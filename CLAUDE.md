@@ -138,3 +138,11 @@ Use `ts domain`, never hand-typed certbot/nginx/psql:
 - Never trust the VPS resolver right after a DNS change (it kept returning Cloudflare IPs); the tool uses `curl --resolve` to this server.
 - Website 1 / eot.ir is refused by the tool. Canonical = apex, www 301s to it. Keep records grey unless SSL mode is Full (strict).
 - Robots: Odoo's stock robots.txt emits an http:// Sitemap line (proxy_mode off) - stock behaviour, also on eot.ir; not changed.
+
+## Interactive talent inventory (ts_talent)
+- Instrument `TALENT-INV-15` (matrix mode): the participant WRITES 2-8 fields and answers the same 15 statements per field (5-point). Scale = sum of 3 items /15*100 (20-100); item i -> scale (i-1) mod 5 (ANA, EXP, ACA, NOV, DUT); composites are plain means of scales (TOT, INT, ACT, CRE, SCH, CRT, CRP). Engine `models/engine_matrix.py` is pure (golden tests `tools/prod/tests_talent_engine.py` run anywhere).
+- Answers live in `ts.attempt.field` / `ts.attempt.cell`, results in `attempt.profile_json` (see spec §9). Controllers subclass `TsAssessment` with `@http.route()` (no args) to reuse the base routes.
+- Stored item text is verbatim from the book; «این زمینه» is replaced by the field name only at display time.
+- Old source-instrument tests must exclude `TALENT-INV-15` (33 source instruments; the catalog shows 34).
+- Flow tests reuse password files `/root/.ts_flow_<DB>_*` on prod: a re-used clone name carries stale files; `ensure_user` now upserts the user every run.
+- Historical import: dry-run first (`TS_IMPORT_XLSX=... < ts_import_talent.py` in odoo shell), counts only, never print rows. The export never lives in the repo; use a 700 directory and delete it afterwards.

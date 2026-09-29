@@ -115,3 +115,6 @@ flows = assignment invitations, result-ready notice, phone OTP. Built ts_kaveneg
 clones with fake Kavenegar (51/51 gateway, 8/8 webhooks, 30/30 flows; eot.ir UNCHANGED, 1,072 pages).
 Shipped live 11:44-11:54 Tehran-time-of-server as `sms1` (backup eot_main_pre_ts_sms1_20260929-1144.dump); live guard: eot.ir UNCHANGED.
 kv_enabled is OFF: nothing is sent until the owner enters the API key in Settings -> SMS -> Kavenegar and ticks Send SMS via Kavenegar.
+
+## 2026-09-29 - interactive talent inventory (ts_talent), branch talent-inventory
+Built ts_talent (matrix engine, field/cell models, 5-screen taking flow, 7-level report, catalog/detail extensions) and the historical-import tooling. Rehearsed on eot_ts11/12/13 clones: eot.ir UNCHANGED (1,072 pages, /my portal identical), engine 44/44, ORM 38/38, HTTP talent flow 36/36, old suites green after excluding the matrix instrument from source-instrument counts.
