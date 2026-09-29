@@ -9,7 +9,7 @@
 ## ۱. تغییرات مدل (ماژول جدید `ts_talent`، وابسته به `ts_assessment`, `ts_org`)
 | مدل | تغییر | توضیح |
 |---|---|---|
-| `ts.instrument.version` | `mode` Selection `single`(پیش‌فرض)/`matrix`؛ `field_min`=2, `field_default`=3, `field_max`=8؛ `field_suggestions` Text (هر خط یک چیپ)؛ `noise_gap` Float=10 | فقط نسخه‌های `matrix` موتور جدید را می‌گیرند |
+| `ts.instrument.version` | `mode` Selection `single`(پیش‌فرض)/`matrix`؛ `field_min`=2, `field_default`=3, `field_max`=8؛ `field_guidance` Text (متن راهنمای نوشتن زمینه)؛ `noise_gap` Float=10 | فقط نسخه‌های `matrix` موتور جدید را می‌گیرند |
 | `ts.instrument.factor` | `kind` Selection `scale`/`composite`؛ `group` Selection `intelligence`/`action`/`none`؛ `composite_of` Char (کدهای عامل، با کاما)؛ `program_text` Text | ترکیب‌ها گویه ندارند؛ در `matrix` باند لازم نیست |
 | **`ts.attempt.field`** (جدید) | `attempt_id`, `sequence` 1..8, `label` Char(80) required, `label_norm` Char (نرمال‌شده برای جستجو), `state` draft/done, `started_at`, `finished_at`, `seconds` Int, `flag_straight` Bool, `flag_fast` Bool, `source_ref` Char | یک ردیف = یک زمینهٔ نام‌گذاری‌شده |
 | `ts.attempt.answer` | `field_id` M2o (nullable, ondelete cascade)؛ یکتایی `(attempt_id, item_id, field_id)` به‌جای `(attempt_id, item_id)` | برای سنجه‌های فعلی NULL می‌ماند |
@@ -18,7 +18,7 @@
 | `ts.workspace` | بدون تغییر؛ purpose=`education` (نقش‌ها owner/counselor) | مؤسسه = partner شرکت + workspace |
 
 ## ۲. تعریف سنجه (داده، نه کد) — `data/talent_inventory.xml`
-- Instrument: code `TALENT-INV-15`, slug `talent-inventory`, title «فهرست تعاملی استعداد», category «استعدادیابی», audience `adolescent` (پیشنهاد؛ مسیر guardian موجود فعال می‌شود — تصمیم مالک)، purpose `personal`, `intended_use/limitations/evidence_note` از متن کتاب (بخش ۵ خلاصه) و پژوهش B.
+- Instrument: code `TALENT-INV-15`, slug `talent-inventory`, title «فهرست تعاملی استعداد», category «استعدادیابی», audience `adult` (تصمیم مالک ۱۴۰۵/۰۷/۰۷: خودِ فرد پاسخ می‌دهد، حتی نوجوان؛ مسیر guardian و «پاسخ برای فرزند» وجود ندارد)، purpose `personal`, `intended_use/limitations/evidence_note` از متن کتاب (بخش ۵ خلاصه) و پژوهش B.
 - Version `TALENT-INV-15/1.0`: `mode=matrix`, scale 1–5, reverse: هیچ، aggregation «mean×20», missing «هر زمینهٔ نام‌دار باید ۱۵ پاسخ داشته باشد».
 - ۱۵ گویه عیناً از سرستون‌های فرم‌افزار (`docs/talent_items.json`، md5 `9afb7ade…`)؛ گویهٔ i ← عامل `(i-1) mod 5`.
 - ۵ عامل `scale` (کد/نام رسمی طبق تیترهای کتاب L274–L283): `ANA` هوش تحلیلی، `EXP` هوش تجربی، `ACA` هوش تحصیلی (group=intelligence)؛ `NOV` کنش نوسودمندی، `DUT` کنش وظیفه‌مندی (group=action). `definition` = تعریف عیناً کتاب.
@@ -47,11 +47,11 @@ score_matrix(contract, fields) -> {fields:[{seq,label,scales:{code:score},compos
 
 ## ۴. جریان پاسخ‌دهی (کنترلر `ts_talent`)
 مسیرها زیر همان `/take/<token>` با `page` = `f<seq>-p<1..3>`:
-1. رضایت (قالب موجود؛ guardian اگر audience کودک/نوجوان).
+1. رضایت (قالب موجود، فقط رضایت خودِ فرد؛ بدون انتخاب «چه کسی پاسخ می‌دهد» و بدون تأیید ولی).
 2. راهنمای یک‌صفحه‌ای: «برای هر زمینه ۱۵ جمله، ۵ درجه؛ ۲ تا ۸ زمینه؛ حدود ۱ دقیقه برای هر زمینه».
-3. **زمینه**: چیپ‌ها + متن آزاد (الزامی، ≤۸۰ نویسه؛ نرمال‌سازی: حذف فاصلهٔ اضافی، ي/ك عربی → فارسی؛ تکراری بودن نام در همان تلاش رد می‌شود).
+3. **زمینه**: فقط متن آزاد که خودِ فرد می‌نویسد (بدون چیپ/فهرست انتخابی؛ راهنمایی فقط متنی، ≤۸۰ نویسه؛ نرمال‌سازی: حذف فاصلهٔ اضافی، ي/ك عربی → فارسی؛ تکراری بودن نام در همان تلاش رد می‌شود).
 4. سه صفحهٔ ۵ گویه‌ای؛ رادیوهای عمودی با لنگر کامل؛ ذخیرهٔ خودکار هر گویه (`/answer` موجود با `field`)؛ «زمینهٔ ۲ از ۳ · صفحهٔ ۱ از ۳».
-5. پایان زمینه: اگر ۱۵ پاسخ یکسان → تأیید ملایم یک‌باره. سپس «افزودن زمینهٔ دیگر» / «پایان و دیدن نتیجه» (دومی فقط از زمینهٔ ۲ به بعد فعال).
+5. پایان زمینه: اگر ۱۵ پاسخ یکسان → تأیید ملایم یک‌باره. سپس «نوشتن زمینهٔ بعدی» / «پایان و دیدن نتیجه» (دومی فقط از زمینهٔ ۲ به بعد فعال).
 6. بازبینی → ارسال → گزارش. زمینهٔ ناقص هنگام ارسال حذف می‌شود اگر هیچ پاسخی ندارد، وگرنه کاربر به اوّلین گویهٔ بی‌پاسخ برمی‌گردد.
 
 ## ۵. گزارش (`ts_talent.report`, جایگزین `ts_assessment.report` وقتی `mode=matrix`)
@@ -71,7 +71,7 @@ score_matrix(contract, fields) -> {fields:[{seq,label,scales:{code:score},compos
 - مسیر: کلون → بررسی → live با `--live` و بکاپ قبلی؛ `ts guard` قبل/بعد.
 
 ## ۷. تصمیم‌های مالک (یک‌جا پرسیده می‌شود)
-1. مخاطب سنجه: نوجوان (مسیر ولی فعال) / بزرگسال / هر دو.
+1. مخاطب سنجه: **تصمیم گرفته شد** — خودِ فرد پاسخ می‌دهد (حتی نوجوان)؛ بدون مسیر ولی.
 2. شرکت‌کنندگان تاریخی: بدون حساب کاربری (partner فقط؛ بعداً با موبایل تأییدشده قابل «ادعا») **[پیشنهاد]** / ساخت کاربر پورتال بدون دعوت.
 3. قاعدهٔ ادغام تکراری‌ها: موبایل، سپس ایمیل **[پیشنهاد]** / هر ردیف شخص جدا.
 4. ترکیب‌ها در گزارش: هر هفت ترکیب کتاب **[پیشنهاد]** / فقط پنج مقیاس + کل.
