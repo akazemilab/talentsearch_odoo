@@ -112,4 +112,6 @@ Every stage: rehearse on an `eot_ts*` clone -> `ts guard compare` (eot.ir unchan
 Owner asked for the whole Kavenegar REST API inside Odoo's native SMS model, token entered at the end.
 Answers: shared module (ts_kavenegar, not in theme_eot_custom), token in Settings, webhooks on ts.innerquest.me,
 flows = assignment invitations, result-ready notice, phone OTP. Built ts_kavenegar + ts_sms, rehearsed on eot_ts11/eot_ts12
-clones with fake Kavenegar. Status: see the shipping entry below once shipped.
+clones with fake Kavenegar (51/51 gateway, 8/8 webhooks, 30/30 flows; eot.ir UNCHANGED, 1,072 pages).
+Shipped live 11:44-11:54 Tehran-time-of-server as `sms1` (backup eot_main_pre_ts_sms1_20260929-1144.dump); live guard: eot.ir UNCHANGED.
+kv_enabled is OFF: nothing is sent until the owner enters the API key in Settings -> SMS -> Kavenegar and ticks Send SMS via Kavenegar.
