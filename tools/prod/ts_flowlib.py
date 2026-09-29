@@ -28,11 +28,17 @@ def shell(code):
     return r.stdout + r.stderr
 
 
+_ENSURED = set()
+
+
 def ensure_user(login):
     pw_file = '/root/.ts_flow_%s_%s' % (DB, login.split('@')[0])
     if not os.path.exists(pw_file):
         pw = os.urandom(12).hex()
         old = os.umask(0o077); open(pw_file, 'w').write(pw); os.umask(old)
+    if login not in _ENSURED:  # a re-used clone name can carry a stale password file: always upsert the user once per run
+        pw = open(pw_file).read().strip()
+        _ENSURED.add(login)
         shell(("u=env['res.users'].with_context(no_reset_password=True).search([('login','=','%s')])\n"
                "u=u or env['res.users'].with_context(no_reset_password=True).create({'name':'آزمون جریان','login':'%s','group_ids':[(6,0,[env.ref('base.group_portal').id])]})\n"
                "u.password=%r\nenv.cr.commit()\n") % (login, login, pw))

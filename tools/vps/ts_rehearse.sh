@@ -24,6 +24,13 @@ echo "=== assessment tests"
 ssh eot-odoo-prod "cd /tmp && sudo -u odoo env HOME=/opt/odoo /opt/odoo/venv/bin/python3 /opt/odoo/odoo/odoo-bin shell -c /etc/odoo20.conf -d $DB --db-filter='^$DB\$' --addons-path=/opt/odoo/talentsearch_stage/addons,/opt/odoo/themes,/opt/odoo/enterprise,/opt/odoo/odoo/addons --no-http --log-level=warn < /opt/odoo/talentsearch_stage/tools/prod/tests_assessment.py 2>&1 | grep -E '^(PASS|FAIL|SUMMARY|    unexpected)|Error'"
 echo "=== http participant flow"
 ssh eot-odoo-prod "PYTHONIOENCODING=utf-8 python3 -u /opt/odoo/talentsearch_stage/tools/prod/ts_http_flow.py $DB $PORT"
+if [[ " ${MODS//,/ } " == *" ts_talent "* ]]; then
+  echo "=== talent engine tests"; python3 /opt/odoo/talentsearch_stage/tools/prod/tests_talent_engine.py 2>&1 | grep -E '^(FAIL|SUMMARY)|passed' 
+  echo "=== talent tests"
+  ssh eot-odoo-prod "cd /tmp && sudo -u odoo env HOME=/opt/odoo /opt/odoo/venv/bin/python3 /opt/odoo/odoo/odoo-bin shell -c /etc/odoo20.conf -d $DB --db-filter='^$DB\$' --addons-path=/opt/odoo/talentsearch_stage/addons,/opt/odoo/themes,/opt/odoo/enterprise,/opt/odoo/odoo/addons --no-http --log-level=warn < /opt/odoo/talentsearch_stage/tools/prod/tests_talent.py 2>&1 | grep -E '^(FAIL|SUMMARY|    unexpected)|Error'"
+  echo "=== http talent flow"
+  ssh eot-odoo-prod "rm -f /root/.ts_flow_${DB}_*; PYTHONIOENCODING=utf-8 python3 -u /opt/odoo/talentsearch_stage/tools/prod/ts_http_talent.py $DB $PORT" | grep -E '^(FAIL|SUMMARY)|Traceback|Error'
+fi
 if [[ " ${MODS//,/ } ${UPG//,/ } " == *" ts_org "* ]]; then
   echo "=== organization tests"
   ssh eot-odoo-prod "cd /tmp && sudo -u odoo env HOME=/opt/odoo /opt/odoo/venv/bin/python3 /opt/odoo/odoo/odoo-bin shell -c /etc/odoo20.conf -d $DB --db-filter='^$DB\$' --addons-path=/opt/odoo/talentsearch_stage/addons,/opt/odoo/themes,/opt/odoo/enterprise,/opt/odoo/odoo/addons --no-http --log-level=warn < /opt/odoo/talentsearch_stage/tools/prod/tests_org.py 2>&1 | grep -E '^(PASS|FAIL|SUMMARY|    unexpected)|Error'"

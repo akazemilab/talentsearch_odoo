@@ -93,6 +93,7 @@
                           t-att-data-token="attempt.access_token" t-att-data-field="field.id">
                         <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
                         <input type="hidden" name="p" t-att-value="page"/>
+                        <h1 class="visually-hidden">جمله‌های زمینهٔ <t t-out="field.label"/></h1>
                         <div class="tt-steps" aria-hidden="true">
                             <i t-foreach="range(1, n_pages + 1)" t-as="s" t-attf-class="#{'done' if s &lt;= page else ''}"/>
                         </div>
@@ -257,7 +258,7 @@
 
                                     <section class="ts-doc__sec">
                                         <h2>جدول کامل</h2>
-                                        <div class="tt-scroll">
+                                        <div class="tt-scroll ts-table-wrap">
                                             <table class="tt-table">
                                                 <thead><tr>
                                                     <th scope="col">توانایی</th>
