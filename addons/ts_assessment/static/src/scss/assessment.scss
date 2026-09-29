@@ -63,7 +63,7 @@
     .ts-pill { display: inline-block; padding: 3px 10px; border-radius: 999px; background: var(--brand-soft); color: var(--brand-deep); font-size: .82rem; font-weight: 700; }
     .ts-pill--ok { background: #dff0e8; color: var(--success); }
     .ts-pill--warn { background: #fbf3e2; color: #6b4600; }
-    .ts-btn--sm { min-height: 38px; padding: 6px 12px; font-size: .85rem; }
+    .ts-btn--sm { min-height: 40px; padding: 6px 12px; font-size: .85rem; }
 
     // report
     .ts-report-actions { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; margin-block-end: 12px; }
