@@ -1,0 +1,288 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="ts_instrument_view_list" model="ir.ui.view">
+        <field name="name">ts.instrument.list</field>
+        <field name="model">ts.instrument</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="code"/>
+                <field name="title"/>
+                <field name="category"/>
+                <field name="audience"/>
+                <field name="active_item_count"/>
+                <field name="factor_count"/>
+                <field name="duration_minutes"/>
+                <field name="state" widget="badge" decoration-success="state == 'published'" decoration-muted="state == 'retired'"/>
+                <field name="attempt_count" string="اجرا"/>
+            </list>
+        </field>
+    </record>
+    <record id="ts_instrument_view_form" model="ir.ui.view">
+        <field name="name">ts.instrument.form</field>
+        <field name="model">ts.instrument</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                    <button name="action_publish" type="object" string="انتشار" class="btn-primary" invisible="state == 'published'" groups="ts_core.group_ts_curator"/>
+                    <button name="action_retire" type="object" string="بازنشسته کردن" invisible="state == 'retired'" groups="ts_core.group_ts_curator" confirm="سنجه از فهرست عمومی حذف می‌شود. ادامه می‌دهید؟"/>
+                    <field name="state" widget="statusbar" statusbar_visible="draft,approved,published"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <h1><field name="title" readonly="1"/></h1>
+                        <field name="name"/>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="code"/>
+                            <field name="category"/>
+                            <field name="audience"/>
+                            <field name="purpose"/>
+                            <field name="slug" readonly="1"/>
+                        </group>
+                        <group>
+                            <field name="current_version_id"/>
+                            <field name="active_item_count"/>
+                            <field name="factor_count"/>
+                            <field name="duration_minutes"/>
+                            <field name="attempt_count"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="کاربرد و محدودیت" name="use">
+                            <group>
+                                <field name="intended_use"/>
+                                <field name="limitations"/>
+                                <field name="rights_note"/>
+                                <field name="evidence_note"/>
+                            </group>
+                        </page>
+                        <page string="تأیید و منبع" name="approval">
+                            <group>
+                                <field name="approved_by_id"/>
+                                <field name="approved_at"/>
+                                <field name="approval_note"/>
+                                <field name="source_xmlid"/>
+                                <field name="source_record_id"/>
+                            </group>
+                        </page>
+                        <page string="نسخه‌ها" name="versions">
+                            <field name="version_ids">
+                                <list>
+                                    <field name="contract_version"/>
+                                    <field name="engine_version"/>
+                                    <field name="active_item_count"/>
+                                    <field name="scored_factor_count"/>
+                                    <field name="validation_ok"/>
+                                    <field name="superseded"/>
+                                    <field name="content_hash" optional="hide"/>
+                                </list>
+                            </field>
+                        </page>
+                    </notebook>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+    <record id="ts_instrument_version_view_form" model="ir.ui.view">
+        <field name="name">ts.instrument.version.form</field>
+        <field name="model">ts.instrument.version</field>
+        <field name="arch" type="xml">
+            <form create="0">
+                <sheet>
+                    <h1><field name="name"/></h1>
+                    <group>
+                        <group>
+                            <field name="instrument_id"/>
+                            <field name="contract_version"/>
+                            <field name="engine_version"/>
+                            <field name="locked"/>
+                            <field name="superseded"/>
+                        </group>
+                        <group>
+                            <field name="scale_min"/>
+                            <field name="scale_max"/>
+                            <field name="reverse_rule"/>
+                            <field name="aggregation"/>
+                            <field name="missing_rule"/>
+                        </group>
+                    </group>
+                    <group>
+                        <field name="validation_ok"/>
+                        <field name="validation_report"/>
+                        <field name="content_hash"/>
+                        <field name="source_contract_xmlid"/>
+                    </group>
+                    <notebook>
+                        <page string="ابعاد و بازه‌ها">
+                            <field name="factor_ids">
+                                <list>
+                                    <field name="sequence" widget="handle"/>
+                                    <field name="code"/>
+                                    <field name="name"/>
+                                    <field name="scored"/>
+                                    <field name="source_rule_xmlid" optional="hide"/>
+                                </list>
+                                <form>
+                                    <group>
+                                        <field name="code"/>
+                                        <field name="name"/>
+                                        <field name="scored"/>
+                                        <field name="definition"/>
+                                    </group>
+                                    <field name="band_ids">
+                                        <list>
+                                            <field name="band"/>
+                                            <field name="min_score"/>
+                                            <field name="max_score"/>
+                                            <field name="content_version"/>
+                                            <field name="approved_at"/>
+                                        </list>
+                                        <form>
+                                            <group>
+                                                <field name="band"/>
+                                                <field name="min_score"/>
+                                                <field name="max_score"/>
+                                                <field name="content_version"/>
+                                                <field name="source_approved_by"/>
+                                                <field name="source_approved_at"/>
+                                                <field name="approved_by_id"/>
+                                                <field name="approved_at"/>
+                                            </group>
+                                            <group string="تفسیر برای شرکت‌کننده"><field name="client_text" nolabel="1"/></group>
+                                            <group string="راهنمای متخصص"><field name="therapist_text" nolabel="1"/></group>
+                                        </form>
+                                    </field>
+                                </form>
+                            </field>
+                        </page>
+                        <page string="پرسش‌ها">
+                            <field name="item_ids">
+                                <list>
+                                    <field name="sequence"/>
+                                    <field name="source_question_id"/>
+                                    <field name="text"/>
+                                    <field name="factor_id"/>
+                                    <field name="reverse"/>
+                                    <field name="disabled"/>
+                                </list>
+                            </field>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+    <record id="ts_instrument_view_search" model="ir.ui.view">
+        <field name="name">ts.instrument.search</field>
+        <field name="model">ts.instrument</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="title"/>
+                <field name="code"/>
+                <filter name="published" string="منتشرشده" domain="[('state', '=', 'published')]"/>
+                <group>
+                    <filter name="by_category" string="دسته" context="{'group_by': 'category'}"/>
+                    <filter name="by_state" string="وضعیت" context="{'group_by': 'state'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+    <record id="ts_instrument_action" model="ir.actions.act_window">
+        <field name="name">سنجه‌ها</field>
+        <field name="res_model">ts.instrument</field>
+        <field name="view_mode">list,form</field>
+    </record>
+
+    <record id="ts_attempt_view_list" model="ir.ui.view">
+        <field name="name">ts.attempt.list</field>
+        <field name="model">ts.attempt</field>
+        <field name="arch" type="xml">
+            <list create="0" edit="0" delete="0">
+                <field name="name"/>
+                <field name="partner_id"/>
+                <field name="instrument_id"/>
+                <field name="state" widget="badge" decoration-success="state == 'done'" decoration-danger="state == 'error'"/>
+                <field name="progress"/>
+                <field name="started_at"/>
+                <field name="submitted_at"/>
+            </list>
+        </field>
+    </record>
+    <record id="ts_attempt_view_form" model="ir.ui.view">
+        <field name="name">ts.attempt.form</field>
+        <field name="model">ts.attempt</field>
+        <field name="arch" type="xml">
+            <form create="0" edit="0" delete="0">
+                <sheet>
+                    <h1><field name="name"/></h1>
+                    <group>
+                        <group>
+                            <field name="partner_id"/>
+                            <field name="instrument_id"/>
+                            <field name="version_id"/>
+                            <field name="state"/>
+                            <field name="respondent_role"/>
+                            <field name="subject_label"/>
+                        </group>
+                        <group>
+                            <field name="consent_service"/>
+                            <field name="consent_research"/>
+                            <field name="consent_version"/>
+                            <field name="consent_at"/>
+                            <field name="submitted_at"/>
+                            <field name="engine_version"/>
+                            <field name="output_hash"/>
+                        </group>
+                    </group>
+                    <field name="result_ids">
+                        <list>
+                            <field name="factor_id"/>
+                            <field name="score"/>
+                            <field name="band"/>
+                            <field name="item_count"/>
+                        </list>
+                        <form>
+                            <group>
+                                <field name="factor_id"/>
+                                <field name="score"/>
+                                <field name="band"/>
+                                <field name="content_version"/>
+                            </group>
+                            <group string="راهنمای متخصص"><field name="therapist_text" nolabel="1"/></group>
+                        </form>
+                    </field>
+                </sheet>
+            </form>
+        </field>
+    </record>
+    <record id="ts_attempt_view_pivot" model="ir.ui.view">
+        <field name="name">ts.attempt.pivot</field>
+        <field name="model">ts.attempt</field>
+        <field name="arch" type="xml">
+            <pivot>
+                <field name="instrument_id" type="row"/>
+                <field name="state" type="col"/>
+            </pivot>
+        </field>
+    </record>
+    <record id="ts_attempt_view_graph" model="ir.ui.view">
+        <field name="name">ts.attempt.graph</field>
+        <field name="model">ts.attempt</field>
+        <field name="arch" type="xml">
+            <graph type="line">
+                <field name="create_date" interval="week"/>
+            </graph>
+        </field>
+    </record>
+    <record id="ts_attempt_action" model="ir.actions.act_window">
+        <field name="name">اجراهای سنجه</field>
+        <field name="res_model">ts.attempt</field>
+        <field name="view_mode">list,form,pivot,graph</field>
+    </record>
+
+    <menuitem id="menu_ts_assessments" name="سنجش" parent="ts_core.menu_ts_root" sequence="20"/>
+    <menuitem id="menu_ts_instruments" name="سنجه‌ها" parent="menu_ts_assessments" action="ts_instrument_action" sequence="10" groups="ts_core.group_ts_user"/>
+    <menuitem id="menu_ts_attempts" name="اجراها و نتایج" parent="menu_ts_assessments" action="ts_attempt_action" sequence="20" groups="ts_core.group_ts_manager"/>
+</odoo>

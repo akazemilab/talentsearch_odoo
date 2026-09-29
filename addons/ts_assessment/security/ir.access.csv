@@ -1,0 +1,17 @@
+id,name,model_id,group_id/id,operation,domain
+access_ts_instrument_user,instrument operator read,ts.instrument,ts_core.group_ts_user,r,
+access_ts_instrument_curator,instrument curator,ts.instrument,ts_core.group_ts_curator,cru,
+access_ts_version_user,version operator read,ts.instrument.version,ts_core.group_ts_user,r,
+access_ts_version_curator,version curator,ts.instrument.version,ts_core.group_ts_curator,cru,
+access_ts_factor_user,factor operator read,ts.instrument.factor,ts_core.group_ts_user,r,
+access_ts_factor_curator,factor curator,ts.instrument.factor,ts_core.group_ts_curator,cru,
+access_ts_band_user,band operator read,ts.instrument.band,ts_core.group_ts_user,r,
+access_ts_band_curator,band curator,ts.instrument.band,ts_core.group_ts_curator,cru,
+access_ts_item_user,item operator read,ts.instrument.item,ts_core.group_ts_user,r,
+access_ts_item_curator,item curator,ts.instrument.item,ts_core.group_ts_curator,cru,
+access_ts_attempt_manager,attempt manager read,ts.attempt,ts_core.group_ts_manager,r,
+access_ts_attempt_portal,attempt own,ts.attempt,base.group_portal,r,"[('user_id', '=', user.id)]"
+access_ts_answer_manager,answer manager read,ts.attempt.answer,ts_core.group_ts_manager,r,
+access_ts_answer_portal,answer own,ts.attempt.answer,base.group_portal,r,"[('attempt_id.user_id', '=', user.id)]"
+access_ts_result_manager,result manager read,ts.attempt.result,ts_core.group_ts_manager,r,
+access_ts_result_portal,result own,ts.attempt.result,base.group_portal,r,"[('attempt_id.user_id', '=', user.id)]"

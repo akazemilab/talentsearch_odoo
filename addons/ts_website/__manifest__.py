@@ -5,7 +5,7 @@
     'category': 'Website',
     'author': 'EOT',
     'license': 'LGPL-3',
-    'depends': ['website', 'crm', 'website_crm', 'ts_core'],
+    'depends': ['website', 'crm', 'website_crm', 'account', 'ts_core'],
     'data': [
         'data/website.xml',
         'data/crm.xml',

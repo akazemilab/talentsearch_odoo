@@ -1,6 +1,7 @@
 import logging
 
-from odoo import api, models
+from odoo import api, fields, models
+from odoo.fields import Domain
 from odoo.exceptions import UserError
 
 _logger = logging.getLogger(__name__)
@@ -9,6 +10,7 @@ HOMEPAGE_ARCH = '<t name="Homepage" t-name="website.homepage"><t t-call="ts_webs
 
 # (label, url, sequence). Rebuilt on every upgrade; website 2 only.
 TS_MENU = [
+    ('سنجه‌ها', '/assessments', 5),
     ('برای سازمان‌ها', '/employers', 10),
     ('برای مراکز بالینی', '/clinics', 20),
     ('روند کار', '/how-it-works', 30),
@@ -36,6 +38,8 @@ class Website(models.Model):
             raise UserError('Refusing to configure website 1 as Talent Search.')
         self._ts_setup_homepage(site)
         self._ts_setup_menu(site)
+        if site.auth_signup_uninvited != 'b2c':
+            site.auth_signup_uninvited = 'b2c'  # website-2 setting: visitors may create an account
         self._ts_isolate_crm_stages()
         self._ts_contain_stock_apps(site)
         _logger.info('Talent Search site %s configured (website id %s)', site.name, site.id)
@@ -72,6 +76,7 @@ class Website(models.Model):
     # Stock apps installed for Talent Search that publish website content on
     # the company's default website (website 1 = eot.ir) or on every website.
     STOCK_APP_PAGE_MODULES = ('website_helpdesk', 'website_crm', 'survey', 'website_payment', 'helpdesk')
+    STOCK_APP_PORTAL_MODULES = ('account', 'payment', 'account_payment', 'helpdesk', 'website_helpdesk', 'sale', 'survey')
 
     def _ts_contain_stock_apps(self, site):
         """Move what stock app installs put on eot.ir onto website 2.
@@ -98,6 +103,11 @@ class Website(models.Model):
             ('website_id', '!=', False), ('website_id', '!=', site.id), ('active', '=', True),
             '|', '|', '|', '|', ('key', '=like', 'website_crm.%'), ('key', '=like', 'website_helpdesk.%'),
             ('key', '=like', 'survey.%'), ('key', '=like', 'website_payment.%'), ('key', '=like', 'helpdesk.%')])
+        # Portal home cards of those apps: Talent Search only (not eot.ir).
+        entry_ids = IMD.search([('model', '=', 'portal.entry'), ('module', 'in', self.STOCK_APP_PORTAL_MODULES)]).mapped('res_id')
+        entries = self.env['portal.entry'].with_context(ts_all_websites=True).browse(entry_ids).exists().filtered(lambda e: not e.website_id)
+        if entries:
+            entries.write({'website_id': site.id, 'show_in_portal': False})
         if stray_views:
             _logger.info('Talent Search: deactivating install-generated views on other websites: %s', stray_views.mapped('key'))
             stray_views.write({'active': False})
@@ -123,3 +133,23 @@ class Website(models.Model):
         stock = stock.filtered(lambda s: not s.get_external_id().get(s.id, '').startswith('ts_website.'))
         if stock:
             stock.write({'team_ids': [(6, 0, default_team.ids)]})
+
+
+class PortalEntry(models.Model):
+    """Portal home cards are not website-aware in Odoo 20. Stock apps installed
+    for Talent Search (account, payment, account_payment, helpdesk) add cards
+    ('Invoices to pay', 'Manage your payment methods', 'Tickets', ...) to every
+    signed-in user's /my - including eot.ir's. A card with a website only
+    shows on that website."""
+    _inherit = 'portal.entry'
+
+    website_id = fields.Many2one('website', index=True, ondelete='cascade',
+                                 help='Empty: every website. Set: only that website.')
+
+    @api.model
+    def _search(self, domain, *args, **kwargs):
+        from odoo.http import request
+        website = request and getattr(request, 'env', None) and request.env.website
+        if website and not self.env.context.get('ts_all_websites'):
+            domain = Domain(domain) & (Domain('website_id', '=', False) | Domain('website_id', '=', website.id))
+        return super()._search(domain, *args, **kwargs)

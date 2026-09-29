@@ -38,6 +38,14 @@ case $CMD in
     grep -E " (ERROR|CRITICAL) |Traceback|ParseError|ValidationError" "/tmp/ts_${CMD}_$DB.log" | grep -v theme_paptic | head -20
     grep -E "Modules loaded|modules loaded" "/tmp/ts_${CMD}_$DB.log" | tail -1
     step "rc=$rc"; exit $rc ;;
+  apply)
+    INS=${3:-}; UPG=${4:-}; ARGS=()
+    [ -n "$INS" ] && ARGS+=(-i "$INS"); [ -n "$UPG" ] && ARGS+=(-u "$UPG")
+    step "apply install=[$INS] upgrade=[$UPG]"
+    odoo "${ARGS[@]}" --stop-after-init --no-http > "/tmp/ts_apply_$DB.log" 2>&1; rc=$?
+    grep -E " (ERROR|CRITICAL) |Traceback|ParseError" "/tmp/ts_apply_$DB.log" | grep -v theme_paptic | head -20
+    grep -E "Talent Search instruments loaded" "/tmp/ts_apply_$DB.log" | tail -1 | cut -c1-240
+    step "rc=$rc"; exit $rc ;;
   serve)
     PORT=${3:-8071}; pkill -f "[-]d $DB " 2>/dev/null; sleep 1
     sudo -u odoo setsid nohup $PY $BIN -c /etc/odoo20.conf -d "$DB" --db-filter="^$DB\$" --addons-path=$AP --http-port=$PORT --gevent-port=$((PORT+1000)) --workers=0 --max-cron-threads=0 --no-database-list > "/tmp/ts_serve_$DB.log" 2>&1 &

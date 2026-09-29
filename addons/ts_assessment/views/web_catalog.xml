@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="tpl_catalog" model="ir.ui.view">
+        <field name="name">TS: assessment catalog</field>
+        <field name="type">qweb</field>
+        <field name="key">ts_assessment.catalog</field>
+        <field name="website_id" ref="ts_website.website_ts"/>
+        <field name="arch" type="xml">
+            <t t-name="ts_assessment.catalog">
+                <t t-call="website.layout" additional_title.f="سنجه‌ها">
+                    <div id="wrap" class="ts-page">
+                        <t t-call="ts_website.page_hero" kicker.f="سنجه‌ها" title.f="یک سنجه انتخاب کنید و خودتان را بهتر بشناسید"
+                           lead.f="هر سنجه هدف، مخاطب، زمان تقریبی و محدودیت‌های خودش را دارد. پیش از شروع همه را می‌بینید و نتیجه در حساب کاربری شما ذخیره می‌شود."/>
+                        <section class="ts-section">
+                            <div class="ts-container">
+                                <p class="ts-muted"><t t-out="fa(count)"/> سنجهٔ منتشرشده</p>
+                                <t t-foreach="groups" t-as="g">
+                                    <div class="ts-cat">
+                                        <h2 class="ts-cat__title" t-out="g[0]"/>
+                                        <div class="ts-grid ts-grid--3">
+                                            <t t-foreach="g[1]" t-as="inst">
+                                                <a class="ts-card ts-inst" t-attf-href="/assessments/#{inst.slug}">
+                                                    <span class="ts-card__band" aria-hidden="true"/>
+                                                    <h3 t-out="inst.title"/>
+                                                    <p class="ts-inst__meta">
+                                                        <span><t t-out="fa(inst.active_item_count)"/> پرسش</span>
+                                                        <span>حدود <t t-out="fa(inst.duration_minutes)"/> دقیقه</span>
+                                                        <span><t t-out="fa(inst.factor_count)"/> بُعد</span>
+                                                    </p>
+                                                    <p t-if="inst.audience != 'adult'" class="ts-inst__aud" t-out="dict(inst._fields['audience'].selection).get(inst.audience)"/>
+                                                    <span class="ts-card__link">جزئیات و شروع</span>
+                                                </a>
+                                            </t>
+                                        </div>
+                                    </div>
+                                </t>
+                                <p class="ts-notice">نتیجهٔ هر سنجه توصیف پاسخ‌های شما در همان پرسشنامه است، نه تشخیص. <a href="/evidence">شواهد و محدودیت‌ها</a></p>
+                            </div>
+                        </section>
+                    </div>
+                </t>
+            </t>
+        </field>
+    </record>
+
+    <record id="tpl_detail" model="ir.ui.view">
+        <field name="name">TS: assessment detail</field>
+        <field name="type">qweb</field>
+        <field name="key">ts_assessment.detail</field>
+        <field name="website_id" ref="ts_website.website_ts"/>
+        <field name="arch" type="xml">
+            <t t-name="ts_assessment.detail">
+                <t t-call="website.layout" additional_title="inst.title">
+                    <div id="wrap" class="ts-page">
+                        <section class="ts-hero ts-hero--soft">
+                            <div class="ts-container">
+                                <a href="/assessments" class="ts-back">همهٔ سنجه‌ها</a>
+                                <span class="ts-hero__kicker" t-out="inst.category"/>
+                                <h1 t-out="inst.title"/>
+                                <p class="ts-inst__meta ts-inst__meta--hero">
+                                    <span><t t-out="fa(inst.active_item_count)"/> پرسش</span>
+                                    <span>حدود <t t-out="fa(inst.duration_minutes)"/> دقیقه</span>
+                                    <span><t t-out="fa(inst.factor_count)"/> بُعد</span>
+                                    <span t-out="dict(inst._fields['audience'].selection).get(inst.audience)"/>
+                                </p>
+                                <div class="ts-hero__actions">
+                                    <t t-set="open_attempt" t-value="mine.filtered(lambda a: a.state in ('consent', 'in_progress'))[:1]"/>
+                                    <a t-if="open_attempt" t-attf-href="/take/#{open_attempt.access_token}" class="ts-btn ts-btn--primary">ادامهٔ پاسخ‌دهی (<t t-out="fa(open_attempt.progress)"/>٪)</a>
+                                    <form t-else="" t-att-action="start_url" method="post">
+                                        <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                                        <button type="submit" class="ts-btn ts-btn--primary">شروع سنجه</button>
+                                    </form>
+                                    <a t-if="request.env.user._is_public()" href="/web/signup" class="ts-btn ts-btn--outline">ساخت حساب کاربری</a>
+                                </div>
+                                <p t-if="request.env.user._is_public()" class="ts-muted">برای ذخیرهٔ پاسخ‌ها و دیدن نتیجه در حساب کاربری، ابتدا وارد شوید یا حساب بسازید.</p>
+                            </div>
+                        </section>
+                        <section class="ts-section">
+                            <div class="ts-container ts-grid ts-grid--2">
+                                <div class="ts-prose">
+                                    <h2>کاربرد</h2>
+                                    <p t-out="inst.intended_use"/>
+                                    <h2>ابعادی که توصیف می‌شود</h2>
+                                    <ul class="ts-factors">
+                                        <t t-foreach="version.factor_ids.filtered('scored')" t-as="f">
+                                            <li>
+                                                <strong t-out="f.name"/>
+                                                <span t-if="f.definition" t-out="f.definition"/>
+                                            </li>
+                                        </t>
+                                    </ul>
+                                </div>
+                                <div class="ts-prose">
+                                    <div class="ts-card ts-card--soft">
+                                        <h3>چگونه پاسخ می‌دهید</h3>
+                                        <p>برای هر عبارت، میزان توصیف خود (یا کودک) را روی مقیاس پنج‌درجه‌ای از «بسیار کم» تا «بسیار زیاد» انتخاب می‌کنید. پاسخ‌ها خودکار ذخیره می‌شوند و می‌توانید بعداً ادامه دهید.</p>
+                                        <h3>محدودیت‌ها</h3>
+                                        <p t-out="inst.limitations"/>
+                                        <h3>حریم خصوصی</h3>
+                                        <p>پاسخ‌ها و نتیجه فقط در حساب کاربری شما دیده می‌شود. <a href="/privacy">حریم خصوصی</a></p>
+                                    </div>
+                                    <t t-if="mine">
+                                        <h3>اجراهای قبلی شما</h3>
+                                        <ul>
+                                            <t t-foreach="mine" t-as="a">
+                                                <li>
+                                                    <a t-if="a.state == 'done'" t-attf-href="/my/assessments/#{a.id}">گزارش <t t-out="a.jalali(a.submitted_at, False)"/></a>
+                                                    <a t-elif="a.state in ('consent', 'in_progress')" t-attf-href="/take/#{a.access_token}">ادامه (<t t-out="fa(a.progress)"/>٪)</a>
+                                                </li>
+                                            </t>
+                                        </ul>
+                                    </t>
+                                </div>
+                            </div>
+                        </section>
+                    </div>
+                </t>
+            </t>
+        </field>
+    </record>
+</odoo>

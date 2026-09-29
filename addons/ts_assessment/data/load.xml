@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Idempotent: loads/updates instruments from data/source/psy_source.json
+         (verified against the owner's exports); a changed contract becomes a
+         new locked version, existing attempts keep their version. -->
+    <function model="ts.instrument" name="_ts_load_source"/>
+</odoo>

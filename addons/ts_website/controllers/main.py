@@ -58,3 +58,18 @@ class TsWebsite(http.Controller):
 
 def _esc(value):
     return str(escape(value or ''))
+
+
+from odoo.addons.account.controllers.portal import PortalAccount  # noqa: E402
+
+
+class TsPortalAccount(PortalAccount):
+    """Installing Invoicing (for Talent Search) added an electronic-invoice
+    format selector (France FacturX, Peppol, XRechnung, ...) to every
+    signed-in user's /my/account, eot.ir's included. None of these formats
+    apply in Iran: hide the selector on every website."""
+
+    def _prepare_my_account_rendering_values(self, *args, **kwargs):
+        values = super()._prepare_my_account_rendering_values(*args, **kwargs)
+        values['invoice_edi_formats'] = {}
+        return values
