@@ -3,6 +3,7 @@
 DB=${1:?db}; MODS=${2:?install_modules}; UPG=${3:-}; PORT=8071
 PORTAL_PATHS="/my /my/home /my/account /my/security"
 ts db clone $DB || exit 1
+ssh eot-odoo-prod "rm -f /root/.ts_flow_${DB}_*"   # a re-used clone name must not inherit stale test-user passwords
 if [ "${SKIP_BASE:-0}" != 1 ]; then
   # baseline = the clone served on the code that is LIVE now (stage may already hold newer code)
   ts sync >/dev/null; ssh eot-odoo-prod "TS_CODE=/opt/odoo/talentsearch bash /opt/odoo/talentsearch_stage/tools/prod/ts_db.sh serve $DB $PORT" && ts guard snapshot $DB $PORT ${DB}_base || exit 1
@@ -25,7 +26,7 @@ ssh eot-odoo-prod "cd /tmp && sudo -u odoo env HOME=/opt/odoo /opt/odoo/venv/bin
 echo "=== http participant flow"
 ssh eot-odoo-prod "PYTHONIOENCODING=utf-8 python3 -u /opt/odoo/talentsearch_stage/tools/prod/ts_http_flow.py $DB $PORT"
 if [[ " ${MODS//,/ } " == *" ts_talent "* ]]; then
-  echo "=== talent engine tests"; python3 /opt/odoo/talentsearch_stage/tools/prod/tests_talent_engine.py 2>&1 | grep -E '^(FAIL|SUMMARY)|passed' 
+  echo "=== talent engine tests"; ssh eot-odoo-prod "python3 /opt/odoo/talentsearch_stage/tools/prod/tests_talent_engine.py" 2>&1 | grep -E '^(FAIL|SUMMARY)|passed' 
   echo "=== talent tests"
   ssh eot-odoo-prod "cd /tmp && sudo -u odoo env HOME=/opt/odoo /opt/odoo/venv/bin/python3 /opt/odoo/odoo/odoo-bin shell -c /etc/odoo20.conf -d $DB --db-filter='^$DB\$' --addons-path=/opt/odoo/talentsearch_stage/addons,/opt/odoo/themes,/opt/odoo/enterprise,/opt/odoo/odoo/addons --no-http --log-level=warn < /opt/odoo/talentsearch_stage/tools/prod/tests_talent.py 2>&1 | grep -E '^(FAIL|SUMMARY|    unexpected)|Error'"
   echo "=== http talent flow"
