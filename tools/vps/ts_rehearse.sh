@@ -2,8 +2,10 @@
 # ts_rehearse.sh DB MODULES : clone -> serve -> eot.ir baseline -> install -> serve -> guard compare -> TS page check
 DB=${1:?db}; MODS=${2:?modules}; PORT=8071
 ts db clone $DB || exit 1
-ts db serve $DB $PORT && ts guard snapshot $DB $PORT ${DB}_base || exit 1
-ssh eot-odoo-prod "pkill -f '[-]d $DB '"; sleep 2
+if [ "${SKIP_BASE:-0}" != 1 ]; then
+  ts db serve $DB $PORT && ts guard snapshot $DB $PORT ${DB}_base || exit 1
+  ssh eot-odoo-prod "pkill -f '[-]d $DB '"; sleep 2
+fi
 ts db install $DB $MODS; rc=$?; [ $rc -ne 0 ] && { echo "!! install failed"; exit $rc; }
 ts db serve $DB $PORT
 echo "=== guard"; ts guard compare $DB $PORT ${DB}_base; g=$?

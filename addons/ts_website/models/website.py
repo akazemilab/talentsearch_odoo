@@ -57,8 +57,13 @@ class Website(models.Model):
 
     def _ts_setup_menu(self, site):
         Menu = self.env['website.menu']
-        top = site.menu_id
-        if not top or top.website_id != site:
+        # website.menu_id is computed and may be stale right after website
+        # creation in the same transaction: look the top menu up directly.
+        top = Menu.search([('website_id', '=', site.id), ('parent_id', '=', False)], limit=1)
+        if not top:
+            site.copy_menu_hierarchy(self.env.ref('website.main_menu'))
+            top = Menu.search([('website_id', '=', site.id), ('parent_id', '=', False)], limit=1)
+        if not top:
             raise UserError('Website 2 has no own top menu.')
         Menu.search([('parent_id', '=', top.id), ('website_id', '=', site.id)]).unlink()
         Menu.create([{'name': n, 'url': u, 'sequence': s, 'parent_id': top.id, 'website_id': site.id}
