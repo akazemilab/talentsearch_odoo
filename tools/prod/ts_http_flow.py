@@ -72,7 +72,7 @@ TS = 'ts.innerquest.me'
 anon = Client(TS)
 st, _, page = anon.req('/assessments')
 slugs = re.findall(r'href="/assessments/([^"/]+)"', page)
-check('catalog 200 with 33 instruments', st == 200 and len(set(slugs)) == 33, '%s %d' % (st, len(set(slugs))))
+check('catalog 200 with 33 source instruments + the talent inventory', st == 200 and len(set(slugs)) == 34, '%s %d' % (st, len(set(slugs))))
 eot = Client('www.eot.ir')
 check('catalog is 404 on eot.ir', eot.req('/assessments')[0] == 404)
 check('/take is 404 on eot.ir', eot.req('/take/x')[0] in (404, 303))

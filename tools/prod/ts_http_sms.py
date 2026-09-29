@@ -104,7 +104,7 @@ p.req('/my/phone/prefs', {'csrf_token': p.csrf(page3), 'results': '1'})
 # ---- result-ready SMS: no result content, only for opted-in verified users
 out = shell("""
 u = env['res.users'].search([('login','=','%s')])
-inst = env['ts.instrument'].search([('state','=','published'),('audience','=','adult')], limit=1)
+inst = env['ts.instrument'].search([('state','=','published'),('audience','=','adult'),('code','!=','TALENT-INV-15')], limit=1)
 a = env['ts.attempt'].create({'user_id': u.id, 'instrument_id': inst.id, 'version_id': inst.current_version_id.id})
 a.give_consent(role='self')
 for it in a.active_items():

@@ -29,7 +29,7 @@ def raises(fn, exc):
 
 # ------------------------------------------------------------------ catalog
 Inst = env['ts.instrument']
-pub = Inst.search([('state', '=', 'published')])
+pub = Inst.search([('state', '=', 'published'), ('code', '!=', 'TALENT-INV-15')])  # source instruments; the matrix one has its own tests
 ret = Inst.search([('state', '=', 'retired')])
 check('33 instruments published', len(pub) == 33, str(len(pub)))
 check('3 instruments retired (009, 011, 024)', sorted(ret.mapped('code')) == ['inventory_009', 'inventory_011', 'inventory_024'])
@@ -37,7 +37,7 @@ check('every published version passed exhaustive band validation', all(i.current
       str([i.code for i in pub if not i.current_version_id.validation_ok]))
 check('every published instrument approved with intended use + rights', all(i.approved_at and i.intended_use and i.rights_note for i in pub))
 V = pub.mapped('current_version_id')
-check('1,340 source items imported', env['ts.instrument.item'].search_count([]) == 1340)
+check('1,340 source items imported', env['ts.instrument.item'].search_count([('version_id.mode', '!=', 'matrix')]) == 1340)
 check('393 bands imported and approved', env['ts.instrument.band'].search_count([('approved_at', '!=', False)]) == 393)
 check('versions locked', all(V.mapped('locked')))
 check('locked version refuses contract edits', raises(lambda: V[0].write({'reverse_rule': 'x'}), UserError))
