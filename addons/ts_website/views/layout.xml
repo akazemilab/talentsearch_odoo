@@ -17,9 +17,11 @@
                     <link rel="preload" href="/ts_website/static/fonts/Vazirmatn-Variable.woff2" as="font" type="font/woff2" crossorigin=""/>
                     <t t-call-assets="ts_website.assets_ts" t-js="false"/>
                 </xpath>
+                <xpath expr="//a[hasclass('o_skip_to_content')]" position="replace">
+                    <a class="o_skip_to_content ts-skip" href="#wrap" groups="!base.group_user">رفتن به محتوای اصلی</a>
+                </xpath>
                 <xpath expr="//header[@id='top']" position="replace">
                     <header id="top" class="ts-header" data-anchor="true">
-                        <a class="ts-skip" href="#wrap">رفتن به محتوای اصلی</a>
                         <div class="ts-container ts-header__bar">
                             <a href="/" class="ts-lockup" aria-label="تلنت سرچ، از خانوادهٔ EOT - صفحهٔ اصلی">
                                 <img src="/ts_website/static/img/talentsearch-logo.webp" width="44" height="44" alt=""/>
