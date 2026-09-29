@@ -91,6 +91,12 @@ Every stage: rehearse on an `eot_ts*` clone -> `ts guard compare` (eot.ir unchan
   - Guard: eot.ir UNCHANGED (1,072 pages).
   - Tests: stage 29/29, assessment 35/35, HTTP participant 24/24, org 32/32, HTTP org 27/27.
 
+### LIVE stage 2 (eot_main), 2026-09-29 08:39-08:50 UTC - PASS
+- Rehearsal r9 (final code): guard eot.ir UNCHANGED; eot.ir /my, /my/home, /my/account, /my/security identical to pre-TS; tests 29/29, 35/35, 24/24, 32/32, 27/27; headless layout audit clean at 1280/375 + print.
+- `ts_ship.sh ts_assessment,ts_org ts_website s2`: backup /var/backups/odoo/eot_main_pre_ts_s2_20260929-0839.dump; previous live code kept at /opt/odoo/talentsearch_prev_s2_20260929-0839; install rc=0; odoo20 down 08:44:27-08:44:58.
+- Live guard: **eot.ir UNCHANGED** (1,072 pages). Live: 33 published (10 employment-eligible, 23 personal), 3 retired; website-2 portal cards scoped.
+- Theme ts-isolation shipped to live earlier the same hour (`eot ship`, verify OK, 1,067 routes) and merged to main (0905f7f).
+
 ### Unresolved gates carried forward
 - Norms/psychometric evidence do not exist in the source; reports say so and use contract bands only.
 - No payment provider, SMS or outgoing email (owner decision, not needed now).
