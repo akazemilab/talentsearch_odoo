@@ -153,3 +153,11 @@ class PortalEntry(models.Model):
         if website and not self.env.context.get('ts_all_websites'):
             domain = Domain(domain) & (Domain('website_id', '=', False) | Domain('website_id', '=', website.id))
         return super()._search(domain, *args, **kwargs)
+
+    def _filter_visible_portal_cards(self):
+        """Odoo shows a portal card only if it is a config card or its counter is
+        non-zero; a card without a counter is rendered hidden (d-none). Talent
+        Search's own cards (website set, no counter) are always shown; a card with a
+        counter (e.g. the workspace card) keeps Odoo's counter rule."""
+        visible = super()._filter_visible_portal_cards()
+        return visible | self.filtered(lambda e: e.website_id and not e.placeholder_count)

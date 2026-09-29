@@ -40,7 +40,7 @@
                                 </ul>
                                 <div class="ts-nav__actions">
                                     <a t-if="request.env.user._is_public()" href="/web/login" class="ts-btn ts-btn--quiet">ورود</a>
-                                    <a t-else="" href="/my" class="ts-btn ts-btn--quiet">حساب من</a>
+                                    <t t-else=""><a href="/my/assessments" class="ts-btn ts-btn--quiet">سنجه‌های من</a><a href="/my" class="ts-btn ts-btn--quiet">حساب من</a></t>
                                     <a href="/contact?topic=demo" class="ts-btn ts-btn--primary">درخواست جلسهٔ معرفی</a>
                                 </div>
                             </nav>
@@ -57,7 +57,7 @@
                                     </ul>
                                     <div class="ts-nav__actions">
                                         <a t-if="request.env.user._is_public()" href="/web/login" class="ts-btn ts-btn--quiet">ورود</a>
-                                        <a t-else="" href="/my" class="ts-btn ts-btn--quiet">حساب من</a>
+                                        <t t-else=""><a href="/my/assessments" class="ts-btn ts-btn--quiet">سنجه‌های من</a><a href="/my" class="ts-btn ts-btn--quiet">حساب من</a></t>
                                         <a href="/contact?topic=demo" class="ts-btn ts-btn--primary">درخواست جلسهٔ معرفی</a>
                                     </div>
                                 </nav>
