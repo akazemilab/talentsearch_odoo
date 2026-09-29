@@ -97,6 +97,12 @@ Every stage: rehearse on an `eot_ts*` clone -> `ts guard compare` (eot.ir unchan
 - Live guard: **eot.ir UNCHANGED** (1,072 pages). Live: 33 published (10 employment-eligible, 23 personal), 3 retired; website-2 portal cards scoped.
 - Theme ts-isolation shipped to live earlier the same hour (`eot ship`, verify OK, 1,067 routes) and merged to main (0905f7f).
 
+### LIVE fix s3, 2026-09-29 09:13-09:32 UTC - «سنجه‌های من» card hidden
+- Symptom (owner): no «سنجه‌های من» on signed-in /my. Cause: Odoo renders a portal card with `d-none` unless it is a config card or has a counter; the card had neither. The test only checked that the text was in the HTML.
+- Fix: `PortalEntry._filter_visible_portal_cards` shows website-2 cards without a counter; the header has a «سنجه‌های من» link for signed-in users; `ts_http_flow` now asserts the card has no `d-none` (and that the workspace card is hidden for a non-member).
+- Rehearsal r10: guard UNCHANGED, eot.ir /my pages identical to pre-TS, tests 29/35/26/32/27 all pass. Ship: `ts_ship.sh '' ts_website s3` (backup /var/backups/odoo/eot_main_pre_ts_s3_*).
+- Guard: the upgrade cascades to ts_assessment/ts_org and re-saves their 16 backend views (models ts.*); the guard reported them as changed. They never render on a website, so the guard now excludes `ts.*` backend views. Re-compared against the pre-ship snapshot: 1,072 pages, eot.ir UNCHANGED.
+
 ### Unresolved gates carried forward
 - Norms/psychometric evidence do not exist in the source; reports say so and use contract bands only.
 - No payment provider, SMS or outgoing email (owner decision, not needed now).

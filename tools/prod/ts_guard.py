@@ -17,7 +17,7 @@ import sys, json, re, hashlib, subprocess, urllib.request, urllib.error, urllib.
 
 DIR = "/var/lib/ts_guard"
 TABLES = {
-    "ir_ui_view": "website_id = 1 OR website_id IS NULL",
+    "ir_ui_view": "(website_id = 1 OR website_id IS NULL) AND coalesce(model, '') NOT LIKE 'ts.%'",  # ts.* backend views (back-office lists/forms of Talent Search models) never render on a website
     "website_page": "website_id = 1 OR website_id IS NULL",
     "website_menu": "website_id = 1 OR website_id IS NULL",
     "website_rewrite": "website_id = 1 OR website_id IS NULL",
@@ -122,8 +122,9 @@ def main():
     bad = 0
     for t, rows in base["db"].items():
         now = cur["db"][t]
-        changed = [k for k in rows if k in now and now[k][0] != rows[k][0]]
-        removed = [k for k in rows if k not in now]
+        ours = set(r[0] for r in psql(db, "SELECT id::text FROM ir_ui_view WHERE coalesce(model,'') LIKE 'ts.%'")) if t == "ir_ui_view" else set()
+        changed = [k for k in rows if k in now and now[k][0] != rows[k][0] and k not in ours]
+        removed = [k for k in rows if k not in now and k not in ours]
         added = [k for k in now if k not in rows]
         if changed or removed:
             bad += 1
