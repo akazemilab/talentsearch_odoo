@@ -44,7 +44,7 @@
                                 </div>
                             </nav>
                             <div class="ts-nav">
-                                <button type="button" class="ts-nav__toggle" aria-expanded="false" aria-controls="ts-mnav">
+                                <button type="button" class="ts-nav__toggle" aria-expanded="false" aria-controls="ts-mnav" aria-label="منو">
                                     <span class="ts-nav__bars" aria-hidden="true"/>
                                     <span class="ts-nav__label">منو</span>
                                 </button>
