@@ -1,3 +1,4 @@
+/** @odoo-module ignore **/
 // Talent Search mobile menu: a disclosure button (aria-expanded) controlling
 // the panel. Loaded only on website 2 via ts_website.assets_ts_js.
 (function () {
