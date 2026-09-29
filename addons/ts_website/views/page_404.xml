@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Persian 404 for website 2 only (core http_routing.404 is English and
+         its tab title falls back to "Page Not Found"). -->
+    <record id="page_404_ts" model="ir.ui.view">
+        <field name="name">TS: 404 page</field>
+        <field name="type">qweb</field>
+        <field name="key">ts_website.page_404</field>
+        <field name="inherit_id" ref="http_routing.404"/>
+        <field name="website_id" ref="website_ts"/>
+        <field name="priority">90</field>
+        <field name="arch" type="xml">
+            <xpath expr="//div[@id='wrap']" position="replace">
+                <t t-set="additional_title">صفحه پیدا نشد</t>
+                <div id="wrap" class="ts-page">
+                    <t t-out="0"/>
+                    <section class="ts-hero ts-hero--soft">
+                        <div class="ts-container">
+                            <span class="ts-hero__kicker">خطای ۴۰۴</span>
+                            <h1>این صفحه پیدا نشد</h1>
+                            <p class="ts-hero__lead">ممکن است نشانی اشتباه تایپ شده باشد یا صفحه جابه‌جا شده باشد.</p>
+                            <div class="ts-hero__actions">
+                                <a href="/" class="ts-btn ts-btn--primary">صفحهٔ اصلی</a>
+                                <a href="/help" class="ts-btn ts-btn--outline">پرسش‌های رایج</a>
+                                <a href="/contact" class="ts-btn ts-btn--quiet">تماس با ما</a>
+                            </div>
+                        </div>
+                    </section>
+                </div>
+            </xpath>
+        </field>
+    </record>
+</odoo>

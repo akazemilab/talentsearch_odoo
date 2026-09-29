@@ -50,7 +50,7 @@ def db_rows(db, base_cols=None):
         key = "key" if t == "ir_config_parameter" else "id"
         extra = ""
         if t == "ir_ui_view":
-            extra = ", coalesce(key,''), coalesce(website_id::text,'g')"
+            extra = ", coalesce(key,''), coalesce(website_id::text,'g'), active::text"
         rows = psql(db, f"SELECT {key}::text, md5((to_jsonb(t) {drop})::text){extra} FROM {t} t WHERE {where}")
         res[t] = {r[0]: r[1:] for r in rows}
     return res, cols
@@ -130,7 +130,10 @@ def main():
             print(f"!! {t}: changed={len(changed)} removed={len(removed)} e.g. {[(k, rows[k][1:] if len(rows[k]) > 1 else '') for k in (changed + removed)[:6]]}")
         if added:
             if t == "ir_ui_view":
-                site1 = [k for k in added if now[k][2] == "1"]
+                site1 = [k for k in added if now[k][2] == "1" and now[k][3] == "true"]
+                parked = [now[k][1] for k in added if now[k][2] == "1" and now[k][3] != "true"]
+                if parked:
+                    print(f"   ir_ui_view: {len(parked)} install-generated website-1 view(s) contained (inactive): {parked[:6]}")
                 if site1:
                     bad += 1
                     print(f"!! ir_ui_view: {len(site1)} NEW website-1 views: {[now[k][1] for k in site1[:8]]}")

@@ -87,6 +87,8 @@ class Website(models.Model):
                 stray_menus = teams.mapped('website_menu_id').filtered(lambda m: m.website_id != site)
                 teams.write({'website_id': site.id, 'website_menu_id': False})
                 stray_menus.unlink()
+            # Menus left behind by an earlier publish (e.g. 'Help' -> /helpdesk).
+            self.env['website.menu'].search([('website_id', '!=', site.id), ('url', '=like', '/helpdesk%')]).unlink()
         # website_crm (and friends) create website-specific copies of their
         # views for every website that has its own copy of the parent. eot.ir
         # had none of these modules before, so every such website-1 copy is

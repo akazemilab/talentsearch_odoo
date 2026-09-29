@@ -15,6 +15,7 @@
         'views/pages_audience.xml',
         'views/pages_trust.xml',
         'views/pages_company.xml',
+        'views/page_404.xml',
         'data/pages.xml',
         'data/setup.xml',
     ],
