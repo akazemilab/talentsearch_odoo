@@ -122,8 +122,10 @@ check('report has no English band words', not re.search(r'\b(Low|Medium|High)\b'
 st, _, page = u.req('/my/assessments')
 check('my assessments lists the report', st == 200 and report.split('?')[0] in page)
 st, _, page = u.req('/my')
-m = re.search(r'<div[^>]*class="([^"]*o_portal_index_card[^"]*)"[^>]*>\s*<a href="/my/assessments"', page)
+m = re.search(r'<div[^>]*class="([^"]*o_portal_index_card[^"]*)"[^>]*>\s*<a[^>]*href="/my/assessments"', page)
 check('portal home shows «سنجه‌های من» card VISIBLE (not d-none)', st == 200 and bool(m) and 'd-none' not in m.group(1), m.group(1) if m else 'card not found')
+w = re.search(r'<div[^>]*class="([^"]*o_portal_index_card[^"]*)"[^>]*>\s*<a[^>]*href="/my/workspaces"', page)
+check('workspace card hidden for a non-member', bool(w) and 'd-none' in w.group(1))
 check('header has a «سنجه‌های من» link for signed-in users', page.count('href="/my/assessments" class="ts-btn ts-btn--quiet"') >= 1)
 
 v = Client(TS)
