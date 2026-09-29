@@ -1,0 +1,37 @@
+#!/bin/bash
+# ts - Talent Search toolkit (VPS side). Mirrors the `eot` toolkit's style:
+# short verdicts, long work detached. Source of truth: /root/talentsearch_odoo.
+#
+#   ts sync                 rsync repo -> eot-odoo-prod:/opt/odoo/talentsearch (odoo-owned)
+#   ts db CMD DB [ARGS]     run tools/prod/ts_db.sh on prod (clone/install/upgrade/serve/stop/modules)
+#   ts guard MODE DB PORT LABEL   snapshot|compare eot.ir fingerprint on prod
+#   ts bg NAME CMD...       detached job, log in /root/ts-jobs/NAME.log
+#   ts job NAME             state + tail
+#   ts sql DB "SELECT ..."  read-only psql on prod
+#   ts get PORT PATH [HOST] status + title + first text of a page from prod
+#   ts push [MSG]           commit all + push origin main
+set -uo pipefail
+REPO=/root/talentsearch_odoo; J=/root/ts-jobs; mkdir -p $J
+P=eot-odoo-prod
+cmd=${1:-help}; shift || true
+case $cmd in
+  sync)
+    rsync -a --delete --exclude .git "$REPO/" $P:/opt/odoo/talentsearch/ && ssh $P 'chown -R odoo:odoo /opt/odoo/talentsearch && chmod +x /opt/odoo/talentsearch/tools/prod/*' && echo "synced $(cd $REPO && git rev-parse --short HEAD 2>/dev/null || echo uncommitted)" ;;
+  db)    ts sync >/dev/null; ssh $P "bash /opt/odoo/talentsearch/tools/prod/ts_db.sh $*" ;;
+  guard) ts sync >/dev/null; ssh $P "python3 -u /opt/odoo/talentsearch/tools/prod/ts_guard.py $*" ;;
+  bg)    name=$1; shift; ( setsid nohup bash -c "$* ; echo \"[rc=\$?]\"" > $J/$name.log 2>&1 & ); echo "started $name" ;;
+  job)   f=$J/$1.log; if grep -q '^\[rc=' $f 2>/dev/null; then echo "[$1] done $(grep -o 'rc=[0-9]*' $f | tail -1)"; else echo "[$1] running"; fi; tail -n ${2:-25} $f ;;
+  sql)   db=$1; shift; ssh $P "sudo -u postgres psql -d $db -AtF ' | ' -v ON_ERROR_STOP=0" <<<"BEGIN READ ONLY; $*; ROLLBACK;" ;;
+  get)   port=$1; path=$2; host=${3:-ts.innerquest.me}
+         ssh $P "curl -s -o /tmp/ts_get.html -w '%{http_code} %{redirect_url}\n' -H 'Host: $host' -H 'X-Forwarded-Proto: https' 'http://127.0.0.1:$port$path'; python3 - <<'PY'
+import re,html
+s=open('/tmp/ts_get.html',encoding='utf-8',errors='ignore').read()
+t=re.findall(r'<title>(.*?)</title>',s,re.S); print('title:',html.unescape(t[0].strip()) if t else '-')
+m=re.search(r'data-website-id=\"(\d+)\"',s); print('website_id:',m.group(1) if m else '-')
+b=re.sub(r'(?is)<(script|style)[^>]*>.*?</\1>','',s); b=re.sub(r'<[^>]+>','\n',b)
+print(' | '.join(l.strip() for l in html.unescape(b).split('\n') if l.strip())[:600])
+for e in re.findall(r'(Traceback.*?)</', s, re.S)[:1]: print('TRACEBACK', e[:500])
+PY" ;;
+  push)  cd $REPO && git add -A && git commit -qm "${*:-update}" ; git push -q origin main 2>&1 | tail -2; git log -1 --oneline ;;
+  *)     sed -n '2,15p' "$0" ;;
+esac
