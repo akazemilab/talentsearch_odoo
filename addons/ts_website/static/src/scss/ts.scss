@@ -62,9 +62,8 @@
     .ts-lockup__text strong { display: block; font-size: 1.15rem; line-height: 1.2; }
     .ts-lockup__text small { display: block; font-size: .72rem; color: var(--muted); }
     .ts-nav { position: static; }
-    .ts-nav > summary { list-style: none; }
-    .ts-nav > summary::-webkit-details-marker { display: none; }
-    .ts-nav__toggle { display: inline-flex; align-items: center; gap: 8px; min-height: var(--control-min); padding: 8px 14px; border: 1px solid var(--line); border-radius: 10px; cursor: pointer; color: var(--brand-deep); font-weight: 700; }
+    .ts-nav__panel[hidden] { display: none !important; }
+    .ts-nav__toggle { background: var(--white); font: inherit; display: inline-flex; align-items: center; gap: 8px; min-height: var(--control-min); padding: 8px 14px; border: 1px solid var(--line); border-radius: 10px; cursor: pointer; color: var(--brand-deep); font-weight: 700; }
     .ts-nav__bars, .ts-nav__bars::before, .ts-nav__bars::after { display: block; width: 18px; height: 2px; background: currentColor; position: relative; }
     .ts-nav__bars::before, .ts-nav__bars::after { content: ''; position: absolute; }
     .ts-nav__bars::before { inset-block-start: -6px; }
@@ -92,7 +91,8 @@
     .ts-hero__actions { display: flex; flex-wrap: wrap; gap: 10px; }
     .ts-hero__actions .ts-btn--quiet { color: var(--white); }
     .ts-hero__actions .ts-btn--quiet:hover { background: rgba(255, 255, 255, .13); color: var(--white); }
-    .ts-hero__mark { position: absolute; inset-inline-end: -120px; inset-block-end: -160px; width: 420px; height: 420px; border-radius: 50%; background: var(--brand-accent); opacity: .35; pointer-events: none; }
+    .ts-hero > .ts-container { position: relative; z-index: 1; }
+    .ts-hero__mark { position: absolute; inset-inline-end: -120px; inset-block-end: -160px; width: 420px; height: 420px; border-radius: 50%; background: var(--brand-accent); opacity: .35; pointer-events: none; z-index: 0; }
     .ts-hero--soft { background: var(--brand-soft); color: var(--ink); }
     .ts-hero--soft h1 { color: var(--brand-deep); }
     .ts-hero--soft .ts-hero__kicker { color: var(--brand-accent); }

@@ -25,6 +25,9 @@
         'ts_website.assets_ts': [
             'ts_website/static/src/scss/ts.scss',
         ],
+        'ts_website.assets_ts_js': [
+            'ts_website/static/src/js/ts_nav.js',
+        ],
     },
     'installable': True,
 }
