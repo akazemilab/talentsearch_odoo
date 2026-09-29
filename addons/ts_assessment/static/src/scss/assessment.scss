@@ -56,7 +56,7 @@
     .ts-missing { display: grid; gap: 6px; padding-inline-start: 1.2em; }
 
     // account list
-    .ts-table-wrap { overflow-x: auto; }
+    .ts-table-wrap { overflow-x: auto; position: relative; } // contains .visually-hidden (absolute) so it cannot widen the page in RTL
     .ts-table { width: 100%; border-collapse: collapse; background: var(--white); border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
     .ts-table th, .ts-table td { padding: 12px 14px; text-align: start; border-block-end: 1px solid var(--line); vertical-align: middle; }
     .ts-table thead th { background: #f1f2f9; font-size: .85rem; color: #3b4263; }
