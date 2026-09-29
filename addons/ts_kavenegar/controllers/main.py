@@ -23,6 +23,10 @@ def _payload():
                 data['_list'] = j
         except ValueError:
             pass
+    # Kavenegar's console names keys freely (messageId, messageid, from, to...): match case-insensitively
+    data = {str(k).lower(): v for k, v in data.items() if k != '_list'} | ({'_list': data['_list']} if '_list' in data else {})
+    if data.get('_list'):
+        data['_list'] = [{str(k).lower(): v for k, v in r.items()} for r in data['_list'] if isinstance(r, dict)]
     return data
 
 
