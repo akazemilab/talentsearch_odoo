@@ -1,0 +1,158 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="ts_assignment_view_list" model="ir.ui.view">
+        <field name="name">ts.assignment.list</field>
+        <field name="model">ts.assignment</field>
+        <field name="arch" type="xml">
+            <list create="false">
+                <field name="name"/>
+                <field name="workspace_id"/>
+                <field name="purpose"/>
+                <field name="invitee_name"/>
+                <field name="instrument_id"/>
+                <field name="state" widget="badge" decoration-success="state == 'done'" decoration-warning="state in ('declined', 'withdrawn')"/>
+                <field name="share_level"/>
+                <field name="invited_by_id"/>
+                <field name="create_date"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="ts_assignment_view_form" model="ir.ui.view">
+        <field name="name">ts.assignment.form</field>
+        <field name="model">ts.assignment</field>
+        <field name="arch" type="xml">
+            <form create="false">
+                <header>
+                    <button name="action_withdraw" type="object" string="لغو دعوت" invisible="state in ('done', 'withdrawn', 'declined')" groups="ts_core.group_ts_manager"/>
+                    <field name="state" widget="statusbar" statusbar_visible="invited,accepted,in_progress,done"/>
+                </header>
+                <sheet>
+                    <div class="oe_title"><h1><field name="name"/></h1></div>
+                    <group>
+                        <group>
+                            <field name="workspace_id" readonly="1"/>
+                            <field name="purpose"/>
+                            <field name="instrument_id" readonly="1"/>
+                            <field name="invitee_name" readonly="1"/>
+                            <field name="invitee_email" readonly="1"/>
+                        </group>
+                        <group>
+                            <field name="invited_by_id"/>
+                            <field name="user_id"/>
+                            <field name="attempt_id"/>
+                            <field name="share_level"/>
+                            <field name="accepted_at"/>
+                        </group>
+                    </group>
+                    <p class="text-muted">پاسخ‌ها هرگز به سازمان نمایش داده نمی‌شود. سطح اشتراک را فقط شرکت‌کننده تعیین یا لغو می‌کند.</p>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <record id="ts_assignment_view_search" model="ir.ui.view">
+        <field name="name">ts.assignment.search</field>
+        <field name="model">ts.assignment</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="invitee_name"/>
+                <field name="workspace_id"/>
+                <field name="instrument_id"/>
+                <filter name="open" string="باز" domain="[('state', 'in', ('invited', 'accepted', 'in_progress'))]"/>
+                <filter name="done" string="تکمیل‌شده" domain="[('state', '=', 'done')]"/>
+                <group>
+                    <filter name="by_ws" string="فضای کاری" context="{'group_by': 'workspace_id'}"/>
+                    <filter name="by_state" string="وضعیت" context="{'group_by': 'state'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="ts_assignment_view_pivot" model="ir.ui.view">
+        <field name="name">ts.assignment.pivot</field>
+        <field name="model">ts.assignment</field>
+        <field name="arch" type="xml">
+            <pivot>
+                <field name="workspace_id" type="row"/>
+                <field name="state" type="col"/>
+            </pivot>
+        </field>
+    </record>
+
+    <record id="ts_assignment_view_graph" model="ir.ui.view">
+        <field name="name">ts.assignment.graph</field>
+        <field name="model">ts.assignment</field>
+        <field name="arch" type="xml">
+            <graph type="bar" stacked="1">
+                <field name="workspace_id"/>
+                <field name="state"/>
+            </graph>
+        </field>
+    </record>
+
+    <record id="ts_assignment_action" model="ir.actions.act_window">
+        <field name="name">دعوت‌های سازمانی</field>
+        <field name="res_model">ts.assignment</field>
+        <field name="view_mode">list,form,pivot,graph</field>
+        <field name="context">{'search_default_open': 1}</field>
+    </record>
+
+    <!-- Operations dashboard: attempts per instrument and state. -->
+    <record id="ts_attempt_view_graph_ops" model="ir.ui.view">
+        <field name="name">ts.attempt.graph.ops</field>
+        <field name="model">ts.attempt</field>
+        <field name="arch" type="xml">
+            <graph type="bar" stacked="1">
+                <field name="instrument_id"/>
+                <field name="state"/>
+            </graph>
+        </field>
+    </record>
+    <record id="ts_attempt_view_pivot_ops" model="ir.ui.view">
+        <field name="name">ts.attempt.pivot.ops</field>
+        <field name="model">ts.attempt</field>
+        <field name="arch" type="xml">
+            <pivot>
+                <field name="instrument_id" type="row"/>
+                <field name="state" type="col"/>
+            </pivot>
+        </field>
+    </record>
+    <record id="ts_ops_dashboard_action" model="ir.actions.act_window">
+        <field name="name">داشبورد عملیات</field>
+        <field name="res_model">ts.attempt</field>
+        <field name="view_mode">graph,pivot,list</field>
+        <field name="view_ids" eval="[(5, 0, 0), (0, 0, {'view_mode': 'graph', 'view_id': ref('ts_attempt_view_graph_ops')}), (0, 0, {'view_mode': 'pivot', 'view_id': ref('ts_attempt_view_pivot_ops')})]"/>
+    </record>
+
+    <!-- Professional verification queue (blueprint journey B1). -->
+    <record id="ts_member_view_list_verify" model="ir.ui.view">
+        <field name="name">ts.workspace.member.list.verify</field>
+        <field name="model">ts.workspace.member</field>
+        <field name="arch" type="xml">
+            <list create="false">
+                <field name="workspace_id"/>
+                <field name="user_id"/>
+                <field name="role"/>
+                <field name="license_number"/>
+                <field name="verification_state" widget="badge" decoration-success="verification_state == 'verified'" decoration-warning="verification_state == 'pending'"/>
+                <field name="verified_by_id"/>
+                <field name="verified_on"/>
+                <button name="action_verify" type="object" string="تأیید صلاحیت" invisible="verification_state == 'verified'" groups="ts_core.group_ts_manager"/>
+            </list>
+        </field>
+    </record>
+    <record id="ts_member_verify_action" model="ir.actions.act_window">
+        <field name="name">احراز صلاحیت حرفه‌ای</field>
+        <field name="res_model">ts.workspace.member</field>
+        <field name="view_mode">list,form</field>
+        <field name="domain">[('role', 'in', ('clinician', 'clinic_director', 'counselor'))]</field>
+        <field name="view_id" ref="ts_member_view_list_verify"/>
+    </record>
+
+    <menuitem id="menu_ts_org_assignments" name="دعوت‌های سازمانی" parent="ts_core.menu_ts_customers" action="ts_assignment_action" sequence="20" groups="ts_core.group_ts_user"/>
+    <menuitem id="menu_ts_org_verify" name="احراز صلاحیت حرفه‌ای" parent="ts_core.menu_ts_customers" action="ts_member_verify_action" sequence="30" groups="ts_core.group_ts_manager"/>
+    <menuitem id="menu_ts_ops_dashboard" name="داشبورد عملیات" parent="ts_assessment.menu_ts_assessments" action="ts_ops_dashboard_action" sequence="5" groups="ts_core.group_ts_manager"/>
+</odoo>

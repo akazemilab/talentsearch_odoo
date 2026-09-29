@@ -9,7 +9,7 @@ PW_FILE=/root/.ts_portal_$DB; LOGIN=ts.portal.check@example.invalid
 if [ ! -f $PW_FILE ]; then
   PW=$(openssl rand -hex 12); umask 077; echo "$PW" > $PW_FILE
   cd /tmp && sudo -u odoo env HOME=/opt/odoo TS_PW="$PW" /opt/odoo/venv/bin/python3 /opt/odoo/odoo/odoo-bin shell -c /etc/odoo20.conf \
-    -d $DB --db-filter="^$DB\$" --addons-path=/opt/odoo/talentsearch/addons,/opt/odoo/themes,/opt/odoo/enterprise,/opt/odoo/odoo/addons \
+    -d $DB --db-filter="^$DB\$" --addons-path=${TS_CODE:-/opt/odoo/talentsearch_stage}/addons,/opt/odoo/themes,/opt/odoo/enterprise,/opt/odoo/odoo/addons \
     --no-http --log-level=warn >/dev/null 2>&1 <<'PY'
 import os
 u = env['res.users'].with_context(no_reset_password=True).search([('login', '=', 'ts.portal.check@example.invalid')])

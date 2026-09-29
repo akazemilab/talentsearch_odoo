@@ -15,6 +15,10 @@ APPROVAL_NOTE = (
     'منبع داده: سامانهٔ پیشین sepehrtherapy.ir (مدل‌های x_psy_*)، هم‌خوان با خروجی‌های بارگذاری‌شده توسط مالک.'
 )
 APPROVAL_VERSION = 'TS-OWNER-APPROVED-1405-07-07'
+# Owner rule (TS-OWNER-APPROVED-1405-07-07): categories an employment workspace may
+# use - adult talent, self-knowledge and work instruments. Every mental-health
+# category (and every child/adolescent instrument) stays out of hiring.
+EMPLOYMENT_CATEGORIES = ('استعدادیابی', 'خودشناسی', 'مسائل شغلی')
 RIGHTS_NOTE = 'مجموعهٔ سنجه‌های EOT. استفاده در تلنت سرچ با تأیید مالک پلتفرم (۱۴۰۵/۰۷/۰۷).'
 EVIDENCE_NOTE = (
     'قرارداد نمره‌گذاری S09-V1.2 (میانگین، نمره‌گذاری معکوس ۶−x، سه بازهٔ تفسیر) و متون تفسیر نسخهٔ '
@@ -123,7 +127,14 @@ class TsInstrumentLoader(models.Model):
                    'پاسخ‌دهنده خود شرکت‌کننده است.')
             upd = {'current_version_id': version.id, 'rights_note': RIGHTS_NOTE, 'evidence_note': EVIDENCE_NOTE,
                    'limitations': LIMITATIONS, 'approval_note': APPROVAL_NOTE}
-            if inst.category and scored:
+            employment = aud == 'adult' and inst.category in EMPLOYMENT_CATEGORIES
+            upd['purpose'] = 'employment' if employment else 'personal'
+            if inst.category and scored and employment:
+                upd['intended_use'] = ('کاربرد: خودشناسی و گفت‌وگوی مشاوره‌ای در حوزهٔ «%s»؛ در فضای کاری استخدامی، فقط با رضایت داوطلب '
+                                       'و به‌صورت خلاصهٔ بازه‌ها، به‌عنوان یکی از ورودی‌های گفت‌وگوی شغلی. این سنجه %s بُعد را توصیف می‌کند: %s. %s '
+                                       'این سنجه برای تشخیص بالینی به کار نمی‌رود و به‌تنهایی مبنای تصمیم استخدامی نیست.'
+                                       % (inst.category, len(scored), names, who))
+            elif inst.category and scored:
                 upd['intended_use'] = ('کاربرد: خودشناسی و گفت‌وگوی مشاوره‌ای در حوزهٔ «%s». این سنجه %s بُعد را توصیف می‌کند: %s. %s '
                                        'این سنجه برای تشخیص بالینی یا تصمیم استخدامی به کار نمی‌رود.'
                                        % (inst.category, len(scored), names, who))
@@ -138,6 +149,7 @@ class TsInstrumentLoader(models.Model):
                 if inst.state != 'retired':
                     inst.state = 'retired'
                 stats['retired'] += 1
+        self._ts_refresh_titles()
         _logger.info('Talent Search instruments loaded: %s', stats)
         return stats
 

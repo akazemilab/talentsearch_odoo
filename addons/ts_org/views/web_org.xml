@@ -1,0 +1,335 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="portal_entry_workspaces" model="portal.entry">
+        <field name="name">فضای کاری سازمان</field>
+        <field name="description">دعوت شرکت‌کنندگان، پیگیری وضعیت و مشاهدهٔ نتایجی که با شما به اشتراک گذاشته شده است</field>
+        <field name="url">/my/workspaces</field>
+        <field name="sequence">2</field>
+        <field name="placeholder_count">ts_workspace_count</field>
+        <field name="website_id" ref="ts_website.website_ts"/>
+    </record>
+
+    <!-- ============================================================ list -->
+    <record id="tpl_workspaces" model="ir.ui.view">
+        <field name="name">TS: my workspaces</field>
+        <field name="type">qweb</field>
+        <field name="key">ts_org.workspaces</field>
+        <field name="website_id" ref="ts_website.website_ts"/>
+        <field name="arch" type="xml">
+            <t t-name="ts_org.workspaces">
+                <t t-call="website.layout" additional_title.f="فضاهای کاری">
+                    <div id="wrap" class="ts-page">
+                        <section class="ts-section">
+                            <div class="ts-container">
+                                <div class="ts-section__head">
+                                    <h1>فضاهای کاری</h1>
+                                    <p>فضاهایی که عضو آن‌ها هستید. هر فضا فقط یک هدف دارد و داده‌ها هرگز بین فضاها جابه‌جا نمی‌شوند.</p>
+                                </div>
+                                <div t-if="not rows" class="ts-card ts-card--soft">
+                                    <h3>عضو هیچ فضای کاری نیستید</h3>
+                                    <p>فضای کاری سازمان‌ها و مراکز بالینی پس از بررسی توسط تیم تلنت سرچ ساخته می‌شود.</p>
+                                    <a href="/contact" class="ts-btn ts-btn--primary">درخواست فضای کاری</a>
+                                </div>
+                                <div t-else="" class="ts-grid ts-org-grid">
+                                    <t t-foreach="rows" t-as="r">
+                                        <article class="ts-card ts-org-card">
+                                            <p class="ts-tag" t-out="dict(r['ws']._fields['purpose'].selection).get(r['ws'].purpose)"/>
+                                            <h2 class="h4" t-out="r['ws'].name"/>
+                                            <dl class="ts-meta ts-meta--card">
+                                                <dt>نقش شما</dt><dd t-out="dict(r['member']._fields['role'].selection).get(r['member'].role)"/>
+                                                <dt>کد</dt><dd><bdi dir="ltr" t-out="r['ws'].code"/></dd>
+                                                <dt>دعوت‌ها</dt><dd><t t-out="fa(sum(r['counts'].values()))"/> · تکمیل‌شده <t t-out="fa(r['counts']['done'])"/></dd>
+                                            </dl>
+                                            <a t-if="r['usable']" t-attf-href="/my/workspaces/#{r['ws'].id}" class="ts-btn ts-btn--primary ts-btn--sm">ورود به فضا</a>
+                                            <p t-elif="r['member'].verification_state == 'pending'" class="ts-notice ts-notice--warn">احراز صلاحیت حرفه‌ای شما در حال بررسی است.</p>
+                                            <p t-else="" class="ts-notice ts-notice--warn">این فضا هنوز فعال نشده است.</p>
+                                        </article>
+                                    </t>
+                                </div>
+                            </div>
+                        </section>
+                    </div>
+                </t>
+            </t>
+        </field>
+    </record>
+
+    <!-- ======================================================= dashboard -->
+    <record id="tpl_workspace" model="ir.ui.view">
+        <field name="name">TS: workspace dashboard</field>
+        <field name="type">qweb</field>
+        <field name="key">ts_org.workspace</field>
+        <field name="website_id" ref="ts_website.website_ts"/>
+        <field name="arch" type="xml">
+            <t t-name="ts_org.workspace">
+                <t t-call="website.layout" additional_title="ws.name">
+                    <div id="wrap" class="ts-page">
+                        <section class="ts-section">
+                            <div class="ts-container">
+                                <a href="/my/workspaces" class="ts-back">فضاهای کاری</a>
+                                <div class="ts-section__head">
+                                    <p class="ts-tag" t-out="dict(ws._fields['purpose'].selection).get(ws.purpose)"/>
+                                    <h1 t-out="ws.name"/>
+                                    <p t-if="ws.purpose == 'employment'">سازمان فقط وضعیت دعوت و، در صورت رضایت شرکت‌کننده، بازهٔ هر بُعد را می‌بیند. پاسخ‌ها و متن‌های تفسیری هرگز به سازمان نمایش داده نمی‌شوند.</p>
+                                    <p t-elif="ws.purpose == 'clinical'">گزارش کامل، از جمله راهنمای متخصص، فقط به متخصص بالینی تأییدشدهٔ همین فضا و فقط با رضایت شرکت‌کننده نمایش داده می‌شود.</p>
+                                </div>
+
+                                <p t-if="created" class="ts-notice" role="status">
+                                    دعوت برای <strong t-out="created.invitee_name"/> ساخته شد. این پیوند را برای او بفرستید:
+                                    <input type="text" readonly="readonly" class="ts-copy" t-att-value="created.invite_url()" aria-label="پیوند دعوت" dir="ltr"/>
+                                </p>
+                                <p t-if="error == 'form'" class="ts-notice ts-notice--warn" role="alert">نام شرکت‌کننده و سنجه را انتخاب کنید.</p>
+                                <p t-if="error == 'rule'" class="ts-notice ts-notice--warn" role="alert">این دعوت با قواعد این فضای کاری سازگار نیست.</p>
+
+                                <nav class="ts-stats" aria-label="وضعیت دعوت‌ها">
+                                    <a t-attf-class="ts-stat #{'is-active' if not state_filter else ''}" href="?"><strong t-out="fa(total)"/><span>همه</span></a>
+                                    <a t-attf-class="ts-stat #{'is-active' if state_filter == 'invited' else ''}" href="?state=invited"><strong t-out="fa(counts['invited'])"/><span>دعوت‌شده</span></a>
+                                    <a t-attf-class="ts-stat #{'is-active' if state_filter == 'in_progress' else ''}" href="?state=in_progress"><strong t-out="fa(counts['in_progress'] + counts['accepted'])"/><span>در حال پاسخ</span></a>
+                                    <a t-attf-class="ts-stat #{'is-active' if state_filter == 'done' else ''}" href="?state=done"><strong t-out="fa(counts['done'])"/><span>تکمیل‌شده</span></a>
+                                    <a t-attf-class="ts-stat #{'is-active' if state_filter == 'declined' else ''}" href="?state=declined"><strong t-out="fa(counts['declined'] + counts['withdrawn'])"/><span>رد یا لغو</span></a>
+                                </nav>
+
+                                <div class="ts-org-layout">
+                                    <div class="ts-table-wrap">
+                                        <p t-if="not assignments" class="ts-muted">دعوتی در این فهرست نیست.</p>
+                                        <table t-else="" class="ts-table">
+                                            <thead><tr><th scope="col">شرکت‌کننده</th><th scope="col">سنجه</th><th scope="col">وضعیت</th><th scope="col">اشتراک</th><th scope="col"><span class="visually-hidden">اقدام</span></th></tr></thead>
+                                            <tbody>
+                                                <tr t-foreach="assignments" t-as="a">
+                                                    <td><strong t-out="a.invitee_name"/><div class="ts-hint"><bdi dir="ltr" t-out="a.name"/></div></td>
+                                                    <td t-out="a.instrument_id.title"/>
+                                                    <td><span t-attf-class="ts-pill #{'ts-pill--ok' if a.state == 'done' else ('ts-pill--warn' if a.state in ('declined', 'withdrawn') else '')}" t-out="dict(a._fields['state'].selection).get(a.state)"/></td>
+                                                    <td t-out="'دارد' if a.share_level != 'none' else ('—' if a.state == 'invited' else 'ندارد')"/>
+                                                    <td><a t-attf-href="/my/workspaces/#{ws.id}/a/#{a.id}" class="ts-btn ts-btn--outline ts-btn--sm">جزئیات</a></td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+
+                                    <aside t-if="member.can_invite()" class="ts-card ts-card--soft ts-org-invite">
+                                        <h2 class="h5">دعوت شرکت‌کنندهٔ تازه</h2>
+                                        <form t-attf-action="/my/workspaces/#{ws.id}/invite" method="post" class="ts-form">
+                                            <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                                            <label for="ts_inv_name">نام و نام خانوادگی</label>
+                                            <input id="ts_inv_name" name="invitee_name" type="text" required="required" maxlength="120" autocomplete="off"/>
+                                            <label for="ts_inv_email">ایمیل (اختیاری)</label>
+                                            <input id="ts_inv_email" name="invitee_email" type="email" dir="ltr" maxlength="200" autocomplete="off"/>
+                                            <label for="ts_inv_inst">سنجه</label>
+                                            <select id="ts_inv_inst" name="instrument_id" required="required">
+                                                <option value="">انتخاب کنید</option>
+                                                <t t-foreach="instruments" t-as="i"><option t-att-value="i.id"><t t-out="i.title"/> · <t t-out="fa(i.active_item_count)"/> پرسش</option></t>
+                                            </select>
+                                            <label for="ts_inv_note">یادداشت برای شرکت‌کننده (اختیاری)</label>
+                                            <input id="ts_inv_note" name="note" type="text" maxlength="300"/>
+                                            <button type="submit" class="ts-btn ts-btn--primary">ساخت پیوند دعوت</button>
+                                            <p class="ts-hint">تلنت سرچ ایمیل یا پیامک نمی‌فرستد؛ پیوند دعوت را خودتان برای شرکت‌کننده بفرستید.</p>
+                                        </form>
+                                    </aside>
+                                </div>
+                            </div>
+                        </section>
+                    </div>
+                </t>
+            </t>
+        </field>
+    </record>
+
+    <!-- ====================================================== assignment -->
+    <record id="tpl_assignment" model="ir.ui.view">
+        <field name="name">TS: workspace assignment</field>
+        <field name="type">qweb</field>
+        <field name="key">ts_org.assignment</field>
+        <field name="website_id" ref="ts_website.website_ts"/>
+        <field name="arch" type="xml">
+            <t t-name="ts_org.assignment">
+                <t t-call="website.layout" additional_title="a.invitee_name + ' · ' + inst.title">
+                    <div id="wrap" class="ts-page">
+                        <section class="ts-section ts-report-page">
+                            <div class="ts-container ts-report-wrap">
+                                <div class="ts-report-actions ts-noprint">
+                                    <a t-attf-href="/my/workspaces/#{ws.id}" class="ts-back" t-out="ws.name"/>
+                                    <button t-if="level != 'none'" type="button" class="ts-btn ts-btn--outline ts-js-print">چاپ یا ذخیره به‌صورت PDF</button>
+                                </div>
+                                <article class="ts-doc">
+                                    <header class="ts-doc__head">
+                                        <div class="ts-doc__brand">
+                                            <img src="/ts_website/static/img/talentsearch-logo.webp" width="40" height="40" alt=""/>
+                                            <div><strong>تلنت سرچ</strong><small>از خانوادهٔ <bdi dir="ltr">EOT</bdi></small></div>
+                                        </div>
+                                        <div class="ts-doc__kind" t-out="'گزارش برای متخصص بالینی' if level == 'clinical' else ('خلاصهٔ نتیجه برای سازمان' if level == 'summary' else 'وضعیت دعوت')"/>
+                                    </header>
+                                    <h1 class="ts-doc__title" t-out="inst.title"/>
+                                    <dl class="ts-meta ts-doc__meta">
+                                        <dt>شرکت‌کننده</dt><dd t-out="a.invitee_name"/>
+                                        <dt>وضعیت</dt><dd t-out="dict(a._fields['state'].selection).get(a.state)"/>
+                                        <dt>شناسهٔ دعوت</dt><dd><bdi dir="ltr" t-out="a.name"/></dd>
+                                        <dt>دعوت‌کننده</dt><dd t-out="a.invited_by_id.name"/>
+                                        <t t-if="attempt and attempt.submitted_at"><dt>تاریخ تکمیل</dt><dd t-out="attempt.jalali(attempt.submitted_at)"/></t>
+                                        <dt>اشتراک نتیجه</dt><dd t-out="dict(a._fields['share_level'].selection).get(a.share_level)"/>
+                                    </dl>
+
+                                    <section t-if="a.state in ('invited', 'accepted', 'in_progress')" class="ts-doc__sec ts-noprint">
+                                        <h2>پیوند دعوت</h2>
+                                        <input type="text" readonly="readonly" class="ts-copy" t-att-value="a.invite_url()" aria-label="پیوند دعوت" dir="ltr"/>
+                                        <form t-if="member.can_invite()" t-attf-action="/my/workspaces/#{ws.id}/a/#{a.id}/withdraw" method="post">
+                                            <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                                            <button type="submit" class="ts-btn ts-btn--quiet ts-btn--sm">لغو این دعوت</button>
+                                        </form>
+                                    </section>
+
+                                    <section t-if="a.state == 'done' and level == 'none'" class="ts-doc__sec">
+                                        <h2>نتیجه</h2>
+                                        <p t-if="a.share_level == 'none'">شرکت‌کننده سنجه را کامل کرده اما نتیجه را با این فضای کاری به اشتراک نگذاشته است.</p>
+                                        <p t-elif="ws.purpose == 'clinical'">گزارش بالینی فقط برای متخصص بالینی تأییدشدهٔ این فضا نمایش داده می‌شود.</p>
+                                        <p t-else="">نقش شما امکان مشاهدهٔ نتیجه را ندارد.</p>
+                                    </section>
+
+                                    <t t-if="level != 'none'">
+                                        <section class="ts-doc__sec">
+                                            <h2>خلاصهٔ نتایج</h2>
+                                            <p t-if="level == 'summary'" class="ts-hint">فقط بازهٔ هر بُعد نمایش داده می‌شود. نمره‌ها، پاسخ‌ها و متن‌های تفسیری شخصی نزد شرکت‌کننده می‌ماند. این نتیجه به‌تنهایی مبنای تصمیم استخدامی نیست.</p>
+                                            <p t-else="" class="ts-hint">نمرهٔ هر بُعد میانگین پاسخ‌ها روی مقیاس ۱ تا ۵ است (عبارت‌های معکوس پیش از میانگین‌گیری برگردانده می‌شوند).</p>
+                                            <table class="ts-table ts-summary">
+                                                <thead><tr><th scope="col">بُعد</th><th t-if="level == 'clinical'" scope="col">نمره (۱ تا ۵)</th><th scope="col">بازه</th></tr></thead>
+                                                <tbody>
+                                                    <tr t-foreach="results" t-as="r">
+                                                        <td t-out="r.factor_id.name"/>
+                                                        <td t-if="level == 'clinical'" class="ts-num" t-out="r.score_fa()"/>
+                                                        <td><span t-attf-class="ts-band ts-band--#{r.band}" t-out="r.band_fa()"/></td>
+                                                    </tr>
+                                                </tbody>
+                                            </table>
+                                        </section>
+                                        <t t-if="level == 'clinical'">
+                                            <section t-foreach="results" t-as="r" class="ts-doc__sec ts-factor">
+                                                <div class="ts-factor__head">
+                                                    <h2 t-out="r.factor_id.name"/>
+                                                    <div class="ts-factor__score"><span class="ts-num" t-out="r.score_fa()"/> <span t-attf-class="ts-band ts-band--#{r.band}" t-out="r.band_fa()"/></div>
+                                                </div>
+                                                <h3>راهنمای متخصص</h3>
+                                                <t t-foreach="r.therapist_sections()" t-as="sec">
+                                                    <h4 t-if="sec[0]" t-out="sec[0]"/>
+                                                    <div class="ts-doc__text" t-out="sec[1]"/>
+                                                </t>
+                                                <details class="ts-noprint-open">
+                                                    <summary>متنی که شرکت‌کننده دیده است</summary>
+                                                    <t t-foreach="r.client_sections()" t-as="sec">
+                                                        <h4 t-if="sec[0]" t-out="sec[0]"/>
+                                                        <div class="ts-doc__text" t-out="sec[1]"/>
+                                                    </t>
+                                                </details>
+                                            </section>
+                                        </t>
+                                        <section class="ts-doc__sec ts-doc__foot">
+                                            <h2>محدودیت‌ها</h2>
+                                            <p t-out="inst.limitations"/>
+                                            <p class="ts-hint">مشاهدهٔ این صفحه ثبت می‌شود. شناسهٔ گزارش <bdi dir="ltr" t-out="attempt.name"/> · اثر نتیجه <bdi dir="ltr" t-out="(attempt.output_hash or '')[:12]"/></p>
+                                        </section>
+                                    </t>
+                                </article>
+                            </div>
+                        </section>
+                    </div>
+                </t>
+            </t>
+        </field>
+    </record>
+
+    <!-- ========================================================== invite -->
+    <record id="tpl_invite" model="ir.ui.view">
+        <field name="name">TS: invitation</field>
+        <field name="type">qweb</field>
+        <field name="key">ts_org.invite</field>
+        <field name="website_id" ref="ts_website.website_ts"/>
+        <field name="arch" type="xml">
+            <t t-name="ts_org.invite">
+                <t t-call="website.layout" additional_title.f="دعوت به سنجش">
+                    <div id="wrap" class="ts-page">
+                        <section class="ts-section">
+                            <div class="ts-container ts-narrow">
+                                <div class="ts-section__head">
+                                    <p class="ts-tag">دعوت به سنجش</p>
+                                    <h1 t-out="inst.title"/>
+                                    <p><strong t-out="ws.partner_id.name"/> شما را به پاسخ‌دادن به این سنجه دعوت کرده است.</p>
+                                </div>
+                                <div t-if="a.state in ('withdrawn', 'declined')" class="ts-card ts-card--soft">
+                                    <h2 class="h5">این دعوت دیگر فعال نیست</h2>
+                                    <p>برای اطلاعات بیشتر با سازمان دعوت‌کننده تماس بگیرید.</p>
+                                </div>
+                                <t t-else="">
+                                    <dl class="ts-meta">
+                                        <dt>دعوت برای</dt><dd t-out="a.invitee_name"/>
+                                        <dt>تعداد پرسش</dt><dd t-out="fa(inst.active_item_count)"/>
+                                        <dt>زمان تقریبی</dt><dd><t t-out="fa(inst.duration_minutes)"/> دقیقه</dd>
+                                        <t t-if="a.note"><dt>یادداشت سازمان</dt><dd t-out="a.note"/></t>
+                                    </dl>
+                                    <div class="ts-card ts-card--soft">
+                                        <h2 class="h5">چه چیزی با سازمان به اشتراک گذاشته می‌شود؟</h2>
+                                        <ul class="ts-list-check" t-if="ws.purpose == 'employment'">
+                                            <li>سازمان وضعیت دعوت (شروع‌شده یا تکمیل‌شده) را می‌بیند.</li>
+                                            <li>اگر اجازه دهید، فقط بازهٔ هر بُعد (کم، متوسط یا زیاد) را می‌بیند.</li>
+                                            <li>پاسخ‌های شما، نمره‌ها و متن‌های تفسیری فقط برای شما نمایش داده می‌شود.</li>
+                                            <li>هر زمان بخواهید می‌توانید اشتراک را از صفحهٔ گزارش لغو کنید.</li>
+                                        </ul>
+                                        <ul class="ts-list-check" t-else="">
+                                            <li>مرکز وضعیت دعوت را می‌بیند.</li>
+                                            <li>اگر اجازه دهید، گزارش کامل همراه با راهنمای متخصص فقط به متخصص بالینی تأییدشدهٔ این مرکز نمایش داده می‌شود.</li>
+                                            <li>هر زمان بخواهید می‌توانید اشتراک را از صفحهٔ گزارش لغو کنید.</li>
+                                        </ul>
+                                    </div>
+                                    <t t-if="public">
+                                        <p>برای شروع وارد حساب خود شوید یا حساب تازه بسازید. گزارش نتیجه در حساب شما نگه داشته می‌شود.</p>
+                                        <div class="ts-hero__actions">
+                                            <a t-att-href="signup_url" class="ts-btn ts-btn--primary">ساخت حساب</a>
+                                            <a t-att-href="login_url" class="ts-btn ts-btn--outline">ورود</a>
+                                        </div>
+                                    </t>
+                                    <t t-else="">
+                                        <form t-attf-action="/invite/#{a.token}/accept" method="post" class="ts-form">
+                                            <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                                            <label class="ts-opt">
+                                                <input type="checkbox" name="share" value="1" checked="checked"/>
+                                                <span t-if="ws.purpose == 'employment'">اجازه می‌دهم بازهٔ هر بُعد با این سازمان به اشتراک گذاشته شود.</span>
+                                                <span t-else="">اجازه می‌دهم گزارش کامل با متخصص بالینی تأییدشدهٔ این مرکز به اشتراک گذاشته شود.</span>
+                                            </label>
+                                            <button type="submit" class="ts-btn ts-btn--primary">پذیرش و ادامه</button>
+                                        </form>
+                                        <form t-attf-action="/invite/#{a.token}/decline" method="post">
+                                            <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                                            <button type="submit" class="ts-btn ts-btn--quiet ts-btn--sm">نمی‌خواهم شرکت کنم</button>
+                                        </form>
+                                    </t>
+                                </t>
+                            </div>
+                        </section>
+                    </div>
+                </t>
+            </t>
+        </field>
+    </record>
+
+    <!-- Participant's own report: show and revoke workspace sharing. -->
+    <record id="tpl_report_share" model="ir.ui.view">
+        <field name="name">TS: report sharing note</field>
+        <field name="type">qweb</field>
+        <field name="inherit_id" ref="ts_assessment.tpl_report"/>
+        <field name="website_id" ref="ts_website.website_ts"/>
+        <field name="arch" type="xml">
+            <xpath expr="//section[hasclass('ts-doc__foot')]" position="before">
+                <t t-set="ts_share" t-value="attempt.ts_org_assignment()"/>
+                <section t-if="ts_share" class="ts-doc__sec ts-noprint">
+                    <h2>اشتراک با سازمان</h2>
+                    <p>این سنجه به دعوت <strong t-out="ts_share.workspace_id.partner_id.name"/> انجام شد.
+                        <t t-if="ts_share.share_level == 'summary'">سازمان فقط بازهٔ هر بُعد را می‌بیند.</t>
+                        <t t-elif="ts_share.share_level == 'clinical'">گزارش کامل برای متخصص بالینی تأییدشدهٔ این مرکز قابل مشاهده است.</t>
+                        <t t-else="">نتیجه با سازمان به اشتراک گذاشته نشده است.</t>
+                    </p>
+                    <form t-if="ts_share.share_level != 'none'" t-attf-action="/my/assessments/#{attempt.id}/unshare" method="post">
+                        <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                        <button type="submit" class="ts-btn ts-btn--outline ts-btn--sm">لغو اشتراک</button>
+                    </form>
+                </section>
+            </xpath>
+        </field>
+    </record>
+</odoo>

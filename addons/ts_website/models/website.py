@@ -85,6 +85,7 @@ class Website(models.Model):
         demo team 'Customer Care' on website 1 (adds a 'Help' menu to every
         eot.ir page) and ships a generic page /your-ticket-has-been-submitted.
         Only records created by those apps are touched, never eot.ir's own."""
+        IMD = self.env['ir.model.data']
         if 'helpdesk.team' in self.env:
             teams = self.env['helpdesk.team'].with_context(active_test=False).search([('website_id', '!=', site.id)])
             if teams:
@@ -111,7 +112,6 @@ class Website(models.Model):
         if stray_views:
             _logger.info('Talent Search: deactivating install-generated views on other websites: %s', stray_views.mapped('key'))
             stray_views.write({'active': False})
-        IMD = self.env['ir.model.data']
         page_ids = IMD.search([('model', '=', 'website.page'), ('module', 'in', self.STOCK_APP_PAGE_MODULES)]).mapped('res_id')
         pages = self.env['website.page'].browse(page_ids).exists().filtered(lambda p: not p.website_id)
         if pages:

@@ -28,7 +28,7 @@ def ensure_user(login):
                 "u.password=%r\nenv.cr.commit()\n") % (login, login, pw)
         subprocess.run(['sudo', '-u', 'odoo', 'env', 'HOME=/opt/odoo', '/opt/odoo/venv/bin/python3', '/opt/odoo/odoo/odoo-bin', 'shell',
                         '-c', '/etc/odoo20.conf', '-d', DB, '--db-filter=^%s$' % DB,
-                        '--addons-path=/opt/odoo/talentsearch/addons,/opt/odoo/themes,/opt/odoo/enterprise,/opt/odoo/odoo/addons',
+                        '--addons-path=/opt/odoo/talentsearch_stage/addons,/opt/odoo/themes,/opt/odoo/enterprise,/opt/odoo/odoo/addons',
                         '--no-http', '--log-level=warn'], input=code, text=True, capture_output=True, cwd='/tmp')
     return open(pw_file).read().strip()
 
@@ -41,6 +41,7 @@ class Client:
 
     def req(self, path, data=None):
         body = urllib.parse.urlencode(data).encode() if data is not None else None
+        path = urllib.parse.quote(path, safe="/?=&%:#;,+")  # hrefs carry raw Persian slugs
         r = urllib.request.Request(BASE + path, data=body, headers={'Host': self.host, 'X-Forwarded-Proto': 'https'})
         try:
             resp = self.op.open(r, timeout=60)
@@ -93,7 +94,8 @@ st, loc, _ = u.req('/take/%s/consent' % token, {'csrf_token': u.csrf(page)})
 check('consent without the required box is refused', 'error=consent' in loc, loc)
 st, loc, _ = u.req('/take/%s/consent' % token, {'csrf_token': u.csrf(page), 'consent_service': '1'})
 st, _, page = u.req('/take/' + token)
-check('player page renders (10 items, 5-point scale)', st == 200 and page.count('class="ts-q"') == 10 and page.count('type="radio"') == 50,
+nq = page.count('class="ts-q"')
+check('player page renders (up to 10 items per page, 5-point scale)', st == 200 and 1 <= nq <= 10 and page.count('type="radio"') == 5 * nq,
       '%s q=%d' % (st, page.count('class="ts-q"')))
 csrf = u.csrf(page)
 pages = int(re.search(r'صفحهٔ [۰-۹]+ از ([۰-۹]+)', page).group(1).translate(str.maketrans('۰۱۲۳۴۵۶۷۸۹', '0123456789')))

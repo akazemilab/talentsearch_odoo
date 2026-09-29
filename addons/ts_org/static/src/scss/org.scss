@@ -1,0 +1,29 @@
+// Talent Search organizations/clinicians (website 2 only, via ts_website.assets_ts).
+#wrapwrap {
+    .ts-org-grid { grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); }
+    .ts-org-card .ts-btn { align-self: flex-start; margin-block-start: auto; }
+    .ts-org-card h2 { margin: 0; }
+    .ts-stats { display: flex; flex-wrap: wrap; gap: var(--space-2); margin-block: var(--space-6); }
+    .ts-stat {
+        display: flex; flex-direction: column; min-width: 7rem; min-height: var(--control-min);
+        padding: var(--space-3) var(--space-4); border: 1px solid var(--line); border-radius: var(--radius-md);
+        color: var(--ink); text-decoration: none; background: var(--white);
+        strong { font-size: 1.5rem; line-height: 1.2; color: var(--brand-deep); }
+        span { font-size: .875rem; color: var(--muted); }
+        &.is-active, &:hover, &:focus-visible { border-color: var(--brand-accent); box-shadow: 0 0 0 1px var(--brand-accent); }
+    }
+    .ts-org-layout { display: grid; gap: var(--space-6); grid-template-columns: minmax(0, 1fr); align-items: start; }
+    @media (min-width: 992px) { .ts-org-layout { grid-template-columns: minmax(0, 1fr) 320px; } }
+    .ts-org-invite .ts-form { display: flex; flex-direction: column; gap: var(--space-2); }
+    .ts-org-invite input, .ts-org-invite select {
+        width: 100%; min-height: var(--control-min); padding: var(--space-2) var(--space-3);
+        border: 1px solid var(--line); border-radius: var(--radius-sm); background: var(--white);
+    }
+    .ts-copy {
+        display: block; width: 100%; min-height: var(--control-min); margin-block: var(--space-2);
+        padding: var(--space-2) var(--space-3); border: 1px solid var(--line); border-radius: var(--radius-sm);
+        font-family: monospace; font-size: .875rem; background: var(--paper); color: var(--ink);
+    }
+    .ts-doc details { margin-block-start: var(--space-3); }
+    .ts-doc details summary { cursor: pointer; color: var(--brand-deep); min-height: var(--control-min); display: flex; align-items: center; }
+}

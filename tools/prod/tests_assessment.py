@@ -42,6 +42,8 @@ check('393 bands imported and approved', env['ts.instrument.band'].search_count(
 check('versions locked', all(V.mapped('locked')))
 check('locked version refuses contract edits', raises(lambda: V[0].write({'reverse_rule': 'x'}), UserError))
 stats = Inst._ts_load_source()
+slugs = pub.mapped('slug')
+check('instrument URLs and titles are unique', len(set(slugs)) == len(slugs) and len(set(pub.mapped('title'))) == len(pub))
 check('loader is idempotent (second run creates nothing)', stats['created'] == 0 and stats['versions'] == 0, str(stats))
 
 # ------------------------------------------------ independent reference engine
@@ -70,7 +72,7 @@ def reference(code, answers_by_qid):
         s = sum(vals) / len(vals)
         hits = [b for b, lo, hi in ref_bands[rule] if lo <= s <= hi]
         assert len(hits) == 1
-        out[fcode] = (round(s, 9), hits[0])
+        out[fcode] = (round(s, 4), hits[0])  # stored at the field's 4-decimal precision
     return out
 
 
@@ -102,7 +104,7 @@ for inst in pub:
         a, by_qid = run(inst, u1, ch)
         cases += 1
         exp = reference(inst.code, by_qid)
-        got = {r.factor_id.code: (round(r.score, 9), r.band) for r in a.result_ids}
+        got = {r.factor_id.code: (round(r.score, 4), r.band) for r in a.result_ids}
         if a.state != 'done' or got != exp:
             mismatch.append((inst.code, label, a.state))
 check('golden parity: ORM engine == independent source engine (%d attempts, 33 instruments x 6 answer sets)' % cases,

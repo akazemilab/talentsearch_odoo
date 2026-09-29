@@ -15,11 +15,21 @@ Read theme_eot_custom's CLAUDE.md too: its Odoo 20 pitfalls apply here.
   baseline -> install -> `ts_guard compare` -> stage tests) BEFORE
   `tools/prod/ts_ship.sh` on eot_main. Guard verdict must be "eot.ir UNCHANGED".
 - Tests that create records run only on eot_ts* clones (scripts assert it).
+- Theme exception (owner, 2026-09-29): eot.ir problems caused by the shared
+  instance may be fixed in theme_eot_custom (branch `ts-isolation`), rehearsed with the
+  theme's own `eot` toolkit and shipped with `eot ship`; never mixed into a ts ship.
 
 ## Workflow
 Source of truth is /root/talentsearch_odoo on the VPS (pushes with deploy key
 `vps-talentsearch-rw`); the cloud session can read the GitHub repo but cannot push.
-`ts sync` rsyncs to /opt/odoo/talentsearch on prod. Long jobs: `ts bg NAME CMD`,
+`ts sync` rsyncs to the STAGING dir /opt/odoo/talentsearch_stage on prod; every
+rehearsal, clone, test and guard runs from there. Only `ts_ship.sh` copies stage ->
+LIVE /opt/odoo/talentsearch (the dir in odoo20's addons_path), after stopping odoo20,
+keeping /opt/odoo/talentsearch_prev_<label>_<ts> and restoring it if the install
+fails. (2026-09-29 incident: `ts sync` used to write the live dir, so a theme ship
+restarted odoo20 on unshipped code and failed.) Rehearsal baselines serve the clone
+on the LIVE code (`TS_CODE=/opt/odoo/talentsearch`), because the stage may already
+hold newer code that the old clone DB cannot run. Long jobs: `ts bg NAME CMD`,
 `ts job NAME`. Clones are served on :8071; nginx `ts-innerquest.conf` upstream
 `ts_odoo` points ts.innerquest.me at 8071 (clone review) or 8069 (live).
 
@@ -78,3 +88,16 @@ have exactly one answer, each factor score must match exactly one band (inclusiv
 Only inventory_012's questions carry anchor labels (بسیار کم / متوسط / بسیار زیاد).
 Export timestamps are Asia/Tehran. Clinical texts' approver is a test account -> draft.
 Factor codes are not globally unique (factor_073, factor_098): key by (inventory, code).
+
+## Organizations and clinicians (ts_org)
+- `ts.assignment` = one invitation (workspace, instrument, invitee). No email/SMS is
+  sent: the member copies the link `/invite/<token>`. The participant signs in,
+  accepts (sharing opt-in, default checked, revocable from the report) and takes the
+  attempt through the normal player; the attempt carries `workspace_id`.
+- Visibility (`visible_results`): employment -> reviewer/hr/hiring roles see only the
+  band per factor (no scores, answers or texts) when share_level=summary; clinical ->
+  only verified clinician/clinic_director see the full report with therapist texts.
+  Nobody in a workspace has ACL on attempts/answers/results: controllers read with
+  sudo after the membership check. Portal users have no ACL on ts.assignment.
+- Employment-eligible instruments: `EMPLOYMENT_CATEGORIES` in ts_assessment/loader.py
+  (adult + استعدادیابی/خودشناسی/مسائل شغلی), owner rule TS-OWNER-APPROVED-1405-07-07.

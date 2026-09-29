@@ -11,7 +11,9 @@
 set -uo pipefail
 FS=/opt/odoo/.local/share/Odoo/filestore
 PY=/opt/odoo/venv/bin/python3; BIN=/opt/odoo/odoo/odoo-bin
-AP=/opt/odoo/talentsearch/addons,/opt/odoo/themes,/opt/odoo/enterprise,/opt/odoo/odoo/addons
+CODE=${TS_CODE:-/opt/odoo/talentsearch_stage}   # TS_CODE=/opt/odoo/talentsearch serves a clone on the LIVE code (read-only use: baselines)
+[[ $CODE == /opt/odoo/talentsearch || $CODE == /opt/odoo/talentsearch_stage ]] || { echo "!! bad TS_CODE"; exit 2; }
+AP=$CODE/addons,/opt/odoo/themes,/opt/odoo/enterprise,/opt/odoo/odoo/addons
 CMD=${1:?command}; DB=${2:?db}
 step(){ echo "=== $(date +%T) $*"; }
 guard_db(){

@@ -57,12 +57,29 @@ class TsInstrument(models.Model):
 
     _code_unique = models.Constraint('unique(code)', 'کد سنجه باید یکتا باشد.')
 
+    @staticmethod
+    def _ts_base_title(name):
+        return re.sub(r'\s*-\s*\d+\s*$', '', name or '').strip()
+
     @api.depends('name')
     def _compute_title(self):
+        # Titles drop the source's trailing item count ("... - 48"). Two source
+        # instruments share a base name (inventory_003/004, 48 and 72 items):
+        # those keep the count so title and URL stay unique.
         for rec in self:
-            title = re.sub(r'\s*-\s*\d+\s*$', '', rec.name or '').strip()
-            rec.title = title
-            rec.slug = re.sub(r'\s+', '-', title)
+            base = self._ts_base_title(rec.name)
+            m = re.search(r'-\s*(\d+)\s*$', rec.name or '')
+            twins = self.with_context(active_test=False).search([('name', '=like', base + '%'), ('id', '!=', rec._origin.id or 0)])
+            dup = m and any(self._ts_base_title(t.name) == base for t in twins)
+            n = m.group(1) if m else ''
+            rec.title = '%s (%s پرسش)' % (base, n.translate(str.maketrans('0123456789', '۰۱۲۳۴۵۶۷۸۹'))) if dup else base
+            rec.slug = re.sub(r'\s+', '-', base) + ('-%s' % n if dup else '')
+
+    def _ts_refresh_titles(self):
+        insts = self.with_context(active_test=False).search([])
+        self.env.add_to_compute(self._fields['title'], insts)
+        self.env.add_to_compute(self._fields['slug'], insts)
+        insts.flush_recordset(['title', 'slug'])
 
     @api.depends('current_version_id.active_item_count')
     def _compute_duration(self):
