@@ -30,4 +30,14 @@ if [[ " ${MODS//,/ } ${UPG//,/ } " == *" ts_org "* ]]; then
   echo "=== http organization flow"
   ssh eot-odoo-prod "PYTHONIOENCODING=utf-8 python3 -u /opt/odoo/talentsearch_stage/tools/prod/ts_http_org.py $DB $PORT"
 fi
+if [[ " ${MODS//,/ } ${UPG//,/ } " == *" ts_kavenegar "* ]]; then
+  echo "=== kavenegar tests (fake API)"
+  ssh eot-odoo-prod "cd /tmp && sudo -u odoo env HOME=/opt/odoo /opt/odoo/venv/bin/python3 /opt/odoo/odoo/odoo-bin shell -c /etc/odoo20.conf -d $DB --db-filter='^$DB\$' --addons-path=/opt/odoo/talentsearch_stage/addons,/opt/odoo/themes,/opt/odoo/enterprise,/opt/odoo/odoo/addons --no-http --log-level=warn < /opt/odoo/talentsearch_stage/tools/prod/tests_kavenegar.py 2>&1 | grep -E '^(PASS|FAIL|SUMMARY|    unexpected)|Error|Traceback'"
+  echo "=== kavenegar webhooks (http)"
+  ssh eot-odoo-prod "python3 -u /opt/odoo/talentsearch_stage/tools/prod/ts_http_kv.py $DB $PORT"
+fi
+if [[ " ${MODS//,/ } ${UPG//,/ } " == *" ts_sms "* ]]; then
+  echo "=== talent search SMS flows (fake Kavenegar)"
+  ssh eot-odoo-prod "PYTHONIOENCODING=utf-8 python3 -u /opt/odoo/talentsearch_stage/tools/prod/ts_http_sms.py $DB $PORT"
+fi
 echo "[guard rc=$g]"

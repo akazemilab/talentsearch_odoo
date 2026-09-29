@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="1">
+    <record id="cron_ts_otp_gc" model="ir.cron">
+        <field name="name">Talent Search: purge old phone codes</field>
+        <field name="model_id" ref="model_ts_phone_otp"/>
+        <field name="state">code</field>
+        <field name="code">model._gc_old()</field>
+        <field name="interval_number">1</field>
+        <field name="interval_type">days</field>
+    </record>
+</odoo>

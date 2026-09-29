@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <menuitem id="menu_kv_root" name="Kavenegar" sequence="95" groups="base.group_system" web_icon="sms,static/description/icon.png"/>
+    <menuitem id="menu_kv_messages" name="SMS log" parent="menu_kv_root" action="action_kv_message" sequence="10"/>
+    <menuitem id="menu_kv_send" name="Send" parent="menu_kv_root" action="action_kv_send_wizard" sequence="20"/>
+    <menuitem id="menu_kv_templates" name="Verify templates" parent="menu_kv_root" action="action_kv_template" sequence="30"/>
+    <menuitem id="menu_kv_blocked" name="Blocked numbers" parent="menu_kv_root" action="action_kv_blocked" sequence="40"/>
+    <menuitem id="menu_kv_media" name="Media" parent="menu_kv_root" action="action_kv_media" sequence="50"/>
+    <menuitem id="menu_kv_reports" name="Reports and lookups" parent="menu_kv_root" action="action_kv_report_wizard" sequence="60"/>
+    <menuitem id="menu_kv_sync_templates" name="Sync templates" parent="menu_kv_root" action="action_kv_template_sync" sequence="70"/>
+    <menuitem id="menu_kv_sync_blocked" name="Sync blocked list" parent="menu_kv_root" action="action_kv_blocked_sync" sequence="80"/>
+</odoo>

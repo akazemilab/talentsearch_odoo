@@ -1,0 +1,8 @@
+id,name,model_id,group_id/id,operation,domain
+access_kv_message_system,kv_message_system,kavenegar.message,base.group_system,crud,
+access_kv_template_system,kv_template_system,kavenegar.template,base.group_system,crud,
+access_kv_blocked_system,kv_blocked_system,kavenegar.blocked,base.group_system,crud,
+access_kv_media_system,kv_media_system,kavenegar.media,base.group_system,crud,
+access_kv_send_system,kv_send_system,kavenegar.send.wizard,base.group_system,crud,
+access_kv_send_line_system,kv_send_line_system,kavenegar.send.wizard.line,base.group_system,crud,
+access_kv_report_system,kv_report_system,kavenegar.report.wizard,base.group_system,crud,

@@ -101,3 +101,28 @@ Factor codes are not globally unique (factor_073, factor_098): key by (inventory
   sudo after the membership check. Portal users have no ACL on ts.assignment.
 - Employment-eligible instruments: `EMPLOYMENT_CATEGORIES` in ts_assessment/loader.py
   (adult + استعدادیابی/خودشناسی/مسائل شغلی), owner rule TS-OWNER-APPROVED-1405-07-07.
+
+## SMS (Kavenegar) - modules ts_kavenegar (generic) and ts_sms (Talent Search flows)
+- `ts_kavenegar` (depends only on `sms`, `phone_validation`) is the native Odoo 20 gateway: `res.company._get_sms_api_class`
+  returns `SmsApiKavenegar` (tools/sms_api.py) when `kv_enabled`, exactly how stock `sms_twilio` plugs in. Every native
+  SMS (chatter, templates, mass SMS, automations, composer) therefore goes through Kavenegar. Same body -> `sms/send`
+  (localid = sms uuid per receptor); different bodies -> `sms/sendarray`; chunks of 200; limits 1800 (4000 messenger) chars.
+- Full REST coverage lives in `tools/kavenegar.py` (send, sendarray, status*, select, outbox, cancel, inbox, blocked, verify lookup +
+  template CRUD, TTS call, account info/config, media, getdate). Error codes map to Odoo `failure_type` (added `kv_*` types on
+  `sms.sms` and `mail.notification`).
+- API key: company field `kv_api_key` (groups=base.group_system), typed by the owner in Settings -> SMS -> Kavenegar. Never in
+  chat, code, logs or the message log. `ts_kavenegar.api_base` (ir.config_parameter) overrides the API base URL: tests point it at a
+  local fake server; empty in production.
+- Webhooks (payload format is NOT in rest.html; parser accepts query/form/JSON): `/kavenegar/<secret>/status` and
+  `/kavenegar/<secret>/inbound`. They answer only on website 2 (404 on eot.ir even with the secret). Cron polling (status every
+  10 min, inbox every 5 min) covers a missed webhook. Secret is generated in Settings and can be rotated.
+- `kavenegar.message` = log of every outgoing/incoming message (status, cost, parts); native `sms.tracker`/notifications are
+  updated from Kavenegar statuses (`_kv_sync_native`). OTP/secret texts are masked (`***`) in the log (`sms.sms.kv_secret`).
+- `ts_sms` (Talent Search): invitation SMS (only with a valid mobile AND the org's consent tick), result-ready SMS (only a link,
+  never result text; only for users who verified a mobile and opted in), `/my/phone` mobile verification (OTP: 6 digits, 5 min,
+  5 attempts, 60 s cooldown, 5 per hour per user and per number, hashed with per-code salt). Everything is a no-op until
+  `kv_enabled` is ticked, and the invite hint text on the workspace page switches accordingly.
+- Tests: `tools/prod/tests_kavenegar.py` (fake session), `ts_http_kv.py` (webhooks), `ts_http_sms.py` (flows with a fake local
+  Kavenegar server); `ts_rehearse` runs them when `ts_kavenegar` / `ts_sms` are in the module list. Real sends are never made
+  by tests; the first real send happens only after the owner enters the key and says so.
+- Pitfall: `dict.setdefault` does not replace an existing None value (default sender was skipped); use `get(k) or default`.

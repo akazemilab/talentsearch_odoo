@@ -1,0 +1,2 @@
+id,name,model_id,group_id/id,operation,domain
+access_ts_phone_otp_manager,ts phone otp manager,ts.phone.otp,ts_core.group_ts_manager,r,

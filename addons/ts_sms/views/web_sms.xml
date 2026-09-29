@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="portal_entry_phone" model="portal.entry">
+        <field name="name">شمارهٔ موبایل و پیامک</field>
+        <field name="description">تأیید شمارهٔ موبایل و انتخاب اینکه هنگام آماده‌شدن نتیجه پیامک بگیرید یا نه</field>
+        <field name="url">/my/phone</field>
+        <field name="sequence">3</field>
+        <field name="website_id" ref="ts_website.website_ts"/>
+    </record>
+
+    <!-- Invitation form: optional mobile + consent; replaces the "we never send SMS" hint -->
+    <record id="tpl_workspace_sms" model="ir.ui.view">
+        <field name="name">TS: workspace invite with SMS</field>
+        <field name="type">qweb</field>
+        <field name="inherit_id" ref="ts_org.tpl_workspace"/>
+        <field name="website_id" ref="ts_website.website_ts"/>
+        <field name="arch" type="xml">
+            <xpath expr="//input[@id='ts_inv_email']" position="after">
+                <t t-set="ts_sms_on" t-value="request.env.company.sudo().kv_enabled and request.env.company.sudo().ts_sms_invite"/>
+                <t t-if="ts_sms_on">
+                    <label for="ts_inv_phone">موبایل (اختیاری، برای ارسال پیامک دعوت)</label>
+                    <input id="ts_inv_phone" name="invitee_phone" type="tel" dir="ltr" inputmode="numeric" maxlength="20" autocomplete="off" placeholder="09123456789"/>
+                    <label class="ts-check"><input type="checkbox" name="sms_consent" value="1"/> تأیید می‌کنم شرکت‌کننده با دریافت این پیامک موافق است</label>
+                </t>
+            </xpath>
+            <xpath expr="//p[@t-if='created']" position="after">
+                <p t-if="created and created.sms_sent_at" class="ts-notice" role="status">پیامک دعوت ارسال شد.</p>
+                <p t-if="created and created.sms_error" class="ts-notice ts-notice--warn" role="alert">
+                    پیامک ارسال نشد (<t t-out="created.sms_error"/>). پیوند بالا را خودتان برای شرکت‌کننده بفرستید.
+                </p>
+            </xpath>
+            <xpath expr="//p[hasclass('ts-hint')][contains(., 'ایمیل یا پیامک نمی')]" position="replace">
+                <p class="ts-hint">
+                    <t t-if="request.env.company.sudo().kv_enabled and request.env.company.sudo().ts_sms_invite">پیامک فقط وقتی فرستاده می‌شود که موبایل را وارد کنید و موافقت شرکت‌کننده را تأیید کنید. پیوند دعوت همیشه در دسترس شماست و می‌توانید خودتان هم بفرستید.</t>
+                    <t t-else="">تلنت سرچ ایمیل یا پیامک نمی‌فرستد؛ پیوند دعوت را خودتان برای شرکت‌کننده بفرستید.</t>
+                </p>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- /my/phone -->
+    <record id="tpl_phone" model="ir.ui.view">
+        <field name="name">TS: my phone</field>
+        <field name="type">qweb</field>
+        <field name="key">ts_sms.phone</field>
+        <field name="website_id" ref="ts_website.website_ts"/>
+        <field name="arch" type="xml">
+            <t t-name="ts_sms.phone">
+                <t t-call="website.layout" additional_title.f="شمارهٔ موبایل">
+                    <div id="wrap" class="ts-page">
+                        <section class="ts-section">
+                            <div class="ts-container">
+                                <div class="ts-section__head">
+                                    <h1>شمارهٔ موبایل و پیامک</h1>
+                                    <p>شمارهٔ شما فقط برای تأیید هویت حساب و اعلان «نتیجه آماده است» به کار می‌رود. متن نتیجه هرگز پیامک نمی‌شود و هر زمان بخواهید می‌توانید شماره را حذف کنید.</p>
+                                </div>
+                                <p t-if="msg" t-attf-class="ts-notice #{'ts-notice--warn' if msg[0] == 'warn' else ''}" role="status" t-out="msg[1]"/>
+                                <div t-if="not enabled" class="ts-card ts-card--soft">
+                                    <h3>هنوز فعال نشده است</h3>
+                                    <p>تأیید شمارهٔ موبایل پس از راه‌اندازی سرویس پیامک در دسترس خواهد بود.</p>
+                                </div>
+                                <t t-elif="verified">
+                                    <div class="ts-card">
+                                        <h3>شمارهٔ تأییدشده</h3>
+                                        <p><bdi dir="ltr" t-out="masked"/></p>
+                                        <form action="/my/phone/prefs" method="post" class="ts-form">
+                                            <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                                            <label class="ts-check"><input type="checkbox" name="results" value="1" t-att-checked="'checked' if opt_results else None"/> وقتی نتیجهٔ سنجه آماده شد پیامک بگیرم</label>
+                                            <button type="submit" class="ts-btn ts-btn--primary ts-btn--sm">ذخیره</button>
+                                        </form>
+                                        <form action="/my/phone/remove" method="post">
+                                            <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                                            <button type="submit" class="ts-btn ts-btn--ghost ts-btn--sm">حذف شماره</button>
+                                        </form>
+                                    </div>
+                                </t>
+                                <t t-else="">
+                                    <div class="ts-card">
+                                        <h3>تأیید شمارهٔ موبایل</h3>
+                                        <form action="/my/phone/send" method="post" class="ts-form">
+                                            <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                                            <label for="ts_phone_no">شمارهٔ موبایل</label>
+                                            <input id="ts_phone_no" name="phone" type="tel" dir="ltr" inputmode="numeric" required="required" maxlength="20" autocomplete="tel" placeholder="09123456789"/>
+                                            <button type="submit" class="ts-btn ts-btn--primary">ارسال کد تأیید</button>
+                                        </form>
+                                        <form t-if="pending" action="/my/phone/verify" method="post" class="ts-form">
+                                            <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                                            <label for="ts_phone_code">کد شش‌رقمی پیامک‌شده</label>
+                                            <input id="ts_phone_code" name="code" type="text" dir="ltr" inputmode="numeric" required="required" maxlength="6" pattern="[0-9۰-۹]{6}" autocomplete="one-time-code"/>
+                                            <button type="submit" class="ts-btn ts-btn--primary">تأیید</button>
+                                        </form>
+                                    </div>
+                                </t>
+                            </div>
+                        </section>
+                    </div>
+                </t>
+            </t>
+        </field>
+    </record>
+</odoo>

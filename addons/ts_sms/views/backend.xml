@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="res_config_settings_view_form_ts_sms" model="ir.ui.view">
+        <field name="name">res.config.settings.view.form.ts.sms</field>
+        <field name="model">res.config.settings</field>
+        <field name="inherit_id" ref="ts_kavenegar.res_config_settings_view_form_kavenegar"/>
+        <field name="arch" type="xml">
+            <setting id="kavenegar_webhook" position="after">
+                <setting id="ts_sms" string="Talent Search SMS" help="What Talent Search may send by SMS. Result texts are never sent." invisible="not kv_enabled" groups="base.group_system">
+                    <div class="content-group">
+                        <div><field name="ts_sms_invite"/> <label for="ts_sms_invite"/></div>
+                        <div><field name="ts_sms_result"/> <label for="ts_sms_result"/></div>
+                        <div><field name="ts_sms_otp"/> <label for="ts_sms_otp"/></div>
+                        <div class="row mt8">
+                            <label for="ts_sms_otp_template_id" class="col-lg-4 o_light_label"/>
+                            <field name="ts_sms_otp_template_id"/>
+                        </div>
+                    </div>
+                </setting>
+            </setting>
+        </field>
+    </record>
+</odoo>

@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="res_config_settings_view_form_kavenegar" model="ir.ui.view">
+        <field name="name">res.config.settings.view.form.kavenegar</field>
+        <field name="model">res.config.settings</field>
+        <field name="inherit_id" ref="base_setup.res_config_settings_view_form"/>
+        <field name="arch" type="xml">
+            <setting id="sms" position="after">
+                <setting id="kavenegar" string="Kavenegar SMS" help="Send every Odoo SMS through Kavenegar (chatter, templates, mass SMS, automations)."
+                         groups="base.group_system">
+                    <field name="kv_enabled"/>
+                    <div class="content-group" invisible="not kv_enabled">
+                        <div class="row mt8">
+                            <label for="kv_api_key" class="col-lg-4 o_light_label"/>
+                            <field name="kv_api_key" password="True" placeholder="API key from the Kavenegar panel"/>
+                        </div>
+                        <div class="row">
+                            <label for="kv_sender" class="col-lg-4 o_light_label"/>
+                            <field name="kv_sender"/>
+                        </div>
+                        <div class="row">
+                            <label for="kv_inbox_line" class="col-lg-4 o_light_label"/>
+                            <field name="kv_inbox_line"/>
+                        </div>
+                        <div class="row">
+                            <label for="kv_default_tag" class="col-lg-4 o_light_label"/>
+                            <field name="kv_default_tag"/>
+                        </div>
+                        <div class="row">
+                            <label for="kv_debug" class="col-lg-4 o_light_label"/>
+                            <field name="kv_debug"/>
+                        </div>
+                        <div class="mt8">
+                            <button name="action_kv_test" type="object" class="btn-primary" string="Test connection and read credit"/>
+                            <button name="action_kv_push_config" type="object" class="btn-link" string="Send debug mode / sender to Kavenegar"/>
+                        </div>
+                        <div class="text-muted mt8" invisible="not kv_account_type">
+                            Credit <field name="kv_credit" class="oe_inline"/> rial ·
+                            expires <field name="kv_expire" class="oe_inline"/> ·
+                            <field name="kv_account_type" class="oe_inline"/>
+                        </div>
+                    </div>
+                </setting>
+                <setting id="kavenegar_features" string="Kavenegar account features"
+                         help="Tick only what your Kavenegar account has; the rest stays disabled with a clear message."
+                         invisible="not kv_enabled" groups="base.group_system">
+                    <div class="content-group">
+                        <div><field name="kv_has_lookup"/> <label for="kv_has_lookup"/></div>
+                        <div><field name="kv_has_ip_whitelist"/> <label for="kv_has_ip_whitelist"/></div>
+                        <div><field name="kv_has_messenger"/> <label for="kv_has_messenger"/></div>
+                        <div class="row mt8">
+                            <label for="kv_min_credit" class="col-lg-4 o_light_label"/>
+                            <field name="kv_min_credit"/>
+                        </div>
+                        <div class="row">
+                            <label for="kv_alert_user_ids" class="col-lg-4 o_light_label"/>
+                            <field name="kv_alert_user_ids" widget="many2many_tags"/>
+                        </div>
+                    </div>
+                </setting>
+                <setting id="kavenegar_webhook" string="Kavenegar webhooks"
+                         help="Paste these two URLs in the Kavenegar panel (line settings): Status Callback URL and Receive via Callback URL."
+                         invisible="not kv_enabled" groups="base.group_system">
+                    <div class="content-group">
+                        <div class="row">
+                            <label for="kv_webhook_base" class="col-lg-4 o_light_label"/>
+                            <field name="kv_webhook_base" placeholder="https://ts.innerquest.me"/>
+                        </div>
+                        <div class="row">
+                            <label for="kv_webhook_status_url" class="col-lg-4 o_light_label"/>
+                            <field name="kv_webhook_status_url" widget="CopyClipboardChar"/>
+                        </div>
+                        <div class="row">
+                            <label for="kv_webhook_inbound_url" class="col-lg-4 o_light_label"/>
+                            <field name="kv_webhook_inbound_url" widget="CopyClipboardChar"/>
+                        </div>
+                        <button name="action_kv_generate_secret" type="object" class="btn-link"
+                                string="Generate / rotate secret" confirm="Old URLs stop working until you paste the new ones."/>
+                    </div>
+                </setting>
+            </setting>
+        </field>
+    </record>
+</odoo>

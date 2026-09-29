@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="1">
+    <record id="cron_kv_poll" model="ir.cron">
+        <field name="name">Kavenegar: poll message status (webhook fallback)</field>
+        <field name="model_id" ref="model_kavenegar_message"/>
+        <field name="state">code</field>
+        <field name="code">model._kv_cron_poll()</field>
+        <field name="interval_number">10</field>
+        <field name="interval_type">minutes</field>
+    </record>
+    <record id="cron_kv_inbox" model="ir.cron">
+        <field name="name">Kavenegar: pull inbox</field>
+        <field name="model_id" ref="model_kavenegar_message"/>
+        <field name="state">code</field>
+        <field name="code">model._kv_cron_inbox()</field>
+        <field name="interval_number">5</field>
+        <field name="interval_type">minutes</field>
+    </record>
+    <record id="cron_kv_account" model="ir.cron">
+        <field name="name">Kavenegar: account credit</field>
+        <field name="model_id" ref="base.model_res_company"/>
+        <field name="state">code</field>
+        <field name="code">model._kv_cron_account()</field>
+        <field name="interval_number">1</field>
+        <field name="interval_type">hours</field>
+    </record>
+</odoo>

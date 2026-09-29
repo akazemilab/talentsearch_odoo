@@ -107,3 +107,9 @@ Every stage: rehearse on an `eot_ts*` clone -> `ts guard compare` (eot.ir unchan
 - Norms/psychometric evidence do not exist in the source; reports say so and use contract bands only.
 - No payment provider, SMS or outgoing email (owner decision, not needed now).
 - talentsearch.ir DNS cutover: owner decision.
+
+## SMS (Kavenegar) - 2026-09-29
+Owner asked for the whole Kavenegar REST API inside Odoo's native SMS model, token entered at the end.
+Answers: shared module (ts_kavenegar, not in theme_eot_custom), token in Settings, webhooks on ts.innerquest.me,
+flows = assignment invitations, result-ready notice, phone OTP. Built ts_kavenegar + ts_sms, rehearsed on eot_ts11/eot_ts12
+clones with fake Kavenegar. Status: see the shipping entry below once shipped.

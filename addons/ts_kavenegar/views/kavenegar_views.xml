@@ -1,0 +1,254 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Messages -->
+    <record id="view_kv_message_list" model="ir.ui.view">
+        <field name="name">kavenegar.message.list</field>
+        <field name="model">kavenegar.message</field>
+        <field name="arch" type="xml">
+            <list create="0" decoration-danger="state == 'failed'" decoration-success="state == 'delivered'"
+                  decoration-muted="state == 'cancelled'">
+                <field name="create_date" string="Created"/>
+                <field name="direction"/>
+                <field name="kind"/>
+                <field name="receptor"/>
+                <field name="sender"/>
+                <field name="body" optional="show"/>
+                <field name="state" widget="badge"/>
+                <field name="status_text" optional="hide"/>
+                <field name="cost" optional="show"/>
+                <field name="parts" optional="hide"/>
+                <field name="tag" optional="hide"/>
+                <field name="partner_id" optional="show"/>
+                <field name="messageid" optional="hide"/>
+                <field name="company_id" groups="base.group_multi_company" optional="hide"/>
+            </list>
+        </field>
+    </record>
+    <record id="view_kv_message_form" model="ir.ui.view">
+        <field name="name">kavenegar.message.form</field>
+        <field name="model">kavenegar.message</field>
+        <field name="arch" type="xml">
+            <form create="0">
+                <header>
+                    <button name="action_refresh_status" type="object" string="Refresh status"
+                            invisible="direction != 'out' or not messageid"/>
+                    <button name="action_cancel_scheduled" type="object" string="Cancel scheduled message"
+                            invisible="kv_status != 2" confirm="The message will not be sent and its cost is refunded."/>
+                    <field name="state" widget="statusbar" statusbar_visible="queued,sent,delivered"/>
+                </header>
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="direction"/>
+                            <field name="kind"/>
+                            <field name="receptor"/>
+                            <field name="sender"/>
+                            <field name="partner_id"/>
+                            <field name="template_name" invisible="kind != 'lookup'"/>
+                        </group>
+                        <group>
+                            <field name="messageid"/>
+                            <field name="sms_uuid"/>
+                            <field name="kv_status"/>
+                            <field name="status_text"/>
+                            <field name="cost"/>
+                            <field name="tag"/>
+                            <field name="characters"/>
+                            <field name="parts"/>
+                            <field name="last_check"/>
+                            <field name="company_id" groups="base.group_multi_company"/>
+                        </group>
+                    </group>
+                    <field name="body"/>
+                </sheet>
+            </form>
+        </field>
+    </record>
+    <record id="view_kv_message_search" model="ir.ui.view">
+        <field name="name">kavenegar.message.search</field>
+        <field name="model">kavenegar.message</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="receptor"/>
+                <field name="body"/>
+                <field name="messageid"/>
+                <field name="partner_id"/>
+                <filter name="out" string="Outgoing" domain="[('direction','=','out')]"/>
+                <filter name="in" string="Incoming" domain="[('direction','=','in')]"/>
+                <filter name="failed" string="Failed" domain="[('state','=','failed')]"/>
+                <filter name="open" string="Not final" domain="[('is_final','=',False)]"/>
+                <group>
+                    <filter name="g_state" string="Status" context="{'group_by': 'state'}"/>
+                    <filter name="g_kind" string="Kind" context="{'group_by': 'kind'}"/>
+                    <filter name="g_day" string="Day" context="{'group_by': 'create_date:day'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+    <record id="view_kv_message_pivot" model="ir.ui.view">
+        <field name="name">kavenegar.message.pivot</field>
+        <field name="model">kavenegar.message</field>
+        <field name="arch" type="xml">
+            <pivot>
+                <field name="create_date" interval="day" type="row"/>
+                <field name="state" type="col"/>
+                <field name="cost" type="measure"/>
+            </pivot>
+        </field>
+    </record>
+    <record id="action_kv_message" model="ir.actions.act_window">
+        <field name="name">SMS log</field>
+        <field name="res_model">kavenegar.message</field>
+        <field name="view_mode">list,form,pivot</field>
+    </record>
+
+    <!-- Templates -->
+    <record id="view_kv_template_list" model="ir.ui.view">
+        <field name="name">kavenegar.template.list</field>
+        <field name="model">kavenegar.template</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="name"/>
+                <field name="approval" widget="badge"/>
+                <field name="send_method"/>
+                <field name="remote_id"/>
+                <field name="last_sync"/>
+            </list>
+        </field>
+    </record>
+    <record id="view_kv_template_form" model="ir.ui.view">
+        <field name="name">kavenegar.template.form</field>
+        <field name="model">kavenegar.template</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                    <button name="action_push" type="object" string="Send to Kavenegar" class="btn-primary"/>
+                    <button name="action_pull" type="object" string="Refresh from Kavenegar" invisible="not remote_id"/>
+                    <button name="action_clone" type="object" string="Clone" invisible="not remote_id"/>
+                    <button name="action_delete_remote" type="object" string="Delete on Kavenegar" invisible="not remote_id"
+                            confirm="Delete this template on Kavenegar?"/>
+                    <field name="approval" widget="statusbar" statusbar_visible="PendingReview,Approved"/>
+                </header>
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="name"/>
+                            <field name="remote_id"/>
+                            <field name="source_type"/>
+                            <field name="send_method"/>
+                            <field name="fallback_method"/>
+                            <field name="switch_ttl"/>
+                        </group>
+                        <group>
+                            <field name="primary_line"/>
+                            <field name="secondary_line"/>
+                            <field name="source_url"/>
+                            <field name="source_name"/>
+                            <field name="last_sync"/>
+                            <field name="company_id" groups="base.group_multi_company"/>
+                        </group>
+                    </group>
+                    <group string="Texts (%token, %token2, %token3, %token10, %token20)">
+                        <field name="text_message" colspan="2"/>
+                        <field name="voice_message" colspan="2"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+    <record id="action_kv_template" model="ir.actions.act_window">
+        <field name="name">Verify templates</field>
+        <field name="res_model">kavenegar.template</field>
+        <field name="view_mode">list,form</field>
+    </record>
+    <record id="action_kv_template_sync" model="ir.actions.server">
+        <field name="name">Sync templates from Kavenegar</field>
+        <field name="model_id" ref="model_kavenegar_template"/>
+        <field name="state">code</field>
+        <field name="code">action = model.action_sync_all()</field>
+    </record>
+
+    <!-- Blocked -->
+    <record id="view_kv_blocked_list" model="ir.ui.view">
+        <field name="name">kavenegar.blocked.list</field>
+        <field name="model">kavenegar.blocked</field>
+        <field name="arch" type="xml">
+            <list editable="top">
+                <field name="number"/>
+                <field name="line"/>
+                <field name="reason"/>
+                <field name="blocked_date"/>
+            </list>
+        </field>
+    </record>
+    <record id="action_kv_blocked" model="ir.actions.act_window">
+        <field name="name">Blocked numbers</field>
+        <field name="res_model">kavenegar.blocked</field>
+        <field name="view_mode">list</field>
+        <field name="context">{'default_line': False}</field>
+    </record>
+    <record id="action_kv_blocked_sync" model="ir.actions.server">
+        <field name="name">Sync blocked list from Kavenegar</field>
+        <field name="model_id" ref="model_kavenegar_blocked"/>
+        <field name="state">code</field>
+        <field name="code">action = model.action_sync()</field>
+    </record>
+
+    <!-- Media -->
+    <record id="view_kv_media_form" model="ir.ui.view">
+        <field name="name">kavenegar.media.form</field>
+        <field name="model">kavenegar.media</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                    <button name="action_upload" type="object" string="Upload to Kavenegar" class="btn-primary"
+                            invisible="remote_id"/>
+                    <button name="action_info" type="object" string="Refresh info" invisible="not remote_id"/>
+                    <button name="action_delete_remote" type="object" string="Delete on Kavenegar" invisible="not remote_id"/>
+                </header>
+                <sheet>
+                    <group>
+                        <field name="name"/>
+                        <field name="file" filename="filename"/>
+                        <field name="filename" invisible="1"/>
+                        <field name="remote_id"/>
+                        <field name="remote_info"/>
+                        <field name="company_id" groups="base.group_multi_company"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+    <record id="view_kv_media_list" model="ir.ui.view">
+        <field name="name">kavenegar.media.list</field>
+        <field name="model">kavenegar.media</field>
+        <field name="arch" type="xml">
+            <list><field name="name"/><field name="remote_id"/></list>
+        </field>
+    </record>
+    <record id="action_kv_media" model="ir.actions.act_window">
+        <field name="name">Media</field>
+        <field name="res_model">kavenegar.media</field>
+        <field name="view_mode">list,form</field>
+    </record>
+
+    <!-- sms.sms extra fields -->
+    <record id="view_sms_sms_form_kv" model="ir.ui.view">
+        <field name="name">sms.sms.form.kavenegar</field>
+        <field name="model">sms.sms</field>
+        <field name="inherit_id" ref="sms.sms_tsms_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='body']" position="after">
+                <group string="Kavenegar">
+                    <field name="kv_sender"/>
+                    <field name="kv_date"/>
+                    <field name="kv_tag"/>
+                    <field name="kv_hide"/>
+                    <field name="kv_policy"/>
+                    <field name="kv_type"/>
+                    <field name="kv_media_id"/>
+                </group>
+            </xpath>
+        </field>
+    </record>
+</odoo>

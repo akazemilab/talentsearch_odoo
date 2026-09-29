@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_kv_send_wizard_form" model="ir.ui.view">
+        <field name="name">kavenegar.send.wizard.form</field>
+        <field name="model">kavenegar.send.wizard</field>
+        <field name="arch" type="xml">
+            <form>
+                <group>
+                    <field name="mode" widget="radio" options="{'horizontal': true}"/>
+                    <field name="company_id" groups="base.group_multi_company"/>
+                </group>
+                <group>
+                    <field name="receptors" placeholder="09121234567&#10;09351234567"/>
+                    <field name="message" invisible="mode == 'lookup'"/>
+                    <label for="characters" invisible="mode != 'sms'"/>
+                    <div invisible="mode != 'sms'"><field name="characters" class="oe_inline"/> characters, <field name="parts" class="oe_inline"/> part(s)</div>
+                </group>
+                <group string="SMS options" invisible="mode != 'sms'">
+                    <group>
+                        <field name="sender"/>
+                        <field name="schedule"/>
+                        <field name="tag"/>
+                        <field name="hide"/>
+                    </group>
+                    <group>
+                        <field name="policy"/>
+                        <field name="display_type"/>
+                        <field name="media_id"/>
+                    </group>
+                </group>
+                <field name="line_ids" invisible="mode != 'sms'">
+                    <list editable="bottom"><field name="number"/><field name="message"/></list>
+                </field>
+                <group string="Verify Lookup" invisible="mode != 'lookup'">
+                    <field name="template_id" required="mode == 'lookup'"/>
+                    <field name="token"/>
+                    <field name="token2"/>
+                    <field name="token3"/>
+                    <field name="token10"/>
+                    <field name="token20"/>
+                    <field name="lookup_type"/>
+                    <field name="tag"/>
+                </group>
+                <group string="Voice" invisible="mode != 'call'">
+                    <field name="schedule"/>
+                    <field name="repeat"/>
+                </group>
+                <footer>
+                    <button name="action_send" type="object" string="Send" class="btn-primary" data-hotkey="q"/>
+                    <button special="cancel" string="Cancel" data-hotkey="x"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+    <record id="action_kv_send_wizard" model="ir.actions.act_window">
+        <field name="name">Send SMS / OTP / call</field>
+        <field name="res_model">kavenegar.send.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+
+    <record id="view_kv_report_wizard_form" model="ir.ui.view">
+        <field name="name">kavenegar.report.wizard.form</field>
+        <field name="model">kavenegar.report.wizard</field>
+        <field name="arch" type="xml">
+            <form>
+                <group>
+                    <field name="kind"/>
+                    <field name="company_id" groups="base.group_multi_company"/>
+                    <field name="date_from" invisible="kind in ('latest_outbox','select','status_local','server_time','account_config')"/>
+                    <field name="date_to" invisible="kind in ('latest_outbox','select','status_local','server_time','account_config')"/>
+                    <field name="line" invisible="kind not in ('select_outbox','latest_outbox','count_inbox','inbox')"/>
+                    <field name="status" invisible="kind != 'count_outbox'"/>
+                    <field name="receptor" invisible="kind != 'by_receptor'"/>
+                    <field name="ids_text" invisible="kind not in ('select','status_local')"/>
+                    <field name="pagesize" invisible="kind != 'latest_outbox'"/>
+                    <field name="pagenumber" invisible="kind != 'inbox'"/>
+                    <field name="include_read" invisible="kind not in ('count_inbox','inbox')"/>
+                </group>
+                <field name="result" readonly="1" invisible="not result"/>
+                <footer>
+                    <button name="action_run" type="object" string="Run" class="btn-primary"/>
+                    <button special="cancel" string="Close"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+    <record id="action_kv_report_wizard" model="ir.actions.act_window">
+        <field name="name">Reports and lookups</field>
+        <field name="res_model">kavenegar.report.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+</odoo>
