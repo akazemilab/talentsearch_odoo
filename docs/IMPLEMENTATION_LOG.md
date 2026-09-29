@@ -29,3 +29,34 @@ Every stage: rehearse on an `eot_ts*` clone -> `ts guard compare` (eot.ir unchan
   - website 1 record: only new empty columns (crm_default_team_id/user_id).
   - 12 new ir.config_parameter keys (additive).
 - Fixes: containment step in ts_website; guard v2 ignores added columns, compares form markup strictly, and fails on eot.ir sitemap changes.
+
+### Rehearsal 2-3 (eot_ts2, eot_ts3): apps + ts_core + ts_website
+- Found and fixed:
+  - theme_eot_custom's global controllers (/privacy, /courses, /your-ticket-has-been-submitted, /my/psychological-results) fired on website 2 -> theme_* modules dropped from website 2's routing map.
+  - `_UNSLUG_RE` import path (500 on unknown TS URLs).
+  - Odoo 20 does not pass `t-set` from a `t-call` body -> inner heroes were empty; params now passed as attributes.
+  - Desktop menu hidden by `<details>`; mobile menu replaced by button + aria-expanded (plain JS bundle, `@odoo-module ignore`).
+  - Headings fell back to "Inter Tight"; hero text under the decorative circle (contrast); English 404 title and skip link.
+  - `website.menu_id` stale after website creation (install failure).
+- Rehearsal 3 (fresh, final code at that time): eot.ir /contactus 200 -> 500 again. Cause: Odoo copies new inheriting views onto website 1 at the END of loading, after ts_website's setup. Fix: containment also runs from an `ir.ui.view._create_all_specific_views` override.
+- Stage 1 tests: 29/29 pass (tenant/purpose isolation, portal denials, audit immutability, gating, pipeline separation).
+- Lead form (server-side test on clone): missing consent -> error; valid -> lead in Talent Search team, stage «درخواست ورودی», HTML escaped, audit event; missing CSRF -> 400.
+
+### Rehearsal 4 (eot_ts4, fresh, final code) - PASS
+- eot.ir UNCHANGED (1,072 pages + forms + sitemap + all existing website-1/generic rows); website_crm copy contained (inactive).
+- All 13 Talent Search pages 200 on website 2; /masnavi, /courses -> Persian 404; unknown host -> eot.ir; 29/29 stage tests.
+
+### LIVE (eot_main), 2026-09-29 06:35-06:48 UTC - PASS
+- `tools/prod/ts_ship.sh install survey,crm,helpdesk,account,ts_core,ts_website s1`
+- /etc/odoo20.conf addons_path += /opt/odoo/talentsearch/addons (backup next to the file).
+- Backup: /var/backups/odoo/eot_main_pre_ts_s1_20260929-0635.dump + filestore tgz.
+- odoo20 stopped 06:40:28 -> started 06:42:42 (eot.ir downtime ~2 min 20 s); install rc=0.
+- Live guard: **eot.ir UNCHANGED** (1,072 pages, forms, sitemap, existing rows).
+- Website 2 = db id 4 (xmlid ts_website.website_ts), https://ts.innerquest.me (nginx upstream -> 8069, noindex header).
+- Rehearsal clones dropped (pg/fs/proc all 0).
+
+### Unresolved gates carried forward
+- Instruments: none published. Scale/reverse/missing rules verified from source; still missing per instrument: rights, evidence, intended use, norms; anchor labels exist only for inventory_012; clinical texts need a named clinician's approval.
+- Privacy and consent pages are marked draft pending legal review.
+- No payment provider, SMS or outgoing email (owner decision, not needed now).
+- talentsearch.ir DNS cutover: owner decision.
