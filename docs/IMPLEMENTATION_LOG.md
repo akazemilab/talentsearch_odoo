@@ -55,8 +55,43 @@ Every stage: rehearse on an `eot_ts*` clone -> `ts guard compare` (eot.ir unchan
 - Website 2 = db id 4 (xmlid ts_website.website_ts), https://ts.innerquest.me (nginx upstream -> 8069, noindex header).
 - Rehearsal clones dropped (pg/fs/proc all 0).
 
+### 2026-09-29 owner decisions (10:32 local)
+- All 33 contract-bearing instruments, their scoring rules, interpretation texts (participant and clinician), and the privacy/consent texts are approved by the owner (EOT). Recorded as `TS-OWNER-APPROVED-1405-07-07`, approver = platform admin. The texts claim no psychometric reliability, validity or norms, because the source records none.
+- The owner authorised fixing the eot.ir problems caused by the shared instance in theme_eot_custom.
+
+### Incident 2026-09-29 ~07:20 UTC (live, contained)
+- `ts sync` wrote unshipped code into the LIVE addons dir. A theme ship then restarted odoo20 on that code, and the upgrade failed: UnboundLocalError `IMD` in `_ts_contain_stock_apps`.
+- Live TS code was restored to ed70629 and odoo20 restarted. eot.ir /, /contactus and /web/login stayed 200.
+- Fixes:
+  - The IMD bug.
+  - Rehearsals now use /opt/odoo/talentsearch_stage.
+  - `ts_ship.sh` alone copies stage to live, keeping the previous copy and restoring it on failure.
+  - Rehearsal baselines are served on the live code.
+
+### Stage 2: assessments + organizations (rehearsals r6-r9)
+- ts_assessment: 36 source instruments. 33 are published (locked versions, exhaustive band validation); 3 are retired (no contract).
+  - Golden parity against an independent re-implementation of S09-V3.0: 198 attempts, compared at the stored 4-decimal precision.
+  - Duplicate base title (inventory_003/004): the title and URL now carry the item count.
+- ts_org:
+  - Invitations by copyable link (no email/SMS).
+  - Participant opt-in sharing, revocable from the report.
+  - Employment workspaces see only the band per factor. Clinical workspaces show the full report with clinician texts, and only to verified clinicians.
+  - Operations dashboard and a clinician verification queue.
+  - Employment-eligible instruments: adult + استعدادیابی/خودشناسی/مسائل شغلی.
+- Trust/privacy/consent pages:
+  - Drafts replaced by «نسخهٔ ۱، لازم‌الاجرا از ۷ مهر ۱۴۰۵؛ تأییدشده توسط EOT».
+  - Claims that did not match the product were removed: reference group, reviewer signature before release, support-access workflow, minors path "not active".
+- eot.ir fixes:
+  - Stage 1 had added stock portal cards ("Invoices to pay", payment methods, ...) and an e-invoice selector to eot.ir's signed-in /my. They are now scoped to website 2, and eot.ir /my, /my/home, /my/account and /my/security are identical to the pre-Talent-Search text.
+  - Theme: retired-URL redirects answer only on website 1, and the contact form hook is kept. Branch ts-isolation was rehearsed (1,067 routes, only the 3 pre-existing English article titles flagged), shipped live 08:2x UTC and merged to main.
+- Headless layout audit (tools/vps/ts_shot.py) found two issues, both fixed:
+  - Odoo's menu-autohide script threw on every website-2 page because header#top had no .top_menu.
+  - The dashboard table's visually-hidden header widened the page by 17px at 375px.
+- r8 results:
+  - Guard: eot.ir UNCHANGED (1,072 pages).
+  - Tests: stage 29/29, assessment 35/35, HTTP participant 24/24, org 32/32, HTTP org 27/27.
+
 ### Unresolved gates carried forward
-- Instruments: none published. Scale/reverse/missing rules verified from source; still missing per instrument: rights, evidence, intended use, norms; anchor labels exist only for inventory_012; clinical texts need a named clinician's approval.
-- Privacy and consent pages are marked draft pending legal review.
+- Norms/psychometric evidence do not exist in the source; reports say so and use contract bands only.
 - No payment provider, SMS or outgoing email (owner decision, not needed now).
 - talentsearch.ir DNS cutover: owner decision.
