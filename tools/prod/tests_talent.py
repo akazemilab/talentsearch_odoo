@@ -112,6 +112,25 @@ for n in range(8):
     att2.ts_finish_field(f)
 check('ninth field refused', raises(lambda: att2.ts_add_field('زمینه ۹')))
 
+
+# ---- import helpers (pure)
+from datetime import date
+from odoo.addons.ts_assessment.models.attempt import g2j
+from odoo.addons.ts_talent.models import importer as IM
+
+bad = 0
+d = date(1991, 3, 1)
+while d < date(2031, 3, 1):
+    jy, jm, jd = g2j(d.year, d.month, d.day)
+    if IM.j2g(jy, jm, jd) != (d.year, d.month, d.day):
+        bad += 1
+    d = date.fromordinal(d.toordinal() + 1)
+check('Jalali -> Gregorian round-trips for 40 years of days', bad == 0, str(bad))
+check('stamp 1403/05/17 14:32 Tehran -> 11:02 UTC', str(IM.parse_stamp('1403/05/17 14:32')) == '2024-08-07 11:02:00')
+check('Persian digits in a stamp', str(IM.parse_stamp('۱۴۰۳/۰۵/۱۷ ۱۴:۳۲')) == '2024-08-07 11:02:00')
+check('phone forms all normalize alike', {IM.norm_phone(x) for x in ('09121234567', '9121234567', '+98 912 123 4567', '۰۹۱۲۱۲۳۴۵۶۷', '00989121234567')} == {'+989121234567'})
+check('bad phone / e-mail rejected', IM.norm_phone('12345') is None and IM.norm_email('abc') is None and IM.norm_email(' A@B.co ') == 'a@b.co')
+
 failed = [n for n, ok in results if not ok]
 env.cr.rollback()
 print('SUMMARY %d/%d passed' % (len(results) - len(failed), len(results)))
