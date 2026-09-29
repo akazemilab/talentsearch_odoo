@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="page_home_view" model="ir.ui.view">
+        <field name="name">TS: homepage</field>
+        <field name="type">qweb</field>
+        <field name="key">ts_website.home</field>
+        <field name="website_id" ref="website_ts"/>
+        <field name="arch" type="xml">
+            <t t-name="ts_website.home">
+                <t t-call="website.layout" pageName.f="homepage" additional_title.f="سنجش روان‌شناختی با مرزهای روشن">
+                    <div id="wrap" class="ts-page">
+                        <section class="ts-hero">
+                            <div class="ts-container">
+                                <span class="ts-hero__kicker">سنجش روان‌شناختی، از خانوادهٔ <bdi dir="ltr">EOT</bdi></span>
+                                <h1>بدانید یک سنجش چه چیزی را می‌تواند بگوید، و چه چیزی را نه.</h1>
+                                <p class="ts-hero__lead">تلنت سرچ به سازمان‌ها و مراکز مشاوره کمک می‌کند پرسشنامه‌های روان‌شناختی را با هدف روشن، رضایت آگاهانه، حفظ حریم خصوصی و بازبینی انسانی اجرا کنند و نتیجه را همراه با محدودیت‌هایش بخوانند.</p>
+                                <div class="ts-hero__actions">
+                                    <a href="/contact?topic=demo" class="ts-btn ts-btn--light">درخواست جلسهٔ معرفی</a>
+                                    <a href="/how-it-works" class="ts-btn ts-btn--quiet">روند کار را ببینید</a>
+                                </div>
+                            </div>
+                            <div class="ts-hero__mark" aria-hidden="true"/>
+                        </section>
+
+                        <section class="ts-section">
+                            <div class="ts-container">
+                                <div class="ts-section__head">
+                                    <h2>برای چه کسانی</h2>
+                                    <p>هر مسیر فضای کاری، دسترسی‌ها و گزارش‌های جداگانه دارد. دادهٔ بالینی هرگز به کارفرما نمی‌رسد.</p>
+                                </div>
+                                <div class="ts-grid ts-grid--3">
+                                    <article class="ts-card">
+                                        <span class="ts-card__band" aria-hidden="true"/>
+                                        <h3>سازمان‌ها و منابع انسانی</h3>
+                                        <p>تحلیل شغل، مجموعهٔ سنجش مرتبط با نقش، دعوت از داوطلبان، کارت ارزیابی و مصاحبهٔ ساختاریافته؛ تصمیم نهایی با انسان.</p>
+                                        <a class="ts-card__link" href="/employers">مسیر سازمان‌ها</a>
+                                    </article>
+                                    <article class="ts-card">
+                                        <span class="ts-card__band" aria-hidden="true"/>
+                                        <h3>مراکز مشاوره و درمان</h3>
+                                        <p>پذیرش مراجع، رضایت آگاهانه، اجرای پرسشنامه روی موبایل، بازبینی متخصص پیش از انتشار نتیجه و پیگیری روند تغییرات.</p>
+                                        <a class="ts-card__link" href="/clinics">مسیر مراکز بالینی</a>
+                                    </article>
+                                    <article class="ts-card">
+                                        <span class="ts-card__band" aria-hidden="true"/>
+                                        <h3>شرکت‌کنندگان</h3>
+                                        <p>پیش از شروع می‌دانید چرا دعوت شده‌اید، چه کسی نتیجه را می‌بیند و چه حقی دارید. پاسخ‌ها خودکار ذخیره می‌شوند.</p>
+                                        <a class="ts-card__link" href="/how-it-works#participants">حقوق و روند شرکت‌کننده</a>
+                                    </article>
+                                </div>
+                            </div>
+                        </section>
+
+                        <section class="ts-section">
+                            <div class="ts-container">
+                                <div class="ts-section__head">
+                                    <h2>اصولی که کوتاه نمی‌آییم</h2>
+                                </div>
+                                <div class="ts-grid ts-grid--2">
+                                    <div class="ts-card ts-card--soft">
+                                        <h3>هدف، پیش از هر چیز</h3>
+                                        <p>استخدام، مراقبت بالینی و آموزش هر کدام قرارداد، اطلاع‌رسانی، سنجه و گزارش جدا دارند و داده‌ها بین آن‌ها جابه‌جا نمی‌شود.</p>
+                                    </div>
+                                    <div class="ts-card ts-card--soft">
+                                        <h3>رضایت جداگانه و قابل پس‌گرفتن</h3>
+                                        <p>رضایت برای خدمت اصلی و برای پژوهش جدا گرفته می‌شود، هیچ گزینه‌ای از پیش تیک‌خورده نیست و مسیر انصراف روشن است.</p>
+                                    </div>
+                                    <div class="ts-card ts-card--soft">
+                                        <h3>پرسشنامه، ورودی تصمیم انسانی است</h3>
+                                        <p>هیچ تشخیص خودکار، رد خودکار استخدام یا تصمیم درمانی خودکاری وجود ندارد. نتیجهٔ بالینی تا بازبینی متخصص منتشر نمی‌شود.</p>
+                                    </div>
+                                    <div class="ts-card ts-card--soft">
+                                        <h3>نمره همراه با معنا و محدودیت</h3>
+                                        <p>هر نمره با جهت مقیاس، نسخهٔ سنجه، گروه هدف و مرز تفسیرش نمایش داده می‌شود؛ بدون برچسب قطعی شخصیتی.</p>
+                                    </div>
+                                </div>
+                                <p class="ts-notice"><strong>فهرست سنجه‌ها کجاست؟</strong> هر سنجه فقط وقتی منتشر می‌شود که مالکیت و حق استفاده، شواهد، گروه هدف و کاربرد مجاز آن ثبت و تأیید شده باشد. شرح این معیارها در <a href="/evidence">شواهد و محدودیت‌ها</a> آمده است.</p>
+                            </div>
+                        </section>
+
+                        <t t-call="ts_website.cta"/>
+                    </div>
+                </t>
+            </t>
+        </field>
+    </record>
+</odoo>

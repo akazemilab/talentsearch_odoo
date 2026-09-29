@@ -1,0 +1,176 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="page_employers_view" model="ir.ui.view">
+        <field name="name">TS: employers</field>
+        <field name="type">qweb</field>
+        <field name="key">ts_website.page_employers</field>
+        <field name="website_id" ref="website_ts"/>
+        <field name="arch" type="xml">
+            <t t-name="ts_website.page_employers">
+                <t t-call="website.layout" additional_title.f="برای سازمان‌ها">
+                    <div id="wrap" class="ts-page">
+                        <t t-call="ts_website.page_hero">
+                            <t t-set="kicker">برای سازمان‌ها و منابع انسانی</t>
+                            <t t-set="title">شواهد مرتبط با نقش، نه یک رتبهٔ شخصیتی</t>
+                            <t t-set="lead">سنجش در استخدام از تحلیل شغل شروع می‌شود: هر بُعدی که سنجیده می‌شود باید به کاری که فرد انجام خواهد داد ربط داشته باشد. تصمیم نهایی همیشه با شماست و مستند می‌شود.</t>
+                        </t>
+                        <section class="ts-section">
+                            <div class="ts-container">
+                                <div class="ts-section__head"><h2>روند یک پروژهٔ استخدامی</h2></div>
+                                <ol class="ts-steps">
+                                    <li><div><strong>تحلیل شغل</strong><span>وظایف اصلی، معیار موفقیت، مهارت‌های لازم و وزن هر شایستگی (جمع وزن‌ها صد درصد) ثبت می‌شود. هیچ سازهٔ بالینی قابل انتخاب نیست.</span></div></li>
+                                    <li><div><strong>انتخاب مجموعهٔ سنجش</strong><span>برای هر سنجهٔ پیشنهادی زمان، شواهد، گروه هدف، موارد منع و نمونهٔ گزارش را می‌بینید. نسخهٔ مجموعه هنگام شروع پروژه قفل می‌شود.</span></div></li>
+                                    <li><div><strong>دعوت داوطلبان</strong><span>با ایمیل، پیامک یا لینک یک‌بارمصرف. داوطلب پیش از شروع هدف، گیرندهٔ نتایج، زمان تقریبی و امکانات دسترس‌پذیری را می‌بیند.</span></div></li>
+                                    <li><div><strong>کارت ارزیابی نقش</strong><span>منابع انسانی فقط ابعاد مرتبط با نقش، کیفیت تکمیل و محدودیت‌ها را می‌بیند؛ نه پاسخ‌های خام و نه هیچ دادهٔ سلامت.</span></div></li>
+                                    <li><div><strong>مصاحبهٔ ساختاریافته و تصمیم</strong><span>مدیر استخدام امتیاز مصاحبه و دلیل تصمیم را ثبت می‌کند. هر دسترسی و خروجی ممیزی می‌شود.</span></div></li>
+                                </ol>
+                            </div>
+                        </section>
+                        <section class="ts-section">
+                            <div class="ts-container ts-grid ts-grid--2">
+                                <div>
+                                    <h2>آنچه دریافت می‌کنید</h2>
+                                    <ul class="ts-list-check">
+                                        <li>قالب پروژه برای نقش‌های تکرارشونده و قیف دعوت تا تصمیم</li>
+                                        <li>کارت ارزیابی با عدم‌قطعیت قابل مشاهده، بدون رتبه‌بندی تک‌عددی</li>
+                                        <li>راهنمای مصاحبهٔ ساختاریافته و دفتر ثبت تصمیم</li>
+                                        <li>گزارش بازخورد برای داوطلب، مطابق آنچه از پیش توافق شده</li>
+                                    </ul>
+                                </div>
+                                <div>
+                                    <h2>آنچه عمداً انجام نمی‌دهیم</h2>
+                                    <ul class="ts-list-check ts-list-no">
+                                        <li>رد خودکار داوطلب بر اساس نمره</li>
+                                        <li>نمایش پاسخ‌های بالینی یا اطلاعات سلامت به کارفرما</li>
+                                        <li>برابر دانستن نمرهٔ بالا با استخدام موفق</li>
+                                        <li>نظارت تهاجمی یا ضبط تصویر بدون ضرورت</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </section>
+                        <t t-call="ts_website.cta">
+                            <t t-set="cta_title">با یک نقش شروع کنید</t>
+                            <t t-set="cta_text">همکاری با یک پایلوت محدود روی یک نقش آغاز می‌شود. دامنه و هزینه پس از گفت‌وگو در پیش‌فاکتور مشخص می‌شود.</t>
+                        </t>
+                    </div>
+                </t>
+            </t>
+        </field>
+    </record>
+
+    <record id="page_clinics_view" model="ir.ui.view">
+        <field name="name">TS: clinics</field>
+        <field name="type">qweb</field>
+        <field name="key">ts_website.page_clinics</field>
+        <field name="website_id" ref="website_ts"/>
+        <field name="arch" type="xml">
+            <t t-name="ts_website.page_clinics">
+                <t t-call="website.layout" additional_title.f="برای مراکز بالینی">
+                    <div id="wrap" class="ts-page">
+                        <t t-call="ts_website.page_hero">
+                            <t t-set="kicker">برای مراکز مشاوره و درمان</t>
+                            <t t-set="title">پرسشنامه به‌عنوان ورودی قضاوت بالینی، نه جایگزین آن</t>
+                            <t t-set="lead">متخصص دارای مجوز سنجه را تعیین می‌کند، مراجع روی موبایل پاسخ می‌دهد و نتیجه تا بازبینی و امضای متخصص برای مراجع منتشر نمی‌شود.</t>
+                        </t>
+                        <section class="ts-section">
+                            <div class="ts-container">
+                                <div class="ts-section__head"><h2>روند کار در مرکز</h2></div>
+                                <ol class="ts-steps">
+                                    <li><div><strong>احراز صلاحیت</strong><span>مدارک مرکز و پروانهٔ متخصصان بررسی می‌شود. پیش از احراز، سنجه‌های بالینی باز نمی‌شوند.</span></div></li>
+                                    <li><div><strong>پذیرش و رضایت</strong><span>پرونده با حداقل اطلاعات لازم ساخته می‌شود. دعوت‌نامهٔ مراجع هویت متخصص، هدف، حریم خصوصی و محدودیت‌های فوریت را توضیح می‌دهد.</span></div></li>
+                                    <li><div><strong>تعیین سنجه</strong><span>سنجه، دلیل، تناوب، موعد و مسئول بازبینی ثبت می‌شود. مراجع روی موبایل پاسخ می‌دهد و پاسخ‌ها خودکار ذخیره می‌شوند.</span></div></li>
+                                    <li><div><strong>بازبینی و انتشار</strong><span>متخصص نمره، موارد بی‌پاسخ، مقایسه با دفعات قبل و محدودیت‌ها را می‌بیند، تفسیر را ثبت و گزارش را امضا می‌کند.</span></div></li>
+                                    <li><div><strong>پیگیری</strong><span>نوبت بعدی سنجش زمان‌بندی می‌شود، روند تغییرات با نسخه‌های هم‌ارز رسم می‌شود و ارجاع مستند می‌شود.</span></div></li>
+                                </ol>
+                            </div>
+                        </section>
+                        <section class="ts-section">
+                            <div class="ts-container">
+                                <div class="ts-notice ts-notice--warn">
+                                    <p><strong>تلنت سرچ خدمت اورژانسی نیست.</strong> پاسخ فوری به موارد نگران‌کننده بر عهدهٔ مسئول تعیین‌شده در همان مرکز و طبق پروتکل مصوب آن است. هیچ فضای بالینی بدون معرفی این مسئول فعال نمی‌شود. در شرایط اضطراری با اورژانس <bdi dir="ltr">115</bdi> تماس بگیرید.</p>
+                                </div>
+                                <div class="ts-grid ts-grid--2">
+                                    <div>
+                                        <h2>برای متخصص</h2>
+                                        <ul class="ts-list-check">
+                                            <li>فهرست پرونده‌های تخصیص‌یافته، موعدها و صف بازبینی</li>
+                                            <li>نمایش نمره با جهت مقیاس، نسخه و موارد بی‌پاسخ</li>
+                                            <li>گزارش پیش‌نویس، امضا، نسخه‌های اصلاحی با حفظ سابقه</li>
+                                        </ul>
+                                    </div>
+                                    <div>
+                                        <h2>برای مدیر مرکز</h2>
+                                        <ul class="ts-list-check">
+                                            <li>احراز صلاحیت کارکنان و تخصیص پرونده</li>
+                                            <li>آمار بهره‌برداری، تأخیر بازبینی و مصرف اعتبار</li>
+                                            <li>بدون دسترسی پیش‌فرض به همهٔ پرونده‌ها</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </section>
+                        <t t-call="ts_website.cta">
+                            <t t-set="cta_title">پایلوت با نظارت متخصص</t>
+                            <t t-set="cta_text">همکاری با مراکز به‌صورت پایلوت و با تأیید روند کار توسط متخصصان همان مرکز آغاز می‌شود.</t>
+                        </t>
+                    </div>
+                </t>
+            </t>
+        </field>
+    </record>
+
+    <record id="page_how_view" model="ir.ui.view">
+        <field name="name">TS: how it works</field>
+        <field name="type">qweb</field>
+        <field name="key">ts_website.page_how</field>
+        <field name="website_id" ref="website_ts"/>
+        <field name="arch" type="xml">
+            <t t-name="ts_website.page_how">
+                <t t-call="website.layout" additional_title.f="روند کار">
+                    <div id="wrap" class="ts-page">
+                        <t t-call="ts_website.page_hero">
+                            <t t-set="kicker">روند کار</t>
+                            <t t-set="title">از دعوت تا نتیجه، هر مرحله روشن است</t>
+                            <t t-set="lead">سازمان یا مرکز شما را دعوت می‌کند، شما آگاهانه تصمیم می‌گیرید، پاسخ می‌دهید و نتیجه پس از بازبینی به شکلی که از پیش گفته شده به دستتان می‌رسد.</t>
+                        </t>
+                        <section class="ts-section" id="participants">
+                            <div class="ts-container">
+                                <div class="ts-section__head"><h2>برای شرکت‌کننده</h2><p>برای پاسخ دادن به دعوت‌نامه لازم نیست حساب کاربری کامل بسازید.</p></div>
+                                <ol class="ts-steps">
+                                    <li><div><strong>دعوت‌نامه</strong><span>می‌بینید چه کسی دعوت کرده، چرا، چه مدت طول می‌کشد و چه کسی نتیجه را خواهد دید.</span></div></li>
+                                    <li><div><strong>رضایت</strong><span>رضایت برای خدمت اصلی و برای پژوهش جداست و هیچ کدام از پیش انتخاب نشده است. شرکت در پژوهش اختیاری است.</span></div></li>
+                                    <li><div><strong>پاسخ دادن</strong><span>روی موبایل یا رایانه، با ذخیرهٔ خودکار. اگر اتصال قطع شد یا کار را نیمه‌تمام گذاشتید، تا زمان اعتبار دعوت‌نامه از همان‌جا ادامه می‌دهید.</span></div></li>
+                                    <li><div><strong>ارسال و رسید</strong><span>پیش از ارسال، پرسش‌های بی‌پاسخ را می‌بینید. پس از ارسال رسیدی می‌گیرید که می‌گوید بعد چه می‌شود و چه زمانی.</span></div></li>
+                                    <li><div><strong>نتیجه</strong><span>نتیجه فقط پس از بازبینی لازم و به همان شکلی که در دعوت‌نامه گفته شده منتشر می‌شود. تاریخچهٔ اشتراک‌گذاری را می‌توانید ببینید.</span></div></li>
+                                </ol>
+                            </div>
+                        </section>
+                        <section class="ts-section">
+                            <div class="ts-container ts-grid ts-grid--2">
+                                <div>
+                                    <h2>حقوق شما</h2>
+                                    <ul class="ts-list-check">
+                                        <li>دانستن هدف، گیرندهٔ نتایج و مدت نگهداری داده</li>
+                                        <li>پس گرفتن رضایت برای پردازش‌های آینده</li>
+                                        <li>درخواست اصلاح یا حذف، طبق قرارداد و الزامات قانونی</li>
+                                        <li>درخواست پشتیبانی و امکانات دسترس‌پذیری</li>
+                                    </ul>
+                                </div>
+                                <div>
+                                    <h2>برای سازمان یا مرکز</h2>
+                                    <ul class="ts-list-check">
+                                        <li>فضای کاری جدا برای هر هدف با نقش‌ها و دسترسی‌های تعریف‌شده</li>
+                                        <li>ثبت هر دسترسی، خروجی و تغییر مهم در دفتر ممیزی</li>
+                                        <li>آمار تجمیعی فقط با حداقل اندازهٔ گروه، برای جلوگیری از شناسایی افراد</li>
+                                    </ul>
+                                    <p><a href="/employers">مسیر سازمان‌ها</a> · <a href="/clinics">مسیر مراکز بالینی</a></p>
+                                </div>
+                            </div>
+                        </section>
+                        <t t-call="ts_website.cta"/>
+                    </div>
+                </t>
+            </t>
+        </field>
+    </record>
+</odoo>

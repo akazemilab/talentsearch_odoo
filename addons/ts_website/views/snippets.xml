@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Shared blocks for website-2 pages. -->
+    <record id="snippet_cta" model="ir.ui.view">
+        <field name="name">TS: call to action band</field>
+        <field name="type">qweb</field>
+        <field name="key">ts_website.cta</field>
+        <field name="website_id" ref="website_ts"/>
+        <field name="arch" type="xml">
+            <t t-name="ts_website.cta">
+                <section class="ts-section">
+                    <div class="ts-container">
+                        <div class="ts-band">
+                            <div>
+                                <h2 t-out="cta_title or 'از یک گفت‌وگوی کوتاه شروع کنیم'"/>
+                                <p t-out="cta_text or 'نیاز شما را می‌شنویم و می‌گوییم تلنت سرچ کجا کمک می‌کند و کجا نه.'"/>
+                            </div>
+                            <a t-att-href="cta_href or '/contact?topic=demo'" class="ts-btn ts-btn--primary" t-out="cta_label or 'درخواست جلسهٔ معرفی'"/>
+                        </div>
+                    </div>
+                </section>
+            </t>
+        </field>
+    </record>
+    <record id="snippet_page_hero" model="ir.ui.view">
+        <field name="name">TS: inner page hero</field>
+        <field name="type">qweb</field>
+        <field name="key">ts_website.page_hero</field>
+        <field name="website_id" ref="website_ts"/>
+        <field name="arch" type="xml">
+            <t t-name="ts_website.page_hero">
+                <section class="ts-hero ts-hero--soft">
+                    <div class="ts-container">
+                        <span class="ts-hero__kicker" t-out="kicker"/>
+                        <h1 t-out="title"/>
+                        <p class="ts-hero__lead" t-out="lead"/>
+                    </div>
+                </section>
+            </t>
+        </field>
+    </record>
+</odoo>

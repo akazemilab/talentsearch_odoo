@@ -1,0 +1,209 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="snippet_lead_form" model="ir.ui.view">
+        <field name="name">TS: lead form</field>
+        <field name="type">qweb</field>
+        <field name="key">ts_website.lead_form</field>
+        <field name="website_id" ref="website_ts"/>
+        <field name="arch" type="xml">
+            <t t-name="ts_website.lead_form">
+                <t t-set="topic" t-value="request.params.get('topic') or default_topic or 'demo'"/>
+                <form action="/ts/lead" method="post" class="ts-form" novalidate="novalidate">
+                    <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                    <p t-if="request.params.get('error')" class="ts-form__error" role="alert">لطفاً فیلدهای الزامی را کامل کنید و رضایت تماس را تأیید کنید.</p>
+                    <div>
+                        <label for="ts_topic">موضوع</label>
+                        <select id="ts_topic" name="topic">
+                            <option value="demo" t-att-selected="topic == 'demo'">درخواست جلسهٔ معرفی</option>
+                            <option value="quote" t-att-selected="topic == 'quote'">درخواست پیش‌فاکتور</option>
+                            <option value="evidence" t-att-selected="topic == 'evidence'">پرسش دربارهٔ شواهد یک سنجه</option>
+                            <option value="support" t-att-selected="topic == 'support'">پشتیبانی شرکت‌کننده</option>
+                            <option value="other" t-att-selected="topic == 'other'">موضوع دیگر</option>
+                        </select>
+                    </div>
+                    <div class="ts-grid ts-grid--2">
+                        <div>
+                            <label for="ts_name">نام و نام خانوادگی <span class="ts-hint">(الزامی)</span></label>
+                            <input id="ts_name" type="text" name="name" dir="auto" required="required" autocomplete="name" maxlength="120"/>
+                        </div>
+                        <div>
+                            <label for="ts_email">ایمیل کاری <span class="ts-hint">(الزامی)</span></label>
+                            <input id="ts_email" type="email" name="email" dir="ltr" required="required" autocomplete="email" maxlength="160"/>
+                        </div>
+                        <div>
+                            <label for="ts_phone">تلفن</label>
+                            <input id="ts_phone" type="tel" name="phone" dir="ltr" autocomplete="tel" maxlength="40"/>
+                        </div>
+                        <div>
+                            <label for="ts_company">نام سازمان یا مرکز</label>
+                            <input id="ts_company" type="text" name="company" dir="auto" autocomplete="organization" maxlength="160"/>
+                        </div>
+                        <div>
+                            <label for="ts_segment">نوع مجموعه</label>
+                            <select id="ts_segment" name="segment">
+                                <option value="">انتخاب کنید</option>
+                                <option value="employer">سازمان / منابع انسانی</option>
+                                <option value="clinic">مرکز مشاوره یا درمان</option>
+                                <option value="practitioner">متخصص مستقل</option>
+                                <option value="participant">شرکت‌کننده</option>
+                                <option value="other">سایر</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label for="ts_size">تعداد کارکنان</label>
+                            <select id="ts_size" name="size">
+                                <option value="">انتخاب کنید</option>
+                                <option value="1-49">کمتر از ۵۰</option>
+                                <option value="50-199">۵۰ تا ۱۹۹</option>
+                                <option value="200-999">۲۰۰ تا ۹۹۹</option>
+                                <option value="1000+">۱۰۰۰ و بیشتر</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label for="ts_volume">تعداد سنجش سالانهٔ تقریبی</label>
+                            <input id="ts_volume" type="text" name="volume" dir="auto" inputmode="numeric" maxlength="40"/>
+                        </div>
+                        <div>
+                            <label for="ts_roles">نقش‌ها یا کاربرد مدنظر</label>
+                            <input id="ts_roles" type="text" name="roles" dir="auto" maxlength="200"/>
+                        </div>
+                    </div>
+                    <div>
+                        <label for="ts_message">توضیحات</label>
+                        <textarea id="ts_message" name="message" dir="auto" maxlength="3000"/>
+                    </div>
+                    <label class="ts-check"><input type="checkbox" name="consent_contact" value="1" required="required"/> <span>موافقم تلنت سرچ برای پاسخ به همین درخواست با من تماس بگیرد. <span class="ts-hint">(الزامی)</span></span></label>
+                    <label class="ts-check"><input type="checkbox" name="consent_news" value="1"/> <span>مایلم اخبار و به‌روزرسانی‌های تلنت سرچ را دریافت کنم. <span class="ts-hint">(اختیاری)</span></span></label>
+                    <div><button type="submit" class="ts-btn ts-btn--primary">ارسال درخواست</button></div>
+                    <p class="ts-hint">اطلاعات این فرم فقط برای پاسخ به درخواست شما استفاده می‌شود. <a href="/privacy">حریم خصوصی</a></p>
+                </form>
+            </t>
+        </field>
+    </record>
+
+    <record id="page_contact_view" model="ir.ui.view">
+        <field name="name">TS: contact</field>
+        <field name="type">qweb</field>
+        <field name="key">ts_website.page_contact</field>
+        <field name="website_id" ref="website_ts"/>
+        <field name="arch" type="xml">
+            <t t-name="ts_website.page_contact">
+                <t t-call="website.layout" additional_title.f="تماس">
+                    <div id="wrap" class="ts-page">
+                        <t t-call="ts_website.page_hero">
+                            <t t-set="kicker">تماس</t>
+                            <t t-set="title">با ما در تماس باشید</t>
+                            <t t-set="lead">درخواست جلسهٔ معرفی، پیش‌فاکتور، پرسش دربارهٔ شواهد یا پشتیبانی. پاسخ از طریق ایمیل یا تلفنی که وارد می‌کنید داده می‌شود.</t>
+                        </t>
+                        <section class="ts-section">
+                            <div class="ts-container ts-grid ts-grid--2">
+                                <t t-call="ts_website.lead_form"/>
+                                <div class="ts-card ts-card--soft" style="align-self:start">
+                                    <h3>راه‌های دیگر</h3>
+                                    <p>ایمیل: <a href="mailto:info@eot.ir"><bdi dir="ltr">info@eot.ir</bdi></a></p>
+                                    <p>تلفن: <a href="tel:+982188174100"><bdi dir="ltr">021-88174100</bdi></a></p>
+                                    <p>تلنت سرچ خدمت اورژانسی نیست. در شرایط اضطراری با اورژانس <bdi dir="ltr">115</bdi> تماس بگیرید.</p>
+                                </div>
+                            </div>
+                        </section>
+                    </div>
+                </t>
+            </t>
+        </field>
+    </record>
+
+    <record id="page_pricing_view" model="ir.ui.view">
+        <field name="name">TS: pricing / quote request</field>
+        <field name="type">qweb</field>
+        <field name="key">ts_website.page_pricing</field>
+        <field name="website_id" ref="website_ts"/>
+        <field name="arch" type="xml">
+            <t t-name="ts_website.page_pricing">
+                <t t-call="website.layout" additional_title.f="درخواست پیش‌فاکتور">
+                    <div id="wrap" class="ts-page">
+                        <t t-call="ts_website.page_hero">
+                            <t t-set="kicker">هزینه و پیش‌فاکتور</t>
+                            <t t-set="title">هزینه بر اساس دامنهٔ واقعی کار شما</t>
+                            <t t-set="lead">قیمت ثابتی روی سایت اعلام نمی‌کنیم، چون هزینه به نوع سنجه، تعداد تکمیل‌ها، خدمات بازبینی و حق استفادهٔ سنجه‌ها بستگی دارد. پیش‌فاکتور به تومان صادر می‌شود.</t>
+                        </t>
+                        <section class="ts-section">
+                            <div class="ts-container ts-grid ts-grid--2">
+                                <div class="ts-prose">
+                                    <h2>پیش‌فاکتور چه چیزهایی را مشخص می‌کند</h2>
+                                    <ul class="ts-list-check">
+                                        <li>دامنهٔ پایلوت یا قرارداد سالانه و مدت آن</li>
+                                        <li>تعداد تکمیل‌های پیش‌بینی‌شده و اعتبار مصرفی</li>
+                                        <li>سنجه‌ها و شرایط حق استفادهٔ هر کدام</li>
+                                        <li>خدمات بازبینی، پشتیبانی و راه‌اندازی</li>
+                                        <li>آنچه شامل نمی‌شود</li>
+                                    </ul>
+                                </div>
+                                <t t-call="ts_website.lead_form"><t t-set="default_topic">quote</t></t>
+                            </div>
+                        </section>
+                    </div>
+                </t>
+            </t>
+        </field>
+    </record>
+
+    <record id="page_thanks_view" model="ir.ui.view">
+        <field name="name">TS: request received</field>
+        <field name="type">qweb</field>
+        <field name="key">ts_website.page_thanks</field>
+        <field name="website_id" ref="website_ts"/>
+        <field name="arch" type="xml">
+            <t t-name="ts_website.page_thanks">
+                <t t-call="website.layout" additional_title.f="درخواست دریافت شد">
+                    <div id="wrap" class="ts-page">
+                        <t t-call="ts_website.page_hero">
+                            <t t-set="kicker">درخواست دریافت شد</t>
+                            <t t-set="title">سپاس از پیام شما</t>
+                            <t t-set="lead">درخواست شما ثبت شد و همکاران ما از طریق ایمیل یا تلفنی که وارد کرده‌اید پاسخ می‌دهند.</t>
+                        </t>
+                        <section class="ts-section">
+                            <div class="ts-container">
+                                <p><a href="/" class="ts-btn ts-btn--outline">بازگشت به صفحهٔ اصلی</a></p>
+                            </div>
+                        </section>
+                    </div>
+                </t>
+            </t>
+        </field>
+    </record>
+
+    <record id="page_about_view" model="ir.ui.view">
+        <field name="name">TS: about</field>
+        <field name="type">qweb</field>
+        <field name="key">ts_website.page_about</field>
+        <field name="website_id" ref="website_ts"/>
+        <field name="arch" type="xml">
+            <t t-name="ts_website.page_about">
+                <t t-call="website.layout" additional_title.f="درباره ما">
+                    <div id="wrap" class="ts-page">
+                        <t t-call="ts_website.page_hero">
+                            <t t-set="kicker">درباره ما</t>
+                            <t t-set="title">تلنت سرچ، خدمت سنجش از خانوادهٔ <bdi dir="ltr">EOT</bdi></t>
+                            <t t-set="lead">مؤسسهٔ <bdi dir="ltr">EOT</bdi> مسئول تلنت سرچ است. هر خدمت در خانوادهٔ EOT برای یک نیاز مشخص ساخته شده و نام EOT را به‌عنوان پشتوانه همراه دارد.</t>
+                        </t>
+                        <section class="ts-section">
+                            <div class="ts-container ts-prose">
+                                <h2>چرا تلنت سرچ</h2>
+                                <p>سنجش روان‌شناختی وقتی مفید است که هدفش روشن باشد، شرکت‌کننده آگاهانه رضایت دهد و نتیجه همراه با محدودیت‌هایش خوانده شود. تلنت سرچ برای همین ساخته شده است: ابزاری برای سازمان‌ها و مراکز بالینی که سنجش را درست اجرا کنند، نه بیشتر از آنچه یک پرسشنامه می‌تواند بگوید.</p>
+                                <h2>خانوادهٔ <bdi dir="ltr">EOT</bdi></h2>
+                                <ul>
+                                    <li><strong><bdi dir="ltr">EOT</bdi>:</strong> دانش روان‌شناسی و آموزش حرفه‌ای روان‌شناسان. <a href="https://www.eot.ir/">eot.ir</a></li>
+                                    <li><strong>سپهر:</strong> مشاوره و روان‌درمانی فردی و گروهی.</li>
+                                    <li><strong>تلنت اسکول:</strong> یادگیری روان‌شناسی برای همه، با سرعت خود یادگیرنده.</li>
+                                    <li><strong>تلنت سرچ:</strong> سنجش‌های روان‌شناختی، توضیح و گزارش نتایج.</li>
+                                </ul>
+                                <p>اگر به دنبال مشاوره یا درمان هستید، تلنت سرچ جای مناسبی برای شروع نیست؛ از مسیر مراقبت در <a href="https://www.eot.ir/">EOT</a> استفاده کنید.</p>
+                            </div>
+                        </section>
+                        <t t-call="ts_website.cta"/>
+                    </div>
+                </t>
+            </t>
+        </field>
+    </record>
+</odoo>

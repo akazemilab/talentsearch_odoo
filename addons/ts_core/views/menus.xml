@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <menuitem id="menu_ts_root" name="تلنت سرچ" sequence="45" groups="group_ts_user" web_icon="ts_core,static/description/icon.png"/>
+    <menuitem id="menu_ts_customers" name="مشتریان" parent="menu_ts_root" sequence="10"/>
+    <menuitem id="menu_ts_workspaces" name="فضاهای کاری" parent="menu_ts_customers" action="ts_workspace_action" sequence="10"/>
+    <menuitem id="menu_ts_governance" name="حاکمیت و ممیزی" parent="menu_ts_root" sequence="90"/>
+    <menuitem id="menu_ts_audit" name="رویدادهای ممیزی" parent="menu_ts_governance" action="ts_audit_event_action" sequence="10"/>
+</odoo>

@@ -37,16 +37,23 @@ def psql(db, q):
     return [l.split("\t") for l in out.stdout.splitlines() if l]
 
 
-def db_rows(db):
-    res = {}
+def columns(db, t):
+    return [r[0] for r in psql(db, f"SELECT column_name FROM information_schema.columns WHERE table_name = '{t}' ORDER BY 1")]
+
+
+def db_rows(db, base_cols=None):
+    res, cols = {}, {}
     for t, where in TABLES.items():
+        cols[t] = columns(db, t)
+        new = [c for c in cols[t] if base_cols and c not in base_cols.get(t, cols[t])]
+        drop = DROP + "".join(f" - '{c}'" for c in new)
         key = "key" if t == "ir_config_parameter" else "id"
         extra = ""
         if t == "ir_ui_view":
             extra = ", coalesce(key,''), coalesce(website_id::text,'g')"
-        rows = psql(db, f"SELECT {key}::text, md5((to_jsonb(t) {DROP})::text){extra} FROM {t} t WHERE {where}")
+        rows = psql(db, f"SELECT {key}::text, md5((to_jsonb(t) {drop})::text){extra} FROM {t} t WHERE {where}")
         res[t] = {r[0]: r[1:] for r in rows}
-    return res
+    return res, cols
 
 
 def fetch(port, path, host="www.eot.ir"):
@@ -79,6 +86,12 @@ def text_of(b):
     return [l.strip() for l in html.unescape(t).split("\n") if l.strip()]
 
 
+def forms_of(body):
+    b = re.sub(r'name="csrf_token" value="[^"]*"', "", body)
+    b = re.sub(r'value="[0-9a-f]{40,}[^"]*"', 'value="X"', b)
+    return re.findall(r"(?is)<(?:form|input|select|textarea|button)\b[^>]*>", b)
+
+
 def pages(port):
     st, loc, sm = fetch(port, "/sitemap.xml")
     urls = []
@@ -89,7 +102,9 @@ def pages(port):
     for path in sorted(set(urls + SYSTEM)):
         st, loc, body = fetch(port, path)
         n = norm(body)
-        out[path] = {"status": st, "loc": loc, "hash": hashlib.md5(n.encode()).hexdigest(), "text": text_of(n)[:4000]}
+        out[path] = {"status": st, "loc": loc, "hash": hashlib.md5(n.encode()).hexdigest(), "text": text_of(n)[:4000],
+                     "forms": forms_of(body)}
+    out["__sitemap__"] = {"status": 0, "loc": "", "hash": "", "text": sorted(set(urls)), "forms": []}
     return out
 
 
@@ -97,12 +112,13 @@ def main():
     mode, db, port, label = sys.argv[1:5]
     os.makedirs(DIR, exist_ok=True)
     path = f"{DIR}/{label}.json"
-    cur = {"db": db_rows(db), "pages": pages(port)}
+    base = json.load(open(path)) if mode == "compare" else None
+    rows, cols = db_rows(db, base.get("cols") if base else None)
+    cur = {"db": rows, "cols": cols, "pages": pages(port)}
     if mode == "snapshot":
         json.dump(cur, open(path, "w"))
         print(f"snapshot {label}: " + ", ".join(f"{t}={len(v)}" for t, v in cur["db"].items()) + f", pages={len(cur['pages'])}")
         return 0
-    base = json.load(open(path))
     bad = 0
     for t, rows in base["db"].items():
         now = cur["db"][t]
@@ -133,10 +149,18 @@ def main():
                 print(f"!! {t}: {len(added)} new rows with website 1 or no website: {added[:8]}")
             else:
                 print(f"   {t}: {len(added)} new rows")
+    sb, sc = set(base["pages"]["__sitemap__"]["text"]), set(cur["pages"]["__sitemap__"]["text"])
+    if sb != sc:
+        bad += 1
+        print(f"!! eot.ir sitemap: added {sorted(sc - sb)[:6]} removed {sorted(sb - sc)[:6]}")
     for p, b in base["pages"].items():
         c = cur["pages"].get(p)
-        if not c:
+        if not c or p == "__sitemap__":
             continue
+        if b.get("forms") != c.get("forms"):
+            bad += 1
+            fd = [l for l in difflib.unified_diff(b.get("forms", []), c.get("forms", []), lineterm="", n=0) if l[:1] in "+-" and l[:3] not in ("---", "+++")]
+            print(f"!! forms on {urllib.parse.unquote(p)} changed: {[x[:160] for x in fd[:4]]}")
         if (c["status"], c["loc"], c["hash"]) != (b["status"], b["loc"], b["hash"]):
             d = [l for l in difflib.unified_diff(b["text"], c["text"], lineterm="", n=0) if l[:1] in "+-" and l[:3] not in ("---", "+++")]
             if b["status"] == c["status"] and b["loc"] == c["loc"] and not d:

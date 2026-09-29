@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Back-office groups are for EOT operators only. Customer staff and
+         participants are portal users; their access is granted per
+         workspace membership in ir.access.csv and in controllers. -->
+    <record model="res.groups.privilege" id="privilege_ts">
+        <field name="name">تلنت سرچ</field>
+        <field name="sequence">60</field>
+        <field name="category_id" ref="base.module_category_services"/>
+    </record>
+    <record model="res.groups" id="group_ts_user">
+        <field name="name">پشتیبان عملیات</field>
+        <field name="sequence">10</field>
+        <field name="privilege_id" ref="privilege_ts"/>
+        <field name="comment">مشاهده فضاهای کاری و ممیزی برای پشتیبانی؛ بدون دسترسی به پاسخ‌ها یا نتایج شرکت‌کنندگان.</field>
+    </record>
+    <record model="res.groups" id="group_ts_curator">
+        <field name="name">سرپرست سنجه‌ها (روان‌سنجی)</field>
+        <field name="sequence">20</field>
+        <field name="privilege_id" ref="privilege_ts"/>
+        <field name="implied_ids" eval="[(4, ref('group_ts_user'))]"/>
+        <field name="comment">مدیریت چرخه عمر سنجه، نسخه‌ها و قرارداد نمره‌گذاری؛ بدون دسترسی پیش‌فرض به داده هویتی شرکت‌کنندگان.</field>
+    </record>
+    <record model="res.groups" id="group_ts_manager">
+        <field name="name">مدیر پلتفرم</field>
+        <field name="sequence">30</field>
+        <field name="privilege_id" ref="privilege_ts"/>
+        <field name="implied_ids" eval="[(4, ref('group_ts_curator'))]"/>
+        <field name="user_ids" eval="[(4, ref('base.user_root')), (4, ref('base.user_admin'))]"/>
+    </record>
+</odoo>

@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Every view here carries website_id = website 2, so eot.ir (website 1)
+         never renders it. Priority 90 applies it after Odoo's own header /
+         footer template views. -->
+    <record id="layout_ts" model="ir.ui.view">
+        <field name="name">Talent Search layout (website 2)</field>
+        <field name="type">qweb</field>
+        <field name="key">ts_website.layout_ts</field>
+        <field name="inherit_id" ref="website.layout"/>
+        <field name="website_id" ref="website_ts"/>
+        <field name="priority">90</field>
+        <field name="arch" type="xml">
+            <data>
+                <xpath expr="//head/meta[last()]" position="after">
+                    <meta name="theme-color" content="#393E70"/>
+                    <link rel="preload" href="/ts_website/static/fonts/Vazirmatn-Variable.woff2" as="font" type="font/woff2" crossorigin=""/>
+                    <t t-call-assets="ts_website.assets_ts" t-js="false"/>
+                </xpath>
+                <xpath expr="//header[@id='top']" position="replace">
+                    <header id="top" class="ts-header" data-anchor="true">
+                        <a class="ts-skip" href="#wrap">رفتن به محتوای اصلی</a>
+                        <div class="ts-container ts-header__bar">
+                            <a href="/" class="ts-lockup" aria-label="تلنت سرچ، از خانوادهٔ EOT - صفحهٔ اصلی">
+                                <img src="/ts_website/static/img/talentsearch-logo.webp" width="44" height="44" alt=""/>
+                                <span class="ts-lockup__text">
+                                    <strong>تلنت سرچ</strong>
+                                    <small>از خانوادهٔ <bdi dir="ltr">EOT</bdi></small>
+                                </span>
+                            </a>
+                            <details class="ts-nav">
+                                <summary class="ts-nav__toggle" aria-label="منو">
+                                    <span class="ts-nav__bars" aria-hidden="true"/>
+                                    <span class="ts-nav__label">منو</span>
+                                </summary>
+                                <nav class="ts-nav__panel" aria-label="منوی اصلی">
+                                    <ul class="ts-nav__list">
+                                        <t t-foreach="website.menu_id.child_id" t-as="m">
+                                            <li><a t-att-href="m.url" t-out="m.name" t-att-aria-current="'page' if request.httprequest.path == m.url else None"/></li>
+                                        </t>
+                                    </ul>
+                                    <div class="ts-nav__actions">
+                                        <a t-if="request.env.user._is_public()" href="/web/login" class="ts-btn ts-btn--quiet">ورود</a>
+                                        <a t-else="" href="/my" class="ts-btn ts-btn--quiet">حساب من</a>
+                                        <a href="/contact?topic=demo" class="ts-btn ts-btn--primary">درخواست جلسهٔ معرفی</a>
+                                    </div>
+                                </nav>
+                            </details>
+                        </div>
+                    </header>
+                </xpath>
+                <xpath expr="//footer[@id='bottom']" position="replace">
+                    <footer id="bottom" class="ts-footer" data-anchor="true">
+                        <div class="ts-container ts-footer__grid">
+                            <section>
+                                <p class="ts-footer__brand">تلنت سرچ <small>از خانوادهٔ <bdi dir="ltr">EOT</bdi></small></p>
+                                <p>خدمت سنجش روان‌شناختی مؤسسهٔ <bdi dir="ltr">EOT</bdi> برای سازمان‌ها و مراکز بالینی، با رضایت آگاهانه، حریم خصوصی و بازبینی انسانی.</p>
+                                <p><a href="https://www.eot.ir/">بازگشت به <bdi dir="ltr">EOT</bdi></a></p>
+                            </section>
+                            <nav aria-label="راهنما">
+                                <h2>راهنما</h2>
+                                <ul>
+                                    <li><a href="/how-it-works">روند کار</a></li>
+                                    <li><a href="/sample-report">گزارش نمونه چگونه خوانده می‌شود</a></li>
+                                    <li><a href="/evidence">شواهد و محدودیت‌ها</a></li>
+                                    <li><a href="/help">پرسش‌های رایج</a></li>
+                                </ul>
+                            </nav>
+                            <nav aria-label="همکاری">
+                                <h2>همکاری</h2>
+                                <ul>
+                                    <li><a href="/employers">برای سازمان‌ها</a></li>
+                                    <li><a href="/clinics">برای مراکز بالینی</a></li>
+                                    <li><a href="/pricing">درخواست پیش‌فاکتور</a></li>
+                                    <li><a href="/about">درباره ما</a></li>
+                                </ul>
+                            </nav>
+                            <section>
+                                <h2>تماس</h2>
+                                <ul>
+                                    <li><a href="mailto:info@eot.ir"><bdi dir="ltr">info@eot.ir</bdi></a></li>
+                                    <li><a href="tel:+982188174100"><bdi dir="ltr">021-88174100</bdi></a></li>
+                                    <li><a href="/privacy">حریم خصوصی</a> · <a href="/consent-policy">رضایت آگاهانه</a></li>
+                                </ul>
+                            </section>
+                        </div>
+                        <div class="ts-container ts-footer__legal">
+                            <p>تلنت سرچ ابزار تشخیص پزشکی یا خدمت اورژانسی نیست. در شرایط اضطراری با اورژانس <bdi dir="ltr">115</bdi> تماس بگیرید.</p>
+                            <p>© مؤسسهٔ <bdi dir="ltr">EOT</bdi></p>
+                        </div>
+                    </footer>
+                </xpath>
+            </data>
+        </field>
+    </record>
+</odoo>

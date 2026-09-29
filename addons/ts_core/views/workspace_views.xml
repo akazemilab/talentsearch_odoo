@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="ts_workspace_view_list" model="ir.ui.view">
+        <field name="name">ts.workspace.list</field>
+        <field name="model">ts.workspace</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="code"/>
+                <field name="name"/>
+                <field name="partner_id"/>
+                <field name="purpose"/>
+                <field name="state" widget="badge" decoration-success="state == 'active'" decoration-info="state == 'pilot'" decoration-warning="state == 'suspended'"/>
+                <field name="member_count" string="اعضا"/>
+                <field name="gated" optional="hide"/>
+            </list>
+        </field>
+    </record>
+    <record id="ts_workspace_view_form" model="ir.ui.view">
+        <field name="name">ts.workspace.form</field>
+        <field name="model">ts.workspace</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                    <field name="state" widget="statusbar" options="{'clickable': '1'}" statusbar_visible="draft,pilot,active"/>
+                </header>
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button name="action_view_audit" type="object" class="oe_stat_button" icon="fa-list" string="ممیزی" groups="ts_core.group_ts_user"/>
+                    </div>
+                    <div class="alert alert-warning" role="alert" invisible="not gated">
+                        این نوع فضای کاری (دانشگاه/مدرسه یا رفاه کارکنان) تا تأیید جداگانه مالک پلتفرم قابل فعال‌سازی نیست.
+                    </div>
+                    <div class="oe_title">
+                        <label for="name"/>
+                        <h1><field name="name" placeholder="مثلاً: استخدام کارشناس فروش"/></h1>
+                        <field name="code" readonly="1"/>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="partner_id"/>
+                            <field name="purpose" readonly="state != 'draft'"/>
+                            <field name="gated" invisible="1"/>
+                        </group>
+                        <group>
+                            <field name="data_contact_id"/>
+                            <field name="escalation_contact_id" invisible="purpose != 'clinical'" required="purpose == 'clinical' and state in ('pilot', 'active')"/>
+                            <field name="company_id" groups="base.group_multi_company"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="اعضا" name="members">
+                            <field name="member_ids" context="{'default_workspace_id': id}">
+                                <list editable="bottom">
+                                    <field name="user_id" domain="[('share', '=', True)]"/>
+                                    <field name="role"/>
+                                    <field name="license_number"/>
+                                    <field name="verification_state" readonly="1" widget="badge" decoration-success="verification_state == 'verified'" decoration-warning="verification_state == 'pending'" decoration-danger="verification_state == 'rejected'"/>
+                                    <field name="active" widget="boolean_toggle"/>
+                                    <button name="action_verify" type="object" string="تأیید صلاحیت" icon="fa-check" invisible="verification_state != 'pending'" groups="ts_core.group_ts_manager"/>
+                                </list>
+                            </field>
+                        </page>
+                        <page string="یادداشت" name="note">
+                            <field name="note"/>
+                        </page>
+                    </notebook>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+    <record id="ts_workspace_view_search" model="ir.ui.view">
+        <field name="name">ts.workspace.search</field>
+        <field name="model">ts.workspace</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="name"/>
+                <field name="partner_id"/>
+                <filter name="employment" string="استخدام" domain="[('purpose', '=', 'employment')]"/>
+                <filter name="clinical" string="بالینی" domain="[('purpose', '=', 'clinical')]"/>
+                <separator/>
+                <filter name="live" string="پایلوت یا فعال" domain="[('state', 'in', ('pilot', 'active'))]"/>
+                <group>
+                    <filter name="by_purpose" string="هدف" context="{'group_by': 'purpose'}"/>
+                    <filter name="by_state" string="وضعیت" context="{'group_by': 'state'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+    <record id="ts_workspace_action" model="ir.actions.act_window">
+        <field name="name">فضاهای کاری</field>
+        <field name="res_model">ts.workspace</field>
+        <field name="view_mode">list,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">هنوز فضای کاری‌ای ساخته نشده است</p>
+            <p>برای هر سازمان مشتری و هر هدف (استخدام یا بالینی) یک فضای کاری جدا بسازید.</p>
+        </field>
+    </record>
+</odoo>

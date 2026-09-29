@@ -1,0 +1,8 @@
+id,name,model_id,group_id/id,operation,domain
+access_ts_workspace_user,ts.workspace operator read,ts.workspace,group_ts_user,r,
+access_ts_workspace_manager,ts.workspace manager,ts.workspace,group_ts_manager,crud,
+access_ts_workspace_portal,ts.workspace portal member read,ts.workspace,base.group_portal,r,"[('member_ids', 'any', [('user_id', '=', user.id), ('active', '=', True)])]"
+access_ts_member_user,ts.workspace.member operator read,ts.workspace.member,group_ts_user,r,
+access_ts_member_manager,ts.workspace.member manager,ts.workspace.member,group_ts_manager,crud,
+access_ts_member_portal,ts.workspace.member portal same-workspace read,ts.workspace.member,base.group_portal,r,"[('workspace_id.member_ids', 'any', [('user_id', '=', user.id), ('active', '=', True)])]"
+access_ts_audit_user,ts.audit.event operator read,ts.audit.event,group_ts_user,r,

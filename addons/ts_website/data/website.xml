@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="1">
+    <!-- Website 2. Created once (noupdate). website.create() bootstraps a
+         website-2 copy of the homepage and main menu; data/setup.xml then
+         points them at Talent Search content. -->
+    <record id="website_ts" model="website">
+        <field name="name">تلنت سرچ</field>
+        <field name="domain">https://ts.innerquest.me</field>
+        <field name="sequence">20</field>
+        <field name="company_id" ref="base.main_company"/>
+        <field name="default_lang_id" ref="base.lang_fa_IR"/>
+        <field name="language_ids" eval="[(6, 0, [ref('base.lang_fa_IR')])]"/>
+        <field name="auth_signup_uninvited">b2b</field>
+    </record>
+</odoo>
