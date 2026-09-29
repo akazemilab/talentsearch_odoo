@@ -28,12 +28,24 @@
                                     <small>از خانوادهٔ <bdi dir="ltr">EOT</bdi></small>
                                 </span>
                             </a>
+                            <nav class="ts-dnav" aria-label="منوی اصلی">
+                                <ul class="ts-nav__list">
+                                    <t t-foreach="website.menu_id.child_id" t-as="m">
+                                        <li><a t-att-href="m.url" t-out="m.name" t-att-aria-current="'page' if request.httprequest.path == m.url else None"/></li>
+                                    </t>
+                                </ul>
+                                <div class="ts-nav__actions">
+                                    <a t-if="request.env.user._is_public()" href="/web/login" class="ts-btn ts-btn--quiet">ورود</a>
+                                    <a t-else="" href="/my" class="ts-btn ts-btn--quiet">حساب من</a>
+                                    <a href="/contact?topic=demo" class="ts-btn ts-btn--primary">درخواست جلسهٔ معرفی</a>
+                                </div>
+                            </nav>
                             <details class="ts-nav">
-                                <summary class="ts-nav__toggle" aria-label="منو">
+                                <summary class="ts-nav__toggle">
                                     <span class="ts-nav__bars" aria-hidden="true"/>
                                     <span class="ts-nav__label">منو</span>
                                 </summary>
-                                <nav class="ts-nav__panel" aria-label="منوی اصلی">
+                                <nav class="ts-nav__panel" aria-label="منوی اصلی (موبایل)">
                                     <ul class="ts-nav__list">
                                         <t t-foreach="website.menu_id.child_id" t-as="m">
                                             <li><a t-att-href="m.url" t-out="m.name" t-att-aria-current="'page' if request.httprequest.path == m.url else None"/></li>

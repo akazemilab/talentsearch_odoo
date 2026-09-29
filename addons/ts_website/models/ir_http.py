@@ -1,11 +1,23 @@
 from odoo import models
 from odoo.fields import Domain
 from odoo.http import request
-from odoo.addons.base.models import ir_http
+from odoo.addons.http_routing.models import ir_http
 
 
 class IrHttp(models.AbstractModel):
     _inherit = 'ir.http'
+
+    def _generate_routing_rules(self, modules, converters):
+        """Website 2 gets no routes from theme_* modules.
+
+        Theme controllers are not website-scoped: theme_eot_custom's retired-URL
+        redirects (/privacy, /courses, /your-ticket-has-been-submitted, ...)
+        would otherwise send Talent Search visitors to eot.ir paths. Odoo keeps
+        one routing map per website, so eot.ir's map is built exactly as before."""
+        website = self.env.website
+        if website and website._ts_is_current():
+            modules = [m for m in modules if not m.startswith('theme_')]
+        return super()._generate_routing_rules(modules, converters)
 
     @classmethod
     def _serve_redirect(cls):

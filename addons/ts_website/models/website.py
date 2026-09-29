@@ -84,7 +84,21 @@ class Website(models.Model):
             teams = self.env['helpdesk.team'].with_context(active_test=False).search([('website_id', '!=', site.id)])
             if teams:
                 teams.filtered('is_published').write({'is_published': False})
-                teams.write({'website_id': site.id})
+                stray_menus = teams.mapped('website_menu_id').filtered(lambda m: m.website_id != site)
+                teams.write({'website_id': site.id, 'website_menu_id': False})
+                stray_menus.unlink()
+        # website_crm (and friends) create website-specific copies of their
+        # views for every website that has its own copy of the parent. eot.ir
+        # had none of these modules before, so every such website-1 copy is
+        # install-generated; website_crm.contactus_form's copy breaks eot.ir's
+        # redesigned /contactus (its xpath target no longer exists) -> 500.
+        stray_views = self.env['ir.ui.view'].with_context(active_test=False).search([
+            ('website_id', '!=', False), ('website_id', '!=', site.id), ('active', '=', True),
+            '|', '|', '|', '|', ('key', '=like', 'website_crm.%'), ('key', '=like', 'website_helpdesk.%'),
+            ('key', '=like', 'survey.%'), ('key', '=like', 'website_payment.%'), ('key', '=like', 'helpdesk.%')])
+        if stray_views:
+            _logger.info('Talent Search: deactivating install-generated views on other websites: %s', stray_views.mapped('key'))
+            stray_views.write({'active': False})
         IMD = self.env['ir.model.data']
         page_ids = IMD.search([('model', '=', 'website.page'), ('module', 'in', self.STOCK_APP_PAGE_MODULES)]).mapped('res_id')
         pages = self.env['website.page'].browse(page_ids).exists().filtered(lambda p: not p.website_id)
