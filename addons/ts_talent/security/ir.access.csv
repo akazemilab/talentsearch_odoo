@@ -1,0 +1,5 @@
+id,name,model_id,group_id/id,operation,domain
+access_ts_attempt_field_manager,attempt field manager read,ts.attempt.field,ts_core.group_ts_manager,r,
+access_ts_attempt_field_portal,attempt field own,ts.attempt.field,base.group_portal,r,"[('attempt_id.user_id', '=', user.id)]"
+access_ts_attempt_cell_manager,attempt cell manager read,ts.attempt.cell,ts_core.group_ts_manager,r,
+access_ts_attempt_cell_portal,attempt cell own,ts.attempt.cell,base.group_portal,r,"[('attempt_id.user_id', '=', user.id)]"

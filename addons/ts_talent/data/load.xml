@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Idempotent: creates the instrument TALENT-INV-15 and its locked version 1.0
+         from data/talent_items.json (the 15 statements, verbatim from the published form). -->
+    <function model="ts.instrument" name="_ts_load_talent"/>
+</odoo>
