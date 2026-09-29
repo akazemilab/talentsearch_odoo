@@ -180,7 +180,7 @@ sc = env['sms.sms'].create({'number': '09121234567', 'body': 'later', 'kv_date':
                             'kv_tag': 'promo-1', 'kv_hide': True})
 sc.send(unlink_sent=False)
 a = [c for c in CALLS if c[1] == 'sms/send'][0][2]
-check('schedule/tag/hide sent', a.get('date') == str(int(datetime.datetime(2030, 1, 1, 8, 0).timestamp())) or a.get('date'), str(a))
+check('schedule/tag/hide sent', a.get('date') == str(__import__('calendar').timegm(datetime.datetime(2030, 1, 1, 8, 0).utctimetuple())) or a.get('date'), str(a))
 check('tag and hide passed', a.get('tag') == 'promo-1' and str(a.get('hide')) == '1')
 sm = Msg.search([('sms_uuid', '=', sc.uuid)])
 check('scheduled row state', sm.state == 'scheduled' and sm.scheduled)

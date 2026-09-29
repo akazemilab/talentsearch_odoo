@@ -1,3 +1,4 @@
+import calendar
 from collections import defaultdict
 
 from odoo import fields, models
@@ -41,7 +42,7 @@ class SmsSms(models.Model):
 
     def _kv_extras(self):
         self.ensure_one()
-        date = int(self.kv_date.timestamp()) if self.kv_date else None
+        date = calendar.timegm(self.kv_date.utctimetuple()) if self.kv_date else None
         return {
             'sender': self.kv_sender or None, 'date': date, 'tag': self.kv_tag or None,
             'hide': self.kv_hide, 'policy': self.kv_policy or None,

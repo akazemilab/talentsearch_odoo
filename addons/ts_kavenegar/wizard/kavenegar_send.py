@@ -1,3 +1,5 @@
+import calendar
+
 from odoo import api, fields, models, _
 from odoo.exceptions import UserError
 
@@ -63,7 +65,7 @@ class KavenegarSendWizard(models.TransientModel):
         if not numbers:
             raise UserError(_('Enter at least one number.'))
         cl = c._kv_client()
-        date = int(self.schedule.timestamp()) if self.schedule else None
+        date = calendar.timegm(self.schedule.utctimetuple()) if self.schedule else None
         Msg = self.env['kavenegar.message']
         if self.mode == 'lookup':
             if not c.kv_has_lookup:

@@ -1,11 +1,14 @@
+import calendar
 import json
+from datetime import timedelta
 
 from odoo import fields, models, _
 from odoo.exceptions import UserError
 
 
 def _ts(d):
-    return int(d.timestamp()) if d else None
+    # Odoo datetimes are naive UTC: convert with timegm, never with the server's local zone
+    return calendar.timegm(d.utctimetuple()) if d else None
 
 
 class KavenegarReportWizard(models.TransientModel):
@@ -25,8 +28,8 @@ class KavenegarReportWizard(models.TransientModel):
         ('server_time', 'Server time (utils/getdate)'),
         ('account_config', 'Read account configuration'),
     ], required=True, default='count_outbox')
-    date_from = fields.Datetime()
-    date_to = fields.Datetime()
+    date_from = fields.Datetime(default=lambda s: fields.Datetime.now() - timedelta(hours=23))
+    date_to = fields.Datetime(default=fields.Datetime.now)
     line = fields.Char('Line / sender')
     status = fields.Integer('Status filter (0 = all)')
     receptor = fields.Char()
@@ -42,6 +45,16 @@ class KavenegarReportWizard(models.TransientModel):
         cl = c._kv_client()
         ids = [x for x in (self.ids_text or '').replace('\n', ',').split(',') if x.strip()]
         k = self.kind
+        if k in ('select_outbox', 'count_outbox', 'by_receptor', 'count_inbox', 'inbox'):
+            if not self.date_from:
+                raise UserError(_('Fill the start date.'))
+            if self.date_to and self.date_to <= self.date_from:
+                raise UserError(_('The end date must be after the start date.'))
+            limit = timedelta(days=2) if k in ('count_inbox', 'inbox') else timedelta(days=1)
+            if self.date_to and self.date_to - self.date_from > limit:
+                raise UserError(_('Kavenegar allows a window of at most %s day(s) for this report.', limit.days))
+            if k in ('select_outbox', 'count_outbox', 'by_receptor') and self.date_from < fields.Datetime.now() - timedelta(days=4):
+                raise UserError(_('Kavenegar only reports the last 4 days for this report.'))
         Msg = self.env['kavenegar.message']
         if k == 'count_outbox':
             res = c._kv_call(cl.count_outbox, _ts(self.date_from), _ts(self.date_to), self.status or None)
