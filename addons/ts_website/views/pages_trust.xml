@@ -9,11 +9,7 @@
             <t t-name="ts_website.page_evidence">
                 <t t-call="website.layout" additional_title.f="شواهد و محدودیت‌ها">
                     <div id="wrap" class="ts-page">
-                        <t t-call="ts_website.page_hero">
-                            <t t-set="kicker">شواهد و محدودیت‌ها</t>
-                            <t t-set="title">یک پرسشنامه پاسخی محدود می‌دهد؛ ما محدوده‌اش را می‌گوییم</t>
-                            <t t-set="lead">سنجش روان‌شناختی تشخیص یا درمان نیست. این صفحه توضیح می‌دهد پیش از انتشار هر سنجه چه چیزی باید ثبت و تأیید شود و نتیجه را چگونه باید خواند.</t>
-                        </t>
+                        <t t-call="ts_website.page_hero" kicker.f="شواهد و محدودیت‌ها" title.f="یک پرسشنامه پاسخی محدود می‌دهد؛ ما محدوده‌اش را می‌گوییم" lead.f="سنجش روان‌شناختی تشخیص یا درمان نیست. این صفحه توضیح می‌دهد پیش از انتشار هر سنجه چه چیزی باید ثبت و تأیید شود و نتیجه را چگونه باید خواند."/>
                         <section class="ts-section">
                             <div class="ts-container ts-prose">
                                 <h2>پیش از انتشار هر سنجه</h2>
@@ -58,11 +54,7 @@
             <t t-name="ts_website.page_sample">
                 <t t-call="website.layout" additional_title.f="گزارش نمونه">
                     <div id="wrap" class="ts-page">
-                        <t t-call="ts_website.page_hero">
-                            <t t-set="kicker">گزارش نمونه</t>
-                            <t t-set="title">یک گزارش تلنت سرچ از چه بخش‌هایی تشکیل شده است</t>
-                            <t t-set="lead">نمونهٔ زیر ساختگی است و فقط ساختار گزارش را نشان می‌دهد؛ نام، نمره و متن آن واقعی نیستند.</t>
-                        </t>
+                        <t t-call="ts_website.page_hero" kicker.f="گزارش نمونه" title.f="یک گزارش تلنت سرچ از چه بخش‌هایی تشکیل شده است" lead.f="نمونهٔ زیر ساختگی است و فقط ساختار گزارش را نشان می‌دهد؛ نام، نمره و متن آن واقعی نیستند."/>
                         <section class="ts-section">
                             <div class="ts-container ts-grid ts-grid--2">
                                 <article class="ts-report" aria-label="نمونهٔ ساختگی گزارش">
@@ -117,11 +109,7 @@
             <t t-name="ts_website.page_help">
                 <t t-call="website.layout" additional_title.f="پرسش‌های رایج">
                     <div id="wrap" class="ts-page">
-                        <t t-call="ts_website.page_hero">
-                            <t t-set="kicker">راهنما</t>
-                            <t t-set="title">پرسش‌های رایج</t>
-                            <t t-set="lead">اگر پاسخ پرسشتان را اینجا پیدا نکردید، از صفحهٔ تماس پیام بفرستید.</t>
-                        </t>
+                        <t t-call="ts_website.page_hero" kicker.f="راهنما" title.f="پرسش‌های رایج" lead.f="اگر پاسخ پرسشتان را اینجا پیدا نکردید، از صفحهٔ تماس پیام بفرستید."/>
                         <section class="ts-section">
                             <div class="ts-container ts-prose">
                                 <h2>برای شرکت‌کنندگان</h2>
@@ -157,11 +145,7 @@
             <t t-name="ts_website.page_privacy">
                 <t t-call="website.layout" additional_title.f="حریم خصوصی">
                     <div id="wrap" class="ts-page">
-                        <t t-call="ts_website.page_hero">
-                            <t t-set="kicker">حریم خصوصی</t>
-                            <t t-set="title">با داده‌های شما چه می‌کنیم</t>
-                            <t t-set="lead">خلاصه‌ای از اصول حریم خصوصی تلنت سرچ.</t>
-                        </t>
+                        <t t-call="ts_website.page_hero" kicker.f="حریم خصوصی" title.f="با داده‌های شما چه می‌کنیم" lead.f="خلاصه‌ای از اصول حریم خصوصی تلنت سرچ."/>
                         <section class="ts-section">
                             <div class="ts-container ts-prose">
                                 <p class="ts-notice ts-notice--warn"><strong>نسخهٔ پیش‌نویس.</strong> این متن پیش از راه‌اندازی عمومی توسط مشاور حقوقی بازبینی و نسخهٔ نهایی با تاریخ اجرا منتشر می‌شود.</p>
@@ -193,11 +177,7 @@
             <t t-name="ts_website.page_consent">
                 <t t-call="website.layout" additional_title.f="رضایت آگاهانه">
                     <div id="wrap" class="ts-page">
-                        <t t-call="ts_website.page_hero">
-                            <t t-set="kicker">رضایت آگاهانه</t>
-                            <t t-set="title">رضایت شما جدا، روشن و قابل پس‌گرفتن است</t>
-                            <t t-set="lead">چگونگی دریافت و ثبت رضایت پیش از هر سنجش.</t>
-                        </t>
+                        <t t-call="ts_website.page_hero" kicker.f="رضایت آگاهانه" title.f="رضایت شما جدا، روشن و قابل پس‌گرفتن است" lead.f="چگونگی دریافت و ثبت رضایت پیش از هر سنجش."/>
                         <section class="ts-section">
                             <div class="ts-container ts-prose">
                                 <p class="ts-notice ts-notice--warn"><strong>نسخهٔ پیش‌نویس.</strong> متن رضایت‌نامهٔ هر سنجش پیش از راه‌اندازی عمومی بازبینی حقوقی و بالینی می‌شود.</p>

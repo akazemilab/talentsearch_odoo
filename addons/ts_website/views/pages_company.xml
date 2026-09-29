@@ -90,11 +90,7 @@
             <t t-name="ts_website.page_contact">
                 <t t-call="website.layout" additional_title.f="تماس">
                     <div id="wrap" class="ts-page">
-                        <t t-call="ts_website.page_hero">
-                            <t t-set="kicker">تماس</t>
-                            <t t-set="title">با ما در تماس باشید</t>
-                            <t t-set="lead">درخواست جلسهٔ معرفی، پیش‌فاکتور، پرسش دربارهٔ شواهد یا پشتیبانی. پاسخ از طریق ایمیل یا تلفنی که وارد می‌کنید داده می‌شود.</t>
-                        </t>
+                        <t t-call="ts_website.page_hero" kicker.f="تماس" title.f="با ما در تماس باشید" lead.f="درخواست جلسهٔ معرفی، پیش‌فاکتور، پرسش دربارهٔ شواهد یا پشتیبانی. پاسخ از طریق ایمیل یا تلفنی که وارد می‌کنید داده می‌شود."/>
                         <section class="ts-section">
                             <div class="ts-container ts-grid ts-grid--2">
                                 <t t-call="ts_website.lead_form"/>
@@ -121,11 +117,7 @@
             <t t-name="ts_website.page_pricing">
                 <t t-call="website.layout" additional_title.f="درخواست پیش‌فاکتور">
                     <div id="wrap" class="ts-page">
-                        <t t-call="ts_website.page_hero">
-                            <t t-set="kicker">هزینه و پیش‌فاکتور</t>
-                            <t t-set="title">هزینه بر اساس دامنهٔ واقعی کار شما</t>
-                            <t t-set="lead">قیمت ثابتی روی سایت اعلام نمی‌کنیم، چون هزینه به نوع سنجه، تعداد تکمیل‌ها، خدمات بازبینی و حق استفادهٔ سنجه‌ها بستگی دارد. پیش‌فاکتور به تومان صادر می‌شود.</t>
-                        </t>
+                        <t t-call="ts_website.page_hero" kicker.f="هزینه و پیش‌فاکتور" title.f="هزینه بر اساس دامنهٔ واقعی کار شما" lead.f="قیمت ثابتی روی سایت اعلام نمی‌کنیم، چون هزینه به نوع سنجه، تعداد تکمیل‌ها، خدمات بازبینی و حق استفادهٔ سنجه‌ها بستگی دارد. پیش‌فاکتور به تومان صادر می‌شود."/>
                         <section class="ts-section">
                             <div class="ts-container ts-grid ts-grid--2">
                                 <div class="ts-prose">
@@ -138,7 +130,7 @@
                                         <li>آنچه شامل نمی‌شود</li>
                                     </ul>
                                 </div>
-                                <t t-call="ts_website.lead_form"><t t-set="default_topic">quote</t></t>
+                                <t t-call="ts_website.lead_form" default_topic.f="quote"/>
                             </div>
                         </section>
                     </div>
@@ -156,11 +148,7 @@
             <t t-name="ts_website.page_thanks">
                 <t t-call="website.layout" additional_title.f="درخواست دریافت شد">
                     <div id="wrap" class="ts-page">
-                        <t t-call="ts_website.page_hero">
-                            <t t-set="kicker">درخواست دریافت شد</t>
-                            <t t-set="title">سپاس از پیام شما</t>
-                            <t t-set="lead">درخواست شما ثبت شد و همکاران ما از طریق ایمیل یا تلفنی که وارد کرده‌اید پاسخ می‌دهند.</t>
-                        </t>
+                        <t t-call="ts_website.page_hero" kicker.f="درخواست دریافت شد" title.f="سپاس از پیام شما" lead.f="درخواست شما ثبت شد و همکاران ما از طریق ایمیل یا تلفنی که وارد کرده‌اید پاسخ می‌دهند."/>
                         <section class="ts-section">
                             <div class="ts-container">
                                 <p><a href="/" class="ts-btn ts-btn--outline">بازگشت به صفحهٔ اصلی</a></p>
@@ -181,11 +169,7 @@
             <t t-name="ts_website.page_about">
                 <t t-call="website.layout" additional_title.f="درباره ما">
                     <div id="wrap" class="ts-page">
-                        <t t-call="ts_website.page_hero">
-                            <t t-set="kicker">درباره ما</t>
-                            <t t-set="title">تلنت سرچ، خدمت سنجش از خانوادهٔ <bdi dir="ltr">EOT</bdi></t>
-                            <t t-set="lead">مؤسسهٔ <bdi dir="ltr">EOT</bdi> مسئول تلنت سرچ است. هر خدمت در خانوادهٔ EOT برای یک نیاز مشخص ساخته شده و نام EOT را به‌عنوان پشتوانه همراه دارد.</t>
-                        </t>
+                        <t t-call="ts_website.page_hero" kicker.f="درباره ما" title.f="تلنت سرچ، خدمت سنجش از خانوادهٔ EOT" lead.f="مؤسسهٔ EOT مسئول تلنت سرچ است. هر خدمت در خانوادهٔ EOT برای یک نیاز مشخص ساخته شده و نام EOT را به‌عنوان پشتوانه همراه دارد."/>
                         <section class="ts-section">
                             <div class="ts-container ts-prose">
                                 <h2>چرا تلنت سرچ</h2>

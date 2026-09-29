@@ -9,11 +9,7 @@
             <t t-name="ts_website.page_employers">
                 <t t-call="website.layout" additional_title.f="برای سازمان‌ها">
                     <div id="wrap" class="ts-page">
-                        <t t-call="ts_website.page_hero">
-                            <t t-set="kicker">برای سازمان‌ها و منابع انسانی</t>
-                            <t t-set="title">شواهد مرتبط با نقش، نه یک رتبهٔ شخصیتی</t>
-                            <t t-set="lead">سنجش در استخدام از تحلیل شغل شروع می‌شود: هر بُعدی که سنجیده می‌شود باید به کاری که فرد انجام خواهد داد ربط داشته باشد. تصمیم نهایی همیشه با شماست و مستند می‌شود.</t>
-                        </t>
+                        <t t-call="ts_website.page_hero" kicker.f="برای سازمان‌ها و منابع انسانی" title.f="شواهد مرتبط با نقش، نه یک رتبهٔ شخصیتی" lead.f="سنجش در استخدام از تحلیل شغل شروع می‌شود: هر بُعدی که سنجیده می‌شود باید به کاری که فرد انجام خواهد داد ربط داشته باشد. تصمیم نهایی همیشه با شماست و مستند می‌شود."/>
                         <section class="ts-section">
                             <div class="ts-container">
                                 <div class="ts-section__head"><h2>روند یک پروژهٔ استخدامی</h2></div>
@@ -48,10 +44,7 @@
                                 </div>
                             </div>
                         </section>
-                        <t t-call="ts_website.cta">
-                            <t t-set="cta_title">با یک نقش شروع کنید</t>
-                            <t t-set="cta_text">همکاری با یک پایلوت محدود روی یک نقش آغاز می‌شود. دامنه و هزینه پس از گفت‌وگو در پیش‌فاکتور مشخص می‌شود.</t>
-                        </t>
+                        <t t-call="ts_website.cta" cta_title.f="با یک نقش شروع کنید" cta_text.f="همکاری با یک پایلوت محدود روی یک نقش آغاز می‌شود. دامنه و هزینه پس از گفت‌وگو در پیش‌فاکتور مشخص می‌شود."/>
                     </div>
                 </t>
             </t>
@@ -67,11 +60,7 @@
             <t t-name="ts_website.page_clinics">
                 <t t-call="website.layout" additional_title.f="برای مراکز بالینی">
                     <div id="wrap" class="ts-page">
-                        <t t-call="ts_website.page_hero">
-                            <t t-set="kicker">برای مراکز مشاوره و درمان</t>
-                            <t t-set="title">پرسشنامه به‌عنوان ورودی قضاوت بالینی، نه جایگزین آن</t>
-                            <t t-set="lead">متخصص دارای مجوز سنجه را تعیین می‌کند، مراجع روی موبایل پاسخ می‌دهد و نتیجه تا بازبینی و امضای متخصص برای مراجع منتشر نمی‌شود.</t>
-                        </t>
+                        <t t-call="ts_website.page_hero" kicker.f="برای مراکز مشاوره و درمان" title.f="پرسشنامه به‌عنوان ورودی قضاوت بالینی، نه جایگزین آن" lead.f="متخصص دارای مجوز سنجه را تعیین می‌کند، مراجع روی موبایل پاسخ می‌دهد و نتیجه تا بازبینی و امضای متخصص برای مراجع منتشر نمی‌شود."/>
                         <section class="ts-section">
                             <div class="ts-container">
                                 <div class="ts-section__head"><h2>روند کار در مرکز</h2></div>
@@ -109,10 +98,7 @@
                                 </div>
                             </div>
                         </section>
-                        <t t-call="ts_website.cta">
-                            <t t-set="cta_title">پایلوت با نظارت متخصص</t>
-                            <t t-set="cta_text">همکاری با مراکز به‌صورت پایلوت و با تأیید روند کار توسط متخصصان همان مرکز آغاز می‌شود.</t>
-                        </t>
+                        <t t-call="ts_website.cta" cta_title.f="پایلوت با نظارت متخصص" cta_text.f="همکاری با مراکز به‌صورت پایلوت و با تأیید روند کار توسط متخصصان همان مرکز آغاز می‌شود."/>
                     </div>
                 </t>
             </t>
@@ -128,11 +114,7 @@
             <t t-name="ts_website.page_how">
                 <t t-call="website.layout" additional_title.f="روند کار">
                     <div id="wrap" class="ts-page">
-                        <t t-call="ts_website.page_hero">
-                            <t t-set="kicker">روند کار</t>
-                            <t t-set="title">از دعوت تا نتیجه، هر مرحله روشن است</t>
-                            <t t-set="lead">سازمان یا مرکز شما را دعوت می‌کند، شما آگاهانه تصمیم می‌گیرید، پاسخ می‌دهید و نتیجه پس از بازبینی به شکلی که از پیش گفته شده به دستتان می‌رسد.</t>
-                        </t>
+                        <t t-call="ts_website.page_hero" kicker.f="روند کار" title.f="از دعوت تا نتیجه، هر مرحله روشن است" lead.f="سازمان یا مرکز شما را دعوت می‌کند، شما آگاهانه تصمیم می‌گیرید، پاسخ می‌دهید و نتیجه پس از بازبینی به شکلی که از پیش گفته شده به دستتان می‌رسد."/>
                         <section class="ts-section" id="participants">
                             <div class="ts-container">
                                 <div class="ts-section__head"><h2>برای شرکت‌کننده</h2><p>برای پاسخ دادن به دعوت‌نامه لازم نیست حساب کاربری کامل بسازید.</p></div>
