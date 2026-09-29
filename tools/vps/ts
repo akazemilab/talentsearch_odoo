@@ -9,6 +9,8 @@
 #   ts job NAME             state + tail
 #   ts sql DB "SELECT ..."  read-only psql on prod
 #   ts get PORT PATH [HOST] status + title + first text of a page from prod
+#   ts domain check DOMAIN [--website ID]      DNS(authoritative)+cert+nginx+live probes, verdict line
+#   ts domain cutover DOMAIN --website ID --from-domain URL [--wait S] [--dry-run]   whole domain go-live; run via `ts bg`
 #   ts push [MSG]           commit all + push origin main
 set -uo pipefail
 REPO=/root/talentsearch_odoo; J=/root/ts-jobs; mkdir -p $J
@@ -32,6 +34,7 @@ b=re.sub(r'(?is)<(script|style)[^>]*>.*?</\1>','',s); b=re.sub(r'<[^>]+>','\n',b
 print(' | '.join(l.strip() for l in html.unescape(b).split('\n') if l.strip())[:600])
 for e in re.findall(r'(Traceback.*?)</', s, re.S)[:1]: print('TRACEBACK', e[:500])
 PY" ;;
+  domain) ts sync >/dev/null; ssh -o ConnectionAttempts=3 $P "python3 -u /opt/odoo/talentsearch_stage/tools/prod/ts_domain.py $*" ;;
   push)  cd $REPO && git add -A && git commit -qm "${*:-update}" ; git push -q origin main 2>&1 | tail -2; git log -1 --oneline ;;
   *)     sed -n '2,15p' "$0" ;;
 esac

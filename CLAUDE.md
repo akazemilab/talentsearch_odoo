@@ -126,3 +126,15 @@ Factor codes are not globally unique (factor_073, factor_098): key by (inventory
   Kavenegar server); `ts_rehearse` runs them when `ts_kavenegar` / `ts_sms` are in the module list. Real sends are never made
   by tests; the first real send happens only after the owner enters the key and says so.
 - Pitfall: `dict.setdefault` does not replace an existing None value (default sender was skipped); use `get(k) or default`.
+
+
+## Going live on a domain (learned 2026-09-29, talentsearch.ir)
+Use `ts domain`, never hand-typed certbot/nginx/psql:
+- `ts bg dom "ts domain cutover DOMAIN --website ID --from-domain https://old.host --wait 900"` then `ts job dom`.
+  Gate = authoritative-NS DNS is DNS-only (grey cloud) for apex AND www; it names the record that is still proxied.
+  Then certbot (idempotent) -> nginx conf (backup, `nginx -t`, auto-restore) -> website.domain + kv_webhook_base
+  with preconditions -> odoo20 restart -> verify. `ts domain check DOMAIN [--website ID]` is the read-only verify.
+- website.domain is ormcache'd: a DB update alone keeps serving website 1's homepage on the new host until odoo20 restarts.
+- Never trust the VPS resolver right after a DNS change (it kept returning Cloudflare IPs); the tool uses `curl --resolve` to this server.
+- Website 1 / eot.ir is refused by the tool. Canonical = apex, www 301s to it. Keep records grey unless SSL mode is Full (strict).
+- Robots: Odoo's stock robots.txt emits an http:// Sitemap line (proxy_mode off) - stock behaviour, also on eot.ir; not changed.
