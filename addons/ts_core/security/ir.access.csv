@@ -6,3 +6,4 @@ access_ts_member_user,ts.workspace.member operator read,ts.workspace.member,grou
 access_ts_member_manager,ts.workspace.member manager,ts.workspace.member,group_ts_manager,crud,
 access_ts_member_portal,ts.workspace.member portal same-workspace read,ts.workspace.member,base.group_portal,r,"[('workspace_id.member_ids', 'any', [('user_id', '=', user.id), ('active', '=', True)])]"
 access_ts_audit_user,ts.audit.event operator read,ts.audit.event,group_ts_user,r,
+access_ts_emergency_manager,ts.emergency.access manager,ts.emergency.access,group_ts_manager,crud,

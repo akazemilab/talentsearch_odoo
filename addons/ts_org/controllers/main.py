@@ -108,6 +108,7 @@ class TsOrg(http.Controller):
             'created': request.env['ts.assignment'].sudo().browse(int(kw['created'])).exists()
             if kw.get('created', '').isdigit() else None,
             'error': kw.get('error'), 'fa': fa_digits, 'page_name': 'ts_workspaces',
+            'others': [m for m in _memberships() if m.workspace_id != ws and m.can_act()],
             'is_new': bool(kw.get('new')), 'flash': request.session.pop('ts_flash', None),
             'can_invite_participants': member.can_invite_participants(),
             'checklist': self._checklist(member, ws),

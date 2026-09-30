@@ -6,7 +6,7 @@ from odoo.exceptions import UserError
 
 from odoo.addons.ts_core.models.workspace import GATED_PURPOSES as GATED, ROLES_BY_PURPOSE
 
-TERMS_VERSION = 'panel-terms-1405-07-v1'
+TERMS_VERSION = 'panel-terms-1405-07-v2'
 MAX_PANELS_PER_DAY = 3
 # what the person picks -> workspace purpose
 KINDS = {'school': 'education', 'org': 'employment', 'clinic': 'clinical'}

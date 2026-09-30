@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="ts_emergency_list" model="ir.ui.view">
+        <field name="name">ts.emergency.access.list</field>
+        <field name="model">ts.emergency.access</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="workspace_id"/>
+                <field name="user_id"/>
+                <field name="opened_at"/>
+                <field name="expires_at"/>
+                <field name="state"/>
+            </list>
+        </field>
+    </record>
+    <record id="ts_emergency_form" model="ir.ui.view">
+        <field name="name">ts.emergency.access.form</field>
+        <field name="model">ts.emergency.access</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                    <button name="action_view_results" type="object" string="مشاهدهٔ نتایج" invisible="state != 'open'" class="btn-primary"/>
+                    <button name="action_close" type="object" string="بستن دسترسی" invisible="state != 'open'"/>
+                </header>
+                <sheet>
+                    <group>
+                        <field name="workspace_id" readonly="id"/>
+                        <field name="reason" readonly="id"/>
+                        <field name="user_id"/>
+                        <field name="opened_at"/>
+                        <field name="expires_at"/>
+                        <field name="closed_at"/>
+                        <field name="state"/>
+                    </group>
+                    <p class="text-muted">مالک پنل از هر بازشدن مطلع می‌شود و هر مشاهده در ممیزی ثبت می‌شود. این روال فقط برای رساندن کمک به شرکت‌کنندهٔ در خطر است.</p>
+                </sheet>
+            </form>
+        </field>
+    </record>
+    <record id="ts_emergency_action" model="ir.actions.act_window">
+        <field name="name">دسترسی اضطراری</field>
+        <field name="res_model">ts.emergency.access</field>
+        <field name="view_mode">list,form</field>
+    </record>
+    <menuitem id="menu_ts_emergency" name="دسترسی اضطراری" parent="ts_core.menu_ts_governance" action="ts_emergency_action" sequence="20" groups="ts_core.group_ts_manager"/>
+</odoo>

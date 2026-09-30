@@ -68,6 +68,11 @@
                         <section class="ts-section">
                             <div class="ts-container">
                                 <a href="/my/workspaces" class="ts-back">فضاهای کاری</a>
+                                <nav t-if="others" class="ts-stats" aria-label="پنل‌های من">
+                                    <span class="ts-hint">تغییر پنل:</span>
+                                    <a t-foreach="others" t-as="o" t-attf-href="/my/workspaces/#{o.workspace_id.id}" class="ts-stat"><strong t-out="o.workspace_id.name"/><span t-out="dict(o._fields['role'].selection).get(o.role)"/></a>
+                                </nav>
+                                <p t-if="others" class="ts-hint">داده‌های هر پنل کاملاً جداست؛ کارشناس مستقل که عضو سازمان هم هست، مراجع خصوصی‌اش را هرگز در پنل سازمان نمی‌بیند.</p>
                                 <div class="ts-section__head">
                                     <p class="ts-tag" t-out="dict(ws._fields['purpose'].selection).get(ws.purpose)"/>
                                     <h1 t-out="ws.name"/>
