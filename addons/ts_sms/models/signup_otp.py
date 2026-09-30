@@ -126,3 +126,13 @@ class ResUsers(models.Model):
                 raise AccessDenied()
             return {'uid': self.id, 'auth_method': 'password', 'mfa': 'skip'}
         return super()._check_credentials(credential, env)
+
+
+class ResUsersPhones(models.Model):
+    _inherit = 'res.users'
+
+    def _ts_verified_phones(self):
+        """The mobile this user proved by code (used to bind workspace invitations to one person)."""
+        phones = super()._ts_verified_phones()
+        p = self.sudo().partner_id.ts_phone
+        return phones + [p] if p else phones

@@ -106,7 +106,7 @@ check('a wrong password still fails as before', raises(lambda: u1.with_user(u1).
 # ---- invite states
 inst = env['ts.instrument'].search([('state', '=', 'published'), ('purpose', '=', 'employment')], limit=1)
 org = env['res.partner'].create({'name': 'سازمان دعوت', 'is_company': True})
-ws = env['ts.workspace'].create({'name': 'دعوت آزمون', 'purpose': 'employment', 'partner_id': org.id})
+ws = env['ts.workspace'].create({'approved_on': '2026-01-01 00:00:00', 'name': 'دعوت آزمون', 'purpose': 'employment', 'partner_id': org.id})
 ws.state = 'active'
 A = env['ts.assignment']
 

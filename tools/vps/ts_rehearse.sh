@@ -43,6 +43,8 @@ if [[ " ${MODS//,/ } ${UPG//,/ } " == *" ts_org "* ]]; then
   ssh eot-odoo-prod "cd /tmp && sudo -u odoo env HOME=/opt/odoo /opt/odoo/venv/bin/python3 /opt/odoo/odoo/odoo-bin shell -c /etc/odoo20.conf -d $DB --db-filter='^$DB\$' --addons-path=/opt/odoo/talentsearch_stage/addons,/opt/odoo/themes,/opt/odoo/enterprise,/opt/odoo/odoo/addons --no-http --log-level=warn < /opt/odoo/talentsearch_stage/tools/prod/tests_org.py 2>&1 | grep -E '^(PASS|FAIL|SUMMARY|    unexpected)|Error'"
   echo "=== responsible-specialist tests"
   ssh eot-odoo-prod "cd /tmp && sudo -u odoo env HOME=/opt/odoo /opt/odoo/venv/bin/python3 /opt/odoo/odoo/odoo-bin shell -c /etc/odoo20.conf -d $DB --db-filter='^$DB\\$' --addons-path=/opt/odoo/talentsearch_stage/addons,/opt/odoo/themes,/opt/odoo/enterprise,/opt/odoo/odoo/addons --no-http --log-level=warn < /opt/odoo/talentsearch_stage/tools/prod/tests_org_resp.py 2>&1 | grep -E '^(PASS|FAIL|SUMMARY|    unexpected)|Error'"
+  echo "=== panel self-service tests"
+  ssh eot-odoo-prod "cd /tmp && sudo -u odoo env HOME=/opt/odoo /opt/odoo/venv/bin/python3 /opt/odoo/odoo/odoo-bin shell -c /etc/odoo20.conf -d $DB --db-filter='^$DB\\$' --addons-path=/opt/odoo/talentsearch_stage/addons,/opt/odoo/themes,/opt/odoo/enterprise,/opt/odoo/odoo/addons --no-http --log-level=warn < /opt/odoo/talentsearch_stage/tools/prod/tests_panel.py 2>&1 | grep -E '^(PASS|FAIL|SUMMARY|    unexpected)|Error'"
   echo "=== mobile sign-in tests"
   ssh eot-odoo-prod "cd /tmp && sudo -u odoo env HOME=/opt/odoo /opt/odoo/venv/bin/python3 /opt/odoo/odoo/odoo-bin shell -c /etc/odoo20.conf -d $DB --db-filter='^$DB\\$' --addons-path=/opt/odoo/talentsearch_stage/addons,/opt/odoo/themes,/opt/odoo/enterprise,/opt/odoo/odoo/addons --no-http --log-level=warn < /opt/odoo/talentsearch_stage/tools/prod/tests_signup.py 2>&1 | grep -E '^(PASS|FAIL|SUMMARY|    unexpected)|Error'"
   echo "=== http organization flow"
@@ -51,6 +53,8 @@ fi
 if [[ " ${MODS//,/ } ${UPG//,/ } " == *" ts_sms "* ]]; then
   echo "=== http mobile sign-in + invite links"
   ssh eot-odoo-prod "PYTHONIOENCODING=utf-8 python3 -u /opt/odoo/talentsearch_stage/tools/prod/ts_http_signup.py $DB $PORT" | grep -E '^(PASS|FAIL|SUMMARY)|Traceback|Error'
+  echo "=== http panel self-service"
+  ssh eot-odoo-prod "PYTHONIOENCODING=utf-8 python3 -u /opt/odoo/talentsearch_stage/tools/prod/ts_http_panel.py $DB $PORT" | grep -E '^(PASS|FAIL|SUMMARY)|Traceback|Error'
 fi
 if [[ " ${MODS//,/ } ${UPG//,/ } " == *" ts_kavenegar "* ]]; then
   echo "=== kavenegar tests (fake API)"

@@ -1,3 +1,6 @@
 id,name,model_id,group_id/id,operation,domain
 access_ts_assignment_user,assignment operator read,ts.assignment,ts_core.group_ts_user,r,
 access_ts_assignment_manager,assignment manager,ts.assignment,ts_core.group_ts_manager,cru,
+access_ts_member_invite_manager,member invite manager,ts.member.invite,ts_core.group_ts_manager,cru,
+access_ts_usage_event_manager,usage event manager,ts.usage.event,ts_core.group_ts_manager,r,
+access_ts_usage_event_user,usage event operator,ts.usage.event,ts_core.group_ts_user,r,

@@ -126,7 +126,7 @@ hr_pw = ensure_user(HR)
 out = shell(
     "u=env['res.users'].search([('login','=','%s')])\n"
     "org=env['res.partner'].search([('name','=','سازمان آزمون پیامک')],limit=1) or env['res.partner'].create({'name':'سازمان آزمون پیامک','is_company':True})\n"
-    "ws=env['ts.workspace'].search([('name','=','فضای آزمون پیامک')],limit=1) or env['ts.workspace'].create({'name':'فضای آزمون پیامک','purpose':'employment','partner_id':org.id})\n"
+    "ws=env['ts.workspace'].search([('name','=','فضای آزمون پیامک')],limit=1) or env['ts.workspace'].create({'approved_on':'2026-01-01 00:00:00','name':'فضای آزمون پیامک','purpose':'employment','partner_id':org.id})\n"
     "ws.state='active'\n"
     "env['ts.workspace.member'].search([('workspace_id','=',ws.id),('user_id','=',u.id)]) or env['ts.workspace.member'].create({'workspace_id':ws.id,'user_id':u.id,'role':'hr_admin'})\n"
     "inst=ws.env['ts.workspace.member'].search([('workspace_id','=',ws.id),('user_id','=',u.id)]).allowed_instruments()[:1]\n"

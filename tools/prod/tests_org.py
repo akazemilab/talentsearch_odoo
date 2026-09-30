@@ -42,9 +42,9 @@ hr, rev, clin, clin2, p1, p2, outsider = (puser('ts.org.%s@example.invalid' % n)
                                           ('hr', 'rev', 'clin', 'clin2', 'p1', 'p2', 'out'))
 org = env['res.partner'].create({'name': 'سازمان آزمون', 'is_company': True})
 WS = env['ts.workspace']
-w_emp = WS.create({'name': 'استخدام آزمون', 'purpose': 'employment', 'partner_id': org.id})
+w_emp = WS.create({'approved_on': '2026-01-01 00:00:00', 'name': 'استخدام آزمون', 'purpose': 'employment', 'partner_id': org.id})
 w_emp.state = 'active'
-w_cli = WS.create({'name': 'مرکز آزمون', 'purpose': 'clinical', 'partner_id': org.id, 'escalation_contact_id': org.id})
+w_cli = WS.create({'approved_on': '2026-01-01 00:00:00', 'name': 'مرکز آزمون', 'purpose': 'clinical', 'partner_id': org.id, 'escalation_contact_id': org.id})
 w_cli.state = 'active'
 M = env['ts.workspace.member']
 m_hr = M.create({'workspace_id': w_emp.id, 'user_id': hr.id, 'role': 'hr_admin'})
@@ -82,6 +82,11 @@ check('accept creates attempt tied to workspace', at1.workspace_id == w_emp and 
 check('another account cannot take over the invitation', raises(lambda: a1.action_accept(p2, share=True), UserError))
 finish(at1)
 check('state follows attempt -> done', a1.state == 'done')
+ue = env['ts.usage.event'].search([('attempt_id', '=', at1.id)])
+check('completed attempt records exactly one usage event', len(ue) == 1 and ue.workspace_id == w_emp and ue.units == 1)
+at1.action_submit()
+check('re-submitting does not duplicate the usage event', env['ts.usage.event'].search_count([('attempt_id', '=', at1.id)]) == 1)
+check('usage events are recorded, nothing is blocked (no credit fields)', 'balance' not in env['ts.workspace']._fields)
 lvl, res = a1.visible_results(m_hr)
 check('hr admin sees band summary only', lvl == 'summary' and res)
 check('reviewer sees band summary', a1.visible_results(m_rev)[0] == 'summary')

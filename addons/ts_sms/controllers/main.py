@@ -7,6 +7,7 @@ from odoo.http import request
 from odoo.addons.ts_assessment.controllers.main import _ts_site_or_404
 from odoo.addons.ts_assessment.models.attempt import fa_digits
 from odoo.addons.ts_org.controllers.main import TsOrg
+from odoo.addons.ts_org.controllers.panel import TsPanel
 
 from ..models.phone_otp import iran_mobile
 
@@ -105,3 +106,12 @@ class TsSmsController(TsOrg):
         request.env.user.partner_id.sudo().write(
             {'ts_phone': False, 'ts_phone_verified_at': False, 'ts_sms_results': False})
         return request.redirect('/my/phone?msg=removed')
+
+
+class TsSmsPanelController(TsPanel):
+
+    def _auth_urls(self, path):
+        urls = super()._auth_urls(path)
+        if _enabled():
+            urls['phone_url'] = '/signup?next=%s' % quote(path, safe='/')
+        return urls

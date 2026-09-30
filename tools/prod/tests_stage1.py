@@ -59,7 +59,10 @@ check('clinician starts unverified', M.search([('user_id', '=', u_cli.id)]).veri
 check('clinical workspace cannot go live without escalation owner',
       raises(lambda: ws_cli.write({'state': 'pilot'}), ValidationError))
 ws_edu = W.create({'name': 'TS test education', 'purpose': 'education', 'partner_id': org1.id})
-check('gated purpose cannot be activated', ws_edu.gated and raises(lambda: ws_edu.write({'state': 'active'}), ValidationError))
+ws_gate = W.create({'name': 'TS test gated', 'purpose': 'employment', 'partner_id': org1.id})
+check('gated purpose cannot be activated before approval', ws_gate.gated and raises(lambda: ws_gate.write({'state': 'active'}), ValidationError))
+check('gated purpose may run in limited pilot mode', not raises(lambda: ws_gate.write({'state': 'pilot'}), ValidationError))
+check('education needs no approval', not ws_edu.gated and not raises(lambda: ws_edu.write({'state': 'active'}), ValidationError))
 ws_emp.write({'state': 'pilot'})
 check('purpose locked after draft', raises(lambda: ws_emp.write({'purpose': 'clinical'}), UserError))
 

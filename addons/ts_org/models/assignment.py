@@ -96,6 +96,8 @@ class TsAssignment(models.Model):
                 raise ValidationError('این سنجه برای فرایند استخدام مجاز نیست.')
             if a.workspace_id.state not in ('pilot', 'active'):
                 raise ValidationError('فضای کاری فعال نیست.')
+            if a.workspace_id.gated:
+                raise ValidationError('این پنل در انتظار تأیید مالک پلتفرم است؛ دعوت شرکت‌کنندهٔ واقعی پس از تأیید ممکن می‌شود.')
 
     @api.constrains('responsible_id', 'workspace_id', 'user_id')
     def _check_responsible(self):
@@ -244,6 +246,11 @@ class TsWorkspaceMember(models.Model):
 
     def can_invite(self):
         return self.can_act() and self.role in INVITE_ROLES
+
+    def can_invite_participants(self):
+        """Real participants can be invited only once the platform owner approved gated panels."""
+        self.ensure_one()
+        return self.can_invite() and not self.workspace_id.gated
 
     # ------------------------------------------------ responsible specialist
     def sees_all(self):

@@ -24,7 +24,7 @@ out = shell(
     "u=env['res.users'].search([('login','=','%s')])\n"
     "ws=env['ts.workspace'].search([('name','=','فضای آزمون HTTP')],limit=1)\n"
     "org=env['res.partner'].search([('name','=','سازمان آزمون HTTP')],limit=1) or env['res.partner'].create({'name':'سازمان آزمون HTTP','is_company':True})\n"
-    "ws=ws or env['ts.workspace'].create({'name':'فضای آزمون HTTP','purpose':'employment','partner_id':org.id})\n"
+    "ws=ws or env['ts.workspace'].create({'approved_on':'2026-01-01 00:00:00','name':'فضای آزمون HTTP','purpose':'employment','partner_id':org.id})\n"
     "ws.state='active'\n"
     "env['ts.workspace.member'].search([('workspace_id','=',ws.id),('user_id','=',u.id)]) or env['ts.workspace.member'].create({'workspace_id':ws.id,'user_id':u.id,'role':'hr_admin'})\n"
     "env.cr.commit()\nprint('WS', ws.id)\n" % HR)

@@ -27,9 +27,9 @@
                                 </div>
                                 <div t-if="not rows" class="ts-card ts-card--soft">
                                     <h3>عضو هیچ فضای کاری نیستید</h3>
-                                    <p>فضای کاری سازمان‌ها و مراکز بالینی پس از بررسی توسط تیم تلنت سرچ ساخته می‌شود.</p>
-                                    <a href="/contact" class="ts-btn ts-btn--primary">درخواست فضای کاری</a>
+                                    <p>اگر همکاری شما را دعوت کرده، پیوند دعوت را باز کنید. یا پنل خودتان را بسازید.</p>
                                 </div>
+                                <p><a href="/my/workspaces/new" class="ts-btn ts-btn--primary">ساخت پنل تازه</a></p>
                                 <div t-else="" class="ts-grid ts-org-grid">
                                     <t t-foreach="rows" t-as="r">
                                         <article class="ts-card ts-org-card">
@@ -42,6 +42,7 @@
                                             </dl>
                                             <a t-if="r['usable']" t-attf-href="/my/workspaces/#{r['ws'].id}" class="ts-btn ts-btn--primary ts-btn--sm">ورود به فضا</a>
                                             <p t-elif="r['member'].verification_state == 'pending'" class="ts-notice ts-notice--warn">احراز صلاحیت حرفه‌ای شما در حال بررسی است.</p>
+                                            <p t-elif="r['ws'].state == 'suspended'" class="ts-notice ts-notice--warn">این پنل تعلیق شده است.</p>
                                             <p t-else="" class="ts-notice ts-notice--warn">این فضا هنوز فعال نشده است.</p>
                                         </article>
                                     </t>
@@ -81,6 +82,22 @@
                                 </p>
                                 <p t-if="error == 'form'" class="ts-notice ts-notice--warn" role="alert">نام شرکت‌کننده و سنجه را انتخاب کنید.</p>
                                 <p t-if="error == 'rule'" class="ts-notice ts-notice--warn" role="alert">این دعوت با قواعد این فضای کاری سازگار نیست.</p>
+                                <p t-if="error == 'pending'" class="ts-notice ts-notice--warn" role="alert">تا تأیید پنل، دعوت شرکت‌کنندهٔ واقعی ممکن نیست.</p>
+                                <p t-if="flash" class="ts-notice ts-notice--warn" role="alert" t-out="flash"/>
+                                <p t-if="is_new" class="ts-notice" role="status">پنل ساخته شد.</p>
+                                <section t-if="ws.gated" class="ts-notice ts-notice--warn" id="ts-pending" role="status">
+                                    <strong>پنل در انتظار تأیید است.</strong>
+                                    <t t-if="ws.state == 'pilot'"> می‌توانید پنل را کامل کنید و همکارانتان را دعوت کنید؛ دعوت شرکت‌کنندهٔ واقعی و دریافت نتیجه پس از تأیید تیم تلنت سرچ باز می‌شود.</t>
+                                    <t t-if="ws.rejected_on"><br/>درخواست رد شد<t t-if="ws.rejection_note">: <span t-out="ws.rejection_note"/></t>. می‌توانید اطلاعات پنل را اصلاح کنید و با پشتیبانی تماس بگیرید.</t>
+                                </section>
+                                <section t-if="checklist" class="ts-card ts-card--soft" id="ts-checklist">
+                                    <h2 class="h5">گام‌های راه‌اندازی</h2>
+                                    <ol class="ts-checklist">
+                                        <li t-foreach="checklist" t-as="c" t-attf-class="#{'is-done' if c[1] else ''}">
+                                            <span t-out="'✓ ' if c[1] else '○ '"/><a t-if="c[2] and not c[1]" t-att-href="c[2]" t-out="c[0]"/><t t-else=""><t t-out="c[0]"/></t>
+                                        </li>
+                                    </ol>
+                                </section>
 
                                 <nav class="ts-stats" aria-label="وضعیت دعوت‌ها">
                                     <a t-attf-class="ts-stat #{'is-active' if not state_filter else ''}" href="?"><strong t-out="fa(total)"/><span>همه</span></a>
@@ -156,7 +173,7 @@
                                         </table>
                                     </div>
 
-                                    <aside t-if="member.can_invite()" class="ts-card ts-card--soft ts-org-invite">
+                                    <aside t-if="can_invite_participants" id="ts-invite" class="ts-card ts-card--soft ts-org-invite">
                                         <h2 class="h5">دعوت شرکت‌کنندهٔ تازه</h2>
                                         <form t-attf-action="/my/workspaces/#{ws.id}/invite" method="post" class="ts-form">
                                             <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
@@ -167,7 +184,7 @@
                                             <label for="ts_inv_inst">سنجه</label>
                                             <select id="ts_inv_inst" name="instrument_id" required="required">
                                                 <option value="">انتخاب کنید</option>
-                                                <t t-foreach="instruments" t-as="i"><option t-att-value="i.id"><t t-out="i.title"/> · <t t-out="fa(i.active_item_count)"/> پرسش</option></t>
+                                                <t t-foreach="instruments" t-as="i"><option t-att-value="i.id"><t t-out="i.title"/> · <t t-if="i.code == 'TALENT-INV-15'">۱۵ جمله برای هر زمینه</t><t t-else=""><t t-out="fa(i.active_item_count)"/> پرسش</t></option></t>
                                             </select>
                                             <label for="ts_inv_note">یادداشت برای شرکت‌کننده (اختیاری)</label>
                                             <input id="ts_inv_note" name="note" type="text" maxlength="300"/>
@@ -176,6 +193,55 @@
                                         </form>
                                     </aside>
                                 </div>
+
+                                <section t-if="member.can_assign()" id="ts-members" class="ts-card ts-card--soft">
+                                    <h2 class="h5">اعضای پنل</h2>
+                                    <ul>
+                                        <li t-foreach="members" t-as="m"><strong t-out="m.user_id.name"/> · <t t-out="dict(m._fields['role'].selection).get(m.role)"/></li>
+                                    </ul>
+                                    <div t-if="new_invite" class="ts-notice" role="status">
+                                        پیوند دعوت ساخته شد. آن را برای همکارتان بفرستید؛ فقط با همان موبایل یا ایمیل کار می‌کند و ۷ روز اعتبار دارد:
+                                        <input type="text" readonly="readonly" class="ts-copy" t-att-value="new_invite.invite_url()" aria-label="پیوند دعوت" dir="ltr"/>
+                                    </div>
+                                    <div t-if="pending_invites">
+                                        <h3 class="h6">دعوت‌های در انتظار</h3>
+                                        <ul>
+                                            <li t-foreach="pending_invites" t-as="pi">
+                                                <bdi dir="ltr" t-out="pi.phone or pi.email"/> · <t t-out="dict(pi._fields['role'].selection).get(pi.role)"/>
+                                                <form t-attf-action="/my/workspaces/#{ws.id}/members/revoke/#{pi.id}" method="post" class="ts-inline-form">
+                                                    <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                                                    <button type="submit" class="ts-btn ts-btn--outline ts-btn--sm">لغو</button>
+                                                </form>
+                                            </li>
+                                        </ul>
+                                    </div>
+                                    <form t-attf-action="/my/workspaces/#{ws.id}/members/invite" method="post" class="ts-form">
+                                        <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                                        <h3 class="h6">دعوت همکار</h3>
+                                        <label for="ts_m_role">نقش</label>
+                                        <select id="ts_m_role" name="role" required="required">
+                                            <t t-foreach="role_choices" t-as="rc"><option t-att-value="rc[0]" t-out="rc[1]"/></t>
+                                        </select>
+                                        <label for="ts_m_phone">موبایل همکار</label>
+                                        <input id="ts_m_phone" name="phone" type="tel" dir="ltr" maxlength="20" autocomplete="off"/>
+                                        <label for="ts_m_email">یا ایمیل</label>
+                                        <input id="ts_m_email" name="email" type="email" dir="ltr" maxlength="200" autocomplete="off"/>
+                                        <button type="submit" class="ts-btn ts-btn--primary">ساخت پیوند دعوت</button>
+                                        <p class="ts-hint">تلنت سرچ برای همکاران پیامک یا ایمیل نمی‌فرستد؛ پیوند را خودتان بفرستید.</p>
+                                    </form>
+                                </section>
+
+                                <section t-if="member.can_assign()" id="ts-settings" class="ts-card ts-card--soft">
+                                    <h2 class="h5">نام و لوگو</h2>
+                                    <form t-attf-action="/my/workspaces/#{ws.id}/settings" method="post" enctype="multipart/form-data" class="ts-form">
+                                        <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                                        <label for="ts_s_name">نام پنل</label>
+                                        <input id="ts_s_name" name="name" type="text" maxlength="100" t-att-value="ws.name"/>
+                                        <label for="ts_s_logo">لوگو (PNG، JPG یا WEBP تا ۵۰۰ کیلوبایت)</label>
+                                        <input id="ts_s_logo" name="logo" type="file" accept="image/png,image/jpeg,image/webp"/>
+                                        <button type="submit" class="ts-btn ts-btn--outline">ذخیره</button>
+                                    </form>
+                                </section>
                             </div>
                         </section>
                     </div>
