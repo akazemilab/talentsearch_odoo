@@ -4,7 +4,7 @@ from odoo import api, fields, models
 from odoo.exceptions import UserError, ValidationError
 
 # Who may do what inside a workspace (blueprint §4, purpose-bound roles).
-INVITE_ROLES = {'owner', 'hr_admin', 'hiring_manager', 'clinic_director', 'clinician'}
+INVITE_ROLES = {'owner', 'hr_admin', 'hiring_manager', 'clinic_director', 'clinician', 'counselor'}
 VIEW_ROLES = INVITE_ROLES | {'reviewer'}
 # Roles that need a recorded professional verification before they can act.
 VERIFIED_ROLES = {'clinician', 'clinic_director'}
@@ -193,4 +193,7 @@ class TsWorkspaceMember(models.Model):
         dom = [('state', '=', 'published')]
         if self.workspace_id.purpose == 'employment':
             dom.append(('purpose', '=', 'employment'))
+        elif self.workspace_id.purpose == 'education':
+            # institutes invite students to the interactive talent inventory only
+            dom.append(('code', '=', 'TALENT-INV-15'))
         return self.env['ts.instrument'].sudo().search(dom)
