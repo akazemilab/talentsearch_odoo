@@ -12,6 +12,9 @@
                 <field name="state" widget="badge" decoration-success="state == 'active'" decoration-info="state == 'pilot'" decoration-warning="state == 'suspended'"/>
                 <field name="member_count" string="اعضا"/>
                 <field name="gated" optional="hide"/>
+                <field name="owner_user_id" optional="show"/>
+                <field name="create_date" string="تاریخ ساخت" optional="show"/>
+                <field name="terms_accepted_on" optional="hide"/>
             </list>
         </field>
     </record>
@@ -22,6 +25,9 @@
             <form>
                 <header>
                     <button name="action_approve" type="object" string="تأیید مالک پلتفرم" class="btn-primary" invisible="not gated" groups="ts_core.group_ts_manager"/>
+                    <button name="action_reject" type="object" string="رد با دلیل" invisible="not gated" groups="ts_core.group_ts_manager"/>
+                    <button name="action_suspend" type="object" string="تعلیق" invisible="state not in ('pilot', 'active')" groups="ts_core.group_ts_manager"/>
+                    <button name="action_resume" type="object" string="رفع تعلیق" invisible="state != 'suspended'" groups="ts_core.group_ts_manager"/>
                     <field name="state" widget="statusbar" options="{'clickable': '1'}" statusbar_visible="draft,pilot,active"/>
                 </header>
                 <sheet>
@@ -29,7 +35,7 @@
                         <button name="action_view_audit" type="object" class="oe_stat_button" icon="fa-list" string="ممیزی" groups="ts_core.group_ts_user"/>
                     </div>
                     <div class="alert alert-warning" role="alert" invisible="not gated">
-                        این نوع فضای کاری (دانشگاه/مدرسه یا رفاه کارکنان) تا تأیید جداگانه مالک پلتفرم قابل فعال‌سازی نیست.
+                        این فضای کاری (سازمان، کلینیک یا رفاه کارکنان) در انتظار تأیید مالک پلتفرم است؛ تا آن زمان مالک می‌تواند پنل را تنظیم و همکار دعوت کند ولی شرکت‌کنندهٔ واقعی دعوت نمی‌شود.
                     </div>
                     <div class="oe_title">
                         <label for="name"/>
@@ -41,8 +47,12 @@
                             <field name="partner_id"/>
                             <field name="purpose" readonly="state != 'draft'"/>
                             <field name="gated" invisible="1"/>
-                            <field name="approval_note" invisible="purpose not in ('education', 'benefits')"/>
+                            <field name="approval_note"/>
+                            <field name="rejection_note" invisible="not gated"/>
+                            <field name="rejected_on" invisible="not rejected_on"/>
                             <field name="approved_on" invisible="not approved_on"/>
+                            <field name="terms_accepted_on" invisible="not terms_accepted_on"/>
+                            <field name="terms_version" invisible="not terms_version"/>
                         </group>
                         <group>
                             <field name="data_contact_id"/>
@@ -98,5 +108,11 @@
             <p class="o_view_nocontent_smiling_face">هنوز فضای کاری‌ای ساخته نشده است</p>
             <p>برای هر سازمان مشتری و هر هدف (استخدام یا بالینی) یک فضای کاری جدا بسازید.</p>
         </field>
+    </record>
+    <record id="ts_workspace_pending_action" model="ir.actions.act_window">
+        <field name="name">پنل‌های در انتظار تأیید</field>
+        <field name="res_model">ts.workspace</field>
+        <field name="view_mode">list,form</field>
+        <field name="domain">[('gated', '=', True), ('state', 'in', ('draft', 'pilot'))]</field>
     </record>
 </odoo>

@@ -1,0 +1,211 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- ======================================================= landing -->
+    <record id="tpl_panel_landing" model="ir.ui.view">
+        <field name="name">TS: panel landing</field>
+        <field name="type">qweb</field>
+        <field name="key">ts_org.panel_landing</field>
+        <field name="website_id" ref="ts_website.website_ts"/>
+        <field name="arch" type="xml">
+            <t t-name="ts_org.panel_landing">
+                <t t-call="website.layout" additional_title.f="ساخت پنل">
+                    <div id="wrap" class="ts-page">
+                        <section class="ts-section">
+                            <div class="ts-container">
+                                <div class="ts-section__head">
+                                    <h1>پنل بسازید</h1>
+                                    <p>یک پنل، فضای کار شما برای دعوت شرکت‌کننده‌ها، دیدن گزارش‌هایی است که خودشان با شما به اشتراک می‌گذارند، و هم‌کاری با همکارانتان. ساخت پنل در این فصل رایگان است.</p>
+                                </div>
+                                <div class="ts-grid">
+                                    <article class="ts-card">
+                                        <h2 class="h4">مدرسه یا مرکز مشاوره</h2>
+                                        <p>بلافاصله فعال می‌شود. مشاورها را دعوت کنید و برای هر دانش‌آموز یک مشاور مسئول تعیین کنید.</p>
+                                    </article>
+                                    <article class="ts-card">
+                                        <h2 class="h4">سازمان</h2>
+                                        <p>پنل را بسازید و همکارانتان را دعوت کنید. دعوت شرکت‌کنندهٔ واقعی پس از بررسی و تأیید تیم تلنت سرچ باز می‌شود.</p>
+                                    </article>
+                                    <article class="ts-card">
+                                        <h2 class="h4">درمانگاه یا کلینیک</h2>
+                                        <p>پنل را بسازید و متخصص‌ها را دعوت کنید. دعوت شرکت‌کنندهٔ واقعی پس از بررسی و تأیید باز می‌شود.</p>
+                                    </article>
+                                    <article class="ts-card">
+                                        <h2 class="h4">کار مستقل</h2>
+                                        <p>اگر تنها کار می‌کنید، یک پنل یک‌نفره بسازید؛ بعداً می‌توانید همکار اضافه کنید.</p>
+                                    </article>
+                                </div>
+                                <p><a t-att-href="cta_url" class="ts-btn ts-btn--primary">ساخت پنل</a>
+                                   <a href="/panel/terms" class="ts-btn ts-btn--outline">شرایط استفاده</a></p>
+                            </div>
+                        </section>
+                    </div>
+                </t>
+            </t>
+        </field>
+    </record>
+
+    <!-- ======================================================= terms -->
+    <record id="tpl_panel_terms" model="ir.ui.view">
+        <field name="name">TS: panel terms</field>
+        <field name="type">qweb</field>
+        <field name="key">ts_org.panel_terms</field>
+        <field name="website_id" ref="ts_website.website_ts"/>
+        <field name="arch" type="xml">
+            <t t-name="ts_org.panel_terms">
+                <t t-call="website.layout" additional_title.f="شرایط استفاده از پنل">
+                    <div id="wrap" class="ts-page">
+                        <section class="ts-section">
+                            <div class="ts-container ts-prose">
+                                <h1>شرایط استفاده از پنل</h1>
+                                <p class="ts-hint">نسخه: <bdi dir="ltr" t-out="version"/></p>
+                                <h2 class="h4">قیمت</h2>
+                                <p>ساخت و استفاده از پنل در این فصل رایگان است. تعداد آزمون‌های تکمیل‌شده ثبت می‌شود، اما چیزی کسر یا مسدود نمی‌شود. اگر بعداً تعرفه‌ای تعیین شود، پیش از اعمال به شما اطلاع داده می‌شود.</p>
+                                <h2 class="h4">پنل سازمان و درمانگاه</h2>
+                                <p>این پنل‌ها ابتدا در «حالت محدود» ساخته می‌شوند: می‌توانید پنل را بسازید و همکاران را دعوت کنید، اما دعوت شرکت‌کنندهٔ واقعی و دریافت نتیجه پس از بررسی و تأیید تیم تلنت سرچ امکان‌پذیر می‌شود. تیم تلنت سرچ می‌تواند درخواست را رد کند یا پنلی را تعلیق کند.</p>
+                                <h2 class="h4">حریم خصوصی شرکت‌کننده</h2>
+                                <p>شرکت‌کننده تصمیم می‌گیرد چه چیزی با پنل به اشتراک گذاشته شود. پاسخ‌های خام هرگز نمایش داده نمی‌شوند. شما متعهد می‌شوید از نتایج فقط برای هدفی که پنل برای آن ساخته شده استفاده کنید.</p>
+                                <h2 class="h4">مسئولیت شما</h2>
+                                <p>هر دعوتی که از پنل فرستاده می‌شود به نام شما و پنل شما ثبت می‌شود. همکاران فقط آنچه را که به آن‌ها سپرده‌اید می‌بینند. نتایج ابزار سنجش، تشخیص یا تصمیم نهایی نیستند.</p>
+                                <h2 class="h4">پنل بالینی</h2>
+                                <p>مسئول پنل بالینی می‌پذیرد که اگر شرکت‌کننده‌ای نشانهٔ خطر یا نیاز به پاسخ فوری بالینی نشان دهد، پاسخ‌گویی فوری با متخصص همان پنل است و تلنت سرچ خدمات اورژانسی ارائه نمی‌کند.</p>
+                                <h2 class="h4">انتقال مراجع‌ها</h2>
+                                <p>اگر یک متخصص از پنل جدا شود، مراجع‌های او به مالک پنل برمی‌گردند و مالک آن‌ها را به فرد دیگری می‌سپارد. داده‌ها بین پنل‌ها جابه‌جا نمی‌شوند.</p>
+                                <p><a href="/panel" class="ts-btn ts-btn--outline">بازگشت</a></p>
+                            </div>
+                        </section>
+                    </div>
+                </t>
+            </t>
+        </field>
+    </record>
+
+    <!-- ======================================================= create -->
+    <record id="tpl_panel_new" model="ir.ui.view">
+        <field name="name">TS: new panel</field>
+        <field name="type">qweb</field>
+        <field name="key">ts_org.panel_new</field>
+        <field name="website_id" ref="ts_website.website_ts"/>
+        <field name="arch" type="xml">
+            <t t-name="ts_org.panel_new">
+                <t t-call="website.layout" additional_title.f="ساخت پنل">
+                    <div id="wrap" class="ts-page">
+                        <section class="ts-section">
+                            <div class="ts-container">
+                                <a href="/my/workspaces" class="ts-back">فضاهای کاری</a>
+                                <div class="ts-section__head"><h1>ساخت پنل</h1></div>
+                                <p t-if="error" class="ts-notice ts-notice--warn" role="alert" t-out="error"/>
+                                <form action="/my/workspaces/new/create" method="post" class="ts-form">
+                                    <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                                    <label for="ts_p_name">نام پنل</label>
+                                    <input id="ts_p_name" name="name" type="text" required="required" minlength="2" maxlength="100" t-att-value="vals.get('name')"/>
+                                    <fieldset>
+                                        <legend>نوع پنل</legend>
+                                        <label><input type="radio" name="kind" value="school" required="required" t-att-checked="'checked' if vals.get('kind') == 'school' else None"/> مدرسه یا مرکز مشاوره</label>
+                                        <label><input type="radio" name="kind" value="org" t-att-checked="'checked' if vals.get('kind') == 'org' else None"/> سازمان</label>
+                                        <label><input type="radio" name="kind" value="clinic" t-att-checked="'checked' if vals.get('kind') == 'clinic' else None"/> درمانگاه یا کلینیک</label>
+                                        <label><input type="radio" name="kind" value="solo" t-att-checked="'checked' if vals.get('kind') == 'solo' else None"/> کار مستقل (پنل یک‌نفره)</label>
+                                    </fieldset>
+                                    <label for="ts_p_solo">اگر پنل یک‌نفره است، چه کاری می‌کنید؟</label>
+                                    <select id="ts_p_solo" name="solo_as">
+                                        <option value="">—</option>
+                                        <option value="counselor" t-att-selected="'selected' if vals.get('solo_as') == 'counselor' else None">مشاور تحصیلی یا شغلی</option>
+                                        <option value="psychologist" t-att-selected="'selected' if vals.get('solo_as') == 'psychologist' else None">روان‌شناس یا متخصص بالینی</option>
+                                        <option value="hr" t-att-selected="'selected' if vals.get('solo_as') == 'hr' else None">منابع انسانی</option>
+                                    </select>
+                                    <label><input type="checkbox" name="escalation_ok" value="1"/> (فقط پنل بالینی) می‌پذیرم که پاسخ‌گویی فوری به نشانهٔ خطر بالینی با من است.</label>
+                                    <label><input type="checkbox" name="terms" value="1" required="required"/> <a href="/panel/terms" target="_blank">شرایط استفاده</a> را خوانده و می‌پذیرم.</label>
+                                    <button type="submit" class="ts-btn ts-btn--primary">ساخت پنل</button>
+                                    <p class="ts-hint">پنل مدرسه بلافاصله فعال می‌شود. پنل سازمان و درمانگاه تا تأیید تیم تلنت سرچ در حالت محدود است.</p>
+                                </form>
+                            </div>
+                        </section>
+                    </div>
+                </t>
+            </t>
+        </field>
+    </record>
+
+    <!-- ======================================================= join -->
+    <record id="tpl_panel_join" model="ir.ui.view">
+        <field name="name">TS: join panel</field>
+        <field name="type">qweb</field>
+        <field name="key">ts_org.panel_join</field>
+        <field name="website_id" ref="ts_website.website_ts"/>
+        <field name="arch" type="xml">
+            <t t-name="ts_org.panel_join">
+                <t t-call="website.layout" additional_title.f="دعوت به پنل">
+                    <div id="wrap" class="ts-page">
+                        <section class="ts-section">
+                            <div class="ts-container">
+                                <div class="ts-section__head"><h1>دعوت به پنل</h1></div>
+                                <p t-if="error" class="ts-notice ts-notice--warn" role="alert" t-out="error"/>
+                                <t t-if="state != 'ok'">
+                                    <p class="ts-notice ts-notice--warn" role="alert">این دعوت دیگر معتبر نیست. از مالک پنل بخواهید دعوت تازه بفرستد.</p>
+                                </t>
+                                <t t-else="">
+                                    <p>شما به پنل «<strong t-out="inv.workspace_id.name"/>» با نقش «<strong t-out="role_label"/>» دعوت شده‌اید.</p>
+                                    <t t-if="not signed">
+                                        <p>برای پذیرفتن، با همان شمارهٔ موبایل یا ایمیلی که دعوت برایش صادر شده وارد شوید.</p>
+                                        <a t-if="urls.get('phone_url')" t-att-href="urls['phone_url']" class="ts-btn ts-btn--primary">ورود با کد پیامکی</a>
+                                        <a t-att-href="urls['login_url']" class="ts-btn ts-btn--outline">ورود با ایمیل</a>
+                                        <a t-att-href="urls['signup_url']" class="ts-btn ts-btn--outline">ساخت حساب</a>
+                                    </t>
+                                    <t t-elif="not fits">
+                                        <p class="ts-notice ts-notice--warn" role="alert">این دعوت برای شمارهٔ موبایل یا ایمیل دیگری صادر شده است. با حسابی که دعوت برایش صادر شده وارد شوید.</p>
+                                    </t>
+                                    <form t-else="" t-attf-action="/join/#{inv.token}/accept" method="post" class="ts-form">
+                                        <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                                        <t t-if="inv.role in ('clinician', 'clinic_director')">
+                                            <label for="ts_j_lic">شمارهٔ پروانه یا نظام حرفه‌ای</label>
+                                            <input id="ts_j_lic" name="license_number" type="text" required="required" maxlength="60" dir="ltr"/>
+                                            <p class="ts-hint">شمارهٔ پروانه توسط تیم تلنت سرچ بررسی می‌شود.</p>
+                                        </t>
+                                        <button type="submit" class="ts-btn ts-btn--primary">پذیرفتن دعوت</button>
+                                    </form>
+                                </t>
+                            </div>
+                        </section>
+                    </div>
+                </t>
+            </t>
+        </field>
+    </record>
+
+    <!-- ======================================================= share with my counselor -->
+    <record id="tpl_share_form" model="ir.ui.view">
+        <field name="name">TS: share result with my counselor</field>
+        <field name="type">qweb</field>
+        <field name="key">ts_org.share_form</field>
+        <field name="website_id" ref="ts_website.website_ts"/>
+        <field name="arch" type="xml">
+            <t t-name="ts_org.share_form">
+                <t t-call="website.layout" additional_title.f="ارسال نتیجه برای مشاور">
+                    <div id="wrap" class="ts-page">
+                        <section class="ts-section">
+                            <div class="ts-container">
+                                <a t-attf-href="/my/assessments/#{attempt.id}" class="ts-back">بازگشت به نتیجه</a>
+                                <div class="ts-section__head">
+                                    <h1>ارسال نتیجه برای مشاور</h1>
+                                    <p>مشاور شما یک «کد پنل» دارد. با وارد کردن آن، فقط بازهٔ هر زمینه در نتیجهٔ شما برای مشاور پنل دیده می‌شود. پاسخ‌های خام هرگز دیده نمی‌شوند و هر زمان بخواهید اشتراک را لغو می‌کنید.</p>
+                                </div>
+                                <p t-if="error" class="ts-notice ts-notice--warn" role="alert" t-out="error"/>
+                                <form t-if="not ws" t-attf-action="/my/assessments/#{attempt.id}/share" method="get" class="ts-form">
+                                    <label for="ts_sh_code">کد پنل</label>
+                                    <input id="ts_sh_code" name="code" type="text" dir="ltr" required="required" maxlength="30" autocomplete="off" t-att-value="code"/>
+                                    <button type="submit" class="ts-btn ts-btn--primary">ادامه</button>
+                                </form>
+                                <form t-else="" t-attf-action="/my/assessments/#{attempt.id}/share/confirm" method="post" class="ts-form">
+                                    <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                                    <input type="hidden" name="code" t-att-value="ws.code"/>
+                                    <p>نتیجه برای پنل «<strong t-out="ws.name"/>» ارسال شود؟</p>
+                                    <button type="submit" class="ts-btn ts-btn--primary">بله، ارسال شود</button>
+                                    <a t-attf-href="/my/assessments/#{attempt.id}/share" class="ts-btn ts-btn--outline">نه، کد دیگری وارد می‌کنم</a>
+                                </form>
+                            </div>
+                        </section>
+                    </div>
+                </t>
+            </t>
+        </field>
+    </record>
+</odoo>

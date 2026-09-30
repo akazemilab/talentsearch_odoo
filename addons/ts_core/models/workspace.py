@@ -7,9 +7,10 @@ PURPOSES = [
     ('education', 'دانشگاه و مدرسه'),
     ('benefits', 'رفاه کارکنان'),
 ]
-# Blueprint §3/§C: education and benefits are future variants, gated until
-# their rights, clinical, consent and operational requirements are approved.
-GATED_PURPOSES = {'education', 'benefits'}
+# Organizations, clinics and benefit programs are reviewed by the platform owner before the first real
+# participant can be invited (the panel may already be set up and colleagues invited). Education
+# (schools, counseling centers) is active immediately.
+GATED_PURPOSES = {'employment', 'clinical', 'benefits'}
 
 ROLES_BY_PURPOSE = {
     'employment': {'owner', 'hr_admin', 'hiring_manager', 'reviewer'},
@@ -55,6 +56,12 @@ class TsWorkspace(models.Model):
     approved_by_id = fields.Many2one('res.users', 'تأییدکنندهٔ مالک پلتفرم', readonly=True, copy=False)
     approved_on = fields.Datetime('تاریخ تأیید', readonly=True, copy=False)
     approval_note = fields.Char('یادداشت تأیید', copy=False)
+    rejected_on = fields.Datetime('تاریخ رد', readonly=True, copy=False)
+    rejection_note = fields.Char('دلیل رد (برای مالک پنل نمایش داده می‌شود)', copy=False)
+    terms_version = fields.Char('نسخهٔ شرایط پذیرفته‌شده', readonly=True, copy=False)
+    terms_accepted_on = fields.Datetime('تاریخ پذیرش شرایط', readonly=True, copy=False)
+    terms_accepted_by_id = fields.Many2one('res.users', 'پذیرنده‌ی شرایط', readonly=True, copy=False)
+    owner_user_id = fields.Many2one('res.users', 'مالک پنل', compute='_compute_owner_user')
     member_ids = fields.One2many('ts.workspace.member', 'workspace_id', 'اعضا')
     member_count = fields.Integer(compute='_compute_member_count')
     data_contact_id = fields.Many2one('res.partner', 'مسئول داده', tracking=True)
@@ -64,6 +71,11 @@ class TsWorkspace(models.Model):
     company_id = fields.Many2one('res.company', required=True, default=lambda s: s.env.company)
 
     _code_unique = models.Constraint('unique(code)', 'کد فضای کاری باید یکتا باشد.')
+
+    @api.depends('member_ids.role', 'member_ids.active', 'member_ids.user_id')
+    def _compute_owner_user(self):
+        for ws in self:
+            ws.owner_user_id = ws.member_ids.filtered(lambda m: m.active and m.role == 'owner')[:1].user_id
 
     @api.depends('purpose', 'approved_on')
     def _compute_gated(self):
@@ -80,8 +92,41 @@ class TsWorkspace(models.Model):
                 raise UserError('این فضای کاری نیاز به تأیید ندارد.')
             if ws.approved_on:
                 continue
-            ws.write({'approved_by_id': self.env.uid, 'approved_on': fields.Datetime.now()})
+            ws.write({'approved_by_id': self.env.uid, 'approved_on': fields.Datetime.now(),
+                      'rejected_on': False, 'rejection_note': False})
             self.env['ts.audit.event'].log('workspace.approve', ws, workspace=ws, purpose=ws.purpose)
+
+    def _check_manager(self):
+        if not self.env.user.has_group('ts_core.group_ts_manager'):
+            raise UserError('فقط مدیر پلتفرم می‌تواند این کار را انجام دهد.')
+
+    def action_reject(self):
+        """Platform owner declines a pending panel; the note is shown to the panel owner."""
+        self._check_manager()
+        for ws in self:
+            if not ws.gated:
+                raise UserError('این فضای کاری در انتظار تأیید نیست.')
+            if not ws.rejection_note:
+                raise UserError('دلیل رد را در فیلد «دلیل رد» بنویسید.')
+            ws.rejected_on = fields.Datetime.now()
+            self.env['ts.audit.event'].log('workspace.reject', ws, workspace=ws, purpose=ws.purpose,
+                                           note=ws.rejection_note)
+
+    def action_suspend(self):
+        self._check_manager()
+        for ws in self:
+            if ws.state not in ('pilot', 'active'):
+                raise UserError('فقط فضای پایلوت یا فعال معلق می‌شود.')
+            ws.write({'state': 'suspended'})
+            self.env['ts.audit.event'].log('workspace.suspend', ws, workspace=ws, note=ws.approval_note or False)
+
+    def action_resume(self):
+        self._check_manager()
+        for ws in self:
+            if ws.state != 'suspended':
+                raise UserError('این فضای کاری معلق نیست.')
+            ws.write({'state': 'pilot'})
+            self.env['ts.audit.event'].log('workspace.resume', ws, workspace=ws)
 
     def _compute_member_count(self):
         for ws in self:
@@ -112,7 +157,7 @@ class TsWorkspace(models.Model):
     def _check_activation(self):
         for ws in self:
             if ws.state in ('pilot', 'active'):
-                if ws.gated:
+                if ws.gated and ws.state == 'active':
                     raise ValidationError('این نوع فضای کاری هنوز تأیید نشده و قابل فعال‌سازی نیست.')
                 if ws.purpose == 'clinical' and not ws.escalation_contact_id:
                     raise ValidationError('فضای بالینی بدون مسئول پاسخ فوری فعال نمی‌شود.')
@@ -185,7 +230,19 @@ class TsWorkspaceMember(models.Model):
             self.env['ts.audit.event'].log('member.add', m, workspace=m.workspace_id, user=m.user_id.id, role=m.role)
         return records
 
+    def unlink(self):
+        for m in self.filtered(lambda m: m.active and m.role == 'owner'):
+            others = m.workspace_id.member_ids.filtered(lambda x: x.active and x.role == 'owner' and x not in self)
+            if not others:
+                raise UserError('هر فضای کاری باید دست‌کم یک مالک فعال داشته باشد؛ ابتدا مالک دیگری اضافه کنید.')
+        return super().unlink()
+
     def write(self, vals):
+        if vals.get('active') is False or ('role' in vals and vals['role'] != 'owner'):
+            for m in self.filtered(lambda m: m.active and m.role == 'owner'):
+                others = m.workspace_id.member_ids.filtered(lambda x: x.active and x.role == 'owner' and x not in self)
+                if not others:
+                    raise UserError('هر فضای کاری باید دست‌کم یک مالک فعال داشته باشد؛ ابتدا مالک دیگری اضافه کنید.')
         res = super().write(vals)
         if {'role', 'active', 'user_id'} & set(vals):
             for m in self:

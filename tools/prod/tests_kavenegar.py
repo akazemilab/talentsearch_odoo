@@ -295,6 +295,14 @@ company.kv_enabled = False
 check('disabled -> stock IAP class', company._get_sms_api_class().__name__ == 'SmsApi')
 company.kv_enabled = True
 
+from odoo.addons.ts_kavenegar.models.res_company import _is_line
+check('line discovery keeps real lines', _is_line('10004346') and _is_line('90008956') and _is_line(' 3000505050 '))
+check('line discovery drops short service values', not _is_line('1') and not _is_line('100010') and not _is_line('abc') and not _is_line(''))
+company.sudo().write({'kv_lines': '1,100010,10004346'})
+sel = [k for k, _ in env['res.company']._kv_line_selection()]
+check('selection hides short values', '10004346' in sel and '1' not in sel and '100010' not in sel, str(sel))
+company.sudo().write({'kv_lines': '10004346,90008956'})
+
 # persist webhook fixtures for the HTTP test
 open('/tmp/kv_http_fixture.json', 'w').write(json.dumps({
     'secret': company.sudo().kv_webhook_secret,

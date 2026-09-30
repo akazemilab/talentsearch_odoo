@@ -18,12 +18,12 @@ inst = env['ts.instrument'].search([('code', '=', 'TALENT-INV-15')])
 v = inst.current_version_id
 org = env['res.partner'].search([('name', '=', 'مؤسسهٔ آزمون HTTP')], limit=1) or env['res.partner'].create({'name': 'مؤسسهٔ آزمون HTTP', 'is_company': True})
 ws = env['ts.workspace'].search([('partner_id', '=', org.id)], limit=1) or env['ts.workspace'].create({'name': 'مؤسسهٔ آزمون HTTP', 'purpose': 'education', 'partner_id': org.id})
-ws.action_approve(); ws.state = 'pilot'
+ws.write({'approved_on': '2026-01-01 00:00:00'}); ws.state = 'pilot'
 u = env['res.users'].search([('login', '=', %r)])
 env['ts.workspace.member'].search([('workspace_id', '=', ws.id), ('user_id', '=', u.id)]) or env['ts.workspace.member'].create({'workspace_id': ws.id, 'user_id': u.id, 'role': 'counselor'})
 org2 = env['res.partner'].search([('name', '=', 'مؤسسهٔ دیگر')], limit=1) or env['res.partner'].create({'name': 'مؤسسهٔ دیگر', 'is_company': True})
 ws2 = env['ts.workspace'].search([('partner_id', '=', org2.id)], limit=1) or env['ts.workspace'].create({'name': 'مؤسسهٔ دیگر HTTP', 'purpose': 'education', 'partner_id': org2.id})
-ws2.action_approve(); ws2.state = 'pilot'
+ws2.write({'approved_on': '2026-01-01 00:00:00'}); ws2.state = 'pilot'
 def mk(name, ref, wsid):
     ex = env['ts.attempt'].search([('source_ref', '=', ref)])
     if ex:

@@ -7,6 +7,7 @@ from odoo.http import request
 from odoo.addons.ts_assessment.controllers.main import _ts_site_or_404
 from odoo.addons.ts_assessment.models.attempt import fa_digits
 from odoo.addons.ts_org.models.assignment import RESPONSIBLE_ROLES
+from odoo.addons.ts_org.models.panel import role_choices
 
 
 def _memberships():
@@ -107,7 +108,30 @@ class TsOrg(http.Controller):
             'created': request.env['ts.assignment'].sudo().browse(int(kw['created'])).exists()
             if kw.get('created', '').isdigit() else None,
             'error': kw.get('error'), 'fa': fa_digits, 'page_name': 'ts_workspaces',
+            'is_new': bool(kw.get('new')), 'flash': request.session.pop('ts_flash', None),
+            'can_invite_participants': member.can_invite_participants(),
+            'checklist': self._checklist(member, ws),
+            'members': ws.member_ids.filtered('active') if member.can_assign() else request.env['ts.workspace.member'],
+            'pending_invites': request.env['ts.member.invite'].sudo().search(
+                [('workspace_id', '=', ws.id), ('state', '=', 'pending')]) if member.can_assign() else None,
+            'new_invite': request.env['ts.member.invite'].sudo().search(
+                [('id', '=', int(kw['minv'])), ('workspace_id', '=', ws.id)], limit=1)
+            if member.can_assign() and (kw.get('minv') or '').isdigit() else None,
+            'role_choices': role_choices(ws) if member.can_assign() else [],
         })
+
+    def _checklist(self, member, ws):
+        if not member.can_assign():
+            return []
+        others = len(ws.member_ids.filtered(lambda m: m.active and m != member)) + \
+            request.env['ts.member.invite'].sudo().search_count([('workspace_id', '=', ws.id)])
+        first = request.env['ts.assignment'].sudo().search_count([('workspace_id', '=', ws.id)])
+        return [
+            ('پنل ساخته شد', True, None),
+            ('نام و لوگوی پنل', bool(ws.partner_id.image_1920), '#ts-settings'),
+            ('دعوت اولین همکار', bool(others), '#ts-members'),
+            ('دعوت اولین شرکت‌کننده' + (' (پس از تأیید)' if ws.gated else ''), bool(first), '#ts-invite'),
+        ]
 
     @http.route('/my/workspaces/<int:ws_id>/invite', type='http', auth='user', website=True,
                 methods=['POST'], sitemap=False)
@@ -116,6 +140,8 @@ class TsOrg(http.Controller):
         member = _membership(ws_id)
         if not member.can_invite():
             raise request.not_found()
+        if not member.can_invite_participants():
+            return request.redirect('/my/workspaces/%s?error=pending' % ws_id)
         name = (post.get('invitee_name') or '').strip()
         inst_id = post.get('instrument_id') or ''
         allowed = member.allowed_instruments()

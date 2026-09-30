@@ -11,6 +11,7 @@
         'data/sequence.xml',
         'views/backend.xml',
         'views/web_org.xml',
+        'views/web_panel.xml',
     ],
     'assets': {
         'ts_website.assets_ts': ['ts_org/static/src/scss/org.scss'],

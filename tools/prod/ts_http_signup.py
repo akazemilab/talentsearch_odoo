@@ -49,7 +49,7 @@ for u in env['res.users'].sudo().search([('login', '=', '@PHONE@')]):
     u.partner_id.sudo().write({'ts_phone': False}); u.sudo().write({'active': False, 'login': 'old.' + str(u.id)})
 inst = env['ts.instrument'].search([('state', '=', 'published'), ('purpose', '=', 'employment')], limit=1)
 org = env['res.partner'].search([('name', '=', 'سازمان ثبت‌نام HTTP')], limit=1) or env['res.partner'].create({'name': 'سازمان ثبت‌نام HTTP', 'is_company': True})
-ws = env['ts.workspace'].search([('partner_id', '=', org.id)], limit=1) or env['ts.workspace'].create({'name': 'سازمان ثبت‌نام HTTP', 'purpose': 'employment', 'partner_id': org.id})
+ws = env['ts.workspace'].search([('partner_id', '=', org.id)], limit=1) or env['ts.workspace'].create({'approved_on': '2026-01-01 00:00:00', 'name': 'سازمان ثبت‌نام HTTP', 'purpose': 'employment', 'partner_id': org.id})
 ws.state = 'active'
 A = env['ts.assignment']
 a = A.create({'workspace_id': ws.id, 'instrument_id': inst.id, 'invitee_name': 'دعوت‌شدهٔ HTTP'})

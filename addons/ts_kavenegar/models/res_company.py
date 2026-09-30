@@ -7,6 +7,12 @@ from odoo.addons.sms.tools.sms_api import SmsApi
 from ..tools.kavenegar import Kavenegar, KavenegarError
 
 
+
+def _is_line(x):
+    """A sender line is a long numeric number; short values such as '1' or '100010' are service codes, not lines."""
+    x = (x or '').strip()
+    return x.isdigit() and len(x) >= 7
+
 class ResCompany(models.Model):
     _inherit = 'res.company'
 
@@ -42,7 +48,7 @@ class ResCompany(models.Model):
         for c in self.env['res.company'].sudo().search([]):
             for x in (c.kv_lines or '').split(','):
                 x = x.strip()
-                if x and x not in lines:
+                if _is_line(x) and x not in lines:
                     lines.append(x)
         return [(x, x) for x in lines]
 
@@ -68,7 +74,7 @@ class ResCompany(models.Model):
             found.add(m.sender)
         for m in Msg.search([('company_id', '=', self.id), ('direction', '=', 'in'), ('receptor', '!=', False)]):
             found.add(m.receptor)
-        lines = sorted(x.strip() for x in found if x and x.strip().isdigit())
+        lines = sorted(x.strip() for x in found if _is_line(x))
         self.sudo().kv_lines = ','.join(lines)
         return lines
 
