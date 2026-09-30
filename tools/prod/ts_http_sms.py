@@ -49,6 +49,7 @@ threading.Thread(target=srv.serve_forever, daemon=True).start()
 shell("""
 env['ir.config_parameter'].sudo().set_str('ts_kavenegar.api_base', 'http://127.0.0.1:18099/v1/%s/%s.json')
 c = env.company.sudo()
+c.write({'kv_lines': '10004346'})
 c.write({'kv_enabled': True, 'kv_api_key': 'FAKEKEY', 'kv_sender': '10004346', 'ts_sms_invite': True, 'ts_sms_result': True, 'ts_sms_otp': True, 'ts_sms_otp_template_id': False})
 env['sms.sms'].search([]).unlink()
 env['ts.phone.otp'].sudo().search([]).unlink()
