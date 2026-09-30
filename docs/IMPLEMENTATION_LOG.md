@@ -129,3 +129,13 @@ Data step (owner-only, NOT in code): approve workspace 1, set pilot, add the cou
 ## er3 — Kavenegar line dropdown (2026-09-30)
 - `kv_sender`/`kv_inbox_line` are now Selections fed by `res.company.kv_lines`. Kavenegar has no API listing lines (30 endpoints probed -> 404), so lines are discovered from latest outbox senders, account default sender, stored messages; refreshed by "Fetch lines" and by Test connection.
 - Live: kv_sender set to 90008956 (the account's actual line). Known quirk: discovery also lists '1' and '100010' (from stored inbound receptors); filter short values in a later change.
+
+## resp1 — responsible specialist (stage 1 of the two-mode signup work, 2026-09-30)
+- `ts.assignment.responsible_id` and `ts.attempt.responsible_id` (imports only) -> `ts.workspace.member`; constraint: same workspace, active, role in INVITE_ROLES, never the participant themselves. Every change writes `assignment.responsible_change` / `attempt.responsible_change` (old/new member ids).
+- Visibility (`ts.workspace.member.can_see`): owner, `hr_admin`, `clinic_director`, `reviewer` see everything; other specialists only what they are responsible for. Unassigned queue is visible to owner/managers everywhere and to counselors in education only. Applied in `visible_results`, `ts_org_visible_to`, workspace list/counts and the assignment/report routes (404 otherwise).
+- Default: the inviter is responsible if they are a specialist; an owner only while they are the only member; owner accepting their own invite drops the self-responsibility (unassigned).
+- UI: workspace page has "تخصیص‌نشده" and "مسئولیت من" filters and a per-row dropdown (owner/`hr_admin`/`clinic_director` only, POST `/my/workspaces/<id>/{a|p}/<id>/responsible`). The 114 imported results stay unassigned until the owner hands them over.
+- NOT changed: `GATED_PURPOSES` is still `{'education','benefits'}` (the brief assumed the opposite; changing it would ungate workspace 1, so it waits for stage 3 and the owner's decision).
+- Tests: `tools/prod/tests_org_resp.py` (22), `tools/prod/ts_http_resp.py` (12), both run by `ts_rehearse.sh`; `tests_org.py` clinical fixture now assigns the clinician (unassigned clinic results are hidden from clinicians by design).
+- Rehearsal eot_ts13: eot.ir UNCHANGED (1,050 pages) + portal UNCHANGED; stage1 29/29, assessment 35/35, participant flow 26/26, engine 44/44, talent 56/56, talent HTTP 43/43, org 32/32 + HTTP 27/27, edu HTTP 17/17, responsible 22/22 + HTTP 12/12. First rehearsal caught a 500 (union of two models in the controller) before ship.
+- Leftover clone server `eot_ts_kv1` held port 8071; its process was stopped, its database was not dropped.
