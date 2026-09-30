@@ -5,6 +5,5 @@
     <menuitem id="menu_ts_pending" name="پنل‌های در انتظار تأیید" parent="menu_ts_customers" action="ts_workspace_pending_action" sequence="5" groups="group_ts_manager"/>
     <menuitem id="menu_ts_workspaces" name="فضاهای کاری" parent="menu_ts_customers" action="ts_workspace_action" sequence="10"/>
     <menuitem id="menu_ts_governance" name="حاکمیت و ممیزی" parent="menu_ts_root" sequence="90"/>
-    <menuitem id="menu_ts_emergency" name="دسترسی اضطراری" parent="menu_ts_governance" action="ts_emergency_action" sequence="20" groups="group_ts_manager"/>
     <menuitem id="menu_ts_audit" name="رویدادهای ممیزی" parent="menu_ts_governance" action="ts_audit_event_action" sequence="10"/>
 </odoo>
