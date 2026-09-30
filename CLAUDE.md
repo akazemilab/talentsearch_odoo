@@ -146,3 +146,11 @@ Use `ts domain`, never hand-typed certbot/nginx/psql:
 - Old source-instrument tests must exclude `TALENT-INV-15` (33 source instruments; the catalog shows 34).
 - Flow tests reuse password files `/root/.ts_flow_<DB>_*` on prod: a re-used clone name carries stale files; `ensure_user` now upserts the user every run.
 - Historical import: dry-run first (`TS_IMPORT_XLSX=... < ts_import_talent.py` in odoo shell), counts only, never print rows. The export never lives in the repo; use a 700 directory and delete it afterwards.
+
+## Panels, sign-in and responsible specialist (stages 1-5, 2026-09-30)
+- Two-mode signup: `/signup` (mobile OTP, ts_sms) and `/panel` -> `/my/workspaces/new` (ts_org). A panel is a `ts.workspace`; education is active at once, employment/clinical start as `state='pilot'` + `gated` until `action_approve()` (members may build and invite colleagues; `ts.assignment` creation is refused while gated). `GATED_PURPOSES = {employment, clinical, benefits}`.
+- Who sees a participant: owner/`hr_admin`/`clinic_director`/`reviewer` see all, others only what they are responsible for (`member.can_see`); the unassigned queue is visible to owners/managers and, in education only, to counselors. When a member is deactivated, deleted or loses a responsible role their clients go back to the unassigned queue (audited) - nothing disappears.
+- Colleague invites (`ts.member.invite`) are bound to one verified mobile (`res.users._ts_verified_phones()`, filled by ts_sms from `ts_phone`) or email; the link is always shareable, no SMS is sent. Self-taken results reach a counselor only through `ts.assignment.ts_share_attempt` (panel code + explicit confirm).
+- `ts.usage.event` records one row per completed workspace attempt; nothing is deducted (next phase).
+- `ts.emergency.access` is a procedure (reason >= 15 chars, 24 h, owner notified, audited), not a technical lock: platform managers still have read ACLs on clinical data.
+- Gotchas found while building: Odoo 20 Binary fields need `base64.b64encode(x).decode()`; a `<p>` between a `t-if` and its `t-else` 500s the page (ORM suites never render templates - run the HTTP suite); `ts db stop` drops the clone database; new test phone numbers must not collide across suites (`ts_http_signup.py` owns 09127770001).
