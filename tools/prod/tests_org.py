@@ -75,7 +75,7 @@ def finish(attempt):
 
 a1 = A.create({'workspace_id': w_emp.id, 'instrument_id': emp[0].id, 'invitee_name': 'شرکت‌کنندهٔ یک'})
 check('assignment numbered and invited', a1.name.startswith('TSI-') and a1.state == 'invited')
-check('invite url on website 2 domain', a1.invite_url().startswith('https://ts.innerquest.me/invite/'), a1.invite_url())
+check('invite url on website 2 domain', a1.invite_url().startswith('https://talentsearch.ir/invite/'), a1.invite_url())
 check('nothing visible before completion', a1.visible_results(m_hr)[0] == 'none')
 at1 = a1.action_accept(p1, share=True)
 check('accept creates attempt tied to workspace', at1.workspace_id == w_emp and a1.state == 'accepted' and a1.share_level == 'summary')

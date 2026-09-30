@@ -55,7 +55,7 @@ env['ts.phone.otp'].sudo().search([]).unlink()
 env.cr.commit()
 """)
 
-TS = 'ts.innerquest.me'
+TS = 'talentsearch.ir'
 PART = 'ts.sms.part.http@example.invalid'
 pw = ensure_user(PART)
 shell("u=env['res.users'].search([('login','=','%s')]); u.partner_id.sudo().write({'ts_phone': False, 'ts_phone_verified_at': False, 'ts_sms_results': False}); env['ts.phone.otp'].sudo().search([('user_id','=',u.id)]).unlink(); env.cr.commit()" % PART)

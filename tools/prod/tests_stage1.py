@@ -26,7 +26,7 @@ def raises(fn, exc):
 
 site = env.ref('ts_website.website_ts')
 check('website 2 exists and is not website 1', site.id != 1, 'id=%s' % site.id)
-check('website 2 domain', site.domain == 'https://ts.innerquest.me', site.domain)
+check('website 2 domain', site.domain == 'https://talentsearch.ir', site.domain)
 check('website 2 is Persian only', site.language_ids.mapped('code') == ['fa_IR'])
 check('website 1 untouched name/domain', env['website'].browse(1).domain == 'https://www.eot.ir')
 check('website 2 own top menu', site.menu_id.website_id == site and len(site.menu_id.child_id) == 7)

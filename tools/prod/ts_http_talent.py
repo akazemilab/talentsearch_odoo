@@ -11,7 +11,7 @@ spec = importlib.util.spec_from_file_location('flowlib', os.path.join(os.path.di
 lib = importlib.util.module_from_spec(spec); spec.loader.exec_module(lib)
 lib.setup(DB, PORT)
 Client, check, ensure_user, path_of, summary = lib.Client, lib.check, lib.ensure_user, lib.path_of, lib.summary
-TS = 'ts.innerquest.me'
+TS = 'talentsearch.ir'
 LOGIN = 'ts.talent.http@example.invalid'
 
 anon = Client(TS)
@@ -80,6 +80,8 @@ report = path_of(loc)
 st, _, page = u.req(report)
 check('report renders 3 fields, tiles, 7 levels and table', st == 200 and 'tt-tiles' in page and page.count('tt-panel"') >= 3
       and page.count('<h3>') >= 7 and 'tt-table' in page)
+check('report has the fields-side-by-side section', 'tt-compare' in page and page.count('tt-cmp__row') == 6 and 'برجسته' in page)
+check('participant report is not in org mode', 'tt-cobrand' not in page)
 check('report shows program names from the book', 'آموزش جبرانی' in page)
 check('raw answers hidden by default behind a button', 'aria-expanded="false"' in page and 'hidden="hidden"' in page)
 check('no unresolved placeholders in the report', 'None' not in page and 'False' not in page)
@@ -93,4 +95,11 @@ check("other user cannot open the report", o.req(report.split('?')[0])[0] == 404
 e = Client('www.eot.ir')
 check('/take is not served on eot.ir', e.req('/take/' + token)[0] in (404, 303))
 check('talent catalog is 404 on eot.ir', e.req('/assessments')[0] == 404)
+st, _, page = anon.req('/entekhab-reshteh')
+check('landing is public on the talent site', st == 200 and 'انتخاب رشتهٔ ۱۴۰۵' in page and '/entekhab-reshteh/sample' in page)
+check('landing makes no "best major" or rank promise', 'بهترین رشته' not in page and 'رتبه' in page)
+st, _, page = anon.req('/entekhab-reshteh/sample')
+check('sample report is public, labelled fictional, side by side', st == 200 and 'نمونهٔ ساختگی' in page and page.count('tt-cmp__row') == 6)
+check('landing and sample are 404 on eot.ir', Client('www.eot.ir').req('/entekhab-reshteh')[0] == 404 and Client('www.eot.ir').req('/entekhab-reshteh/sample')[0] == 404)
+check('org person route needs login', anon.req('/my/workspaces/1/p/1')[0] in (303, 302, 404))
 summary()

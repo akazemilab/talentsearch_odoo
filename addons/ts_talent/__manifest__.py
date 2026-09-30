@@ -11,6 +11,7 @@
     'data': [
         'security/ir.access.csv',
         'views/web_talent.xml',
+        'views/web_entekhab.xml',
         'data/load.xml',
     ],
     'assets': {

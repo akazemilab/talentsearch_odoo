@@ -28,7 +28,7 @@ from odoo.addons.ts_talent.models import engine_matrix as EM
 inst = env['ts.instrument'].search([('code', '=', 'TALENT-INV-15')])
 check('instrument exists and is published', len(inst) == 1 and inst.state == 'published')
 v = inst.current_version_id
-check('matrix version 2/3/8 fields', v.mode == 'matrix' and (v.field_min, v.field_default, v.field_max) == (2, 3, 8))
+check('matrix version 2/4/8 fields', v.mode == 'matrix' and (v.field_min, v.field_default, v.field_max) == (2, 4, 8))
 check('15 verbatim items', len(v.item_ids) == 15)
 check('5 scale + 7 composite factors', len(v.factor_ids.filtered(lambda f: f.kind == 'scale')) == 5 and len(v.factor_ids.filtered(lambda f: f.kind == 'composite')) == 7)
 check('version is locked against edits', raises(lambda: v.write({'field_max': 9})))
@@ -74,7 +74,7 @@ f3 = att.ts_add_field('هنر')
 p3 = [1, 2, 3, 4, 5] * 3
 answer(f3, p3)
 att.ts_finish_field(f3)
-check('progress computed (all answered)', att.progress >= 99, str(att.progress))
+check('progress computed (3 of 4 suggested fields answered)', att.progress >= 75, str(att.progress))
 ok = att.action_submit()
 check('submit ok', ok and att.state == 'done' and att.released and bool(att.profile_json))
 prof = att.ts_profile()
@@ -94,6 +94,25 @@ check('report: 7 levels of text', len(lv) == 7 and all(l['lines'] for l in lv))
 check('report: charts for each field', all('<svg' in str(R.field_chart(f)) for f in prof['fields']))
 check('report: programs use book names', any(p[1].startswith('آموزش جبرانی') for p in R.programs_list(prof['interpretation'])))
 
+# entekhab-1405: fields side by side
+gap = prof['interpretation'].get('gap', 10)
+cr = R.compare_rows(prof, gap)
+check('compare: 6 rows over every field', [r['code'] for r in cr] == ['ANA', 'EXP', 'ACA', 'NOV', 'DUT', 'TOT']
+      and all(len(r['cells']) == len(prof['fields']) for r in cr))
+check('compare: exactly the top value(s) are best; near within gap', all(
+    (c['mark'] == 'best') == (abs(c['score'] - max(x['score'] for x in r['cells'])) < 1e-9)
+    and (c['mark'] != 'near' or max(x['score'] for x in r['cells']) - c['score'] <= gap)
+    for r in cr for c in r['cells']))
+check('compare: bar percent maps 20..100 to 0..100', all(abs(c['pct'] - (c['score'] - 20) / 80.0 * 100) < 0.06 for r in cr for c in r['cells']))
+fake = {'fields': [{'label': 'الف', 'scales': dict(ANA=80, EXP=80, ACA=60, NOV=40, DUT=20), 'composites': {'TOT': 56.0}, 'flags': {}},
+                   {'label': 'ب', 'scales': dict(ANA=72, EXP=80, ACA=59, NOV=40, DUT=20), 'composites': {'TOT': 54.2}, 'flags': {}}]}
+fr = {r['code']: r for r in R.compare_rows(fake, 10)}
+check('compare: exact tie -> both best', [c['mark'] for c in fr['EXP']['cells']] == ['best', 'best'])
+check('compare: 8 below top is near, 1 below is near', fr['ANA']['cells'][1]['mark'] == 'near' and fr['ACA']['cells'][1]['mark'] == 'near')
+check('compare: cards list every field with high/low', len(R.field_cards(prof, gap)) == len(prof['fields']))
+check('compare: two neutral lines, no "best major" wording', len(R.compare_lines(prof['interpretation'])) == 2
+      and not any('بهترین رشته' in x for x in R.compare_lines(prof['interpretation'])))
+
 # imported (historical) participant: contact only, no user
 partner = env['res.partner'].create({'name': 'شرکت‌کنندهٔ آزمون ورود'})
 imp = env['ts.attempt'].create({'person_id': partner.id, 'instrument_id': inst.id, 'version_id': v.id,
@@ -102,6 +121,31 @@ check('imported attempt has no user and is not released', not imp.user_id and im
 check('source_ref is unique', raises(lambda: env['ts.attempt'].create({
     'person_id': partner.id, 'instrument_id': inst.id, 'version_id': v.id, 'source': 'import', 'source_ref': 'test:import:1'}),
     exc=Exception))
+
+
+# entekhab-1405: institute (education) view of imported results, answers never included
+org_p = env['res.partner'].create({'name': 'مؤسسهٔ آزمون', 'is_company': True})
+w_edu = env['ts.workspace'].create({'name': 'مؤسسهٔ آزمون', 'purpose': 'education', 'partner_id': org_p.id})
+check('education workspace is gated until approved', w_edu.gated and raises(lambda: w_edu.write({'state': 'pilot'})))
+check('approval is manager-only', raises(lambda: w_edu.with_user(user).action_approve(), exc=Exception))
+w_edu.action_approve()
+check('approval recorded and gate lifted', not w_edu.gated and w_edu.approved_by_id and w_edu.approved_on
+      and env['ts.audit.event'].search_count([('res_model', '=', 'ts.workspace'), ('res_id', '=', w_edu.id), ('event_type', '=', 'workspace.approve')]) == 1)
+w_edu.state = 'pilot'
+c_user = env['res.users'].with_context(no_reset_password=True).create({
+    'name': 'مشاور آزمون', 'login': 'ts.talent.counselor@example.invalid', 'group_ids': [(6, 0, [env.ref('base.group_portal').id])]})
+m_c = env['ts.workspace.member'].create({'workspace_id': w_edu.id, 'user_id': c_user.id, 'role': 'counselor'})
+imp.write({'workspace_id': w_edu.id})
+check('counselor can act and sees the imported result', m_c.can_act() and imp.ts_org_visible_to(m_c))
+imp2 = env['ts.attempt'].create({'person_id': partner.id, 'instrument_id': inst.id, 'version_id': v.id, 'source': 'import',
+                                 'source_ref': 'test:import:2', 'state': 'done', 'released': False})
+check('an import of another workspace stays invisible', not imp2.ts_org_visible_to(m_c))
+check('a web attempt without a shared assignment is invisible', not att.ts_org_visible_to(m_c))
+m_c.active = False
+check('inactive member sees nothing', not imp.ts_org_visible_to(m_c))
+m_c.active = True
+w_edu.state = 'suspended'
+check('suspended workspace hides imports', not imp.ts_org_visible_to(m_c))
 
 # field cap
 att2 = env['ts.attempt'].create({'user_id': user.id, 'instrument_id': inst.id, 'version_id': v.id})

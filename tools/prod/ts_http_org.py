@@ -17,7 +17,7 @@ lib = importlib.util.module_from_spec(spec); spec.loader.exec_module(lib)
 lib.setup(DB, PORT)
 Client, check, ensure_user, path_of, shell = lib.Client, lib.check, lib.ensure_user, lib.path_of, lib.shell
 
-TS = 'ts.innerquest.me'
+TS = 'talentsearch.ir'
 HR, PART = 'ts.org.hr.http@example.invalid', 'ts.org.part.http@example.invalid'
 hr_pw, part_pw = ensure_user(HR), ensure_user(PART)
 out = shell(
@@ -43,7 +43,7 @@ check('invite form lists employment instruments only', len(opts) > 0, str(len(op
 st, loc, _ = hr.req('/my/workspaces/%s/invite' % ws_id, {'csrf_token': hr.csrf(page), 'invitee_name': 'شرکت‌کنندهٔ HTTP', 'instrument_id': opts[0]})
 check('invite -> dashboard with created', st in (302, 303) and 'created=' in loc, loc)
 st, _, page = hr.req(path_of(loc))
-m = re.search(r'value="https://ts\.innerquest\.me/invite/([0-9a-f]{32})"', page)
+m = re.search(r'value="https://talentsearch\.ir/invite/([0-9a-f]{32})"', page)
 check('invite link shown for copying', bool(m))
 tok = m.group(1)
 st, loc, _ = hr.req('/my/workspaces/%s/invite' % ws_id, {'csrf_token': hr.csrf(page), 'invitee_name': 'x', 'instrument_id': '999999'})

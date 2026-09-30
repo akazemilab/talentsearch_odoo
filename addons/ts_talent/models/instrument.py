@@ -26,7 +26,7 @@ class TsInstrumentVersion(models.Model):
     mode = fields.Selection([('single', 'یک‌بار پاسخ'), ('matrix', 'تکرار به ازای هر زمینه')],
                             'شیوهٔ پاسخ‌دهی', default='single', required=True)
     field_min = fields.Integer('کمترین تعداد زمینه', default=2)
-    field_default = fields.Integer('تعداد پیش‌فرض زمینه', default=3)
+    field_default = fields.Integer('تعداد پیش‌فرض زمینه', default=4)
     field_max = fields.Integer('بیشترین تعداد زمینه', default=8)
     field_guidance = fields.Text('راهنمای نوشتن زمینه')
     noise_gap = fields.Float('فاصلهٔ «تقریباً برابر» (نمره)', default=10.0)
