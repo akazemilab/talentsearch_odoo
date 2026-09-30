@@ -10,6 +10,10 @@ VIEW_ROLES = INVITE_ROLES | {'reviewer'}
 VERIFIED_ROLES = {'clinician', 'clinic_director'}
 # Education: the institute's owner and counselors read the participant report (never the answers).
 EDU_ROLES = {'owner', 'counselor'}
+# Owners and managers see every result of the workspace; other specialists see only
+# the participants they are responsible for (plus the unassigned queue where allowed).
+SEE_ALL_ROLES = {'owner', 'hr_admin', 'clinic_director', 'reviewer'}
+RESPONSIBLE_ROLES = INVITE_ROLES
 
 from odoo.addons.ts_assessment.models.loader import EMPLOYMENT_CATEGORIES  # noqa: F401 (single source)
 
@@ -55,6 +59,10 @@ class TsAssignment(models.Model):
         ('declined', 'ردشده'),
         ('withdrawn', 'لغوشده'),
     ], 'وضعیت', compute='_compute_state', store=True, tracking=True)
+    responsible_id = fields.Many2one(
+        'ts.workspace.member', 'کارشناس مسئول', index=True, ondelete='set null',
+        domain="[('workspace_id', '=', workspace_id), ('active', '=', True)]",
+        help='کارشناسی که نتیجهٔ این شرکت‌کننده را می‌بیند. مالک و مدیر همه را می‌بینند.')
     withdrawn = fields.Boolean(readonly=True)
     declined = fields.Boolean(readonly=True)
     company_id = fields.Many2one(related='workspace_id.company_id', store=True)
@@ -87,11 +95,37 @@ class TsAssignment(models.Model):
             if a.workspace_id.state not in ('pilot', 'active'):
                 raise ValidationError('فضای کاری فعال نیست.')
 
+    @api.constrains('responsible_id', 'workspace_id', 'user_id')
+    def _check_responsible(self):
+        for a in self:
+            r = a.responsible_id
+            if not r:
+                continue
+            if r.workspace_id != a.workspace_id or not r.active or r.role not in RESPONSIBLE_ROLES:
+                raise ValidationError('کارشناس مسئول باید عضو فعال همین فضای کاری با نقش کارشناس باشد.')
+            if a.user_id and r.user_id == a.user_id:
+                raise ValidationError('شرکت‌کننده نمی‌تواند کارشناس مسئولِ خودش باشد.')
+
+    def write(self, vals):
+        old = {a.id: a.responsible_id.id for a in self} if 'responsible_id' in vals else {}
+        res = super().write(vals)
+        for a in self:
+            if a.id in old and old[a.id] != a.responsible_id.id:
+                self.env['ts.audit.event'].log('assignment.responsible_change', a, workspace=a.workspace_id,
+                                               old=old[a.id] or False, new=a.responsible_id.id or False)
+        return res
+
     @api.model_create_multi
     def create(self, vals_list):
+        Member = self.env['ts.workspace.member']
         for vals in vals_list:
             if vals.get('name', '/') == '/':
                 vals['name'] = self.env['ir.sequence'].next_by_code('ts.assignment') or '/'
+            if 'responsible_id' not in vals and vals.get('workspace_id'):
+                default = Member.ts_default_responsible(vals['workspace_id'],
+                                                        vals.get('invited_by_id') or self.env.uid)
+                if default:
+                    vals['responsible_id'] = default.id
         recs = super().create(vals_list)
         for a in recs:
             self.env['ts.audit.event'].log('assignment.create', a, workspace=a.workspace_id,
@@ -117,6 +151,9 @@ class TsAssignment(models.Model):
             raise UserError('این دعوت قبلاً با حساب دیگری پذیرفته شده است.')
         if not self.user_id:
             share_level = self.default_share_level() if share else 'none'
+            if self.responsible_id.user_id == user:
+                # nobody is their own responsible specialist: back to the unassigned queue
+                self.responsible_id = False
             inst = self.instrument_id
             attempt = self.env['ts.attempt'].create({
                 'user_id': user.id, 'instrument_id': inst.id, 'version_id': inst.current_version_id.id,
@@ -160,6 +197,8 @@ class TsAssignment(models.Model):
         empty = self.env['ts.attempt.result']
         if member.workspace_id != self.workspace_id or not member.can_act():
             return 'none', empty
+        if not member.can_see(self):
+            return 'none', empty
         if self.state != 'done' or self.share_level == 'none' or not self.attempt_id.released:
             return 'none', empty
         results = self.attempt_id.result_rows()
@@ -187,6 +226,44 @@ class TsWorkspaceMember(models.Model):
 
     def can_invite(self):
         return self.can_act() and self.role in INVITE_ROLES
+
+    # ------------------------------------------------ responsible specialist
+    def sees_all(self):
+        self.ensure_one()
+        return self.role in SEE_ALL_ROLES
+
+    def sees_unassigned(self):
+        """Owners and managers always; counselors only in education workspaces."""
+        self.ensure_one()
+        return self.sees_all() or (self.workspace_id.purpose == 'education' and self.role == 'counselor')
+
+    def can_assign(self):
+        """Who may hand a participant to a specialist: owner and managers."""
+        self.ensure_one()
+        return self.can_act() and self.sees_all() and self.role != 'reviewer'
+
+    def can_see(self, rec):
+        """rec is a ts.assignment or an imported ts.attempt with a responsible_id."""
+        self.ensure_one()
+        if rec.workspace_id != self.workspace_id:
+            return False
+        if self.sees_all():
+            return True
+        if rec.responsible_id:
+            return rec.responsible_id == self
+        return self.sees_unassigned()
+
+    @api.model
+    def ts_default_responsible(self, workspace_id, user_id):
+        """The inviter is responsible if they are a specialist; an owner only when working alone."""
+        m = self.sudo().search([('workspace_id', '=', int(workspace_id)), ('user_id', '=', user_id),
+                                ('active', '=', True)], limit=1)
+        if not m or m.role not in RESPONSIBLE_ROLES or not m.can_act():
+            return self.browse()
+        if m.role == 'owner' and self.sudo().search_count(
+                [('workspace_id', '=', m.workspace_id.id), ('active', '=', True)]) > 1:
+            return self.browse()
+        return m
 
     def allowed_instruments(self):
         self.ensure_one()

@@ -88,6 +88,8 @@
                                     <a t-attf-class="ts-stat #{'is-active' if state_filter == 'in_progress' else ''}" href="?state=in_progress"><strong t-out="fa(counts['in_progress'] + counts['accepted'])"/><span>در حال پاسخ</span></a>
                                     <a t-attf-class="ts-stat #{'is-active' if state_filter == 'done' else ''}" href="?state=done"><strong t-out="fa(counts['done'])"/><span>تکمیل‌شده</span></a>
                                     <a t-attf-class="ts-stat #{'is-active' if state_filter == 'declined' else ''}" href="?state=declined"><strong t-out="fa(counts['declined'] + counts['withdrawn'])"/><span>رد یا لغو</span></a>
+                                    <a t-if="show_unassigned" t-attf-class="ts-stat #{'is-active' if resp_filter == 'none' else ''}" href="?resp=none"><strong t-out="fa(unassigned_count)"/><span>تخصیص‌نشده</span></a>
+                                    <a t-attf-class="ts-stat #{'is-active' if resp_filter == 'mine' else ''}" href="?resp=mine"><strong t-out="fa(mine_count)"/><span>مسئولیت من</span></a>
                                 </nav>
 
                                 <section t-if="ws.purpose == 'education'" class="ts-card ts-card--soft" id="ts-imports">
@@ -100,13 +102,24 @@
                                     <p t-if="not imports" class="ts-muted">نتیجهٔ واردشده‌ای در این فهرست نیست.</p>
                                     <div t-else="" class="ts-table-wrap">
                                         <table class="ts-table">
-                                            <thead><tr><th scope="col">شرکت‌کننده</th><th scope="col">منبع</th><th scope="col">زمینه‌ها</th><th scope="col">تاریخ</th><th scope="col">دسترسی شرکت‌کننده</th><th scope="col"><span class="visually-hidden">اقدام</span></th></tr></thead>
+                                            <thead><tr><th scope="col">شرکت‌کننده</th><th scope="col">منبع</th><th scope="col">زمینه‌ها</th><th scope="col">تاریخ</th><th scope="col">کارشناس مسئول</th><th scope="col">دسترسی شرکت‌کننده</th><th scope="col"><span class="visually-hidden">اقدام</span></th></tr></thead>
                                             <tbody>
                                                 <tr t-foreach="imports" t-as="p">
                                                     <td><strong t-out="p.person_id.name"/></td>
                                                     <td>واردشده</td>
                                                     <td t-out="fa(len(p.field_ids))"/>
                                                     <td t-out="p.jalali(p.submitted_at, False)"/>
+                                                    <td>
+                                                        <form t-if="can_assign" t-attf-action="/my/workspaces/#{ws.id}/p/#{p.id}/responsible" method="post" class="ts-inline-form">
+                                                            <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                                                            <select name="responsible_id" aria-label="کارشناس مسئول">
+                                                                <option value="">تخصیص‌نشده</option>
+                                                                <t t-foreach="assignable" t-as="rm"><option t-att-value="rm.id" t-att-selected="'selected' if p.responsible_id == rm else None" t-out="rm.user_id.name"/></t>
+                                                            </select>
+                                                            <button type="submit" class="ts-btn ts-btn--outline ts-btn--sm">ثبت</button>
+                                                        </form>
+                                                        <t t-else=""><t t-out="p.responsible_id.user_id.name or 'تخصیص‌نشده'"/></t>
+                                                    </td>
                                                     <td><span class="ts-pill" t-out="'منتشرشده' if p.released else 'منتشر نشده'"/></td>
                                                     <td><a t-attf-href="/my/workspaces/#{ws.id}/p/#{p.id}" class="ts-btn ts-btn--outline ts-btn--sm">پرونده</a></td>
                                                 </tr>
@@ -119,12 +132,23 @@
                                     <div class="ts-table-wrap">
                                         <p t-if="not assignments" class="ts-muted">دعوتی در این فهرست نیست.</p>
                                         <table t-else="" class="ts-table">
-                                            <thead><tr><th scope="col">شرکت‌کننده</th><th scope="col">سنجه</th><th scope="col">وضعیت</th><th scope="col">اشتراک</th><th scope="col"><span class="visually-hidden">اقدام</span></th></tr></thead>
+                                            <thead><tr><th scope="col">شرکت‌کننده</th><th scope="col">سنجه</th><th scope="col">وضعیت</th><th scope="col">کارشناس مسئول</th><th scope="col">اشتراک</th><th scope="col"><span class="visually-hidden">اقدام</span></th></tr></thead>
                                             <tbody>
                                                 <tr t-foreach="assignments" t-as="a">
                                                     <td><strong t-out="a.invitee_name"/><div class="ts-hint"><bdi dir="ltr" t-out="a.name"/></div></td>
                                                     <td t-out="a.instrument_id.title"/>
                                                     <td><span t-attf-class="ts-pill #{'ts-pill--ok' if a.state == 'done' else ('ts-pill--warn' if a.state in ('declined', 'withdrawn') else '')}" t-out="dict(a._fields['state'].selection).get(a.state)"/></td>
+                                                    <td>
+                                                        <form t-if="can_assign" t-attf-action="/my/workspaces/#{ws.id}/a/#{a.id}/responsible" method="post" class="ts-inline-form">
+                                                            <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                                                            <select name="responsible_id" aria-label="کارشناس مسئول">
+                                                                <option value="">تخصیص‌نشده</option>
+                                                                <t t-foreach="assignable" t-as="rm"><option t-att-value="rm.id" t-att-selected="'selected' if a.responsible_id == rm else None" t-out="rm.user_id.name"/></t>
+                                                            </select>
+                                                            <button type="submit" class="ts-btn ts-btn--outline ts-btn--sm">ثبت</button>
+                                                        </form>
+                                                        <t t-else=""><t t-out="a.responsible_id.user_id.name or 'تخصیص‌نشده'"/></t>
+                                                    </td>
                                                     <td t-out="'دارد' if a.share_level != 'none' else ('—' if a.state == 'invited' else 'ندارد')"/>
                                                     <td><a t-attf-href="/my/workspaces/#{ws.id}/a/#{a.id}" class="ts-btn ts-btn--outline ts-btn--sm">جزئیات</a></td>
                                                 </tr>
@@ -190,6 +214,7 @@
                                         <dt>وضعیت</dt><dd t-out="dict(a._fields['state'].selection).get(a.state)"/>
                                         <dt>شناسهٔ دعوت</dt><dd><bdi dir="ltr" t-out="a.name"/></dd>
                                         <dt>دعوت‌کننده</dt><dd t-out="a.invited_by_id.name"/>
+                                        <dt>کارشناس مسئول</dt><dd t-out="a.responsible_id.user_id.name or 'تخصیص‌نشده'"/>
                                         <t t-if="attempt and attempt.submitted_at"><dt>تاریخ تکمیل</dt><dd t-out="attempt.jalali(attempt.submitted_at)"/></t>
                                         <dt>اشتراک نتیجه</dt><dd t-out="dict(a._fields['share_level'].selection).get(a.share_level)"/>
                                     </dl>
