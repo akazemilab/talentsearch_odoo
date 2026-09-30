@@ -125,3 +125,7 @@ Built: (1) ts_core - `ts.workspace` owner approval (`approved_by_id/approved_on/
 Tooling fix: the rehearsal harness/tests still used the old staging host `ts.innerquest.me`; after the talentsearch.ir cutover website 4's domain is `https://talentsearch.ir`, so hosts in tools/ were switched (website.xml data stays noupdate). New `tools/prod/ts_http_edu.py` (16 checks) is run by `ts_rehearse.sh`.
 Rehearsal eot_ts14: eot.ir UNCHANGED (1,049 pages) + portal UNCHANGED; stage1 29/29, assessment 35/35, participant flow 26/26, engine 44/44, talent 53/53, talent HTTP 43/43, org 32/32 + HTTP 27/27, edu HTTP 16/16, SMS 30/30, webhooks 8/8. Known unrelated: `tests_kavenegar` "inbox stored 2 messages" counts every inbound row in the clone, which now includes real rows from prod (test assumes an empty inbox).
 Data step (owner-only, NOT in code): approve workspace 1, set pilot, add the counselor portal user as member.
+
+## er3 — Kavenegar line dropdown (2026-09-30)
+- `kv_sender`/`kv_inbox_line` are now Selections fed by `res.company.kv_lines`. Kavenegar has no API listing lines (30 endpoints probed -> 404), so lines are discovered from latest outbox senders, account default sender, stored messages; refreshed by "Fetch lines" and by Test connection.
+- Live: kv_sender set to 90008956 (the account's actual line). Known quirk: discovery also lists '1' and '100010' (from stored inbound receptors); filter short values in a later change.
