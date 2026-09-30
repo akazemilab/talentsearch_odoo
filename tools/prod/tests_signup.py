@@ -24,6 +24,7 @@ def raises(fn, exc):
 
 def age(table, where, minutes=2):
     env.cr.execute("update %s set create_date = create_date - interval '%d minutes' where %s" % (table, minutes, where))
+    env.invalidate_all()
 
 
 c = env.company.sudo()
@@ -69,6 +70,7 @@ try:
     age('ts_signup_otp', "phone = '%s'" % P)
     Otp.request_code(P, '10.0.0.1')
     env.cr.execute("update ts_signup_otp set expires_at = now() - interval '1 minute' where phone = %s and used = false", [P])
+    env.invalidate_all()
     check('expired code refused', Otp.verify_code(P, sent[-1][1]) == (False, 'expired'))
 
     for _ in range(6):
