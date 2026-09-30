@@ -1,3 +1,4 @@
+from datetime import datetime, timedelta
 # Mobile sign-in (pre-login OTP), one-time login token and invite expiry. Run ONLY on an eot_ts* clone via odoo-bin shell.
 from odoo.exceptions import AccessDenied, UserError
 
@@ -69,7 +70,8 @@ try:
 
     age('ts_signup_otp', "phone = '%s'" % P)
     Otp.request_code(P, '10.0.0.1')
-    env.cr.execute("update ts_signup_otp set expires_at = now() - interval '1 minute' where phone = %s and used = false", [P])
+    Otp.sudo().search([('used', '=', False)], order='id desc', limit=1).write({'expires_at': datetime.utcnow() - timedelta(minutes=1)})
+    env.flush_all()
     env.invalidate_all()
     res = Otp.verify_code(P, sent[-1][1])
     check('expired code refused', res == (False, 'expired'), str(res) + ' rows=%d' % Otp.sudo().search_count([('phone', '=', P), ('used', '=', False)]))
