@@ -6,8 +6,9 @@ class ResConfigSettings(models.TransientModel):
 
     kv_enabled = fields.Boolean(related='company_id.kv_enabled', readonly=False)
     kv_api_key = fields.Char(related='company_id.kv_api_key', readonly=False)
-    kv_sender = fields.Char(related='company_id.kv_sender', readonly=False)
-    kv_inbox_line = fields.Char(related='company_id.kv_inbox_line', readonly=False)
+    kv_sender = fields.Selection(related='company_id.kv_sender', readonly=False)
+    kv_inbox_line = fields.Selection(related='company_id.kv_inbox_line', readonly=False)
+    kv_lines = fields.Char(related='company_id.kv_lines')
     kv_default_tag = fields.Char(related='company_id.kv_default_tag', readonly=False)
     kv_debug = fields.Boolean(related='company_id.kv_debug', readonly=False)
     kv_webhook_base = fields.Char(related='company_id.kv_webhook_base', readonly=False)
@@ -38,6 +39,13 @@ class ResConfigSettings(models.TransientModel):
         return self._kv_notify(_('Connected. Credit: %(c)s rial, expires %(e)s, account type %(t)s',
                                  c='{:,.0f}'.format(float(info.get('remaincredit') or 0)),
                                  e=info.get('expiredate'), t=info.get('type')))
+
+    def action_kv_fetch_lines(self):
+        self.execute()
+        lines = self.company_id.kv_fetch_lines()
+        if not lines:
+            return self._kv_notify(_('No line found in the account history yet. Send one message from the Kavenegar panel or check the API key.'), 'warning')
+        return {'type': 'ir.actions.client', 'tag': 'reload'}
 
     def action_kv_push_config(self):
         self.execute()
