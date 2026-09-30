@@ -18,7 +18,7 @@ TS = 'talentsearch.ir'
 OWN, COL, OTH = 'ts.panel.http.own@example.invalid', 'ts.panel.http.col@example.invalid', 'ts.panel.http.oth@example.invalid'
 own_pw, col_pw, oth_pw = ensure_user(OWN), ensure_user(COL), ensure_user(OTH)
 shell(
-    "for l,p in (('%s','09127770001'),('%s','09127770002'),('%s','09127770003')):\n"
+    "for l,p in (('%s','09126660001'),('%s','09126660002'),('%s','09126660003')):\n"
     "    u=env['res.users'].search([('login','=',l)])\n"
     "    u.partner_id.sudo().write({'ts_phone':p})\n"
     "env.cr.commit()\nprint('OK')\n" % (OWN, COL, OTH))
@@ -56,13 +56,13 @@ st, loc2, _ = own.req('/my/workspaces/%s/invite' % ws_id, {'csrf_token': own.csr
 check('participant invite POST refused while pending', 'error=' in loc2, loc2)
 
 # colleague invite
-st, loc2, _ = own.req('/my/workspaces/%s/members/invite' % ws_id, {'csrf_token': own.csrf(page), 'role': 'hr_admin', 'phone': '۰۹۱۲۷۷۷۰۰۰۲'})
+st, loc2, _ = own.req('/my/workspaces/%s/members/invite' % ws_id, {'csrf_token': own.csrf(page), 'role': 'hr_admin', 'phone': '۰۹۱۲۶۶۶۰۰۰۲'})
 check('colleague invite -> shows link', st in (302, 303) and 'minv=' in loc2, loc2)
 st, _, page2 = own.req(path_of(loc2))
 m = re.search(r'value="https://talentsearch\.ir/join/([0-9a-f]{32})"', page2)
 check('join link displayed for copying', bool(m))
 tok = m.group(1)
-st, loc3, _ = own.req('/my/workspaces/%s/members/invite' % ws_id, {'csrf_token': own.csrf(page2), 'role': 'clinician', 'phone': '09127770009'})
+st, loc3, _ = own.req('/my/workspaces/%s/members/invite' % ws_id, {'csrf_token': own.csrf(page2), 'role': 'clinician', 'phone': '09126660009'})
 st, _, page3 = own.req('/my/workspaces/%s' % ws_id)
 check('role outside the panel kind refused (flash shown)', 'برای این نوع پنل مجاز نیست' in page3)
 
@@ -89,7 +89,7 @@ st, _, _ = anon.req('/join/' + 'f' * 32)
 check('unknown join token is 404', st == 404)
 
 # revoke + settings
-st, loc6, _ = own.req('/my/workspaces/%s/members/invite' % ws_id, {'csrf_token': own.csrf(page2), 'role': 'hr_admin', 'phone': '09127770008'})
+st, loc6, _ = own.req('/my/workspaces/%s/members/invite' % ws_id, {'csrf_token': own.csrf(page2), 'role': 'hr_admin', 'phone': '09126660008'})
 st, _, pg = own.req('/my/workspaces/' + ws_id)
 rv = re.search(r'/my/workspaces/%s/members/revoke/(\d+)' % ws_id, pg)
 check('pending invite can be revoked', bool(rv))
