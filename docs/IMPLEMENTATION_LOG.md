@@ -139,3 +139,9 @@ Data step (owner-only, NOT in code): approve workspace 1, set pilot, add the cou
 - Tests: `tools/prod/tests_org_resp.py` (22), `tools/prod/ts_http_resp.py` (12), both run by `ts_rehearse.sh`; `tests_org.py` clinical fixture now assigns the clinician (unassigned clinic results are hidden from clinicians by design).
 - Rehearsal eot_ts13: eot.ir UNCHANGED (1,050 pages) + portal UNCHANGED; stage1 29/29, assessment 35/35, participant flow 26/26, engine 44/44, talent 56/56, talent HTTP 43/43, org 32/32 + HTTP 27/27, edu HTTP 17/17, responsible 22/22 + HTTP 12/12. First rehearsal caught a 500 (union of two models in the controller) before ship.
 - Leftover clone server `eot_ts_kv1` held port 8071; its process was stopped, its database was not dropped.
+
+## sgn1 — mobile sign-in + hardened invites (stage 2, 2026-09-30)
+- `ts_sms`: `/signup` (mobile -> 6-digit code -> session login; new users get name step), models `ts.signup.otp` (5/hour/phone, 20/hour/IP-hash, 60 s cooldown, 5 attempts, 5-minute TTL, Persian digits accepted) and `ts.login.token` (single-use, 120 s) consumed by a custom `res.users._check_credentials` type `ts_phone_login`. `next` is validated (`//`, backslashes, newlines rejected). Audit `account.signup_phone` / `account.login_phone`. Works only when Kavenegar + OTP are on; otherwise the old email flow is untouched.
+- `ts_org`: invites expire after 30 days (`invite_state()`: ok/expired/used/declined/withdrawn, each with its own message); invite page offers mobile sign-in and uses education wording for schools.
+- Tests: `tests_signup.py` 27, `ts_http_signup.py` 22 (fake Kavenegar on :18098). Test fix: OTP-expiry test now edits the row through the ORM (raw SQL hit a format mismatch).
+- Rehearsal eot_ts13 + ship `sgn1`: eot.ir UNCHANGED (1,050 pages) both on the clone and live; live /signup 200, eot.ir /signup 404; only journal errors were harmless `.map` asset requests.
