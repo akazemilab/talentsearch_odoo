@@ -43,11 +43,12 @@ records = [IM.parse_row(r) for r in rows[1:] if any(c not in (None, '') for c in
 
 # ---- institute partner + education workspace (created once, never duplicated)
 Partner = env['res.partner']
-inst_partner = Partner.search([('name', '=', INSTITUTE), ('is_company', '=', True)])
+inst_partner = Partner.with_context(active_test=False).search([('name', '=', INSTITUTE)])
 assert len(inst_partner) <= 1, 'more than one institute partner: stop'
 counts = Counter()
 if not inst_partner:
-    inst_partner = Partner.create({'name': INSTITUTE, 'is_company': True})
+    inst_partner = Partner.create({'name': INSTITUTE, 'company_type': 'company'})
+    assert inst_partner.is_company, 'institute partner must be a company'
     counts['institute_created'] = 1
 workspace = env['ts.workspace'].search([('partner_id', '=', inst_partner.id), ('purpose', '=', 'education')])
 assert len(workspace) <= 1, 'more than one education workspace: stop'
