@@ -98,4 +98,67 @@
             </t>
         </field>
     </record>
+
+    <!-- /signup: sign in or sign up by mobile (one-time code) -->
+    <record id="tpl_signup" model="ir.ui.view">
+        <field name="name">TS: signup by mobile</field>
+        <field name="type">qweb</field>
+        <field name="key">ts_sms.signup</field>
+        <field name="website_id" ref="ts_website.website_ts"/>
+        <field name="arch" type="xml">
+            <t t-name="ts_sms.signup">
+                <t t-call="website.layout" additional_title.f="ورود یا ثبت‌نام">
+                    <div id="wrap" class="ts-page">
+                        <section class="ts-section">
+                            <div class="ts-container ts-narrow">
+                                <div class="ts-section__head">
+                                    <h1>ورود یا ثبت‌نام با موبایل</h1>
+                                    <p>با یک کد پیامکی وارد می‌شوید؛ رمز عبور لازم نیست. اگر حسابی با این شماره دارید وارد همان می‌شوید، وگرنه حساب تازه ساخته می‌شود.</p>
+                                </div>
+                                <p t-if="msg" t-attf-class="ts-notice #{'ts-notice--warn' if msg[0] == 'warn' else ''}" role="status" t-out="msg[1]"/>
+                                <div t-if="not enabled" class="ts-card ts-card--soft">
+                                    <h3>ورود با موبایل هنوز فعال نشده است</h3>
+                                    <p>فعلاً می‌توانید با ایمیل <a href="/web/login">وارد شوید</a> یا <a href="/web/signup">حساب بسازید</a>.</p>
+                                </div>
+                                <div t-elif="step == 'code'" class="ts-card">
+                                    <h3>کد تأیید را وارد کنید</h3>
+                                    <p>کد شش‌رقمی به <bdi dir="ltr" t-out="masked"/> پیامک شد.</p>
+                                    <form action="/signup/verify" method="post" class="ts-form">
+                                        <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                                        <input type="hidden" name="next" t-att-value="next"/>
+                                        <label for="ts_su_code">کد شش‌رقمی</label>
+                                        <input id="ts_su_code" name="code" type="text" dir="ltr" inputmode="numeric" required="required" maxlength="6" pattern="[0-9۰-۹]{6}" autocomplete="one-time-code"/>
+                                        <button type="submit" class="ts-btn ts-btn--primary">تأیید و ورود</button>
+                                    </form>
+                                    <p><a t-attf-href="/signup?next=#{next}">شمارهٔ دیگر یا کد تازه</a></p>
+                                </div>
+                                <div t-elif="step == 'name'" class="ts-card">
+                                    <h3>نام شما</h3>
+                                    <p>شمارهٔ شما تأیید شد. برای ساخت حساب، نام خود را وارد کنید.</p>
+                                    <form action="/signup/name" method="post" class="ts-form">
+                                        <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                                        <input type="hidden" name="next" t-att-value="next"/>
+                                        <label for="ts_su_name">نام و نام خانوادگی</label>
+                                        <input id="ts_su_name" name="name" type="text" required="required" maxlength="100" autocomplete="name"/>
+                                        <button type="submit" class="ts-btn ts-btn--primary">ساخت حساب و ادامه</button>
+                                    </form>
+                                </div>
+                                <div t-else="" class="ts-card">
+                                    <h3>شمارهٔ موبایل</h3>
+                                    <form action="/signup/send" method="post" class="ts-form">
+                                        <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                                        <input type="hidden" name="next" t-att-value="next"/>
+                                        <label for="ts_su_phone">شمارهٔ موبایل</label>
+                                        <input id="ts_su_phone" name="phone" type="tel" dir="ltr" inputmode="numeric" required="required" maxlength="20" autocomplete="tel" placeholder="09123456789"/>
+                                        <button type="submit" class="ts-btn ts-btn--primary">ارسال کد</button>
+                                    </form>
+                                    <p class="ts-hint">شمارهٔ شما فقط برای ورود و تأیید حساب به کار می‌رود. پیامکِ اعلان نتیجه فقط با اجازهٔ خودتان در صفحهٔ «شمارهٔ موبایل و پیامک» فعال می‌شود. <a href="/web/login">ورود با ایمیل</a></p>
+                                </div>
+                            </div>
+                        </section>
+                    </div>
+                </t>
+            </t>
+        </field>
+    </record>
 </odoo>

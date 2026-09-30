@@ -303,9 +303,9 @@
                                     <h1 t-out="inst.title"/>
                                     <p><strong t-out="ws.partner_id.name"/> شما را به پاسخ‌دادن به این سنجه دعوت کرده است.</p>
                                 </div>
-                                <div t-if="a.state in ('withdrawn', 'declined')" class="ts-card ts-card--soft">
-                                    <h2 class="h5">این دعوت دیگر فعال نیست</h2>
-                                    <p>برای اطلاعات بیشتر با سازمان دعوت‌کننده تماس بگیرید.</p>
+                                <div t-if="inv_state != 'ok'" class="ts-card ts-card--soft" role="status">
+                                    <h2 class="h5" t-out="inv_msg[inv_state][0]"/>
+                                    <p t-out="inv_msg[inv_state][1]"/>
                                 </div>
                                 <t t-else="">
                                     <dl class="ts-meta">
@@ -316,7 +316,12 @@
                                     </dl>
                                     <div class="ts-card ts-card--soft">
                                         <h2 class="h5">چه چیزی با سازمان به اشتراک گذاشته می‌شود؟</h2>
-                                        <ul class="ts-list-check" t-if="ws.purpose == 'employment'">
+                                        <ul class="ts-list-check" t-if="ws.purpose == 'education'">
+                                            <li>مؤسسه و مشاور مسئول گزارش نتیجهٔ شما را می‌بینند.</li>
+                                            <li>پاسخ‌های خام شما را هرگز نمی‌بینند.</li>
+                                            <li>هر زمان بخواهید می‌توانید اشتراک را از صفحهٔ گزارش لغو کنید.</li>
+                                        </ul>
+                                        <ul class="ts-list-check" t-elif="ws.purpose == 'employment'">
                                             <li>سازمان وضعیت دعوت (شروع‌شده یا تکمیل‌شده) را می‌بیند.</li>
                                             <li>اگر اجازه دهید، فقط بازهٔ هر بُعد (کم، متوسط یا زیاد) را می‌بیند.</li>
                                             <li>پاسخ‌های شما، نمره‌ها و متن‌های تفسیری فقط برای شما نمایش داده می‌شود.</li>
@@ -331,8 +336,9 @@
                                     <t t-if="public">
                                         <p>برای شروع وارد حساب خود شوید یا حساب تازه بسازید. گزارش نتیجه در حساب شما نگه داشته می‌شود.</p>
                                         <div class="ts-hero__actions">
-                                            <a t-att-href="signup_url" class="ts-btn ts-btn--primary">ساخت حساب</a>
-                                            <a t-att-href="login_url" class="ts-btn ts-btn--outline">ورود</a>
+                                            <a t-if="phone_url" t-att-href="phone_url" class="ts-btn ts-btn--primary">ورود یا ثبت‌نام با موبایل</a>
+                                            <a t-att-href="signup_url" t-attf-class="ts-btn #{'ts-btn--outline' if phone_url else 'ts-btn--primary'}">ساخت حساب<t t-if="phone_url"> با ایمیل</t></a>
+                                            <a t-att-href="login_url" class="ts-btn ts-btn--outline">ورود<t t-if="phone_url"> با ایمیل</t></a>
                                         </div>
                                     </t>
                                     <t t-else="">
@@ -340,7 +346,8 @@
                                             <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
                                             <label class="ts-opt">
                                                 <input type="checkbox" name="share" value="1" checked="checked"/>
-                                                <span t-if="ws.purpose == 'employment'">اجازه می‌دهم بازهٔ هر بُعد با این سازمان به اشتراک گذاشته شود.</span>
+                                                <span t-if="ws.purpose == 'education'">اجازه می‌دهم گزارش نتیجه‌ام با مؤسسه و مشاور مسئول به اشتراک گذاشته شود.</span>
+                                                <span t-elif="ws.purpose == 'employment'">اجازه می‌دهم بازهٔ هر بُعد با این سازمان به اشتراک گذاشته شود.</span>
                                                 <span t-else="">اجازه می‌دهم گزارش کامل با متخصص بالینی تأییدشدهٔ این مرکز به اشتراک گذاشته شود.</span>
                                             </label>
                                             <button type="submit" class="ts-btn ts-btn--primary">پذیرش و ادامه</button>

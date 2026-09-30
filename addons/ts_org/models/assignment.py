@@ -1,4 +1,5 @@
 import uuid
+from datetime import timedelta
 
 from odoo import api, fields, models
 from odoo.exceptions import UserError, ValidationError
@@ -12,6 +13,7 @@ VERIFIED_ROLES = {'clinician', 'clinic_director'}
 EDU_ROLES = {'owner', 'counselor'}
 # Owners and managers see every result of the workspace; other specialists see only
 # the participants they are responsible for (plus the unassigned queue where allowed).
+INVITE_TTL_DAYS = 30
 SEE_ALL_ROLES = {'owner', 'hr_admin', 'clinic_director', 'reviewer'}
 RESPONSIBLE_ROLES = INVITE_ROLES
 
@@ -138,6 +140,20 @@ class TsAssignment(models.Model):
         base = self.env.ref('ts_website.website_ts').domain or ''
         return '%s/invite/%s' % (base.rstrip('/'), self.token)
 
+    def invite_state(self):
+        """ok | expired | used | declined | withdrawn: what a participant opening the link should be told."""
+        self.ensure_one()
+        if self.withdrawn:
+            return 'withdrawn'
+        if self.declined:
+            return 'declined'
+        if self.user_id:
+            return 'used'
+        if (self.create_date and self.create_date < fields.Datetime.now() - timedelta(days=INVITE_TTL_DAYS)) \
+                or (self.deadline and self.deadline < fields.Date.today()):
+            return 'expired'
+        return 'ok'
+
     def default_share_level(self):
         self.ensure_one()
         return 'clinical' if self.purpose == 'clinical' else 'summary'
@@ -149,6 +165,8 @@ class TsAssignment(models.Model):
             raise UserError('این دعوت دیگر معتبر نیست.')
         if self.user_id and self.user_id != user:
             raise UserError('این دعوت قبلاً با حساب دیگری پذیرفته شده است.')
+        if not self.user_id and self.invite_state() == 'expired':
+            raise UserError('مهلت این دعوت تمام شده است.')
         if not self.user_id:
             share_level = self.default_share_level() if share else 'none'
             if self.responsible_id.user_id == user:

@@ -1,4 +1,5 @@
 import re
+from urllib.parse import quote
 
 from odoo import fields, http
 from odoo.http import request
@@ -52,6 +53,12 @@ class TsSmsController(TsOrg):
         else:
             a.sms_error = 'شمارهٔ معتبر و تأیید موافقت شرکت‌کننده لازم است'
         return resp
+
+    def _auth_urls(self, path):
+        urls = super()._auth_urls(path)
+        if _enabled():
+            urls['phone_url'] = '/signup?next=%s' % quote(path, safe='/')
+        return urls
 
     def _phone_values(self, msg=None, pending=False):
         p = request.env.user.partner_id.sudo()
