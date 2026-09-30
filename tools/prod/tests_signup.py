@@ -71,7 +71,8 @@ try:
     Otp.request_code(P, '10.0.0.1')
     env.cr.execute("update ts_signup_otp set expires_at = now() - interval '1 minute' where phone = %s and used = false", [P])
     env.invalidate_all()
-    check('expired code refused', Otp.verify_code(P, sent[-1][1]) == (False, 'expired'))
+    res = Otp.verify_code(P, sent[-1][1])
+    check('expired code refused', res == (False, 'expired'), str(res) + ' rows=%d' % Otp.sudo().search_count([('phone', '=', P), ('used', '=', False)]))
 
     for _ in range(6):
         age('ts_signup_otp', "phone = '%s'" % P)

@@ -2,6 +2,7 @@ from urllib.parse import quote
 
 from odoo import fields, http
 from odoo.http import request
+from odoo.http.session import authenticate
 
 from odoo.addons.ts_assessment.controllers.main import _ts_site_or_404
 from odoo.addons.ts_assessment.models.attempt import fa_digits
@@ -41,7 +42,7 @@ class TsSignup(http.Controller):
 
     def _login(self, user):
         token = request.env['ts.login.token'].sudo().issue(user)
-        request.session.authenticate(request.env, {'type': 'ts_phone_login', 'login': user.login, 'token': token})
+        authenticate(request.session, request.env, {'type': 'ts_phone_login', 'login': user.login, 'token': token})
 
     @http.route('/signup', type='http', auth='public', website=True, sitemap=False)
     def signup(self, step=None, msg=None, **kw):
@@ -115,7 +116,7 @@ class TsSignup(http.Controller):
             'name': name, 'login': phone,
             'group_ids': [(6, 0, [request.env.ref('base.group_portal').id])],
         })
-        user.partner_id.sudo().write({'mobile': phone, 'ts_phone': phone,
+        user.partner_id.sudo().write({'phone': phone, 'ts_phone': phone,
                                       'ts_phone_verified_at': fields.Datetime.now()})
         request.env['ts.audit.event'].sudo().log('account.signup_phone', user)
         self._login(user)
