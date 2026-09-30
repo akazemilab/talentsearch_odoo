@@ -15,8 +15,8 @@
                                 <h1>بدانید یک سنجش چه چیزی را می‌تواند بگوید، و چه چیزی را نه.</h1>
                                 <p class="ts-hero__lead">تلنت سرچ به سازمان‌ها و مراکز مشاوره کمک می‌کند پرسشنامه‌های روان‌شناختی را با هدف روشن، رضایت آگاهانه، حفظ حریم خصوصی و بازبینی انسانی اجرا کنند و نتیجه را همراه با محدودیت‌هایش بخوانند.</p>
                                 <div class="ts-hero__actions">
-                                    <a href="/assessments" class="ts-btn ts-btn--light">مشاهدهٔ سنجه‌ها</a>
-                                    <a href="/contact?topic=demo" class="ts-btn ts-btn--quiet">درخواست جلسهٔ معرفی (سازمان‌ها)</a>
+                                    <a href="/panel" class="ts-btn ts-btn--light">پنل بساز</a>
+                                    <a href="/assessments" class="ts-btn ts-btn--quiet">فقط می‌خواهم آزمون بدهم</a>
                                 </div>
                             </div>
                             <div class="ts-hero__mark" aria-hidden="true"/>

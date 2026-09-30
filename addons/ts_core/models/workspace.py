@@ -230,6 +230,13 @@ class TsWorkspaceMember(models.Model):
             self.env['ts.audit.event'].log('member.add', m, workspace=m.workspace_id, user=m.user_id.id, role=m.role)
         return records
 
+    def unlink(self):
+        for m in self.filtered(lambda m: m.active and m.role == 'owner'):
+            others = m.workspace_id.member_ids.filtered(lambda x: x.active and x.role == 'owner' and x not in self)
+            if not others:
+                raise UserError('هر فضای کاری باید دست‌کم یک مالک فعال داشته باشد؛ ابتدا مالک دیگری اضافه کنید.')
+        return super().unlink()
+
     def write(self, vals):
         if vals.get('active') is False or ('role' in vals and vals['role'] != 'owner'):
             for m in self.filtered(lambda m: m.active and m.role == 'owner'):

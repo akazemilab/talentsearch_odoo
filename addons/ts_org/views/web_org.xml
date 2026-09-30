@@ -25,11 +25,11 @@
                                     <h1>فضاهای کاری</h1>
                                     <p>فضاهایی که عضو آن‌ها هستید. هر فضا فقط یک هدف دارد و داده‌ها هرگز بین فضاها جابه‌جا نمی‌شوند.</p>
                                 </div>
+                                <p><a href="/my/workspaces/new" class="ts-btn ts-btn--primary">ساخت پنل تازه</a></p>
                                 <div t-if="not rows" class="ts-card ts-card--soft">
                                     <h3>عضو هیچ فضای کاری نیستید</h3>
                                     <p>اگر همکاری شما را دعوت کرده، پیوند دعوت را باز کنید. یا پنل خودتان را بسازید.</p>
                                 </div>
-                                <p><a href="/my/workspaces/new" class="ts-btn ts-btn--primary">ساخت پنل تازه</a></p>
                                 <div t-else="" class="ts-grid ts-org-grid">
                                     <t t-foreach="rows" t-as="r">
                                         <article class="ts-card ts-org-card">
@@ -41,8 +41,8 @@
                                                 <dt>دعوت‌ها</dt><dd><t t-out="fa(sum(r['counts'].values()))"/> · تکمیل‌شده <t t-out="fa(r['counts']['done'])"/></dd>
                                             </dl>
                                             <a t-if="r['usable']" t-attf-href="/my/workspaces/#{r['ws'].id}" class="ts-btn ts-btn--primary ts-btn--sm">ورود به فضا</a>
-                                            <p t-elif="r['member'].verification_state == 'pending'" class="ts-notice ts-notice--warn">احراز صلاحیت حرفه‌ای شما در حال بررسی است.</p>
                                             <p t-elif="r['ws'].state == 'suspended'" class="ts-notice ts-notice--warn">این پنل تعلیق شده است.</p>
+                                            <p t-elif="r['member'].verification_state == 'pending'" class="ts-notice ts-notice--warn">احراز صلاحیت حرفه‌ای شما در حال بررسی است.</p>
                                             <p t-else="" class="ts-notice ts-notice--warn">این فضا هنوز فعال نشده است.</p>
                                         </article>
                                     </t>
@@ -441,9 +441,16 @@
         <field name="arch" type="xml">
             <xpath expr="//section[hasclass('ts-doc__foot')]" position="before">
                 <t t-set="ts_share" t-value="attempt.ts_org_assignment()"/>
+                <section t-if="not ts_share and attempt.state == 'done' and not attempt.workspace_id and attempt.source != 'import'" class="ts-doc__sec ts-noprint" id="ts-share-counselor">
+                    <h2>ارسال نتیجه برای مشاورم</h2>
+                    <p>اگر مشاور دارید، می‌توانید با «کد پنل» او فقط بازهٔ هر زمینه را برایش بفرستید. پاسخ‌های شما دیده نمی‌شود و هر زمان می‌توانید اشتراک را لغو کنید.</p>
+                    <a t-attf-href="/my/assessments/#{attempt.id}/share" class="ts-btn ts-btn--outline ts-btn--sm">ارسال برای مشاورم</a>
+                </section>
                 <section t-if="ts_share" class="ts-doc__sec ts-noprint">
                     <h2>اشتراک با سازمان</h2>
-                    <p>این سنجه به دعوت <strong t-out="ts_share.workspace_id.partner_id.name"/> انجام شد.
+                    <p t-if="ts_share.invited_by_id == attempt.user_id">این نتیجه را شما برای <strong t-out="ts_share.workspace_id.name"/> فرستاده‌اید.</p>
+                    <p t-else="">این سنجه به دعوت <strong t-out="ts_share.workspace_id.partner_id.name"/> انجام شد.</p>
+                    <p>
                         <t t-if="ts_share.share_level == 'summary'">سازمان فقط بازهٔ هر بُعد را می‌بیند.</t>
                         <t t-elif="ts_share.share_level == 'clinical'">گزارش کامل برای متخصص بالینی تأییدشدهٔ این مرکز قابل مشاهده است.</t>
                         <t t-else="">نتیجه با سازمان به اشتراک گذاشته نشده است.</t>

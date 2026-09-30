@@ -185,6 +185,28 @@ class TsAssignment(models.Model):
                                            share=share_level)
         return self.attempt_id
 
+    @api.model
+    def ts_share_attempt(self, attempt, code, user):
+        """A participant sends an already finished, self-taken result to ONE education panel (by its code).
+        Uses the normal assignment machinery, so revoking, visibility and the responsible-counselor rules
+        are identical to an invited result. Only the band summary is shared; answers never are."""
+        attempt = attempt.sudo()
+        code = (code or '').strip().upper().translate(str.maketrans('۰۱۲۳۴۵۶۷۸۹٠١٢٣٤٥٦٧٨٩', '01234567890123456789'))
+        ws = self.env['ts.workspace'].sudo().search([('code', '=', code), ('purpose', '=', 'education'),
+                                                      ('state', 'in', ('pilot', 'active'))], limit=1) if code else False
+        if not ws or ws.gated:
+            raise UserError('پنلی با این کد پیدا نشد. کد را از مشاور خود بپرسید.')
+        if attempt.user_id != user or attempt.state != 'done' or attempt.workspace_id or attempt.source == 'import':
+            raise UserError('این نتیجه قابل ارسال برای مشاور نیست.')
+        if self.sudo().search_count([('attempt_id', '=', attempt.id)]):
+            raise UserError('این نتیجه پیش‌تر با یک پنل به اشتراک گذاشته شده است؛ ابتدا اشتراک قبلی را لغو کنید.')
+        a = self.sudo().create({
+            'workspace_id': ws.id, 'instrument_id': attempt.instrument_id.id, 'invitee_name': user.name or 'شرکت‌کننده',
+            'invited_by_id': user.id, 'user_id': user.id, 'attempt_id': attempt.id, 'share_level': 'summary',
+            'accepted_at': fields.Datetime.now()})
+        self.env['ts.audit.event'].sudo().log('assignment.self_share', a, workspace=ws, instrument=attempt.instrument_id.code)
+        return a
+
     def action_decline(self, user):
         self.ensure_one()
         if self.user_id and self.user_id != user:

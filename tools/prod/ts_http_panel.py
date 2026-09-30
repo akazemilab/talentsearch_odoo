@@ -72,7 +72,8 @@ oth = Client(TS)
 check('other person login', oth.login(OTH, oth_pw))
 st, _, jp = oth.req('/join/' + tok)
 check('wrong identity cannot accept', st == 200 and 'برای شمارهٔ موبایل یا ایمیل دیگری' in jp and '/accept' not in jp)
-st, loc4, _ = oth.req('/join/%s/accept' % tok, {'csrf_token': oth.csrf(jp)})
+st, _, homepg = oth.req('/my/workspaces/new')
+st, loc4, _ = oth.req('/join/%s/accept' % tok, {'csrf_token': oth.csrf(homepg)})
 check('direct accept POST by wrong identity refused', st in (302, 303) and '/join/' in loc4, loc4)
 col = Client(TS)
 check('colleague login', col.login(COL, col_pw))
@@ -115,6 +116,50 @@ st, _, pg = own.req('/my/workspaces')
 check('suspended panel is marked on the list', st == 200 and 'تعلیق شده' in pg)
 st, _, _ = own.req('/my/workspaces/' + ws_id)
 check('suspended panel dashboard is closed', st == 404)
+
+# homepage call-to-action
+st, _, home = anon.req('/')
+check('homepage main button is «پنل بساز» -> /panel', st == 200 and 'href="/panel"' in home and 'پنل بساز' in home)
+check('homepage secondary button is «فقط می‌خواهم آزمون بدهم» -> /assessments', 'فقط می‌خواهم آزمون بدهم' in home)
+
+# participant shares a finished self-taken result with a counselor panel (by code)
+PART = 'ts.panel.http.part@example.invalid'
+part_pw = ensure_user(PART)
+out = shell(
+    "u=env['res.users'].search([('login','=','%s')])\n"
+    "inst=env['ts.instrument'].search([('state','=','published'),('purpose','=','employment')],limit=1)\n"
+    "at=env['ts.attempt'].create({'user_id':u.id,'instrument_id':inst.id,'version_id':inst.current_version_id.id})\n"
+    "at.give_consent()\n"
+    "for it in at.active_items(): at.save_answer(it.id, 1 + it.id %% 5)\n"
+    "at.action_submit()\n"
+    "ws=env['ts.workspace'].browse(%s)\n"
+    "env.cr.commit()\nprint('AT', at.id, 'CODE', ws.code)\n" % (PART, sid))
+at_id, code = re.search(r'AT (\d+) CODE (\S+)', out).groups()
+pc = Client(TS)
+check('participant login', pc.login(PART, part_pw))
+st, _, rep = pc.req('/my/assessments/' + at_id)
+check('result page offers sending to my counselor', st == 200 and 'ارسال نتیجه برای مشاورم' in rep and '/share' in rep, str(st))
+st, _, fm = pc.req('/my/assessments/%s/share' % at_id)
+check('share form asks for a panel code', st == 200 and 'name="code"' in fm)
+st, _, bad = pc.req('/my/assessments/%s/share?code=TSW-99999' % at_id)
+check('unknown code is refused with a message', 'پنلی با این کد پیدا نشد' in bad)
+st, _, ok = pc.req('/my/assessments/%s/share?code=%s' % (at_id, code))
+check('known code shows the panel name for confirmation', 'مدرسهٔ آزمایشی HTTP' in ok and '/share/confirm' in ok)
+st, loc, _ = pc.req('/my/assessments/%s/share/confirm' % at_id, {'csrf_token': pc.csrf(ok), 'code': code})
+check('confirm -> back to the result', st in (302, 303) and loc.endswith('/my/assessments/' + at_id) or ('/my/assessments/' + at_id) in loc, loc)
+st, _, rep = pc.req('/my/assessments/' + at_id)
+check('result page now says it was sent, with a stop button', 'فرستاده‌اید' in rep and '/unshare' in rep)
+st, _, _ = pc.req('/my/assessments/%s/share/confirm' % at_id, {'code': code})
+check('confirm without CSRF is rejected', st in (400, 403))
+st, _, other = anon.req('/my/assessments/%s/share' % at_id)
+check('anonymous cannot open the share page', st in (302, 303, 404))
+st, _, _ = oth.req('/my/assessments/%s/share' % at_id)
+check('another account cannot open my share page', st == 404)
+st, _, sp = own.req('/my/workspaces/' + sid)
+check('the panel sees the shared result in its unassigned queue', st == 200 and 'href="?resp=none"' in sp)
+st, loc, _ = pc.req('/my/assessments/%s/unshare' % at_id, {'csrf_token': pc.csrf(rep)})
+st, _, rep = pc.req('/my/assessments/' + at_id)
+check('participant can stop sharing', 'نتیجه با سازمان به اشتراک گذاشته نشده است' in rep)
 
 # eot.ir isolation
 e = Client('www.eot.ir')

@@ -133,3 +133,37 @@ class TsPanel(http.Controller):
             _flash(str(e.args[0] if e.args else e))
             return request.redirect('/join/%s' % token)
         return request.redirect('/my/workspaces/%s' % m.workspace_id.id)
+
+    # --------------------------------------------------------------- participant -> counselor
+    def _own_attempt(self, attempt_id):
+        at = request.env['ts.attempt'].sudo().search([
+            ('id', '=', int(attempt_id)), ('user_id', '=', request.env.user.id), ('state', '=', 'done')], limit=1)
+        if not at:
+            raise request.not_found()
+        return at
+
+    @http.route('/my/assessments/<int:attempt_id>/share', type='http', auth='user', website=True, sitemap=False)
+    def share_form(self, attempt_id, code=None, **kw):
+        _ts_site_or_404()
+        at = self._own_attempt(attempt_id)
+        ws, error = None, _flash()
+        if code:
+            code = code.strip().upper()[:30]
+            ws = request.env['ts.workspace'].sudo().search([
+                ('code', '=', code), ('purpose', '=', 'education'), ('state', 'in', ('pilot', 'active'))], limit=1)
+            if not ws or ws.gated:
+                ws, error = None, 'پنلی با این کد پیدا نشد. کد را از مشاور خود بپرسید.'
+        return request.render('ts_org.share_form', {
+            'attempt': at, 'ws': ws, 'code': code or '', 'error': error, 'page_name': 'ts_assessments'})
+
+    @http.route('/my/assessments/<int:attempt_id>/share/confirm', type='http', auth='user', website=True,
+                methods=['POST'], sitemap=False)
+    def share_confirm(self, attempt_id, **post):
+        _ts_site_or_404()
+        at = self._own_attempt(attempt_id)
+        try:
+            request.env['ts.assignment'].ts_share_attempt(at, post.get('code'), request.env.user)
+        except (UserError, ValidationError) as e:
+            _flash(str(e.args[0] if e.args else e))
+            return request.redirect('/my/assessments/%s/share' % attempt_id)
+        return request.redirect('/my/assessments/%s' % attempt_id)

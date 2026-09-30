@@ -170,4 +170,42 @@
             </t>
         </field>
     </record>
+
+    <!-- ======================================================= share with my counselor -->
+    <record id="tpl_share_form" model="ir.ui.view">
+        <field name="name">TS: share result with my counselor</field>
+        <field name="type">qweb</field>
+        <field name="key">ts_org.share_form</field>
+        <field name="website_id" ref="ts_website.website_ts"/>
+        <field name="arch" type="xml">
+            <t t-name="ts_org.share_form">
+                <t t-call="website.layout" additional_title.f="ارسال نتیجه برای مشاور">
+                    <div id="wrap" class="ts-page">
+                        <section class="ts-section">
+                            <div class="ts-container">
+                                <a t-attf-href="/my/assessments/#{attempt.id}" class="ts-back">بازگشت به نتیجه</a>
+                                <div class="ts-section__head">
+                                    <h1>ارسال نتیجه برای مشاور</h1>
+                                    <p>مشاور شما یک «کد پنل» دارد. با وارد کردن آن، فقط بازهٔ هر زمینه در نتیجهٔ شما برای مشاور پنل دیده می‌شود. پاسخ‌های خام هرگز دیده نمی‌شوند و هر زمان بخواهید اشتراک را لغو می‌کنید.</p>
+                                </div>
+                                <p t-if="error" class="ts-notice ts-notice--warn" role="alert" t-out="error"/>
+                                <form t-if="not ws" t-attf-action="/my/assessments/#{attempt.id}/share" method="get" class="ts-form">
+                                    <label for="ts_sh_code">کد پنل</label>
+                                    <input id="ts_sh_code" name="code" type="text" dir="ltr" required="required" maxlength="30" autocomplete="off" t-att-value="code"/>
+                                    <button type="submit" class="ts-btn ts-btn--primary">ادامه</button>
+                                </form>
+                                <form t-else="" t-attf-action="/my/assessments/#{attempt.id}/share/confirm" method="post" class="ts-form">
+                                    <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                                    <input type="hidden" name="code" t-att-value="ws.code"/>
+                                    <p>نتیجه برای پنل «<strong t-out="ws.name"/>» ارسال شود؟</p>
+                                    <button type="submit" class="ts-btn ts-btn--primary">بله، ارسال شود</button>
+                                    <a t-attf-href="/my/assessments/#{attempt.id}/share" class="ts-btn ts-btn--outline">نه، کد دیگری وارد می‌کنم</a>
+                                </form>
+                            </div>
+                        </section>
+                    </div>
+                </t>
+            </t>
+        </field>
+    </record>
 </odoo>

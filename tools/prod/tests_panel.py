@@ -93,10 +93,12 @@ pub = env['res.users'].browse(env.ref('base.public_user').id)
 check('public visitor cannot create a panel', raises(lambda: W.ts_panel_create(pub, 'TSP عمومی', 'school', terms=True)))
 
 # ---- profile
-png = b'\x89PNG\r\n\x1a\n' + b'0' * 50
+import base64
+png = base64.b64decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==')
 ws1.ts_update_profile(name='TSP مدرسهٔ نو', logo_bytes=png)
 check('profile rename + logo', ws1.name == 'TSP مدرسهٔ نو' and ws1.partner_id.name == 'TSP مدرسهٔ نو' and ws1.partner_id.image_1920)
 check('non-image logo refused', raises(lambda: ws1.ts_update_profile(logo_bytes=b'<script>alert(1)</script>')))
+check('fake PNG that cannot be decoded refused', raises(lambda: ws1.ts_update_profile(logo_bytes=b'\x89PNG\r\n\x1a\n' + b'0' * 50)))
 check('oversized logo refused', raises(lambda: ws1.ts_update_profile(logo_bytes=b'\x89PNG\r\n\x1a\n' + b'0' * 600000)))
 
 # ---- colleague invitations (ws2 = organization, owner o2)
@@ -163,4 +165,28 @@ ws2.action_resume()
 check('resume returns to pilot', ws2.state == 'pilot' and o2.can_act())
 check('a panel owner cannot approve', raises(lambda: ws3.with_user(u3).action_approve(), (UserError, ValidationError, Exception)))
 
+
+# ---- participant sends a finished self-taken result to a counselor panel (by code)
+A = env['ts.assignment']
+u_part, u_part2 = puser('part', '09128880001'), puser('part2', '09128880002')
+at = env['ts.attempt'].create({'user_id': u_part.id, 'instrument_id': inst.id, 'version_id': inst.current_version_id.id})
+check('unfinished result cannot be shared', raises(lambda: A.ts_share_attempt(at, ws1.code, u_part)))
+at.give_consent()
+for it in at.active_items():
+    at.save_answer(it.id, 1 + it.id % 5)
+at.action_submit()
+check('self-taken attempt is finished and has no panel', at.state == 'done' and not at.workspace_id)
+check('usage is not recorded for self-taken attempts', not env['ts.usage.event'].search_count([('attempt_id', '=', at.id)]))
+check('unknown panel code refused', raises(lambda: A.ts_share_attempt(at, 'TSW-99999', u_part)))
+check('organization panel code is not a counselor panel', raises(lambda: A.ts_share_attempt(at, ws2.code, u_part)))
+check('someone else cannot share my result', raises(lambda: A.ts_share_attempt(at, ws1.code, u_part2)))
+sh = A.ts_share_attempt(at, ' ' + ws1.code.lower() + ' ', u_part)
+check('share creates an accepted summary-level assignment in the education panel',
+      sh.workspace_id == ws1 and sh.share_level == 'summary' and sh.user_id == u_part and sh.attempt_id == at and sh.state == 'done')
+check('shared result lands in the unassigned queue', not sh.responsible_id)
+check('panel owner sees the band summary, never raw answers', sh.visible_results(own)[0] == 'education')
+check('share audit-logged', AUD.search_count([('event_type', '=', 'assignment.self_share'), ('workspace_id', '=', ws1.id)]) == 1)
+check('second share of the same result refused', raises(lambda: A.ts_share_attempt(at, ws4.code, u_part)))
+sh.action_revoke_share(u_part)
+check('participant can stop sharing at any time', sh.visible_results(own)[0] == 'none')
 print('SUMMARY %d/%d passed' % (sum(1 for _, ok in results if ok), len(results)))
