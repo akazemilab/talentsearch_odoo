@@ -47,8 +47,8 @@ inst_partner = Partner.with_context(active_test=False).search([('name', '=', INS
 assert len(inst_partner) <= 1, 'more than one institute partner: stop'
 counts = Counter()
 if not inst_partner:
-    inst_partner = Partner.create({'name': INSTITUTE, 'company_type': 'company'})
-    assert inst_partner.is_company, 'institute partner must be a company'
+    inst_partner = Partner.create({'name': INSTITUTE, 'is_company': True})
+    inst_partner.write({'is_company': True})  # Odoo 20 recomputes it on create; the explicit write sticks
     counts['institute_created'] = 1
 workspace = env['ts.workspace'].search([('partner_id', '=', inst_partner.id), ('purpose', '=', 'education')])
 assert len(workspace) <= 1, 'more than one education workspace: stop'
