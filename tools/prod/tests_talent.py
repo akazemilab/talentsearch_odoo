@@ -126,11 +126,13 @@ check('source_ref is unique', raises(lambda: env['ts.attempt'].create({
 # entekhab-1405: institute (education) view of imported results, answers never included
 org_p = env['res.partner'].create({'name': 'مؤسسهٔ آزمون', 'is_company': True})
 w_edu = env['ts.workspace'].create({'name': 'مؤسسهٔ آزمون', 'purpose': 'education', 'partner_id': org_p.id})
-check('education workspace is gated until approved', w_edu.gated and raises(lambda: w_edu.write({'state': 'pilot'})))
-check('approval is manager-only', raises(lambda: w_edu.with_user(user).action_approve(), exc=Exception))
-w_edu.action_approve()
-check('approval recorded and gate lifted', not w_edu.gated and w_edu.approved_by_id and w_edu.approved_on
-      and env['ts.audit.event'].search_count([('res_model', '=', 'ts.workspace'), ('res_id', '=', w_edu.id), ('event_type', '=', 'workspace.approve')]) == 1)
+check('education workspace needs no approval (self-service panels are live at once)', not w_edu.gated and not raises(lambda: w_edu.write({'state': 'pilot'})))
+w_gate = env['ts.workspace'].create({'name': 'سازمان آزمون', 'purpose': 'employment', 'partner_id': org_p.id})
+check('employment workspace is gated until approved', w_gate.gated and raises(lambda: w_gate.write({'state': 'active'})))
+check('approval is manager-only', raises(lambda: w_gate.with_user(user).action_approve(), exc=Exception))
+w_gate.action_approve()
+check('approval recorded and gate lifted', not w_gate.gated and w_gate.approved_by_id and w_gate.approved_on
+      and env['ts.audit.event'].search_count([('res_model', '=', 'ts.workspace'), ('res_id', '=', w_gate.id), ('event_type', '=', 'workspace.approve')]) == 1)
 w_edu.state = 'pilot'
 c_user = env['res.users'].with_context(no_reset_password=True).create({
     'name': 'مشاور آزمون', 'login': 'ts.talent.counselor@example.invalid', 'group_ids': [(6, 0, [env.ref('base.group_portal').id])]})
