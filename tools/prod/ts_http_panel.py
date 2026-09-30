@@ -106,6 +106,9 @@ st, loc, _ = own.req('/my/workspaces/new/create', {'csrf_token': own.csrf(page),
 sid = re.search(r'/my/workspaces/(\d+)', loc).group(1)
 st, _, sp = own.req(path_of(loc))
 check('school panel is live: no pending banner, invite form present', 'id="ts-pending"' not in sp and 'id="ts-invite"' in sp)
+check('person with two panels gets a panel switcher', 'تغییر پنل' in sp and '/my/workspaces/%s' % ws_id in sp)
+st, _, tp = anon.req('/panel/terms')
+check('terms explain what happens when a specialist leaves', 'وقتی کارشناس می‌رود' in tp and 'دسترسی اضطراری' in tp)
 
 # platform approval lifts the gate
 shell("ws=env['ts.workspace'].browse(%s)\nws.action_approve()\nenv.cr.commit()\nprint('OK')\n" % ws_id)

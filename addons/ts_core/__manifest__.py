@@ -12,6 +12,7 @@
         'data/ts_sequence.xml',
         'views/workspace_views.xml',
         'views/audit_views.xml',
+        'views/emergency_views.xml',
         'views/menus.xml',
     ],
     'installable': True,

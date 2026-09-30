@@ -266,6 +266,28 @@ class TsWorkspaceMember(models.Model):
             return False
         return True
 
+    # ------------------------------------------------ a specialist leaves or changes role
+    def _ts_release_clients(self):
+        """Everything this member was responsible for goes back to the unassigned queue (owner/manager
+        still see it, the leaver no longer can). Each change is audit-logged by the record's own write."""
+        A = self.env['ts.assignment'].sudo()
+        T = self.env['ts.attempt'].sudo()
+        for m in self:
+            A.search([('responsible_id', '=', m.id)]).write({'responsible_id': False})
+            T.search([('responsible_id', '=', m.id)]).write({'responsible_id': False})
+
+    def write(self, vals):
+        leaving = self.env['ts.workspace.member']
+        if vals.get('active') is False or ('role' in vals and vals['role'] not in RESPONSIBLE_ROLES):
+            leaving = self.filtered(lambda m: m.role in RESPONSIBLE_ROLES or vals.get('active') is False)
+        res = super().write(vals)
+        leaving._ts_release_clients()
+        return res
+
+    def unlink(self):
+        self._ts_release_clients()
+        return super().unlink()
+
     def can_invite(self):
         return self.can_act() and self.role in INVITE_ROLES
 
