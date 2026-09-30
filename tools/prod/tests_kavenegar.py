@@ -112,6 +112,7 @@ class FakeSession:
 kv.requests.Session = FakeSession
 
 company = env.company
+company.sudo().write({'kv_lines': '10004346'})
 company.sudo().write({'kv_enabled': True, 'kv_api_key': 'TESTKEY-not-real', 'kv_sender': '10004346',
                       'kv_inbox_line': '10004346', 'kv_has_lookup': True, 'kv_min_credit': 10000})
 company.kv_generate_secret()
@@ -301,3 +302,10 @@ open('/tmp/kv_http_fixture.json', 'w').write(json.dumps({
 env.cr.commit()
 fails = [n for n, o in results if not o]
 print('SUMMARY %d/%d passed' % (len(results) - len(fails), len(results)), fails or '')
+
+# line dropdown: discovered lines feed the selection
+company.sudo().write({'kv_lines': '10004346,90008956'})
+sel = [k for k, _v in env['res.company']._kv_line_selection()]
+check('line dropdown lists known lines', sel == ['10004346', '90008956'], sel)
+company.sudo().write({'kv_inbox_line': '90008956'})
+check('inbox line accepts a listed line', company.kv_inbox_line == '90008956')

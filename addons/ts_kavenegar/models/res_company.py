@@ -12,8 +12,12 @@ class ResCompany(models.Model):
 
     kv_enabled = fields.Boolean('Send SMS via Kavenegar')
     kv_api_key = fields.Char('Kavenegar API key', groups='base.group_system')
-    kv_sender = fields.Char('Default sender line', help='Line number, e.g. 10004346')
-    kv_inbox_line = fields.Char('Inbox line', help='Line that receives SMS (leave empty to disable inbox)')
+    kv_sender = fields.Selection('_kv_line_selection', string='Default sender line',
+                                 help='Pick one of the account lines (use "Fetch lines" to refresh the list)')
+    kv_inbox_line = fields.Selection('_kv_line_selection', string='Inbox line',
+                                     help='Line that receives SMS (leave empty to disable inbox)')
+    kv_lines = fields.Char('Known lines', readonly=True, copy=False,
+                           help='Comma separated. Kavenegar has no API that lists lines, so they are read from the account outbox/inbox history.')
     kv_default_tag = fields.Char('Default tag', help='Tag created in the Kavenegar panel (letters, digits, -)')
     kv_debug = fields.Boolean('Debug mode', help='Kavenegar accepts requests but sends nothing and charges nothing.')
     kv_webhook_secret = fields.Char('Webhook secret', groups='base.group_system', copy=False)
@@ -31,6 +35,42 @@ class ResCompany(models.Model):
     kv_expire = fields.Char('Account expiry', readonly=True)
     kv_account_type = fields.Char('Account type', readonly=True)
     kv_last_sync = fields.Datetime('Last account sync', readonly=True)
+
+    @api.model
+    def _kv_line_selection(self):
+        lines = []
+        for c in self.env['res.company'].sudo().search([]):
+            for x in (c.kv_lines or '').split(','):
+                x = x.strip()
+                if x and x not in lines:
+                    lines.append(x)
+        return [(x, x) for x in lines]
+
+    def kv_fetch_lines(self):
+        """Discover the account's lines: sender of the latest outbox, lines seen in stored messages,
+        the account default sender and the lines already chosen."""
+        self.ensure_one()
+        found = set((self.kv_lines or '').split(','))
+        found |= {self.kv_sender, self.kv_inbox_line}
+        cl = self._kv_client()
+        try:
+            for e in cl.latest_outbox(200) or []:
+                found.add(str(e.get('sender') or ''))
+        except KavenegarError:
+            pass
+        try:
+            cfg = cl.account_config_get()
+            found.add(str((cfg[0] if cfg else {}).get('defaultsender') or ''))
+        except KavenegarError:
+            pass
+        Msg = self.env['kavenegar.message'].sudo()
+        for m in Msg.search([('company_id', '=', self.id), ('direction', '=', 'out'), ('sender', '!=', False)]):
+            found.add(m.sender)
+        for m in Msg.search([('company_id', '=', self.id), ('direction', '=', 'in'), ('receptor', '!=', False)]):
+            found.add(m.receptor)
+        lines = sorted(x.strip() for x in found if x and x.strip().isdigit())
+        self.sudo().kv_lines = ','.join(lines)
+        return lines
 
     def _compute_kv_urls(self):
         for c in self:
@@ -74,6 +114,10 @@ class ResCompany(models.Model):
             'kv_account_type': info.get('type') or '',
             'kv_last_sync': fields.Datetime.now(),
         })
+        try:
+            self.kv_fetch_lines()
+        except Exception:
+            pass
         self._kv_check_credit_alarm()
         return info
 

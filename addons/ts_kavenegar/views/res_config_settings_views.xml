@@ -17,6 +17,7 @@
                         <div class="row">
                             <label for="kv_sender" class="col-lg-4 o_light_label"/>
                             <field name="kv_sender"/>
+                            <button name="action_kv_fetch_lines" type="object" class="btn-link" string="Fetch lines from Kavenegar"/>
                         </div>
                         <div class="row">
                             <label for="kv_inbox_line" class="col-lg-4 o_light_label"/>
