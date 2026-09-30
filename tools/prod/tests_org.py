@@ -102,7 +102,7 @@ at2 = a2.action_accept(p2, share=False)
 finish(at2)
 check('declined sharing -> nothing visible', a2.share_level == 'none' and a2.visible_results(m_hr)[0] == 'none')
 
-a3 = A.create({'workspace_id': w_cli.id, 'instrument_id': mental.id, 'invitee_name': 'مراجع'})
+a3 = A.create({'workspace_id': w_cli.id, 'instrument_id': mental.id, 'invitee_name': 'مراجع', 'responsible_id': m_clin.id})
 at3 = a3.action_accept(p1, share=True)
 finish(at3)
 lvl, res = a3.visible_results(m_clin)

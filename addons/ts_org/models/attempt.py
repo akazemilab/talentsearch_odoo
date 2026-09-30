@@ -1,8 +1,31 @@
-from odoo import models
+from odoo import api, fields, models
+from odoo.exceptions import ValidationError
+
+from .assignment import RESPONSIBLE_ROLES
 
 
 class TsAttempt(models.Model):
     _inherit = 'ts.attempt'
+
+    responsible_id = fields.Many2one(
+        'ts.workspace.member', 'کارشناس مسئول', index=True, ondelete='set null',
+        help='برای نتیجه‌های واردشده که دعوتی ندارند؛ برای دعوت‌های وب، کارشناس مسئولِ دعوت ملاک است.')
+
+    @api.constrains('responsible_id', 'workspace_id')
+    def _check_responsible(self):
+        for at in self:
+            r = at.responsible_id
+            if r and (r.workspace_id != at.workspace_id or not r.active or r.role not in RESPONSIBLE_ROLES):
+                raise ValidationError('کارشناس مسئول باید عضو فعال همین فضای کاری با نقش کارشناس باشد.')
+
+    def write(self, vals):
+        old = {a.id: a.responsible_id.id for a in self} if 'responsible_id' in vals else {}
+        res = super().write(vals)
+        for a in self:
+            if a.id in old and old[a.id] != a.responsible_id.id:
+                self.env['ts.audit.event'].log('attempt.responsible_change', a, workspace=a.workspace_id,
+                                               old=old[a.id] or False, new=a.responsible_id.id or False)
+        return res
 
     def ts_org_assignment(self):
         """The workspace invitation behind this attempt (owner-only use in the report)."""
@@ -23,7 +46,7 @@ class TsAttempt(models.Model):
         if self.state != 'done':
             return False
         if self.source == 'import':
-            return True
+            return member.can_see(self)
         a = self.env['ts.assignment'].sudo().search(
             [('attempt_id', '=', self.id), ('workspace_id', '=', ws.id)], limit=1)
         return bool(a) and a.visible_results(member)[0] == 'education'

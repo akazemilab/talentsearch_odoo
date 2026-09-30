@@ -6,6 +6,7 @@ from odoo.http import request
 
 from odoo.addons.ts_assessment.controllers.main import _ts_site_or_404
 from odoo.addons.ts_assessment.models.attempt import fa_digits
+from odoo.addons.ts_org.models.assignment import RESPONSIBLE_ROLES
 
 
 def _memberships():
@@ -25,9 +26,21 @@ def _membership(ws_id):
 def _assignment(member, assignment_id):
     a = request.env['ts.assignment'].sudo().search([
         ('id', '=', int(assignment_id)), ('workspace_id', '=', member.workspace_id.id)], limit=1)
-    if not a:
+    if not a or not member.can_see(a):
         raise request.not_found()
     return a
+
+
+def _scope(member, records):
+    """Only what this member may see: everything for owners/managers, else their own."""
+    return records.filtered(member.can_see)
+
+
+def _assignable(member):
+    """Members a participant can be handed to (owner/manager view only)."""
+    if not member.can_assign():
+        return request.env['ts.workspace.member']
+    return member.workspace_id.member_ids.filtered(lambda m: m.active and m.role in RESPONSIBLE_ROLES)
 
 
 def _counts(assignments):
@@ -45,7 +58,7 @@ class TsOrg(http.Controller):
         for m in _memberships():
             ws = m.workspace_id
             rows.append({'member': m, 'ws': ws, 'usable': m.can_act(),
-                         'counts': _counts(request.env['ts.assignment'].sudo().search([('workspace_id', '=', ws.id)]))})
+                         'counts': _counts(_scope(m, request.env['ts.assignment'].sudo().search([('workspace_id', '=', ws.id)])))})
         return request.render('ts_org.workspaces', {'rows': rows, 'fa': fa_digits, 'page_name': 'ts_workspaces'})
 
     @http.route('/my/workspaces/<int:ws_id>', type='http', auth='user', website=True, sitemap=False)
@@ -53,7 +66,8 @@ class TsOrg(http.Controller):
         _ts_site_or_404()
         member = _membership(ws_id)
         ws = member.workspace_id
-        allx = request.env['ts.assignment'].sudo().search([('workspace_id', '=', ws.id)])
+        allx = _scope(member, request.env['ts.assignment'].sudo().search([('workspace_id', '=', ws.id)]))
+        resp = kw.get('resp')
         shown = allx.filtered(lambda a: a.state == state) if state else allx
         imports = request.env['ts.attempt']
         src = kw.get('src')
@@ -61,11 +75,24 @@ class TsOrg(http.Controller):
             imports = request.env['ts.attempt'].sudo().search([
                 ('workspace_id', '=', ws.id), ('source', '=', 'import'), ('state', '=', 'done')],
                 order='submitted_at desc, id desc')
+            imports = _scope(member, imports)
             if src == 'invite':
                 imports = imports.browse()
             if src == 'import':
                 shown = shown.browse()
+        un_a = allx.filtered(lambda r: not r.responsible_id)
+        un_i = imports.filtered(lambda r: not r.responsible_id)
+        mi_a = allx.filtered(lambda r: r.responsible_id == member)
+        mi_i = imports.filtered(lambda r: r.responsible_id == member)
+        unassigned, mine = len(un_a) + len(un_i), len(mi_a) + len(mi_i)
+        if resp == 'none':
+            shown, imports = shown & un_a, imports & un_i
+        elif resp == 'mine':
+            shown, imports = shown & mi_a, imports & mi_i
         return request.render('ts_org.workspace', {
+            'resp_filter': resp, 'unassigned_count': unassigned, 'mine_count': mine,
+            'can_assign': member.can_assign(), 'assignable': _assignable(member),
+            'show_unassigned': member.sees_unassigned(),
             'imports': imports, 'src_filter': src,
             'member': member, 'ws': ws, 'assignments': shown, 'counts': _counts(allx), 'total': len(allx),
             'state_filter': state, 'instruments': member.allowed_instruments() if member.can_invite() else [],
@@ -127,6 +154,44 @@ class TsOrg(http.Controller):
         except UserError:
             pass
         return request.redirect('/my/workspaces/%s/a/%s' % (ws_id, a.id))
+
+    def _set_responsible(self, member, rec, post):
+        """Owner/manager hands a record to a specialist of the same workspace, or clears it."""
+        if not member.can_assign():
+            raise request.not_found()
+        rid = (post.get('responsible_id') or '').strip()
+        target = request.env['ts.workspace.member']
+        if rid:
+            target = _assignable(member).filtered(lambda m: str(m.id) == rid)
+            if not target:
+                return False
+        try:
+            rec.write({'responsible_id': target.id or False})
+        except (UserError, ValidationError):
+            return False
+        return True
+
+    @http.route('/my/workspaces/<int:ws_id>/a/<int:assignment_id>/responsible', type='http', auth='user',
+                website=True, methods=['POST'], sitemap=False)
+    def assignment_responsible(self, ws_id, assignment_id, **post):
+        _ts_site_or_404()
+        member = _membership(ws_id)
+        a = _assignment(member, assignment_id)
+        ok = self._set_responsible(member, a, post)
+        return request.redirect('/my/workspaces/%s%s' % (ws_id, '' if ok else '?error=rule'))
+
+    @http.route('/my/workspaces/<int:ws_id>/p/<int:attempt_id>/responsible', type='http', auth='user',
+                website=True, methods=['POST'], sitemap=False)
+    def import_responsible(self, ws_id, attempt_id, **post):
+        _ts_site_or_404()
+        member = _membership(ws_id)
+        at = request.env['ts.attempt'].sudo().search([
+            ('id', '=', int(attempt_id)), ('workspace_id', '=', member.workspace_id.id),
+            ('source', '=', 'import')], limit=1)
+        if not at or not member.can_see(at):
+            raise request.not_found()
+        ok = self._set_responsible(member, at, post)
+        return request.redirect('/my/workspaces/%s%s' % (ws_id, '' if ok else '?error=rule'))
 
     # -------------------------------------------------------- participant side
     def _invite(self, token):

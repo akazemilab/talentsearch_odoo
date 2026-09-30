@@ -41,6 +41,7 @@
                             <field name="invited_by_id"/>
                             <field name="user_id"/>
                             <field name="attempt_id"/>
+                            <field name="responsible_id"/>
                             <field name="share_level"/>
                             <field name="accepted_at"/>
                         </group>

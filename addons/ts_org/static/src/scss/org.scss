@@ -15,6 +15,8 @@
     .ts-org-layout { display: grid; gap: var(--space-6); grid-template-columns: minmax(0, 1fr); align-items: start; }
     @media (min-width: 992px) { .ts-org-layout { grid-template-columns: minmax(0, 1fr) 320px; } }
     .ts-org-layout > * { min-width: 0; }
+    .ts-inline-form { display: flex; gap: var(--space-2); align-items: center; flex-wrap: wrap; }
+    .ts-inline-form select { min-height: var(--control-min); max-width: 12rem; padding: var(--space-1) var(--space-2); border: 1px solid var(--line); border-radius: var(--radius-sm); background: var(--white); }
     .ts-org-invite .ts-form { display: flex; flex-direction: column; gap: var(--space-2); }
     .ts-org-invite input, .ts-org-invite select {
         width: 100%; max-width: 100%; min-height: var(--control-min); padding: var(--space-2) var(--space-3);
