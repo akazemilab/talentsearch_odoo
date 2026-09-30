@@ -24,7 +24,7 @@ case $cmd in
   bg)    name=$1; shift; ( setsid nohup bash -c "$* ; echo \"[rc=\$?]\"" > $J/$name.log 2>&1 & ); echo "started $name" ;;
   job)   f=$J/$1.log; if grep -q '^\[rc=' $f 2>/dev/null; then echo "[$1] done $(grep -o 'rc=[0-9]*' $f | tail -1)"; else echo "[$1] running"; fi; tail -n ${2:-25} $f ;;
   sql)   db=$1; shift; ssh $P "sudo -u postgres psql -d $db -AtF ' | ' -v ON_ERROR_STOP=0" <<<"BEGIN READ ONLY; $*; ROLLBACK;" ;;
-  get)   port=$1; path=$2; host=${3:-ts.innerquest.me}
+  get)   port=$1; path=$2; host=${3:-talentsearch.ir}
          ssh $P "curl -s -o /tmp/ts_get.html -w '%{http_code} %{redirect_url}\n' -H 'Host: $host' -H 'X-Forwarded-Proto: https' 'http://127.0.0.1:$port$path'; python3 - <<'PY'
 import re,html
 s=open('/tmp/ts_get.html',encoding='utf-8',errors='ignore').read()

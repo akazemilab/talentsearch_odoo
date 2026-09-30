@@ -21,6 +21,7 @@
         <field name="arch" type="xml">
             <form>
                 <header>
+                    <button name="action_approve" type="object" string="تأیید مالک پلتفرم" class="btn-primary" invisible="not gated" groups="ts_core.group_ts_manager"/>
                     <field name="state" widget="statusbar" options="{'clickable': '1'}" statusbar_visible="draft,pilot,active"/>
                 </header>
                 <sheet>
@@ -40,6 +41,8 @@
                             <field name="partner_id"/>
                             <field name="purpose" readonly="state != 'draft'"/>
                             <field name="gated" invisible="1"/>
+                            <field name="approval_note" invisible="purpose not in ('education', 'benefits')"/>
+                            <field name="approved_on" invisible="not approved_on"/>
                         </group>
                         <group>
                             <field name="data_contact_id"/>

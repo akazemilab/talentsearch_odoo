@@ -68,7 +68,7 @@ def path_of(loc):
     return urllib.parse.urlsplit(loc).path + (('?' + urllib.parse.urlsplit(loc).query) if urllib.parse.urlsplit(loc).query else '')
 
 
-TS = 'ts.innerquest.me'
+TS = 'talentsearch.ir'
 anon = Client(TS)
 st, _, page = anon.req('/assessments')
 slugs = re.findall(r'href="/assessments/([^"/]+)"', page)

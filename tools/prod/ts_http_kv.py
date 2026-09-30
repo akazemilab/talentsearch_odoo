@@ -20,7 +20,7 @@ def check(n, ok, d=''):
 
 
 S, M = fx['secret'], fx['messageid']
-ts = 'ts.innerquest.me'
+ts = 'talentsearch.ir'
 st, body = req('/kavenegar/%s/status?messageId=%s&status=10&statustext=x' % (S, M), ts)
 check('status GET on website 2 -> 200 OK', st == 200 and body == 'OK', '%s %s' % (st, body))
 st, body = req('/kavenegar/%s/status' % S, ts, 'POST', ('messageid=%s&status=11' % M).encode(), {'Content-Type': 'application/x-www-form-urlencoded'})

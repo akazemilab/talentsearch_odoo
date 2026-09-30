@@ -168,3 +168,57 @@ def tiles(interp, profile):
         pf = interp['per_field'][0]
         out.append({'k': 'برجسته‌ترین توانایی', 'v': NAMES[pf['order'][0]], 's': 'در «%s»' % pf['label']})
     return out
+
+
+# ------------------------------------------------------------ fields side by side
+COMPARE_CODES = ['ANA', 'EXP', 'ACA', 'NOV', 'DUT', 'TOT']
+
+
+def compare_rows(profile, gap=10):
+    """For each ability (and the overall mean) one row across the participant's own fields.
+
+    mark: 'best' = exact top (the engine's tie rule), 'near' = within `gap`
+    points of the top, '' otherwise. Comparison is only within the person."""
+    rows = []
+    for code in COMPARE_CODES:
+        vals = [f['scales'][code] if code in SCALES else f['composites'][code] for f in profile['fields']]
+        top = max(vals)
+        cells = []
+        for f, v in zip(profile['fields'], vals):
+            if abs(v - top) < 1e-9:
+                mark = 'best'
+            elif top - v <= gap:
+                mark = 'near'
+            else:
+                mark = ''
+            cells.append({'label': f['label'], 'score': v, 'pct': round((v - 20) / 80.0 * 100, 1), 'mark': mark})
+        rows.append({'code': code, 'name': NAMES[code], 'total': code == 'TOT', 'cells': cells})
+    return rows
+
+
+def field_cards(profile, gap=10):
+    """One card per field: overall mean, strongest and weakest ability (ties kept)."""
+    cards = []
+    for i, f in enumerate(profile['fields']):
+        sc = f['scales']
+        hi, lo = max(sc.values()), min(sc.values())
+        cards.append({
+            'label': f['label'], 'idx': i + 1, 'tot': f['composites']['TOT'],
+            'high': [NAMES[c] for c in SCALES if abs(sc[c] - hi) < 1e-9], 'high_score': hi,
+            'low': [NAMES[c] for c in SCALES if abs(sc[c] - lo) < 1e-9], 'low_score': lo,
+            'caution': bool(f['flags'].get('straight') or f['flags'].get('fast')),
+        })
+    return cards
+
+
+def compare_lines(interp):
+    """Two neutral sentences that only restate the engine's own comparison."""
+    if interp['n_fields'] < 2:
+        return []
+    b, w = interp['brief'], interp['weak']
+    return [
+        'در این فهرست، زمینهٔ %s بالاترین میانگین را دارد (%s)؛ این فقط مقایسهٔ زمینه‌های خودِ شما با یکدیگر است.' % (
+            joinfa(b['fields'], True), fmt(b['field_score'])),
+        'پایین‌ترین میانگین به زمینهٔ %s (%s) می‌رسد. این ترتیب توصیهٔ انتخاب یا حذف رشته نیست؛ برای تصمیم، آن را با نمره‌ها، علاقه و مشورت بسنجید.' % (
+            joinfa(w['fields'], True), fmt(w['field_score'])),
+    ]

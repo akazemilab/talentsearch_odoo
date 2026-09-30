@@ -52,6 +52,9 @@ class TsWorkspace(models.Model):
     ], 'وضعیت', default='draft', required=True, tracking=True)
     gated = fields.Boolean('نیازمند تأیید', compute='_compute_gated', store=True,
                            help='هدف‌های دانشگاه/مدرسه و رفاه کارکنان تا تأیید مالک پلتفرم غیرفعال می‌مانند.')
+    approved_by_id = fields.Many2one('res.users', 'تأییدکنندهٔ مالک پلتفرم', readonly=True, copy=False)
+    approved_on = fields.Datetime('تاریخ تأیید', readonly=True, copy=False)
+    approval_note = fields.Char('یادداشت تأیید', copy=False)
     member_ids = fields.One2many('ts.workspace.member', 'workspace_id', 'اعضا')
     member_count = fields.Integer(compute='_compute_member_count')
     data_contact_id = fields.Many2one('res.partner', 'مسئول داده', tracking=True)
@@ -62,10 +65,23 @@ class TsWorkspace(models.Model):
 
     _code_unique = models.Constraint('unique(code)', 'کد فضای کاری باید یکتا باشد.')
 
-    @api.depends('purpose')
+    @api.depends('purpose', 'approved_on')
     def _compute_gated(self):
         for ws in self:
-            ws.gated = ws.purpose in GATED_PURPOSES
+            ws.gated = ws.purpose in GATED_PURPOSES and not ws.approved_on
+
+    def action_approve(self):
+        """Platform-owner approval that lifts the gate on one education/benefits
+        workspace (rights, consent and operations reviewed for that customer)."""
+        if not self.env.user.has_group('ts_core.group_ts_manager'):
+            raise UserError('فقط مدیر پلتفرم می‌تواند فضای کاری را تأیید کند.')
+        for ws in self:
+            if ws.purpose not in GATED_PURPOSES:
+                raise UserError('این فضای کاری نیاز به تأیید ندارد.')
+            if ws.approved_on:
+                continue
+            ws.write({'approved_by_id': self.env.uid, 'approved_on': fields.Datetime.now()})
+            self.env['ts.audit.event'].log('workspace.approve', ws, workspace=ws, purpose=ws.purpose)
 
     def _compute_member_count(self):
         for ws in self:

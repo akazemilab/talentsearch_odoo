@@ -71,6 +71,7 @@
                                     <p class="ts-tag" t-out="dict(ws._fields['purpose'].selection).get(ws.purpose)"/>
                                     <h1 t-out="ws.name"/>
                                     <p t-if="ws.purpose == 'employment'">سازمان فقط وضعیت دعوت و، در صورت رضایت شرکت‌کننده، بازهٔ هر بُعد را می‌بیند. پاسخ‌ها و متن‌های تفسیری هرگز به سازمان نمایش داده نمی‌شوند.</p>
+                                    <p t-elif="ws.purpose == 'education'">مشاور مؤسسه گزارش شرکت‌کنندگان را می‌بیند؛ پاسخ‌های خام هرگز نمایش داده نمی‌شوند. نتیجه‌های واردشده از فرم‌افزار قبلی فقط برای اعضای همین مؤسسه قابل مشاهده‌اند و برای خود شرکت‌کننده منتشر نشده‌اند.</p>
                                     <p t-elif="ws.purpose == 'clinical'">گزارش کامل، از جمله راهنمای متخصص، فقط به متخصص بالینی تأییدشدهٔ همین فضا و فقط با رضایت شرکت‌کننده نمایش داده می‌شود.</p>
                                 </div>
 
@@ -88,6 +89,31 @@
                                     <a t-attf-class="ts-stat #{'is-active' if state_filter == 'done' else ''}" href="?state=done"><strong t-out="fa(counts['done'])"/><span>تکمیل‌شده</span></a>
                                     <a t-attf-class="ts-stat #{'is-active' if state_filter == 'declined' else ''}" href="?state=declined"><strong t-out="fa(counts['declined'] + counts['withdrawn'])"/><span>رد یا لغو</span></a>
                                 </nav>
+
+                                <section t-if="ws.purpose == 'education'" class="ts-card ts-card--soft" id="ts-imports">
+                                    <h2 class="h5">نتیجه‌های واردشده <span class="ts-hint">(<t t-out="fa(len(imports))"/>)</span></h2>
+                                    <nav class="ts-stats" aria-label="منبع">
+                                        <a t-attf-class="ts-stat #{'is-active' if not src_filter else ''}" href="?">همه</a>
+                                        <a t-attf-class="ts-stat #{'is-active' if src_filter == 'import' else ''}" href="?src=import">واردشده از فرم‌افزار</a>
+                                        <a t-attf-class="ts-stat #{'is-active' if src_filter == 'invite' else ''}" href="?src=invite">دعوت‌های وب</a>
+                                    </nav>
+                                    <p t-if="not imports" class="ts-muted">نتیجهٔ واردشده‌ای در این فهرست نیست.</p>
+                                    <div t-else="" class="ts-table-wrap">
+                                        <table class="ts-table">
+                                            <thead><tr><th scope="col">شرکت‌کننده</th><th scope="col">منبع</th><th scope="col">زمینه‌ها</th><th scope="col">تاریخ</th><th scope="col">دسترسی شرکت‌کننده</th><th scope="col"><span class="visually-hidden">اقدام</span></th></tr></thead>
+                                            <tbody>
+                                                <tr t-foreach="imports" t-as="p">
+                                                    <td><strong t-out="p.person_id.name"/></td>
+                                                    <td>واردشده</td>
+                                                    <td t-out="fa(len(p.field_ids))"/>
+                                                    <td t-out="p.jalali(p.submitted_at, False)"/>
+                                                    <td><span class="ts-pill" t-out="'منتشرشده' if p.released else 'منتشر نشده'"/></td>
+                                                    <td><a t-attf-href="/my/workspaces/#{ws.id}/p/#{p.id}" class="ts-btn ts-btn--outline ts-btn--sm">پرونده</a></td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </section>
 
                                 <div class="ts-org-layout">
                                     <div class="ts-table-wrap">

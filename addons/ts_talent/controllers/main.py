@@ -11,6 +11,8 @@ from odoo.addons.ts_assessment.controllers.main import TsAssessment, _my_attempt
 from odoo.addons.ts_assessment.models.attempt import CONSENT_VERSION, fa_digits
 from odoo.addons.ts_assessment.models.instrument import SCALE
 
+from odoo.addons.ts_org.controllers.main import _membership as _org_membership
+
 from ..models import engine_matrix as EM
 from ..models import report as R
 from ..models.text import item_segments
@@ -34,6 +36,42 @@ def texts():
 
 def _n_pages(items):
     return max(1, math.ceil(len(items) / PAGE))
+
+
+def report_ctx(attempt, org_view=False, ws=None, submitted=None):
+    """Template context of the matrix report; org_view drops raw answers (institute side)."""
+    profile = attempt.ts_profile()
+    interp = profile['interpretation']
+    gap = interp.get('gap', 10)
+    fields = profile['fields']
+    t = texts()
+    raw = []
+    if not org_view:
+        items = attempt.active_items()
+        cells = {}
+        for c in attempt.cell_ids:
+            cells.setdefault(c.field_id.label, {})[c.item_id.id] = c.value
+        labels = dict(SCALE)
+        raw = [{'label': f['label'],
+                'rows': [(item_segments(it.text, f['label']), labels.get(cells.get(f['label'], {}).get(it.id), '—'))
+                         for it in items]} for f in fields]
+    defs = [(EM.NAMES[c], t['scales'][c]['definition']) for c in EM.SCALES]
+    defs += [(EM.NAMES[c], t['composites'][c]['definition']) for c in ('INT', 'CRE', 'SCH', 'CRT', 'CRP') if c in t['composites']]
+    single = R.single_field_lines(interp) if interp['n_fields'] < 2 else None
+    multi = interp['n_fields'] >= 2
+    return {
+        'attempt': attempt, 'inst': attempt.instrument_id, 'version': attempt.version_id,
+        'tiles': R.tiles(interp, profile), 'fields': fields,
+        'charts': {f['label']: R.field_chart(f) for f in fields},
+        'legend': [EM.NAMES[c] for c in EM.SCALES], 'single': single,
+        'lv': R.levels(interp, profile) if not single else [], 'interp': interp,
+        'programs': R.programs_list(interp), 'rows': R.table_rows(profile, gap), 'raw': raw,
+        'cmp_rows': R.compare_rows(profile, gap) if multi else [],
+        'cmp_cards': R.field_cards(profile, gap) if multi else [],
+        'cmp_lines': R.compare_lines(interp) if multi else [],
+        'gap': int(gap), 'org_view': org_view, 'ws': ws, 'who': attempt.person_id.name or attempt.partner_id.name or '',
+        'texts': t, 'defs': defs, 'submitted': submitted,
+        'fa': fa_digits, 'fmt': R.fmt, 'joinfa': R.joinfa, 'page_name': 'ts_workspaces' if org_view else 'ts_assessments'}
 
 
 class TsTalent(TsAssessment):
@@ -188,28 +226,46 @@ class TsTalent(TsAssessment):
         if attempt.state != 'done' or not attempt.released:
             return request.redirect('/take/%s' % attempt.access_token)
         request.env['ts.audit.event'].sudo().log('report.view', attempt)
-        profile = attempt.ts_profile()
-        interp = profile['interpretation']
-        gap = interp.get('gap', 10)
-        fields = profile['fields']
-        t = texts()
-        items = attempt.active_items()
-        cells = {}
-        for c in attempt.cell_ids:
-            cells.setdefault(c.field_id.label, {})[c.item_id.id] = c.value
-        labels = dict(SCALE)
-        raw = [{'label': f['label'],
-                'rows': [(item_segments(it.text, f['label']), labels.get(cells.get(f['label'], {}).get(it.id), '—'))
-                         for it in items]} for f in fields]
-        defs = [(EM.NAMES[c], t['scales'][c]['definition']) for c in EM.SCALES]
-        defs += [(EM.NAMES[c], t['composites'][c]['definition']) for c in ('INT', 'CRE', 'SCH', 'CRT', 'CRP') if c in t['composites']]
-        single = R.single_field_lines(interp) if interp['n_fields'] < 2 else None
-        return request.render('ts_talent.report', {
-            'attempt': attempt, 'inst': attempt.instrument_id, 'version': attempt.version_id,
-            'tiles': R.tiles(interp, profile), 'fields': fields,
-            'charts': {f['label']: R.field_chart(f) for f in fields},
-            'legend': [EM.NAMES[c] for c in EM.SCALES], 'single': single,
-            'lv': R.levels(interp, profile) if not single else [], 'interp': interp,
-            'programs': R.programs_list(interp), 'rows': R.table_rows(profile, gap), 'raw': raw,
-            'texts': t, 'defs': defs, 'submitted': kw.get('submitted'),
-            'fa': fa_digits, 'fmt': R.fmt, 'joinfa': R.joinfa, 'page_name': 'ts_assessments'})
+        return request.render('ts_talent.report', report_ctx(attempt, submitted=kw.get('submitted')))
+
+
+class TsTalentOrg(http.Controller):
+    """Institute (education workspace) side: a counselor reads a participant report."""
+
+    @http.route('/my/workspaces/<int:ws_id>/p/<int:attempt_id>', type='http', auth='user', website=True, sitemap=False)
+    def org_person(self, ws_id, attempt_id, **kw):
+        _ts_site_or_404()
+        member = _org_membership(ws_id)
+        attempt = request.env['ts.attempt'].sudo().browse(attempt_id).exists()
+        if not attempt or not attempt.ts_is_matrix() or not attempt.ts_org_visible_to(member):
+            raise request.not_found()
+        request.env['ts.audit.event'].sudo().log('attempt.result_view', attempt, workspace=member.workspace_id,
+                                                 viewer=request.env.user.id)
+        return request.render('ts_talent.report', report_ctx(attempt, org_view=True, ws=member.workspace_id))
+
+
+_SAMPLE = [  # fully fictional profile; never derived from a real person
+    ('علوم زیستی', dict(ANA=80, EXP=73.33, ACA=86.67, NOV=60, DUT=73.33), False),
+    ('طراحی گرافیک', dict(ANA=66.67, EXP=86.67, ACA=60, NOV=93.33, DUT=66.67), False),
+    ('فوتسال', dict(ANA=53.33, EXP=80, ACA=46.67, NOV=60, DUT=86.67), False),
+    ('برنامه‌نویسی', dict(ANA=86.67, EXP=66.67, ACA=80, NOV=73.33, DUT=53.33), True),
+]
+
+
+def sample_profile():
+    fields = []
+    for label, sc, fast in _SAMPLE:
+        fields.append({'label': label, 'scales': dict(sc), 'composites': {'TOT': sum(sc.values()) / 5.0},
+                       'flags': {'straight': False, 'fast': fast}})
+    return {'fields': fields}
+
+
+class TsEntekhab(http.Controller):
+
+    @http.route('/entekhab-reshteh/sample', type='http', auth='public', website=True, sitemap=True)
+    def er_sample(self, **kw):
+        _ts_site_or_404()
+        prof = sample_profile()
+        return request.render('ts_talent.er_sample', {
+            'cmp_rows': R.compare_rows(prof, 10), 'cmp_cards': R.field_cards(prof, 10),
+            'fa': fa_digits, 'fmt': R.fmt, 'joinfa': R.joinfa, 'gap': 10, 'names': [f['label'] for f in prof['fields']]})

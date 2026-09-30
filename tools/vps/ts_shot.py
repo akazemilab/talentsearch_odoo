@@ -1,7 +1,7 @@
 #!/root/eot-browser/venv/bin/python
 """Headless layout audit of Talent Search pages on a served CLONE (never live accounts).
     ts_shot.py DB PORT [--as LOGIN] PATH...
-Tunnels VPS:18071 -> prod:PORT, maps ts.innerquest.me to it, signs in with the
+Tunnels VPS:18071 -> prod:PORT, maps talentsearch.ir to it, signs in with the
 clone-only test user (password read from prod's root-only file, never printed) and
 reports per page and width: status, horizontal overflow, elements wider than the
 viewport, small tap targets, images without alt, English UI words, console errors,
@@ -51,13 +51,13 @@ pw_file = '/root/.ts_flow_%s_%s' % (DB, (LOGIN or '').split('@')[0])
 password = subprocess.run(['ssh', 'eot-odoo-prod', 'cat', pw_file], capture_output=True, text=True).stdout.strip() if LOGIN else None
 with sync_playwright() as p:
     b = p.chromium.launch(executable_path=CHROME, args=['--no-sandbox', '--disable-dev-shm-usage', '--disable-gpu',
-                                                        '--host-resolver-rules=MAP ts.innerquest.me:80 127.0.0.1:18071'])
+                                                        '--host-resolver-rules=MAP talentsearch.ir:80 127.0.0.1:18071'])
     ctx = b.new_context(locale='fa-IR')
     page = ctx.new_page()
     errors = []
     page.on('console', lambda m: errors.append(m.text[:160]) if m.type == 'error' else None)
     page.on('pageerror', lambda e: errors.append(str(e)[:160]))
-    BASE = 'http://ts.innerquest.me'
+    BASE = 'http://talentsearch.ir'
     if LOGIN:
         page.goto(BASE + '/web/login', timeout=90000)
         page.fill('input[name=login]', LOGIN); page.fill('input[name=password]', password)

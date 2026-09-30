@@ -59,6 +59,8 @@ class TsInstrumentTalent(models.Model):
                                                      CONTRACT_VERSION if not n else '1.%d' % n)
             (inst.version_ids - version).with_context(ts_loader=True).write({'superseded': True})
             created = True
+        if version.field_default != 4:  # entekhab-1405: suggest 4 fields (data: median 4, 18% used 8)
+            version.with_context(ts_loader=True).write({'field_default': 4})
         version._validate_contract()
         upd = {'current_version_id': version.id, 'intended_use': INTENDED_USE, 'limitations': LIMITATIONS,
                'rights_note': RIGHTS_NOTE, 'evidence_note': EVIDENCE_NOTE, 'approval_note': APPROVAL_NOTE}
@@ -79,7 +81,7 @@ class TsInstrumentTalent(models.Model):
             'engine_version': 'TS-MATRIX-1.0', 'mode': 'matrix', 'scale_min': 1, 'scale_max': 5,
             'reverse_rule': 'none', 'aggregation': 'scale = sum of 3 items / 15 x 100; composite = mean of its scales',
             'missing_rule': 'every named field needs exactly 15 answers; 2 to 8 fields',
-            'field_min': 2, 'field_default': 3, 'field_max': 8, 'noise_gap': 10.0, 'field_guidance': FIELD_GUIDANCE,
+            'field_min': 2, 'field_default': 4, 'field_max': 8, 'noise_gap': 10.0, 'field_guidance': FIELD_GUIDANCE,
         })
         Factor, Item = self.env['ts.instrument.factor'], self.env['ts.instrument.item']
         factors = {}

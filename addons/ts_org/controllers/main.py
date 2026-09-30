@@ -55,7 +55,18 @@ class TsOrg(http.Controller):
         ws = member.workspace_id
         allx = request.env['ts.assignment'].sudo().search([('workspace_id', '=', ws.id)])
         shown = allx.filtered(lambda a: a.state == state) if state else allx
+        imports = request.env['ts.attempt']
+        src = kw.get('src')
+        if ws.purpose == 'education':
+            imports = request.env['ts.attempt'].sudo().search([
+                ('workspace_id', '=', ws.id), ('source', '=', 'import'), ('state', '=', 'done')],
+                order='submitted_at desc, id desc')
+            if src == 'invite':
+                imports = imports.browse()
+            if src == 'import':
+                shown = shown.browse()
         return request.render('ts_org.workspace', {
+            'imports': imports, 'src_filter': src,
             'member': member, 'ws': ws, 'assignments': shown, 'counts': _counts(allx), 'total': len(allx),
             'state_filter': state, 'instruments': member.allowed_instruments() if member.can_invite() else [],
             'created': request.env['ts.assignment'].sudo().browse(int(kw['created'])).exists()
@@ -93,6 +104,8 @@ class TsOrg(http.Controller):
         member = _membership(ws_id)
         a = _assignment(member, assignment_id)
         level, results = a.visible_results(member)
+        if level == 'education' and a.attempt_id:
+            return request.redirect('/my/workspaces/%s/p/%s' % (ws_id, a.attempt_id.id))
         if level != 'none':
             request.env['ts.audit.event'].sudo().log('assignment.result_view', a, workspace=a.workspace_id,
                                                      level=level, viewer=request.env.user.id)

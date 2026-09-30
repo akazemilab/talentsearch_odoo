@@ -2,7 +2,7 @@
 
 Talent Search (talentsearch.ir) by EOT = **website 2** (xmlid `ts_website.website_ts`,
 db id 4) inside `eot_main` on eot-odoo-prod, next to eot.ir (website 1, theme
-`theme_eot_custom`, repo akazemilab/theme_eot_custom). Staging host: ts.innerquest.me.
+`theme_eot_custom`, repo akazemilab/theme_eot_custom). Staging host: ts.innerquest.me (before the 2026-09-29 cutover; website 4's domain is now https://talentsearch.ir and the test tools use that host).
 Read theme_eot_custom's CLAUDE.md too: its Odoo 20 pitfalls apply here.
 
 ## Hard rules

@@ -8,6 +8,8 @@ INVITE_ROLES = {'owner', 'hr_admin', 'hiring_manager', 'clinic_director', 'clini
 VIEW_ROLES = INVITE_ROLES | {'reviewer'}
 # Roles that need a recorded professional verification before they can act.
 VERIFIED_ROLES = {'clinician', 'clinic_director'}
+# Education: the institute's owner and counselors read the participant report (never the answers).
+EDU_ROLES = {'owner', 'counselor'}
 
 from odoo.addons.ts_assessment.models.loader import EMPLOYMENT_CATEGORIES  # noqa: F401 (single source)
 
@@ -167,6 +169,8 @@ class TsAssignment(models.Model):
             return 'none', empty
         if self.purpose == 'employment' and self.share_level == 'summary' and member.role in VIEW_ROLES:
             return 'summary', results
+        if self.purpose == 'education' and self.share_level == 'summary' and member.role in EDU_ROLES:
+            return 'education', results
         return 'none', empty
 
 

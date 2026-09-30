@@ -189,7 +189,8 @@
                         <section class="ts-section ts-report-page">
                             <div class="ts-container ts-report-wrap">
                                 <div class="ts-report-actions ts-noprint">
-                                    <a href="/my/assessments" class="ts-back">سنجه‌های من</a>
+                                    <a t-if="not org_view" href="/my/assessments" class="ts-back">سنجه‌های من</a>
+                                    <a t-else="" t-attf-href="/my/workspaces/#{ws.id}" class="ts-back">بازگشت به فهرست شرکت‌کنندگان</a>
                                     <button type="button" class="ts-btn ts-btn--outline ts-js-print">چاپ یا ذخیره به‌صورت PDF</button>
                                 </div>
                                 <p t-if="submitted" class="ts-notice ts-noprint" role="status">پاسخ‌های شما ثبت شد و گزارش آماده است.</p>
@@ -201,10 +202,12 @@
                                         </div>
                                         <div class="ts-doc__kind">گزارش فهرست تعاملی استعداد</div>
                                     </header>
-                                    <h1 class="ts-doc__title">نیمرخ شما در یک نگاه</h1>
-                                    <p class="tt-lead">این نمره‌ها برداشت شما از خودتان در هر زمینه‌اند و فقط زمینه‌ها و توانایی‌های خودِ شما با هم مقایسه می‌شوند؛ با دیگران مقایسه نمی‌شوند. نمره‌ها از ۲۰ تا ۱۰۰ هستند.</p>
+                                    <p t-if="org_view" class="tt-cobrand">تهیه‌شده برای جلسهٔ مشاوره — <strong t-out="ws.name"/></p>
+                                    <h1 class="ts-doc__title" t-out="('نیمرخ ' + who) if org_view else 'نیمرخ شما در یک نگاه'"/>
+                                    <p class="tt-lead" t-if="not org_view">این نمره‌ها برداشت شما از خودتان در هر زمینه‌اند و فقط زمینه‌ها و توانایی‌های خودِ شما با هم مقایسه می‌شوند؛ با دیگران مقایسه نمی‌شوند. نمره‌ها از ۲۰ تا ۱۰۰ هستند.</p>
+                                    <p class="tt-lead" t-else="">این نمره‌ها برداشت خودِ شرکت‌کننده از خودش در هر زمینه‌اند و فقط زمینه‌ها و توانایی‌های خودِ او با هم مقایسه می‌شوند؛ با دیگران مقایسه نمی‌شوند. نمره‌ها از ۲۰ تا ۱۰۰ هستند. این گزارش برای گفتگوی مشاوره است، نه برای تعیین رشته.</p>
                                     <dl class="ts-meta ts-doc__meta">
-                                        <dt>شرکت‌کننده</dt><dd t-out="attempt.partner_id.name"/>
+                                        <dt>شرکت‌کننده</dt><dd t-out="who"/>
                                         <dt>تاریخ تکمیل</dt><dd t-out="attempt.jalali(attempt.submitted_at)"/>
                                         <dt>زمینه‌ها</dt><dd><t t-out="joinfa([f['label'] for f in fields], True)"/></dd>
                                         <dt>شناسهٔ گزارش</dt><dd><bdi dir="ltr" t-out="attempt.name"/></dd>
@@ -217,6 +220,34 @@
                                             <span class="tt-tile__s" t-out="t['s']"/>
                                         </div>
                                     </div>
+
+                                    <section class="ts-doc__sec tt-compare" t-if="cmp_rows">
+                                        <h2>زمینه‌ها کنار هم</h2>
+                                        <p class="tt-mini">هر ردیف یک توانایی است و هر نوار یک زمینه؛ طول نوار از ۲۰ (کمترین ممکن) تا ۱۰۰ (بیشترین ممکن). «برجسته» یعنی بالاترین نمره در آن ردیف و «نزدیک» یعنی حداکثر <t t-out="fa(gap)"/> نمره کمتر از آن (اختلاف کوچک را معنادار نگیرید).</p>
+                                        <div class="tt-cmp">
+                                            <div t-foreach="cmp_rows" t-as="r" t-attf-class="tt-cmp__row #{'is-total' if r['total'] else ''}">
+                                                <h3 t-out="r['name']"/>
+                                                <ul>
+                                                    <li t-foreach="r['cells']" t-as="c" t-attf-class="tt-cmp__cell tt-m-#{c['mark'] or 'none'}">
+                                                        <span class="tt-cmp__lab" t-out="c['label']"/>
+                                                        <span class="tt-cmp__bar" aria-hidden="true"><i t-attf-class="tt-f#{c_index + 1}" t-attf-style="width: #{c['pct']}%"/></span>
+                                                        <b t-out="fmt(c['score'])"/>
+                                                        <em t-if="c['mark'] == 'best'">برجسته</em>
+                                                        <em t-elif="c['mark'] == 'near'">نزدیک</em>
+                                                    </li>
+                                                </ul>
+                                            </div>
+                                        </div>
+                                        <div class="tt-cards">
+                                            <div t-foreach="cmp_cards" t-as="k" class="tt-card">
+                                                <h3><i t-attf-class="tt-f#{k['idx']}"/><t t-out="k['label']"/><span>میانگین <t t-out="fmt(k['tot'])"/></span></h3>
+                                                <p>بیشترین: <t t-out="joinfa(k['high'])"/> (<t t-out="fmt(k['high_score'])"/>)</p>
+                                                <p>کمترین: <t t-out="joinfa(k['low'])"/> (<t t-out="fmt(k['low_score'])"/>)</p>
+                                                <p t-if="k['caution']" class="tt-flag">این زمینه با احتیاط خوانده شود (پاسخ یکسان یا بسیار سریع).</p>
+                                            </div>
+                                        </div>
+                                        <p t-foreach="cmp_lines" t-as="ln" t-out="ln"/>
+                                    </section>
 
                                     <section class="ts-doc__sec">
                                         <h2>توانایی‌های شما در هر زمینه</h2>
@@ -283,7 +314,7 @@
                                         </div>
                                     </section>
 
-                                    <section class="ts-doc__sec ts-noprint">
+                                    <section class="ts-doc__sec ts-noprint" t-if="not org_view">
                                         <h2>پاسخ‌های من</h2>
                                         <button type="button" class="tt-toggle" aria-expanded="false" aria-controls="tt-raw">نمایش پاسخ‌های من</button>
                                         <div id="tt-raw" hidden="hidden">
@@ -304,7 +335,8 @@
                                         </dl>
                                         <p t-out="inst.limitations"/>
                                         <p>اگر نتیجه برایتان پرسش ایجاد کرده یا نگران‌تان کرده است، با یک متخصص مشورت کنید. <a href="/contact?topic=support">تماس با پشتیبانی</a></p>
-                                        <p class="ts-hint">این گزارش فقط برای شرکت‌کننده است. شناسهٔ گزارش <bdi dir="ltr" t-out="attempt.name"/> · نسخه <bdi dir="ltr"><t t-out="version.contract_version"/> · <t t-out="attempt.engine_version"/></bdi></p>
+                                        <p class="ts-hint" t-if="org_view">این گزارش را شرکت‌کننده برای مؤسسه‌ای که در آن مشاوره می‌گیرد در دسترس گذاشته یا مؤسسه پیشتر دریافت کرده است؛ پاسخ‌های خام در آن نیست. شناسهٔ گزارش <bdi dir="ltr" t-out="attempt.name"/></p>
+                                        <p class="ts-hint" t-else="">این گزارش فقط برای شرکت‌کننده است. شناسهٔ گزارش <bdi dir="ltr" t-out="attempt.name"/> · نسخه <bdi dir="ltr"><t t-out="version.contract_version"/> · <t t-out="attempt.engine_version"/></bdi></p>
                                     </section>
                                 </article>
                             </div>

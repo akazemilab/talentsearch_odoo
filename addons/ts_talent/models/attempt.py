@@ -41,7 +41,7 @@ class TsAttempt(models.Model):
         for a in matrix:
             n = len(a.cell_ids)
             per = a.version_id.active_item_count or EM.ITEM_COUNT
-            fields_n = max(len(a.field_ids), a.version_id.field_default or 3)
+            fields_n = max(len(a.field_ids), a.version_id.field_default or 4)
             a.answered_count = n
             a.progress = 100 if a.state == 'done' else min(99, int(round(100.0 * n / (per * fields_n))))
 
