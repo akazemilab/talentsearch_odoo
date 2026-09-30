@@ -48,6 +48,14 @@ def _counts(assignments):
     return {k: len(assignments.filtered(lambda a, k=k: a.state == k)) for k in keys}
 
 
+INVITE_MSG = {
+    'expired': ('این دعوت منقضی شده است', 'مهلت دعوت تمام شده است. از سازمان یا مؤسسهٔ دعوت‌کننده بخواهید دعوت تازه بفرستد.'),
+    'used': ('این دعوت قبلاً استفاده شده است', 'این پیوند با یک حساب دیگر پذیرفته شده است. اگر اشتباهی رخ داده، از دعوت‌کننده بخواهید دعوت تازه بفرستد.'),
+    'declined': ('این دعوت رد شده است', 'برای شرکت در سنجه از دعوت‌کننده بخواهید دعوت تازه بفرستد.'),
+    'withdrawn': ('این دعوت دیگر فعال نیست', 'دعوت‌کننده آن را لغو کرده است. برای اطلاعات بیشتر با او تماس بگیرید.'),
+}
+
+
 class TsOrg(http.Controller):
 
     # ------------------------------------------------------- organization side
@@ -194,6 +202,12 @@ class TsOrg(http.Controller):
         return request.redirect('/my/workspaces/%s%s' % (ws_id, '' if ok else '?error=rule'))
 
     # -------------------------------------------------------- participant side
+    def _auth_urls(self, path):
+        """Sign-in links for a public visitor; ts_sms adds mobile sign-in (phone_url)."""
+        redirect = quote(path)
+        return {'login_url': '/web/login?redirect=%s' % redirect, 'signup_url': '/web/signup?redirect=%s' % redirect,
+                'phone_url': None}
+
     def _invite(self, token):
         a = request.env['ts.assignment'].sudo().search([('token', '=', token)], limit=1)
         if not a or a.workspace_id.state not in ('pilot', 'active'):
@@ -211,11 +225,12 @@ class TsOrg(http.Controller):
             return request.redirect('/take/%s' % a.attempt_id.access_token)
         if a.state == 'done' and a.user_id == user:
             return request.redirect('/my/assessments/%s' % a.attempt_id.id)
-        redirect = quote('/invite/%s' % token)
+        inv_state = a.invite_state()
         return request.render('ts_org.invite', {
             'a': a, 'inst': a.instrument_id, 'ws': a.workspace_id, 'public': user._is_public(),
-            'login_url': '/web/login?redirect=%s' % redirect, 'signup_url': '/web/signup?redirect=%s' % redirect,
-            'fa': fa_digits,
+            'fa': fa_digits, **self._auth_urls('/invite/%s' % token),
+            'inv_state': inv_state if not (inv_state == 'used' and a.user_id == user) else 'ok',
+            'inv_msg': INVITE_MSG,
         })
 
     @http.route('/invite/<string:token>/accept', type='http', auth='user', website=True,

@@ -4,3 +4,4 @@ from . import res_partner
 from . import phone_otp
 from . import assignment
 from . import attempt
+from . import signup_otp
