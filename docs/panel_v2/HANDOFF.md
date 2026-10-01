@@ -7,8 +7,8 @@ explicit approval («تأیید فاز ۱»). While it says DRAFT, Phase 2 must 
 must not change.
 
 - Design written: 2026-10-01 (9 Mehr 1405). Approved by the owner 2026-10-01 (defaults for D4, D6, D7, D8 accepted).
-- Last finished stage: **S5 `clients-edit`** (shipped 2026-10-01, label `pv2s5`, commit bb2e414).
-- **Next stage: S6 `invites`** (`07_build_plan.md`; clone name `eot_ts36`; branch `pv2-6-invites` is written and nearly hand-tested; needs rebase on main + full rehearsal).
+- Last finished stage: **S6 `invites`** (shipped 2026-10-01, label `pv2s6`, commit c722bb9).
+- **Next stage: S7 `campaigns`** (branch `pv2-7-campaigns` is rebased on main and under full rehearsal; then S8 `import`, drafts in /root/s8wip on the VPS).
 
 ## 1. Read in this order (Phase 2)
 1. This file.
@@ -150,3 +150,4 @@ The full list is `06_gap_analysis.md` section 2.
 | S3 | members | 2026-10-01 | 2bbb31c | Members page, invites resend/revoke, role change, deactivate, role help, re-authentication; rehearsal eot_ts33 green, eot.ir UNCHANGED. |
 | S4 | clients | 2026-10-01 | 4d18327 | Client model `ts.panel.client` (single place of responsibility; `responsible_id` on assignment/attempt is a NON-stored related field), migration M3-M5 (1 invite client, 108 locked import clients), list with filters/sort/paging and search kept in the session, client page. Rehearsal eot_ts34 green (second run), eot.ir UNCHANGED. Deviations: `channel`/`expires_at` on assignment move to S6; audit event `client.responsible_change` added next to the old ones. Slow step: first rehearsal wasted on stored-related recompute running constraints. |
 | S5 | clients-edit | 2026-10-01 | bb2e414 | Client edit/archive/merge, groups page (`W/groups`, `groups:manage`), bulk responsible change. Rehearsal eot_ts35 green (second run), eot.ir UNCHANGED. Lessons: flush between freeing and re-taking a unique value in merge; menu tests must not depend on menu length. |
+| S6 | invites | 2026-10-01 | c722bb9 | Invite wizard, invitation list, stored `expires_at` (+ deadline write rule), dashboard without forms, old page at `W/legacy` until S20. Rehearsal eot_ts36s green (second run), eot.ir UNCHANGED. Deviations: `stopped` attempt state on withdraw deferred to S18; no QR decoder in tests. |

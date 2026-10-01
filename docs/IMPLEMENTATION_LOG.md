@@ -215,3 +215,10 @@ Data step (owner-only, NOT in code): approve workspace 1, set pilot, add the cou
 - `ts_panel` 20.0.2.1.0: client edit, archive/restore, merge (`ts_merge` flushes between freeing and re-taking unique values), groups page `W/groups` (menu seq 25, `groups:manage`), perm labels, CSS/JS.
 - Tests: `tests_pv2_5.py` (33 ORM), `ts_http_pv2_5.py` (38 HTTP). Rehearsal eot_ts35 (second run): eot.ir UNCHANGED, portal UNCHANGED, unexpected failures 0. Ship `pv2s5` (commit bb2e414): eot.ir UNCHANGED live.
 - Lessons: flush ordering with unique indexes (also around `raises()` savepoints); the test client does not follow redirects (`lib.follow`); an overridden compute must list all `@api.depends` inputs; menu tests should not depend on menu length.
+
+## pv2s6 — Panel v2, stage S6 invites (2026-10-01)
+
+- `ts_panel`: invite wizard, invitation list (`W/invites`), dashboard without forms; `ts.assignment.expires_at` is stored, and `write()` recalculates it when `deadline` changes on a not-yet-accepted invitation. `?minv=` redirects to `/members?minv=`. The old workspace page stays at `W/legacy` until S20; the setup checklist moved to the dashboard.
+- Tests: `tests_pv2_6.py`, `ts_http_pv2_6.py` (48 checks); older suites moved to `/legacy` and to stored expiry. Rehearsal eot_ts36s (second run): eot.ir UNCHANGED, portal UNCHANGED, unexpected failures 0. Ship `pv2s6` (commit c722bb9): eot.ir UNCHANGED live.
+- Deviations: attempt state `stopped` on withdraw is deferred to S18; the QR check has no decoder; `opened` can be set by link previews; `ts.job` gets a `draft` state in S8.
+- Lessons: when a page moves, move the old suites that read it in the same stage; stored expiry replaces read-time age; a kept clone on a slot's port blocks the rehearsal; a stale ts_shot tunnel on 18071 needs `fuser -k`.
