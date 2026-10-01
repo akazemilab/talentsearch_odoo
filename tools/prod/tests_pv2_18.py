@@ -82,7 +82,7 @@ edu.ts_transfer(adm, couns, stay='owner')
 check('stay as owner keeps two owners', adm.role == 'owner' and couns.role == 'owner')
 check('an already-owner target is refused', raises(lambda: edu.ts_transfer(adm, couns)))
 
-edu_inst = adm.allowed_instruments()[:1]
+edu_inst = Inst.search([('state', '=', 'published'), ('purpose', '=', 'education')], limit=1)
 # ---- ORG-8 close
 check('a non-owner cannot close', raises(lambda: edu.ts_close(o1)))
 nc = N.sudo().search_count([('type', '=', 'panel_closed')])
