@@ -65,7 +65,7 @@ class TsPanelCampaigns(http.Controller):
         page = min(max(int(kw['page']) if (kw.get('page') or '').isdigit() else 1, 1), pages)
         rows = C.search(dom, limit=PAGE, offset=(page - 1) * PAGE)
         vis = assignment_domain(me)
-        joined = {c.id: request.env['ts.assignment'].sudo().search_count(vis + [('campaign_id', '=', c.id)]) for c in rows}
+        joined = {c.id: request.env['ts.assignment'].sudo().search_count(vis + [('campaign_id', '=', c.id)]) for c in rows}  # ts-scope-ok: vis is the workspace-scoped assignment domain
         return render_in_shell('ts_panel.campaigns', me, 'campaigns', 'دعوت گروهی', rows=rows, joined=joined, kind_labels=KIND_LABELS,
                                state_c=STATE_C, total=total, page=page, pages=pages, ws_id=ws_id)
 
@@ -112,7 +112,7 @@ class TsPanelCampaigns(http.Controller):
                 flash_error('در گروه‌های انتخاب‌شده کسی نیست که بتوانید برایش دعوت بسازید.')
                 return request.redirect(back + '?keep=1')
             extra = dict(clients=clients, to_invite=to_invite, skipped=skipped, skip_labels=SKIP_LABELS)
-        inst = request.env['ts.instrument'].sudo().browse(d['instrument_id'])
+        inst = request.env['ts.instrument'].sudo().browse(d['instrument_id'])  # ts-scope-ok: instrument is global, not workspace data
         return render_in_shell('ts_panel.campaign_review', me, 'campaigns', 'مرور دعوت گروهی', draft=d, inst=inst,
                                groups=self._groups(me).filtered(lambda g: g.id in d.get('group_ids', [])),
                                kind_labels=KIND_LABELS, **extra)
@@ -258,9 +258,9 @@ class TsPanelCampaigns(http.Controller):
         c = self._campaign_or_404(me, cid)
         if not self._can_open(me, c):
             return forbidden(me, 'invites:bulk', 'campaigns')
-        invs = request.env['ts.assignment'].sudo().browse()
+        invs = request.env['ts.assignment'].sudo().browse()  # ts-scope-ok: empty recordset
         if c.kind == 'list':
-            invs = request.env['ts.assignment'].sudo().search(
+            invs = request.env['ts.assignment'].sudo().search(  # ts-scope-ok: domain is campaign-scoped, campaign checked against workspace above
                 assignment_domain(me) + [('campaign_id', '=', c.id), ('state', 'in', ('invited', 'opened'))], limit=60)
         return render_in_shell('ts_panel.campaign_sheet', me, 'campaigns', 'برگهٔ چاپی ' + c.name, c=c, invs=invs,
                                url=c.invite_url() if c.kind == 'open_link' else None,

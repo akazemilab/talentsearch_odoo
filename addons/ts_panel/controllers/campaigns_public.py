@@ -31,7 +31,7 @@ class TsPanelCampaignJoin(TsOrg):
         st = c.open_state()
         mine = None
         if not user._is_public():
-            mine = request.env['ts.assignment'].sudo().search(
+            mine = request.env['ts.assignment'].sudo().search(  # ts-scope-ok: campaign_id is scoped to the campaign workspace
                 [('campaign_id', '=', c.id), ('client_id.user_id', '=', user.id)], limit=1)   # ts-scope-ok: campaign_id is the panel's own
         return request.render('ts_panel.campaign_join', {
             'c': c, 'ws': c.workspace_id, 'inst': c.instrument_id, 'public': user._is_public(), 'fa': fa_digits,
