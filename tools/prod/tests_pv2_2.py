@@ -43,6 +43,7 @@ m1 = M.create({'workspace_id': a.id, 'user_id': u0.id, 'role': 'owner'})
 check('header link: exactly one panel -> its dashboard', u0.ts_panel_home() == '/my/workspaces/%s/home' % a.id)
 M.create({'workspace_id': b.id, 'user_id': u0.id, 'role': 'owner'})
 check('header link: several panels -> the list', u0.ts_panel_home() == '/my/workspaces')
+M.create({'workspace_id': b.id, 'user_id': puser().id, 'role': 'owner'})   # a panel keeps one active owner
 M.search([('workspace_id', '=', b.id), ('user_id', '=', u0.id)]).active = False
 check('header link: a deactivated membership does not count', u0.ts_panel_home() == '/my/workspaces/%s/home' % a.id)
 
