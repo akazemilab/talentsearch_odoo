@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- W/credits: free-mode banner, usage tiles, usage per month and instrument, ledger history (WAL-2, WAL-3) -->
+    <record id="tpl_credits" model="ir.ui.view">
+        <field name="name">TS panel: credits</field>
+        <field name="type">qweb</field>
+        <field name="key">ts_panel.credits</field>
+        <field name="website_id" ref="ts_website.website_ts"/>
+        <field name="arch" type="xml">
+            <t t-name="ts_panel.credits">
+                <t t-call="website.layout" additional_title="title">
+                    <div id="wrap" class="ts-page">
+                        <t t-call="ts_panel.shell_frame">
+                            <header class="tsp-head">
+                                <div>
+                                    <h1 class="tsp-head__title">اعتبار و مصرف</h1>
+                                    <p class="tsp-head__help">هر سنجهٔ تکمیل‌شده در این پنل یک واحد مصرف ثبت می‌کند. به‌اشتراک‌گذاری نتیجه با کد پنل و ورود از فایل مصرف ندارد.</p>
+                                </div>
+                            </header>
+                            <div t-if="free" class="ts-notice ts-notice--info" role="status">
+                                <strong>رایگان در این فصل</strong> — استفاده از پنل فعلاً هزینه‌ای ندارد و چیزی مسدود نمی‌شود؛ مصرف شما برای اطلاع ثبت می‌شود.
+                            </div>
+                            <ul class="tsp-stats" aria-label="خلاصهٔ مصرف">
+                                <li><div class="tsp-stat"><strong t-out="fa(month_units)"/><span>مصرف این ماه</span></div></li>
+                                <li><div class="tsp-stat"><strong t-out="fa(wallet.units_used)"/><span>مصرف کل</span></div></li>
+                                <li><div class="tsp-stat"><strong t-out="fa(committed)"/><span>دعوت‌های باز</span></div></li>
+                                <li t-if="not free"><div class="tsp-stat"><strong t-out="fa(wallet.balance)"/><span>موجودی</span></div></li>
+                            </ul>
+                            <section class="ts-card" aria-labelledby="tsp-cr-1">
+                                <h2 id="tsp-cr-1" class="h5">مصرف ماهانه به تفکیک سنجه</h2>
+                                <p t-if="not months" class="ts-hint">هنوز سنجه‌ای تکمیل نشده است.</p>
+                                <table t-if="months" class="ts-table tsp-table tsp-table--cards">
+                                    <caption class="tsp-sr">مصرف ماهانه</caption>
+                                    <thead><tr><th scope="col">ماه</th><th t-foreach="names" t-as="n" scope="col" t-out="n"/><th scope="col">جمع</th></tr></thead>
+                                    <tbody>
+                                        <tr t-foreach="months" t-as="mo">
+                                            <th scope="row" data-label="ماه"><t t-out="fa('%04d/%02d' % (mo[0], mo[1]))"/></th>
+                                            <td t-foreach="names" t-as="n" t-att-data-label="n" t-out="fa(mo[2].get(n, 0))"/>
+                                            <td data-label="جمع" t-out="fa(sum(mo[2].values()))"/>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </section>
+                            <section class="ts-card" aria-labelledby="tsp-cr-2">
+                                <h2 id="tsp-cr-2" class="h5">تاریخچه</h2>
+                                <p t-if="not rows" class="ts-hint">هنوز سنجه‌ای تکمیل نشده است.</p>
+                                <table t-if="rows" class="ts-table tsp-table tsp-table--cards">
+                                    <caption class="tsp-sr">تاریخچهٔ دفتر اعتبار</caption>
+                                    <thead><tr><th scope="col">تاریخ</th><th scope="col">نوع</th><th scope="col">شرکت‌کننده</th><th scope="col">واحد</th></tr></thead>
+                                    <tbody>
+                                        <tr t-foreach="rows" t-as="r">
+                                            <th scope="row" data-label="تاریخ" t-out="jalali(r.txn_date)"/>
+                                            <td data-label="نوع"><t t-out="type_labels.get(r.type, r.type)"/></td>
+                                            <td data-label="شرکت‌کننده" t-out="r.assignment_id.client_id.code or '—'"/>
+                                            <td data-label="واحد" t-out="fa(r.units)"/>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </section>
+                        </t>
+                    </div>
+                </t>
+            </t>
+        </field>
+    </record>
+</odoo>

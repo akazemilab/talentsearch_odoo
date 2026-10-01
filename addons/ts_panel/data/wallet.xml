@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- M6: one wallet per panel and one free debit per existing usage event (idempotent) -->
+    <function model="ts.wallet" name="_migrate_m6"/>
+    <record id="cron_wallet_reconcile" model="ir.cron">
+        <field name="name">Panel: reconcile wallet ledger</field>
+        <field name="model_id" ref="model_ts_wallet"/>
+        <field name="state">code</field>
+        <field name="code">model._cron_reconcile()</field>
+        <field name="interval_number">1</field>
+        <field name="interval_type">days</field>
+    </record>
+</odoo>

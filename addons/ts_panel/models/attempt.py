@@ -41,8 +41,8 @@ class TsAttempt(models.Model):
         for at in self.sudo():
             if at.state != 'done' or not at.workspace_id or at.source == 'import':
                 continue
-            if Usage.search_count([('attempt_id', '=', at.id)]):
-                continue
-            a = self.env['ts.assignment'].sudo().search([('attempt_id', '=', at.id)], limit=1)
-            Usage.create({'workspace_id': at.workspace_id.id, 'attempt_id': at.id,
-                          'assignment_id': a.id or False})
+            if not Usage.search_count([('attempt_id', '=', at.id)]):
+                a = self.env['ts.assignment'].sudo().search([('attempt_id', '=', at.id)], limit=1)
+                Usage.create({'workspace_id': at.workspace_id.id, 'attempt_id': at.id,
+                              'assignment_id': a.id or False})
+            self.env['ts.wallet']._for_workspace(at.workspace_id)._debit_usage(at)      # S11: one ledger row per attempt, idempotent

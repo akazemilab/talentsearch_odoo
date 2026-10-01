@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Back office (PLT-4, WAL-3, WAL-6): ledger list and pivot, wallets -->
+    <record id="view_ts_wallet_txn_list" model="ir.ui.view">
+        <field name="name">ts.wallet.txn.list</field>
+        <field name="model">ts.wallet.txn</field>
+        <field name="arch" type="xml">
+            <list create="0" edit="0" delete="0">
+                <field name="txn_date"/>
+                <field name="workspace_id"/>
+                <field name="type"/>
+                <field name="reason_code"/>
+                <field name="units" sum="Units"/>
+                <field name="amount" sum="Credits"/>
+                <field name="balance_after"/>
+                <field name="free"/>
+                <field name="instrument_id" optional="hide"/>
+                <field name="actor_id" optional="hide"/>
+            </list>
+        </field>
+    </record>
+    <record id="view_ts_wallet_txn_pivot" model="ir.ui.view">
+        <field name="name">ts.wallet.txn.pivot</field>
+        <field name="model">ts.wallet.txn</field>
+        <field name="arch" type="xml">
+            <pivot>
+                <field name="workspace_id" type="row"/>
+                <field name="txn_date" interval="month" type="col"/>
+                <field name="units" type="measure"/>
+                <field name="amount" type="measure"/>
+            </pivot>
+        </field>
+    </record>
+    <record id="view_ts_wallet_txn_search" model="ir.ui.view">
+        <field name="name">ts.wallet.txn.search</field>
+        <field name="model">ts.wallet.txn</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="workspace_id"/>
+                <filter name="f_debit" string="Usage" domain="[('type', '=', 'debit_usage')]"/>
+                <filter name="f_refund" string="Refunds" domain="[('type', '=', 'refund')]"/>
+                <group>
+                    <filter name="g_ws" string="Panel" context="{'group_by': 'workspace_id'}"/>
+                    <filter name="g_type" string="Type" context="{'group_by': 'type'}"/>
+                    <filter name="g_instr" string="Instrument" context="{'group_by': 'instrument_id'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+    <record id="action_ts_wallet_txn" model="ir.actions.act_window">
+        <field name="name">Wallet ledger</field>
+        <field name="res_model">ts.wallet.txn</field>
+        <field name="view_mode">list,pivot</field>
+    </record>
+    <record id="view_ts_wallet_list" model="ir.ui.view">
+        <field name="name">ts.wallet.list</field>
+        <field name="model">ts.wallet</field>
+        <field name="arch" type="xml">
+            <list create="0" delete="0">
+                <field name="workspace_id"/>
+                <field name="balance"/>
+                <field name="units_used"/>
+                <field name="low_threshold"/>
+            </list>
+        </field>
+    </record>
+    <record id="action_ts_wallet" model="ir.actions.act_window">
+        <field name="name">Panel wallets</field>
+        <field name="res_model">ts.wallet</field>
+        <field name="view_mode">list</field>
+    </record>
+    <menuitem id="menu_ts_wallet_txn" name="Wallet ledger" parent="ts_core.menu_ts_customers" action="action_ts_wallet_txn" sequence="60"/>
+    <menuitem id="menu_ts_wallet" name="Panel wallets" parent="ts_core.menu_ts_customers" action="action_ts_wallet" sequence="61"/>
+</odoo>
