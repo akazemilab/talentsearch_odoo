@@ -92,7 +92,7 @@ class TsPanelPortal(CustomerPortal):
             for a in at.ts_shares():
                 since = Consent.search([('assignment_id', '=', a.id), ('kind', '=', 'share')], order='id desc', limit=1)  # ts-scope-ok: own ledger
                 resp = a.client_id.responsible_id.user_id.name if a.client_id.responsible_id else False
-                shares.append({'a': a, 'panel': a.workspace_id.name, 'resp': resp, 'level': a.ts_level_word(),
+                shares.append({'a': a, 'aid': a.id, 'panel': a.workspace_id.name, 'resp': resp, 'level': a.ts_level_word(),
                                'since': jalali(since.at or a.create_date, with_time=False), 'active': a.share_level != 'none',
                                'views': self._views(a) if a.share_level != 'none' else []})
             can_share = (not at.workspace_id and at.source != 'import')

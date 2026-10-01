@@ -29,7 +29,7 @@
         <field name="website_id" ref="ts_website.website_ts"/>
         <field name="arch" type="xml">
             <t t-name="ts_panel.my_home">
-                <t t-call="website.layout" additional_title="کارهای من">
+                <t t-call="website.layout" additional_title.f="کارهای من">
                     <div id="wrap" class="ts-page">
                         <section class="tsp-section container" style="max-width:860px">
                             <h1 class="tsp-head__title">کارهای من</h1>
@@ -95,7 +95,7 @@
         <field name="website_id" ref="ts_website.website_ts"/>
         <field name="arch" type="xml">
             <t t-name="ts_panel.my_account">
-                <t t-call="website.layout" additional_title="حساب من">
+                <t t-call="website.layout" additional_title.f="حساب من">
                     <div id="wrap" class="ts-page">
                         <section class="tsp-section container" style="max-width:640px">
                             <h1 class="tsp-head__title">حساب من</h1>
@@ -136,7 +136,7 @@
         <field name="website_id" ref="ts_website.website_ts"/>
         <field name="arch" type="xml">
             <t t-name="ts_panel.my_sharing">
-                <t t-call="website.layout" additional_title="چه کسی نتیجه‌های من را می‌بیند">
+                <t t-call="website.layout" additional_title.f="چه کسی نتیجه‌های من را می‌بیند">
                     <div id="wrap" class="ts-page">
                         <section class="tsp-section container" style="max-width:860px">
                             <h1 class="tsp-head__title">چه کسی نتیجه‌های من را می‌بیند؟</h1>
@@ -150,8 +150,9 @@
                                 <a href="/assessments" class="ts-btn ts-btn--primary">مشاهدهٔ سنجه‌ها</a>
                             </div>
                             <div t-foreach="blocks" t-as="b" class="ts-card ts-sharing-block">
-                                <h2><t t-out="b['at'].instrument_id.title"/></h2>
-                                <p class="ts-hint"><t t-out="b['at'].jalali(b['at'].submitted_at, False)"/> · <a t-attf-href="/my/assessments/#{b['at'].id}">مشاهدهٔ گزارش</a></p>
+                                <t t-set="att" t-value="b['at']"/>
+                                <h2><t t-out="att.instrument_id.title"/></h2>
+                                <p class="ts-hint"><t t-out="att.jalali(att.submitted_at, False)"/> · <a t-attf-href="/my/assessments/#{att.id}">مشاهدهٔ گزارش</a></p>
                                 <t t-set="act" t-value="[s for s in b['shares'] if s['active']]"/>
                                 <p t-if="not act" class="ts-sharing-none">این نتیجه را هیچ پنل یا سازمانی نمی‌بیند. فقط شما.</p>
                                 <ul t-if="act" class="tsp-list">
@@ -166,14 +167,14 @@
                                             <t t-foreach="s['views']" t-as="v"><span><t t-out="v[0]"/> (<t t-out="v[1]"/>)</span><t t-if="not v_last">، </t></t>
                                         </div>
                                         <div class="ts-hint" t-else="">این پنل هنوز نتیجه را باز نکرده است.</div>
-                                        <form t-attf-action="/my/sharing/#{s['a'].id}/revoke" method="post" data-tsp-once="1">
+                                        <form t-attf-action="/my/sharing/#{s['aid']}/revoke" method="post" data-tsp-once="1">
                                             <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
                                             <button type="submit" class="ts-btn ts-btn--outline ts-btn--sm">لغو اشتراک با این پنل</button>
                                         </form>
                                     </li>
                                 </ul>
                                 <p t-if="b['can_share'] and len(act) &lt; limit">
-                                    <a t-attf-href="/my/assessments/#{b['at'].id}/share" class="ts-btn ts-btn--outline ts-btn--sm">ارسال برای مشاور</a>
+                                    <a t-attf-href="/my/assessments/#{att.id}/share" class="ts-btn ts-btn--outline ts-btn--sm">ارسال برای مشاور</a>
                                 </p>
                             </div>
                         </section>
@@ -191,7 +192,7 @@
         <field name="website_id" ref="ts_website.website_ts"/>
         <field name="arch" type="xml">
             <t t-name="ts_panel.my_privacy">
-                <t t-call="website.layout" additional_title="داده‌های من">
+                <t t-call="website.layout" additional_title.f="داده‌های من">
                     <div id="wrap" class="ts-page">
                         <section class="tsp-section container" style="max-width:760px">
                             <h1 class="tsp-head__title">داده‌های من</h1>
@@ -239,7 +240,7 @@
         <field name="website_id" ref="ts_website.website_ts"/>
         <field name="arch" type="xml">
             <t t-name="ts_panel.my_privacy_job">
-                <t t-call="website.layout" additional_title="نسخهٔ داده‌های من">
+                <t t-call="website.layout" additional_title.f="نسخهٔ داده‌های من">
                     <div id="wrap" class="ts-page">
                         <section class="tsp-section container" style="max-width:640px">
                             <h1 class="tsp-head__title">نسخهٔ داده‌های من</h1>
