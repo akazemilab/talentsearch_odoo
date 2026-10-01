@@ -154,7 +154,7 @@ st, body = post(own, W + '/clients/new', {'name': 'تازه از فرم'})[0::2]
 check('the same name warns about a duplicate and still allows saving', 'confirm' in body or 'مشابه' in body or st in (302, 303), str(st))
 st, loc, _ = post(own, W + '/clients/%s/edit' % NEW, {'name': 'تازه ویرایش‌شده', 'age_group': 'adult', 'phone': '09121112233'})
 check('editing saves', 'تازه ویرایش‌شده' in get(own, W + '/clients/' + NEW)[1])
-check('a counselor cannot edit someone else\'s client (404)', post(c1, W + '/clients/%s/edit' % K4, {'name': 'xx'})[0] == 404, str(post(c1, W + '/clients/%s/edit' % K4, {'name': 'xx'})[0]))
+check('a counselor cannot edit a colleague\'s client (403)', post(c1, W + '/clients/%s/edit' % K4, {'name': 'xx'})[0] == 403)
 st, loc, _ = post(own, W + '/clients/%s/edit' % NEW, {'name': 'تازه ویرایش‌شده', 'age_group': 'minor', 'guardian_name': 'ولی', 'guardian_phone': '09123334455', 'guardian_relation': 'father'})
 check('a minor keeps guardian data on the page', 'ولی' in get(own, W + '/clients/' + NEW)[1])
 
