@@ -213,8 +213,18 @@
                                     <dt t-if="a.opened_at">نخستین بازشدن</dt><dd t-if="a.opened_at" t-out="jalali(a.opened_at)"/>
                                     <dt t-if="a.note">یادداشت</dt><dd t-if="a.note" t-out="a.note"/>
                                     <dt>مهلت</dt><dd><t t-if="deadline_fa" t-out="deadline_fa"/><t t-else="">—</t></dd>
+                                    <dt t-if="a.sms_consent">پیامک دعوت</dt><dd t-if="a.sms_consent"><t t-if="a.sms_sent_at">ارسال شد</t><t t-elif="a.sms_error">نرسید</t><t t-else="">ارسال نشده</t></dd>
+                                    <dt t-if="a.reminder_count">یادآوری‌ها</dt><dd t-if="a.reminder_count"><t t-out="fa(a.reminder_count)"/> بار، آخرین: <t t-out="jalali(a.last_reminder_at)"/></dd>
                                 </dl>
                                 <p t-if="level != 'none' and a.attempt_id"><a t-attf-href="/my/workspaces/#{ws.id}/a/#{a.id}" class="ts-btn ts-btn--outline">دیدن نتیجه</a></p>
+                            </section>
+                            <section t-if="can_manage and a.state in ('invited', 'opened', 'accepted', 'in_progress')" class="ts-card" aria-labelledby="tsp-i-rem">
+                                <h2 id="tsp-i-rem" class="h5">یادآوری</h2>
+                                <p class="ts-hint">به شرکت‌کننده‌ای که حساب دارد یا با پیامکِ موافقت‌شده، یک یادآوری می‌فرستد. در هر ۲۴ ساعت یکی و در کل حداکثر ۳ تا؛ در ساعت‌های ۲۱ تا ۸ فرستاده نمی‌شود.</p>
+                                <form t-attf-action="/my/workspaces/#{ws.id}/invites/#{a.id}/remind" method="post" data-tsp-once="1">
+                                    <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                                    <button type="submit" class="ts-btn ts-btn--outline">فرستادن یادآوری</button>
+                                </form>
                             </section>
                             <section t-if="can_manage" class="ts-card" aria-labelledby="tsp-i-ext">
                                 <h2 id="tsp-i-ext" class="h5">تمدید</h2>

@@ -8,3 +8,4 @@ from . import campaigns
 from . import campaigns_public
 from . import imports
 from . import exports
+from . import notifications

@@ -10,9 +10,13 @@
         <field name="arch" type="xml">
             <data>
                 <xpath expr="(//a[@href='/my/assessments'])[1]" position="before">
+                    <a t-if="not request.env.user._is_public()" href="/my/notifications" class="ts-btn ts-btn--quiet" aria-label="اعلان‌ها">اعلان‌ها<t t-set="ts_unread" t-value="request.env.user._ts_unread_label()"/><span t-if="ts_unread" class="ts-pill ts-pill--info" t-out="ts_unread"/></a>
+
                     <a t-if="request.env.user.ts_panel_home()" t-att-href="request.env.user.ts_panel_home()" class="ts-btn ts-btn--quiet">پنل من</a>
                 </xpath>
                 <xpath expr="(//a[@href='/my/assessments'])[2]" position="before">
+                    <a t-if="not request.env.user._is_public()" href="/my/notifications" class="ts-btn ts-btn--quiet" aria-label="اعلان‌ها">اعلان‌ها<t t-set="ts_unread2" t-value="request.env.user._ts_unread_label()"/><span t-if="ts_unread2" class="ts-pill ts-pill--info" t-out="ts_unread2"/></a>
+
                     <a t-if="request.env.user.ts_panel_home()" t-att-href="request.env.user.ts_panel_home()" class="ts-btn ts-btn--quiet">پنل من</a>
                 </xpath>
             </data>

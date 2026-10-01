@@ -2,3 +2,5 @@ id,name,model_id,group_id/id,operation,domain
 access_ts_panel_client_manager,panel client manager,ts.panel.client,ts_core.group_ts_manager,r,
 access_ts_campaign_manager,campaign manager,ts.campaign,ts_core.group_ts_manager,r,
 access_ts_job_manager,job manager,ts.job,ts_core.group_ts_manager,r,
+access_ts_notification_manager,notification manager,ts.notification,ts_core.group_ts_manager,r,
+access_ts_notify_pref_manager,notify pref manager,ts.notify.pref,ts_core.group_ts_manager,r,

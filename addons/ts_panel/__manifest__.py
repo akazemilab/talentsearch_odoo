@@ -1,7 +1,7 @@
 {
     'name': 'Talent Search - Panel v2',
     'summary': 'Panel v2: roles and permissions, clients, invitations, reports, audit, lifecycle (website 2 only). S0 = tooling and two fixes.',
-    'version': '20.0.6.0.0',
+    'version': '20.0.7.0.0',
     'category': 'Services/Talent Search',
     'author': 'EOT',
     'license': 'LGPL-3',
@@ -26,6 +26,8 @@
         'views/web_member.xml',
         'views/web_help_roles.xml',
         'views/web_reauth.xml',
+        'views/backend_notify.xml',
+        'views/web_notifications.xml',
         'views/layout_inherit.xml',
     ],
     'assets': {

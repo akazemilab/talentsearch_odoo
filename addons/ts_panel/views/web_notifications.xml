@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- /my/notifications and /my/notifications/prefs (S10, NOT-1, NOT-2) -->
+    <record id="tpl_notifications" model="ir.ui.view">
+        <field name="name">TS panel: notification center</field>
+        <field name="type">qweb</field>
+        <field name="key">ts_panel.notifications</field>
+        <field name="website_id" ref="ts_website.website_ts"/>
+        <field name="arch" type="xml">
+            <t t-name="ts_panel.notifications">
+                <t t-call="website.layout" additional_title="title">
+                    <div id="wrap" class="ts-page">
+                        <section class="tsp-section container" style="max-width:760px">
+                            <h1 class="tsp-head__title">اعلان‌ها</h1>
+                            <p t-if="flash" class="tsp-flash" role="status" t-out="flash"/>
+                            <p class="tsp-inline">
+                                <a t-if="only_unread" href="/my/notifications" class="ts-btn ts-btn--outline">نمایش همه</a>
+                                <a t-else="" href="/my/notifications?unread=1" class="ts-btn ts-btn--outline">فقط خوانده‌نشده‌ها</a>
+                                <a href="/my/notifications/prefs" class="ts-btn ts-btn--quiet">ترجیح‌های اعلان</a>
+                            </p>
+                            <form t-if="unread" action="/my/notifications/read_all" method="post" data-tsp-once="1">
+                                <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                                <button type="submit" class="ts-btn ts-btn--outline">همه را خوانده‌شده کن</button>
+                            </form>
+                            <div class="ts-card">
+                                <p t-if="not rows" class="ts-hint">اعلانی ندارید.</p>
+                                <ul t-if="rows" class="tsp-list">
+                                    <li t-foreach="rows" t-as="r">
+                                        <span t-if="not r.read_at" class="ts-pill" style="background:#e3edf6;color:#1f4e79">تازه</span> <a t-attf-href="/my/notifications/#{r.id}"><t t-out="r.title"/></a>
+                                        <span class="ts-hint"> — <t t-out="jalali(r.create_date)"/></span>
+                                    </li>
+                                </ul>
+                            </div>
+                        </section>
+                    </div>
+                </t>
+            </t>
+        </field>
+    </record>
+
+    <record id="tpl_notification_prefs" model="ir.ui.view">
+        <field name="name">TS panel: notification preferences</field>
+        <field name="type">qweb</field>
+        <field name="key">ts_panel.notification_prefs</field>
+        <field name="website_id" ref="ts_website.website_ts"/>
+        <field name="arch" type="xml">
+            <t t-name="ts_panel.notification_prefs">
+                <t t-call="website.layout" additional_title="title">
+                    <div id="wrap" class="ts-page">
+                        <section class="tsp-section container" style="max-width:760px">
+                            <h1 class="tsp-head__title">ترجیح‌های اعلان</h1>
+                            <p class="tsp-head__help">برای هر رویداد انتخاب کنید که در همین سایت (زنگ اعلان) به شما گفته شود یا پیامک هم بگیرید. عنوان اعلان‌ها نام و نتیجه‌ای را نشان نمی‌دهد.</p>
+                            <p t-if="flash" class="tsp-flash" role="status" t-out="flash"/>
+                            <p t-if="not has_phone" class="ts-hint">پیامک فقط برای کسی ممکن است که شمارهٔ موبایل خود را با کد تأیید کرده باشد. <a href="/my/phone">تأیید موبایل</a></p>
+                            <p t-if="has_phone and not sms_live" class="ts-hint">ارسال پیامک اعلان‌ها فعلاً از سوی پلتفرم فعال نشده است؛ ترجیح شما ذخیره می‌شود و بعداً اعمال می‌شود.</p>
+                            <form action="/my/notifications/prefs" method="post" class="tsp-form ts-card" data-tsp-once="1">
+                                <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                                <fieldset t-foreach="types" t-as="t" class="tsp-field">
+                                    <legend class="tsp-field__label" t-out="t[1]"/>
+                                    <label class="tsp-check"><input type="checkbox" t-attf-name="app_#{t[0]}" value="1" t-att-checked="'checked' if prefs[t[0]][0] else None"/><span>اعلان در سایت</span></label>
+                                    <label t-if="t[2]" class="tsp-check"><input type="checkbox" t-attf-name="sms_#{t[0]}" value="1" t-att-checked="'checked' if prefs[t[0]][1] else None" t-att-disabled="'disabled' if not has_phone else None"/><span>پیامک</span></label>
+                                </fieldset>
+                                <p><button type="submit" class="ts-btn ts-btn--primary">ذخیره</button> <a href="/my/notifications" class="ts-btn ts-btn--quiet">بازگشت</a></p>
+                            </form>
+                        </section>
+                    </div>
+                </t>
+            </t>
+        </field>
+    </record>
+</odoo>

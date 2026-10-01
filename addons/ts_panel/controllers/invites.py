@@ -301,7 +301,7 @@ class TsPanelInvites(http.Controller):
                 website=True, methods=['POST'], sitemap=False)
     def invite_action(self, ws_id, aid, action, **post):
         me = member_or_404(ws_id)
-        if action not in ('extend', 'withdraw'):
+        if action not in ('extend', 'withdraw', 'remind'):
             raise request.not_found()
         denied = require(me, 'invites:manage', 'invites')
         if denied:
@@ -317,6 +317,9 @@ class TsPanelInvites(http.Controller):
                     raise UserError('مدت تمدید را از فهرست برگزینید.')
                 a.action_extend(days, me)
                 flash_ok('دعوت تمدید شد.')
+            elif action == 'remind':
+                ok, msg = a.ts_manual_reminder(me)
+                (flash_ok if ok else flash_error)(msg)
             else:
                 if not post.get('confirm'):
                     raise UserError('برای لغو دعوت، تأیید را تیک بزنید.')

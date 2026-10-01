@@ -24,4 +24,29 @@
         <field name="interval_number">1</field>
         <field name="interval_type">hours</field>
     </record>
+    <record id="cron_reminders" model="ir.cron">
+        <field name="name">Panel: one reminder per open invitation (10:00 Tehran)</field>
+        <field name="model_id" ref="ts_org.model_ts_assignment"/>
+        <field name="state">code</field>
+        <field name="code">model._cron_reminders()</field>
+        <field name="interval_number">1</field>
+        <field name="interval_type">days</field>
+        <field name="nextcall" eval="(DateTime.now().replace(hour=6, minute=30, second=0, microsecond=0) + timedelta(days=1)).strftime('%Y-%m-%d %H:%M:%S')"/>
+    </record>
+    <record id="cron_flush_sms" model="ir.cron">
+        <field name="name">Panel: send SMS that waited for the quiet hours to end</field>
+        <field name="model_id" ref="model_ts_notification"/>
+        <field name="state">code</field>
+        <field name="code">model._cron_flush_sms()</field>
+        <field name="interval_number">1</field>
+        <field name="interval_type">hours</field>
+    </record>
+    <record id="cron_vacuum_notifications" model="ir.cron">
+        <field name="name">Panel: delete old read notifications</field>
+        <field name="model_id" ref="model_ts_notification"/>
+        <field name="state">code</field>
+        <field name="code">model._cron_vacuum()</field>
+        <field name="interval_number">1</field>
+        <field name="interval_type">days</field>
+    </record>
 </odoo>
