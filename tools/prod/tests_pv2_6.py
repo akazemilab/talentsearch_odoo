@@ -97,7 +97,9 @@ e.sudo().write({'expires_at': now - timedelta(hours=1)})
 check('past expiry without the flag: the link already says expired', e.invite_state() == 'expired' and e.state == 'invited')
 n = A._cron_expire_invitations()
 check('the cron flags exactly the late unaccepted invitation', n >= 1 and e.expired and e.state == 'expired' and not a.expired and not d.expired)
-check('expired state comes before opened', (a.write({'expires_at': now - timedelta(minutes=5)}) or A._cron_expire_invitations() or True) and a.state == 'expired')
+a.write({'expires_at': now - timedelta(minutes=5)})
+A._cron_expire_invitations()
+check('expired state comes before opened', a.opened_at and a.expired and a.state == 'expired')
 check('an expired invitation cannot be accepted', raises(lambda: a.action_accept(puser(), share=False)))
 
 # ---- extend
