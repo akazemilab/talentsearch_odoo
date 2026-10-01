@@ -59,7 +59,7 @@ JS = r"""() => {
   // contrast (checklist 3): sample visible text elements
   const lum = c => { const f = v => { v /= 255; return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4); }; return 0.2126 * f(c[0]) + 0.7152 * f(c[1]) + 0.0722 * f(c[2]); };
   const parse = s => { const m = s.match(/rgba?\(([^)]+)\)/); if (!m) return null; const p = m[1].split(',').map(parseFloat); return {c: p.slice(0, 3), a: p.length > 3 ? p[3] : 1}; };
-  const bgOf = el => { for (let e = el; e; e = e.parentElement) { const p = parse(getComputedStyle(e).backgroundColor); if (p && p.a > 0.95) return p.c; } return [255, 255, 255]; };
+  const bgOf = el => { for (let e = el; e; e = e.parentElement) { const cs = getComputedStyle(e); if (cs.backgroundImage && cs.backgroundImage !== 'none') return null; const p = parse(cs.backgroundColor); if (p && p.a > 0.95) return p.c; } return [255, 255, 255]; };
   const low = []; let seen = 0;
   for (const el of document.querySelectorAll('#wrap p, #wrap li, #wrap td, #wrap th, #wrap label, #wrap a, #wrap button, #wrap h1, #wrap h2, #wrap h3, #wrap small, #wrap dd, #wrap dt, #wrap span')) {
     if (seen > 250) break;
@@ -69,7 +69,8 @@ JS = r"""() => {
     const cs = getComputedStyle(el); if (cs.visibility === 'hidden' || cs.opacity === '0') continue;
     seen++;
     const fg = parse(cs.color); if (!fg) continue;
-    const L1 = lum(fg.c), L2 = lum(bgOf(el)), ratio = (Math.max(L1, L2) + 0.05) / (Math.min(L1, L2) + 0.05);
+    const bg = bgOf(el); if (!bg) continue;   // gradient or image behind the text: cannot be computed, skip
+    const L1 = lum(fg.c), L2 = lum(bg), ratio = (Math.max(L1, L2) + 0.05) / (Math.min(L1, L2) + 0.05);
     const size = parseFloat(cs.fontSize), bold = parseInt(cs.fontWeight) >= 700, large = size >= 24 || (size >= 18.66 && bold);
     if (ratio < (large ? 3 : 4.5)) low.push(el.tagName.toLowerCase() + '.' + [...el.classList].slice(0, 2).join('.') + ' ' + ratio.toFixed(1));
   }
