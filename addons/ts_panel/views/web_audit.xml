@@ -14,7 +14,7 @@
                             <header class="tsp-head">
                                 <div>
                                     <h1 class="tsp-head__title">ممیزی پنل</h1>
-                                    <p class="tsp-head__help">هر کار مهم در این پنل اینجا ثبت می‌شود. فقط مالک پنل این صفحه را می‌بیند و رویدادها هرگز تغییر یا حذف نمی‌شوند.</p>
+                                    <p class="tsp-head__help">هر کار مهم در این پنل اینجا ثبت می‌شود. فقط مالک پنل این صفحه را می‌بیند و رویدادها هرگز تغییر یا حذف نمی‌شوند. <a class="tsp-what" href="/help/panel#support">این چیست؟</a></p>
                                 </div>
                                 <a t-if="can_export" t-attf-href="/my/workspaces/#{ws.id}/audit/export?#{qs}" class="ts-btn ts-btn--outline">خروجی CSV</a>
                             </header>

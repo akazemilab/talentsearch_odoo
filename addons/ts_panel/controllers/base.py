@@ -36,7 +36,7 @@ MENU = [
     {'seq': 40, 'key': 'members', 'label': 'اعضا و نقش‌ها', 'suffix': '/members', 'perm': 'members:read'},
     {'seq': 80, 'key': 'audit', 'label': 'ممیزی', 'suffix': '/audit', 'perm': 'audit:read'},
     {'seq': 90, 'key': 'settings', 'label': 'تنظیمات', 'suffix': '/settings', 'perm': 'panel:profile'},
-    {'seq': 999, 'key': 'help', 'label': 'راهنما', 'url': '/help', 'perm': None},   # always last, for every state (WCAG 3.2.6)
+    {'seq': 999, 'key': 'help', 'label': 'راهنما', 'url': '/help/panel', 'perm': None},   # always last, for every state (WCAG 3.2.6)
 ]
 
 STATE_LABELS = {'invited': 'دعوت‌شده', 'opened': 'بازشده', 'expired': 'منقضی', 'accepted': 'پذیرفته', 'in_progress': 'در حال پاسخ',

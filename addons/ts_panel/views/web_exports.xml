@@ -14,7 +14,7 @@
                             <header class="tsp-head">
                                 <div>
                                     <h1 class="tsp-head__title">خروجی‌ها</h1>
-                                    <p class="tsp-head__help">فایل‌ها در قالب csv یا xlsx ساخته می‌شوند، رقم‌ها لاتین‌اند و هر تاریخ هم شمسی و هم میلادی می‌آید. برای گرفتن خروجی باید دوباره هویت خود را تأیید کنید و فایل <t t-out="fa(ttl)"/> ساعت در دسترس می‌ماند.</p>
+                                    <p class="tsp-head__help">فایل‌ها در قالب csv یا xlsx ساخته می‌شوند، رقم‌ها لاتین‌اند و هر تاریخ هم شمسی و هم میلادی می‌آید. برای گرفتن خروجی باید دوباره هویت خود را تأیید کنید و فایل <t t-out="fa(ttl)"/> ساعت در دسترس می‌ماند. <a class="tsp-what" href="/help/panel#export">این چیست؟</a></p>
                                 </div>
                             </header>
                             <section class="ts-card" aria-labelledby="tsp-ex-1">

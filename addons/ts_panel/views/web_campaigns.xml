@@ -144,7 +144,7 @@
                                         <p t-if="kv[1]" class="ts-notice" role="status"><t t-out="fa(len(kv[1]))"/> نفر کنار گذاشته می‌شوند چون <t t-out="skip_labels[kv[0]]"/>: <t t-out="'، '.join(kv[1][:10].mapped('name'))"/><t t-if="len(kv[1]) &gt; 10"> و …</t></p>
                                     </t>
                                     <p t-if="not to_invite" class="ts-notice" role="alert">کسی برای دعوت نمانده است.</p>
-                                    <p t-if="minors" class="ts-notice" id="ts-guardian-box"><label><input type="checkbox" name="guardian_ok" value="1"/> رضایت ولی یا سرپرست قانونی <t t-out="fa(len(minors))"/> شرکت‌کنندهٔ زیر ۱۸ سال را گرفته‌ایم و نزد ما محفوظ است.</label></p>
+                                    <p t-if="minors" class="ts-notice" id="ts-guardian-box"><label><input type="checkbox" name="guardian_ok" value="1"/> رضایت ولی یا سرپرست قانونی <t t-out="fa(len(minors))"/> شرکت‌کنندهٔ زیر ۱۸ سال را گرفته‌ایم و نزد ما محفوظ است.</label> <a class="tsp-what" href="/help/panel#minors">این چیست؟</a></p>
                                 </t>
                                 <p>
                                     <button t-if="draft['kind'] != 'list' or to_invite" type="submit" class="ts-btn ts-btn--primary">ساخت</button>

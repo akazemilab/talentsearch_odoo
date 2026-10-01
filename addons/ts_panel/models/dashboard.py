@@ -122,8 +122,8 @@ class TsMemberDashboard(models.Model):
             if n:
                 out.append({'key': key, 'label': label, 'n': n, 'url': url})
 
-        add('gated', 'پنل در انتظار تأیید تیم تلنت سرچ است', 1 if ws.gated else 0, '/help')
-        add('verify', 'احراز صلاحیت حرفه‌ای شما در حال بررسی است', 1 if self._ts_unverified_pro() else 0, '/help')
+        add('gated', 'پنل در انتظار تأیید تیم تلنت سرچ است', 1 if ws.gated else 0, '/help/panel')
+        add('verify', 'احراز صلاحیت حرفه‌ای شما در حال بررسی است', 1 if self._ts_unverified_pro() else 0, '/help/panel')
         if self.can_act() and self.has_perm('invites:manage'):
             dom = assignment_domain(self)
             add('unseen', 'نتیجهٔ آماده که هنوز باز نکرده‌اید', len(unseen_ids(env, self, dom)), base + '/invites?unseen=1')

@@ -16,3 +16,4 @@ from . import portal
 from . import consent
 from . import lifecycle
 from . import sessions
+from . import help_center

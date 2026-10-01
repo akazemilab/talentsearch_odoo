@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- /help/panel (S19, HLP-2): short task pages. Every statement is checked against the code; the date is CHECKED in controllers/help.py. -->
+    <record id="tpl_help_panel" model="ir.ui.view">
+        <field name="name">TS panel: help center</field>
+        <field name="type">qweb</field>
+        <field name="key">ts_panel.help_panel</field>
+        <field name="website_id" ref="ts_website.website_ts"/>
+        <field name="arch" type="xml">
+            <t t-name="ts_panel.help_panel">
+                <t t-call="website.layout" additional_title.f="راهنمای پنل">
+                    <div id="wrap" class="ts-page">
+                        <section class="tsp-section container">
+                            <header class="tsp-head">
+                                <div>
+                                    <h1 class="tsp-head__title">راهنمای پنل</h1>
+                                    <p class="tsp-head__help">پاسخ کوتاه به کارهایی که در پنل انجام می‌دهید. آخرین بررسی متن‌ها: <t t-out="checked"/>.</p>
+                                </div>
+                            </header>
+                            <nav class="ts-card" aria-label="فهرست راهنما">
+                                <ul class="tsp-list">
+                                    <li><a href="#invite">فرستادن دعوت</a></li>
+                                    <li><a href="#import">وارد کردن فهرست شرکت‌کنندگان</a></li>
+                                    <li><a href="#report">خواندن یک نتیجه یا گزارش</a></li>
+                                    <li><a href="#roles">نقش‌ها و دسترسی‌ها</a></li>
+                                    <li><a href="#sharing">اشتراک‌گذاری و حریم خصوصی</a></li>
+                                    <li><a href="#minors">شرکت‌کنندگان زیر ۱۸ سال</a></li>
+                                    <li><a href="#export">خروجی گرفتن از اطلاعات</a></li>
+                                    <li><a href="#support">دسترسی پشتیبانی به پنل</a></li>
+                                    <li><a href="#credits">اعتبار</a></li>
+                                </ul>
+                            </nav>
+                            <article class="ts-card" id="invite">
+                                <h2>فرستادن دعوت</h2>
+                                <p>از بخش «دعوت‌ها» مراحل را دنبال کنید: سنجه را انتخاب می‌کنید، شرکت‌کنندگان را می‌افزایید و پیش از فرستادن، خلاصهٔ کار را می‌بینید. شرکت‌کننده با پیوند دعوت وارد می‌شود و پیش از شروع، رضایت خود را ثبت می‌کند. دعوتی که هنوز باز نشده را می‌توانید لغو کنید.</p>
+                            </article>
+                            <article class="ts-card" id="import">
+                                <h2>وارد کردن فهرست شرکت‌کنندگان</h2>
+                                <p>در بخش «وارد کردن» فایل را بارگذاری می‌کنید و پیش از ثبت نهایی، پیش‌نمایش را می‌بینید. نتایجی که از بیرون وارد شده‌اند در گزارش‌ها با برچسب «واردشده» دیده می‌شوند.</p>
+                            </article>
+                            <article class="ts-card" id="report">
+                                <h2>خواندن یک نتیجه یا گزارش</h2>
+                                <p>آنچه می‌بینید به نقش شما و سطح اشتراک‌گذاری شرکت‌کننده بستگی دارد: فقط وضعیت، خلاصهٔ نتیجه، نتیجهٔ آموزشی یا گزارش بالینی. نتیجه تشخیص نیست و هر بار که نتیجه‌ای را باز یا چاپ کنید، در گزارش رویدادهای پنل ثبت می‌شود. گزارش گروهی فقط شمار افراد را نشان می‌دهد و خانه‌های کوچک پنهان می‌شوند.</p>
+                            </article>
+                            <article class="ts-card" id="roles">
+                                <h2>نقش‌ها و دسترسی‌ها</h2>
+                                <p>هر نقش در پنل کارهای مشخصی دارد. جدول کامل را در <a href="/help/roles">صفحهٔ نقش‌ها</a> ببینید.</p>
+                            </article>
+                            <article class="ts-card" id="sharing">
+                                <h2>اشتراک‌گذاری و حریم خصوصی</h2>
+                                <p>نتیجهٔ هر شرکت‌کننده مال خود اوست. او تصمیم می‌گیرد کدام پنل (حداکثر ۳ پنل برای هر نتیجه) و در چه سطحی نتیجه را ببیند، و هر وقت بخواهد اشتراک را قطع می‌کند. پاسخ‌های خام را هیچ‌کس جز خود شرکت‌کننده نمی‌بیند.</p>
+                            </article>
+                            <article class="ts-card" id="minors">
+                                <h2>شرکت‌کنندگان زیر ۱۸ سال</h2>
+                                <p>پنل با یک تیک تأیید می‌کند که رضایت ولی را در دست دارد؛ این تأیید با نام تأییدکننده و زمان ثبت می‌شود. تا پیش از آن، برای شرکت‌کنندهٔ زیر ۱۸ سال فقط وضعیت انجام کار دیده می‌شود. خود شرکت‌کننده هم پیش از شروع، موافقت خود را اعلام می‌کند.</p>
+                            </article>
+                            <article class="ts-card" id="export">
+                                <h2>خروجی گرفتن از اطلاعات</h2>
+                                <p>گرفتن خروجی نیاز به تأیید دوبارهٔ گذرواژه دارد و در گزارش رویدادها ثبت می‌شود. در خروجی فقط اطلاعاتی می‌آید که نقش شما اجازهٔ دیدنش را دارد.</p>
+                            </article>
+                            <article class="ts-card" id="support">
+                                <h2>دسترسی پشتیبانی به پنل</h2>
+                                <p>تیم تلنت سرچ فقط با ثبت دلیل و شمارهٔ درخواست به پنل شما دسترسی می‌گیرد. مسئول پنل از این دسترسی خبردار می‌شود و آن را در گزارش رویدادها می‌بیند.</p>
+                            </article>
+                            <article class="ts-card" id="credits">
+                                <h2>اعتبار</h2>
+                                <p>در بخش «اعتبار» موجودی و گردش حساب پنل را می‌بینید.</p>
+                            </article>
+                            <p class="ts-notice" id="help-contact">پاسخ خود را پیدا نکردید؟ <a t-att-href="contact_url">با پشتیبانی تماس بگیرید</a>.</p>
+                        </section>
+                    </div>
+                </t>
+            </t>
+        </field>
+    </record>
+</odoo>

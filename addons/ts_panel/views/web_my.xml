@@ -141,7 +141,7 @@
                         <section class="tsp-section container" style="max-width:860px">
                             <h1 class="tsp-head__title">چه کسی نتیجه‌های من را می‌بیند؟</h1>
                             <t t-call="ts_panel.my_nav" active="sharing"/>
-                            <p class="ts-hint">پاسخ‌های خام شما را هیچ پنلی نمی‌بیند. هر نتیجه را می‌توانید با حداکثر <t t-out="fa(limit)"/> پنل به اشتراک بگذارید و هر زمان اشتراک را لغو کنید.</p>
+                            <p class="ts-hint">پاسخ‌های خام شما را هیچ پنلی نمی‌بیند. هر نتیجه را می‌توانید با حداکثر <t t-out="fa(limit)"/> پنل به اشتراک بگذارید و هر زمان اشتراک را لغو کنید. <a class="tsp-what" href="/help/panel#sharing">این چیست؟</a></p>
                             <p t-if="ok" class="tsp-flash" role="status" t-out="ok"/>
                             <p t-if="error" class="tsp-flash tsp-flash--err" role="alert" t-out="error"/>
                             <div t-if="not blocks" class="ts-card ts-card--soft">
