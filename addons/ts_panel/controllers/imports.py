@@ -11,7 +11,7 @@ from odoo.addons.ts_org.models.perms import ROLE_PERMS
 
 from ..models import importer
 from ..models.job import KINDS, STATES, att_bytes
-from .base import flash_error, flash_ok, forbidden, member_or_404, render_in_shell, require
+from .base import flash_error, flash_ok, forbidden, member_or_404, need_reauth, render_in_shell, require
 
 KIND_LABEL = dict(KINDS)
 STATE_LABEL = dict(STATES)
@@ -140,7 +140,7 @@ class TsPanelImports(http.Controller):
         job = self._job_or_404(me, jid, kinds=None)
         s = job._s()
         groups = request.env['ts.panel.group'].sudo().search_count([('workspace_id', '=', me.workspace_id.id), ('active', '=', True)])
-        return render_in_shell('ts_panel.job', me, 'import' if job.kind == 'import_clients' else 'home', 'کار ' + KIND_LABEL.get(job.kind, ''),
+        return render_in_shell('ts_panel.job', me, 'import' if job.kind == 'import_clients' else ('exports' if job.kind.startswith('export_') else 'home'), 'کار ' + KIND_LABEL.get(job.kind, ''),
                                job=job, s=s, kind_label=KIND_LABEL, state_label=STATE_LABEL, pill=JOB_PILL,
                                refresh=job.state in ('queued', 'running'), can_download=job.can_download(me), groups=groups,
                                err_text=importer.FILE_ERRORS.get(job.error_code or '', 'خطای داخلی؛ دوباره امتحان کنید یا با پشتیبانی تماس بگیرید.'),
@@ -152,8 +152,14 @@ class TsPanelImports(http.Controller):
         job = self._job_or_404(me, jid, kinds=None)
         if not job.can_download(me):
             raise request.not_found()
+        exported = job.kind.startswith('export_')
+        if exported:
+            redo = need_reauth('دریافت فایل خروجی', '/my/workspaces/%s/jobs/%s/download' % (ws_id, jid))
+            if redo:
+                return redo
         att = job.result_attachment_id
-        request.env['ts.audit.event'].sudo().log('job.download', job, workspace=job.workspace_id, member=me, kind=job.kind)
+        request.env['ts.audit.event'].sudo().log('export.download' if exported else 'job.download', job, workspace=job.workspace_id,
+                                                 member=me, kind=job.kind)
         return request.make_response(att_bytes(att), headers=[('Content-Type', att.mimetype or 'application/octet-stream'),
                                                        ('Content-Disposition', 'attachment; filename="%s"' % att.name),
                                                        ('Cache-Control', 'private, no-store')])

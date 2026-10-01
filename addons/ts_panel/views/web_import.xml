@@ -135,8 +135,15 @@
                                 </div>
                             </header>
                             <section class="ts-card" role="status">
-                                <p t-if="job.state in ('queued', 'running')">فایل شما در حال ورود است؛ این صفحه خودش تازه می‌شود.</p>
-                                <t t-if="job.state == 'done'">
+                                <p t-if="job.state in ('queued', 'running') and job.kind == 'import_clients'">فایل شما در حال ورود است؛ این صفحه خودش تازه می‌شود.</p>
+                                <p t-if="job.state in ('queued', 'running') and job.kind != 'import_clients'">فایل شما در حال ساخت است؛ این صفحه خودش تازه می‌شود.</p>
+                                <t t-if="job.state == 'done' and job.kind.startswith('export_')">
+                                    <p>فایل آماده است: <t t-out="fa(s.get('rows', 0))"/> ردیف.</p>
+                                    <p t-if="can_download"><a t-attf-href="/my/workspaces/#{ws.id}/jobs/#{job.id}/download" class="ts-btn ts-btn--primary">دریافت فایل</a></p>
+                                    <p class="ts-hint">فایل تا <t t-out="jalali(job.expires_at)"/> در دسترس است؛ هنگام دریافت دوباره هویت شما را می‌پرسیم.</p>
+                                    <p><a t-attf-href="/my/workspaces/#{ws.id}/exports" class="ts-btn ts-btn--outline">بازگشت به خروجی‌ها</a></p>
+                                </t>
+                                <t t-if="job.state == 'done' and job.kind == 'import_clients'">
                                     <dl class="tsp-dl">
                                         <dt>شرکت‌کنندهٔ تازه</dt><dd t-out="fa(s.get('create', 0))"/>
                                         <dt>به‌روزرسانی‌شده</dt><dd t-out="fa(s.get('update', 0))"/>

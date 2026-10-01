@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- W/exports: the three exports (EXP-1, EXP-2, EXP-3) -->
+    <record id="tpl_exports" model="ir.ui.view">
+        <field name="name">TS panel: exports</field>
+        <field name="type">qweb</field>
+        <field name="key">ts_panel.exports</field>
+        <field name="website_id" ref="ts_website.website_ts"/>
+        <field name="arch" type="xml">
+            <t t-name="ts_panel.exports">
+                <t t-call="website.layout" additional_title="title">
+                    <div id="wrap" class="ts-page">
+                        <t t-call="ts_panel.shell_frame">
+                            <header class="tsp-head">
+                                <div>
+                                    <h1 class="tsp-head__title">خروجی‌ها</h1>
+                                    <p class="tsp-head__help">فایل‌ها در قالب csv یا xlsx ساخته می‌شوند، رقم‌ها لاتین‌اند و هر تاریخ هم شمسی و هم میلادی می‌آید. برای گرفتن خروجی باید دوباره هویت خود را تأیید کنید و فایل <t t-out="fa(ttl)"/> ساعت در دسترس می‌ماند.</p>
+                                </div>
+                            </header>
+                            <section class="ts-card" aria-labelledby="tsp-ex-1">
+                                <h2 id="tsp-ex-1" class="h5">فهرست شرکت‌کنندگان</h2>
+                                <p class="ts-hint">نام، کد، گروه‌ها، مسئول، وضعیت و شمار دعوت‌ها. فقط شرکت‌کنندگانی که شما می‌بینید.</p>
+                                <form t-attf-action="/my/workspaces/#{ws.id}/exports/create" method="post" class="tsp-form" data-tsp-once="1">
+                                    <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                                    <input type="hidden" name="what" value="clients"/>
+                                    <label class="tsp-field"><span class="tsp-field__label">قالب</span>
+                                        <select name="format" class="form-select"><option value="csv">csv</option><option value="xlsx">xlsx (اکسل)</option></select></label>
+                                    <label class="tsp-field"><span class="tsp-field__label">وضعیت</span>
+                                        <select name="state" class="form-select"><option value="active">فعال</option><option value="archived">بایگانی‌شده</option><option value="all">همه</option></select></label>
+                                    <label t-if="groups" class="tsp-field"><span class="tsp-field__label">گروه</span>
+                                        <select name="group_id" class="form-select"><option value="">همهٔ گروه‌ها</option><option t-foreach="groups" t-as="g" t-att-value="g.id" t-out="g.name"/></select></label>
+                                    <p><button type="submit" class="ts-btn ts-btn--primary">ساخت فایل شرکت‌کنندگان</button></p>
+                                </form>
+                            </section>
+                            <section class="ts-card" aria-labelledby="tsp-ex-2">
+                                <h2 id="tsp-ex-2" class="h5">وضعیت دعوت‌ها</h2>
+                                <p class="ts-hint">یک ردیف برای هر دعوت: شرکت‌کننده، سنجه، وضعیت و تاریخ‌ها. نتیجه‌ای در آن نیست.</p>
+                                <form t-attf-action="/my/workspaces/#{ws.id}/exports/create" method="post" class="tsp-form" data-tsp-once="1">
+                                    <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                                    <input type="hidden" name="what" value="status"/>
+                                    <label class="tsp-field"><span class="tsp-field__label">قالب</span>
+                                        <select name="format" class="form-select"><option value="csv">csv</option><option value="xlsx">xlsx (اکسل)</option></select></label>
+                                    <label class="tsp-field"><span class="tsp-field__label">سنجه</span>
+                                        <select name="instrument_id" class="form-select"><option value="">همهٔ سنجه‌ها</option><option t-foreach="instruments" t-as="i" t-att-value="i.id" t-out="i.name"/></select></label>
+                                    <label t-if="groups" class="tsp-field"><span class="tsp-field__label">گروه</span>
+                                        <select name="group_id" class="form-select"><option value="">همهٔ گروه‌ها</option><option t-foreach="groups" t-as="g" t-att-value="g.id" t-out="g.name"/></select></label>
+                                    <p><button type="submit" class="ts-btn ts-btn--primary">ساخت فایل وضعیت</button></p>
+                                </form>
+                            </section>
+                            <section t-if="can_results" class="ts-card" aria-labelledby="tsp-ex-3">
+                                <h2 id="tsp-ex-3" class="h5">نتایج</h2>
+                                <p class="ts-hint">فقط نتیجه‌هایی که شرکت‌کننده با پنل به اشتراک گذاشته و شما در همان سطح می‌بینید: سطح هر عامل (کم، متوسط، زیاد). پاسخ‌ها هرگز در فایل نیستند.</p>
+                                <form t-attf-action="/my/workspaces/#{ws.id}/exports/create" method="post" class="tsp-form" data-tsp-once="1">
+                                    <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                                    <input type="hidden" name="what" value="results"/>
+                                    <label class="tsp-field"><span class="tsp-field__label">قالب</span>
+                                        <select name="format" class="form-select"><option value="csv">csv</option><option value="xlsx">xlsx (اکسل)</option></select></label>
+                                    <label class="tsp-field"><span class="tsp-field__label">سنجه</span>
+                                        <select name="instrument_id" class="form-select"><option value="">همهٔ سنجه‌ها</option><option t-foreach="instruments" t-as="i" t-att-value="i.id" t-out="i.name"/></select></label>
+                                    <label t-if="groups" class="tsp-field"><span class="tsp-field__label">گروه</span>
+                                        <select name="group_id" class="form-select"><option value="">همهٔ گروه‌ها</option><option t-foreach="groups" t-as="g" t-att-value="g.id" t-out="g.name"/></select></label>
+                                    <p><button type="submit" class="ts-btn ts-btn--primary">ساخت فایل نتایج</button></p>
+                                </form>
+                            </section>
+                            <section class="ts-card" aria-labelledby="tsp-ex-4">
+                                <h2 id="tsp-ex-4" class="h5">فایل‌های اخیر شما</h2>
+                                <p t-if="not jobs" class="ts-hint">هنوز خروجی نگرفته‌اید.</p>
+                                <ul t-if="jobs" class="tsp-list">
+                                    <li t-foreach="jobs" t-as="j">
+                                        <a t-attf-href="/my/workspaces/#{ws.id}/jobs/#{j.id}"><t t-out="dict(j._fields['kind'].selection).get(j.kind, '')"/> — <t t-out="jalali(j.create_date)"/></a>
+                                        <span class="ts-pill ts-pill--neutral" t-out="dict(j._fields['state'].selection).get(j.state, j.state)"/>
+                                    </li>
+                                </ul>
+                            </section>
+                        </t>
+                    </div>
+                </t>
+            </t>
+        </field>
+    </record>
+</odoo>

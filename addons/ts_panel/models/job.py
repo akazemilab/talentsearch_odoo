@@ -11,13 +11,15 @@ from datetime import timedelta
 from odoo import api, fields, models
 from odoo.exceptions import UserError
 
-from . import importer
+from . import exporter, importer
 
 KINDS = [('export_clients', 'برون‌بری شرکت‌کنندگان'), ('export_status', 'برون‌بری وضعیت دعوت‌ها'),
          ('export_results', 'برون‌بری نتایج'), ('export_audit', 'برون‌بری رویدادها'),
          ('import_clients', 'ورود شرکت‌کنندگان از فایل'), ('group_report', 'گزارش گروهی'), ('data_export', 'نسخهٔ داده‌های من')]
 KIND_PERM = {'import_clients': 'clients:import', 'export_clients': 'clients:export', 'export_status': 'clients:export',
              'export_results': 'results:export', 'export_audit': 'audit:export', 'group_report': 'reports:group'}
+EXPORT_ROWS = {'export_clients': exporter.client_rows, 'export_status': exporter.status_rows,
+               'export_results': exporter.result_rows}
 STATES = [('draft', 'در حال آماده‌سازی'), ('queued', 'در صف'), ('running', 'در حال اجرا'), ('done', 'انجام شد'),
           ('failed', 'ناموفق'), ('expired', 'منقضی')]
 
@@ -185,6 +187,49 @@ class TsJob(models.Model):
         self._drop_source()
         self.env['ts.audit.event'].log('import.run', self, workspace=self.workspace_id, member=self.member_id,
                                        created=res['create'], updated=res['update'], unchanged=res['same'], errors=res['error'])
+
+
+    # ------------------------------------------------------------------ exports (S9)
+    @api.model
+    def ts_export_create(self, member, kind, fmt, params=None):
+        """Create and start an export job for `member`. Raises UserError when the kind is not allowed for this member or
+        panel. A small export runs at once, a large one waits for the cron runner."""
+        if kind not in EXPORT_ROWS or not member.can_act() or not member.has_perm(KIND_PERM[kind]):
+            raise UserError('این خروجی برای شما ممکن نیست.')
+        if kind == 'export_results' and member.workspace_id.purpose not in ('education', 'employment'):
+            raise UserError('این نوع پنل خروجی نتایج ندارد.')
+        fmt = fmt if fmt in ('csv', 'xlsx') else 'csv'
+        clean = {k: str(v) for k, v in (params or {}).items() if k in ('group_id', 'instrument_id', 'state') and v}
+        clean['format'] = fmt
+        job = self.sudo().create({'workspace_id': member.workspace_id.id, 'member_id': member.id, 'user_id': member.user_id.id,
+                                  'kind': kind, 'state': 'queued', 'params': json.dumps(clean)})
+        job.total = exporter.count_rows(self.env, member, kind, clean)
+        self.env['ts.audit.event'].sudo().log('export.create', job, workspace=job.workspace_id, member=member, kind=kind, format=fmt)
+        if job.total <= self._inline_rows():
+            job.ts_run(commit=False)
+        return job
+
+    def _run_export(self, commit):
+        m = self.member_id
+        if not (m.exists() and m.user_id == self.user_id and m.can_act() and m.has_perm(KIND_PERM[self.kind])
+                and (self.kind != 'export_results' or self.workspace_id.purpose in ('education', 'employment'))):
+            raise importer.FileProblem('forbidden')            # the permission is checked again when the job runs (P21)
+        p = self._p()
+        headers, rows = EXPORT_ROWS[self.kind](self.env, m, p)
+        data, ext, mime = exporter.render(p.get('format'), headers, rows)
+        stamp = exporter.date_cols(fields.Datetime.now())[1].replace('-', '')
+        att = self._attach('%s-%s.%s' % (self.kind.replace('export_', ''), stamp, ext), data, mime)
+        self.write({'state': 'done', 'summary': json.dumps({'rows': len(rows)}), 'progress': len(rows), 'total': len(rows),
+                    'result_attachment_id': att.id, 'expires_at': fields.Datetime.now() + timedelta(hours=self._ttl_hours())})
+
+    def _run_export_clients(self, commit):
+        self._run_export(commit)
+
+    def _run_export_status(self, commit):
+        self._run_export(commit)
+
+    def _run_export_results(self, commit):
+        self._run_export(commit)
 
     # ------------------------------------------------------------------ crons
     @api.model
