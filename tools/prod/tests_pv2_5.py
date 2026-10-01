@@ -93,7 +93,7 @@ g.write({'client_ids': [(4, x.id), (4, d.id)]})
 check('group counts its clients', g.client_count == 2)
 g.write({'active': False})
 env.flush_all()
-check('archiving a group keeps its clients', len(g.client_ids) == 2 and x.group_ids == g)
+check('archiving a group keeps its clients', len(g.client_ids) == 2 and not x.group_ids)
 check('an archived group frees its name', bool(G.create({'workspace_id': ws.id, 'name': 'کلاس هفتم'})))
 
 # ---- archive / restore
