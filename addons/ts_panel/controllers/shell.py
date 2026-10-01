@@ -43,6 +43,8 @@ class TsPanelWorkspace(TsOrg):
         member = member_or_404(ws_id)
         if (kw.get('created') or '').isdigit():
             return request.redirect('/my/workspaces/%s/invites/%s?new=1' % (ws_id, kw['created']))
+        if (kw.get('minv') or '').isdigit():       # the old invite form of colleagues redirects here
+            return request.redirect('/my/workspaces/%s/members?minv=%s' % (ws_id, kw['minv']))
         if kw.get('error') in OLD_ERRORS:
             flash_error(OLD_ERRORS[kw['error']])
         if state in STATE_LABELS:

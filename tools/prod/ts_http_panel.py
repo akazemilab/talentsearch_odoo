@@ -59,7 +59,7 @@ check('participant invite POST refused while pending', 'error=' in loc2, loc2)
 # colleague invite
 st, loc2, _ = own.req('/my/workspaces/%s/members/invite' % ws_id, {'csrf_token': own.csrf(legacy), 'role': 'hr_admin', 'phone': '۰۹۱۲۶۶۶۰۰۰۲'})
 check('colleague invite -> shows link', st in (302, 303) and 'minv=' in loc2, loc2)
-st, _, page2 = own.req(path_of(loc2))
+st, _, page2 = lib.follow(own, loc2)
 m = re.search(r'value="https://talentsearch\.ir/join/([0-9a-f]{32})"', page2)
 check('join link displayed for copying', bool(m))
 tok = m.group(1)
