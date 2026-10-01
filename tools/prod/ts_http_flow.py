@@ -28,7 +28,8 @@ def ensure_user(login):
                 "u.password=%r\nenv.cr.commit()\n") % (login, login, pw)
         subprocess.run(['sudo', '-u', 'odoo', 'env', 'HOME=/opt/odoo', '/opt/odoo/venv/bin/python3', '/opt/odoo/odoo/odoo-bin', 'shell',
                         '-c', '/etc/odoo20.conf', '-d', DB, '--db-filter=^%s$' % DB,
-                        '--addons-path=/opt/odoo/talentsearch_stage/addons,/opt/odoo/themes,/opt/odoo/enterprise,/opt/odoo/odoo/addons',
+                        '--addons-path=/opt/odoo/talentsearch_stage%s/addons,/opt/odoo/themes,/opt/odoo/enterprise,/opt/odoo/odoo/addons' % (
+                            '' if os.environ.get('TS_SLOT', '0') == '0' else '_s' + os.environ['TS_SLOT']),
                         '--no-http', '--log-level=warn'], input=code, text=True, capture_output=True, cwd='/tmp')
     return open(pw_file).read().strip()
 

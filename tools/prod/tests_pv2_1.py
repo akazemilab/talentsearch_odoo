@@ -301,6 +301,7 @@ check('P13 a second active membership in the same panel is refused',
       raises(lambda: M.create({'workspace_id': ws_b1.id, 'user_id': dup.id, 'role': 'owner'}), Exception))
 first = M.search([('workspace_id', '=', ws_b1.id), ('user_id', '=', dup.id)])
 first.active = False
+env.flush_all()
 check('P13 after deactivation the person can be added again',
       bool(M.create({'workspace_id': ws_b1.id, 'user_id': dup.id, 'role': 'owner'})))
 
@@ -335,6 +336,8 @@ check('P17 route_of replaces ids and tokens',
 ev = env['ts.audit.event'].log('pv2.test', ws_r, workspace=ws_r, reason='secret text', phone='09121234567', keep=1)
 check('P17 stored detail has no raw reason/phone and the raw IP column is not written',
       'secret' not in (ev.detail or '') and '0912' not in (ev.detail or '') and not ev.ip_address and ev.outcome == 'ok')
+h1 = env['ts.audit.event']._hash_ip('203.0.113.9')
+check('P17 an address is stored only as a salted hash (16 hex)', bool(h1) and len(h1) == 16 and '203' not in h1 and h1 == env['ts.audit.event']._hash_ip('203.0.113.9'))
 ws_n = panel('education')
 ws_n.write({'approval_note': 'یادداشت محرمانه'})
 env['ts.audit.event'].search([('workspace_id', '=', ws_n.id)])

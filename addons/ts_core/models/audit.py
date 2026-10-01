@@ -73,10 +73,10 @@ class TsAuditEvent(models.Model):
     @api.model
     def _ip_salt(self):
         ICP = self.env['ir.config_parameter'].sudo()
-        salt = ICP.get_param('ts_core.audit_ip_salt')
+        salt = ICP.get_str('ts_core.audit_ip_salt')
         if not salt:
             salt = secrets.token_hex(16)
-            ICP.set_param('ts_core.audit_ip_salt', salt)
+            ICP.set_str('ts_core.audit_ip_salt', salt)
         return salt
 
     @api.model

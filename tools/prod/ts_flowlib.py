@@ -3,7 +3,8 @@ import http.cookiejar, os, re, subprocess, urllib.error, urllib.parse, urllib.re
 
 DB = PORT = BASE = None
 results = []
-AP = '/opt/odoo/talentsearch_stage/addons,/opt/odoo/themes,/opt/odoo/enterprise,/opt/odoo/odoo/addons'
+_SLOT = os.environ.get('TS_SLOT', '0')   # slot N>0 rehearses from /opt/odoo/talentsearch_stage_sN
+AP = '/opt/odoo/talentsearch_stage%s/addons,' % ('' if _SLOT == '0' else '_s' + _SLOT) + '/opt/odoo/themes,/opt/odoo/enterprise,/opt/odoo/odoo/addons'
 
 
 def setup(db, port):

@@ -300,7 +300,9 @@ class TsWorkspaceMember(models.Model):
         return super().unlink()
 
     def can_invite(self):
-        return self.has_perm('invites:create')
+        """Role may create invitations (a gated panel is handled by can_invite_participants, as before;
+        admin is not added: the coordinator does not invite in this stage)."""
+        return self.role in INVITE_ROLES
 
     def can_invite_participants(self):
         """Real participants can be invited only once the platform owner approved gated panels."""
