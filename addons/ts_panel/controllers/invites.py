@@ -290,7 +290,11 @@ class TsPanelInvites(http.Controller):
         a = _assignment_or_404(me, aid)
         if not me.can_act() or not me.can_see(a.client_id) or a.state not in ('invited', 'opened', 'expired'):
             raise request.not_found()
-        png = request.env['ir.actions.report'].barcode('QR', a.invite_url(), width=320, height=320)
+        import io
+        import qrcode   # in the Odoo virtualenv with Pillow; reportlab's PNG backend is not installed
+        buf = io.BytesIO()
+        qrcode.make(a.invite_url(), box_size=8, border=2).save(buf, format='PNG')
+        png = buf.getvalue()
         return request.make_response(png, headers=[('Content-Type', 'image/png'), ('Cache-Control', 'private, no-store')])
 
     @http.route('/my/workspaces/<int:ws_id>/invites/<int:aid>/<string:action>', type='http', auth='user',

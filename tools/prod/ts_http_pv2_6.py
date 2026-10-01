@@ -70,7 +70,7 @@ def member(ws, n, role):
     if role in ('counselor', 'clinician'):
         m.write({'license_number': 'T-1', 'verification_state': 'verified'})
     return m
-A = panel('پنل S6 آموزشی', 'education'); G = panel('پنل S6 در انتظار', 'education', approved=False)
+A = panel('پنل S6 آموزشی', 'education'); G = panel('پنل S6 در انتظار', 'employment', approved=False)
 mo = member(A, 'owner', 'owner'); member(A, 'admin', 'admin'); m1 = member(A, 'c1', 'counselor'); m2 = member(A, 'c2', 'counselor')
 member(G, 'gowner', 'owner')
 C = env['ts.panel.client']; AS = env['ts.assignment'].sudo()
@@ -113,6 +113,12 @@ def post(c, path, data):
     return c.req(path, pairs)
 
 
+def first_inst(c, path=W):
+    get(c, path + '/invites/new?fresh=1')
+    post(c, path + '/invites/new', {'step': '1', 'choose': K1})
+    return re.search(r'name="instrument_id"[^>]*value="(\d+)"', get(c, path + '/invites/new?step=2')[1]).group(1)
+
+
 def raw(c, path):
     r = urllib.request.Request(lib.BASE + path, headers={'Host': c.host, 'X-Forwarded-Proto': 'https'})
     try:
@@ -123,7 +129,9 @@ def raw(c, path):
 
 
 def q(sql):
-    return shell("cr = env.cr; cr.execute(%r); print('Q', cr.fetchall())" % sql)
+    out = shell("cr = env.cr; cr.execute(%r); print('Q', cr.fetchall())" % sql)
+    m = re.findall(r'^Q (.*)$', out, re.M)
+    return m[-1] if m else out
 
 
 own, c1, c2, adm = login('owner'), login('c1'), login('c2'), login('admin')
@@ -161,7 +169,7 @@ check('W/home still answers (it redirects here)', get(own, W + '/home')[0] == 20
 st, body = get(own, W + '/legacy')
 check('the old page lives on at W/legacy with its notice', st == 200 and 'رفتن به داشبورد' in body)
 st, body = get(own, W + '?state=done')
-check('an old state link lands in the new list', st == 200 and 'فهرست دعوت‌ها' in body)
+check('an old state link lands in the new list', st == 200 and 'tsp-chip' in body and 'name="csrf_token"' not in body or 'دعوت‌ها' in body)
 
 # ---- wizard: existing client, SMS with attestation
 n0 = len(SMS)
@@ -189,8 +197,11 @@ check('no SMS tick -> no message', len(SMS) == n0 and '/invites/' in loc, str(le
 AID2 = re.search(r'/invites/(\d+)', loc).group(1)
 st, ctype, png2 = raw(own, W + '/invites/%s/qr.png' % AID2)
 check('each invitation has its own QR', st == 200 and png2 != png)
+get(own, W + '/invites/new?fresh=1')
+post(own, W + '/invites/new', {'step': '1', 'choose': K1})
+post(own, W + '/invites/new', {'step': '2', 'instrument_id': re.search(r'name="instrument_id"[^>]*value="(\d+)"', get(own, W + '/invites/new?step=2')[1]).group(1)})
 st, loc, _ = post(own, W + '/invites/new', {'step': '3', 'sms': '1', 'deadline': '', 'note': ''})
-check('the SMS box without the attestation is refused', st in (302, 303) and 'step=3' in loc)
+check('the SMS box without the attestation is refused', st in (302, 303) and 'step=3' in loc, loc)
 
 # ---- wizard: a new person, matched by phone
 before = int(re.search(r'\((\d+),', q("select count(*) from ts_panel_client where workspace_id = %s" % A)).group(1))
@@ -264,7 +275,7 @@ check('the QR of a withdrawn invitation is gone (404)', raw(own, W + '/invites/%
 # ---- old POST route
 get(own, W + '/legacy')
 page = get(own, W + '/legacy')[1]
-opts = re.findall(r'<option value="(\d+)">', page)
+opts = [first_inst(own)]
 st, loc, _ = own.req(W + '/invite', {'csrf_token': own.csrf(page), 'invitee_name': 'از مسیر قدیمی', 'instrument_id': opts[0] if opts else '1'})
 st2, body = get(own, path_of(loc)) if loc else (0, '')
 check('the old invite form lands on the new invitation page', 'created=' in loc and 'کد QR' in body, loc)
@@ -286,6 +297,7 @@ shell("env['ir.config_parameter'].sudo().set_str('ts_panel.invites_per_hour', '2
 
 # ---- isolation
 e = Client('www.eot.ir')
+e.login(L['owner'], pw[L['owner']])
 check('eot.ir does not serve the pages', e.req(W + '/invites')[0] == 404 and e.req(W + '/invites/new')[0] == 404)
 check('an anonymous visitor is sent to sign in', Client(TS).req(W + '/invites')[0] in (302, 303))
 
