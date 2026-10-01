@@ -1,8 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <!-- Dashboard v1 (S2): today's six counters as tiles. The role-based dashboard arrives in S12. -->
+    <!-- Dashboard (S12, DSH-1..DSH-5): needs attention, KPI tiles for a period, funnel with a table, workload, onboarding.
+         Counts and states only; every number links to the list that shows exactly those records. -->
     <record id="tpl_dashboard" model="ir.ui.view">
-        <field name="name">TS panel: dashboard v1</field>
+        <field name="name">TS panel: dashboard</field>
         <field name="type">qweb</field>
         <field name="key">ts_panel.dashboard</field>
         <field name="website_id" ref="ts_website.website_ts"/>
@@ -14,7 +15,7 @@
                             <header class="tsp-head">
                                 <div>
                                     <h1 class="tsp-head__title">داشبورد</h1>
-                                    <p class="tsp-head__help">وضعیت دعوت‌هایی که می‌توانید ببینید. هر کادر شما را به فهرست دعوت‌های همان وضعیت می‌برد.</p>
+                                    <p class="tsp-head__help">اول کارهای منتظر شما، بعد خلاصهٔ دوره. هر عدد شما را به فهرستی می‌برد که همان تعداد را نشان می‌دهد.</p>
                                 </div>
                                 <div class="tsp-head__actions">
                                     <a t-if="can_invite" t-attf-href="/my/workspaces/#{ws.id}/invites/new?fresh=1" class="ts-btn ts-btn--primary">دعوت تازه</a>
@@ -27,23 +28,84 @@
                                 <t t-if="rejected"><br/>درخواست رد شد<t t-if="rejection_note">: <span t-out="rejection_note"/></t>. می‌توانید اطلاعات پنل را اصلاح کنید و با پشتیبانی تماس بگیرید.</t>
                             </section>
                             <p t-if="is_new" class="ts-notice" role="status">پنل ساخته شد.</p>
-                            <section t-if="checklist" class="ts-card ts-card--soft" id="ts-checklist">
-                                <h2 class="h5">گام‌های راه‌اندازی</h2>
+
+                            <section t-if="attention" class="ts-card" aria-labelledby="tsp-d-att">
+                                <h2 id="tsp-d-att" class="h5">نیازمند توجه</h2>
+                                <ul class="tsp-list">
+                                    <li t-foreach="attention" t-as="a">
+                                        <a t-att-href="a['url']"><strong class="ts-num" t-out="fa(a['n'])"/> <span t-out="a['label']"/></a>
+                                    </li>
+                                </ul>
+                            </section>
+
+                            <section t-if="checklist" class="ts-card ts-card--soft" id="ts-checklist" aria-labelledby="tsp-d-chk">
+                                <h2 id="tsp-d-chk" class="h5">گام‌های راه‌اندازی</h2>
                                 <ol class="ts-checklist">
                                     <li t-foreach="checklist" t-as="c" t-attf-class="#{'is-done' if c[1] else ''}">
                                         <a t-if="c[2] and not c[1]" t-att-href="c[2]" t-out="c[0]"/><span t-else="" t-out="c[0]"/><span t-if="c[1]" class="tsp-sr"> (انجام شد)</span>
                                     </li>
                                 </ol>
+                                <form t-if="can_dismiss" t-attf-action="/my/workspaces/#{ws.id}/dashboard/dismiss" method="post" data-tsp-once="1">
+                                    <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                                    <button type="submit" class="ts-btn ts-btn--ghost">دیگر نشان نده</button>
+                                </form>
                             </section>
-                            <p t-if="not total" class="tsp-empty">هنوز دعوتی نفرستاده‌اید. با «دعوت تازه» اولین دعوت را بسازید.</p>
-                            <ul class="tsp-stats" aria-label="شمار دعوت‌ها به تفکیک وضعیت">
-                                <li t-foreach="tiles" t-as="t">
-                                    <a class="tsp-stat" t-att-href="t['url']">
-                                        <strong class="ts-num" t-out="fa(t['n'])"/>
-                                        <span t-out="t['label']"/>
-                                    </a>
-                                </li>
-                            </ul>
+
+                            <section t-if="tiles or funnel" class="ts-card" aria-labelledby="tsp-d-kpi">
+                                <h2 id="tsp-d-kpi" class="h5">خلاصهٔ دوره</h2>
+                                <nav class="tsp-chips" aria-label="دورهٔ گزارش">
+                                    <a t-foreach="periods" t-as="p" t-attf-href="/my/workspaces/#{ws.id}?period=#{p}"
+                                       t-attf-class="tsp-chip #{'is-on' if p == days else ''}" t-att-aria-current="'true' if p == days else None">
+                                        <t t-out="fa(p)"/> روز گذشته</a>
+                                </nav>
+                                <ul t-if="tiles" class="tsp-stats" aria-label="شاخص‌های دوره">
+                                    <li t-foreach="tiles" t-as="t">
+                                        <a t-if="t['url']" class="tsp-stat" t-att-href="t['url']">
+                                            <strong class="ts-num"><t t-if="t['key'] == 'rate'"><t t-out="fa(t['text'][0])"/> از <t t-out="fa(t['text'][1])"/></t><t t-else="" t-out="fa(t['n'])"/></strong>
+                                            <span t-out="t['label']"/>
+                                            <small t-if="t['key'] == 'usage' and t['text']" t-out="t['text']"/>
+                                        </a>
+                                        <div t-else="" class="tsp-stat">
+                                            <strong class="ts-num" t-out="fa(t['n'])"/>
+                                            <span t-out="t['label']"/>
+                                        </div>
+                                    </li>
+                                </ul>
+                                <p t-if="not tiles" class="ts-hint">برای نقش شما شاخصی در این بخش نیست.</p>
+                            </section>
+
+                            <section t-if="funnel" class="ts-card" aria-labelledby="tsp-d-fun">
+                                <h2 id="tsp-d-fun" class="h5">مسیر دعوت‌ها در این دوره</h2>
+                                <table class="ts-table tsp-table">
+                                    <caption class="tsp-sr">شمار دعوت‌های ساخته‌شده در دوره به تفکیک وضعیت</caption>
+                                    <thead><tr><th scope="col">وضعیت</th><th scope="col">تعداد</th><th scope="col"><span class="tsp-sr">نمودار</span></th></tr></thead>
+                                    <tbody>
+                                        <t t-set="top" t-value="max([f[2] for f in funnel] + [1])"/>
+                                        <tr t-foreach="funnel" t-as="f">
+                                            <th scope="row"><a t-att-href="f[3]" t-out="f[1]"/></th>
+                                            <td class="ts-num" t-out="fa(f[2])"/>
+                                            <td aria-hidden="true"><span class="tsp-bar" t-attf-style="width: #{round(100.0 * f[2] / top)}%"></span></td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </section>
+
+                            <section t-if="workload" class="ts-card" aria-labelledby="tsp-d-wl">
+                                <h2 id="tsp-d-wl" class="h5">حجم کار اعضا</h2>
+                                <table class="ts-table tsp-table tsp-table--cards">
+                                    <caption class="tsp-sr">شرکت‌کنندگان و دعوت‌های باز هر عضو</caption>
+                                    <thead><tr><th scope="col">عضو</th><th scope="col">شرکت‌کنندگان</th><th scope="col">دعوت‌های باز</th></tr></thead>
+                                    <tbody>
+                                        <tr t-foreach="workload" t-as="w">
+                                            <th scope="row" data-label="عضو" t-out="w[0].user_id.name"/>
+                                            <td data-label="شرکت‌کنندگان" class="ts-num" t-out="fa(w[1])"/>
+                                            <td data-label="دعوت‌های باز" class="ts-num" t-out="fa(w[2])"/>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </section>
+
+                            <p t-if="not total and not attention and not checklist" class="tsp-empty">هنوز دعوتی نفرستاده‌اید. با «دعوت تازه» اولین دعوت را بسازید.</p>
                         </t>
                     </div>
                 </t>

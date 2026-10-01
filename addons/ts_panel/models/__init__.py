@@ -14,3 +14,4 @@ from . import notify_texts
 from . import notify
 from . import company
 from . import wallet
+from . import dashboard

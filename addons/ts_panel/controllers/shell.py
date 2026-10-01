@@ -1,10 +1,11 @@
-from odoo import http
+from odoo import fields, http
 from odoo.exceptions import UserError, ValidationError
 from odoo.http import request
 
 from odoo.addons.ts_org.controllers.main import TsOrg
 from odoo.addons.ts_org.models.panel import TERMS_VERSION
 
+from ..models.dashboard import PERIODS
 from .base import STATE_LABELS, flash_error, flash_ok, member_or_404, render_in_shell, require
 from .invites import STATE_ORDER, invite_count_by_state
 
@@ -49,7 +50,7 @@ class TsPanelWorkspace(TsOrg):
             flash_error(OLD_ERRORS[kw['error']])
         if state in STATE_LABELS:
             return request.redirect('/my/workspaces/%s/invites?state=%s' % (ws_id, state))
-        return self._dashboard(member, is_new=bool(kw.get('new')))
+        return self._dashboard(member, is_new=bool(kw.get('new')), period=kw.get('period'))
 
     @http.route('/my/workspaces/<int:ws_id>/legacy', type='http', auth='user', website=True, sitemap=False)
     def workspace_legacy(self, ws_id, state=None, **kw):
@@ -79,7 +80,7 @@ class TsPanelWorkspace(TsOrg):
             ('دعوت اولین شرکت‌کننده' + (' (پس از تأیید)' if ws.gated else ''), bool(first), base + '/invites/new?fresh=1'),
         ]
 
-    def _dashboard(self, member, is_new=False):
+    def _dashboard(self, member, is_new=False, period=None):
         if not member.has_perm('panel:view'):
             return require(member, 'panel:view', 'home')
         ws = member.workspace_id
@@ -87,12 +88,14 @@ class TsPanelWorkspace(TsOrg):
         if page_state:
             title, text = STATE_PAGES[page_state]
             return render_in_shell('ts_panel.state_page', member, 'home', title, state_title=title, state_text=text)
+        days = int(period) if (period or '').isdigit() and int(period) in PERIODS else 30
         counts = invite_count_by_state(member) if member.can_act() and member.has_perm('invites:manage') else {k: 0 for k in STATE_ORDER}
-        tiles = [{'key': k, 'label': STATE_LABELS[k], 'n': counts[k],
-                  'url': '/my/workspaces/%s/invites?state=%s' % (ws.id, k)} for k in STATE_ORDER]
-        return render_in_shell('ts_panel.dashboard', member, 'home', 'داشبورد', tiles=tiles,
-                               checklist=self._setup_steps(member) if is_new or not sum(counts.values()) else [], is_new=is_new,
-                               total=sum(counts.values()), gated=ws.gated, can_invite=member.can_act() and member.has_perm('invites:create'),
+        return render_in_shell('ts_panel.dashboard', member, 'home', 'داشبورد',
+                               attention=member.dash_attention(), tiles=member.dash_tiles(days), funnel=member.dash_funnel(days),
+                               workload=member.dash_workload(), checklist=member.dash_checklist(), days=days, periods=PERIODS,
+                               is_new=is_new, total=sum(counts.values()), gated=ws.gated,
+                               can_invite=member.can_act() and member.has_perm('invites:create'),
+                               can_dismiss=member.has_perm('members:invite'),
                                rejected=ws.rejected_on, rejection_note=ws.rejection_note)
 
 
@@ -101,6 +104,15 @@ class TsPanelShell(http.Controller):
     @http.route('/my/workspaces/<int:ws_id>/home', type='http', auth='user', website=True, sitemap=False)
     def home(self, ws_id, **kw):
         member_or_404(ws_id)
+        return request.redirect('/my/workspaces/%s' % ws_id)
+
+    @http.route('/my/workspaces/<int:ws_id>/dashboard/dismiss', type='http', auth='user', website=True, methods=['POST'], sitemap=False)
+    def dismiss_checklist(self, ws_id, **post):
+        member = member_or_404(ws_id)
+        denied = require(member, 'members:invite', 'home')
+        if denied:
+            return denied
+        member.workspace_id.sudo().onboarding_dismissed_on = fields.Datetime.now()
         return request.redirect('/my/workspaces/%s' % ws_id)
 
     # ------------------------------------------------------------------ settings

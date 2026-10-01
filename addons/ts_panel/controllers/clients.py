@@ -13,7 +13,7 @@ from .base import STATE_LABELS, flash_error, flash_ok, forbidden, member_or_404,
 PAGE = 25
 SORTS = {'name': 'name_norm', 'activity': 'last_activity_at', 'open': 'open_count', 'done': 'done_count'}
 FILTERS = [('all', 'همه'), ('mine', 'مراجعان من'), ('unassigned', 'بدون کارشناس'), ('imported', 'واردشده'),
-           ('archived', 'بایگانی‌شده')]
+           ('archived', 'بایگانی‌شده'), ('handover', 'درخواست واگذاری'), ('mine_open', 'مراجعان باز من')]
 SOURCE_LABELS = {'manual': 'ثبت دستی', 'csv': 'فایل', 'invite': 'دعوت', 'open_link': 'پیوند عمومی',
                  'self_share': 'ارسال با کد پنل', 'import': 'واردشده'}
 Q_KEY = 'ts_clients_q'
@@ -107,6 +107,10 @@ class TsPanelClients(http.Controller):
             dom.append(('responsible_id', '=', False))
         elif flt == 'imported':
             dom.append(('source', '=', 'import'))
+        elif flt == 'handover':
+            dom.append(('handover_to_id', '!=', False))
+        elif flt == 'mine_open':
+            dom += [('responsible_id', '=', me.id), ('open_count', '>', 0)]
         G = request.env['ts.panel.group'].sudo()
         groups = G.search([('workspace_id', '=', ws_id)])
         group = groups.filtered(lambda g: str(g.id) == params.get('group'))[:1]

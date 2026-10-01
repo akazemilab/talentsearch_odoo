@@ -20,6 +20,7 @@
                                     <a t-if="can_create" t-attf-href="/my/workspaces/#{ws.id}/invites/new?fresh=1" class="ts-btn ts-btn--primary">دعوت تازه</a>
                                 </div>
                             </header>
+                            <p t-if="filtered" class="ts-notice" role="status">نمایش فقط: <strong t-out="filtered"/> (<span class="ts-num" t-out="fa(total)"/> دعوت) — <a t-att-href="clear_url">نمایش همه</a></p>
                             <nav class="tsp-chips" aria-label="فیلتر وضعیت">
                                 <a t-att-href="url(state='all', page=1)" t-attf-class="tsp-chip #{'is-on' if state == 'all' else ''}" t-att-aria-current="'true' if state == 'all' else None">همه <span class="ts-num" t-out="fa(all_total)"/></a>
                                 <a t-foreach="state_order" t-as="k" t-att-href="url(state=k, page=1)" t-attf-class="tsp-chip #{'is-on' if state == k else ''}" t-att-aria-current="'true' if state == k else None"><t t-out="state_labels[k]"/> <span class="ts-num" t-out="fa(counts[k])"/></a>

@@ -9,9 +9,15 @@ from odoo.http import request
 from odoo.addons.ts_org.models.panel import norm_email, norm_phone
 
 from .base import STATE_LABELS, flash_error, flash_ok, forbidden, member_or_404, render_in_shell, require
+from ..models.dashboard import invite_filters
 from .clients import visible_domain
 
 PAGE = 25
+FILTER_TEXT = {'unseen': 'نتیجه‌هایی که هنوز باز نکرده‌اید', 'overdue': 'دعوت‌های گذشته از مهلت',
+               'expiring': 'دعوت‌هایی که تا ۳ روز دیگر منقضی می‌شوند', 'sent': 'دعوت‌های فرستاده‌شده در این دوره',
+               'accepted': 'دعوت‌های پذیرفته‌شده در این دوره', 'done': 'تکمیل‌شده‌ها در این دوره',
+               'noshare': 'تکمیل‌شده‌های بدون اشتراک نتیجه', 'created': 'دعوت‌های ساخته‌شده در این دوره',
+               'active': 'دعوت‌های این دوره (بدون لغوشده)'}
 STATE_ORDER = ['invited', 'opened', 'accepted', 'in_progress', 'done', 'expired', 'declined', 'withdrawn']
 DRAFT = 'ts_invite_draft_%s'
 PILL = {'done': 'ts-pill--ok', 'accepted': 'ts-pill--info', 'in_progress': 'ts-pill--info', 'expired': 'ts-pill--warn',
@@ -66,22 +72,30 @@ class TsPanelInvites(http.Controller):
             return forbidden(me, 'invites:manage', 'invites')
         A = request.env['ts.assignment'].sudo()
         state = kw.get('state') if kw.get('state') in STATE_LABELS else 'all'
-        dom = assignment_domain(me) + ([('state', '=', state)] if state != 'all' else [])
+        base_dom = assignment_domain(me)
+        extra, fparams = invite_filters(request.env, me, base_dom, kw)
+        dom = base_dom + extra + ([('state', '=', state)] if state != 'all' else [])
         total = A.search_count(dom)
         pages = max(1, -(-total // PAGE))
         page = min(max(int(kw['page']) if (kw.get('page') or '').isdigit() else 1, 1), pages)
         rows = A.search(dom, order='create_date desc, id desc', limit=PAGE, offset=(page - 1) * PAGE)
-        counts = invite_count_by_state(me)
+        counts = invite_count_by_state(me) if not fparams else {k: 0 for k in STATE_ORDER}
+        if fparams:
+            for st, n in A._read_group(base_dom + extra, groupby=['state'], aggregates=['__count']):
+                counts[st] = n
 
         def url(**over):
             q = {'state': state, 'page': page}
+            q.update(fparams)
             q.update(over)
             parts = ['%s=%s' % (k, v) for k, v in q.items() if not ((k == 'state' and v == 'all') or (k == 'page' and int(v) == 1))]
             return '/my/workspaces/%s/invites%s' % (ws_id, ('?' + '&'.join(parts)) if parts else '')
 
         return render_in_shell('ts_panel.invites', me, 'invites', 'دعوت‌ها', rows=rows, counts=counts, state=state,
                                state_order=STATE_ORDER, state_labels=STATE_LABELS, pill=PILL, total=total, page=page, pages=pages,
-                               url=url, can_create=me.has_perm('invites:create'), all_total=sum(counts.values()))
+                               url=url, can_create=me.has_perm('invites:create'), all_total=sum(counts.values()),
+                               filtered=FILTER_TEXT.get(next((k for k in ('unseen', 'overdue', 'expiring') if k in fparams), fparams.get('kind')), '') if fparams else '',
+                               clear_url='/my/workspaces/%s/invites%s' % (ws_id, ('?state=' + state) if state != 'all' else ''))
 
     # ------------------------------------------------------------------ wizard
     def _draft(self, ws_id):

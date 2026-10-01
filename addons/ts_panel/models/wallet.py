@@ -188,6 +188,14 @@ class TsWallet(models.Model):
             by[name] = by.get(name, 0) + units
         return [(y, m, out[(y, m)]) for y, m in sorted(out, reverse=True)[:months]]
 
+    def units_since(self, start):
+        """Units used since `start` (naive UTC): debits minus refunds."""
+        self.ensure_one()
+        self.env.flush_all()
+        self.env.cr.execute("""SELECT COALESCE(SUM(CASE WHEN type = 'debit_usage' THEN units WHEN type = 'refund' THEN -units ELSE 0 END), 0)
+                                  FROM ts_wallet_txn WHERE wallet_id = %s AND txn_date >= %s""", [self.id, start])
+        return self.env.cr.fetchone()[0]
+
     def current_month_units(self):
         self.ensure_one()
         now = datetime.now(ZoneInfo('Asia/Tehran'))
