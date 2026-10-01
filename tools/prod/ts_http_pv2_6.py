@@ -59,8 +59,7 @@ def panel(name, purpose, approved=True):
     org.write({'is_company': True})
     ws = env['ts.workspace'].search([('partner_id', '=', org.id)], limit=1) or env['ts.workspace'].create(
         {'name': name, 'purpose': purpose, 'partner_id': org.id})
-    if approved:
-        ws.write({'approved_on': '2026-01-01 00:00:00'})
+    ws.write({'purpose': purpose, 'approved_on': '2026-01-01 00:00:00' if approved else False})
     ws.state = 'pilot'
     return ws
 def member(ws, n, role):
