@@ -170,7 +170,11 @@ class TsPanelInvites(http.Controller):
             dups = C.ts_duplicates(ws_id, phone=d.get('new_phone'), email=d.get('new_email')).filtered(lambda c: me.can_see(c) and not c.contact_locked)
         from odoo.addons.ts_assessment.models.attempt import jalali
         dl = jalali(datetime.combine(fields.Date.to_date(d['deadline']), time(12)), with_time=False) if d.get('deadline') else ''
-        return {'dups': dups, 'deadline_fa': dl}
+        needs_guardian = False
+        if d.get('client_id'):
+            cl = C.search(visible_domain(me) + [('id', '=', d['client_id'])])
+            needs_guardian = bool(cl and cl.ts_needs_guardian())
+        return {'dups': dups, 'deadline_fa': dl, 'needs_guardian': needs_guardian}
 
     def _wizard_post(self, me, ws_id, step, post):
         d = dict(self._draft(ws_id))
@@ -236,10 +240,10 @@ class TsPanelInvites(http.Controller):
             self._save_draft(ws_id, d)
             return request.redirect(back + '?step=4')
         if step == '4':
-            return self._create(me, ws_id, d)
+            return self._create(me, ws_id, d, post)
         return request.redirect(back)
 
-    def _create(self, me, ws_id, d):
+    def _create(self, me, ws_id, d, post=None):
         back = '/my/workspaces/%s/invites/new' % ws_id
         A = request.env['ts.assignment'].sudo()
         if not d.get('instrument_id') or d['instrument_id'] not in me.allowed_instruments().ids:
@@ -258,6 +262,11 @@ class TsPanelInvites(http.Controller):
             if not c or c.contact_locked:
                 flash_error('این شرکت‌کننده را نمی‌توان دعوت کرد.')
                 return request.redirect(back + '?fresh=1')
+            if c.ts_needs_guardian():
+                if not (post or {}).get('guardian_ok'):
+                    flash_error('برای شرکت‌کنندهٔ زیر ۱۸ سال باید تأیید کنید که رضایت ولی یا سرپرست قانونی را گرفته‌اید.')
+                    return request.redirect(back + '?step=4')
+                c.ts_attest_guardian(me)
             vals.update(client_id=c.id, invitee_name=c.name, invitee_email=c.email or False, invitee_phone=c.phone or False)
         else:
             vals.update(invitee_name=d['new_name'], invitee_email=d.get('new_email') or False, invitee_phone=d.get('new_phone') or False)

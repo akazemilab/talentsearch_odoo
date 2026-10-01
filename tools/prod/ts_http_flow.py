@@ -93,7 +93,7 @@ st, _, page = u.req('/take/' + token)
 check('consent page shown first', st == 200 and 'consent_service' in page)
 st, loc, _ = u.req('/take/%s/consent' % token, {'csrf_token': u.csrf(page)})
 check('consent without the required box is refused', 'error=consent' in loc, loc)
-st, loc, _ = u.req('/take/%s/consent' % token, {'csrf_token': u.csrf(page), 'consent_service': '1'})
+st, loc, _ = u.req('/take/%s/consent' % token, {'csrf_token': u.csrf(page), 'consent_service': '1', 'age18': 'yes'})
 st, _, page = u.req('/take/' + token)
 nq = page.count('class="ts-q"')
 check('player page renders (up to 10 items per page, 5-point scale)', st == 200 and 1 <= nq <= 10 and page.count('type="radio"') == 5 * nq,

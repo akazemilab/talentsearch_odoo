@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- S16: age question for people who take a test on their own, and the child's own assent in a panel (GRD-2, GRD-5) -->
+    <template id="consent_age_ass" name="Age and assent on the consent page">
+        <t t-if="not attempt.workspace_id">
+            <fieldset id="ts-age-box" class="ts-age">
+                <legend>آیا ۱۸ سال یا بیشتر دارید؟</legend>
+                <p t-if="error == 'age'" class="ts-form__error tt-error" role="alert">لطفاً سن خود را مشخص کنید.</p>
+                <p t-if="error == 'guardian_ok'" class="ts-form__error tt-error" role="alert">برای زیر ۱۸ سال، رضایت ولی یا سرپرست قانونی لازم است.</p>
+                <label><input type="radio" name="age18" value="yes" required="required"/> بله</label>
+                <label><input type="radio" name="age18" value="no"/> خیر، کمتر از ۱۸ سال دارم</label>
+                <label class="ts-check"><input type="checkbox" name="guardian_ok" value="1"/>
+                    <span>اگر کمتر از ۱۸ سال دارید: ولی یا سرپرست قانونی‌ام از انجام این آزمون آگاه است و موافقت کرده است.</span></label>
+            </fieldset>
+        </t>
+        <t t-elif="attempt.client_id and attempt.client_id.age_group == 'minor'">
+            <p t-if="error == 'assent'" class="ts-form__error tt-error" role="alert">برای ادامه باید موافقت خودتان را اعلام کنید.</p>
+            <label class="ts-check"><input type="checkbox" name="assent_ok" value="1" required="required"/>
+                <span>برایم توضیح داده‌اند که این آزمون چیست و می‌توانم هر وقت خواستم متوقف شوم؛ خودم هم موافقم.</span></label>
+        </t>
+    </template>
+
+    <record id="consent_age_assessment" model="ir.ui.view">
+        <field name="name">ts_panel.consent.age.assessment</field>
+        <field name="inherit_id" ref="ts_assessment.consent"/>
+        <field name="mode">extension</field>
+        <field name="arch" type="xml">
+            <xpath expr="//input[@name='consent_service']/.." position="before">
+                <t t-call="ts_panel.consent_age_ass"/>
+            </xpath>
+        </field>
+    </record>
+    <record id="consent_age_talent" model="ir.ui.view">
+        <field name="name">ts_panel.consent.age.talent</field>
+        <field name="inherit_id" ref="ts_talent.tpl_consent"/>
+        <field name="mode">extension</field>
+        <field name="arch" type="xml">
+            <xpath expr="//input[@name='consent_service']/.." position="before">
+                <t t-call="ts_panel.consent_age_ass"/>
+            </xpath>
+        </field>
+    </record>
+</odoo>

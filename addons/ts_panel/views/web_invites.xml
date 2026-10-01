@@ -163,6 +163,7 @@
                                     <dt>پیامک</dt><dd><t t-if="draft.get('sms')">بله، با تأیید رضایت</t><t t-else="">نه؛ پیوند را خودتان می‌فرستید</t></dd>
                                 </dl>
                                 <p t-if="dups" class="ts-notice" role="status">این مشخصات با «<t t-out="', '.join(dups.mapped('name'))"/>» یکی است؛ دعوت برای همان ردیف ثبت می‌شود.</p>
+                                <p t-if="needs_guardian" class="ts-notice" id="ts-guardian-box"><label><input type="checkbox" name="guardian_ok" value="1"/> رضایت ولی یا سرپرست قانونی این شرکت‌کننده را گرفته‌ایم و نزد ما محفوظ است.</label></p>
                                 <p><button type="submit" class="ts-btn ts-btn--primary">ساخت دعوت</button> <a t-attf-href="/my/workspaces/#{ws.id}/invites/new?step=3" class="ts-btn ts-btn--quiet">قبلی</a></p>
                             </form>
                         </t>

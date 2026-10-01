@@ -21,3 +21,4 @@ from . import support_access
 from . import consent
 from . import data_request
 from . import assignment_consent
+from . import guardian

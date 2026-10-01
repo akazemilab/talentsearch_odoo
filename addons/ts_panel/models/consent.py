@@ -35,7 +35,7 @@ class TsConsentRecord(models.Model):
 
     @api.model
     def _log(self, kind, user, assignment=None, attempt=None, workspace=None, level=False, version=False, method='checkbox',
-             given_as='self'):
+             given_as='self', client=None):
         """Write one ledger row. Never raises into the caller's flow."""
         try:
             with self.env.cr.savepoint():
@@ -44,7 +44,7 @@ class TsConsentRecord(models.Model):
                         'assignment_id': assignment.id if assignment else False,
                         'attempt_id': attempt.id if attempt else (assignment.attempt_id.id if assignment else False),
                         'workspace_id': workspace.id if workspace else (assignment.workspace_id.id if assignment else False),
-                        'client_id': assignment.client_id.id if assignment and 'client_id' in assignment._fields else False,
+                        'client_id': client.id if client else (assignment.client_id.id if assignment and 'client_id' in assignment._fields else False),
                         'ip_hash': self.env['ts.audit.event']._request_facts().get('ip_hash')}
                 return self.sudo().with_context(ts_consent_create=True).create(vals)
         except Exception:                                       # the ledger must not break the action it records

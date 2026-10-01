@@ -98,7 +98,7 @@ class TsPanelCampaigns(http.Controller):
             return render_in_shell('ts_panel.campaign_form', me, 'campaigns', 'دعوت گروهی تازه', **self._form_ctx(me, d))
         step = post.get('step')
         if step == 'create':
-            return self._create(me, ws_id)
+            return self._create(me, ws_id, post)
         d, err = self._read_form(me, post)
         request.session[DRAFT % ws_id] = d
         if err:
@@ -111,7 +111,8 @@ class TsPanelCampaigns(http.Controller):
             if not clients:
                 flash_error('در گروه‌های انتخاب‌شده کسی نیست که بتوانید برایش دعوت بسازید.')
                 return request.redirect(back + '?keep=1')
-            extra = dict(clients=clients, to_invite=to_invite, skipped=skipped, skip_labels=SKIP_LABELS)
+            extra = dict(clients=clients, to_invite=to_invite, skipped=skipped, skip_labels=SKIP_LABELS,
+                         minors=to_invite.filtered(lambda c: c.ts_needs_guardian()))
         inst = request.env['ts.instrument'].sudo().browse(d['instrument_id'])  # ts-scope-ok: instrument is global, not workspace data
         return render_in_shell('ts_panel.campaign_review', me, 'campaigns', 'مرور دعوت گروهی', draft=d, inst=inst,
                                groups=self._groups(me).filtered(lambda g: g.id in d.get('group_ids', [])),
@@ -162,7 +163,7 @@ class TsPanelCampaigns(http.Controller):
             d['open_days'] = int(days) if days in ('7', '14', '30') else 14
         return d, err
 
-    def _create(self, me, ws_id):
+    def _create(self, me, ws_id, post=None):
         back = '/my/workspaces/%s/campaigns/new' % ws_id
         d = request.session.get(DRAFT % ws_id)
         if not d or not d.get('instrument_id') or d['instrument_id'] not in me.allowed_instruments().ids:
@@ -182,7 +183,14 @@ class TsPanelCampaigns(http.Controller):
                 if len(to_invite) > MAX_LIST or recent + len(to_invite) > limit:
                     flash_error('در یک ساعت بیش از %s دعوت نمی‌توان ساخت؛ گروه کوچک‌تری انتخاب کنید یا کمی بعد دوباره امتحان کنید.' % _fa(limit))
                     return request.redirect(back + '?keep=1')
+                minors = to_invite.filtered(lambda c: c.ts_needs_guardian())
+                if minors and not (post or {}).get('guardian_ok'):
+                    flash_error('برای شرکت‌کنندگان زیر ۱۸ سال باید تأیید کنید که رضایت ولی یا سرپرست قانونی را گرفته‌اید.')
+                    return request.redirect(back + '?keep=1')
                 vals.update(group_ids=[(6, 0, d['group_ids'])], send_sms=bool(d.get('sms')), remind=bool(d.get('remind')))
+                if minors:
+                    vals.update(guardian_attested_by_id=me.id, guardian_attested_on=fields.Datetime.now())
+                    minors.ts_attest_guardian(me)
                 c = Campaign.create(vals)
                 created, skipped = c.ts_launch(clients)
                 request.env['ts.audit.event'].log('campaign.create', c, workspace=c.workspace_id, member=me, kind='list',
