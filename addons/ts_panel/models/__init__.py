@@ -6,4 +6,5 @@ from . import text
 from . import client
 from . import assignment
 from . import group
+from . import campaign
 from . import saved_view

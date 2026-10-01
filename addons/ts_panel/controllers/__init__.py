@@ -4,3 +4,5 @@ from . import reauth
 from . import clients
 from . import groups
 from . import invites
+from . import campaigns
+from . import campaigns_public

@@ -64,7 +64,10 @@
                                     <h1 class="tsp-head__title" t-out="g.name"/>
                                     <p class="tsp-head__help"><t t-out="kind_label[g.kind]"/> · <t t-out="fa(len(people))"/> نفر<t t-if="hidden"> (<t t-out="fa(hidden)"/> نفر دیگر را شما نمی‌بینید)</t></p>
                                 </div>
-                                <a t-attf-href="/my/workspaces/#{ws.id}/groups" class="ts-btn ts-btn--quiet">همهٔ گروه‌ها</a>
+                                <div class="tsp-head__actions">
+                                    <a t-if="can_campaign" t-attf-href="/my/workspaces/#{ws.id}/campaigns/new?group=#{g.id}" class="ts-btn ts-btn--primary">دعوت گروه</a>
+                                    <a t-attf-href="/my/workspaces/#{ws.id}/groups" class="ts-btn ts-btn--quiet">همهٔ گروه‌ها</a>
+                                </div>
                             </header>
                             <p t-if="not people" class="tsp-empty">این گروه هنوز عضوی ندارد. از فهرست شرکت‌کنندگان، چند نفر را انتخاب و به گروه اضافه کنید.</p>
                             <div t-if="people" class="ts-table-wrap">

@@ -1,0 +1,320 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- W/campaigns: list (INV-5, INV-6) -->
+    <record id="tpl_campaigns" model="ir.ui.view">
+        <field name="name">TS panel: campaigns</field>
+        <field name="type">qweb</field>
+        <field name="key">ts_panel.campaigns</field>
+        <field name="website_id" ref="ts_website.website_ts"/>
+        <field name="arch" type="xml">
+            <t t-name="ts_panel.campaigns">
+                <t t-call="website.layout" additional_title="title">
+                    <div id="wrap" class="ts-page">
+                        <t t-call="ts_panel.shell_frame">
+                            <header class="tsp-head">
+                                <div>
+                                    <h1 class="tsp-head__title">دعوت گروهی</h1>
+                                    <p class="tsp-head__help">یک سنجه را برای یک کلاس یا گروه بفرستید، یا پیوند بازی بسازید که هر کس با آن بپیوندد تا سقفی که تعیین می‌کنید.</p>
+                                </div>
+                                <div class="tsp-head__actions">
+                                    <a t-attf-href="/my/workspaces/#{ws.id}/campaigns/new" class="ts-btn ts-btn--primary">دعوت گروهی تازه</a>
+                                </div>
+                            </header>
+                            <p t-if="not rows" class="tsp-empty">برای دعوت یک کلاس یا گروه، دعوت گروهی بسازید.</p>
+                            <div t-if="rows" class="ts-table-wrap">
+                                <table class="ts-table tsp-table tsp-table--cards">
+                                    <caption class="tsp-sr">فهرست دعوت‌های گروهی</caption>
+                                    <thead><tr><th scope="col">عنوان</th><th scope="col">نوع</th><th scope="col">سنجه</th><th scope="col">دعوت‌ها</th><th scope="col">وضعیت</th><th scope="col">ساخته‌شده</th></tr></thead>
+                                    <tbody>
+                                        <tr t-foreach="rows" t-as="c">
+                                            <th scope="row" data-label="عنوان"><a t-attf-href="/my/workspaces/#{ws.id}/campaigns/#{c.id}" t-out="c.name"/></th>
+                                            <td data-label="نوع" t-out="kind_labels[c.kind]"/>
+                                            <td data-label="سنجه" t-out="c.instrument_id.name"/>
+                                            <td data-label="دعوت‌ها" t-out="fa(joined.get(c.id, 0))"/>
+                                            <td data-label="وضعیت"><span class="ts-pill" t-out="state_c[c.state]"/></td>
+                                            <td data-label="ساخته‌شده" t-out="jalali(c.create_date)"/>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                            <nav t-if="pages &gt; 1" class="tsp-pager" aria-label="صفحه‌بندی">
+                                <a t-if="page &gt; 1" t-attf-href="/my/workspaces/#{ws.id}/campaigns?page=#{page - 1}" rel="prev">صفحهٔ قبل</a>
+                                <span aria-current="page">صفحهٔ <t t-out="fa(page)"/> از <t t-out="fa(pages)"/></span>
+                                <a t-if="page &lt; pages" t-attf-href="/my/workspaces/#{ws.id}/campaigns?page=#{page + 1}" rel="next">صفحهٔ بعد</a>
+                            </nav>
+                        </t>
+                    </div>
+                </t>
+            </t>
+        </field>
+    </record>
+
+    <!-- W/campaigns/new: one form, then a review -->
+    <record id="tpl_campaign_form" model="ir.ui.view">
+        <field name="name">TS panel: campaign form</field>
+        <field name="type">qweb</field>
+        <field name="key">ts_panel.campaign_form</field>
+        <field name="website_id" ref="ts_website.website_ts"/>
+        <field name="arch" type="xml">
+            <t t-name="ts_panel.campaign_form">
+                <t t-call="website.layout" additional_title="title">
+                    <div id="wrap" class="ts-page">
+                        <t t-call="ts_panel.shell_frame">
+                            <header class="tsp-head">
+                                <div>
+                                    <h1 class="tsp-head__title">دعوت گروهی تازه</h1>
+                                    <p class="tsp-head__help">پس از این فرم یک صفحهٔ مرور می‌بینید؛ تا آن‌جا چیزی ساخته یا فرستاده نمی‌شود.</p>
+                                </div>
+                            </header>
+                            <form t-attf-action="/my/workspaces/#{ws.id}/campaigns/new" method="post" class="tsp-form ts-card" data-tsp-once="1">
+                                <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                                <input type="hidden" name="step" value="review"/>
+                                <fieldset class="tsp-field">
+                                    <legend class="tsp-field__label">نوع</legend>
+                                    <label class="tsp-radio"><input type="radio" name="kind" value="list" t-att-checked="'checked' if draft.get('kind', 'list') == 'list' else None"/><span>دعوت گروهی: برای همهٔ اعضای گروه‌های انتخابی دعوت جداگانه ساخته می‌شود</span></label>
+                                    <label class="tsp-radio"><input type="radio" name="kind" value="open_link" t-att-checked="'checked' if draft.get('kind') == 'open_link' else None"/><span>پیوند باز: هر کس که پیوند را داشته باشد می‌پیوندد، تا سقفی که می‌گذارید</span></label>
+                                </fieldset>
+                                <label class="tsp-field"><span class="tsp-field__label">عنوان</span><input type="text" name="name" maxlength="80" required="required" t-att-value="draft.get('name')" class="form-control"/></label>
+                                <fieldset class="tsp-field">
+                                    <legend class="tsp-field__label">سنجه</legend>
+                                    <label t-foreach="instruments" t-as="i" class="tsp-radio"><input type="radio" name="instrument_id" t-att-value="i.id" required="required" t-att-checked="'checked' if draft.get('instrument_id') == i.id else None"/><span t-out="i.name"/></label>
+                                </fieldset>
+                                <fieldset class="tsp-field">
+                                    <legend class="tsp-field__label">گروه‌ها (برای دعوت گروهی)</legend>
+                                    <p t-if="not groups" class="ts-hint">هنوز گروهی نساخته‌اید. <a t-attf-href="/my/workspaces/#{ws.id}/groups">گروه بسازید</a>.</p>
+                                    <label t-foreach="groups" t-as="g" class="tsp-check"><input type="checkbox" name="group_ids" t-att-value="g.id" t-att-checked="'checked' if g.id in draft.get('group_ids', []) else None"/><span><t t-out="g.name"/> (<t t-out="fa(g.client_count)"/> نفر)</span></label>
+                                </fieldset>
+                                <label class="tsp-field"><span class="tsp-field__label">سقف پیوستن (برای پیوند باز)</span><input type="number" name="open_max" min="1" max="500" t-att-value="draft.get('open_max') or open_default" class="form-control" dir="ltr"/></label>
+                                <label class="tsp-field"><span class="tsp-field__label">اعتبار پیوند باز</span>
+                                    <select name="open_days" class="form-select"><option value="7" t-att-selected="'selected' if draft.get('open_days') == 7 else None">۷ روز</option><option value="14" t-att-selected="'selected' if draft.get('open_days', 14) == 14 else None">۱۴ روز</option><option value="30" t-att-selected="'selected' if draft.get('open_days') == 30 else None">۳۰ روز</option></select></label>
+                                <label class="tsp-field"><span class="tsp-field__label">مهلت (اختیاری)</span><input type="date" name="deadline" t-att-value="draft.get('deadline')" class="form-control"/></label>
+                                <label class="tsp-field"><span class="tsp-field__label">یادداشت برای شرکت‌کنندگان (اختیاری)</span><input type="text" name="note" maxlength="300" t-att-value="draft.get('note')" class="form-control"/></label>
+                                <fieldset t-if="sms_ok" class="tsp-field">
+                                    <legend class="tsp-field__label">پیامک (برای دعوت گروهی)</legend>
+                                    <label class="tsp-check"><input type="checkbox" name="sms" value="1" t-att-checked="'checked' if draft.get('sms') else None"/><span>پیوند دعوت را با پیامک هم بفرست (فقط برای کسانی که موبایل ثبت‌شده دارند)</span></label>
+                                    <label class="tsp-check"><input type="checkbox" name="attest" value="1" t-att-checked="'checked' if draft.get('sms') else None"/><span>تأیید می‌کنم که شرکت‌کنندگان (یا سرپرست قانونی آنان) با دریافت پیامک موافق‌اند؛ این تأیید شامل یک پیامک دعوت و یک یادآوری است.</span></label>
+                                    <label class="tsp-check"><input type="checkbox" name="remind" value="1" t-att-checked="'checked' if draft.get('remind', True) else None"/><span>یک یادآوری هم فرستاده شود</span></label>
+                                </fieldset>
+                                <p><button type="submit" class="ts-btn ts-btn--primary">مرور</button> <a t-attf-href="/my/workspaces/#{ws.id}/campaigns" class="ts-btn ts-btn--quiet">انصراف</a></p>
+                            </form>
+                        </t>
+                    </div>
+                </t>
+            </t>
+        </field>
+    </record>
+
+    <record id="tpl_campaign_review" model="ir.ui.view">
+        <field name="name">TS panel: campaign review</field>
+        <field name="type">qweb</field>
+        <field name="key">ts_panel.campaign_review</field>
+        <field name="website_id" ref="ts_website.website_ts"/>
+        <field name="arch" type="xml">
+            <t t-name="ts_panel.campaign_review">
+                <t t-call="website.layout" additional_title="title">
+                    <div id="wrap" class="ts-page">
+                        <t t-call="ts_panel.shell_frame">
+                            <header class="tsp-head">
+                                <div>
+                                    <h1 class="tsp-head__title">مرور پیش از ساخت</h1>
+                                    <p class="tsp-head__help">اگر درست است «ساخت» را بزنید؛ در غیر این صورت برگردید و فرم را اصلاح کنید.</p>
+                                </div>
+                            </header>
+                            <form t-attf-action="/my/workspaces/#{ws.id}/campaigns/new" method="post" class="tsp-form ts-card" data-tsp-once="1">
+                                <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                                <input type="hidden" name="step" value="create"/>
+                                <dl class="tsp-dl">
+                                    <dt>عنوان</dt><dd t-out="draft['name']"/>
+                                    <dt>نوع</dt><dd t-out="kind_labels[draft['kind']]"/>
+                                    <dt>سنجه</dt><dd t-out="inst.name"/>
+                                    <dt t-if="draft.get('deadline')">مهلت</dt><dd t-if="draft.get('deadline')" t-out="draft['deadline']"/>
+                                    <dt t-if="draft.get('note')">یادداشت</dt><dd t-if="draft.get('note')" t-out="draft['note']"/>
+                                    <t t-if="draft['kind'] == 'list'">
+                                        <dt>گروه‌ها</dt><dd t-out="', '.join(groups.mapped('name'))"/>
+                                        <dt>دعوت می‌شوند</dt><dd><strong t-out="fa(len(to_invite))"/> نفر از <t t-out="fa(len(clients))"/> نفر</dd>
+                                        <dt>پیامک</dt><dd><t t-if="draft.get('sms')">بله، با تأیید رضایت</t><t t-else="">نه؛ پیوندها را خودتان می‌فرستید</t></dd>
+                                    </t>
+                                    <t t-else="">
+                                        <dt>سقف پیوستن</dt><dd t-out="fa(draft['open_max'])"/>
+                                        <dt>اعتبار پیوند</dt><dd><t t-out="fa(draft.get('open_days', 14))"/> روز</dd>
+                                    </t>
+                                </dl>
+                                <t t-if="draft['kind'] == 'list'">
+                                    <t t-foreach="skipped.items()" t-as="kv">
+                                        <p t-if="kv[1]" class="ts-notice" role="status"><t t-out="fa(len(kv[1]))"/> نفر کنار گذاشته می‌شوند چون <t t-out="skip_labels[kv[0]]"/>: <t t-out="'، '.join(kv[1][:10].mapped('name'))"/><t t-if="len(kv[1]) &gt; 10"> و …</t></p>
+                                    </t>
+                                    <p t-if="not to_invite" class="ts-notice" role="alert">کسی برای دعوت نمانده است.</p>
+                                </t>
+                                <p>
+                                    <button t-if="draft['kind'] != 'list' or to_invite" type="submit" class="ts-btn ts-btn--primary">ساخت</button>
+                                    <a t-attf-href="/my/workspaces/#{ws.id}/campaigns/new?keep=1" class="ts-btn ts-btn--quiet">برگشت به فرم</a>
+                                </p>
+                            </form>
+                        </t>
+                    </div>
+                </t>
+            </t>
+        </field>
+    </record>
+
+    <!-- W/campaigns/<id>: counts, link, list (INV-9) -->
+    <record id="tpl_campaign" model="ir.ui.view">
+        <field name="name">TS panel: campaign page</field>
+        <field name="type">qweb</field>
+        <field name="key">ts_panel.campaign</field>
+        <field name="website_id" ref="ts_website.website_ts"/>
+        <field name="arch" type="xml">
+            <t t-name="ts_panel.campaign">
+                <t t-call="website.layout" additional_title="title">
+                    <div id="wrap" class="ts-page">
+                        <t t-call="ts_panel.shell_frame">
+                            <header class="tsp-head">
+                                <div>
+                                    <h1 class="tsp-head__title" t-out="c.name"/>
+                                    <p class="tsp-head__help"><span class="ts-pill" t-out="state_c[c.state]"/> · <t t-out="kind_labels[c.kind]"/> · <t t-out="c.instrument_id.name"/></p>
+                                </div>
+                                <div class="tsp-head__actions">
+                                    <a t-attf-href="/my/workspaces/#{ws.id}/campaigns/#{c.id}/sheet" class="ts-btn ts-btn--outline">برگهٔ چاپی</a>
+                                    <a t-attf-href="/my/workspaces/#{ws.id}/campaigns" class="ts-btn ts-btn--quiet">همهٔ دعوت‌های گروهی</a>
+                                </div>
+                            </header>
+                            <section t-if="c.kind == 'open_link'" class="ts-card" aria-labelledby="tsp-c-link">
+                                <h2 id="tsp-c-link" class="h5">پیوند باز</h2>
+                                <p t-if="open_state == 'ok'" class="tsp-inline">
+                                    <input id="tsp_campaign_url" type="text" readonly="readonly" class="ts-copy" dir="ltr" t-att-value="url" aria-label="پیوند باز"/>
+                                    <button type="button" class="ts-btn ts-btn--outline" data-tsp-copy="tsp_campaign_url" hidden="hidden">رونوشت پیوند</button>
+                                    <span class="tsp-field__hint" role="status" data-tsp-copied="1"></span>
+                                </p>
+                                <p t-if="open_state != 'ok'" class="ts-notice" role="status">
+                                    <t t-if="open_state == 'full'">ظرفیت تکمیل شد؛ کسی دیگر نمی‌پیوندد.</t>
+                                    <t t-elif="open_state == 'expired'">مهلت پیوند به پایان رسید.</t>
+                                    <t t-else="">پیوند بسته شده است.</t>
+                                </p>
+                                <img t-if="open_state == 'ok'" t-attf-src="/my/workspaces/#{ws.id}/campaigns/#{c.id}/qr.png" width="200" height="200" alt="کد QR پیوند باز برای اسکن با گوشی" class="tsp-qr"/>
+                                <dl class="tsp-dl">
+                                    <dt>پیوسته‌اند</dt><dd><t t-out="fa(joined)"/> از <t t-out="fa(c.open_max)"/></dd>
+                                    <dt>انقضا</dt><dd><t t-if="c.open_expires_at" t-out="jalali(c.open_expires_at)"/><t t-else="">—</t></dd>
+                                </dl>
+                            </section>
+                            <nav class="tsp-chips" aria-label="شمار وضعیت‌ها">
+                                <span t-foreach="state_order" t-as="k" class="tsp-chip"><t t-out="state_labels[k]"/> <span class="ts-num" t-out="fa(counts[k])"/></span>
+                            </nav>
+                            <p t-if="not rows" class="tsp-empty">هنوز دعوتی در این مجموعه نیست.</p>
+                            <div t-if="rows" class="ts-table-wrap">
+                                <table class="ts-table tsp-table tsp-table--cards">
+                                    <caption class="tsp-sr">دعوت‌های این مجموعه</caption>
+                                    <thead><tr><th scope="col">شرکت‌کننده</th><th scope="col">وضعیت</th><th scope="col">ارسال</th></tr></thead>
+                                    <tbody>
+                                        <tr t-foreach="rows" t-as="a">
+                                            <th scope="row" data-label="شرکت‌کننده"><a t-attf-href="/my/workspaces/#{ws.id}/invites/#{a.id}" t-out="a.invitee_name"/></th>
+                                            <td data-label="وضعیت"><span t-attf-class="ts-pill #{pill.get(a.state, '')}" t-out="state_labels.get(a.state, a.state)"/></td>
+                                            <td data-label="ارسال" t-out="jalali(a.create_date)"/>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                            <p t-if="total &gt; len(rows)" class="ts-hint">صد دعوت نخست نشان داده شد؛ فهرست کامل در صفحهٔ دعوت‌ها است.</p>
+                            <section t-if="can_close" class="ts-card" aria-labelledby="tsp-c-close">
+                                <h2 id="tsp-c-close" class="h5">بستن</h2>
+                                <form t-attf-action="/my/workspaces/#{ws.id}/campaigns/#{c.id}/close" method="post" class="tsp-form" data-tsp-once="1">
+                                    <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                                    <p class="ts-hint">پس از بستن کسی نمی‌پیوندد و یادآوری فرستاده نمی‌شود. دعوت‌های ساخته‌شده لغو نمی‌شوند.</p>
+                                    <label class="tsp-check"><input type="checkbox" name="confirm" value="1"/><span>مطمئنم، بسته شود</span></label>
+                                    <p><button type="submit" class="ts-btn ts-btn--outline">بستن</button></p>
+                                </form>
+                            </section>
+                        </t>
+                    </div>
+                </t>
+            </t>
+        </field>
+    </record>
+
+    <!-- printable sheet of links and QR codes -->
+    <record id="tpl_campaign_sheet" model="ir.ui.view">
+        <field name="name">TS panel: campaign sheet</field>
+        <field name="type">qweb</field>
+        <field name="key">ts_panel.campaign_sheet</field>
+        <field name="website_id" ref="ts_website.website_ts"/>
+        <field name="arch" type="xml">
+            <t t-name="ts_panel.campaign_sheet">
+                <t t-call="website.layout" additional_title="title">
+                    <div id="wrap" class="ts-page">
+                        <t t-call="ts_panel.shell_frame">
+                            <header class="tsp-head">
+                                <div>
+                                    <h1 class="tsp-head__title" t-out="c.name"/>
+                                    <p class="tsp-head__help">برای چاپ از منوی مرورگر استفاده کنید. هر کس با اسکن کد یا باز کردن پیوند وارد می‌شود.</p>
+                                </div>
+                                <a t-attf-href="/my/workspaces/#{ws.id}/campaigns/#{c.id}" class="ts-btn ts-btn--quiet">برگشت</a>
+                            </header>
+                            <section t-if="c.kind == 'open_link'" class="ts-card">
+                                <p t-if="not open_ok" class="ts-notice" role="status">این پیوند دیگر باز نیست.</p>
+                                <t t-if="open_ok">
+                                    <img t-attf-src="/my/workspaces/#{ws.id}/campaigns/#{c.id}/qr.png" width="240" height="240" alt="کد QR پیوند باز" class="tsp-qr"/>
+                                    <p dir="ltr" class="ts-copy" t-out="url"/>
+                                </t>
+                            </section>
+                            <p t-if="c.kind == 'list' and not invs" class="tsp-empty">دعوت بازی برای چاپ نیست.</p>
+                            <section t-foreach="invs" t-as="a" class="ts-card">
+                                <h2 class="h5" t-out="a.invitee_name"/>
+                                <img t-attf-src="/my/workspaces/#{ws.id}/invites/#{a.id}/qr.png" width="160" height="160" alt="کد QR دعوت" class="tsp-qr"/>
+                                <p dir="ltr" class="ts-copy" t-out="a.invite_url()"/>
+                            </section>
+                        </t>
+                    </div>
+                </t>
+            </t>
+        </field>
+    </record>
+
+    <!-- /c/<token>: the open link, participant side -->
+    <record id="tpl_campaign_join" model="ir.ui.view">
+        <field name="name">TS panel: open link</field>
+        <field name="type">qweb</field>
+        <field name="key">ts_panel.campaign_join</field>
+        <field name="website_id" ref="ts_website.website_ts"/>
+        <field name="arch" type="xml">
+            <t t-name="ts_panel.campaign_join">
+                <t t-call="website.layout" additional_title.f="دعوت به سنجش">
+                    <div id="wrap" class="ts-page">
+                        <section class="ts-section">
+                            <div class="ts-container ts-narrow">
+                                <div class="ts-section__head">
+                                    <p class="ts-tag">دعوت به سنجش</p>
+                                    <h1 t-out="inst.title"/>
+                                    <p><strong t-out="ws.partner_id.name"/> شما را به پاسخ‌دادن به این سنجه دعوت کرده است.</p>
+                                </div>
+                                <p t-if="flash" class="ts-notice" role="alert" t-out="flash"/>
+                                <div t-if="state != 'ok' and not mine" class="ts-card ts-card--soft" role="status">
+                                    <h2 class="h5" t-out="msg"/>
+                                    <p>اگر فکر می‌کنید اشتباهی شده، با کسی که پیوند را فرستاده تماس بگیرید.</p>
+                                </div>
+                                <t t-else="">
+                                    <dl class="ts-meta">
+                                        <dt>تعداد پرسش</dt><dd t-out="fa(inst.active_item_count)"/>
+                                        <dt>زمان تقریبی</dt><dd><t t-out="fa(inst.duration_minutes)"/> دقیقه</dd>
+                                        <t t-if="c.note"><dt>یادداشت</dt><dd t-out="c.note"/></t>
+                                    </dl>
+                                    <t t-if="public">
+                                        <p>برای شروع وارد حساب خود شوید یا حساب تازه بسازید.</p>
+                                        <div class="ts-hero__actions">
+                                            <a t-if="phone_url" t-att-href="phone_url" class="ts-btn ts-btn--primary">ورود یا ثبت‌نام با موبایل</a>
+                                            <a t-att-href="signup_url" t-attf-class="ts-btn #{'ts-btn--outline' if phone_url else 'ts-btn--primary'}">ساخت حساب<t t-if="phone_url"> با ایمیل</t></a>
+                                            <a t-att-href="login_url" class="ts-btn ts-btn--outline">ورود<t t-if="phone_url"> با ایمیل</t></a>
+                                        </div>
+                                    </t>
+                                    <form t-else="" t-attf-action="/c/#{c.open_token}/join" method="post" class="ts-form">
+                                        <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                                        <label class="ts-field"><span>نام و نام خانوادگی</span><input type="text" name="name" required="required" minlength="2" maxlength="120" t-att-value="user_name" class="form-control" autocomplete="name"/></label>
+                                        <button type="submit" class="ts-btn ts-btn--primary">ادامه</button>
+                                    </form>
+                                </t>
+                            </div>
+                        </section>
+                    </div>
+                </t>
+            </t>
+        </field>
+    </record>
+</odoo>

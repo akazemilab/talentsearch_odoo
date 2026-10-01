@@ -63,7 +63,7 @@ class TsPanelGroups(http.Controller):
         g = _group_or_404(me, gid)
         C = request.env['ts.panel.client'].sudo()
         people = C.search(visible_domain(me) + [('id', 'in', g.client_ids.ids)], order='name_norm, id')
-        return render_in_shell('ts_panel.group', me, 'groups', g.name, g=g, people=people,
+        return render_in_shell('ts_panel.group', me, 'groups', g.name, g=g, people=people, can_campaign=me.has_perm('invites:bulk') and me.can_act(),
                                kind_label=dict(KINDS), hidden=len(g.client_ids) - len(people))
 
     @http.route('/my/workspaces/<int:ws_id>/groups/<int:gid>/<string:action>', type='http', auth='user',
