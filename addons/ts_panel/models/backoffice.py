@@ -68,6 +68,7 @@ class TsDataRequestBackoffice(models.Model):
             r.overdue = bool(r.due_on and r.due_on < today and r.state in ('new', 'in_review'))
 
     def _search_overdue(self, operator, value):
+        self.flush_model(['due_on', 'state'])
         want = bool(value) if operator == '=' else not value
         today = fields.Date.today()
         if want:

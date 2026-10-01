@@ -156,4 +156,8 @@
     <menuitem id="menu_ts_org_assignments" name="دعوت‌های سازمانی" parent="ts_core.menu_ts_customers" action="ts_assignment_action" sequence="20" groups="ts_core.group_ts_manager"/>
     <menuitem id="menu_ts_org_verify" name="احراز صلاحیت حرفه‌ای" parent="ts_core.menu_ts_customers" action="ts_member_verify_action" sequence="30" groups="ts_core.group_ts_manager"/>
     <menuitem id="menu_ts_ops_dashboard" name="داشبورد عملیات" parent="ts_assessment.menu_ts_assessments" action="ts_ops_dashboard_action" sequence="5" groups="ts_core.group_ts_manager"/>
+    <!-- PLT-10: an upgrade only adds groups to a menu; set the manager group alone -->
+    <record id="menu_ts_org_assignments" model="ir.ui.menu">
+        <field name="group_ids" eval="[(6, 0, [ref('ts_core.group_ts_manager')])]"/>
+    </record>
 </odoo>
