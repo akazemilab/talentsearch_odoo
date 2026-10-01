@@ -77,6 +77,10 @@ def tbl(page):
     return m.group(0) if m else ''
 
 
+def rows(page):
+    return [re.sub(r'<[^>]+>', '', t).strip()[:30] for t in re.findall(r'<th scope="row"[^>]*>(.*?)</th>', page, re.S)][:6]
+
+
 def menu(page):
     return [re.sub(r'\s+', ' ', t).strip() for t in re.findall(r'<a[^>]*class="tsp-nav__item"[^>]*>(.*?)</a>', page, re.S)]
 
@@ -87,7 +91,7 @@ check('owner opens the client list', st == 200 and body.count('<h1') == 1 and '�
 check('table has a caption, scope headers and data-labels for the phone layout',
       '<caption' in body and 'scope="col"' in body and body.count('data-label=') >= 5 and 'tsp-table--cards' in body)
 check('owner sees everyone, imported and unassigned included', all(w in tbl(body) for w in ('علیرضا کریمی', 'مریم از کارشناس دو', 'بدون کارشناس', 'فرد تاریخی')))
-check('archived people are not in the default list', 'بایگانی‌شده' not in tbl(body))
+check('archived people are not in the default list', 'بایگانی‌شده' not in tbl(body), str(rows(body)))
 check('page 1 of 2 with a next link', 'rel="next"' in body)
 st, body2 = get(own, '/my/workspaces/%s/clients?page=2' % A)
 check('page 2 opens and has a previous link', st == 200 and 'rel="prev"' in body2)
@@ -101,7 +105,7 @@ check('sorted by name ascending: aria-sort says so', 'aria-sort="ascending"' in 
 st, loc, _ = post(own, '/my/workspaces/%s/clients' % A, {'q': 'عليرضا', 'filter': 'all'})
 check('search POST redirects without the text in the URL', st in (302, 303) and 'q=' not in (loc or '') and 'عل' not in (loc or ''), '%s %s' % (st, loc))
 st, body = get(own, '/my/workspaces/%s/clients' % A)
-check('Arabic ي finds the Persian name; others are filtered out', 'علیرضا کریمی' in tbl(body) and 'بدون کارشناس' not in tbl(body) and 'نتیجهٔ جست‌وجو' in body)
+check('Arabic ي finds the Persian name; others are filtered out', 'علیرضا کریمی' in tbl(body) and 'بدون کارشناس' not in tbl(body) and 'نتیجهٔ جست‌وجو' in body, str(rows(body)))
 post(own, '/my/workspaces/%s/clients' % A, {'q': 'S-100', 'filter': 'all'})
 check('search by the panel\'s own code', 'علیرضا کریمی' in tbl(get(own, '/my/workspaces/%s/clients' % A)[1]))
 post(own, '/my/workspaces/%s/clients' % A, {'q': '', 'filter': 'all'})
@@ -119,7 +123,7 @@ check('filter «بایگانی‌شده»', 'بایگانی‌شده' in tbl(bod
 # counselors: own + unassigned only (education)
 c1 = login('c1')
 st, body = get(c1, '/my/workspaces/%s/clients' % A)
-check('counselor 1 sees own and unassigned', st == 200 and 'علیرضا کریمی' in tbl(body) and 'بدون کارشناس' in tbl(body), str(st))
+check('counselor 1 sees own and unassigned', st == 200 and 'علیرضا کریمی' in tbl(body) and 'بدون کارشناس' in tbl(body), str(rows(body)))
 check('counselor 1 does not see a colleague\'s client', 'مریم از کارشناس دو' not in tbl(body))
 st, body = get(c1, '/my/workspaces/%s/clients/%s' % (A, K2))
 check('counselor 1 opening a colleague\'s client: 403 in the shell', st == 403 and 'tsp-nav' in body, str(st))
