@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- /my/reauth (S3, A7): confirm identity before a sensitive action. -->
+    <record id="tpl_reauth" model="ir.ui.view">
+        <field name="name">TS panel: reauth</field>
+        <field name="type">qweb</field>
+        <field name="key">ts_panel.reauth</field>
+        <field name="website_id" ref="ts_website.website_ts"/>
+        <field name="arch" type="xml">
+            <t t-name="ts_panel.reauth">
+                <t t-call="website.layout" additional_title="title">
+                    <div id="wrap" class="ts-page">
+                        <section class="tsp-section container" style="max-width:640px">
+                            <h1 class="tsp-head__title">تأیید هویت</h1>
+                            <p class="tsp-head__help">برای <t t-out="why"/> باید هویت شما دوباره تأیید شود. تأیید تا <t t-out="minutes"/> دقیقه معتبر می‌ماند.</p>
+                            <p t-if="flash_err" class="tsp-flash tsp-flash--danger" role="alert" t-out="flash_err"/>
+                            <div class="ts-card">
+                                <t t-if="phone_masked">
+                                    <form action="/my/reauth/send" method="post" class="tsp-form" data-tsp-once="1">
+                                        <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                                        <input type="hidden" name="next" t-att-value="next"/>
+                                        <p>کد تأیید به شمارهٔ <bdi dir="ltr" t-out="phone_masked"/> فرستاده می‌شود.</p>
+                                        <p><button type="submit" class="ts-btn"><t t-if="sent">ارسال دوبارهٔ کد</t><t t-else="">ارسال کد</t></button></p>
+                                    </form>
+                                    <form t-if="sent" action="/my/reauth/verify" method="post" class="tsp-form" data-tsp-once="1">
+                                        <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                                        <input type="hidden" name="next" t-att-value="next"/>
+                                        <div class="tsp-field">
+                                            <label class="tsp-field__label" for="tsp_code">کد تأیید</label>
+                                            <input id="tsp_code" name="code" type="text" inputmode="numeric" autocomplete="one-time-code" required="required" maxlength="12" dir="ltr"/>
+                                        </div>
+                                        <p><button type="submit" class="ts-btn ts-btn--primary">تأیید</button></p>
+                                    </form>
+                                </t>
+                                <t t-else="">
+                                    <form action="/my/reauth/verify" method="post" class="tsp-form" data-tsp-once="1">
+                                        <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                                        <input type="hidden" name="next" t-att-value="next"/>
+                                        <div class="tsp-field">
+                                            <label class="tsp-field__label" for="tsp_pw">رمز عبور</label>
+                                            <p class="tsp-field__hint">برای حساب شما شمارهٔ موبایل تأییدشده‌ای ثبت نیست؛ با رمز عبور تأیید کنید.</p>
+                                            <input id="tsp_pw" name="password" type="password" autocomplete="current-password" required="required"/>
+                                        </div>
+                                        <p><button type="submit" class="ts-btn ts-btn--primary">تأیید</button></p>
+                                    </form>
+                                </t>
+                            </div>
+                        </section>
+                    </div>
+                </t>
+            </t>
+        </field>
+    </record>
+</odoo>

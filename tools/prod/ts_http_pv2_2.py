@@ -59,9 +59,10 @@ def menu(page):
 BASE = ['داشبورد', 'دعوت و فهرست (نسخهٔ قبلی)']
 HELP = ['راهنما']
 SETT = ['تنظیمات']
+MEM = ['اعضا و نقش‌ها']
 want = {
-    ('owner', A): BASE + SETT + HELP, ('admin', A): BASE + HELP, ('counselor', A): BASE + HELP,
-    ('hr', B): BASE + SETT + HELP, ('hm', B): BASE + HELP,
+    ('owner', A): BASE + MEM + SETT + HELP, ('admin', A): BASE + MEM + HELP, ('counselor', A): BASE + HELP,
+    ('hr', B): BASE + MEM + SETT + HELP, ('hm', B): BASE + HELP,
 }
 pages = {}
 for (n, w), items in want.items():

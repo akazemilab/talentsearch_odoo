@@ -4,6 +4,9 @@ Every page of the panel: find the caller's membership in the panel of the URL (4
 none), check one permission (403 page inside the shell and a deny event), render inside the shell with the menu
 that the caller's permissions allow. Later stages add menu items by appending to MENU.
 """
+import time
+from urllib.parse import quote
+
 from odoo.http import request
 
 from odoo.addons.ts_assessment.controllers.main import _ts_site_or_404
@@ -16,6 +19,7 @@ MENU = [
     {'seq': 10, 'key': 'home', 'label': 'داشبورد', 'suffix': '/home', 'perm': 'panel:view'},
     {'seq': 15, 'key': 'legacy', 'label': 'دعوت و فهرست (نسخهٔ قبلی)', 'suffix': '', 'perm': 'panel:view',
      'needs_act': True},
+    {'seq': 40, 'key': 'members', 'label': 'اعضا و نقش‌ها', 'suffix': '/members', 'perm': 'members:read'},
     {'seq': 90, 'key': 'settings', 'label': 'تنظیمات', 'suffix': '/settings', 'perm': 'panel:profile'},
     {'seq': 999, 'key': 'help', 'label': 'راهنما', 'url': '/help', 'perm': None},   # always last, for every state (WCAG 3.2.6)
 ]
@@ -92,3 +96,24 @@ def forbidden(member, perm, active=None):
 def require(member, perm, active=None):
     """None when the caller holds `perm`; else the 403 response to return."""
     return None if member.has_perm(perm) else forbidden(member, perm, active)
+
+
+# ------------------------------------------------------------------ re-authentication (05 section 6)
+def reauth_minutes():
+    return request.env['ir.config_parameter'].sudo().get_int('ts_panel.reauth_minutes', 10) or 10
+
+
+def reauth_fresh():
+    at = request.session.get('ts_reauth_at')
+    return bool(at and request.session.get('ts_reauth_uid') == request.env.user.id
+                and time.time() - at <= reauth_minutes() * 60)
+
+
+def need_reauth(why, next_url, pending=None):
+    """None when the caller authenticated recently; else a redirect to /my/reauth. `pending` (form values that are
+    not secrets) is kept in the session and given back to the page so nothing is typed twice (WCAG 3.3.7)."""
+    if reauth_fresh():
+        return None
+    request.session['ts_pv2_pending'] = pending or {}
+    request.session['ts_reauth_why'] = why
+    return request.redirect('/my/reauth?next=%s' % quote(next_url, safe='/'))

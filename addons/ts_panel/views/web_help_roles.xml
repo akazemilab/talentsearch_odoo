@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- /help/roles (S3): what each role can do, generated from the permission table. -->
+    <record id="tpl_help_roles" model="ir.ui.view">
+        <field name="name">TS panel: role help</field>
+        <field name="type">qweb</field>
+        <field name="key">ts_panel.help_roles</field>
+        <field name="website_id" ref="ts_website.website_ts"/>
+        <field name="arch" type="xml">
+            <t t-name="ts_panel.help_roles">
+                <t t-call="website.layout" additional_title="title">
+                    <div id="wrap" class="ts-page">
+                        <section class="tsp-section container">
+                            <header class="tsp-head">
+                                <div>
+                                    <h1 class="tsp-head__title">نقش‌ها و دسترسی‌ها</h1>
+                                    <p class="tsp-head__help">هر نقش در پنل <t t-out="purpose_label"/> چه کارهایی می‌تواند انجام دهد.</p>
+                                </div>
+                            </header>
+                            <ul class="tsp-list" aria-label="نقش‌ها">
+                                <t t-foreach="roles" t-as="r">
+                                    <li class="ts-card"><strong t-out="r['label']"/> — <span t-out="r['blurb']"/></li>
+                                </t>
+                            </ul>
+                            <div class="ts-card" style="overflow-x:auto">
+                                <table class="tsp-table">
+                                    <caption class="tsp-sr">جدول دسترسی هر نقش</caption>
+                                    <thead>
+                                        <tr>
+                                            <th scope="col">کار</th>
+                                            <t t-foreach="roles" t-as="r"><th scope="col" t-out="r['label']"/></t>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <t t-foreach="table" t-as="row">
+                                            <tr>
+                                                <th scope="row" t-out="row['label']"/>
+                                                <t t-foreach="row['cells']" t-as="c">
+                                                    <td><t t-if="c">✓<span class="tsp-sr">دارد</span></t><t t-else=""><span aria-hidden="true">—</span><span class="tsp-sr">ندارد</span></t></td>
+                                                </t>
+                                            </tr>
+                                        </t>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </section>
+                    </div>
+                </t>
+            </t>
+        </field>
+    </record>
+</odoo>

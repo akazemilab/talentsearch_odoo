@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- One member: facts, change role (MEM-4), deactivate/reactivate (MEM-5), practising owner (MEM-7) -->
+    <record id="tpl_member" model="ir.ui.view">
+        <field name="name">TS panel: member</field>
+        <field name="type">qweb</field>
+        <field name="key">ts_panel.member</field>
+        <field name="website_id" ref="ts_website.website_ts"/>
+        <field name="arch" type="xml">
+            <t t-name="ts_panel.member">
+                <t t-call="website.layout" additional_title="title">
+                    <div id="wrap" class="ts-page">
+                        <t t-call="ts_panel.shell_frame">
+                            <a t-attf-href="/my/workspaces/#{ws.id}/members" class="ts-back">اعضا و نقش‌ها</a>
+                            <header class="tsp-head">
+                                <div>
+                                    <h1 class="tsp-head__title" t-out="m.user_id.name"/>
+                                    <p class="tsp-head__help"><span t-out="m_role"/> · <span t-attf-class="ts-pill #{pill}" t-out="state"/></p>
+                                </div>
+                            </header>
+                            <section class="ts-card">
+                                <dl class="ts-meta">
+                                    <dt>شرکت‌کنندگان زیر نظر او</dt><dd class="ts-num" t-out="fa(clients)"/>
+                                    <dt>آخرین فعالیت</dt><dd t-out="last"/>
+                                    <t t-if="m.verification_state == 'pending'"><dt>احراز صلاحیت</dt><dd>در انتظار بررسی</dd></t>
+                                </dl>
+                            </section>
+
+                            <section t-if="can_manage and m.active" class="ts-card" id="tsp-role" aria-labelledby="tsp-role-h">
+                                <h2 id="tsp-role-h" class="h5">تغییر نقش</h2>
+                                <p t-if="resumed" class="tsp-flash tsp-flash--ok" role="status">هویت شما تأیید شد. نقش انتخاب‌شده را نگه داشتیم؛ ذخیره کنید.</p>
+                                <form t-attf-action="/my/workspaces/#{ws.id}/members/#{m.id}/role" method="post" class="tsp-form" data-tsp-once="1">
+                                    <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                                    <fieldset class="tsp-field">
+                                        <legend class="tsp-field__label">نقش تازه</legend>
+                                        <label t-foreach="roles" t-as="ro" class="tsp-radio">
+                                            <input type="radio" name="role" t-att-value="ro['key']" t-att-checked="'checked' if chosen == ro['key'] else None"/>
+                                            <span><strong t-out="ro['label']"/> <span class="tsp-field__hint" t-out="ro['blurb']"/></span>
+                                        </label>
+                                    </fieldset>
+                                    <p class="ts-hint">اگر نقش تازه نتواند مسئول شرکت‌کننده باشد، شرکت‌کنندگان او به صف «تخصیص‌نشده» می‌روند. مالک‌شدن نیاز به تأیید دوبارهٔ هویت دارد.</p>
+                                    <p><button type="submit" class="ts-btn ts-btn--primary">ذخیره نقش</button></p>
+                                </form>
+                            </section>
+
+                            <section t-if="is_self and m.role == 'owner'" class="ts-card" id="tsp-practice" aria-labelledby="tsp-practice-h">
+                                <h2 id="tsp-practice-h" class="h5">خودم هم شرکت‌کننده می‌بینم</h2>
+                                <form t-attf-action="/my/workspaces/#{ws.id}/members/#{m.id}/practice" method="post" class="tsp-form" data-tsp-once="1">
+                                    <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                                    <label class="tsp-check"><input type="checkbox" name="practises" value="1" t-att-checked="'checked' if m.owner_practices else None"/> خودم هم مسئول شرکت‌کنندگان هستم</label>
+                                    <div t-if="clinical" class="tsp-field">
+                                        <label class="tsp-field__label" for="tsp_lic">شمارهٔ پروانه یا نظام حرفه‌ای</label>
+                                        <p class="tsp-field__hint" id="tsp_lic_h">برای دیدن گزارش بالینی لازم است و پس از بررسی تیم تلنت سرچ فعال می‌شود.</p>
+                                        <input id="tsp_lic" name="license_number" type="text" dir="ltr" maxlength="60" t-att-value="m.license_number" aria-describedby="tsp_lic_h"/>
+                                    </div>
+                                    <p><button type="submit" class="ts-btn ts-btn--outline">ذخیره</button></p>
+                                </form>
+                            </section>
+
+                            <section t-if="can_manage" class="ts-card" id="tsp-state" aria-labelledby="tsp-state-h">
+                                <h2 id="tsp-state-h" class="h5">دسترسی به پنل</h2>
+                                <t t-if="m.active">
+                                    <p>با غیرفعال‌کردن، دسترسی او به پنل بلافاصله قطع می‌شود. سابقه‌اش حفظ می‌شود و می‌توانید دوباره فعالش کنید.</p>
+                                    <p><a t-attf-href="/my/workspaces/#{ws.id}/members/#{m.id}/deactivate" class="ts-btn ts-btn--outline">غیرفعال‌کردن…</a></p>
+                                </t>
+                                <t t-else="">
+                                    <p>این عضو غیرفعال است و به پنل دسترسی ندارد.</p>
+                                    <form t-attf-action="/my/workspaces/#{ws.id}/members/#{m.id}/reactivate" method="post" class="tsp-form" data-tsp-once="1">
+                                        <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                                        <p><button type="submit" class="ts-btn ts-btn--primary">دوباره فعال شود</button></p>
+                                    </form>
+                                </t>
+                            </section>
+                        </t>
+                    </div>
+                </t>
+            </t>
+        </field>
+    </record>
+
+    <!-- Confirmation page: names the person and what will happen (03_ia_and_ux.md section 2) -->
+    <record id="tpl_member_deactivate" model="ir.ui.view">
+        <field name="name">TS panel: confirm deactivate</field>
+        <field name="type">qweb</field>
+        <field name="key">ts_panel.member_deactivate</field>
+        <field name="website_id" ref="ts_website.website_ts"/>
+        <field name="arch" type="xml">
+            <t t-name="ts_panel.member_deactivate">
+                <t t-call="website.layout" additional_title="title">
+                    <div id="wrap" class="ts-page">
+                        <t t-call="ts_panel.shell_frame">
+                            <header class="tsp-head"><div><h1 class="tsp-head__title">غیرفعال‌کردن «<t t-out="m.user_id.name"/>»</h1></div></header>
+                            <section class="tsp-confirm ts-card">
+                                <ul>
+                                    <li>دسترسی او به این پنل بلافاصله قطع می‌شود.</li>
+                                    <li t-if="clients"><span class="ts-num" t-out="fa(clients)"/> شرکت‌کننده که مسئول آن‌هاست به صف «تخصیص‌نشده» می‌رود.</li>
+                                    <li>سابقه‌اش در پنل می‌ماند و بعداً می‌توانید دوباره فعالش کنید.</li>
+                                    <li t-if="is_self"><strong>این خود شماست.</strong> پس از غیرفعال‌شدن دیگر وارد این پنل نمی‌شوید؛ اگر مالک دیگری نباشد، این کار انجام نمی‌شود.</li>
+                                </ul>
+                                <form t-attf-action="/my/workspaces/#{ws.id}/members/#{m.id}/deactivate" method="post" class="tsp-form" data-tsp-once="1">
+                                    <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                                    <p>
+                                        <button type="submit" class="ts-btn ts-btn--danger">بله، این عضو غیرفعال شود</button>
+                                        <a t-attf-href="/my/workspaces/#{ws.id}/members/#{m.id}" class="ts-btn ts-btn--quiet">انصراف</a>
+                                    </p>
+                                </form>
+                            </section>
+                        </t>
+                    </div>
+                </t>
+            </t>
+        </field>
+    </record>
+</odoo>
