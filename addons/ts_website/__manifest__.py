@@ -1,7 +1,7 @@
 {
     'name': 'Talent Search - Website',
     'summary': 'talentsearch.ir as website 2 in eot_main: layout, pages, lead forms. Everything is bound to website 2.',
-    'version': '20.0.1.0.0',
+    'version': '20.0.1.1.0',
     'category': 'Website',
     'author': 'EOT',
     'license': 'LGPL-3',
