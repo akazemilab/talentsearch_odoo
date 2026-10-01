@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- W/groups and W/groups/<id> (S5, GRP-1..3) -->
+    <record id="tpl_groups" model="ir.ui.view">
+        <field name="name">TS panel: groups</field>
+        <field name="type">qweb</field>
+        <field name="key">ts_panel.groups</field>
+        <field name="website_id" ref="ts_website.website_ts"/>
+        <field name="arch" type="xml">
+            <t t-name="ts_panel.groups">
+                <t t-call="website.layout" additional_title="title">
+                    <div id="wrap" class="ts-page">
+                        <t t-call="ts_panel.shell_frame">
+                            <header class="tsp-head">
+                                <div>
+                                    <h1 class="tsp-head__title">گروه‌ها</h1>
+                                    <p class="tsp-head__help">کلاس، تیم یا برچسب برای دسته‌بندی شرکت‌کنندگان. گروه‌ها چیزی را به کسی نشان نمی‌دهند؛ هر کس فقط ردیف‌های خودش را می‌بیند.</p>
+                                </div>
+                            </header>
+                            <p t-if="not groups" class="tsp-empty">هنوز گروهی نساخته‌اید.</p>
+                            <div t-if="groups" class="ts-table-wrap">
+                                <table class="ts-table tsp-table tsp-table--cards">
+                                    <caption class="tsp-sr">گروه‌های پنل</caption>
+                                    <thead><tr><th scope="col">نام</th><th scope="col">نوع</th><th scope="col">تعداد</th></tr></thead>
+                                    <tbody>
+                                        <tr t-foreach="groups" t-as="g">
+                                            <th scope="row" data-label="نام"><a t-attf-href="/my/workspaces/#{ws.id}/groups/#{g.id}" t-out="g.name"/></th>
+                                            <td data-label="نوع" t-out="kind_label[g.kind]"/>
+                                            <td data-label="تعداد" class="ts-num" t-out="fa(g.client_count)"/>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                            <form t-attf-action="/my/workspaces/#{ws.id}/groups/new" method="post" class="tsp-form ts-card" data-tsp-once="1">
+                                <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                                <h2 class="h5">گروه تازه</h2>
+                                <label class="tsp-field"><span class="tsp-field__label">نام</span>
+                                    <input type="text" name="name" required="required" maxlength="60" class="form-control"/></label>
+                                <label class="tsp-field"><span class="tsp-field__label">نوع</span>
+                                    <select name="kind" class="form-select">
+                                        <option t-foreach="kinds" t-as="k" t-att-value="k[0]" t-out="k[1]"/>
+                                    </select></label>
+                                <p><button type="submit" class="ts-btn ts-btn--primary">ساخت گروه</button></p>
+                            </form>
+                        </t>
+                    </div>
+                </t>
+            </t>
+        </field>
+    </record>
+
+    <record id="tpl_group" model="ir.ui.view">
+        <field name="name">TS panel: group</field>
+        <field name="type">qweb</field>
+        <field name="key">ts_panel.group</field>
+        <field name="website_id" ref="ts_website.website_ts"/>
+        <field name="arch" type="xml">
+            <t t-name="ts_panel.group">
+                <t t-call="website.layout" additional_title="title">
+                    <div id="wrap" class="ts-page">
+                        <t t-call="ts_panel.shell_frame">
+                            <header class="tsp-head">
+                                <div>
+                                    <h1 class="tsp-head__title" t-out="g.name"/>
+                                    <p class="tsp-head__help"><t t-out="kind_label[g.kind]"/> · <t t-out="fa(len(people))"/> نفر<t t-if="hidden"> (<t t-out="fa(hidden)"/> نفر دیگر را شما نمی‌بینید)</t></p>
+                                </div>
+                                <a t-attf-href="/my/workspaces/#{ws.id}/groups" class="ts-btn ts-btn--quiet">همهٔ گروه‌ها</a>
+                            </header>
+                            <p t-if="not people" class="tsp-empty">این گروه هنوز عضوی ندارد. از فهرست شرکت‌کنندگان، چند نفر را انتخاب و به گروه اضافه کنید.</p>
+                            <div t-if="people" class="ts-table-wrap">
+                                <table class="ts-table tsp-table tsp-table--cards">
+                                    <caption class="tsp-sr">اعضای گروه</caption>
+                                    <thead><tr><th scope="col">نام</th><th scope="col"><span class="tsp-sr">عملیات</span></th></tr></thead>
+                                    <tbody>
+                                        <tr t-foreach="people" t-as="c">
+                                            <th scope="row" data-label="نام"><a t-attf-href="/my/workspaces/#{ws.id}/clients/#{c.id}" t-out="c.name"/></th>
+                                            <td class="tsp-row-actions">
+                                                <form t-attf-action="/my/workspaces/#{ws.id}/groups/#{g.id}/remove" method="post" class="tsp-inline">
+                                                    <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                                                    <input type="hidden" name="client" t-att-value="c.id"/>
+                                                    <button type="submit" class="ts-btn ts-btn--quiet">برداشتن از گروه</button>
+                                                </form>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                            <form t-attf-action="/my/workspaces/#{ws.id}/groups/#{g.id}/rename" method="post" class="tsp-form ts-card" data-tsp-once="1">
+                                <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                                <label class="tsp-field"><span class="tsp-field__label">نام گروه</span>
+                                    <input type="text" name="name" t-att-value="g.name" required="required" maxlength="60" class="form-control"/></label>
+                                <p><button type="submit" class="ts-btn ts-btn--primary">ذخیره</button></p>
+                            </form>
+                            <form t-attf-action="/my/workspaces/#{ws.id}/groups/#{g.id}/archive" method="post" class="tsp-form" data-tsp-once="1">
+                                <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                                <p class="ts-hint">بایگانیِ گروه، ردیف‌ها را حذف نمی‌کند.</p>
+                                <button type="submit" class="ts-btn ts-btn--quiet">بایگانی گروه</button>
+                            </form>
+                        </t>
+                    </div>
+                </t>
+            </t>
+        </field>
+    </record>
+</odoo>

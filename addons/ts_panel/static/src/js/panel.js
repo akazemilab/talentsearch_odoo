@@ -32,6 +32,25 @@
         });
     }
 
-    function init() { initMenus(); initOnce(); }
+    // List selection: the header box selects the page; the count is announced politely (works without it too).
+    function initSelect() {
+        var all = document.querySelector('[data-tsp-selectall]');
+        var out = document.querySelector('[data-tsp-count]');
+        var boxes = Array.prototype.slice.call(document.querySelectorAll('input[name=sel]'));
+        if (!boxes.length) { return; }
+        function count() {
+            var n = boxes.filter(function (b) { return b.checked; }).length;
+            if (out) { out.textContent = n ? ' · ' + n.toLocaleString('fa-IR') + ' انتخاب‌شده' : ''; }
+        }
+        if (all) {
+            all.addEventListener('change', function () {
+                boxes.forEach(function (b) { b.checked = all.checked; });
+                count();
+            });
+        }
+        boxes.forEach(function (b) { b.addEventListener('change', count); });
+    }
+
+    function init() { initMenus(); initOnce(); initSelect(); }
     if (document.readyState === 'loading') { document.addEventListener('DOMContentLoaded', init); } else { init(); }
 })();

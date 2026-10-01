@@ -5,3 +5,5 @@ from . import member
 from . import text
 from . import client
 from . import assignment
+from . import group
+from . import saved_view

@@ -47,6 +47,7 @@ LIVE = {
     'panel:view', 'panel:profile', 'panel:settings',
     'members:read', 'members:invite', 'members:manage', 'members:add_owner',
     'clients:read_all', 'clients:read_own', 'clients:read_unassigned', 'clients:assign',
+    'clients:write', 'clients:archive', 'clients:merge', 'clients:be_responsible', 'groups:manage',
     'results:summary', 'results:education', 'results:clinical',
 }
 

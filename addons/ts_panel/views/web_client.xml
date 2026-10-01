@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <!-- W/clients/<id> (S4): one person: details, responsible specialist, assessments -->
+    <!-- W/clients/<id> (S4, S5): one person: details, responsible specialist, groups, assessments -->
     <record id="tpl_client" model="ir.ui.view">
         <field name="name">TS panel: client</field>
         <field name="type">qweb</field>
@@ -20,21 +20,34 @@
                                         <span t-if="c.state == 'archived'" class="ts-pill">بایگانی</span>
                                     </p>
                                 </div>
+                                <div class="tsp-head__actions">
+                                    <a t-if="can_write" t-attf-href="/my/workspaces/#{ws.id}/clients/#{c.id}/edit" class="ts-btn ts-btn--outline">ویرایش</a>
+                                    <form t-if="can_archive and c.state == 'active'" t-attf-action="/my/workspaces/#{ws.id}/clients/#{c.id}/archive" method="post" class="tsp-inline" data-tsp-once="1">
+                                        <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                                        <button type="submit" class="ts-btn ts-btn--quiet">بایگانی</button>
+                                    </form>
+                                    <form t-if="can_archive and c.state == 'archived' and not c.merged_into_id" t-attf-action="/my/workspaces/#{ws.id}/clients/#{c.id}/restore" method="post" class="tsp-inline" data-tsp-once="1">
+                                        <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                                        <button type="submit" class="ts-btn ts-btn--outline">بازیابی</button>
+                                    </form>
+                                </div>
                             </header>
-                            <p t-if="flash_ok" class="tsp-flash tsp-flash--ok" role="status" t-out="flash_ok"/>
-                            <p t-if="flash_err" class="tsp-flash tsp-flash--danger" role="alert" t-out="flash_err"/>
 
                             <section class="ts-card" aria-labelledby="tsp-c-info">
                                 <h2 id="tsp-c-info" class="h5">مشخصات</h2>
                                 <dl class="tsp-dl">
                                     <dt>شناسهٔ پنل</dt><dd><t t-out="c.code or '—'"/></dd>
                                     <dt>منبع</dt><dd t-out="source_label"/>
+                                    <dt>گروه سنی</dt><dd t-out="age_labels.get(c.age_group)"/>
                                     <t t-if="c.contact_locked">
                                         <dt>اطلاعات تماس</dt><dd>برای افراد واردشده از دادهٔ تاریخی ثبت و نمایش داده نمی‌شود.</dd>
                                     </t>
                                     <t t-else="">
                                         <dt>موبایل</dt><dd><bdi dir="ltr" t-out="c.phone or '—'"/></dd>
                                         <dt>ایمیل</dt><dd><bdi dir="ltr" t-out="c.email or '—'"/></dd>
+                                    </t>
+                                    <t t-if="c.age_group == 'minor' and not c.contact_locked">
+                                        <dt>سرپرست</dt><dd><t t-out="c.guardian_name or '—'"/> <bdi dir="ltr" t-if="c.guardian_phone" t-out="c.guardian_phone"/></dd>
                                     </t>
                                     <dt>حساب کاربری</dt><dd><t t-if="c.user_id">پیوند خورده</t><t t-else="">هنوز پیوند نخورده</t></dd>
                                     <dt>آخرین فعالیت</dt><dd t-out="jalali(c.last_activity_at, with_time=False)"/>
@@ -44,6 +57,21 @@
                             <section class="ts-card" aria-labelledby="tsp-c-resp">
                                 <h2 id="tsp-c-resp" class="h5">کارشناس مسئول</h2>
                                 <p><t t-if="c.responsible_id"><strong t-out="c.responsible_id.user_id.name"/> (<t t-out="role_labels.get(c.responsible_id.role, c.responsible_id.role)"/>)</t><t t-else="">این شرکت‌کننده کارشناس مسئول ندارد.</t></p>
+                                <t t-if="c.handover_to_id">
+                                    <p class="tsp-flash" role="status">درخواست واگذاری به «<t t-out="c.handover_to_id.user_id.name"/>» از طرف «<t t-out="c.handover_by_id.user_id.name"/>» منتظر تأیید است.</p>
+                                    <div t-if="can_assign" class="tsp-row-actions">
+                                        <form t-attf-action="/my/workspaces/#{ws.id}/clients/#{c.id}/decide" method="post" class="tsp-inline" data-tsp-once="1">
+                                            <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                                            <input type="hidden" name="accept" value="1"/>
+                                            <button type="submit" class="ts-btn ts-btn--primary">تأیید واگذاری</button>
+                                        </form>
+                                        <form t-attf-action="/my/workspaces/#{ws.id}/clients/#{c.id}/decide" method="post" class="tsp-inline" data-tsp-once="1">
+                                            <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                                            <input type="hidden" name="accept" value="0"/>
+                                            <button type="submit" class="ts-btn ts-btn--quiet">رد واگذاری</button>
+                                        </form>
+                                    </div>
+                                </t>
                                 <form t-if="can_assign" t-attf-action="/my/workspaces/#{ws.id}/clients/#{c.id}/responsible" method="post" class="tsp-form" data-tsp-once="1">
                                     <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
                                     <div class="tsp-field">
@@ -56,6 +84,41 @@
                                         </select>
                                     </div>
                                     <p><button type="submit" class="ts-btn ts-btn--primary">ذخیره</button></p>
+                                </form>
+                                <form t-if="colleagues and not c.handover_to_id and c.state == 'active'" t-attf-action="/my/workspaces/#{ws.id}/clients/#{c.id}/handover" method="post" class="tsp-form" data-tsp-once="1">
+                                    <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                                    <div class="tsp-field">
+                                        <label class="tsp-field__label" for="tsp_handover">واگذاری این شرکت‌کننده به همکار</label>
+                                        <p class="tsp-field__hint" id="tsp_handover_h">درخواست شما پس از تأیید مالک یا هماهنگ‌کنندهٔ پنل اعمال می‌شود.</p>
+                                        <select id="tsp_handover" name="target" required="required" aria-describedby="tsp_handover_h">
+                                            <option t-foreach="colleagues" t-as="m" t-att-value="m.id"><t t-out="m.user_id.name"/> — <t t-out="role_labels.get(m.role, m.role)"/></option>
+                                        </select>
+                                    </div>
+                                    <p><button type="submit" class="ts-btn ts-btn--outline">درخواست واگذاری</button></p>
+                                </form>
+                            </section>
+
+                            <section class="ts-card" aria-labelledby="tsp-c-grp">
+                                <h2 id="tsp-c-grp" class="h5">گروه‌ها</h2>
+                                <p t-if="not c.group_ids" class="ts-hint">در هیچ گروهی نیست.</p>
+                                <ul t-else="" class="tsp-list">
+                                    <li t-foreach="c.group_ids" t-as="g">
+                                        <a t-if="can_groups" t-attf-href="/my/workspaces/#{ws.id}/groups/#{g.id}" t-out="g.name"/><span t-else="" t-out="g.name"/>
+                                        <form t-if="can_groups" t-attf-action="/my/workspaces/#{ws.id}/clients/#{c.id}/groups" method="post" class="tsp-inline">
+                                            <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                                            <input type="hidden" name="group" t-att-value="g.id"/>
+                                            <input type="hidden" name="remove" value="1"/>
+                                            <button type="submit" class="ts-btn ts-btn--quiet ts-btn--sm">برداشتن</button>
+                                        </form>
+                                    </li>
+                                </ul>
+                                <form t-if="can_groups and all_groups" t-attf-action="/my/workspaces/#{ws.id}/clients/#{c.id}/groups" method="post" class="tsp-inline">
+                                    <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                                    <label for="tsp_addgroup">افزودن به گروه</label>
+                                    <select id="tsp_addgroup" name="group">
+                                        <option t-foreach="all_groups - c.group_ids" t-as="g" t-att-value="g.id" t-out="g.name"/>
+                                    </select>
+                                    <button type="submit" class="ts-btn ts-btn--outline ts-btn--sm">افزودن</button>
                                 </form>
                             </section>
 

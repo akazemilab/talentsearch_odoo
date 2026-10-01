@@ -38,6 +38,10 @@ class TsPanelClient(models.Model):
     guardian_phone = fields.Char('موبایل سرپرست')
     guardian_relation = fields.Selection([('father', 'پدر'), ('mother', 'مادر'), ('guardian', 'سرپرست قانونی'),
                                           ('other', 'سایر')], 'نسبت')
+    group_ids = fields.Many2many('ts.panel.group', 'ts_panel_client_group_rel', 'client_id', 'group_id', 'گروه‌ها')
+    handover_to_id = fields.Many2one('ts.workspace.member', 'واگذاری به', ondelete='set null')
+    handover_by_id = fields.Many2one('ts.workspace.member', 'درخواست‌کننده', ondelete='set null')
+    handover_on = fields.Datetime('زمان درخواست واگذاری')
     user_id = fields.Many2one('res.users', 'حساب کاربری', index=True, ondelete='set null')
     account_is_guardian = fields.Boolean('حساب متعلق به سرپرست است')
     partner_id = fields.Many2one('res.partner', 'شخص (دادهٔ تاریخی)', ondelete='restrict')
@@ -138,6 +142,131 @@ class TsPanelClient(models.Model):
     def ts_touch(self):
         now = fields.Datetime.now()
         self.sudo().filtered(lambda c: c.last_activity_at != now).write({'last_activity_at': now})
+
+    # ------------------------------------------------------------------ S5: archive, merge, handover
+    def _check_actor(self, by, perm):
+        for c in self:
+            if by.workspace_id != c.workspace_id or not by.has_perm(perm) or not by.can_act() or not by.can_see(c):
+                raise UserError('دسترسی ندارید.')
+
+    def ts_archive(self, by):
+        self._check_actor(by, 'clients:archive')
+        now = fields.Datetime.now()
+        for c in self.filtered(lambda c: c.state == 'active'):
+            c.write({'state': 'archived', 'archived_on': now, 'handover_to_id': False, 'handover_by_id': False,
+                     'handover_on': False})
+            self.env['ts.audit.event'].log('client.archive', c, workspace=c.workspace_id)
+
+    def ts_restore(self, by):
+        self._check_actor(by, 'clients:archive')
+        for c in self.filtered(lambda c: c.state == 'archived' and not c.merged_into_id):
+            c.write({'state': 'active', 'archived_on': False})
+            self.env['ts.audit.event'].log('client.restore', c, workspace=c.workspace_id)
+
+    def ts_merge_check(self, other, by):
+        """Raise unless `other` can be folded into self (04_data_model.md linking rule 5)."""
+        self.ensure_one()
+        other.ensure_one()
+        (self | other)._check_actor(by, 'clients:merge')
+        if self == other or self.workspace_id != other.workspace_id:
+            raise UserError('دو ردیف متفاوت از همین پنل را انتخاب کنید.')
+        if self.contact_locked or other.contact_locked:
+            raise UserError('افراد واردشده از دادهٔ تاریخی ادغام نمی‌شوند.')
+        if self.state != 'active' or other.state != 'active':
+            raise UserError('فقط ردیف‌های فعال ادغام می‌شوند.')
+        if self.user_id and other.user_id and self.user_id != other.user_id:
+            raise UserError('این دو ردیف حساب کاربری متفاوتی دارند و ادغام نمی‌شوند.')
+
+    def ts_merge_preview(self, other):
+        self.ensure_one()
+        return {'assignments': len(other.assignment_ids), 'attempts': len(other.attempt_ids - other.assignment_ids.attempt_id),
+                'groups': len(other.group_ids - self.group_ids)}
+
+    def ts_merge(self, other, by):
+        """`other` is folded into self: invitations, results and groups move, empty fields are filled, `other`
+        stays as an archived row pointing here. Nothing is deleted."""
+        self.ensure_one()
+        self.ts_merge_check(other, by)
+        moved_a, moved_t = len(other.assignment_ids), len(other.attempt_ids)
+        other.assignment_ids.sudo().write({'client_id': self.id})
+        other.attempt_ids.sudo().write({'client_id': self.id})
+        fill = {}
+        for f in ('phone', 'email', 'guardian_name', 'guardian_phone', 'guardian_relation'):
+            if not self[f] and other[f]:
+                fill[f] = other[f]
+        if not self.code and other.code:
+            fill['code'] = other.code
+        user = other.user_id if not self.user_id else self.env['res.users']
+        resp = other.responsible_id if not self.responsible_id else self.env['ts.workspace.member']
+        groups = other.group_ids
+        other.write({'code': False, 'user_id': False, 'responsible_id': False, 'group_ids': [(5, 0, 0)],
+                     'state': 'archived', 'archived_on': fields.Datetime.now(), 'merged_into_id': self.id,
+                     'handover_to_id': False, 'handover_by_id': False, 'handover_on': False})
+        if user:
+            fill['user_id'] = user.id
+        if resp and resp.can_act():
+            fill['responsible_id'] = resp.id
+        if groups:
+            fill['group_ids'] = [(4, g.id) for g in groups]
+        if fill:
+            self.write(fill)
+        self.ts_touch()
+        self.env['ts.audit.event'].log('client.merge', self, workspace=self.workspace_id,
+                                       merged=other.id, assignments=moved_a, attempts=moved_t)
+
+    def ts_request_handover(self, by, target):
+        """CLI-5: the responsible specialist asks to hand the client to a colleague. A member who can assign does
+        it at once; otherwise it waits for one of them to confirm."""
+        self.ensure_one()
+        if by.workspace_id != self.workspace_id or not by.can_act() or self.responsible_id != by \
+                or not by.has_perm('clients:be_responsible'):
+            raise UserError('فقط کارشناس مسئول می‌تواند واگذاری را درخواست کند.')
+        if self.state != 'active':
+            raise UserError('شرکت‌کنندهٔ بایگانی‌شده واگذار نمی‌شود.')
+        self._check_handover_target(target, by)
+        if by.has_perm('clients:assign'):
+            self.write({'responsible_id': target.id, 'handover_to_id': False, 'handover_by_id': False, 'handover_on': False})
+            return 'done'
+        self.write({'handover_to_id': target.id, 'handover_by_id': by.id, 'handover_on': fields.Datetime.now()})
+        self.env['ts.audit.event'].log('client.handover_request', self, workspace=self.workspace_id,
+                                       by=by.id, to=target.id)
+        return 'requested'
+
+    def _check_handover_target(self, target, by):
+        if not target or target.workspace_id != self.workspace_id or not target.active or not target.can_act() \
+                or target.role not in RESPONSIBLE_ROLES or target == by or (self.user_id and target.user_id == self.user_id):
+            raise UserError('همکار انتخاب‌شده نمی‌تواند کارشناس مسئول این فرد شود.')
+
+    def ts_decide_handover(self, by, accept):
+        self.ensure_one()
+        self._check_actor(by, 'clients:assign')
+        if not self.handover_to_id:
+            raise UserError('درخواست واگذاری بازی وجود ندارد.')
+        target, requester = self.handover_to_id, self.handover_by_id
+        vals = {'handover_to_id': False, 'handover_by_id': False, 'handover_on': False}
+        if accept:
+            self._check_handover_target(target, requester)
+            vals['responsible_id'] = target.id
+        self.write(vals)
+        self.env['ts.audit.event'].log('client.handover_decide', self, workspace=self.workspace_id,
+                                       accepted=bool(accept), to=target.id)
+
+    # ------------------------------------------------------------------ duplicates (a warning, never a block)
+    @api.model
+    def ts_duplicates(self, ws_id, name=None, phone=None, email=None, exclude=None):
+        dom = [('workspace_id', '=', int(ws_id)), ('state', '=', 'active')]
+        if exclude:
+            dom.append(('id', '!=', exclude))
+        conds = []
+        if (name or '').strip():
+            conds.append(('name_norm', '=', norm_text(name)))
+        if norm_phone(phone):
+            conds.append(('phone', '=', norm_phone(phone)))
+        if norm_email(email):
+            conds.append(('email', '=', norm_email(email)))
+        if not conds:
+            return self.browse()
+        return self.sudo().search(dom + ['|'] * (len(conds) - 1) + conds)
 
     # ------------------------------------------------------------------ finding or making a client
     @api.model

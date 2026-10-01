@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Merge preview and confirmation (S5, CLI-7) -->
+    <record id="tpl_client_merge" model="ir.ui.view">
+        <field name="name">TS panel: merge clients</field>
+        <field name="type">qweb</field>
+        <field name="key">ts_panel.client_merge</field>
+        <field name="website_id" ref="ts_website.website_ts"/>
+        <field name="arch" type="xml">
+            <t t-name="ts_panel.client_merge">
+                <t t-call="website.layout" additional_title="title">
+                    <div id="wrap" class="ts-page">
+                        <t t-call="ts_panel.shell_frame">
+                            <header class="tsp-head">
+                                <div>
+                                    <h1 class="tsp-head__title">ادغام دو ردیف</h1>
+                                    <p class="tsp-head__help">سنجه‌ها، نتیجه‌ها و گروه‌های ردیفِ دیگر به ردیفِ باقی‌مانده منتقل می‌شود. ردیف دیگر بایگانی می‌شود و چیزی حذف نمی‌شود.</p>
+                                </div>
+                            </header>
+                            <form t-attf-action="/my/workspaces/#{ws.id}/clients/merge" method="post" class="tsp-form ts-card" data-tsp-once="1">
+                                <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                                <fieldset class="tsp-field">
+                                    <legend class="tsp-field__label">کدام ردیف بماند؟</legend>
+                                    <label class="tsp-radio">
+                                        <input type="radio" name="keep" t-att-value="a.id" required="required"/>
+                                        <span><strong t-out="a.name"/> — <t t-out="fa(len(a.assignment_ids))"/> دعوت، با افزودنِ <t t-out="fa(prev_b['assignments'])"/> دعوت و <t t-out="fa(prev_b['groups'])"/> گروه از دیگری</span>
+                                    </label>
+                                    <label class="tsp-radio">
+                                        <input type="radio" name="keep" t-att-value="b.id" required="required"/>
+                                        <span><strong t-out="b.name"/> — <t t-out="fa(len(b.assignment_ids))"/> دعوت، با افزودنِ <t t-out="fa(prev_a['assignments'])"/> دعوت و <t t-out="fa(prev_a['groups'])"/> گروه از دیگری</span>
+                                    </label>
+                                </fieldset>
+                                <input type="hidden" name="ids" t-att-value="'%s,%s' % (a.id, b.id)"/>
+                                <p class="ts-hint">این کار قابل برگشت خودکار نیست؛ ردیف بایگانی‌شده می‌ماند و در گزارش رویدادها ثبت می‌شود.</p>
+                                <p><button type="submit" class="ts-btn ts-btn--primary">ادغام</button> <a t-attf-href="/my/workspaces/#{ws.id}/clients" class="ts-btn ts-btn--quiet">انصراف</a></p>
+                            </form>
+                        </t>
+                    </div>
+                </t>
+            </t>
+        </field>
+    </record>
+</odoo>

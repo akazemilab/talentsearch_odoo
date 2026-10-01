@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- W/clients/new and W/clients/<id>/edit (S5, CLI-3) -->
+    <record id="tpl_client_form" model="ir.ui.view">
+        <field name="name">TS panel: client form</field>
+        <field name="type">qweb</field>
+        <field name="key">ts_panel.client_form</field>
+        <field name="website_id" ref="ts_website.website_ts"/>
+        <field name="arch" type="xml">
+            <t t-name="ts_panel.client_form">
+                <t t-call="website.layout" additional_title="title">
+                    <div id="wrap" class="ts-page">
+                        <t t-call="ts_panel.shell_frame">
+                            <header class="tsp-head">
+                                <div>
+                                    <p class="tsp-field__hint"><a t-attf-href="/my/workspaces/#{ws.id}/clients#{('/%s' % c.id) if c else ''}">← بازگشت</a></p>
+                                    <h1 class="tsp-head__title"><t t-if="c">ویرایش شرکت‌کننده</t><t t-else="">شرکت‌کنندهٔ جدید</t></h1>
+                                </div>
+                            </header>
+                            <p t-if="errors" class="tsp-flash tsp-flash--danger" role="alert">فرم را بررسی کنید: <t t-out="len(errors)"/> مورد نیاز به اصلاح دارد.</p>
+                            <section t-if="dups" class="ts-notice" role="alert">
+                                <p><strong>به نظر می‌رسد این فرد قبلاً ثبت شده است:</strong></p>
+                                <ul class="tsp-list"><li t-foreach="dups" t-as="d"><a t-attf-href="/my/workspaces/#{ws.id}/clients/#{d.id}" t-out="d.name"/></li></ul>
+                                <label class="tsp-check"><input type="checkbox" name="confirm_dup" value="1" form="tsp_cform"/><span>با این حال، ذخیره شود</span></label>
+                            </section>
+                            <form id="tsp_cform" method="post" class="tsp-form ts-card" novalidate="novalidate" data-tsp-once="1"
+                                  t-attf-action="/my/workspaces/#{ws.id}/clients/#{('%s/edit' % c.id) if c else 'new'}">
+                                <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                                <div class="tsp-field">
+                                    <label class="tsp-field__label" for="f_name">نام</label>
+                                    <input id="f_name" name="name" type="text" maxlength="120" required="required" t-att-value="vals.get('name')" t-att-aria-invalid="'true' if errors.get('name') else None" t-att-aria-describedby="'f_name_e' if errors.get('name') else None"/>
+                                    <p t-if="errors.get('name')" id="f_name_e" class="tsp-field__error" t-out="errors['name']"/>
+                                </div>
+                                <div class="tsp-field">
+                                    <label class="tsp-field__label" for="f_code">شناسهٔ پنل (اختیاری)</label>
+                                    <p class="tsp-field__hint" id="f_code_h">مثلاً شمارهٔ دانش‌آموزی یا شمارهٔ پرونده؛ در پنل یکتاست.</p>
+                                    <input id="f_code" name="code" type="text" maxlength="40" t-att-value="vals.get('code')" aria-describedby="f_code_h" t-att-aria-invalid="'true' if errors.get('code') else None"/>
+                                    <p t-if="errors.get('code')" class="tsp-field__error" t-out="errors['code']"/>
+                                </div>
+                                <div class="tsp-field">
+                                    <label class="tsp-field__label" for="f_age">گروه سنی</label>
+                                    <select id="f_age" name="age_group">
+                                        <option t-foreach="age" t-as="a" t-att-value="a[0]" t-att-selected="'selected' if vals.get('age_group') == a[0] else None" t-out="a[1]"/>
+                                    </select>
+                                </div>
+                                <t t-if="locked">
+                                    <p class="ts-hint">اطلاعات تماس این فرد از دادهٔ تاریخی است و فعلاً قابل ثبت یا ویرایش نیست.</p>
+                                </t>
+                                <t t-else="">
+                                    <div class="tsp-field">
+                                        <label class="tsp-field__label" for="f_phone">موبایل (اختیاری)</label>
+                                        <p class="tsp-field__hint" id="f_phone_h">مثال: ۰۹۱۲۳۴۵۶۷۸۹</p>
+                                        <input id="f_phone" name="phone" type="tel" dir="ltr" inputmode="tel" maxlength="20" t-att-value="vals.get('phone')" aria-describedby="f_phone_h" t-att-aria-invalid="'true' if errors.get('phone') else None"/>
+                                        <p t-if="errors.get('phone')" class="tsp-field__error" t-out="errors['phone']"/>
+                                    </div>
+                                    <div class="tsp-field">
+                                        <label class="tsp-field__label" for="f_email">ایمیل (اختیاری)</label>
+                                        <input id="f_email" name="email" type="email" dir="ltr" maxlength="200" t-att-value="vals.get('email')" t-att-aria-invalid="'true' if errors.get('email') else None"/>
+                                        <p t-if="errors.get('email')" class="tsp-field__error" t-out="errors['email']"/>
+                                    </div>
+                                    <fieldset class="tsp-field">
+                                        <legend class="tsp-field__label">سرپرست (برای زیر ۱۸ سال، اختیاری)</legend>
+                                        <div class="tsp-field">
+                                            <label class="tsp-field__label" for="f_gname">نام سرپرست</label>
+                                            <input id="f_gname" name="guardian_name" type="text" maxlength="120" t-att-value="vals.get('guardian_name')"/>
+                                        </div>
+                                        <div class="tsp-field">
+                                            <label class="tsp-field__label" for="f_gphone">موبایل سرپرست</label>
+                                            <input id="f_gphone" name="guardian_phone" type="tel" dir="ltr" inputmode="tel" maxlength="20" t-att-value="vals.get('guardian_phone')" t-att-aria-invalid="'true' if errors.get('guardian_phone') else None"/>
+                                            <p t-if="errors.get('guardian_phone')" class="tsp-field__error" t-out="errors['guardian_phone']"/>
+                                        </div>
+                                        <div class="tsp-field">
+                                            <label class="tsp-field__label" for="f_grel">نسبت</label>
+                                            <select id="f_grel" name="guardian_relation">
+                                                <option t-foreach="relations" t-as="r" t-att-value="r[0]" t-att-selected="'selected' if (vals.get('guardian_relation') or '') == r[0] else None" t-out="r[1]"/>
+                                            </select>
+                                        </div>
+                                    </fieldset>
+                                </t>
+                                <div t-if="can_assign and not c" class="tsp-field">
+                                    <label class="tsp-field__label" for="f_resp">کارشناس مسئول</label>
+                                    <select id="f_resp" name="responsible_id">
+                                        <option value="">بدون کارشناس</option>
+                                        <option t-foreach="cands" t-as="m" t-att-value="m.id"><t t-out="m.user_id.name"/> — <t t-out="role_labels.get(m.role, m.role)"/></option>
+                                    </select>
+                                </div>
+                                <p><button type="submit" class="ts-btn ts-btn--primary">ذخیره</button></p>
+                            </form>
+                        </t>
+                    </div>
+                </t>
+            </t>
+        </field>
+    </record>
+</odoo>

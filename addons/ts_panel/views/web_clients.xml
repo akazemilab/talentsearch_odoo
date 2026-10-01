@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <!-- W/clients (S4): the people of the panel, as a table that becomes cards on a phone (TBL-1..4) -->
+    <!-- W/clients (S4, S5): the people of the panel, as a table that becomes cards on a phone (TBL-1..6) -->
     <record id="tpl_clients" model="ir.ui.view">
         <field name="name">TS panel: clients</field>
         <field name="type">qweb</field>
@@ -16,74 +16,151 @@
                                     <h1 class="tsp-head__title">شرکت‌کنندگان</h1>
                                     <p class="tsp-head__help">افرادی که در این پنل دعوت شده‌اند یا نتیجهٔ آن‌ها به پنل رسیده است. دعوت جدید فعلاً از «دعوت و فهرست (نسخهٔ قبلی)» انجام می‌شود.</p>
                                 </div>
+                                <div class="tsp-head__actions">
+                                    <a t-if="can_write" t-attf-href="/my/workspaces/#{ws.id}/clients/new" class="ts-btn ts-btn--primary">شرکت‌کنندهٔ جدید</a>
+                                </div>
                             </header>
-
                             <form t-attf-action="/my/workspaces/#{ws.id}/clients" method="post" class="tsp-search" role="search">
                                 <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
-                                <input type="hidden" name="filter" t-att-value="flt"/>
+                                <input t-if="flt != 'all'" type="hidden" name="filter" t-att-value="flt"/>
+                                <input t-if="group" type="hidden" name="group" t-att-value="group.id"/>
                                 <label class="tsp-sr" for="tsp_q">جست‌وجو در نام، شناسه، موبایل یا ایمیل</label>
                                 <input id="tsp_q" name="q" type="search" t-att-value="q" maxlength="100" autocomplete="off" placeholder="جست‌وجو در نام، شناسه، موبایل یا ایمیل"/>
                                 <button type="submit" class="ts-btn ts-btn--primary">جست‌وجو</button>
+                                <button t-if="q" type="submit" name="q" value="" class="ts-btn ts-btn--quiet">پاک‌کردن جست‌وجو</button>
                             </form>
-                            <p t-if="q" class="tsp-field__hint" role="status">نتیجهٔ جست‌وجو برای «<t t-out="q"/>».
-                                <form t-attf-action="/my/workspaces/#{ws.id}/clients" method="post" class="tsp-inline">
-                                    <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
-                                    <input type="hidden" name="filter" t-att-value="flt"/>
-                                    <input type="hidden" name="q" value=""/>
-                                    <button type="submit" class="ts-btn ts-btn--quiet ts-btn--sm">پاک‌کردن جست‌وجو</button>
-                                </form>
-                            </p>
+                            <p t-if="q" class="tsp-field__hint" role="status">نتیجهٔ جست‌وجو برای «<t t-out="q"/>».</p>
 
                             <nav class="tsp-chips" aria-label="پالایش فهرست">
                                 <t t-foreach="filters" t-as="f">
-                                    <a t-attf-href="/my/workspaces/#{ws.id}/clients#{'' if f[0] == 'all' else '?filter=' + f[0]}"
-                                       t-attf-class="tsp-chip #{'is-on' if f[0] == flt else ''}"
+                                    <a t-att-href="filter_url(f[0])" t-attf-class="tsp-chip #{'is-on' if f[0] == flt else ''}"
                                        t-att-aria-current="'true' if f[0] == flt else None" t-out="f[1]"/>
                                 </t>
                             </nav>
+                            <form t-if="groups" t-attf-action="/my/workspaces/#{ws.id}/clients" method="get" class="tsp-inline">
+                                <input t-if="flt != 'all'" type="hidden" name="filter" t-att-value="flt"/>
+                                <label for="tsp_group_f">گروه</label>
+                                <select id="tsp_group_f" name="group">
+                                    <option value="">همهٔ گروه‌ها</option>
+                                    <option t-foreach="groups" t-as="g" t-att-value="g.id" t-att-selected="'selected' if g == group else None" t-out="g.name"/>
+                                </select>
+                                <button type="submit" class="ts-btn ts-btn--outline ts-btn--sm">اعمال</button>
+                            </form>
 
-                            <p t-if="not rows and not q and flt == 'all'" class="tsp-empty">هنوز شرکت‌کننده‌ای در این پنل نیست. با «دعوت و فهرست (نسخهٔ قبلی)» اولین دعوت را بفرستید.</p>
+                            <section class="ts-card" aria-labelledby="tsp-views-h">
+                                <h2 id="tsp-views-h" class="h5">نماهای ذخیره‌شده و ستون‌ها</h2>
+                                <ul t-if="views" class="tsp-list">
+                                    <li t-foreach="views" t-as="v">
+                                        <a t-attf-href="/my/workspaces/#{ws.id}/clients?view=#{v.id}" t-att-aria-current="'true' if v == view else None"><strong t-out="v.name"/></a>
+                                        <span t-if="v.is_default" class="ts-pill ts-pill--info">پیش‌فرض</span>
+                                        <form t-attf-action="/my/workspaces/#{ws.id}/clients/views/#{v.id}/default" method="post" class="tsp-inline">
+                                            <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                                            <button type="submit" class="ts-btn ts-btn--quiet ts-btn--sm"><t t-if="v.is_default">برداشتن پیش‌فرض</t><t t-else="">پیش‌فرض شود</t></button>
+                                        </form>
+                                        <form t-attf-action="/my/workspaces/#{ws.id}/clients/views/#{v.id}/delete" method="post" class="tsp-inline">
+                                            <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                                            <button type="submit" class="ts-btn ts-btn--quiet ts-btn--sm">حذف</button>
+                                        </form>
+                                    </li>
+                                </ul>
+                                <form t-attf-action="/my/workspaces/#{ws.id}/clients/views/save" method="post" class="tsp-form" data-tsp-once="1">
+                                    <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                                    <input type="hidden" name="filter" t-att-value="flt"/>
+                                    <input type="hidden" name="sort" t-att-value="sort"/>
+                                    <input type="hidden" name="dir" t-att-value="direction"/>
+                                    <input t-if="group" type="hidden" name="group" t-att-value="group.id"/>
+                                    <fieldset class="tsp-field">
+                                        <legend class="tsp-field__label">ستون‌های نمایش‌داده‌شده</legend>
+                                        <label t-foreach="all_cols" t-as="col" class="tsp-check">
+                                            <input type="checkbox" name="col" t-att-value="col[0]" t-att-checked="'checked' if col[0] in cols else None"/>
+                                            <span t-out="col[1]"/>
+                                        </label>
+                                    </fieldset>
+                                    <div class="tsp-field">
+                                        <label class="tsp-field__label" for="tsp_view_name">نام نما</label>
+                                        <p class="tsp-field__hint" id="tsp_view_name_h">پالایش، ترتیب و ستون‌های فعلی ذخیره می‌شود. متن جست‌وجو ذخیره نمی‌شود. حداکثر ۱۰ نما.</p>
+                                        <input id="tsp_view_name" name="name" type="text" maxlength="40" required="required" aria-describedby="tsp_view_name_h"/>
+                                    </div>
+                                    <label class="tsp-check"><input type="checkbox" name="is_default" value="1"/><span>این نما پیش‌فرض باشد</span></label>
+                                    <p><button type="submit" class="ts-btn ts-btn--outline">ذخیرهٔ نما</button></p>
+                                </form>
+                            </section>
+
+                            <p t-if="not rows and not q and flt == 'all' and not group" class="tsp-empty">هنوز شرکت‌کننده‌ای در این پنل نیست. با «دعوت و فهرست (نسخهٔ قبلی)» اولین دعوت را بفرستید<t t-if="can_write"> یا فردی را دستی ثبت کنید</t>.</p>
                             <p t-elif="not rows" class="tsp-empty">موردی پیدا نشد. جست‌وجو یا پالایش را تغییر دهید.</p>
-                            <t t-else="">
-                                <p class="tsp-field__hint" role="status"><t t-out="fa(total)"/> مورد · صفحهٔ <t t-out="fa(page)"/> از <t t-out="fa(pages)"/></p>
+                            <form t-else="" t-attf-action="/my/workspaces/#{ws.id}/clients/bulk" method="post" id="tsp_bulk" data-tsp-bulk="1">
+                                <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                                <p class="tsp-field__hint" role="status"><t t-out="fa(total)"/> مورد · صفحهٔ <t t-out="fa(page)"/> از <t t-out="fa(pages)"/><span data-tsp-count="1"></span></p>
                                 <div class="ts-table-wrap">
                                     <table class="ts-table tsp-table tsp-table--cards">
                                         <caption class="tsp-sr">فهرست شرکت‌کنندگان</caption>
                                         <thead>
                                             <tr>
+                                                <th t-if="any_bulk" scope="col" class="tsp-col-sel"><label class="tsp-check"><input type="checkbox" data-tsp-selectall="1"/><span class="tsp-sr">انتخاب همهٔ این صفحه</span></label></th>
                                                 <th scope="col" t-att-aria-sort="('descending' if desc else 'ascending') if sort == 'name' else None">
                                                     <a t-att-href="url(sort='name', dir='desc' if (sort == 'name' and not desc) else 'asc', page=1)">نام</a></th>
-                                                <th scope="col">منبع</th>
-                                                <th scope="col">کارشناس مسئول</th>
-                                                <th scope="col" t-att-aria-sort="('descending' if desc else 'ascending') if sort == 'open' else None">
+                                                <th t-if="'source' in cols" scope="col">منبع</th>
+                                                <th t-if="'responsible' in cols" scope="col">کارشناس مسئول</th>
+                                                <th t-if="'open' in cols" scope="col" t-att-aria-sort="('descending' if desc else 'ascending') if sort == 'open' else None">
                                                     <a t-att-href="url(sort='open', dir='asc' if (sort == 'open' and desc) else 'desc', page=1)">در جریان</a></th>
-                                                <th scope="col" t-att-aria-sort="('descending' if desc else 'ascending') if sort == 'done' else None">
+                                                <th t-if="'done' in cols" scope="col" t-att-aria-sort="('descending' if desc else 'ascending') if sort == 'done' else None">
                                                     <a t-att-href="url(sort='done', dir='asc' if (sort == 'done' and desc) else 'desc', page=1)">تکمیل‌شده</a></th>
-                                                <th scope="col" t-att-aria-sort="('descending' if desc else 'ascending') if sort == 'activity' else None">
+                                                <th t-if="'activity' in cols" scope="col" t-att-aria-sort="('descending' if desc else 'ascending') if sort == 'activity' else None">
                                                     <a t-att-href="url(sort='activity', dir='asc' if (sort == 'activity' and desc) else 'desc', page=1)">آخرین فعالیت</a></th>
                                             </tr>
                                         </thead>
                                         <tbody>
                                             <tr t-foreach="rows" t-as="c">
+                                                <td t-if="any_bulk" class="tsp-col-sel"><label class="tsp-check"><input type="checkbox" name="sel" t-att-value="c.id"/><span class="tsp-sr">انتخاب <t t-out="c.name"/></span></label></td>
                                                 <th scope="row" data-label="نام">
                                                     <a t-attf-href="/my/workspaces/#{ws.id}/clients/#{c.id}" t-out="c.name"/>
                                                     <span t-if="c.state == 'archived'" class="ts-pill"> بایگانی</span>
                                                 </th>
-                                                <td data-label="منبع"><span class="ts-pill ts-pill--info" t-if="c.source == 'import'">واردشده</span><t t-else="" t-out="source_labels.get(c.source)"/></td>
-                                                <td data-label="کارشناس مسئول"><t t-if="c.responsible_id" t-out="c.responsible_id.user_id.name"/><span t-else="" class="ts-hint">بدون کارشناس</span></td>
-                                                <td data-label="در جریان" class="ts-num" t-out="fa(c.open_count)"/>
-                                                <td data-label="تکمیل‌شده" class="ts-num" t-out="fa(c.done_count)"/>
-                                                <td data-label="آخرین فعالیت" t-out="jalali(c.last_activity_at, with_time=False)"/>
+                                                <td t-if="'source' in cols" data-label="منبع"><span class="ts-pill ts-pill--info" t-if="c.source == 'import'">واردشده</span><t t-else="" t-out="source_labels.get(c.source)"/></td>
+                                                <td t-if="'responsible' in cols" data-label="کارشناس مسئول"><t t-if="c.responsible_id" t-out="c.responsible_id.user_id.name"/><span t-else="" class="ts-hint">بدون کارشناس</span></td>
+                                                <td t-if="'open' in cols" data-label="در جریان" class="ts-num" t-out="fa(c.open_count)"/>
+                                                <td t-if="'done' in cols" data-label="تکمیل‌شده" class="ts-num" t-out="fa(c.done_count)"/>
+                                                <td t-if="'activity' in cols" data-label="آخرین فعالیت" t-out="jalali(c.last_activity_at, with_time=False)"/>
                                             </tr>
                                         </tbody>
                                     </table>
                                 </div>
+                                <fieldset t-if="any_bulk" class="tsp-batch">
+                                    <legend class="tsp-batch__title">کار روی انتخاب‌شده‌ها</legend>
+                                    <div class="tsp-field">
+                                        <label class="tsp-field__label" for="tsp_bulk_action">کار</label>
+                                        <select id="tsp_bulk_action" name="bulk">
+                                            <option value="">یک کار برگزینید</option>
+                                            <option t-if="can_bulk['assign']" value="assign">تعیین کارشناس مسئول</option>
+                                            <option t-if="can_bulk['group_add']" value="group_add">افزودن به گروه</option>
+                                            <option t-if="can_bulk['group_remove']" value="group_remove">برداشتن از گروه</option>
+                                            <option t-if="can_bulk['archive']" value="archive">بایگانی</option>
+                                            <option t-if="can_bulk['restore']" value="restore">بازیابی از بایگانی</option>
+                                            <option t-if="can_bulk['merge']" value="merge">ادغام دو ردیف</option>
+                                        </select>
+                                    </div>
+                                    <div t-if="can_bulk['assign']" class="tsp-field">
+                                        <label class="tsp-field__label" for="tsp_bulk_target">کارشناس (برای «تعیین کارشناس مسئول»)</label>
+                                        <select id="tsp_bulk_target" name="target">
+                                            <option value="">بدون کارشناس</option>
+                                            <option t-foreach="assignable" t-as="m" t-att-value="m.id"><t t-out="m.user_id.name"/> — <t t-out="role_labels.get(m.role, m.role)"/></option>
+                                        </select>
+                                    </div>
+                                    <div t-if="can_bulk['group_add'] and groups" class="tsp-field">
+                                        <label class="tsp-field__label" for="tsp_bulk_group">گروه (برای افزودن یا برداشتن)</label>
+                                        <select id="tsp_bulk_group" name="group">
+                                            <option value="">—</option>
+                                            <option t-foreach="groups" t-as="g" t-att-value="g.id" t-out="g.name"/>
+                                        </select>
+                                    </div>
+                                    <p><button type="submit" class="ts-btn ts-btn--primary">اجرا</button></p>
+                                </fieldset>
                                 <nav t-if="pages &gt; 1" class="tsp-pager" aria-label="صفحه‌بندی">
                                     <a t-if="page &gt; 1" t-att-href="url(page=page - 1)" rel="prev">صفحهٔ قبل</a>
                                     <span aria-current="page">صفحهٔ <t t-out="fa(page)"/></span>
                                     <a t-if="page &lt; pages" t-att-href="url(page=page + 1)" rel="next">صفحهٔ بعد</a>
                                 </nav>
-                            </t>
+                            </form>
                         </t>
                     </div>
                 </t>

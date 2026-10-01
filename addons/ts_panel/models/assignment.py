@@ -19,6 +19,8 @@ class TsAssignment(models.Model):
             if not vals.get('client_id') and vals.get('workspace_id'):
                 vals['client_id'] = Client.ts_for_invitation(vals).id
             c = Client.browse(vals.get('client_id'))
+            if c and c.state != 'active':
+                raise UserError('این شرکت‌کننده بایگانی شده است؛ ابتدا او را بازیابی کنید.')
             if c and c.contact_locked:
                 raise UserError('این فرد از دادهٔ تاریخی است و دعوت برای او فعلاً ممکن نیست.')
         recs = super().create(vals_list)
