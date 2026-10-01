@@ -273,3 +273,10 @@ Data step (owner-only, NOT in code): approve workspace 1, set pilot, add the cou
 - Tests: `tests_pv2_14.py` (34 ORM), `ts_http_pv2_14.py` (20 HTTP). Rehearsal eot_ts55r: guard UNCHANGED, portal UNCHANGED, one old menu test updated for the new item (re-run green). Ship: eot.ir UNCHANGED.
 - Lessons: events seeded for a test must be keyed by actor so a re-run on a kept clone stays valid; cross-panel checks must tolerate the page's own export events.
 - Ship window: www.eot.ir through Arvan again showed only 502 for ~3 min and one curl timeout; never the old server.
+
+## pv2s15 — Panel v2, stage S15 participant portal (2026-10-01)
+
+- `ts_org` 20.0.2.0.0 + `ts_panel` 20.0.11.0.0 (ship label `pv2s15`, commit aeb1ec4): participant home `/my` and account `/my/account` on Talent Search only, sharing page `/my/sharing` (up to `ts_panel.share_max_panels` = 3 panels per result, decision D3), privacy page `/my/privacy` (export as ZIP of JSON + CSV, erase request due in 30 days), append-only consent ledger `ts.consent.record`, data requests `ts.data.request`, and the block "who can see this result" on both report pages.
+- Rehearsal reh58: guard and portal UNCHANGED; only two stale checks in `ts_http_flow.py` (old /my cards) were rewritten.
+- Ship note: the script said NOT OK because the eot.ir comparison saw differences. They came from concurrent work on eot.ir (a website page edited 18:48 and `theme_eot_custom` upgraded with an odoo20 restart 18:52-18:53), not from this ship (upgrade list was only ts_org, ts_panel; probes 200). Lesson: if the compare shows many text diffs, look at `ir_ui_view` / `website_page` write_date and the journal for other deploys before blaming the ship.
+
