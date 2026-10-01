@@ -74,22 +74,6 @@ class TsPanelWorkspace(TsOrg):
             a.action_mark_opened()   # first visit of the link; a link preview may count too, so the panel says «بازشده», not «خوانده‌شده»
         return res
 
-    def _setup_steps(self, member):
-        """The first-steps list of a new panel (moved from the old page), pointing at the new pages."""
-        ws = member.workspace_id
-        if not member.has_perm('members:invite'):
-            return []
-        base = '/my/workspaces/%s' % ws.id
-        others = len(ws.member_ids.filtered(lambda m: m.active and m != member))
-        others += request.env['ts.member.invite'].sudo().search_count([('workspace_id', '=', ws.id)])
-        first = request.env['ts.assignment'].sudo().search_count([('workspace_id', '=', ws.id)])
-        return [
-            ('پنل ساخته شد', True, None),
-            ('نام و لوگوی پنل', bool(ws.partner_id.image_1920), base + '/settings'),
-            ('دعوت اولین همکار', bool(others), base + '/members'),
-            ('دعوت اولین شرکت‌کننده' + (' (پس از تأیید)' if ws.gated else ''), bool(first), base + '/invites/new?fresh=1'),
-        ]
-
     def _dashboard(self, member, is_new=False, period=None):
         if not member.has_perm('panel:view'):
             return require(member, 'panel:view', 'home')
