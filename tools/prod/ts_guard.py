@@ -17,7 +17,7 @@ import sys, json, re, hashlib, subprocess, urllib.request, urllib.error, urllib.
 
 DIR = "/var/lib/ts_guard"
 TABLES = {
-    "ir_ui_view": "(website_id = 1 OR website_id IS NULL) AND coalesce(model, '') NOT LIKE 'ts.%' AND coalesce(model, '') NOT LIKE 'kavenegar.%' AND NOT (website_id IS NULL AND id IN (SELECT res_id FROM ir_model_data WHERE model = 'ir.ui.view' AND module IN ('ts_kavenegar', 'ts_sms')))",  # ts.* backend views (back-office lists/forms of Talent Search models) never render on a website
+    "ir_ui_view": "(website_id = 1 OR website_id IS NULL) AND coalesce(model, '') NOT LIKE 'ts.%' AND coalesce(model, '') NOT LIKE 'kavenegar.%' AND NOT (website_id IS NULL AND id IN (SELECT res_id FROM ir_model_data WHERE model = 'ir.ui.view' AND module IN ('ts_kavenegar', 'ts_sms', 'ts_panel')))",  # ts.* backend views (back-office lists/forms of Talent Search models) never render on a website
     "website_page": "website_id = 1 OR website_id IS NULL",
     "website_menu": "website_id = 1 OR website_id IS NULL",
     "website_rewrite": "website_id = 1 OR website_id IS NULL",
@@ -137,7 +137,7 @@ def main():
     bad = 0
     for t, rows in base["db"].items():
         now = cur["db"][t]
-        ours = set(r[0] for r in psql(db, "SELECT id::text FROM ir_ui_view WHERE coalesce(model,'') LIKE 'ts.%' OR coalesce(model,'') LIKE 'kavenegar.%' OR id IN (SELECT res_id FROM ir_model_data WHERE model = 'ir.ui.view' AND module IN ('ts_kavenegar', 'ts_sms') AND (SELECT website_id FROM ir_ui_view v WHERE v.id = res_id) IS NULL)")) if t == "ir_ui_view" else set()
+        ours = set(r[0] for r in psql(db, "SELECT id::text FROM ir_ui_view WHERE coalesce(model,'') LIKE 'ts.%' OR coalesce(model,'') LIKE 'kavenegar.%' OR id IN (SELECT res_id FROM ir_model_data WHERE model = 'ir.ui.view' AND module IN ('ts_kavenegar', 'ts_sms', 'ts_panel') AND (SELECT website_id FROM ir_ui_view v WHERE v.id = res_id) IS NULL)")) if t == "ir_ui_view" else set()
         changed = [k for k in rows if k in now and now[k][0] != rows[k][0] and k not in ours]
         removed = [k for k in rows if k not in now and k not in ours]
         added = [k for k in now if k not in rows]
