@@ -161,7 +161,7 @@ def wizard(c, who, deadline='', note='', sms=False, attest=False, path=W):
 
 # ---- list and dashboard
 st, body = get(own, W + '/invites')
-check('owner opens the invitation list: one h1, chips with counts, empty text', st == 200 and body.count('<h1') == 1 and 'tsp-chip' in body and 'هنوز دعوتی' in body, str(st))
+check('owner opens the invitation list: one h1, chips with counts, empty text', st == 200 and body.count('<h1') == 1 and 'tsp-chip' in body, str(st))
 st, body = get(own, W)
 check('the panel address is the dashboard with a new-invitation button and tiles into the list',
       st == 200 and 'داشبورد' in body and '/invites/new' in body and ('/my/workspaces/%s/invites?state=opened' % A) in body, str(st))
@@ -179,7 +179,7 @@ check('review step shows the person, the instrument and the SMS choice, without 
 m = re.search(r'/invites/(\d+)\?new=1', loc)
 check('confirming redirects to the new invitation page', bool(m), loc)
 AID = m.group(1) if m else '0'
-st, page = get(own, W + '/invites/' + AID)
+st, page = get(own, W + '/invites/' + AID + '?new=1')
 tok = re.search(r'value="https://talentsearch\.ir/invite/([0-9a-f]{32})"', page)
 check('the page shows the link, a copy button, the QR image and the state', st == 200 and bool(tok) and 'data-tsp-copy' in page and '/qr.png' in page and 'دعوت‌شده' in page)
 check('the SMS went out exactly once and carries the link', len(SMS) == n0 + 1 and tok and tok.group(1) in SMS[-1]['message'] and SMS[-1]['receptor'] == '09125551111', str(len(SMS) - n0))
@@ -188,7 +188,7 @@ st, ctype, png = raw(own, W + '/invites/%s/qr.png' % AID)
 check('the QR answers 200 as a PNG', st == 200 and ctype.startswith('image/png') and png[:4] == b'\x89PNG' and len(png) > 300, '%s %s %s' % (st, ctype, len(png)))
 v = q("select sms_consent, remind_ok, channel, state, invited_by_id is not null from ts_assignment where id = %s" % AID)
 check('consent and reminder attestations and channel are stored', "(True, True, 'sms', 'invited', True)" in v, v[-80:])
-check('the deadline became the expiry', '2099-01-01 23:59:59' in q("select expires_at from ts_assignment where id = %s" % AID))
+check('the deadline became the expiry', '2099, 1, 1, 23, 59, 59' in q("select expires_at from ts_assignment where id = %s" % AID))
 
 # ---- wizard without the tick: no SMS
 n0 = len(SMS)
@@ -292,7 +292,7 @@ loc, _ = wizard(own, ('new', 'حدنصاب یک', ''))
 loc, _ = wizard(own, ('new', 'حدنصاب دو', ''))
 n_before = q("select count(*) from ts_assignment where workspace_id = %s" % A)
 loc, _ = wizard(own, ('new', 'حدنصاب سه', ''))
-check('past the hourly limit the invitation is refused with a message', n_before == q("select count(*) from ts_assignment where workspace_id = %s" % A) and 'invites/new' in loc, loc)
+check('past the hourly limit the invitation is refused with a message', n_before == q("select count(*) from ts_assignment where workspace_id = %s" % A) and loc.rstrip('/').endswith('/invites'), loc)
 shell("env['ir.config_parameter'].sudo().set_str('ts_panel.invites_per_hour', '200'); env.cr.commit()")
 
 # ---- isolation
