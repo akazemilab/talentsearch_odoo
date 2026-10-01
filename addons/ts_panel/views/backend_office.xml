@@ -1,0 +1,135 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Back office (PLT-1, PLT-2, PLT-9): tenant health, pending age, data-request queue. Counts only, no client names. -->
+    <record id="view_ts_workspace_health_list" model="ir.ui.view">
+        <field name="name">ts.workspace.health.list</field>
+        <field name="model">ts.workspace</field>
+        <field name="arch" type="xml">
+            <list create="0" delete="0" decoration-muted="state in ('closed', 'suspended')">
+                <field name="name"/>
+                <field name="purpose"/>
+                <field name="state"/>
+                <field name="ts_member_count"/>
+                <field name="ts_client_count"/>
+                <field name="ts_open_invites"/>
+                <field name="ts_done_30d"/>
+                <field name="ts_last_activity"/>
+                <field name="ts_pending_days" optional="hide"/>
+            </list>
+        </field>
+    </record>
+    <record id="view_ts_workspace_health_search" model="ir.ui.view">
+        <field name="name">ts.workspace.health.search</field>
+        <field name="model">ts.workspace</field>
+        <field name="mode">primary</field>
+        <field name="inherit_id" ref="ts_core.ts_workspace_view_search"/>
+        <field name="arch" type="xml">
+            <xpath expr="//filter[@name='live']" position="after">
+                <filter name="suspended" string="تعلیق‌شده" domain="[('state', '=', 'suspended')]"/>
+            </xpath>
+        </field>
+    </record>
+    <record id="action_ts_workspace_health" model="ir.actions.act_window">
+        <field name="name">سلامت پنل‌ها</field>
+        <field name="res_model">ts.workspace</field>
+        <field name="view_mode">list,form</field>
+        <field name="search_view_id" ref="view_ts_workspace_health_search"/>
+        <field name="context">{'search_default_live': 1}</field>
+    </record>
+    <record id="action_ts_workspace_health_list" model="ir.actions.act_window.view">
+        <field name="sequence">1</field>
+        <field name="view_mode">list</field>
+        <field name="view_id" ref="view_ts_workspace_health_list"/>
+        <field name="act_window_id" ref="action_ts_workspace_health"/>
+    </record>
+    <menuitem id="menu_ts_workspace_health" name="سلامت پنل‌ها" parent="ts_core.menu_ts_customers" action="action_ts_workspace_health"
+              sequence="6" groups="ts_core.group_ts_manager"/>
+
+    <record id="view_ts_workspace_pending_list" model="ir.ui.view">
+        <field name="name">ts.workspace.pending.list</field>
+        <field name="model">ts.workspace</field>
+        <field name="arch" type="xml">
+            <list create="0" delete="0" decoration-danger="ts_pending_days &gt; 7">
+                <field name="name"/>
+                <field name="purpose"/>
+                <field name="state"/>
+                <field name="create_date"/>
+                <field name="ts_pending_days"/>
+                <field name="terms_version"/>
+                <field name="terms_accepted_on"/>
+                <field name="terms_accepted_by_id"/>
+            </list>
+        </field>
+    </record>
+    <record id="action_ts_workspace_pending_list" model="ir.actions.act_window.view">
+        <field name="sequence">1</field>
+        <field name="view_mode">list</field>
+        <field name="view_id" ref="view_ts_workspace_pending_list"/>
+        <field name="act_window_id" ref="ts_core.ts_workspace_pending_action"/>
+    </record>
+
+    <!-- data requests -->
+    <record id="view_ts_data_request_list" model="ir.ui.view">
+        <field name="name">ts.data.request.list</field>
+        <field name="model">ts.data.request</field>
+        <field name="arch" type="xml">
+            <list create="0" delete="0" decoration-danger="overdue" decoration-muted="state in ('done', 'rejected')">
+                <field name="create_date"/>
+                <field name="kind"/>
+                <field name="state"/>
+                <field name="due_on"/>
+                <field name="overdue" column_invisible="1"/>
+                <field name="handled_by_id" optional="show"/>
+                <field name="decision_code" optional="show"/>
+            </list>
+        </field>
+    </record>
+    <record id="view_ts_data_request_form" model="ir.ui.view">
+        <field name="name">ts.data.request.form</field>
+        <field name="model">ts.data.request</field>
+        <field name="arch" type="xml">
+            <form create="0" delete="0">
+                <header>
+                    <button name="action_review" string="شروع رسیدگی" type="object" invisible="state != 'new'"/>
+                    <button name="action_done" string="انجام شد" type="object" class="btn-primary" invisible="state not in ('new', 'in_review')"/>
+                    <button name="action_reject_legal" string="رد: نگه‌داشت قانونی" type="object" invisible="state not in ('new', 'in_review')"/>
+                    <field name="state" widget="statusbar"/>
+                </header>
+                <sheet>
+                    <group>
+                        <field name="kind"/>
+                        <field name="due_on"/>
+                        <field name="overdue"/>
+                        <field name="handled_by_id"/>
+                        <field name="decision_code"/>
+                        <field name="job_id"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+    <record id="view_ts_data_request_search" model="ir.ui.view">
+        <field name="name">ts.data.request.search</field>
+        <field name="model">ts.data.request</field>
+        <field name="arch" type="xml">
+            <search>
+                <filter name="f_open" string="باز" domain="[('state', 'in', ('new', 'in_review'))]"/>
+                <filter name="f_overdue" string="عقب‌افتاده" domain="[('overdue', '=', True)]"/>
+                <filter name="f_erase" string="پاک‌سازی" domain="[('kind', '=', 'erase')]"/>
+                <filter name="f_export" string="دریافت داده" domain="[('kind', '=', 'export')]"/>
+                <group>
+                    <filter name="by_state" string="وضعیت" context="{'group_by': 'state'}"/>
+                    <filter name="by_kind" string="نوع" context="{'group_by': 'kind'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+    <record id="action_ts_data_request" model="ir.actions.act_window">
+        <field name="name">درخواست‌های داده</field>
+        <field name="res_model">ts.data.request</field>
+        <field name="view_mode">list,form</field>
+        <field name="context">{'search_default_f_open': 1}</field>
+    </record>
+    <menuitem id="menu_ts_data_request" name="درخواست‌های داده" parent="ts_core.menu_ts_customers" action="action_ts_data_request"
+              sequence="7" groups="ts_core.group_ts_manager"/>
+</odoo>

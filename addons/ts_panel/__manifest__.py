@@ -27,6 +27,7 @@
         'views/web_audit.xml',
         'views/backend_support.xml',
         'views/backend_wallet.xml',
+        'views/backend_office.xml',
         'views/web_groups.xml',
         'views/web_members.xml',
         'views/web_member.xml',

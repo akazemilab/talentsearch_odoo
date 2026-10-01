@@ -22,3 +22,4 @@ from . import consent
 from . import data_request
 from . import assignment_consent
 from . import guardian
+from . import backoffice
