@@ -83,8 +83,8 @@ class TsPanelPortal(CustomerPortal):
     def sharing(self, **kw):
         _ts_site_or_404()
         user = request.env.user
-        mine = request.env['ts.attempt'].sudo().search([('user_id', '=', user.id), ('state', '=', 'done'), ('released', '=', True)],
-                                                      order='id desc')                                         # ts-scope-ok: own attempts
+        mine = request.env['ts.attempt'].sudo().search([('user_id', '=', user.id), ('state', '=', 'done'), ('released', '=', True)],  # ts-scope-ok: own attempts
+                                                      order='id desc')
         Consent = request.env['ts.consent.record'].sudo()
         blocks = []
         for at in mine:
