@@ -304,7 +304,7 @@ check('selection hides short values', '10004346' in sel and '1' not in sel and '
 company.sudo().write({'kv_lines': '10004346,90008956'})
 
 # persist webhook fixtures for the HTTP test
-open('/tmp/kv_http_fixture.json', 'w').write(json.dumps({
+open('/tmp/kv_http_fixture_%s.json' % env.cr.dbname, 'w').write(json.dumps({
     'secret': company.sudo().kv_webhook_secret,
     'messageid': Msg.search([('direction', '=', 'out'), ('messageid', '!=', False)], limit=1).messageid}))
 env.cr.commit()

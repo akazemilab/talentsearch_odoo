@@ -62,11 +62,17 @@ def fetch(port, path, host="www.eot.ir"):
     class NoRedirect(urllib.request.HTTPRedirectHandler):
         def redirect_request(self, *a, **k): return None
     opener = urllib.request.build_opener(NoRedirect)
-    try:
-        r = opener.open(req, timeout=60)
-        return r.status, r.headers.get("Location", ""), r.read().decode("utf-8", "ignore")
-    except urllib.error.HTTPError as e:
-        return e.code, e.headers.get("Location", ""), e.read().decode("utf-8", "ignore")
+    for attempt in (1, 2):
+        try:
+            r = opener.open(req, timeout=60)
+            return r.status, r.headers.get("Location", ""), r.read().decode("utf-8", "ignore")
+        except urllib.error.HTTPError as e:
+            return e.code, e.headers.get("Location", ""), e.read().decode("utf-8", "ignore")
+        except (urllib.error.URLError, TimeoutError, ConnectionError) as e:   # transient: retry once, then report
+            if attempt == 2:
+                return 0, "", f"FETCH FAILED {type(e).__name__}"
+            import time
+            time.sleep(2)
 
 
 def norm(body):
@@ -99,11 +105,20 @@ def pages(port):
         p = urllib.parse.urlsplit(html.unescape(u))
         urls.append(urllib.parse.quote(urllib.parse.unquote(p.path)) + (("?" + p.query) if p.query else ""))
     out = {}
-    for path in sorted(set(urls + SYSTEM)):
+
+    def one(path):
         st, loc, body = fetch(port, path)
         n = norm(body)
-        out[path] = {"status": st, "loc": loc, "hash": hashlib.md5(n.encode()).hexdigest(), "text": text_of(n)[:4000],
-                     "forms": forms_of(body)}
+        return path, {"status": st, "loc": loc, "hash": hashlib.md5(n.encode()).hexdigest(), "text": text_of(n)[:4000],
+                      "forms": forms_of(body)}
+
+    # Parallel fetch: a clone server takes 4 at once easily; the LIVE server (8069) gets 2 so real
+    # visitors never queue behind the guard. Override with TS_GUARD_WORKERS.
+    workers = int(os.environ.get("TS_GUARD_WORKERS") or (2 if str(port) == "8069" else 4))
+    from concurrent.futures import ThreadPoolExecutor
+    with ThreadPoolExecutor(max_workers=max(1, workers)) as ex:
+        for path, rec in ex.map(one, sorted(set(urls + SYSTEM))):
+            out[path] = rec
     out["__sitemap__"] = {"status": 0, "loc": "", "hash": "", "text": sorted(set(urls)), "forms": []}
     return out
 

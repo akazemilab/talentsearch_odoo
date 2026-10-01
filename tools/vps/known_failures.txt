@@ -1,0 +1,5 @@
+# Substrings of FAIL lines that are known and not caused by the change under test.
+# Keep each with a reason; remove it the day it is fixed.
+# The clone holds real inbound SMS rows from prod; these tests assume an empty inbox.
+inbox stored 2 messages
+inbox dedupes on messageid
