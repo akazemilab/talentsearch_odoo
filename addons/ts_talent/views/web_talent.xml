@@ -185,13 +185,18 @@
         <field name="arch" type="xml">
             <t t-name="ts_talent.report">
                 <t t-call="website.layout" additional_title="'گزارش ' + inst.title">
-                    <div id="wrap" class="ts-page tt-page">
+                    <div id="wrap" class="ts-page tt-page" t-att-data-tsp-autoprint="1 if autoprint else None">
                         <section class="ts-section ts-report-page">
                             <div class="ts-container ts-report-wrap">
                                 <div class="ts-report-actions ts-noprint">
                                     <a t-if="not org_view" href="/my/assessments" class="ts-back">سنجه‌های من</a>
+                                    <a t-elif="back_url" t-att-href="back_url" class="ts-back">بازگشت به شرکت‌کننده</a>
                                     <a t-else="" t-attf-href="/my/workspaces/#{ws.id}" class="ts-back">بازگشت به فهرست شرکت‌کنندگان</a>
-                                    <button type="button" class="ts-btn ts-btn--outline ts-js-print">چاپ یا ذخیره به‌صورت PDF</button>
+                                    <form t-if="print_url" method="post" t-att-action="print_url" style="display:inline;margin:0">
+                                        <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                                        <button type="submit" class="ts-btn ts-btn--outline">چاپ یا ذخیره به‌صورت PDF</button>
+                                    </form>
+                                    <button t-else="" type="button" class="ts-btn ts-btn--outline ts-js-print">چاپ یا ذخیره به‌صورت PDF</button>
                                 </div>
                                 <p t-if="submitted" class="ts-notice ts-noprint" role="status">پاسخ‌های شما ثبت شد و گزارش آماده است.</p>
                                 <article class="ts-doc tt-report">

@@ -217,7 +217,7 @@
                                     <dt t-if="a.sms_consent">پیامک دعوت</dt><dd t-if="a.sms_consent"><t t-if="a.sms_sent_at">ارسال شد</t><t t-elif="a.sms_error">نرسید</t><t t-else="">ارسال نشده</t></dd>
                                     <dt t-if="a.reminder_count">یادآوری‌ها</dt><dd t-if="a.reminder_count"><t t-out="fa(a.reminder_count)"/> بار، آخرین: <t t-out="jalali(a.last_reminder_at)"/></dd>
                                 </dl>
-                                <p t-if="level != 'none' and a.attempt_id"><a t-attf-href="/my/workspaces/#{ws.id}/a/#{a.id}" class="ts-btn ts-btn--outline">دیدن نتیجه</a></p>
+                                <p t-if="level != 'none' and a.attempt_id"><a t-attf-href="/my/workspaces/#{ws.id}/clients/#{a.client_id.id}/r/#{a.attempt_id.id}" class="ts-btn ts-btn--outline">دیدن نتیجه</a></p>
                             </section>
                             <section t-if="can_manage and a.state in ('invited', 'opened', 'accepted', 'in_progress')" class="ts-card" aria-labelledby="tsp-i-rem">
                                 <h2 id="tsp-i-rem" class="h5">یادآوری</h2>

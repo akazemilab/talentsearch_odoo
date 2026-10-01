@@ -57,6 +57,16 @@ class TsPanelWorkspace(TsOrg):
         return super().workspace(ws_id, state=state, **kw)
 
     @http.route()
+    def assignment(self, ws_id, assignment_id, **kw):
+        """S13: a finished invitation of a known participant opens on the new result page."""
+        from .reports import result_url
+        me = member_or_404(ws_id)
+        a = request.env['ts.assignment'].sudo().search([('id', '=', int(assignment_id)), ('workspace_id', '=', me.workspace_id.id)])
+        if a and a.client_id and a.attempt_id and a.state == 'done':
+            return request.redirect(result_url(me.workspace_id.id, a.client_id.id, a.attempt_id.id))
+        return super().assignment(ws_id, assignment_id, **kw)
+
+    @http.route()
     def invite_page(self, token, **kw):
         res = super().invite_page(token, **kw)
         a = request.env['ts.assignment'].sudo().search([('token', '=', token)], limit=1)   # ts-scope-ok: the secret token is the key of a public link

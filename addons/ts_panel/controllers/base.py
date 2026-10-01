@@ -14,6 +14,8 @@ from odoo.addons.ts_assessment.models.attempt import fa_digits, jalali
 from odoo.addons.ts_org.controllers.main import _memberships
 from odoo.addons.ts_org.models.panel import ROLE_LABELS
 
+RESULT_PERMS = ('results:summary', 'results:education', 'results:clinical')
+
 # seq, key, label, path suffix below /my/workspaces/<id>, permission, needs_act, absolute url
 MENU = [
     {'seq': 10, 'key': 'home', 'label': 'داشبورد', 'suffix': '', 'perm': 'panel:view'},
@@ -29,6 +31,7 @@ MENU = [
      'needs_act': True},
     {'seq': 45, 'key': 'exports', 'label': 'خروجی‌ها', 'suffix': '/exports', 'perm': 'clients:export',
      'needs_act': True},
+    {'seq': 42, 'key': 'reports', 'label': 'گزارش‌ها', 'suffix': '/reports', 'perm_any': RESULT_PERMS, 'needs_act': True},
     {'seq': 50, 'key': 'credits', 'label': 'اعتبار و مصرف', 'suffix': '/credits', 'perm': 'credits:read'},
     {'seq': 40, 'key': 'members', 'label': 'اعضا و نقش‌ها', 'suffix': '/members', 'perm': 'members:read'},
     {'seq': 90, 'key': 'settings', 'label': 'تنظیمات', 'suffix': '/settings', 'perm': 'panel:profile'},
@@ -62,6 +65,8 @@ def build_menu(member, active):
     out = []
     for it in sorted(MENU, key=lambda i: i['seq']):
         if it.get('perm') and it['perm'] not in perms:
+            continue
+        if it.get('perm_any') and not any(p in perms for p in it['perm_any']):
             continue
         if it.get('needs_act') and not member.can_act():
             continue

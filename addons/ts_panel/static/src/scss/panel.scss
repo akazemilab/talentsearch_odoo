@@ -119,3 +119,11 @@
         .tsp-shell__nav { position: sticky; inset-block-start: var(--space-4); }
     }
 }
+
+// Print (S13): the result page prints as a clean sheet without the panel navigation; page numbers in the margin.
+@media print {
+    @page { size: A4; margin: 14mm 12mm; @bottom-center { content: counter(page) " / " counter(pages); } }
+    .tsp-noprint, .tsp-nav, .tsp-shell__nav, .tsp-menu-toggle, .tsp-head .ts-btn, .ts-header, .ts-footer { display: none !important; }
+    .tsp-shell { display: block !important; background: #fff !important; }
+    .tsp-card, .ts-card { break-inside: avoid; border: 1px solid #ccc; box-shadow: none; }
+}

@@ -71,6 +71,14 @@
         });
     }
 
-    function init() { initMenus(); initOnce(); initSelect(); initCopy(); }
+    // After a logged print click the server sends the page back with ?print=1: open the print dialog once.
+    function initAutoPrint() {
+        if (document.querySelector('[data-tsp-autoprint]') && /[?&]print=1/.test(location.search)) {
+            if (window.history && history.replaceState) { history.replaceState(null, '', location.pathname); }
+            setTimeout(function () { window.print(); }, 300);
+        }
+    }
+
+    function init() { initMenus(); initOnce(); initSelect(); initCopy(); initAutoPrint(); }
     if (document.readyState === 'loading') { document.addEventListener('DOMContentLoaded', init); } else { init(); }
 })();
