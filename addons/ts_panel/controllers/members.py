@@ -26,7 +26,8 @@ def _roles_for(ws, me):
 
 
 def _other_member(me, mid):
-    m = request.env['ts.workspace.member'].sudo().search([('id', '=', int(mid)), ('workspace_id', '=', me.workspace_id.id)])
+    m = request.env['ts.workspace.member'].sudo().with_context(active_test=False).search(
+        [('id', '=', int(mid)), ('workspace_id', '=', me.workspace_id.id)])
     if not m:
         raise request.not_found()
     return m

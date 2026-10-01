@@ -11,6 +11,7 @@ lib = importlib.util.module_from_spec(spec); spec.loader.exec_module(lib)
 lib.setup(DB, PORT)
 Client, check, ensure_user, summary, shell = lib.Client, lib.check, lib.ensure_user, lib.summary, lib.shell
 TS = 'talentsearch.ir'
+PH = '0912%07d' % (int(__import__('time').time()) % 10000000)
 NAMES = ('owner', 'admin', 'counselor', 'hm', 'target', 'outsider')
 L = {n: 'ts.pv2s3.%s.http@example.invalid' % n for n in NAMES}
 pw = {u: ensure_user(u) for u in L.values()}
@@ -95,12 +96,12 @@ stx, _, bx = Client(TS).req('/join/' + tok2)
 check('the revoked link no longer works', 'دیگر معتبر نیست' in bx or stx in (404, 410), str(stx))
 adm = login('admin')
 st, _, _ = post(adm, '/my/workspaces/%s/members/add' % A, {'role': 'counselor', 'phone': '09121118888'}, '/my/workspaces/%s/members' % A)
-check('admin may invite a counselor', st in (302, 303), str(st))
+check('admin cannot invite (members:invite is not theirs): 403', st == 403, str(st))
 st, _, _ = post(adm, '/my/workspaces/%s/members/add' % A, {'role': 'owner', 'phone': '09121117777'}, '/my/workspaces/%s/members' % A)
 check('admin cannot invite an owner (403)', st == 403, str(st))
 
 # owner role needs fresh re-authentication
-st, loc3, _ = post(own, '/my/workspaces/%s/members/add' % A, {'role': 'owner', 'phone': '09121116666'}, '/my/workspaces/%s/members' % A)
+st, loc3, _ = post(own, '/my/workspaces/%s/members/add' % A, {'role': 'owner', 'phone': PH}, '/my/workspaces/%s/members' % A)
 check('adding an owner without fresh re-auth redirects to /my/reauth', st in (302, 303) and '/my/reauth' in (loc3 or ''), '%s %s' % (st, loc3))
 st, body = page(own, '/my/reauth?next=/my/workspaces/%s/members' % A)
 check('reauth page (password path): one password field, no code field', st == 200 and 'type="password"' in body and 'name="code"' not in body)
@@ -109,7 +110,7 @@ st2, body = page(own, '/my/reauth?next=/my/workspaces/%s/members' % A)
 check('a wrong password is refused with a message', 'رمز عبور درست نیست' in body and 'role="alert"' in body)
 st, loc5, _ = post(own, '/my/reauth/verify', {'password': pw[L['owner']], 'next': '/my/workspaces/%s/members' % A}, '/my/reauth')
 check('the right password goes back to the list', st in (302, 303) and (loc5 or '').endswith('/members'), '%s %s' % (st, loc5))
-st, loc6, _ = post(own, '/my/workspaces/%s/members/add' % A, {'role': 'owner', 'phone': '09121116666'}, '/my/workspaces/%s/members' % A)
+st, loc6, _ = post(own, '/my/workspaces/%s/members/add' % A, {'role': 'owner', 'phone': PH}, '/my/workspaces/%s/members' % A)
 _fl = re.findall(r'role="alert"[^>]*>(.*?)<', page(own, '/my/workspaces/%s/members' % A)[1], re.S) if 'minv=' not in (loc6 or '') else ''
 check('now the owner invite goes through', st in (302, 303) and 'minv=' in (loc6 or ''), '%s %s %s' % (st, loc6, _fl))
 st, _, _ = post(own, '/my/reauth/verify', {'password': 'x', 'next': 'https://evil.example/'}, '/my/reauth')
