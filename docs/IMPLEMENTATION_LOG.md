@@ -194,3 +194,11 @@ Data step (owner-only, NOT in code): approve workspace 1, set pilot, add the cou
 - `ts_panel` 20.0.1.1.0: shared shell (menu per permission, mobile menu button, 403 inside the shell), dashboard `W/home` with six counters, state pages (draft, suspended, closed, awaiting verification), `W/settings` (profile and contact for `panel:profile`, terms for `panel:settings`), header link «پنل من» (`res.users.ts_panel_home()`), notice on the old page. New design tokens in `ts.scss`.
 - Tests: `tests_pv2_2.py` (9 ORM), `ts_http_pv2_2.py` (46 HTTP). Rehearsal eot_ts32: eot.ir UNCHANGED, portal UNCHANGED, unexpected failures 0. Ship `pv2s2` (commit bc08113): eot.ir UNCHANGED live.
 - Lesson: Bootstrap's `:root` overrides `--success`/`--danger`, so panel-local tokens are needed (pill contrast was 2.7:1). Running each new test file by hand on a kept clone first saved a full rehearsal.
+
+## pv2s3 — Panel v2, stage S3 members (2026-10-01)
+
+- `ts_panel` 20.0.1.2.0 (now depends on `ts_sms`): `W/members` (list incl. inactive, pending invitations, invite form), `W/members/<id>` (change role, deactivate with a confirmation page, reactivate, «I also see clients» for owners with licence in clinical panels), send-again (old link dies, new 7-day link), revoke, `/help/roles` generated from the permission table (only permissions that exist today), re-authentication `/my/reauth` (code to the account's verified mobile via the OTP sender, password when there is none; adding an owner needs it; 10 minutes).
+- New model `ts.reauth.code` (hashed code, 5 tries, 5 min, no ACL rows). Never writes to the shared `ts.phone.otp`.
+- Tests: `tests_pv2_3.py` (34 ORM, sender patched, no SMS), `ts_http_pv2_3.py` (35 HTTP). Rehearsal eot_ts33: eot.ir UNCHANGED, portal UNCHANGED, unexpected failures 0. Ship `pv2s3` (commit 2bbb31c): eot.ir UNCHANGED live.
+- Lessons: HTTP test found a real bug (inactive member lookup needs `active_test=False`); a served kept clone keeps old Python after `ts sync` (halt + serve again); ships run from slot 0 only (`TS_SLOT=0`).
+
