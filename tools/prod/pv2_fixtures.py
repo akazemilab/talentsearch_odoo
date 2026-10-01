@@ -30,6 +30,8 @@ def panel(name, purpose):
         {'name': name, 'is_company': True})
     ws = W.search([('partner_id', '=', org.id)], limit=1) or W.create({'name': name, 'purpose': purpose, 'partner_id': org.id})
     ws.write({'approved_on': '2026-01-01 00:00:00'})
+    if purpose == 'clinical' and not ws.escalation_contact_id:
+        ws.escalation_contact_id = org.id   # a clinical panel cannot be active without an emergency contact
     ws.state = 'pilot'
     return ws
 
