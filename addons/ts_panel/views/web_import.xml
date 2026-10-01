@@ -1,0 +1,164 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- W/import: step 1, template and upload (IMP-1) -->
+    <record id="tpl_import_start" model="ir.ui.view">
+        <field name="name">TS panel: import start</field>
+        <field name="type">qweb</field>
+        <field name="key">ts_panel.import_start</field>
+        <field name="website_id" ref="ts_website.website_ts"/>
+        <field name="arch" type="xml">
+            <t t-name="ts_panel.import_start">
+                <t t-call="website.layout" additional_title="title">
+                    <div id="wrap" class="ts-page">
+                        <t t-call="ts_panel.shell_frame">
+                            <header class="tsp-head">
+                                <div>
+                                    <h1 class="tsp-head__title">ورود از فایل</h1>
+                                    <p class="tsp-head__help">فهرست شرکت‌کنندگان را یک‌جا وارد کنید. چهار گام: الگو، بارگذاری، تطبیق ستون‌ها و مرور. پیش از گام آخر چیزی ثبت نمی‌شود.</p>
+                                </div>
+                            </header>
+                            <section class="ts-card" aria-labelledby="tsp-im-1">
+                                <h2 id="tsp-im-1" class="h5">۱. الگو</h2>
+                                <p>فایل شما باید این ستون‌ها را داشته باشد (فقط «نام» الزامی است): <t t-out="'، '.join(headers)"/>.</p>
+                                <p><a t-attf-href="/my/workspaces/#{ws.id}/import/template.csv" class="ts-btn ts-btn--outline">دریافت الگو (csv)</a></p>
+                            </section>
+                            <section class="ts-card" aria-labelledby="tsp-im-2">
+                                <h2 id="tsp-im-2" class="h5">۲. بارگذاری</h2>
+                                <p class="ts-hint">فایل csv یا xlsx، حداکثر <t t-out="fa(max_mb)"/> مگابایت و <t t-out="fa(max_rows)"/> ردیف. اگر فهرست بزرگ‌تر است، آن را به چند فایل تقسیم کنید. فایل شما پس از پایان کار از سامانه پاک می‌شود.</p>
+                                <form t-attf-action="/my/workspaces/#{ws.id}/import/upload" method="post" enctype="multipart/form-data" class="tsp-form" data-tsp-once="1">
+                                    <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                                    <label class="tsp-field"><span class="tsp-field__label">فایل</span><input type="file" name="file" accept=".csv,.xlsx" required="required"/></label>
+                                    <p class="ts-hint">اگر شمارهٔ موبایل در اکسل بدون صفر اول ذخیره شده باشد، ما صفر را اضافه می‌کنیم. رقم‌های فارسی هم پذیرفته می‌شوند.</p>
+                                    <p><button type="submit" class="ts-btn ts-btn--primary">بارگذاری و ادامه</button></p>
+                                </form>
+                            </section>
+                        </t>
+                    </div>
+                </t>
+            </t>
+        </field>
+    </record>
+
+    <record id="tpl_import_map" model="ir.ui.view">
+        <field name="name">TS panel: import mapping</field>
+        <field name="type">qweb</field>
+        <field name="key">ts_panel.import_map</field>
+        <field name="website_id" ref="ts_website.website_ts"/>
+        <field name="arch" type="xml">
+            <t t-name="ts_panel.import_map">
+                <t t-call="website.layout" additional_title="title">
+                    <div id="wrap" class="ts-page">
+                        <t t-call="ts_panel.shell_frame">
+                            <header class="tsp-head">
+                                <div>
+                                    <h1 class="tsp-head__title">تطبیق ستون‌ها</h1>
+                                    <p class="tsp-head__help">برای هر ستون فایل بگویید چه چیزی است. ستون‌هایی که لازم نیست را «نادیده بگیر» بگذارید.</p>
+                                </div>
+                            </header>
+                            <form t-attf-action="/my/workspaces/#{ws.id}/import/#{job.id}/map" method="post" class="tsp-form ts-card" data-tsp-once="1">
+                                <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                                <div t-foreach="range(len(headers))" t-as="i" class="tsp-field">
+                                    <label t-attf-for="tsp_col_#{i}" class="tsp-field__label"><t t-out="headers[i] or ('ستون ' + str(i + 1))"/></label>
+                                    <select t-attf-id="tsp_col_#{i}" t-attf-name="col_#{i}" class="form-select">
+                                        <option value="">نادیده بگیر</option>
+                                        <option t-foreach="fields" t-as="f" t-att-value="f[0]" t-att-selected="'selected' if mapping.get(i) == f[0] else None"><t t-out="f[1]"/></option>
+                                    </select>
+                                </div>
+                                <p><button type="submit" class="ts-btn ts-btn--primary">ادامه به مرور</button> <a t-attf-href="/my/workspaces/#{ws.id}/import" class="ts-btn ts-btn--quiet">فایل دیگر</a></p>
+                            </form>
+                        </t>
+                    </div>
+                </t>
+            </t>
+        </field>
+    </record>
+
+    <record id="tpl_import_review" model="ir.ui.view">
+        <field name="name">TS panel: import review</field>
+        <field name="type">qweb</field>
+        <field name="key">ts_panel.import_review</field>
+        <field name="website_id" ref="ts_website.website_ts"/>
+        <field name="arch" type="xml">
+            <t t-name="ts_panel.import_review">
+                <t t-call="website.layout" additional_title="title">
+                    <div id="wrap" class="ts-page">
+                        <t t-call="ts_panel.shell_frame">
+                            <header class="tsp-head">
+                                <div>
+                                    <h1 class="tsp-head__title">مرور پیش از ورود</h1>
+                                    <p class="tsp-head__help">اگر درست است «وارد کن» را بزنید. ردیف‌های دارای ایراد وارد نمی‌شوند و گزارششان را پس از ورود می‌گیرید.</p>
+                                </div>
+                            </header>
+                            <section class="ts-card">
+                                <dl class="tsp-dl">
+                                    <dt>ردیف‌های فایل</dt><dd t-out="fa(total)"/>
+                                    <dt>شرکت‌کنندهٔ تازه</dt><dd t-out="fa(counts['create'])"/>
+                                    <dt>به‌روزرسانی</dt><dd t-out="fa(counts['update'])"/>
+                                    <dt>بدون تغییر</dt><dd t-out="fa(counts['same'])"/>
+                                    <dt>دارای ایراد</dt><dd t-out="fa(counts['error'])"/>
+                                </dl>
+                                <ul t-if="errs" class="tsp-list">
+                                    <li t-foreach="errs" t-as="e">ردیف <t t-out="fa(e['n'])"/>: <t t-out="errors_text.get(e['err'], e['err'])"/></li>
+                                </ul>
+                                <p t-if="counts['error'] &gt; len(errs)" class="ts-hint">بیست ایراد نخست نشان داده شد.</p>
+                                <form t-attf-action="/my/workspaces/#{ws.id}/import/#{job.id}/start" method="post" data-tsp-once="1">
+                                    <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                                    <p>
+                                        <button t-if="counts['create'] or counts['update']" type="submit" class="ts-btn ts-btn--primary">وارد کن</button>
+                                        <a t-attf-href="/my/workspaces/#{ws.id}/import/#{job.id}/map" class="ts-btn ts-btn--quiet">برگشت به تطبیق ستون‌ها</a>
+                                    </p>
+                                    <p t-if="not (counts['create'] or counts['update'])" class="ts-notice" role="status">چیزی برای وارد کردن نیست.</p>
+                                </form>
+                            </section>
+                        </t>
+                    </div>
+                </t>
+            </t>
+        </field>
+    </record>
+
+    <!-- job page: state, counts, error report -->
+    <record id="tpl_job" model="ir.ui.view">
+        <field name="name">TS panel: job page</field>
+        <field name="type">qweb</field>
+        <field name="key">ts_panel.job</field>
+        <field name="website_id" ref="ts_website.website_ts"/>
+        <field name="arch" type="xml">
+            <t t-name="ts_panel.job">
+                <t t-call="website.layout" additional_title="title">
+                    <div id="wrap" class="ts-page">
+                        <t t-call="ts_panel.shell_frame">
+                            <header class="tsp-head">
+                                <div>
+                                    <h1 class="tsp-head__title" t-out="kind_label.get(job.kind, '')"/>
+                                    <p class="tsp-head__help"><span t-attf-class="ts-pill #{pill.get(job.state, '')}" t-out="state_label.get(job.state, job.state)"/></p>
+                                </div>
+                            </header>
+                            <section class="ts-card" role="status">
+                                <p t-if="job.state in ('queued', 'running')">فایل شما در حال ورود است؛ این صفحه خودش تازه می‌شود.</p>
+                                <t t-if="job.state == 'done'">
+                                    <dl class="tsp-dl">
+                                        <dt>شرکت‌کنندهٔ تازه</dt><dd t-out="fa(s.get('create', 0))"/>
+                                        <dt>به‌روزرسانی‌شده</dt><dd t-out="fa(s.get('update', 0))"/>
+                                        <dt>بدون تغییر</dt><dd t-out="fa(s.get('same', 0))"/>
+                                        <dt>ردشده</dt><dd t-out="fa(s.get('error', 0))"/>
+                                    </dl>
+                                    <p t-if="can_download"><a t-attf-href="/my/workspaces/#{ws.id}/jobs/#{job.id}/download" class="ts-btn ts-btn--outline">دریافت گزارش ردیف‌های ردشده</a></p>
+                                    <p class="ts-hint">گزارش تا <t t-out="jalali(job.expires_at)"/> در دسترس است و فایل بارگذاری‌شده پاک شده است.</p>
+                                    <p>
+                                        <a t-attf-href="/my/workspaces/#{ws.id}/clients" class="ts-btn ts-btn--primary">دیدن شرکت‌کنندگان</a>
+                                        <a t-if="can_campaign and groups" t-attf-href="/my/workspaces/#{ws.id}/campaigns/new" class="ts-btn ts-btn--outline">دعوت یک گروه</a>
+                                    </p>
+                                </t>
+                                <p t-if="job.state == 'failed'" class="ts-notice" role="alert" t-out="err_text"/>
+                                <p t-if="job.state == 'expired'">مهلت این کار به پایان رسیده است.</p>
+                                <p t-if="job.state == 'draft'"><a t-attf-href="/my/workspaces/#{ws.id}/import/#{job.id}/map" class="ts-btn ts-btn--primary">ادامهٔ ورود</a></p>
+                            </section>
+                            <meta t-if="refresh" http-equiv="refresh" content="5"/>
+                        </t>
+                    </div>
+                </t>
+            </t>
+        </field>
+    </record>
+</odoo>
