@@ -243,3 +243,19 @@ Data step (owner-only, NOT in code): approve workspace 1, set pilot, add the cou
 - Tests: `tests_pv2_10.py` (67 ORM), `ts_http_pv2_10.py` (26 HTTP; fake Kavenegar message count 0 with the switches off). Rehearsal eot_ts41r green, eot.ir UNCHANGED, ship OK.
 - Deviations: manual reminders in quiet hours are refused with a message instead of queued; email channel not built (D8).
 - Lessons: `is not true` is not a valid ORM domain operator (use the stored `state` field); `ts check` in the worktree finds the `ts_scope` errors that the main repo run misses; a pill that depends on `.tsp-shell` variables fails the contrast audit outside the shell (use plain colours).
+
+## pv2s11 — Panel v2, stage S11 wallet (2026-10-01)
+
+- `ts_panel` 20.0.8.0.0 (ship commit c4113d3): `ts.wallet` per panel (stored balance and units used), append-only `ts.wallet.txn` with a unique `idem_key`, one debit per finished panel attempt (amount 0 and `free` while `ts_panel.credit_mode` is `free`), `action_void` with a single refund (manager only, audited), daily reconcile cron, credits page `W/credits` (perm `credits:read`), back-office views, menu item «اعتبار و مصرف».
+- Tests: `tests_pv2_11.py` (42 ORM), `ts_http_pv2_11.py` (15 HTTP). Rehearsal eot_ts48r: portal UNCHANGED, unexpected failures 0; guard showed one group (view of ts_panel's own settings, same arch) which the guard now treats as ours. Ship `pv2s11`: eot.ir UNCHANGED.
+- Deviation: voided attempts are not yet left out of reports until S13.
+- Lessons: `ts.instrument.name` is varchar, not jsonb; audit `detail` takes ids only (no `text`); old menu tests must allow later menu items (`LATER`).
+- Toolkit: rehearsal clones are restored from the newest `eot_main_pre_*.dump`, which predates a stage's own install. After a ship the live code can be newer than the newest dump, so the portal baseline fails ("login 200") because columns are missing. Take a fresh `pg_dump -Fc` into `/var/backups/odoo/eot_main_pre_<name>.dump` before rehearsing after any ship.
+
+## pv2s12 — Panel v2, stage S12 dashboard (2026-10-01)
+
+- `ts_panel` 20.0.8.0.0 + dashboard (ship commit 1703dc3): `models/dashboard.py` (needs-attention lines, period tiles 7/30/90 days, funnel, workload, setup checklist with dismiss), list filters on invitations and clients so that every tile count equals its list count, small-group guard `MIN_N` 5.
+- Tests: `tests_pv2_12.py` (38 ORM), `ts_http_pv2_12.py` (21 HTTP). Old S2 tests updated for the new tiles and menu. Rehearsal eot_ts49r: portal UNCHANGED, unexpected failures 0. Ship `pv2s12`: eot.ir UNCHANGED.
+- Lessons: tiles must be built from the same filters as their lists; `'is not true'` is not a domain operator.
+- Incident (not caused by the code): during the ~3 min Odoo stop of each ship the owner saw eot.ir served from the old server 45.82.138.67. DNS and Arvan answers from the VPS pointed only at the new server; root cause is open (see memory lessons).
+

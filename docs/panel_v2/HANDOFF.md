@@ -7,8 +7,8 @@ explicit approval («تأیید فاز ۱»). While it says DRAFT, Phase 2 must 
 must not change.
 
 - Design written: 2026-10-01 (9 Mehr 1405). Approved by the owner 2026-10-01 (defaults for D4, D6, D7, D8 accepted).
-- Last finished stage: **S10 `notify`** (shipped 2026-10-01, label `pv2s10`, commit adfd096).
-- **Next stage: S11 `wallet`** (branch `pv2-11-wallet` in /root/ts_wt_s2: models, credits page, tests written; hand tests running).
+- Last finished stage: **S12 `dashboard`** (shipped 2026-10-01, labels `pv2s11` c4113d3 and `pv2s12` 1703dc3).
+- **Next stage: S13 `reports`** (branch `pv2-13-reports` in /root/ts_wt_s1: code and tests written, 24 ORM + 33 HTTP pass on a kept clone, full rehearsal reh51 running; ship after the owner confirms the eot.ir old-server issue is understood).
 
 ## 1. Read in this order (Phase 2)
 1. This file.
@@ -155,3 +155,5 @@ The full list is `06_gap_analysis.md` section 2.
 | S8 | import | 2026-10-01 | fc6c971 | csv/xlsx client import, `ts.job` runner. Shipped with S9. |
 | S9 | export | 2026-10-01 | fc6c971 | exports of clients, status, results as jobs; fresh reauth; formula guard. Rehearsal eot_ts39r green, eot.ir UNCHANGED. |
 | S10 | notify | 2026-10-01 | adfd096 | Notification centre, bell, preferences, reminders; new SMS switches OFF. Rehearsal eot_ts41r green, eot.ir UNCHANGED. |
+| S11 | wallet | 2026-10-01 | c4113d3 | Wallet, append-only ledger, credits page, void with refund. Rehearsal eot_ts48r green, eot.ir UNCHANGED. |
+| S12 | dashboard | 2026-10-01 | 1703dc3 | Dashboard (attention, KPIs, funnel, workload, checklist) with list filters. Rehearsal eot_ts49r green, eot.ir UNCHANGED. |
