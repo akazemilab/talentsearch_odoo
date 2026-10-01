@@ -38,7 +38,7 @@ class TsRetentionLog(models.Model):
 
     @api.model
     def enabled(self):
-        return self.env['ir.config_parameter'].sudo().get_param('ts_panel.retention_enabled', '0') in ('1', 'True', 'true')
+        return bool(self.env['ir.config_parameter'].sudo().get_bool('ts_panel.retention_enabled', False))
 
     # ------------------------------------------------------------------ the rules: candidates
     @api.model
