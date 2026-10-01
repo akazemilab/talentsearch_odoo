@@ -23,7 +23,7 @@ class TsAssignment(models.Model):
     # writes the client, so every older writer (old page, member leaving, accept) keeps working.
     responsible_id = fields.Many2one(related='client_id.responsible_id', readonly=False, string='کارشناس مسئول')
 
-    @api.depends('expired', 'opened_at')
+    @api.depends('withdrawn', 'declined', 'user_id', 'attempt_id.state', 'expired', 'opened_at')
     def _compute_state(self):
         super()._compute_state()
         for a in self:
@@ -73,7 +73,7 @@ class TsAssignment(models.Model):
     # ------------------------------------------------------------------ expiry (INV-3)
     def action_extend(self, days=None, by=None):
         """A new expiry for an invitation nobody accepted; clears `expired`."""
-        days = int(days or self._ts_ttl_days())
+        days = self._ts_ttl_days() if days is None else int(days)
         if not 1 <= days <= 365:
             raise UserError('مدت تمدید باید بین ۱ تا ۳۶۵ روز باشد.')
         for a in self:
