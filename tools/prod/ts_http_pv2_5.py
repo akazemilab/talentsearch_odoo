@@ -33,6 +33,8 @@ def member(ws, n, role):
 A = panel('پنل S5 آموزشی', 'education')
 mo = member(A, 'owner', 'owner'); member(A, 'admin', 'admin'); m1 = member(A, 'c1', 'counselor'); m2 = member(A, 'c2', 'counselor')
 C = env['ts.panel.client']
+C.search([('workspace_id', '=', A.id), ('name', 'like', 'پنج %')]).write({'name': 'قدیمی', 'state': 'archived', 'responsible_id': False})
+C.search([('workspace_id', '=', A.id), ('name', 'like', 'تازه%')]).write({'name': 'قدیمی', 'state': 'archived', 'responsible_id': False})
 for n, r in (('پنج الف', m1), ('پنج ب', m1), ('پنج پ', m2), ('پنج ت', False)):
     if not C.search_count([('workspace_id', '=', A.id), ('name', '=', n)]):
         C.create({'workspace_id': A.id, 'name': n, 'responsible_id': r.id if r else False})
@@ -83,7 +85,7 @@ GID = m.group(1) if m else '0'
 st, loc, _ = post(own, W + '/groups/new', {'name': ' کلاس پنجم ', 'kind': 'class'})
 st2, body = get(own, W + '/groups')
 check('a duplicate group name is refused with a message', body.count('کلاس پنجم') == body.count('کلاس پنجم') and 'از پیش هست' in body or 'از پیش هست' in get(own, loc)[1], loc)
-check('a counselor has no groups page of her own panel menu entry... but may not open another panel', get(c1, '/my/workspaces/999999/groups')[0] == 404, str(get(c1, '/my/workspaces/999999/groups')[0]))
+check('a counselor has no groups page of her own panel menu entry... but may not open another panel', get(c1, '/my/workspaces/1/groups')[0] == 404, str(get(c1, '/my/workspaces/1/groups')[0]))
 
 # ---- bulk: add to group
 sel = [('sel', K1), ('sel', K2), ('sel', K3), ('bulk', 'group_add'), ('group', GID)]
@@ -152,7 +154,7 @@ st, body = post(own, W + '/clients/new', {'name': 'تازه از فرم'})[0::2]
 check('the same name warns about a duplicate and still allows saving', 'confirm' in body or 'مشابه' in body or st in (302, 303), str(st))
 st, loc, _ = post(own, W + '/clients/%s/edit' % NEW, {'name': 'تازه ویرایش‌شده', 'age_group': 'adult', 'phone': '09121112233'})
 check('editing saves', 'تازه ویرایش‌شده' in get(own, W + '/clients/' + NEW)[1])
-check('a counselor cannot edit someone else\'s client (404)', post(c1, W + '/clients/%s/edit' % K3, {'name': 'x'})[0] == 404, str(post(c1, W + '/clients/%s/edit' % K3, {'name': 'x'})[0]))
+check('a counselor cannot edit someone else\'s client (404)', post(c1, W + '/clients/%s/edit' % K4, {'name': 'xx'})[0] == 404, str(post(c1, W + '/clients/%s/edit' % K4, {'name': 'xx'})[0]))
 st, loc, _ = post(own, W + '/clients/%s/edit' % NEW, {'name': 'تازه ویرایش‌شده', 'age_group': 'minor', 'guardian_name': 'ولی', 'guardian_phone': '09123334455', 'guardian_relation': 'father'})
 check('a minor keeps guardian data on the page', 'ولی' in get(own, W + '/clients/' + NEW)[1])
 
