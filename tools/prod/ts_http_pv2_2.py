@@ -136,7 +136,8 @@ o = login('outsider')
 check('a stranger gets 404 on dashboard and settings', o.req('/my/workspaces/%s/home' % A)[0] == 404 and o.req('/my/workspaces/%s/settings' % A)[0] == 404)
 n_ev = shell("print('N', env['ts.audit.event'].search_count([('event_type','=','authz.deny'),('workspace_id','=',%s)]))" % A)
 check('denials are in the audit trail', int(re.search(r'N (\d+)', n_ev).group(1)) >= 1, n_ev[-20:])
-check('eot.ir has no panel pages', Client('www.eot.ir').req('/my/workspaces/%s/home' % A)[0] == 404)
+e = Client('www.eot.ir'); e.login(L['owner'], pw[L['owner']])
+check('eot.ir has no panel pages (signed in)', e.req('/my/workspaces/%s/home' % A)[0] == 404)
 check('anonymous visitor is sent to sign in', Client(TS).req('/my/workspaces/%s/home' % A)[0] in (302, 303))
 
 # header link «پنل من»

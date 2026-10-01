@@ -17,7 +17,7 @@ MENU = [
     {'seq': 15, 'key': 'legacy', 'label': 'دعوت و فهرست (نسخهٔ قبلی)', 'suffix': '', 'perm': 'panel:view',
      'needs_act': True},
     {'seq': 90, 'key': 'settings', 'label': 'تنظیمات', 'suffix': '/settings', 'perm': 'panel:profile'},
-    {'seq': 999, 'key': 'help', 'label': 'راهنما', 'url': '/help', 'perm': 'help:view'},   # always last (WCAG 3.2.6)
+    {'seq': 999, 'key': 'help', 'label': 'راهنما', 'url': '/help', 'perm': None},   # always last, for every state (WCAG 3.2.6)
 ]
 
 STATE_LABELS = {'invited': 'دعوت‌شده', 'accepted': 'پذیرفته', 'in_progress': 'در حال پاسخ',
