@@ -91,7 +91,7 @@ check('unknown join token is 404', st == 404)
 
 # revoke + settings
 st, loc6, _ = own.req('/my/workspaces/%s/members/invite' % ws_id, {'csrf_token': own.csrf(page2), 'role': 'hr_admin', 'phone': '09126660008'})
-st, _, pg = own.req('/my/workspaces/' + ws_id)
+st, _, pg = own.req('/my/workspaces/%s/members' % ws_id)
 rv = re.search(r'/my/workspaces/%s/members/revoke/(\d+)' % ws_id, pg)
 check('pending invite can be revoked', bool(rv))
 st, _, _ = own.req('/my/workspaces/%s/members/revoke/%s' % (ws_id, rv.group(1)), {'csrf_token': own.csrf(pg)})

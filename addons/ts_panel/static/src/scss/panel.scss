@@ -73,7 +73,7 @@
     .tsp-table { inline-size: 100%; border-collapse: collapse; background: var(--white); }
     .tsp-table th, .tsp-table td { padding: var(--space-3) var(--space-4); text-align: start; border-block-end: 1px solid var(--line); vertical-align: top; }
     .tsp-table thead th { background: var(--brand-soft); color: var(--brand-deep); font-weight: 750; }
-    .tsp-field input[type=password], .tsp-field input[type=number] { min-height: var(--control-min); padding: 8px 12px; border: 1px solid var(--field-line); border-radius: var(--radius-sm); background: var(--white); font-size: 1rem; width: 100%; }
+    .tsp-field input[type=password], .tsp-field input[type=number], .tsp-field input[type=date] { min-height: var(--control-min); padding: 8px 12px; border: 1px solid var(--field-line); border-radius: var(--radius-sm); background: var(--white); font-size: 1rem; width: 100%; }
     @media (max-width: 767.98px) {
         .tsp-table--cards thead { position: absolute; inline-size: 1px; block-size: 1px; overflow: hidden; clip-path: inset(50%); }
         .tsp-table--cards, .tsp-table--cards tbody, .tsp-table--cards tr, .tsp-table--cards td { display: block; inline-size: 100%; }
