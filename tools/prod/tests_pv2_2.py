@@ -59,7 +59,7 @@ check('menu per role: owner has settings, admin and counselor do not',
 cl = panel('clinical')
 unv = M.create({'workspace_id': cl.id, 'user_id': puser().id, 'role': 'clinician'})
 check('menu for an unverified clinician: dashboard and help only', [i['key'] for i in build_menu(unv, 'home')] == ['home', 'help'])
-check('current item is flagged', [i['current'] for i in build_menu(m1, 'settings')] == [False, False, False, False, True, False])
+check('current item is flagged', [i['key'] for i in build_menu(m1, 'settings') if i['current']] == ['settings'])
 
 print('SUMMARY %d/%d passed' % (sum(ok for _, ok in results), len(results)))
 env.cr.rollback()
