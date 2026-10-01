@@ -53,9 +53,11 @@ for role in ('owner', 'admin', 'counselor'):
     if role == 'counselor':
         m.write({'license_number': 'T', 'verification_state': 'verified'})
     keys[role] = [i['key'] for i in build_menu(m, 'home')]
+CORE = ('home', 'clients', 'groups', 'invites', 'members', 'settings', 'help')   # later stages add items between these
+core = {r: [k for k in v if k in CORE] for r, v in keys.items()}
 check('menu per role: owner has settings, admin and counselor do not',
-      keys['owner'] == ['home', 'clients', 'groups', 'invites', 'members', 'settings', 'help']
-      and keys['admin'] == ['home', 'clients', 'groups', 'invites', 'members', 'help'] and keys['counselor'] == ['home', 'clients', 'groups', 'invites', 'help'], str(keys))
+      core['owner'] == ['home', 'clients', 'groups', 'invites', 'members', 'settings', 'help']
+      and core['admin'] == ['home', 'clients', 'groups', 'invites', 'members', 'help'] and core['counselor'] == ['home', 'clients', 'groups', 'invites', 'help'], str(keys))
 cl = panel('clinical')
 unv = M.create({'workspace_id': cl.id, 'user_id': puser().id, 'role': 'clinician'})
 check('menu for an unverified clinician: dashboard and help only', [i['key'] for i in build_menu(unv, 'home')] == ['home', 'help'])
