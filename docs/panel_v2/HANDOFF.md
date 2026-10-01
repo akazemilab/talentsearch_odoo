@@ -7,8 +7,8 @@ explicit approval («تأیید فاز ۱»). While it says DRAFT, Phase 2 must 
 must not change.
 
 - Design written: 2026-10-01 (9 Mehr 1405). Approved by the owner 2026-10-01 (defaults for D4, D6, D7, D8 accepted).
-- Last finished stage: **S7 `campaigns`** (shipped 2026-10-01, label `pv2s7`, commit 0f70cf3).
-- **Next stage: S8 `import`** (branch `pv2-8-import` committed, hand tests green, full rehearsal reh38 running; S9 `export` is being written on `pv2-9-export`).
+- Last finished stage: **S9 `export`** (S8 `import` + S9 shipped together 2026-10-01, label `pv2s9`, commit fc6c971).
+- **Next stage: S10 `notify`** (branch `pv2-10-notify` in /root/ts_wt_s1: code, ORM and HTTP tests written, not yet synced or hand-tested).
 
 ## 1. Read in this order (Phase 2)
 1. This file.
@@ -152,3 +152,5 @@ The full list is `06_gap_analysis.md` section 2.
 | S5 | clients-edit | 2026-10-01 | bb2e414 | Client edit/archive/merge, groups page (`W/groups`, `groups:manage`), bulk responsible change. Rehearsal eot_ts35 green (second run), eot.ir UNCHANGED. Lessons: flush between freeing and re-taking a unique value in merge; menu tests must not depend on menu length. |
 | S6 | invites | 2026-10-01 | c722bb9 | Invite wizard, invitation list, stored `expires_at` (+ deadline write rule), dashboard without forms, old page at `W/legacy` until S20. Rehearsal eot_ts36s green (second run), eot.ir UNCHANGED. Deviations: `stopped` attempt state on withdraw deferred to S18; no QR decoder in tests. |
 | S7 | campaigns | 2026-10-01 | 0f70cf3 | `ts.campaign`: group invitation and open link `/c/<token>`, campaign pages, QR and print sheet. Rehearsal eot_ts37r green (second run), eot.ir UNCHANGED. Lesson: scope comments for ts_check. |
+| S8 | import | 2026-10-01 | fc6c971 | csv/xlsx client import, `ts.job` runner. Shipped with S9. |
+| S9 | export | 2026-10-01 | fc6c971 | exports of clients, status, results as jobs; fresh reauth; formula guard. Rehearsal eot_ts39r green, eot.ir UNCHANGED. |
