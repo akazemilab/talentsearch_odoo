@@ -16,7 +16,7 @@
     // ---------- shell ----------
     // Odoo's Bootstrap :root redefines --success / --danger (#28a745, #dc3545: 2.7:1 on the soft backgrounds);
     // inside the panel the design-system values win.
-    .tsp-shell { --success: #216b50; --danger: #9b2c36; }
+    .tsp-shell { --success: #216b50; --danger: #9b2c36; --info: #1f4e79; --warn: #6b4600; }
     .tsp-shell { display: grid; grid-template-columns: var(--shell-nav) minmax(0, 1fr); gap: var(--space-6); align-items: start; }
     .tsp-section { padding-block: var(--space-6); }
     .tsp-shell__main { min-width: 0; display: grid; gap: var(--space-4); }
