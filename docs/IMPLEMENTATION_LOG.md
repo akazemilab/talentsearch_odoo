@@ -298,3 +298,9 @@ Data step (owner-only, NOT in code): approve workspace 1, set pilot, add the cou
 
 - `ts_panel` 20.0.14.0.0 (ship label `pv2s18`, commit e9dc498): ownership transfer and closing a panel (owner only, re-authentication; notifications `panel_transferred` / `panel_closed`; closed members keep only `panel:view`), client anonymisation, retention job `ts.retention.log` + daily cron (ships OFF: `ts_panel.retention_enabled`; abandoned attempts and audit events are report-only), data-erasure action on the data request (revokes shares, empties attempts, anonymises clients, deactivates the account; clinical-panel attempts are hidden and the decision is `legal_hold`, open item L2).
 - Tests: `tests_pv2_18.py` (39 ORM), `ts_http_pv2_18.py` (20 HTTP). Rehearsal reh62: 1312/1312, guard and portal UNCHANGED. Ship: OK, eot.ir UNCHANGED.
+
+## pv2s18b — Panel v2, stage S18b security (2026-10-01)
+
+- `ts_panel` 20.0.15.0.0 (ship label `pv2s18b`): staff idle timeout (`ts_panel.staff_idle_hours`, default 8, 0 = off; hook in `ir.http._authenticate`, only on website 4 and only for panel members; the last-seen mark is touched every 60 s); sessions page `/my/sessions` with "sign out of other devices" (re-authentication, audit `account.sessions_revoke` with a count); password of at least 15 characters on website 4 only (`_set_password`); SMS sign-in risk notice (`#ts-sms-risk`) on the sign-up page.
+- Tests: `tests_pv2_18b.py` (4 ORM), `ts_http_pv2_18b.py` (11 HTTP). Rehearsal reh63: guard and portal UNCHANGED; one stale S18a check (audit count) made relative. Ship: OK, eot.ir UNCHANGED.
+- Lessons: Odoo 20 `logout` is `odoo.http.session.logout(session, keep_db=True)`; at `_authenticate` time the website is in `env.context['website_id']`/`host_id`; `password` is write-only so a constrains never sees it, override `_set_password`.
