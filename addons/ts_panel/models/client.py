@@ -202,6 +202,7 @@ class TsPanelClient(models.Model):
         other.write({'code': False, 'user_id': False, 'responsible_id': False, 'group_ids': [(5, 0, 0)],
                      'state': 'archived', 'archived_on': fields.Datetime.now(), 'merged_into_id': self.id,
                      'handover_to_id': False, 'handover_by_id': False, 'handover_on': False})
+        self.env.flush_all()   # the freed code and account must reach the database before the survivor takes them
         if user:
             fill['user_id'] = user.id
         if resp and resp.can_act():
