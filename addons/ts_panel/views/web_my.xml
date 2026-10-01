@@ -1,0 +1,313 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- The participant's own pages (S15). All records belong to the Talent Search website only. -->
+
+    <record id="tpl_my_nav" model="ir.ui.view">
+        <field name="name">TS panel: participant navigation</field>
+        <field name="type">qweb</field>
+        <field name="key">ts_panel.my_nav</field>
+        <field name="website_id" ref="ts_website.website_ts"/>
+        <field name="arch" type="xml">
+            <t t-name="ts_panel.my_nav">
+                <nav class="tsp-inline" aria-label="صفحه‌های من" style="margin-bottom:1rem;flex-wrap:wrap">
+                    <a href="/my" t-attf-class="ts-btn #{'ts-btn--primary' if active == 'home' else 'ts-btn--outline'}" t-att-aria-current="'page' if active == 'home' else None">کارهای من</a>
+                    <a href="/my/assessments" t-attf-class="ts-btn #{'ts-btn--primary' if active == 'results' else 'ts-btn--outline'}" t-att-aria-current="'page' if active == 'results' else None">نتیجه‌ها</a>
+                    <a href="/my/sharing" t-attf-class="ts-btn #{'ts-btn--primary' if active == 'sharing' else 'ts-btn--outline'}" t-att-aria-current="'page' if active == 'sharing' else None">چه کسی می‌بیند</a>
+                    <a href="/my/notifications" class="ts-btn ts-btn--outline">اعلان‌ها</a>
+                    <a href="/my/account" t-attf-class="ts-btn #{'ts-btn--primary' if active == 'account' else 'ts-btn--outline'}" t-att-aria-current="'page' if active == 'account' else None">حساب من</a>
+                    <a href="/my/privacy" t-attf-class="ts-btn #{'ts-btn--primary' if active == 'privacy' else 'ts-btn--outline'}" t-att-aria-current="'page' if active == 'privacy' else None">داده‌های من</a>
+                </nav>
+            </t>
+        </field>
+    </record>
+
+    <!-- PRT-1: /my -->
+    <record id="tpl_my_home" model="ir.ui.view">
+        <field name="name">TS panel: participant home</field>
+        <field name="type">qweb</field>
+        <field name="key">ts_panel.my_home</field>
+        <field name="website_id" ref="ts_website.website_ts"/>
+        <field name="arch" type="xml">
+            <t t-name="ts_panel.my_home">
+                <t t-call="website.layout" additional_title="کارهای من">
+                    <div id="wrap" class="ts-page">
+                        <section class="tsp-section container" style="max-width:860px">
+                            <h1 class="tsp-head__title">کارهای من</h1>
+                            <t t-call="ts_panel.my_nav" active="home"/>
+                            <p t-if="unread" class="tsp-flash" role="status">
+                                <a href="/my/notifications"><t t-out="fa(unread)"/> اعلان تازه دارید.</a>
+                            </p>
+                            <div t-if="invites" class="ts-card" id="ts-home-invites">
+                                <h2>دعوت‌هایی که منتظر شما هستند</h2>
+                                <ul class="tsp-list">
+                                    <li t-foreach="invites" t-as="inv">
+                                        <strong t-out="inv.instrument_id.title"/>
+                                        <span class="ts-hint"> — <t t-out="inv.workspace_id.name"/></span>
+                                        <a t-attf-href="/invite/#{inv.token}" class="ts-btn ts-btn--primary ts-btn--sm">مشاهدهٔ دعوت</a>
+                                    </li>
+                                </ul>
+                            </div>
+                            <div t-if="going" class="ts-card" id="ts-home-going">
+                                <h2>سنجه‌های نیمه‌تمام</h2>
+                                <ul class="tsp-list">
+                                    <li t-foreach="going" t-as="a">
+                                        <strong t-out="a.instrument_id.title"/>
+                                        <span class="ts-hint" t-if="a.state == 'in_progress'"> — <t t-out="fa(a.progress)"/>٪ انجام شده</span>
+                                        <a t-attf-href="/take/#{a.access_token}" class="ts-btn ts-btn--primary ts-btn--sm">ادامه</a>
+                                    </li>
+                                </ul>
+                            </div>
+                            <div t-if="done" class="ts-card" id="ts-home-results">
+                                <h2>نتیجه‌های تازه</h2>
+                                <ul class="tsp-list">
+                                    <li t-foreach="done" t-as="a">
+                                        <strong t-out="a.instrument_id.title"/>
+                                        <span class="ts-hint"> — <t t-out="jalali(a.submitted_at, with_time=False)"/></span>
+                                        <span class="ts-hint" t-if="shared_n.get(a.id)"> — با <t t-out="fa(shared_n[a.id])"/> پنل به اشتراک گذاشته شده</span>
+                                        <span class="ts-hint" t-else=""> — فقط شما می‌بینید</span>
+                                        <a t-attf-href="/my/assessments/#{a.id}" class="ts-btn ts-btn--outline ts-btn--sm">گزارش</a>
+                                    </li>
+                                </ul>
+                                <p><a href="/my/assessments">همهٔ نتیجه‌ها</a> · <a href="/my/sharing">چه کسی نتیجه‌های من را می‌بیند؟</a></p>
+                            </div>
+                            <div t-if="not invites and not going and not done" class="ts-card ts-card--soft" id="ts-home-empty">
+                                <h2>فعلاً کاری ندارید</h2>
+                                <p>دعوتی منتظر شما نیست و سنجهٔ نیمه‌تمامی ندارید. هر وقت خواستید یک سنجه را خودتان انجام دهید.</p>
+                                <a href="/assessments" class="ts-btn ts-btn--primary">مشاهدهٔ سنجه‌ها</a>
+                            </div>
+                            <div t-if="memberships" class="ts-card" id="ts-home-panels">
+                                <h2>پنل‌های من</h2>
+                                <p>شما عضو <t t-out="fa(len(memberships))"/> پنل هستید.</p>
+                                <a href="/my/workspaces" class="ts-btn ts-btn--outline">رفتن به پنل‌ها</a>
+                            </div>
+                        </section>
+                    </div>
+                </t>
+            </t>
+        </field>
+    </record>
+
+    <!-- ACC-1, ACC-2: /my/account -->
+    <record id="tpl_my_account" model="ir.ui.view">
+        <field name="name">TS panel: participant account</field>
+        <field name="type">qweb</field>
+        <field name="key">ts_panel.my_account</field>
+        <field name="website_id" ref="ts_website.website_ts"/>
+        <field name="arch" type="xml">
+            <t t-name="ts_panel.my_account">
+                <t t-call="website.layout" additional_title="حساب من">
+                    <div id="wrap" class="ts-page">
+                        <section class="tsp-section container" style="max-width:640px">
+                            <h1 class="tsp-head__title">حساب من</h1>
+                            <t t-call="ts_panel.my_nav" active="account"/>
+                            <p t-if="ok" class="tsp-flash" role="status" t-out="ok"/>
+                            <p t-if="error" class="tsp-flash tsp-flash--err" role="alert" t-out="error"/>
+                            <form action="/my/account/name" method="post" class="ts-card" data-tsp-once="1">
+                                <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                                <label for="acc-name"><strong>نام</strong></label>
+                                <input id="acc-name" name="name" type="text" class="form-control" maxlength="80" required="required" t-att-value="user.name" autocomplete="name"/>
+                                <p class="ts-hint">این نام در گزارش‌های شما و برای پنل‌هایی که نتیجه را با آن‌ها به اشتراک می‌گذارید دیده می‌شود.</p>
+                                <button type="submit" class="ts-btn ts-btn--primary">ذخیرهٔ نام</button>
+                            </form>
+                            <div class="ts-card" id="acc-contact">
+                                <h2>راه‌های ارتباط</h2>
+                                <p><strong>نام ورود:</strong> <span dir="ltr" t-out="user.login"/></p>
+                                <p t-if="phone_verified">شمارهٔ موبایل شما تأیید شده است. <a href="/my/phone">مدیریت موبایل</a></p>
+                                <p t-else="">شمارهٔ موبایل تأییدشده‌ای ندارید. موبایل تنها با کد پیامکی تأیید می‌شود. <a href="/my/phone">تأیید موبایل</a></p>
+                            </div>
+                            <div class="ts-card">
+                                <h2>داده‌ها و امنیت</h2>
+                                <p><a href="/my/privacy">داده‌های من: دریافت نسخه یا درخواست حذف</a></p>
+                                <p><a href="/my/notifications/prefs">ترجیح‌های اعلان</a></p>
+                                <p><a href="/my/security">رمز عبور و امنیت</a></p>
+                            </div>
+                        </section>
+                    </div>
+                </t>
+            </t>
+        </field>
+    </record>
+
+    <!-- PRV-2, AUD-4: /my/sharing -->
+    <record id="tpl_my_sharing" model="ir.ui.view">
+        <field name="name">TS panel: who can see my results</field>
+        <field name="type">qweb</field>
+        <field name="key">ts_panel.my_sharing</field>
+        <field name="website_id" ref="ts_website.website_ts"/>
+        <field name="arch" type="xml">
+            <t t-name="ts_panel.my_sharing">
+                <t t-call="website.layout" additional_title="چه کسی نتیجه‌های من را می‌بیند">
+                    <div id="wrap" class="ts-page">
+                        <section class="tsp-section container" style="max-width:860px">
+                            <h1 class="tsp-head__title">چه کسی نتیجه‌های من را می‌بیند؟</h1>
+                            <t t-call="ts_panel.my_nav" active="sharing"/>
+                            <p class="ts-hint">پاسخ‌های خام شما را هیچ پنلی نمی‌بیند. هر نتیجه را می‌توانید با حداکثر <t t-out="fa(limit)"/> پنل به اشتراک بگذارید و هر زمان اشتراک را لغو کنید.</p>
+                            <p t-if="ok" class="tsp-flash" role="status" t-out="ok"/>
+                            <p t-if="error" class="tsp-flash tsp-flash--err" role="alert" t-out="error"/>
+                            <div t-if="not blocks" class="ts-card ts-card--soft">
+                                <h2>هنوز نتیجه‌ای ندارید</h2>
+                                <p>بعد از انجام یک سنجه، این‌جا می‌بینید چه کسی نتیجهٔ آن را می‌بیند.</p>
+                                <a href="/assessments" class="ts-btn ts-btn--primary">مشاهدهٔ سنجه‌ها</a>
+                            </div>
+                            <div t-foreach="blocks" t-as="b" class="ts-card ts-sharing-block">
+                                <h2><t t-out="b['at'].instrument_id.title"/></h2>
+                                <p class="ts-hint"><t t-out="b['at'].jalali(b['at'].submitted_at, False)"/> · <a t-attf-href="/my/assessments/#{b['at'].id}">مشاهدهٔ گزارش</a></p>
+                                <t t-set="act" t-value="[s for s in b['shares'] if s['active']]"/>
+                                <p t-if="not act" class="ts-sharing-none">این نتیجه را هیچ پنل یا سازمانی نمی‌بیند. فقط شما.</p>
+                                <ul t-if="act" class="tsp-list">
+                                    <li t-foreach="act" t-as="s" class="ts-sharing-row">
+                                        <strong t-out="s['panel']"/>
+                                        <div class="ts-hint">
+                                            کارشناس مسئول: <t t-if="s['resp']" t-out="s['resp']"/><t t-else="">هنوز تعیین نشده</t>
+                                            · از <t t-out="s['since']"/> · <t t-out="s['level']"/>
+                                        </div>
+                                        <div class="ts-hint" t-if="s['views']">
+                                            دیده‌شدن‌ها:
+                                            <t t-foreach="s['views']" t-as="v"><span><t t-out="v[0]"/> (<t t-out="v[1]"/>)</span><t t-if="not v_last">، </t></t>
+                                        </div>
+                                        <div class="ts-hint" t-else="">این پنل هنوز نتیجه را باز نکرده است.</div>
+                                        <form t-attf-action="/my/sharing/#{s['a'].id}/revoke" method="post" data-tsp-once="1">
+                                            <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                                            <button type="submit" class="ts-btn ts-btn--outline ts-btn--sm">لغو اشتراک با این پنل</button>
+                                        </form>
+                                    </li>
+                                </ul>
+                                <p t-if="b['can_share'] and len(act) &lt; limit">
+                                    <a t-attf-href="/my/assessments/#{b['at'].id}/share" class="ts-btn ts-btn--outline ts-btn--sm">ارسال برای مشاور</a>
+                                </p>
+                            </div>
+                        </section>
+                    </div>
+                </t>
+            </t>
+        </field>
+    </record>
+
+    <!-- ACC-5, ACC-6: /my/privacy -->
+    <record id="tpl_my_privacy" model="ir.ui.view">
+        <field name="name">TS panel: my data</field>
+        <field name="type">qweb</field>
+        <field name="key">ts_panel.my_privacy</field>
+        <field name="website_id" ref="ts_website.website_ts"/>
+        <field name="arch" type="xml">
+            <t t-name="ts_panel.my_privacy">
+                <t t-call="website.layout" additional_title="داده‌های من">
+                    <div id="wrap" class="ts-page">
+                        <section class="tsp-section container" style="max-width:760px">
+                            <h1 class="tsp-head__title">داده‌های من</h1>
+                            <t t-call="ts_panel.my_nav" active="privacy"/>
+                            <p t-if="ok" class="tsp-flash" role="status" t-out="ok"/>
+                            <p t-if="error" class="tsp-flash tsp-flash--err" role="alert" t-out="error"/>
+                            <div class="ts-card" id="prv-export">
+                                <h2>دریافت نسخه‌ای از داده‌های من</h2>
+                                <p>یک فایل فشرده شامل نمایه، سنجه‌ها، نتیجه‌ها، اشتراک‌ها و رضایت‌های شما (JSON و CSV) ساخته می‌شود. پاسخ‌های خام و کلید نمره‌دهی در آن نیست. پیوند دریافت ۲۴ ساعت معتبر است. برای امنیت، پیش از این کار هویت شما دوباره تأیید می‌شود.</p>
+                                <form action="/my/privacy/export" method="post" data-tsp-once="1">
+                                    <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                                    <button type="submit" class="ts-btn ts-btn--primary">درخواست نسخهٔ داده‌ها</button>
+                                </form>
+                            </div>
+                            <div class="ts-card" id="prv-erase">
+                                <h2>درخواست حذف داده‌ها</h2>
+                                <p>با ثبت این درخواست، تا ۳۰ روز دیگر نتیجه‌ها و پاسخ‌های شما حذف و اشتراک‌ها لغو می‌شود. شمار استفادهٔ پنل‌ها (بدون نام و محتوا) باقی می‌ماند. وضعیت درخواست را همین‌جا می‌بینید.</p>
+                                <form action="/my/privacy/erase" method="post" data-tsp-once="1">
+                                    <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                                    <button type="submit" class="ts-btn ts-btn--outline">ثبت درخواست حذف</button>
+                                </form>
+                            </div>
+                            <div class="ts-card" id="prv-list">
+                                <h2>درخواست‌های من</h2>
+                                <p t-if="not reqs" class="ts-hint">درخواستی ثبت نکرده‌اید.</p>
+                                <ul t-if="reqs" class="tsp-list">
+                                    <li t-foreach="reqs" t-as="r">
+                                        <strong><t t-if="r.kind == 'export'">دریافت نسخهٔ داده‌ها</t><t t-elif="r.kind == 'erase'">حذف داده‌ها</t><t t-else="">اصلاح داده‌ها</t></strong>
+                                        <span class="ts-hint"> — <t t-out="words.get(r.state, r.state)"/> · ثبت: <t t-out="jalali(r.create_date, with_time=False)"/><t t-if="r.due_on and r.state in ('new', 'in_review')"> · مهلت بررسی تا <t t-out="jd(r.due_on)"/></t></span>
+                                        <a t-if="r.job_id" t-attf-href="/my/privacy/jobs/#{r.job_id.id}" class="ts-btn ts-btn--outline ts-btn--sm">مشاهده</a>
+                                    </li>
+                                </ul>
+                            </div>
+                        </section>
+                    </div>
+                </t>
+            </t>
+        </field>
+    </record>
+
+    <record id="tpl_my_privacy_job" model="ir.ui.view">
+        <field name="name">TS panel: my data file</field>
+        <field name="type">qweb</field>
+        <field name="key">ts_panel.my_privacy_job</field>
+        <field name="website_id" ref="ts_website.website_ts"/>
+        <field name="arch" type="xml">
+            <t t-name="ts_panel.my_privacy_job">
+                <t t-call="website.layout" additional_title="نسخهٔ داده‌های من">
+                    <div id="wrap" class="ts-page">
+                        <section class="tsp-section container" style="max-width:640px">
+                            <h1 class="tsp-head__title">نسخهٔ داده‌های من</h1>
+                            <t t-call="ts_panel.my_nav" active="privacy"/>
+                            <div class="ts-card" id="prv-job">
+                                <t t-if="ready">
+                                    <p>فایل شما آماده است و تا <t t-out="jalali(job.expires_at)"/> قابل دریافت است.</p>
+                                    <a t-attf-href="/my/privacy/jobs/#{job.id}/download" class="ts-btn ts-btn--primary" id="prv-download">دریافت فایل</a>
+                                </t>
+                                <p t-elif="job.state == 'expired'">مهلت دریافت این فایل تمام شد. اگر هنوز لازم دارید، یک درخواست تازه ثبت کنید.</p>
+                                <p t-elif="job.state == 'failed'">ساخت فایل ناموفق بود. دوباره درخواست دهید یا با پشتیبانی تماس بگیرید.</p>
+                                <p t-else="">فایل شما در حال آماده‌سازی است. چند لحظهٔ دیگر همین صفحه را تازه کنید.</p>
+                                <p><a href="/my/privacy">بازگشت به داده‌های من</a></p>
+                            </div>
+                        </section>
+                    </div>
+                </t>
+            </t>
+        </field>
+    </record>
+
+    <!-- PRT-3: "who can see this result" on both report templates -->
+    <record id="tpl_report_who_sees" model="ir.ui.view">
+        <field name="name">TS panel: who can see this result (instrument report)</field>
+        <field name="type">qweb</field>
+        <field name="inherit_id" ref="ts_assessment.tpl_report"/>
+        <field name="website_id" ref="ts_website.website_ts"/>
+        <field name="priority">30</field>
+        <field name="arch" type="xml">
+            <xpath expr="//section[hasclass('ts-doc__foot')]" position="before">
+                <t t-call="ts_panel.who_sees"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="tpl_report_who_sees_matrix" model="ir.ui.view">
+        <field name="name">TS panel: who can see this result (matrix report)</field>
+        <field name="type">qweb</field>
+        <field name="inherit_id" ref="ts_talent.tpl_report"/>
+        <field name="website_id" ref="ts_website.website_ts"/>
+        <field name="priority">30</field>
+        <field name="arch" type="xml">
+            <xpath expr="//article[hasclass('tt-report')]" position="after">
+                <t t-if="not org_view" t-call="ts_panel.who_sees"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="tpl_who_sees" model="ir.ui.view">
+        <field name="name">TS panel: who can see this result (block)</field>
+        <field name="type">qweb</field>
+        <field name="key">ts_panel.who_sees</field>
+        <field name="website_id" ref="ts_website.website_ts"/>
+        <field name="arch" type="xml">
+            <t t-name="ts_panel.who_sees">
+                <t t-if="attempt.state == 'done' and attempt.user_id == request.env.user">
+                    <t t-set="ws_all" t-value="attempt.ts_shares()"/>
+                    <t t-set="ws_act" t-value="ws_all.filtered(lambda s: s.share_level != 'none')"/>
+                    <section class="ts-doc__sec ts-noprint" id="ts-who-sees">
+                        <h2>چه کسی این نتیجه را می‌بیند؟</h2>
+                        <p t-if="not ws_act">هیچ پنل یا سازمانی این نتیجه را نمی‌بیند. فقط شما.</p>
+                        <ul t-if="ws_act">
+                            <li t-foreach="ws_act" t-as="s"><strong t-out="s.workspace_id.name"/> — <t t-out="s.ts_level_word()"/></li>
+                        </ul>
+                        <p>پاسخ‌های خام شما را هیچ پنلی نمی‌بیند. <a href="/my/sharing">مدیریت اشتراک‌ها و دیدن اینکه چه کسی نتیجه را باز کرده است</a></p>
+                    </section>
+                </t>
+            </t>
+        </field>
+    </record>
+</odoo>

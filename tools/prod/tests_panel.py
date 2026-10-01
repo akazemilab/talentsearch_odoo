@@ -186,7 +186,7 @@ check('share creates an accepted summary-level assignment in the education panel
 check('shared result lands in the unassigned queue', not sh.responsible_id)
 check('panel owner sees the band summary, never raw answers', sh.visible_results(own)[0] == 'education')
 check('share audit-logged', AUD.search_count([('event_type', '=', 'assignment.self_share'), ('workspace_id', '=', ws1.id)]) == 1)
-check('second share of the same result refused', raises(lambda: A.ts_share_attempt(at, ws4.code, u_part)))
+check('second share with the same panel refused (S15: other panels are allowed, up to three)', raises(lambda: A.ts_share_attempt(at, ws1.code, u_part)))
 sh.action_revoke_share(u_part)
 check('participant can stop sharing at any time', sh.visible_results(own)[0] == 'none')
 print('SUMMARY %d/%d passed' % (sum(1 for _, ok in results if ok), len(results)))

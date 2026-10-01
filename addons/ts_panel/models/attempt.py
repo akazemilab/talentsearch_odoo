@@ -46,3 +46,15 @@ class TsAttempt(models.Model):
                 Usage.create({'workspace_id': at.workspace_id.id, 'attempt_id': at.id,
                               'assignment_id': a.id or False})
             self.env['ts.wallet']._for_workspace(at.workspace_id)._debit_usage(at)      # S11: one ledger row per attempt, idempotent
+
+    def ts_org_assignment(self):
+        """With up to `ts_panel.share_max_panels` shares per result (D3) the block on the report shows an active one first."""
+        self.ensure_one()
+        rows = self.env['ts.assignment'].sudo().search([('attempt_id', '=', self.id), ('user_id', '=', self.user_id.id)], order='id')
+        active = rows.filtered(lambda a: a.share_level != 'none')
+        return (active or rows)[:1]
+
+    def ts_shares(self):
+        """All panels this result is, or was, shared with / invited from: the participant's 'who can see' list."""
+        self.ensure_one()
+        return self.env['ts.assignment'].sudo().search([('attempt_id', '=', self.id), ('user_id', '=', self.user_id.id)], order='id')

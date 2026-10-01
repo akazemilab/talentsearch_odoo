@@ -197,8 +197,18 @@ class TsAssignment(models.Model):
             raise UserError('پنلی با این کد پیدا نشد. کد را از مشاور خود بپرسید.')
         if attempt.user_id != user or attempt.state != 'done' or attempt.workspace_id or attempt.source == 'import':
             raise UserError('این نتیجه قابل ارسال برای مشاور نیست.')
-        if self.sudo().search_count([('attempt_id', '=', attempt.id)]):
-            raise UserError('این نتیجه پیش‌تر با یک پنل به اشتراک گذاشته شده است؛ ابتدا اشتراک قبلی را لغو کنید.')
+        existing = self.sudo().search([('attempt_id', '=', attempt.id)])
+        active = existing.filtered(lambda x: x.share_level != 'none')
+        if active.filtered(lambda x: x.workspace_id == ws):
+            raise UserError('این نتیجه پیش‌تر با همین پنل به اشتراک گذاشته شده است.')
+        limit = self.env['ir.config_parameter'].sudo().get_int('ts_panel.share_max_panels', 3) or 3     # owner decision D3
+        if len(active) >= limit:
+            raise UserError('این نتیجه همین حالا با %s پنل به اشتراک گذاشته شده است؛ ابتدا یکی از اشتراک‌ها را لغو کنید.' % limit)
+        again = existing.filtered(lambda x: x.workspace_id == ws and x.invited_by_id == user)
+        if again:                                  # re-sharing with a panel the person revoked earlier: the same record
+            again[0].write({'share_level': 'summary'})
+            self.env['ts.audit.event'].sudo().log('assignment.self_share', again[0], workspace=ws, instrument=attempt.instrument_id.code)
+            return again[0]
         a = self.sudo().create({
             'workspace_id': ws.id, 'instrument_id': attempt.instrument_id.id, 'invitee_name': user.name or 'شرکت‌کننده',
             'invited_by_id': user.id, 'user_id': user.id, 'attempt_id': attempt.id, 'share_level': 'summary',

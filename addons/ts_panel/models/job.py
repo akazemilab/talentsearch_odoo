@@ -231,6 +231,23 @@ class TsJob(models.Model):
     def _run_export_results(self, commit):
         self._run_export(commit)
 
+    # ------------------------------------------------------------------ my data (S15, ACC-5)
+    def _run_data_export(self, commit):
+        """The requester's own data as a ZIP (JSON + CSV); no panel, no member."""
+        Req = self.env['ts.data.request']
+        payload = Req.ts_payload(self.user_id)
+        stamp = exporter.date_cols(fields.Datetime.now())[1].replace('-', '')
+        att = self._attach('my-data-%s.zip' % stamp, Req.ts_zip(payload), 'application/zip')
+        rows = sum(len(v) if isinstance(v, list) else 1 for v in payload.values())
+        self.write({'state': 'done', 'summary': json.dumps({'rows': rows}), 'progress': rows, 'total': rows,
+                    'result_attachment_id': att.id, 'expires_at': fields.Datetime.now() + timedelta(hours=24)})
+
+    def can_download_own(self, user):
+        """A participant's own data file: the requester only, before the 24 h expiry."""
+        self.ensure_one()
+        return bool(self.kind == 'data_export' and self.state == 'done' and self.result_attachment_id and self.user_id == user
+                    and (not self.expires_at or self.expires_at >= fields.Datetime.now()))
+
     # ------------------------------------------------------------------ crons
     @api.model
     def _cron_run_jobs(self):
