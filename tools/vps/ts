@@ -97,10 +97,10 @@ case $cmd in
     yes=${1:-}; echo "== leftovers (dry run unless --yes)"
     served=$(ssh $P "pgrep -af '[o]doo-bin.*-d eot_ts' | grep -o -- '-d eot_ts[^ ]*' | cut -c4- | sort -u")
     for d in $(ssh $P "sudo -u postgres psql -Atc \"select datname from pg_database where datname like 'eot\\_ts%'\""); do
-      if echo "$served" | grep -qx "$d"; then echo "keep $d (served)"; else echo "clone $d (not served)"; [ "$yes" = --yes ] && ssh $P "bash /opt/odoo/talentsearch_stage/tools/prod/ts_db.sh stop $d"; fi
+      if echo "$served" | grep -qx "$d"; then echo "keep $d (served)"; else echo "clone $d (not served)"; [ "$yes" = --yes ] && ssh -n $P "bash /opt/odoo/talentsearch_stage/tools/prod/ts_db.sh stop $d"; fi
     done
-    ssh $P "ls -d /opt/odoo/talentsearch_prev_* | awk -F_ '{print \$NF, \$0}' | sort -r | tail -n +4 | cut -d' ' -f2" | while read d; do echo "prev code $d"; [ "$yes" = --yes ] && ssh $P "rm -rf $d"; done
-    ssh $P "find /var/lib/ts_guard -name '*.json' -mtime +3 ! -name 'live_*'" | while read f; do echo "guard snapshot $f"; [ "$yes" = --yes ] && ssh $P "rm -f $f"; done
+    ssh $P "ls -d /opt/odoo/talentsearch_prev_* | awk -F_ '{print \$NF, \$0}' | sort -r | tail -n +4 | cut -d' ' -f2" | while read d; do echo "prev code $d"; [ "$yes" = --yes ] && ssh -n $P "rm -rf $d"; done
+    ssh $P "find /var/lib/ts_guard -name '*.json' -mtime +3 ! -name 'live_*'" | while read f; do echo "guard snapshot $f"; [ "$yes" = --yes ] && ssh -n $P "rm -f $f"; done
     find $J -name '*.log' -mtime +14 | while read f; do echo "log $f"; [ "$yes" = --yes ] && rm -f $f; done
     echo "(eot_ent_test is not a clone name pattern and is never touched)" ;;
   sql)   db=$1; shift; ssh $P "sudo -u postgres psql -d $db -AtF ' | ' -v ON_ERROR_STOP=0" <<<"BEGIN READ ONLY; $*; ROLLBACK;" ;;
