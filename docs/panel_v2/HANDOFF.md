@@ -7,8 +7,8 @@ explicit approval («تأیید فاز ۱»). While it says DRAFT, Phase 2 must 
 must not change.
 
 - Design written: 2026-10-01 (9 Mehr 1405). Approved by the owner 2026-10-01 (defaults for D4, D6, D7, D8 accepted).
-- Last finished stage: **S19 `help-a11y`** (shipped 2026-10-02, label `pv2s19`).
-- **Next stage: S20 `cleanup` (lite)** (branch `pv2-20-cleanup` in /root/ts_wt_s1: unused `_setup_steps` removed; rehearsal reh65 running; ship list ts_panel). W/legacy and the old `ts_org` templates are KEPT on purpose: 9 old suites (ts_http_org, panel, resp, edu, sms, pv2_1/2/6) still test responsible-assignment and invite behaviour through W/legacy; removing it needs those checks moved to the new pages first (owner decision: do it, or leave).
+- Last finished stage: **S20 `cleanup` (lite)** (shipped 2026-10-02, label `pv2s20`). Phase 2 build is complete; see the open items.
+- **Next: none scheduled.** Open items: (1) owner approval of the minors wording (`TS-GUARDIAN-1405-07-v1`, `TS-MINOR-1405-07-v1`); (2) retention ships OFF (`ts_panel.retention_enabled`), abandoned attempts and audit purge are report-only; (3) clinical erase = legal hold (L2); (4) W/legacy and old ts_org templates kept (migrate old suites first); (5) no headless 1280/375 px audit beyond the HTTP scan; (6) eot.ir old-server incident root cause still open.
 
 ## 1. Read in this order (Phase 2)
 1. This file.
@@ -163,5 +163,6 @@ The full list is `06_gap_analysis.md` section 2.
 | S18a | lifecycle | 2026-10-01 | e9dc498 | Transfer, close, retention (OFF), erase. Rehearsal reh62 green. Ship OK, eot.ir UNCHANGED. |
 | S18b | security | 2026-10-01 | ab96600 | Idle timeout, sessions page, 15-char password (website 4), SMS notice. Rehearsal reh63 green. Ship OK, eot.ir UNCHANGED. |
 | S19 | help-a11y | 2026-10-02 | 52bd0ca | Help center, contextual help, scan test, trust text. Rehearsal reh64b green. Ship OK, eot.ir UNCHANGED. |
+| S20 | cleanup (lite) | 2026-10-02 | 325b177 | Unused helper removed; legacy page kept. Rehearsal reh65 green. Ship OK, eot.ir UNCHANGED. |
 | S15 | portal | 2026-10-01 | aeb1ec4 | Participant home/account/sharing/privacy, consent ledger, data requests. Rehearsal eot_ts58r green; ship compare noisy because of concurrent eot.ir work. |
 | S14 | audit | 2026-10-01 | 39329d5 | Panel audit page + CSV, support access, who-viewed list. Rehearsal eot_ts55r green, eot.ir UNCHANGED. |
