@@ -7,8 +7,8 @@ explicit approval («تأیید فاز ۱»). While it says DRAFT, Phase 2 must 
 must not change.
 
 - Design written: 2026-10-01 (9 Mehr 1405). Approved by the owner 2026-10-01 (defaults for D4, D6, D7, D8 accepted).
-- Last finished stage: **S15 `portal`** (shipped 2026-10-01, label `pv2s15`).
-- **Next stage: S16 `minors`** (branch `pv2-16-minors` in /root/ts_wt_s2: code and tests done, 13 ORM + 13 HTTP pass; needs rebase on main, rehearsal with a fresh dump, ship list ts_org,ts_panel,ts_assessment,ts_talent). Then S17 backoffice, S18 lifecycle, S19 help-a11y, S20 cleanup.
+- Last finished stage: **S16 `minors`** (shipped 2026-10-01, label `pv2s16`).
+- **Next stage: S17 `backoffice`** (branch `pv2-17-backoffice` in /root/ts_wt_s1: code done, 25 ORM pass, rehearsal reh61 green; ship list ts_org,ts_panel). Then S18 lifecycle (split A: retention dry-run, erase, close, transfer; B: idle timeout, sessions, password, signup notice), S19 help-a11y, S20 cleanup.
 
 ## 1. Read in this order (Phase 2)
 1. This file.
@@ -158,5 +158,6 @@ The full list is `06_gap_analysis.md` section 2.
 | S11 | wallet | 2026-10-01 | c4113d3 | Wallet, append-only ledger, credits page, void with refund. Rehearsal eot_ts48r green, eot.ir UNCHANGED. |
 | S12 | dashboard | 2026-10-01 | 1703dc3 | Dashboard (attention, KPIs, funnel, workload, checklist) with list filters. Rehearsal eot_ts49r green, eot.ir UNCHANGED. |
 | S13 | reports | 2026-10-01 | $SHA | Result page by level, group report with small-cell suppression, print audit. Rehearsal eot_ts54r green, eot.ir UNCHANGED. |
+| S16 | minors | 2026-10-01 | 0593c58 | Guardian attestation, age question, child assent, consent ledger rows. Rehearsal eot_ts60r green. Owner must approve the minor wording. |
 | S15 | portal | 2026-10-01 | aeb1ec4 | Participant home/account/sharing/privacy, consent ledger, data requests. Rehearsal eot_ts58r green; ship compare noisy because of concurrent eot.ir work. |
 | S14 | audit | 2026-10-01 | 39329d5 | Panel audit page + CSV, support access, who-viewed list. Rehearsal eot_ts55r green, eot.ir UNCHANGED. |
