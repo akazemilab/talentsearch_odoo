@@ -7,7 +7,7 @@ only for the events of the owner's own panel.
 from datetime import datetime, time, timedelta
 from zoneinfo import ZoneInfo
 
-from odoo import api, models
+from odoo import SUPERUSER_ID, api, models
 
 from odoo.addons.ts_assessment.models.attempt import jalali
 from odoo.addons.ts_org.models.panel import ROLE_LABELS

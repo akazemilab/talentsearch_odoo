@@ -77,7 +77,7 @@ def scan(path, html):
         if w in html:
             bad.append('forbidden: %s' % w)
     eng = re.findall(r'(?<![\w/#.@-])[A-Za-z]{4,}(?![\w/@.-])', visible(html))
-    eng = [w for w in eng if w.lower() not in ('http', 'https', 'www')]
+    eng = [w for w in eng if w.lower() not in ('http', 'https', 'www', 'csv', 'xlsx', 'json', 'webp', 'png', 'jpg', 'jpeg', 'pdf', 'zip')]      # file-format names are codes
     if eng:
         bad.append('English: %s' % ','.join(sorted(set(eng))[:6]))
     labels = ' '.join(re.findall(r'(?is)<label\b[^>]*>.*?</label>', html))
