@@ -135,6 +135,8 @@ at_v.sudo().write({'voided': False})
 
 # ---- the talent profile at education level
 tb = [done(edu, talent) for _i in range(5)]
+for _a, _at in tb:
+    _a.client_id.sudo().responsible_id = o_owner.id        # the owner's own clients: the counselor has none of them
 rep = GR.build(o_owner, {})
 trow = next((r for r in rep['instruments'] if r['id'] == talent.id), None)
 check('five shared talent profiles: scale means shown, 20-100', trow and trow['talent'] and trow['talent']['n'] == 5
