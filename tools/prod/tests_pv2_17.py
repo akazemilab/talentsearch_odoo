@@ -99,7 +99,7 @@ check('suspending a panel notifies its owner', after == before + 1, (before, aft
 
 # ---- the back-office screens load for a manager
 for xid in ('ts_panel.action_ts_workspace_health', 'ts_core.ts_workspace_pending_action', 'ts_panel.action_ts_data_request'):
-    act = env.ref(xid).with_user(manager)
+    act = env.ref(xid).sudo()
     ok = True
     try:
         Mo = env[act.res_model].with_user(manager)
@@ -107,7 +107,7 @@ for xid in ('ts_panel.action_ts_workspace_health', 'ts_core.ts_workspace_pending
         Mo.web_search_read([], ['id'], limit=5)
     except Exception as e:                      # noqa: BLE001
         ok = False
-        print(xid, type(e).__name__)
+        print(xid, type(e).__name__, str(e)[:160])
     check('screen loads: %s' % xid, ok)
 
 print('SUMMARY %d/%d passed' % (sum(1 for _, ok in results if ok), len(results)))
