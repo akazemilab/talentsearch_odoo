@@ -40,7 +40,8 @@ def puser(groups=None):
 def panel(purpose, name):
     org = env['res.partner'].create({'name': name, 'is_company': True})
     org.write({'is_company': True})
-    ws = W.create({'name': name, 'purpose': purpose, 'partner_id': org.id})
+    ws = W.create({'name': name, 'purpose': purpose, 'partner_id': org.id,
+                   **({'escalation_contact_id': org.id} if purpose == 'clinical' else {})})
     ws.write({'approved_on': '2026-01-01 00:00:00'})
     ws.state = 'pilot'
     return ws
