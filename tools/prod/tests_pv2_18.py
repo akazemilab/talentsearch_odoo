@@ -116,6 +116,7 @@ if old_n is None:
 env.cr.execute("UPDATE ts_notification SET create_date = now() - interval '200 days' WHERE id = %s", [old_n.id])
 old_n.invalidate_recordset()
 env['ir.config_parameter'].sudo().set_bool('ts_panel.retention_enabled', False)
+ev0 = env['ts.audit.event'].sudo().search_count([('event_type', '=', 'retention.run')])
 out = RL._cron_run()
 check('dry-run counts the closed panel client', out['closed_panels'] >= 1, out)
 check('dry-run counts the old notification', out['notifications'] >= 1)
@@ -127,7 +128,7 @@ out = RL._cron_run()
 c2.invalidate_recordset()
 check('switched on, the closed panel client is anonymised', c2.anonymised_on and not c2.phone)
 check('switched on, the old notification is deleted', not old_n.exists())
-check('the run is audited with counts', env['ts.audit.event'].sudo().search_count([('event_type', '=', 'retention.run')]) == 2)
+check('the run is audited with counts', env['ts.audit.event'].sudo().search_count([('event_type', '=', 'retention.run')]) == ev0 + 2)
 env['ir.config_parameter'].sudo().set_bool('ts_panel.retention_enabled', False)
 
 # ---- PRV-4 erase
