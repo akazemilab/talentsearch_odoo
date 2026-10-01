@@ -85,9 +85,8 @@ for (n, w), items in want.items():
 
 # tiles
 c, page = pages[('owner', A)]
-check('dashboard shows the six counters as links to the filtered list',
-      all(('state=%s' % k) in page for k in ('invited', 'accepted', 'in_progress', 'done', 'declined', 'withdrawn'))
-      and 'تکمیل‌شده' in page and 'class="tsp-stat"' in page)
+check('dashboard shows period tiles as links to the filtered invitation list (S12 replaced the six counters)',
+      'tsp-d-kpi' in page and 'class="tsp-stat"' in page and '/invites?' in page)
 check('current menu item is marked', 'aria-current="page"' in page)
 check('pill states the panel is active (word, not colour only)', 'ts-pill--ok' in page and 'فعال' in page)
 
