@@ -7,8 +7,8 @@ explicit approval («تأیید فاز ۱»). While it says DRAFT, Phase 2 must 
 must not change.
 
 - Design written: 2026-10-01 (9 Mehr 1405). Approved by the owner 2026-10-01 (defaults for D4, D6, D7, D8 accepted).
-- Last finished stage: **S0 `tooling`** (shipped 2026-10-01, label `pv2s0`).
-- **Next stage: S1 `perms`** (`07_build_plan.md`; clone name `eot_ts31`).
+- Last finished stage: **S1 `perms`** (shipped 2026-10-01, label `pv2s1`).
+- **Next stage: S2 `shell`** (`07_build_plan.md`; clone name `eot_ts32`).
 
 ## 1. Read in this order (Phase 2)
 1. This file.
@@ -145,3 +145,4 @@ The full list is `06_gap_analysis.md` section 2.
 | Stage | Label | Shipped on | Commit | Notes |
 |---|---|---|---|---|
 | S0 | tooling | 2026-10-01 | d378b5d | `ts_panel` installed; G28, G30, G31 fixed; fixtures + ts_check/ts_shot rules; rehearsal eot_ts30 green, eot.ir UNCHANGED. Slow step: three rehearsals (fixtures failed twice: clinical panel needs an emergency contact; member verification needs the manager group). |
+| S1 | perms | 2026-10-01 | 7ca39bb | `admin` role, permission registry (33 strings), one active membership, audit hardening + deny events; rehearsal eot_ts31 green, eot.ir UNCHANGED. Slow step: first rehearsal wasted on three test-infra bugs (ICP API, slot path, can_invite). |
