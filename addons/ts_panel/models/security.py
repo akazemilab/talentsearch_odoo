@@ -10,6 +10,7 @@ import time
 from odoo import api, models
 from odoo.exceptions import ValidationError
 from odoo.http import request
+from odoo.http.session import logout as session_logout
 
 _logger = logging.getLogger(__name__)
 MIN_PASSWORD = 15
@@ -53,7 +54,7 @@ class IrHttp(models.AbstractModel):
             last = sess.get('ts_last_seen')
             if last and now - last > hours * 3600 and cls._ts_is_staff(uid):
                 ctx = {k: v for k, v in request.env.context.items() if k in ('lang', 'tz', 'website_id')}
-                sess.logout(keep_db=True)
+                session_logout(sess, keep_db=True)
                 request.env = api.Environment(request.env.cr, None, ctx)       # same as an expired session
                 return
             if not last or now - last > TOUCH_EVERY:
