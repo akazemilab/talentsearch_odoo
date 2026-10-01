@@ -4,12 +4,14 @@ Both act only on requests that arrive on the Talent Search website (website 4). 
 unchanged: the checks return before touching the session. The timeout is switched by `ts_panel.staff_idle_hours`
 (default 8, 0 = off) and applies to people who belong to at least one panel; participants keep Odoo's default session.
 """
+import logging
 import time
 
 from odoo import api, models
 from odoo.exceptions import ValidationError
 from odoo.http import request
 
+_logger = logging.getLogger(__name__)
 MIN_PASSWORD = 15
 TOUCH_EVERY = 60          # seconds between updates of the last-seen mark
 
@@ -54,6 +56,7 @@ class IrHttp(models.AbstractModel):
             if not last or now - last > TOUCH_EVERY:
                 sess['ts_last_seen'] = now
         except Exception:                               # noqa: BLE001  the timeout must never break a request
+            _logger.exception('ts idle check failed')
             return
 
     @classmethod
