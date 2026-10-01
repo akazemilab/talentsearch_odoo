@@ -104,7 +104,7 @@ for xid in ('ts_panel.action_ts_workspace_health', 'ts_core.ts_workspace_pending
     try:
         Mo = env[act.res_model].with_user(manager)
         Mo.get_views([[False, 'list'], [False, 'form'], [False, 'search']])
-        Mo.web_search_read([], ['id'], limit=5)
+        Mo.web_search_read([], {'id': {}}, limit=5)
     except Exception as e:                      # noqa: BLE001
         ok = False
         print(xid, type(e).__name__, str(e)[:160])
