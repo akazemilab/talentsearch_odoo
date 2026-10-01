@@ -114,7 +114,7 @@
         <field name="arch" type="xml">
             <search>
                 <filter name="f_open" string="باز" domain="[('state', 'in', ('new', 'in_review'))]"/>
-                <filter name="f_overdue" string="عقب‌افتاده" domain="[('overdue', '=', True)]"/>
+                <filter name="f_overdue" string="عقب‌افتاده" domain="[('due_on', '&lt;', context_today().strftime('%Y-%m-%d')), ('state', 'in', ('new', 'in_review'))]"/>
                 <filter name="f_erase" string="پاک‌سازی" domain="[('kind', '=', 'erase')]"/>
                 <filter name="f_export" string="دریافت داده" domain="[('kind', '=', 'export')]"/>
                 <group>

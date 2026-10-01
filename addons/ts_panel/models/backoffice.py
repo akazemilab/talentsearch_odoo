@@ -58,7 +58,7 @@ class TsWorkspaceHealth(models.Model):
 class TsDataRequestBackoffice(models.Model):
     _inherit = 'ts.data.request'
 
-    overdue = fields.Boolean('عقب‌افتاده', compute='_compute_overdue', search='_search_overdue')
+    overdue = fields.Boolean('عقب‌افتاده', compute='_compute_overdue')
     user_name = fields.Char('کاربر', related='user_id.name')
 
     @api.depends('due_on', 'state')
@@ -66,14 +66,6 @@ class TsDataRequestBackoffice(models.Model):
         today = fields.Date.today()
         for r in self:
             r.overdue = bool(r.due_on and r.due_on < today and r.state in ('new', 'in_review'))
-
-    def _search_overdue(self, operator, value):
-        self.flush_model(['due_on', 'state'])
-        want = bool(value) if operator == '=' else not value
-        today = fields.Date.today()
-        if want:
-            return [('due_on', '<', today), ('state', 'in', ('new', 'in_review'))]
-        return ['|', ('due_on', '>=', today), ('state', 'not in', ('new', 'in_review'))]
 
     def _ts_manager_only(self):
         if not self.env.user.has_group('ts_core.group_ts_manager'):
