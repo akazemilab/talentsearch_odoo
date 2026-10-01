@@ -75,5 +75,5 @@ check('research consent wrote a research row', Rec.search_count([('kind', '=', '
 # campaign fields
 check('campaign carries the attestation fields', {'guardian_attested_by_id', 'guardian_attested_on'} <= set(env['ts.campaign']._fields))
 
-print('S16 ORM: %d/%d' % (sum(1 for _, ok in results if ok), len(results)))
-env.cr.rollback()
+print('SUMMARY %d/%d passed' % (sum(1 for _, ok in results if ok), len(results)))
+
