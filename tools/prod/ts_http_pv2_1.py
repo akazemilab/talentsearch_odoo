@@ -65,7 +65,7 @@ check('admin login', a.login(ADM, pw[ADM]))
 st, _, page = a.req('/my/workspaces/%s' % ws_id)
 check('admin opens the panel page', st == 200 and 'Traceback' not in page, str(st))
 check('admin does not get the members or settings sections', 'id="ts-members"' not in page and 'id="ts-settings"' not in page)
-csrf = a.csrf(page)
+csrf = a.csrf(a.req('/my/workspaces/new')[2])   # the coordinator's panel page has no form of its own
 st, _, _ = a.req('/my/workspaces/%s/settings' % ws_id, {'name': 'نام تازه', 'csrf_token': csrf})
 check('admin settings POST is refused (404)', st == 404, str(st))
 st, _, _ = a.req('/my/workspaces/%s/members/invite' % ws_id, {'role': 'counselor', 'email': 'zzz@example.invalid', 'csrf_token': csrf})
