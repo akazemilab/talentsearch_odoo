@@ -22,7 +22,7 @@ org.write({'is_company': True})
 ws = env['ts.workspace'].search([('partner_id', '=', org.id)], limit=1) or env['ts.workspace'].create({'name': 'S18b http', 'purpose': 'education', 'partner_id': org.id})
 ws.write({'approved_on': '2026-01-01 00:00:00'})
 if ws.state in ('draft', 'closed'):
-    ws.write({'state': 'pilot', 'closed_on': False})
+    ws.write({'state': 'pilot'})
 u = user('staff')
 env['ts.workspace.member'].search([('workspace_id', '=', ws.id), ('user_id', '=', u.id)]) or env['ts.workspace.member'].create(
     {'workspace_id': ws.id, 'user_id': u.id, 'role': 'owner'})
@@ -30,7 +30,8 @@ env['ir.config_parameter'].sudo().set_float('ts_panel.staff_idle_hours', 8.0)
 env.cr.commit()
 print('OK seeded')
 """ % L
-assert 'OK seeded' in shell(code), 'seed failed'
+_o = shell(code)
+assert 'OK seeded' in _o, 'seed failed: ' + _o[-1200:]
 
 
 def login(n):
