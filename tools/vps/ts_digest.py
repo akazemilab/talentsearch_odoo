@@ -4,12 +4,13 @@
 Prints one block: state (running/done rc), current phase (last '=== ' line), suite totals
 (SUMMARY lines), every FAIL line once (known failures marked), guard/portal verdicts, '!!' lines.
 With SECS (cap 50, the bridge limit is 60) it blocks until the job finishes or something
-new and meaningful appears (a phase, SUMMARY, FAIL, verdict, '!!'), then prints the digest.
+new and meaningful appears (FAIL, '!!', a verdict, the end), then prints the digest.
 """
 import os, re, sys, time
 
 KNOWN = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'known_failures.txt')
-EVENT = re.compile(r'^(=== |SUMMARY|FAIL|!!|\[rc=|\[guard rc=|pages compared|portal: |REHEARSAL|Traceback|.*verdict)')
+# `wait` returns early only for things that need attention or end a stage, not for every phase line
+EVENT = re.compile(r'^(FAIL|!!|\[rc=|pages compared|portal: |REHEARSAL|SHIP |Traceback|.*verdict)')
 
 
 def known():
