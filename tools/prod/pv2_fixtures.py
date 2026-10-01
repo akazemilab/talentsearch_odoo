@@ -3,6 +3,8 @@
 # Fictional data only. Logins ts.pv2.<panel>.<role>@example.invalid, panel names «پنل آزمایشی ...».
 # Upserts on every run: two runs give identical counts (test P22). Later stages extend this file
 # (clients, every invitation state, new roles); it never touches records it did not create.
+from odoo import fields
+
 assert env.cr.dbname.startswith('eot_ts'), 'refusing to run fixtures outside a clone'
 
 portal = env.ref('base.group_portal')
@@ -38,7 +40,8 @@ def member(ws, u, role):
     if m.role != role:
         m.role = role
     if role in ('clinician', 'clinic_director', 'counselor') and m.verification_state != 'verified':
-        m.action_verify()
+        # action_verify needs the platform-manager group; fixtures record the same outcome directly
+        m.write({'license_number': 'TEST-%s' % m.id, 'verification_state': 'verified', 'verified_on': fields.Datetime.now()})
     return m
 
 

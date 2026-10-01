@@ -106,7 +106,7 @@ if has ts_panel; then
   echo "=== $(date +%T) panel v2: fixtures twice (P22)"
   fx(){ ssh $P "cd /tmp && sudo -u odoo env HOME=/opt/odoo /opt/odoo/venv/bin/python3 /opt/odoo/odoo/odoo-bin shell -c /etc/odoo20.conf -d $DB --db-filter='^$DB\$' --addons-path=$STAGE/addons,/opt/odoo/themes,/opt/odoo/enterprise,/opt/odoo/odoo/addons --no-http --log-level=warn < $STAGE/tools/prod/pv2_fixtures.py 2>&1 | grep -E '^FIXTURES|Error|Traceback'"; }
   f1=$(fx); f2=$(fx); echo "$f1"
-  if [ -n "$f1" ] && [ "$f1" = "$f2" ]; then echo "PASS  fixtures run twice with identical counts"; else echo "FAIL  fixtures differ between runs: [$f1] [$f2]"; fi
+  if [[ "$f1" == FIXTURES* ]] && [ "$f1" = "$f2" ]; then echo "PASS  fixtures run twice with identical counts"; else echo "FAIL  fixtures differ between runs: [$f1] [$f2]"; fi
   echo "=== $(date +%T) http panel v2 S0"; http ts_http_pv2_0.py
 fi
 if has ts_kavenegar; then
