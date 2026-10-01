@@ -33,8 +33,8 @@ def member(ws, n, role):
 A = panel('پنل S5 آموزشی', 'education')
 mo = member(A, 'owner', 'owner'); member(A, 'admin', 'admin'); m1 = member(A, 'c1', 'counselor'); m2 = member(A, 'c2', 'counselor')
 C = env['ts.panel.client']
-C.search([('workspace_id', '=', A.id), ('name', 'like', 'پنج %')]).write({'name': 'قدیمی', 'state': 'archived', 'responsible_id': False})
-C.search([('workspace_id', '=', A.id), ('name', 'like', 'تازه%')]).write({'name': 'قدیمی', 'state': 'archived', 'responsible_id': False})
+C.search([('workspace_id', '=', A.id), ('name', 'like', 'پنج %%')]).write({'name': 'قدیمی', 'state': 'archived', 'responsible_id': False})
+C.search([('workspace_id', '=', A.id), ('name', 'like', 'تازه%%')]).write({'name': 'قدیمی', 'state': 'archived', 'responsible_id': False})
 for n, r in (('پنج الف', m1), ('پنج ب', m1), ('پنج پ', m2), ('پنج ت', False)):
     if not C.search_count([('workspace_id', '=', A.id), ('name', '=', n)]):
         C.create({'workspace_id': A.id, 'name': n, 'responsible_id': r.id if r else False})
