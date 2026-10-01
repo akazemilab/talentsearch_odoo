@@ -4,6 +4,9 @@
     .ts-notice--ok { border-inline-start-color: var(--success); background: var(--success-soft); color: var(--success); }
     .ts-notice--danger { border-inline-start-color: var(--danger); background: var(--danger-soft); color: var(--danger); }
     .ts-notice--info { border-inline-start-color: var(--info); background: var(--info-soft); color: var(--info); }
+    .ts-pill { display: inline-block; padding: 3px 10px; border-radius: 999px; background: var(--brand-soft); color: var(--brand-deep); font-size: .9rem; font-weight: 700; }
+    .ts-pill--ok { background: var(--success-soft); color: var(--success); }
+    .ts-pill--warn { background: var(--warn-soft); color: var(--warn); }
     .ts-pill--info { background: var(--info-soft); color: var(--info); }
     .ts-pill--danger { background: var(--danger-soft); color: var(--danger); }
     .ts-pill--neutral { background: var(--neutral-soft); color: var(--neutral); }
