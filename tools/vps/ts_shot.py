@@ -1,20 +1,24 @@
 #!/root/eot-browser/venv/bin/python
 """Headless layout audit of Talent Search pages on a served CLONE (never live accounts).
     ts_shot.py DB PORT [--as LOGIN] PATH...
-Tunnels VPS:18071 -> prod:PORT, maps talentsearch.ir to it, signs in with the
-clone-only test user (password read from prod's root-only file, never printed) and
-reports per page and width: status, horizontal overflow, elements wider than the
-viewport, small tap targets, images without alt, English UI words, console errors,
-and for report pages the print layout. Screenshots stay in /root/ts-jobs/shots/."""
-import os, re, subprocess, sys
+    ts_shot.py DB PORT --matrix FILE.json        FILE = {"login": ["/path", ...], ...}   (Panel v2, 08_design_system.md section 5)
+Tunnels VPS:18071 -> prod:PORT, maps talentsearch.ir to it, signs in with the clone-only test user
+(password read from prod's root-only file, never printed) and reports per page and width:
+status, horizontal overflow, elements wider than the viewport, small tap targets, images without alt,
+English UI words (body and <title>), missing/duplicate h1, inputs without a label, text contrast
+below 4.5:1 (3:1 for large text), console errors, and for report pages the print layout.
+Exit code 1 if any page has a problem. Screenshots stay in /root/ts-jobs/shots/."""
+import json, os, re, subprocess, sys
 from playwright.sync_api import sync_playwright
 
 args = sys.argv[1:]
 DB, PORT = args[0], args[1]; args = args[2:]
 assert DB.startswith('eot_ts'), 'clones only'
-LOGIN = None
+LOGIN, MATRIX = None, None
 if args and args[0] == '--as':
     LOGIN, args = args[1], args[2:]
+elif args and args[0] == '--matrix':
+    MATRIX, args = json.load(open(args[1])), []
 PATHS = args or ['/']
 CHROME = '/snap/chromium/current/usr/lib/chromium-browser/chrome'
 subprocess.run('ssh -fN -o ExitOnForwardFailure=yes -L 18071:127.0.0.1:%s eot-odoo-prod 2>/dev/null || true' % PORT, shell=True)
@@ -44,12 +48,40 @@ JS = r"""() => {
   out.title = document.title;
   out.text = document.body.innerText;
   out.dir = document.documentElement.dir || getComputedStyle(document.body).direction;
+  // inputs without a visible or aria label (checklist 2)
+  const nolabel = [];
+  for (const el of document.querySelectorAll('#wrap input:not([type=hidden]):not([type=submit]):not([type=button]), #wrap select, #wrap textarea')) {
+    const id = el.id, has = (id && document.querySelector('label[for="' + CSS.escape(id) + '"]')) || el.closest('label')
+      || el.getAttribute('aria-label') || el.getAttribute('aria-labelledby');
+    if (!has) nolabel.push(el.name || el.tagName.toLowerCase());
+  }
+  out.nolabel = nolabel.slice(0, 6);
+  // contrast (checklist 3): sample visible text elements
+  const lum = c => { const f = v => { v /= 255; return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4); }; return 0.2126 * f(c[0]) + 0.7152 * f(c[1]) + 0.0722 * f(c[2]); };
+  const parse = s => { const m = s.match(/rgba?\(([^)]+)\)/); if (!m) return null; const p = m[1].split(',').map(parseFloat); return {c: p.slice(0, 3), a: p.length > 3 ? p[3] : 1}; };
+  const bgOf = el => { for (let e = el; e; e = e.parentElement) { const p = parse(getComputedStyle(e).backgroundColor); if (p && p.a > 0.95) return p.c; } return [255, 255, 255]; };
+  const low = []; let seen = 0;
+  for (const el of document.querySelectorAll('#wrap p, #wrap li, #wrap td, #wrap th, #wrap label, #wrap a, #wrap button, #wrap h1, #wrap h2, #wrap h3, #wrap small, #wrap dd, #wrap dt, #wrap span')) {
+    if (seen > 250) break;
+    const t = [...el.childNodes].filter(n => n.nodeType === 3 && n.textContent.trim()).length;
+    const r = el.getBoundingClientRect();
+    if (!t || !r.width || !r.height) continue;
+    const cs = getComputedStyle(el); if (cs.visibility === 'hidden' || cs.opacity === '0') continue;
+    seen++;
+    const fg = parse(cs.color); if (!fg) continue;
+    const L1 = lum(fg.c), L2 = lum(bgOf(el)), ratio = (Math.max(L1, L2) + 0.05) / (Math.min(L1, L2) + 0.05);
+    const size = parseFloat(cs.fontSize), bold = parseInt(cs.fontWeight) >= 700, large = size >= 24 || (size >= 18.66 && bold);
+    if (ratio < (large ? 3 : 4.5)) low.push(el.tagName.toLowerCase() + '.' + [...el.classList].slice(0, 2).join('.') + ' ' + ratio.toFixed(1));
+  }
+  out.lowcontrast = [...new Set(low)].slice(0, 5);
   return out;
 }"""
 
-pw_file = '/root/.ts_flow_%s_%s' % (DB, (LOGIN or '').split('@')[0])
-password = subprocess.run(['ssh', 'eot-odoo-prod', 'cat', pw_file], capture_output=True, text=True).stdout.strip() if LOGIN else None
-with sync_playwright() as p:
+
+def audit(p, login, paths):
+    bad = 0
+    pw_file = '/root/.ts_flow_%s_%s' % (DB, (login or '').split('@')[0])
+    password = subprocess.run(['ssh', 'eot-odoo-prod', 'cat', pw_file], capture_output=True, text=True).stdout.strip() if login else None
     b = p.chromium.launch(executable_path=CHROME, args=['--no-sandbox', '--disable-dev-shm-usage', '--disable-gpu',
                                                         '--host-resolver-rules=MAP talentsearch.ir:80 127.0.0.1:18071'])
     ctx = b.new_context(locale='fa-IR')
@@ -58,35 +90,55 @@ with sync_playwright() as p:
     page.on('console', lambda m: errors.append(m.text[:160]) if m.type == 'error' else None)
     page.on('pageerror', lambda e: errors.append(str(e)[:160]))
     BASE = 'http://talentsearch.ir'
-    if LOGIN:
+    if login:
         page.goto(BASE + '/web/login', timeout=90000)
-        page.fill('input[name=login]', LOGIN); page.fill('input[name=password]', password)
+        page.fill('input[name=login]', login); page.fill('input[name=password]', password)
         page.click('form[action="/web/login"] button[type=submit]'); page.wait_for_load_state('networkidle', timeout=90000)
-        print('signed in' if '/web/login' not in page.url else '!! sign-in failed', flush=True)
-    for path in PATHS:
+        ok = '/web/login' not in page.url
+        print(('signed in as %s' % login.split('@')[0]) if ok else '!! sign-in failed for %s' % login.split('@')[0], flush=True)
+        bad += 0 if ok else 1
+    for path in paths:
         for w in (1280, 375):
             errors.clear()
             page.set_viewport_size({'width': w, 'height': 900})
             r = page.goto(BASE + path, timeout=90000, wait_until='networkidle')
             m = page.evaluate(JS)
-            en = sorted(set(EN.findall(m.pop('text'))))
+            body = m.pop('text')
+            en = sorted(set(EN.findall(body)))
+            en_title = sorted(set(EN.findall(m['title'])))
             probs = []
+            if r and r.status != 200: probs.append('status %d' % r.status)
             if m['scroll'] > 0: probs.append('h-scroll %dpx' % m['scroll'])
             if m['wide']: probs.append('wide ' + ','.join(m['wide']))
             if m['small']: probs.append('small-tap ' + '|'.join(m['small']))
             if m['noalt']: probs.append('img-no-alt %d' % m['noalt'])
             if m['h1'] != 1: probs.append('h1=%d' % m['h1'])
             if en: probs.append('EN ' + ','.join(en))
+            if en_title: probs.append('EN-title ' + ','.join(en_title))
+            if m['nolabel']: probs.append('no-label ' + ','.join(m['nolabel']))
+            if m['lowcontrast']: probs.append('contrast ' + '|'.join(m['lowcontrast']))
             if errors: probs.append('console ' + ' | '.join(errors[:2]))
             if m['dir'] != 'rtl': probs.append('dir=' + m['dir'])
+            bad += 1 if probs else 0
             name = re.sub(r'[^a-z0-9]+', '_', path.lower()).strip('_') or 'home'
-            page.screenshot(path='/root/ts-jobs/shots/%s_%d.png' % (name, w), full_page=True)
+            page.screenshot(path='/root/ts-jobs/shots/%s%s_%d.png' % ((login.split('@')[0] + '_') if MATRIX else '', name, w), full_page=True)
             print('%s %-4s %-40s %s' % (r.status if r else '-', w, path[:40], '; '.join(probs) or 'ok'), flush=True)
         if '/my/assessments/' in path or '/a/' in path:
             page.emulate_media(media='print'); page.set_viewport_size({'width': 794, 'height': 1123})
             hidden = page.evaluate("() => [...document.querySelectorAll('.ts-noprint, header#top, footer')].filter(e => getComputedStyle(e).display !== 'none').length")
             over = page.evaluate("() => document.documentElement.scrollWidth - window.innerWidth")
-            page.pdf(path='/root/ts-jobs/shots/%s_print.pdf' % name) if False else None
             print('print     %-40s %s' % (path[:40], 'ok' if not hidden and over <= 0 else 'visible-chrome=%d overflow=%d' % (hidden, over)), flush=True)
             page.emulate_media(media='screen')
     b.close()
+    return bad
+
+
+with sync_playwright() as p:
+    total = 0
+    if MATRIX:
+        for login, paths in MATRIX.items():
+            total += audit(p, login, paths)
+    else:
+        total = audit(p, LOGIN, PATHS)
+print('SHOT %s' % ('OK' if not total else 'PROBLEMS %d' % total))
+sys.exit(1 if total else 0)

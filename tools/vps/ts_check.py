@@ -10,6 +10,12 @@ Catches, before a 25-minute rehearsal, the failures that cost whole cycles on 20
              (install fails on eot_main: website makes ir_ui_view.visibility NOT NULL)
   W phone    the same test mobile number used in two test files (fixtures collide)
   W pycache  __pycache__ files tracked by git
+  Panel v2 rules (ts_panel only):
+  W audit    an audit `.log(` call passes a keyword that can carry personal data (name, phone, ...); warning until S1
+  E scope    `sudo().search/browse/...` in ts_panel/controllers (outside base.py) without `workspace_id` in the
+             domain (browse: add a `# ts-scope-ok` comment on the line when the id was already scoped)
+  E words    a forbidden claim in a ts_panel template (08_design_system.md section 6)
+  `ts_check.py --selftest` proves the three rules fire on a sample bad module.
 Exit 1 if any E, else 0. Reference for "new" views: the commit in /root/ts-jobs/LIVE_COMMIT
 (written by `ts ship`), else origin/main.
 """
@@ -17,7 +23,26 @@ import ast, glob, os, re, subprocess, sys
 
 from lxml import etree
 
-REPO = os.path.abspath(sys.argv[1] if len(sys.argv) > 1 else os.getcwd())
+SELFTEST = '--selftest' in sys.argv
+argv = [a for a in sys.argv[1:] if a != '--selftest']
+if SELFTEST:   # prove the Panel v2 rules fire on a sample bad module, then exit
+    import tempfile
+    d = tempfile.mkdtemp()
+    os.makedirs(f'{d}/addons/ts_panel/controllers'); os.makedirs(f'{d}/addons/ts_panel/views')
+    open(f'{d}/addons/ts_panel/__manifest__.py', 'w').write("{'name': 'x', 'depends': [], 'data': []}")
+    open(f'{d}/addons/ts_panel/controllers/main.py', 'w').write(
+        "def f(request, env, ws):\n    env['ts.x'].sudo().search([('id', '=', 1)])\n    env['ts.x'].sudo().browse(3)\n"
+        "    env['ts.audit.event'].log('x.y', None, phone='0912')\n"
+        "    env['ts.x'].sudo().search([('workspace_id', '=', ws.id)])\n")
+    open(f'{d}/addons/ts_panel/views/v.xml', 'w', encoding='utf-8').write('<odoo><p>تضمین قبولی</p></odoo>')
+    r = subprocess.run([sys.executable, __file__, d], capture_output=True, text=True).stdout
+    want = ['E scope addons/ts_panel/controllers/main.py:2', 'E scope addons/ts_panel/controllers/main.py:3',
+            'W audit addons/ts_panel/controllers/main.py:4', 'E words addons/ts_panel/views/v.xml']
+    miss = [w for w in want if w not in r]
+    extra = 'E scope addons/ts_panel/controllers/main.py:5' in r
+    print('SELFTEST ' + ('OK' if not miss and not extra else 'FAILED missing=%s extra_flag_on_scoped_search=%s' % (miss, extra)))
+    sys.exit(0 if not miss and not extra else 1)
+REPO = os.path.abspath(argv[0] if argv else os.getcwd())
 ADDONS = os.path.join(REPO, 'addons')
 errors, warns = [], []
 FA = str.maketrans('۰۱۲۳۴۵۶۷۸۹', '0123456789')
@@ -130,6 +155,42 @@ for num, files in sorted(phones.items()):
 tracked = [l for l in (git('ls-files') or '').splitlines() if '__pycache__' in l]
 if tracked:
     warns.append(f'pycache {len(tracked)} __pycache__ files tracked by git')
+
+
+# ---------------------------------------------------------------- Panel v2 rules (ts_panel)
+PANEL = os.path.join(ADDONS, 'ts_panel')
+DENY_KW = {'name', 'phone', 'mobile', 'email', 'national_id', 'national_code', 'nid', 'query', 'search', 'q',
+           'text', 'contact', 'invitee_name', 'partner_name', 'display_name'}
+FORBIDDEN = ['رشتهٔ مناسب تو', 'احتمال قبولی', 'تضمین', 'رایگان برای همیشه', 'نظام روانشناسی و مشاوره']
+SCOPED = ('search', 'search_count', 'search_read', 'read_group', 'browse')
+if os.path.isdir(PANEL):
+    for p in glob.glob(f'{PANEL}/**/*.py', recursive=True):
+        try:
+            src = open(p, encoding='utf-8').read()
+            tree = ast.parse(src)
+        except SyntaxError:
+            continue
+        is_ctrl = os.sep + 'controllers' + os.sep in p and os.path.basename(p) != 'base.py'
+        for node in ast.walk(tree):
+            if not isinstance(node, ast.Call) or not isinstance(node.func, ast.Attribute):
+                continue
+            if node.func.attr == 'log':
+                bad = sorted({k.arg for k in node.keywords if k.arg in DENY_KW})
+                if bad:
+                    warns.append(f'audit {rel(p)}:{node.lineno} .log() passes {bad}: no names, phones, emails or search text in audit detail')
+            if is_ctrl and node.func.attr in SCOPED and isinstance(node.func.value, ast.Call) \
+                    and isinstance(node.func.value.func, ast.Attribute) and node.func.value.func.attr == 'sudo':
+                seg = ast.get_source_segment(src, node) or ''
+                line = src.splitlines()[node.lineno - 1]
+                if 'ts-scope-ok' in line:
+                    continue
+                if node.func.attr == 'browse' or 'workspace_id' not in seg:
+                    errors.append(f'scope {rel(p)}:{node.lineno} sudo().{node.func.attr}() without workspace_id in the domain')
+    for p in glob.glob(f'{PANEL}/**/*.xml', recursive=True):
+        txt = open(p, encoding='utf-8').read()
+        for w in FORBIDDEN:
+            if w in txt:
+                errors.append(f'words {rel(p)}: forbidden claim «{w}»')
 
 for e in errors:
     print('E ' + e)

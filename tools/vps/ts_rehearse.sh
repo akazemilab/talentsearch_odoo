@@ -64,6 +64,7 @@ GPID=$!
 NOCOMMIT=(tests_stage1.py tests_assessment.py)
 has ts_talent && NOCOMMIT+=(tests_talent.py)
 has ts_org && NOCOMMIT+=(tests_org.py tests_org_resp.py tests_panel.py tests_edge.py tests_signup.py)
+has ts_panel && NOCOMMIT+=(tests_pv2_0.py)
 for f in "${NOCOMMIT[@]}"; do
   [ -f $REPO_DIR/tools/prod/$f ] || continue
   grep -q "cr.commit" $REPO_DIR/tools/prod/$f && { echo "!! $f commits; it cannot run beside the guard"; continue; }
@@ -99,6 +100,14 @@ has ts_org && { echo "=== $(date +%T) http organization flow"; http ts_http_org.
 if has ts_sms; then
   echo "=== $(date +%T) http mobile sign-in + invite links"; http ts_http_signup.py
   echo "=== $(date +%T) http panel self-service"; http ts_http_panel.py
+fi
+if has ts_panel; then
+  echo "=== $(date +%T) panel v2: ts_check self-test"; python3 /root/talentsearch_odoo/tools/vps/ts_check.py --selftest | sed 's/^SELFTEST FAILED/FAIL ts_check selftest/'
+  echo "=== $(date +%T) panel v2: fixtures twice (P22)"
+  fx(){ ssh $P "cd /tmp && sudo -u odoo env HOME=/opt/odoo /opt/odoo/venv/bin/python3 /opt/odoo/odoo/odoo-bin shell -c /etc/odoo20.conf -d $DB --db-filter='^$DB\$' --addons-path=$STAGE/addons,/opt/odoo/themes,/opt/odoo/enterprise,/opt/odoo/odoo/addons --no-http --log-level=warn < $STAGE/tools/prod/pv2_fixtures.py 2>&1 | grep -E '^FIXTURES|Error|Traceback'"; }
+  f1=$(fx); f2=$(fx); echo "$f1"
+  if [ -n "$f1" ] && [ "$f1" = "$f2" ]; then echo "PASS  fixtures run twice with identical counts"; else echo "FAIL  fixtures differ between runs: [$f1] [$f2]"; fi
+  echo "=== $(date +%T) http panel v2 S0"; http ts_http_pv2_0.py
 fi
 if has ts_kavenegar; then
   echo "=== $(date +%T) kavenegar tests (fake API, commits)"; orm tests_kavenegar.py

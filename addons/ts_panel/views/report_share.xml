@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- G30: the TALENT-INV-15 report had no revoke button and no "send to my counselor" block.
+         Same behaviour as ts_org.tpl_report_share, worded for what the counselor really sees here
+         (the profile report without the raw answers). Not shown in the institute's own view. -->
+    <record id="tpl_report_share_matrix" model="ir.ui.view">
+        <field name="name">TS panel: matrix report sharing block</field>
+        <field name="type">qweb</field>
+        <field name="inherit_id" ref="ts_talent.tpl_report"/>
+        <field name="website_id" ref="ts_website.website_ts"/>
+        <field name="arch" type="xml">
+            <xpath expr="//article[hasclass('tt-report')]" position="after">
+                <t t-if="not org_view">
+                    <t t-set="ts_share" t-value="attempt.ts_org_assignment()"/>
+                    <section t-if="not ts_share and attempt.state == 'done' and not attempt.workspace_id and attempt.source != 'import'" class="ts-doc__sec ts-noprint" id="ts-share-counselor">
+                        <h2>ارسال نتیجه برای مشاورم</h2>
+                        <p>اگر مشاور دارید، می‌توانید با «کد پنل» او گزارش نیمرخ خود را برایش بفرستید. پاسخ‌های خام شما هرگز دیده نمی‌شود و هر زمان می‌توانید اشتراک را لغو کنید.</p>
+                        <a t-attf-href="/my/assessments/#{attempt.id}/share" class="ts-btn ts-btn--outline ts-btn--sm">ارسال برای مشاورم</a>
+                    </section>
+                    <section t-if="ts_share" class="ts-doc__sec ts-noprint" id="ts-share-status">
+                        <h2>اشتراک با پنل</h2>
+                        <p t-if="ts_share.invited_by_id == attempt.user_id">این نتیجه را شما برای <strong t-out="ts_share.workspace_id.name"/> فرستاده‌اید.</p>
+                        <p t-else="">این سنجه به دعوت <strong t-out="ts_share.workspace_id.partner_id.name"/> انجام شد.</p>
+                        <p>
+                            <t t-if="ts_share.share_level == 'none'">نتیجه با پنل به اشتراک گذاشته نشده است.</t>
+                            <t t-elif="ts_share.workspace_id.purpose == 'education'">مشاور پنل گزارش نیمرخ شما را می‌بیند؛ پاسخ‌های خام شما هرگز دیده نمی‌شود.</t>
+                            <t t-else="">نتیجهٔ این سنجه در این پنل نمایش داده نمی‌شود.</t>
+                        </p>
+                        <form t-if="ts_share.share_level != 'none'" t-attf-action="/my/assessments/#{attempt.id}/unshare" method="post">
+                            <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                            <button type="submit" class="ts-btn ts-btn--outline ts-btn--sm">لغو اشتراک</button>
+                        </form>
+                    </section>
+                </t>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- G31: the share-by-code page said the counselor sees only bands. For the talent inventory
+         the counselor sees the whole profile report (without answers): say so. -->
+    <record id="tpl_share_form_matrix" model="ir.ui.view">
+        <field name="name">TS panel: share form wording per instrument kind</field>
+        <field name="type">qweb</field>
+        <field name="inherit_id" ref="ts_org.tpl_share_form"/>
+        <field name="website_id" ref="ts_website.website_ts"/>
+        <field name="arch" type="xml">
+            <xpath expr="//div[hasclass('ts-section__head')]/p" position="replace">
+                <p t-if="attempt.ts_is_matrix()">مشاور شما یک «کد پنل» دارد. با وارد کردن آن، گزارش نیمرخ شما (نمرهٔ هر زمینه و توانایی‌ها) برای مشاور پنل دیده می‌شود. پاسخ‌های خام هرگز دیده نمی‌شوند و هر زمان بخواهید اشتراک را لغو می‌کنید.</p>
+                <p t-else="">مشاور شما یک «کد پنل» دارد. با وارد کردن آن، فقط بازهٔ هر زمینه در نتیجهٔ شما برای مشاور پنل دیده می‌شود. پاسخ‌های خام هرگز دیده نمی‌شوند و هر زمان بخواهید اشتراک را لغو می‌کنید.</p>
+            </xpath>
+        </field>
+    </record>
+</odoo>
