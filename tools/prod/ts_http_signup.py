@@ -55,7 +55,7 @@ ws.state = 'active'
 A = env['ts.assignment']
 a = A.create({'workspace_id': ws.id, 'instrument_id': inst.id, 'invitee_name': 'دعوت‌شدهٔ HTTP'})
 old = A.create({'workspace_id': ws.id, 'instrument_id': inst.id, 'invitee_name': 'دعوت قدیمی HTTP'})
-env.cr.execute("update ts_assignment set create_date = now() - interval '40 days' where id = %s", [old.id])
+env.cr.execute("update ts_assignment set create_date = now() - interval '40 days', expires_at = now() - interval '10 days' where id = %s", [old.id])
 env.cr.commit()
 print('TOK', a.token, old.token)
 """.replace('@FAKEPORT@', str(FAKE_PORT)).replace('@PHONE@', PHONE))

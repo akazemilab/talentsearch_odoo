@@ -52,11 +52,12 @@ st, _, page = lib.follow(own, loc)
 check('pending banner shown', st == 200 and 'در انتظار تأیید' in page)
 check('checklist shown', 'گام‌های راه‌اندازی' in page and 'پس از تأیید' in page)
 check('participant invite form hidden while pending', 'id="ts-invite"' not in page)
-st, loc2, _ = own.req('/my/workspaces/%s/invite' % ws_id, {'csrf_token': own.csrf(page), 'invitee_name': 'x', 'instrument_id': '1'})
+st, _, legacy = own.req('/my/workspaces/%s/legacy' % ws_id)   # the dashboard has no forms (S6); the old page still does
+st, loc2, _ = own.req('/my/workspaces/%s/invite' % ws_id, {'csrf_token': own.csrf(legacy), 'invitee_name': 'x', 'instrument_id': '1'})
 check('participant invite POST refused while pending', 'error=' in loc2, loc2)
 
 # colleague invite
-st, loc2, _ = own.req('/my/workspaces/%s/members/invite' % ws_id, {'csrf_token': own.csrf(page), 'role': 'hr_admin', 'phone': '۰۹۱۲۶۶۶۰۰۰۲'})
+st, loc2, _ = own.req('/my/workspaces/%s/members/invite' % ws_id, {'csrf_token': own.csrf(legacy), 'role': 'hr_admin', 'phone': '۰۹۱۲۶۶۶۰۰۰۲'})
 check('colleague invite -> shows link', st in (302, 303) and 'minv=' in loc2, loc2)
 st, _, page2 = own.req(path_of(loc2))
 m = re.search(r'value="https://talentsearch\.ir/join/([0-9a-f]{32})"', page2)

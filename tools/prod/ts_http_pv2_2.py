@@ -126,7 +126,7 @@ check('and the name did not change', 'NAME پنل S2 آموزشی' in name, name
 u = login('unv')
 st, _, page = u.req('/my/workspaces/%s' % C)
 check('unverified clinician sees the notice page on the panel address', st == 200 and 'در حال بررسی است' in page and menu(page) == ['داشبورد', 'راهنما'], '%s %s' % (st, menu(page)))
-check('the old page still answers 404 for them', u.req('/my/workspaces/%s' % C)[0] == 404)
+check('the old page still answers 404 for them', u.req('/my/workspaces/%s/legacy' % C)[0] == 404)
 check('and settings is 403', u.req('/my/workspaces/%s/settings' % C)[0] == 403)
 
 # suspended panel

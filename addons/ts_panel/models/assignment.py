@@ -122,7 +122,16 @@ class TsAssignment(models.Model):
         return len(late)
 
     def write(self, vals):
-        res = super().write(vals)
+        if 'deadline' in vals and 'expires_at' not in vals:
+            # the expiry follows the deadline for invitations nobody accepted yet (04_data_model.md 2.4)
+            res = True
+            for a in self:
+                v = dict(vals)
+                if not (a.user_id or a.attempt_id or a.withdrawn or a.declined):
+                    v['expires_at'] = a._ts_default_expiry(vals['deadline'], base=a.create_date)
+                res = super(TsAssignment, a).write(v) and res
+        else:
+            res = super().write(vals)
         if vals.get('attempt_id'):
             for a in self.sudo():
                 if a.client_id and not a.attempt_id.client_id:

@@ -122,6 +122,7 @@ check('fresh invite is ok', a.invite_state() == 'ok')
 b = mk('قدیمی')
 age('ts_assignment', 'id = %d' % b.id, minutes=31 * 24 * 60)
 b.invalidate_recordset()
+b.write({'expires_at': '2020-01-01 00:00:00'})   # S6: the expiry is stored, not read from create_date
 check('invite older than 30 days is expired', b.invite_state() == 'expired')
 check('expired invite cannot be accepted', raises(lambda: b.action_accept(u1, True), UserError))
 d = mk('مهلت'); d.deadline = '2020-01-01'
