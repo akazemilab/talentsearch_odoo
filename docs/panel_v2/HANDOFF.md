@@ -7,8 +7,8 @@ explicit approval («تأیید فاز ۱»). While it says DRAFT, Phase 2 must 
 must not change.
 
 - Design written: 2026-10-01 (9 Mehr 1405). Approved by the owner 2026-10-01 (defaults for D4, D6, D7, D8 accepted).
-- Last finished stage: **S13 `reports`** (shipped 2026-10-01, label `pv2s13`).
-- **Next stage: S14 `audit`** (branch `pv2-14-audit` in /root/ts_wt_s2: ORM 34 + HTTP 20 pass; full rehearsal reh55 running; ship list ts_core,ts_panel). Then S15 portal, S16 minors, S17 backoffice, S18 lifecycle, S19 help-a11y, S20 cleanup.
+- Last finished stage: **S14 `audit`** (shipped 2026-10-01, label `pv2s14`).
+- **Next stage: S15 `portal`** (branch `pv2-15-portal` in /root/ts_wt_s1: code and tests done, 39 ORM + 50 HTTP pass, full rehearsal reh57 running; ship list ts_org,ts_panel). Then S16 minors, S17 backoffice, S18 lifecycle, S19 help-a11y, S20 cleanup.
 
 ## 1. Read in this order (Phase 2)
 1. This file.
@@ -158,3 +158,4 @@ The full list is `06_gap_analysis.md` section 2.
 | S11 | wallet | 2026-10-01 | c4113d3 | Wallet, append-only ledger, credits page, void with refund. Rehearsal eot_ts48r green, eot.ir UNCHANGED. |
 | S12 | dashboard | 2026-10-01 | 1703dc3 | Dashboard (attention, KPIs, funnel, workload, checklist) with list filters. Rehearsal eot_ts49r green, eot.ir UNCHANGED. |
 | S13 | reports | 2026-10-01 | $SHA | Result page by level, group report with small-cell suppression, print audit. Rehearsal eot_ts54r green, eot.ir UNCHANGED. |
+| S14 | audit | 2026-10-01 | 39329d5 | Panel audit page + CSV, support access, who-viewed list. Rehearsal eot_ts55r green, eot.ir UNCHANGED. |

@@ -266,3 +266,10 @@ Data step (owner-only, NOT in code): approve workspace 1, set pilot, add the cou
 - Tests: `tests_pv2_13.py` (24 ORM), `ts_http_pv2_13.py` (33 HTTP). Rehearsal eot_ts54r: guard UNCHANGED, portal UNCHANGED; the only failures were three old tests (print button, renamed audit event, status page after revoke) updated and re-run green. Ship: eot.ir UNCHANGED.
 - Lessons: flowlib `req` now follows the old `/a/` and `/p/` redirects unless `follow_old=False`; after any ship take a fresh `pg_dump` before the next rehearsal (stale dump -> invalid portal baseline).
 - Watch during the ship: www.eot.ir through Arvan returned only 502 for ~3 min while odoo20 was stopped, never the old server (45.82.138.67). Root cause of the earlier old-server report is still OPEN.
+
+## pv2s14 — Panel v2, stage S14 audit (2026-10-01)
+
+- `ts_panel` 20.0.10.0.0 + `ts_core` (ship label `pv2s14`, commit 39329d5): the panel audit page `W/audit` (owner only, families and plain sentences, day/member filters, Tehran day edges, paging), CSV export `W/audit/export` after re-authentication, support access (`kind` emergency/support with a ticket reference, owners notified), "who viewed" list on the result page. `ts_core` emergency access now asks small methods (`_check_scope`, `_hours`) that `ts_panel` overrides.
+- Tests: `tests_pv2_14.py` (34 ORM), `ts_http_pv2_14.py` (20 HTTP). Rehearsal eot_ts55r: guard UNCHANGED, portal UNCHANGED, one old menu test updated for the new item (re-run green). Ship: eot.ir UNCHANGED.
+- Lessons: events seeded for a test must be keyed by actor so a re-run on a kept clone stays valid; cross-panel checks must tolerate the page's own export events.
+- Ship window: www.eot.ir through Arvan again showed only 502 for ~3 min and one curl timeout; never the old server.
