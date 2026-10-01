@@ -92,15 +92,15 @@ class TsPanelInvites(http.Controller):
 
     def _wizard_guard(self, ws_id):
         me = member_or_404(ws_id)
+        if me.can_act() and me.can_invite() and not me.can_invite_participants():
+            return me, render_in_shell('ts_panel.state_page', me, 'invites', 'دعوت هنوز ممکن نیست',
+                                       state_title='دعوت شرکت‌کنندگان پس از تأیید پنل ممکن می‌شود',
+                                       state_text='پنل شما در انتظار تأیید مالک پلتفرم است. تا آن زمان می‌توانید ردیف شرکت‌کنندگان را بسازید و سنجه‌ها را ببینید.')
         denied = require(me, 'invites:create', 'invites')
         if denied:
             return me, denied
         if not me.can_act():
             return me, forbidden(me, 'invites:create', 'invites')
-        if not me.can_invite_participants():
-            return me, render_in_shell('ts_panel.state_page', me, 'invites', 'دعوت هنوز ممکن نیست',
-                                       state_title='دعوت شرکت‌کنندگان پس از تأیید پنل ممکن می‌شود',
-                                       state_text='پنل شما در انتظار تأیید مالک پلتفرم است. تا آن زمان می‌توانید ردیف شرکت‌کنندگان را بسازید و سنجه‌ها را ببینید.')
         return me, None
 
     def _eligible_clients(self, me, q=None):
