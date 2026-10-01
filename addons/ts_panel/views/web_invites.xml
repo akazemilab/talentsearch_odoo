@@ -36,7 +36,7 @@
                                         <tr t-foreach="rows" t-as="a">
                                             <th scope="row" data-label="شرکت‌کننده"><a t-attf-href="/my/workspaces/#{ws.id}/invites/#{a.id}" t-out="a.invitee_name"/></th>
                                             <td data-label="سنجه" t-out="a.instrument_id.name"/>
-                                            <td data-label="وضعیت"><span t-attf-class="ts-pill #{ {'done': 'ts-pill--ok', 'accepted': 'ts-pill--info', 'in_progress': 'ts-pill--info', 'expired': 'ts-pill--warn', 'declined': 'ts-pill--neutral', 'withdrawn': 'ts-pill--neutral'}.get(a.state, '') }" t-out="state_labels.get(a.state, a.state)"/></td>
+                                            <td data-label="وضعیت"><span t-attf-class="ts-pill #{pill.get(a.state, '')}" t-out="state_labels.get(a.state, a.state)"/></td>
                                             <td data-label="ارسال" t-out="jalali(a.create_date)"/>
                                             <td data-label="انقضا"><t t-if="a.state in ('invited', 'opened', 'expired') and a.expires_at" t-out="jalali(a.expires_at)"/><t t-else="">—</t></td>
                                         </tr>
@@ -185,7 +185,7 @@
                             <header class="tsp-head">
                                 <div>
                                     <h1 class="tsp-head__title">دعوت <t t-out="a.invitee_name"/></h1>
-                                    <p class="tsp-head__help"><span t-attf-class="ts-pill #{ {'done': 'ts-pill--ok', 'accepted': 'ts-pill--info', 'in_progress': 'ts-pill--info', 'expired': 'ts-pill--warn'}.get(a.state, '') }" t-out="state_labels.get(a.state, a.state)"/> · <t t-out="a.instrument_id.name"/> · <a t-attf-href="/my/workspaces/#{ws.id}/clients/#{c.id}">صفحهٔ شرکت‌کننده</a></p>
+                                    <p class="tsp-head__help"><span t-attf-class="ts-pill #{pill.get(a.state, '')}" t-out="state_labels.get(a.state, a.state)"/> · <t t-out="a.instrument_id.name"/> · <a t-attf-href="/my/workspaces/#{ws.id}/clients/#{c.id}">صفحهٔ شرکت‌کننده</a></p>
                                 </div>
                                 <a t-attf-href="/my/workspaces/#{ws.id}/invites" class="ts-btn ts-btn--quiet">همهٔ دعوت‌ها</a>
                             </header>

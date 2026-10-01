@@ -14,6 +14,8 @@ from .clients import visible_domain
 PAGE = 25
 STATE_ORDER = ['invited', 'opened', 'accepted', 'in_progress', 'done', 'expired', 'declined', 'withdrawn']
 DRAFT = 'ts_invite_draft_%s'
+PILL = {'done': 'ts-pill--ok', 'accepted': 'ts-pill--info', 'in_progress': 'ts-pill--info', 'expired': 'ts-pill--warn',
+        'declined': 'ts-pill--neutral', 'withdrawn': 'ts-pill--neutral'}
 
 
 def invite_count_by_state(member):
@@ -78,7 +80,7 @@ class TsPanelInvites(http.Controller):
             return '/my/workspaces/%s/invites%s' % (ws_id, ('?' + '&'.join(parts)) if parts else '')
 
         return render_in_shell('ts_panel.invites', me, 'invites', 'دعوت‌ها', rows=rows, counts=counts, state=state,
-                               state_order=STATE_ORDER, state_labels=STATE_LABELS, total=total, page=page, pages=pages,
+                               state_order=STATE_ORDER, state_labels=STATE_LABELS, pill=PILL, total=total, page=page, pages=pages,
                                url=url, can_create=me.has_perm('invites:create'), all_total=sum(counts.values()))
 
     # ------------------------------------------------------------------ wizard
@@ -275,7 +277,7 @@ class TsPanelInvites(http.Controller):
                                is_new=bool(kw.get('new')) and open_link, level=level,
                                can_manage=me.can_invite() and not a.user_id and a.state not in ('done', 'withdrawn', 'declined'),
                                can_withdraw=me.can_invite() and a.state not in ('done', 'withdrawn', 'declined'),
-                               state_labels=STATE_LABELS, channel_label=dict(a._fields['channel'].selection).get(a.channel, ''),
+                               state_labels=STATE_LABELS, pill=PILL, channel_label=dict(a._fields['channel'].selection).get(a.channel, ''),
                                days_options=(7, 14, 30))
 
     @http.route('/my/workspaces/<int:ws_id>/invites/<int:aid>/qr.png', type='http', auth='user', website=True,

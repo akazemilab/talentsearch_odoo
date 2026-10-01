@@ -138,7 +138,7 @@ def wizard(c, who, deadline='', note='', sms=False, attest=False, path=W):
     else:
         post(c, path + '/invites/new', {'step': '1', 'new_name': who[1], 'new_phone': who[2], 'new_email': ''})
     st, body = get(c, path + '/invites/new?step=2')
-    inst = re.search(r'name="instrument_id" value="(\d+)"', body)
+    inst = re.search(r'name="instrument_id"[^>]*value="(\d+)"', body)
     post(c, path + '/invites/new', {'step': '2', 'instrument_id': inst.group(1) if inst else '0'})
     data = {'step': '3', 'deadline': deadline, 'note': note}
     if sms:
@@ -212,7 +212,7 @@ st, loc, _ = post(own, W + '/invites/new', {'step': '2', 'instrument_id': '99999
 check('an instrument that is not allowed for the panel is refused', 'step=2' in loc and 'step=3' not in loc, loc)
 st, body = get(own, W + '/invites/new?step=3')
 check('step 3 cannot be reached without an instrument', 'name="deadline"' not in body)
-inst = re.search(r'name="instrument_id" value="(\d+)"', get(own, W + '/invites/new?step=2')[1]).group(1)
+inst = re.search(r'name="instrument_id"[^>]*value="(\d+)"', get(own, W + '/invites/new?step=2')[1]).group(1)
 post(own, W + '/invites/new', {'step': '2', 'instrument_id': inst})
 st, loc, _ = post(own, W + '/invites/new', {'step': '3', 'deadline': '2001-01-01', 'note': ''})
 check('a deadline in the past is refused', 'step=4' not in loc, loc)
