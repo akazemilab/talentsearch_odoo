@@ -22,7 +22,7 @@
                                     <li class="ts-card"><strong t-out="r['label']"/> — <span t-out="r['blurb']"/></li>
                                 </t>
                             </ul>
-                            <div class="ts-card" style="overflow-x:auto">
+                            <div class="ts-card ts-table-wrap" style="overflow-x:auto" tabindex="0" role="region" aria-label="جدول دسترسی هر نقش">
                                 <table class="tsp-table">
                                     <caption class="tsp-sr">جدول دسترسی هر نقش</caption>
                                     <thead>
