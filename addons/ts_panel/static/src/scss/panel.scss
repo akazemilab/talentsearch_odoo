@@ -64,6 +64,7 @@
     // ---------- S3: members, lists, tables ----------
     .tsp-sr { position: absolute; inline-size: 1px; block-size: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
     .tsp-list { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--space-3); }
+    .tsp-inline select, .tsp-batch select, .tsp-inline .ts-btn--sm, .tsp-batch .ts-btn { min-height: var(--control-min); font-family: Vazirmatn, Tahoma, Arial, sans-serif; font-size: 1rem; padding-inline: var(--space-3); }
     .tsp-inline { display: inline-flex; flex-wrap: wrap; gap: var(--space-2); align-items: center; margin: 0; }
     .tsp-row-actions { display: flex; flex-wrap: wrap; gap: var(--space-2); align-items: center; }
     .tsp-radio, .tsp-check { display: flex; gap: var(--space-2); align-items: flex-start; min-height: var(--control-min); padding-block: var(--space-1); }
