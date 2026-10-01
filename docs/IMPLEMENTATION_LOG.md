@@ -259,3 +259,10 @@ Data step (owner-only, NOT in code): approve workspace 1, set pilot, add the cou
 - Lessons: tiles must be built from the same filters as their lists; `'is not true'` is not a domain operator.
 - Incident (not caused by the code): during the ~3 min Odoo stop of each ship the owner saw eot.ir served from the old server 45.82.138.67. DNS and Arvan answers from the VPS pointed only at the new server; root cause is open (see memory lessons).
 
+
+## pv2s13 — Panel v2, stage S13 reports (2026-10-01)
+
+- `ts_panel` 20.0.9.0.0 + `ts_talent` (ship label `pv2s13`, commit 979f87c): one result page per attempt `W/clients/<cid>/r/<attempt>` whose content follows `ts_result_level` (none -> 404 + deny event, status, summary bands, education, clinical); opening and printing audited (`result.view`, `result.print`); old `/a/` and `/p/` routes redirect there. Group report `W/reports/group` with small-cell suppression (`ts_panel.group_min_n` default 5; every cell below k hidden, and when exactly one cell is hidden the next-smallest too; voided attempts excluded).
+- Tests: `tests_pv2_13.py` (24 ORM), `ts_http_pv2_13.py` (33 HTTP). Rehearsal eot_ts54r: guard UNCHANGED, portal UNCHANGED; the only failures were three old tests (print button, renamed audit event, status page after revoke) updated and re-run green. Ship: eot.ir UNCHANGED.
+- Lessons: flowlib `req` now follows the old `/a/` and `/p/` redirects unless `follow_old=False`; after any ship take a fresh `pg_dump` before the next rehearsal (stale dump -> invalid portal baseline).
+- Watch during the ship: www.eot.ir through Arvan returned only 502 for ~3 min while odoo20 was stopped, never the old server (45.82.138.67). Root cause of the earlier old-server report is still OPEN.
