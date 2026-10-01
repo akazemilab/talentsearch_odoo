@@ -287,3 +287,14 @@ Data step (owner-only, NOT in code): approve workspace 1, set pilot, add the cou
 - Rehearsal reh60: guard and portal UNCHANGED; two stale S15 checks (`/my` phone card in `ts_http_sms.py`, user name in `ts_http_signup.py`) moved to `/my/account`.
 - Ship note: compare again showed differences that come from other work on eot.ir (`theme_eot_custom.page_founder` view changed, odoo20 restarted 19:46:33 right after the compare). Second time this happened during a ship; see the open follow-up in the lessons file.
 
+
+## pv2s17 — Panel v2, stage S17 back office (2026-10-01)
+
+- `ts_org` 20.0.3.0.0 + `ts_panel` 20.0.13.0.0 (ship label `pv2s17`, commit 5a80b15): tenant health list (member / client / open invite counts, done in 30 days, last activity, days pending; SQL-computed), pending-approval list, data-request queue (review, decide, mark done, reject for legal reasons; overdue shown by an explicit domain, not a search method), operator-only access cleanup (`ts_org` assignments menu is manager-only).
+- Tests: `tests_pv2_17.py` (25 ORM). Ship: OK, eot.ir UNCHANGED.
+- Lessons: a non-stored computed field with a `search=` method returned nothing in Odoo 20 here, so use an explicit domain; menu groups are additive on upgrade, reset them with an `ir.ui.menu` record and `(6,0,[...])`.
+
+## pv2s18 — Panel v2, stage S18a lifecycle (2026-10-01)
+
+- `ts_panel` 20.0.14.0.0 (ship label `pv2s18`, commit e9dc498): ownership transfer and closing a panel (owner only, re-authentication; notifications `panel_transferred` / `panel_closed`; closed members keep only `panel:view`), client anonymisation, retention job `ts.retention.log` + daily cron (ships OFF: `ts_panel.retention_enabled`; abandoned attempts and audit events are report-only), data-erasure action on the data request (revokes shares, empties attempts, anonymises clients, deactivates the account; clinical-panel attempts are hidden and the decision is `legal_hold`, open item L2).
+- Tests: `tests_pv2_18.py` (39 ORM), `ts_http_pv2_18.py` (20 HTTP). Rehearsal reh62: 1312/1312, guard and portal UNCHANGED. Ship: OK, eot.ir UNCHANGED.

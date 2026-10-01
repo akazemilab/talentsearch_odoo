@@ -7,8 +7,8 @@ explicit approval («تأیید فاز ۱»). While it says DRAFT, Phase 2 must 
 must not change.
 
 - Design written: 2026-10-01 (9 Mehr 1405). Approved by the owner 2026-10-01 (defaults for D4, D6, D7, D8 accepted).
-- Last finished stage: **S16 `minors`** (shipped 2026-10-01, label `pv2s16`).
-- **Next stage: S17 `backoffice`** (branch `pv2-17-backoffice` in /root/ts_wt_s1: code done, 25 ORM pass, rehearsal reh61 green; ship list ts_org,ts_panel). Then S18 lifecycle (split A: retention dry-run, erase, close, transfer; B: idle timeout, sessions, password, signup notice), S19 help-a11y, S20 cleanup.
+- Last finished stage: **S18a `lifecycle`** (shipped 2026-10-01, label `pv2s18`).
+- **Next stage: S18b `security`** (branch `pv2-18b-security` in /root/ts_wt_s1: idle timeout, sessions page, 15-character password on website 4, SMS risk notice; hand tests green, rehearsal reh63 running). Then S19 help-a11y, S20 cleanup.
 
 ## 1. Read in this order (Phase 2)
 1. This file.
@@ -159,5 +159,7 @@ The full list is `06_gap_analysis.md` section 2.
 | S12 | dashboard | 2026-10-01 | 1703dc3 | Dashboard (attention, KPIs, funnel, workload, checklist) with list filters. Rehearsal eot_ts49r green, eot.ir UNCHANGED. |
 | S13 | reports | 2026-10-01 | $SHA | Result page by level, group report with small-cell suppression, print audit. Rehearsal eot_ts54r green, eot.ir UNCHANGED. |
 | S16 | minors | 2026-10-01 | 0593c58 | Guardian attestation, age question, child assent, consent ledger rows. Rehearsal eot_ts60r green. Owner must approve the minor wording. |
+| S17 | backoffice | 2026-10-01 | 5a80b15 | Tenant health, pending list, data-request queue. Ship OK, eot.ir UNCHANGED. |
+| S18a | lifecycle | 2026-10-01 | e9dc498 | Transfer, close, retention (OFF), erase. Rehearsal reh62 green. Ship OK, eot.ir UNCHANGED. |
 | S15 | portal | 2026-10-01 | aeb1ec4 | Participant home/account/sharing/privacy, consent ledger, data requests. Rehearsal eot_ts58r green; ship compare noisy because of concurrent eot.ir work. |
 | S14 | audit | 2026-10-01 | 39329d5 | Panel audit page + CSV, support access, who-viewed list. Rehearsal eot_ts55r green, eot.ir UNCHANGED. |
