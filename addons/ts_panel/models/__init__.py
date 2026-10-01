@@ -23,3 +23,6 @@ from . import data_request
 from . import assignment_consent
 from . import guardian
 from . import backoffice
+from . import lifecycle
+from . import retention
+from . import erase

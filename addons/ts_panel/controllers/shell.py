@@ -141,7 +141,7 @@ class TsPanelShell(http.Controller):
             terms_on=ws.terms_accepted_on, contact=ws.data_contact_id.name,
             escalation=ws.escalation_contact_id.name if ws.purpose == 'clinical' else None,
             purpose_label=dict(ws._fields['purpose'].selection).get(ws.purpose),
-            has_logo=bool(ws.partner_id.image_1920))
+            has_logo=bool(ws.partner_id.image_1920), can_lifecycle=member.has_perm('panel:transfer') or member.has_perm('panel:close'))
 
     @http.route('/my/workspaces/<int:ws_id>/settings/save', type='http', auth='user', website=True,
                 methods=['POST'], sitemap=False)

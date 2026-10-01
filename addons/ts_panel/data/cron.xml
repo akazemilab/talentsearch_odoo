@@ -49,4 +49,12 @@
         <field name="interval_number">1</field>
         <field name="interval_type">days</field>
     </record>
+    <record id="cron_retention" model="ir.cron">
+        <field name="name">Panel: retention (dry-run unless ts_panel.retention_enabled = 1)</field>
+        <field name="model_id" ref="model_ts_retention_log"/>
+        <field name="state">code</field>
+        <field name="code">model._cron_run()</field>
+        <field name="interval_number">1</field>
+        <field name="interval_type">days</field>
+    </record>
 </odoo>

@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- S18: ownership transfer (ORG-7) and closing the panel (ORG-8), owner only; both ask for re-authentication -->
+    <record id="tpl_transfer" model="ir.ui.view">
+        <field name="name">TS panel: transfer ownership</field>
+        <field name="type">qweb</field>
+        <field name="key">ts_panel.transfer</field>
+        <field name="website_id" ref="ts_website.website_ts"/>
+        <field name="arch" type="xml">
+            <t t-name="ts_panel.transfer">
+                <t t-call="website.layout" additional_title="title">
+                    <div id="wrap" class="ts-page">
+                        <t t-call="ts_panel.shell_frame">
+                            <header class="tsp-head"><div><h1 class="tsp-head__title">انتقال مالکیت پنل</h1>
+                                <p class="tsp-head__help">عضوی که انتخاب می‌کنید مالک پنل «<t t-out="ws.name"/>» می‌شود.</p></div></header>
+                            <section class="ts-card" id="tsp-transfer">
+                                <p t-if="not others" class="ts-notice">عضو فعال دیگری برای انتقال وجود ندارد. ابتدا یک عضو به پنل اضافه کنید.</p>
+                                <form t-else="" t-attf-action="/my/workspaces/#{ws.id}/settings/transfer" method="post" class="tsp-form" data-tsp-once="1">
+                                    <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                                    <fieldset class="tsp-field">
+                                        <legend class="tsp-field__label">مالک تازه</legend>
+                                        <t t-foreach="others" t-as="o">
+                                            <label class="ts-check"><input type="radio" name="new_owner" t-att-value="o.id" required="required"/>
+                                                <span><t t-out="o.user_id.name"/> <span class="ts-hint">(<t t-out="role_labels.get(o.role, o.role)"/>)</span></span></label>
+                                        </t>
+                                    </fieldset>
+                                    <fieldset class="tsp-field">
+                                        <legend class="tsp-field__label">نقش شما پس از انتقال</legend>
+                                        <label class="ts-check"><input type="radio" name="stay" value="admin" checked="checked"/> <span>مدیر پنل</span></label>
+                                        <label class="ts-check"><input type="radio" name="stay" value="owner"/> <span>مالک می‌مانم (دو مالک)</span></label>
+                                    </fieldset>
+                                    <p class="ts-notice">پس از تأیید، هر دو نفر خبردار می‌شوند و این کار در گزارش ممیزی ثبت می‌شود.</p>
+                                    <p><button type="submit" class="ts-btn ts-btn--primary">انتقال مالکیت</button>
+                                        <a t-attf-href="/my/workspaces/#{ws.id}/settings" class="ts-btn ts-btn--quiet">انصراف</a></p>
+                                </form>
+                            </section>
+                        </t>
+                    </div>
+                </t>
+            </t>
+        </field>
+    </record>
+
+    <record id="tpl_close_panel" model="ir.ui.view">
+        <field name="name">TS panel: close the panel</field>
+        <field name="type">qweb</field>
+        <field name="key">ts_panel.close_panel</field>
+        <field name="website_id" ref="ts_website.website_ts"/>
+        <field name="arch" type="xml">
+            <t t-name="ts_panel.close_panel">
+                <t t-call="website.layout" additional_title="title">
+                    <div id="wrap" class="ts-page">
+                        <t t-call="ts_panel.shell_frame">
+                            <header class="tsp-head"><div><h1 class="tsp-head__title">بستن پنل «<t t-out="ws.name"/>»</h1></div></header>
+                            <section class="ts-card" id="tsp-close">
+                                <p>با بستن پنل:</p>
+                                <ul>
+                                    <li>دعوت تازه ساخته نمی‌شود و کسی جز مالک چیزی نمی‌بیند.</li>
+                                    <li>مالک تا ۹۰ روز می‌تواند فهرست مراجعان را بیرون بکشد.</li>
+                                    <li>پس از ۹۰ روز اطلاعات تماس مراجعان پاک می‌شود.</li>
+                                    <li>شرکت‌کنندگان نتایج خودشان را در حساب خود نگه می‌دارند.</li>
+                                </ul>
+                                <form t-attf-action="/my/workspaces/#{ws.id}/settings/close" method="post" class="tsp-form" data-tsp-once="1">
+                                    <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                                    <label class="ts-check"><input type="checkbox" name="confirm" value="1" required="required"/>
+                                        <span>پنل «<t t-out="ws.name"/>» را می‌بندم و می‌دانم برگشت ندارد.</span></label>
+                                    <p><button type="submit" class="ts-btn ts-btn--primary">بستن پنل</button>
+                                        <a t-attf-href="/my/workspaces/#{ws.id}/settings" class="ts-btn ts-btn--quiet">انصراف</a></p>
+                                </form>
+                            </section>
+                        </t>
+                    </div>
+                </t>
+            </t>
+        </field>
+    </record>
+
+    <record id="tpl_settings_lifecycle" model="ir.ui.view">
+        <field name="name">TS panel: settings, lifecycle block</field>
+        <field name="inherit_id" ref="ts_panel.tpl_settings"/>
+        <field name="mode">extension</field>
+        <field name="website_id" ref="ts_website.website_ts"/>
+        <field name="arch" type="xml">
+            <xpath expr="//section[@id='tsp-contact']" position="after">
+                <section t-if="can_lifecycle" class="ts-card" id="tsp-lifecycle" aria-labelledby="tsp-lifecycle-h">
+                    <h2 id="tsp-lifecycle-h" class="h5">مالکیت و پایان پنل</h2>
+                    <p><a t-attf-href="/my/workspaces/#{ws.id}/settings/transfer" class="ts-btn ts-btn--outline">انتقال مالکیت</a>
+                        <a t-attf-href="/my/workspaces/#{ws.id}/settings/close" class="ts-btn ts-btn--outline">بستن پنل</a></p>
+                </section>
+            </xpath>
+        </field>
+    </record>
+</odoo>

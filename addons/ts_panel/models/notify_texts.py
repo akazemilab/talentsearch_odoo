@@ -17,6 +17,8 @@ TYPES = [
     ('export_ready', 'فایل خروجی آماده است'),
     ('import_done', 'ورود فایل تمام شد'),
     ('support_access_opened', 'دسترسی پشتیبانی باز شد'),
+    ('panel_transferred', 'مالکیت پنل منتقل شد'),
+    ('panel_closed', 'پنل بسته شد'),
     ('data_request_update', 'وضعیت درخواست داده‌های شما تغییر کرد'),
 ]
 TITLES = dict(TYPES)
@@ -47,5 +49,7 @@ PREF_LABELS = {
     'export_ready': 'آماده‌شدن فایل خروجی',
     'import_done': 'پایان ورود فایل',
     'support_access_opened': 'باز شدن دسترسی پشتیبانی',
+    'panel_transferred': 'انتقال مالکیت',
+    'panel_closed': 'بسته‌شدن پنل',
     'data_request_update': 'درخواست داده‌های من',
 }
