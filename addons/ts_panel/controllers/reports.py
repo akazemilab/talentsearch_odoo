@@ -69,7 +69,7 @@ class TsPanelReports(http.Controller):
         if not any(me.has_perm(p) for p in RESULT_PERMS):
             return forbidden(me, 'results', 'reports')
         T = request.env['ts.attempt'].sudo()
-        clients = request.env['ts.panel.client'].sudo().search(visible_domain(me) + [('state', '=', 'active')])
+        clients = request.env['ts.panel.client'].sudo().search(visible_domain(me) + [('state', '=', 'active')])  # ts-scope-ok: visible_domain() starts with the member's workspace
         rows = []
         for at in T.search([('workspace_id', '=', me.workspace_id.id), ('client_id', 'in', clients.ids), ('state', '=', 'done'),
                             ('voided', '=', False)], order='submitted_at desc, id desc', limit=80):
