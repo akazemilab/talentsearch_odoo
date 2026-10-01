@@ -61,9 +61,10 @@ HELP = ['راهنما']
 SETT = ['تنظیمات']
 MEM = ['اعضا و نقش‌ها']
 CLI = ['شرکت‌کنندگان']
+GRP = ['گروه‌ها']
 want = {
-    ('owner', A): BASE + CLI + MEM + SETT + HELP, ('admin', A): BASE + CLI + MEM + HELP, ('counselor', A): BASE + CLI + HELP,
-    ('hr', B): BASE + CLI + MEM + SETT + HELP, ('hm', B): BASE + CLI + HELP,
+    ('owner', A): BASE + CLI + GRP + MEM + SETT + HELP, ('admin', A): BASE + CLI + GRP + MEM + HELP, ('counselor', A): BASE + CLI + GRP + HELP,
+    ('hr', B): BASE + CLI + GRP + MEM + SETT + HELP, ('hm', B): BASE + CLI + HELP,
 }
 pages = {}
 for (n, w), items in want.items():
