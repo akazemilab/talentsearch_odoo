@@ -18,6 +18,7 @@ def raises(fn, exc=(UserError, ValidationError, psycopg2.IntegrityError)):
     try:
         with env.cr.savepoint():
             fn()
+            env.flush_all()
     except exc:
         return True
     except Exception as e:
