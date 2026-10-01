@@ -1,0 +1,211 @@
+"""Background jobs of the panel (S8, 04_data_model.md 3.7): a file import now, exports and reports in later stages.
+
+A job belongs to its requester: only that account can open its page or download its file, and the permission of the job
+kind is checked again at download time (P21). `params` holds column mapping and filter ids only; `summary` holds counts;
+the error report holds row numbers and reasons, never row content. The uploaded source file is deleted when the job ends.
+"""
+import base64
+import json
+from datetime import timedelta
+
+from odoo import api, fields, models
+from odoo.exceptions import UserError
+
+from . import importer
+
+KINDS = [('export_clients', 'برون‌بری شرکت‌کنندگان'), ('export_status', 'برون‌بری وضعیت دعوت‌ها'),
+         ('export_results', 'برون‌بری نتایج'), ('export_audit', 'برون‌بری رویدادها'),
+         ('import_clients', 'ورود شرکت‌کنندگان از فایل'), ('group_report', 'گزارش گروهی'), ('data_export', 'نسخهٔ داده‌های من')]
+KIND_PERM = {'import_clients': 'clients:import', 'export_clients': 'clients:export', 'export_status': 'clients:export',
+             'export_results': 'results:export', 'export_audit': 'audit:export', 'group_report': 'reports:group'}
+STATES = [('draft', 'در حال آماده‌سازی'), ('queued', 'در صف'), ('running', 'در حال اجرا'), ('done', 'انجام شد'),
+          ('failed', 'ناموفق'), ('expired', 'منقضی')]
+
+
+def att_bytes(att):
+    """Odoo 20: `raw` is bytes or a lazy BinaryValue (filestore); always return bytes."""
+    r = att.sudo().raw
+    return bytes(r) if isinstance(r, (bytes, bytearray)) else r.content
+
+
+class TsJob(models.Model):
+    _name = 'ts.job'
+    _description = 'Talent Search panel job'
+    _order = 'id desc'
+
+    workspace_id = fields.Many2one('ts.workspace', index=True, ondelete='restrict')
+    member_id = fields.Many2one('ts.workspace.member', ondelete='set null')
+    user_id = fields.Many2one('res.users', index=True, ondelete='set null')
+    kind = fields.Selection(KINDS, required=True)
+    state = fields.Selection(STATES, default='draft', required=True, index=True)
+    params = fields.Text(help='JSON: column mapping and filter ids only')
+    progress = fields.Integer()
+    total = fields.Integer()
+    result_attachment_id = fields.Many2one('ir.attachment', ondelete='set null')
+    source_attachment_id = fields.Many2one('ir.attachment', ondelete='set null')
+    summary = fields.Text(help='JSON: counts')
+    error_code = fields.Char()
+    expires_at = fields.Datetime(index=True)
+
+    # ------------------------------------------------------------------ helpers
+    def _p(self):
+        self.ensure_one()
+        return json.loads(self.params or '{}')
+
+    def _set_p(self, **kw):
+        p = self._p()
+        p.update(kw)
+        self.params = json.dumps(p)
+
+    def _s(self):
+        return json.loads(self.summary or '{}')
+
+    @api.model
+    def _ttl_hours(self):
+        return self.env['ir.config_parameter'].sudo().get_int('ts_panel.export_ttl_hours', 24) or 24
+
+    @api.model
+    def _inline_rows(self):
+        return self.env['ir.config_parameter'].sudo().get_int('ts_panel.job_inline_rows', 500) or 500
+
+    def _attach(self, name, data, mimetype):
+        return self.env['ir.attachment'].sudo().create({
+            'name': name, 'raw': data if isinstance(data, bytes) else data.encode('utf-8'), 'res_model': 'ts.job', 'res_id': self.id,
+            'mimetype': mimetype, 'public': False})
+
+    def can_download(self, member):
+        """P21: the requester only, still holding the permission of the kind, and before the expiry."""
+        self.ensure_one()
+        return bool(self.state == 'done' and self.result_attachment_id and self.user_id == member.user_id
+                    and self.member_id == member and self.workspace_id == member.workspace_id
+                    and member.can_act() and member.has_perm(KIND_PERM.get(self.kind, 'none:none'))
+                    and (not self.expires_at or self.expires_at >= fields.Datetime.now()))
+
+    # ------------------------------------------------------------------ import: prepare, map, preview, start
+    @api.model
+    def ts_import_prepare(self, member, filename, data):
+        """Check and keep the uploaded file; returns the draft job. Raises importer.FileProblem."""
+        headers, rows = importer.parse_table(data, filename)       # raises FileProblem before anything is stored
+        job = self.sudo().create({'workspace_id': member.workspace_id.id, 'member_id': member.id, 'user_id': member.user_id.id,
+                                  'kind': 'import_clients', 'state': 'draft', 'total': len(rows)})
+        att = job._attach('import-source', data, 'application/octet-stream')
+        job.source_attachment_id = att.id
+        mapping = importer.auto_map(headers)
+        job._set_p(headers=headers, mapping={str(k): v for k, v in mapping.items()}, ext=(filename or '').lower().rsplit('.', 1)[-1])
+        return job
+
+    def ts_mapping(self):
+        self.ensure_one()
+        return {int(k): v for k, v in self._p().get('mapping', {}).items()}
+
+    def ts_set_mapping(self, pairs):
+        """pairs = {column index: field or ''}; one field once; `name` required."""
+        self.ensure_one()
+        headers = self._p().get('headers', [])
+        valid = {f for f, _l in importer.FIELDS}
+        mapping, used = {}, set()
+        for idx, f in pairs.items():
+            if f and f in valid and 0 <= idx < len(headers) and f not in used:
+                mapping[str(idx)] = f
+                used.add(f)
+        if 'name' not in used:
+            raise importer.FileProblem('no_name')
+        self._set_p(mapping=mapping)
+
+    def _parsed_table(self):
+        self.ensure_one()
+        att = self.source_attachment_id
+        if not att:
+            raise UserError('فایل این کار دیگر نگه‌داری نمی‌شود.')
+        return importer.parse_table(att_bytes(att), 'x.' + (self._p().get('ext') or 'csv'))
+
+    def ts_preview(self):
+        """Counts and the first rows with a problem; writes nothing."""
+        self.ensure_one()
+        _h, rows = self._parsed_table()
+        items = importer.plan(self.env, self.workspace_id.id, rows, self.ts_mapping())
+        errs = [{'n': it['n'], 'err': it['err']} for it in items if it['action'] == 'error'][:20]
+        return importer.summarize(items), errs
+
+    def ts_start(self):
+        """Queue the import; a small file runs at once, a large one waits for the cron runner."""
+        self.ensure_one()
+        if self.state != 'draft':
+            raise UserError('این کار پیش‌تر شروع شده است.')
+        if 'name' not in self.ts_mapping().values():
+            raise importer.FileProblem('no_name')
+        self.state = 'queued'
+        if self.total <= self._inline_rows():
+            self.ts_run(commit=False)
+
+    # ------------------------------------------------------------------ run
+    def ts_run(self, commit=True):
+        self.ensure_one()
+        if self.state not in ('queued', 'running'):
+            return
+        self.state = 'running'
+        if commit:
+            self.env.flush_all()
+            self.env.cr.commit()
+        try:
+            if commit:
+                getattr(self, '_run_' + self.kind)(True)
+            else:
+                with self.env.cr.savepoint():       # a failure leaves no half import behind
+                    getattr(self, '_run_' + self.kind)(False)
+        except importer.FileProblem as e:
+            self._fail(e.code)
+        except Exception:
+            self._fail('internal')
+        if commit:
+            self.env.flush_all()
+            self.env.cr.commit()
+
+    def _fail(self, code):
+        self.write({'state': 'failed', 'error_code': code})
+        self._drop_source()
+        self.env['ts.audit.event'].log('job.failed', self, workspace=self.workspace_id, kind=self.kind, code=code)
+
+    def _drop_source(self):
+        att = self.source_attachment_id
+        self.source_attachment_id = False
+        if att:
+            att.sudo().unlink()
+
+    def _run_import_clients(self, commit):
+        _h, rows = self._parsed_table()
+        items = importer.plan(self.env, self.workspace_id.id, rows, self.ts_mapping())
+        res = importer.apply_plan(self.env, self.workspace_id, self.user_id.id, items, commit=self.env.cr.commit if commit else None)
+        res['error'] = sum(1 for it in items if it['action'] == 'error')
+        vals = {'state': 'done', 'summary': json.dumps(res), 'progress': len(rows), 'total': len(rows),
+                'expires_at': fields.Datetime.now() + timedelta(hours=self._ttl_hours())}
+        if res['error']:
+            vals['result_attachment_id'] = self._attach('import-errors.csv', importer.error_report(items), 'text/csv').id
+        self.write(vals)
+        self._drop_source()
+        self.env['ts.audit.event'].log('import.run', self, workspace=self.workspace_id, member=self.member_id,
+                                       created=res['create'], updated=res['update'], unchanged=res['same'], errors=res['error'])
+
+    # ------------------------------------------------------------------ crons
+    @api.model
+    def _cron_run_jobs(self):
+        """One queued job per run, locked so that two workers never take the same one."""
+        self.env.flush_all()
+        self.env.cr.execute("SELECT id FROM ts_job WHERE state = 'queued' ORDER BY id FOR UPDATE SKIP LOCKED LIMIT 1")
+        row = self.env.cr.fetchone()
+        if row:
+            self.browse(row[0]).sudo().ts_run(commit=True)
+        return bool(row)
+
+    @api.model
+    def _cron_expire_jobs(self):
+        late = self.sudo().search([('state', '=', 'done'), ('expires_at', '!=', False), ('expires_at', '<', fields.Datetime.now())])
+        for job in late:
+            att = job.result_attachment_id
+            job.write({'state': 'expired', 'result_attachment_id': False})
+            if att:
+                att.sudo().unlink()
+        stale = self.sudo().search([('state', 'in', ('draft', 'failed')), ('create_date', '<', fields.Datetime.now() - timedelta(hours=24))])
+        for job in stale:
+            job._drop_source()
+        return len(late)
