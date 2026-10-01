@@ -25,6 +25,12 @@ PW=$(cat $PW_FILE); J=$(mktemp)
 tok=$(curl -s -c $J -b $J -H "Host: $HOST" "http://127.0.0.1:$PORT/web/login" | grep -o 'name="csrf_token" value="[^"]*"' | head -1 | sed 's/.*value="//;s/"//')
 code=$(curl -s -o /dev/null -w "%{http_code}" -c $J -b $J -H "Host: $HOST" -X POST "http://127.0.0.1:$PORT/web/login" \
   --data-urlencode "csrf_token=$tok" --data-urlencode "login=$LOGIN" --data-urlencode "password=$PW" --data-urlencode "redirect=/my")
+if [ "$code" != 303 ]; then
+  # the clone was re-restored (same name) but the password file survived: the user no longer exists.
+  # Recreate it once; a comparison made while signed out is worthless.
+  if [ -z "${TS_PORTAL_RETRY:-}" ]; then rm -f $J $PW_FILE; TS_PORTAL_RETRY=1 exec bash "$0" "$DB" "$PORT" "$HOST" "$@"; fi
+  echo "!! portal login failed ($code): comparison invalid"
+fi
 echo "login: $code"
 for p in "$@"; do
   echo "##### $p"

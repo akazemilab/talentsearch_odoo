@@ -1,8 +1,8 @@
-# Webhook HTTP checks against a clone (usage: ts_http_kv.py DB PORT). Needs /tmp/kv_http_fixture.json from tests_kavenegar.py.
+# Webhook HTTP checks against a clone (usage: ts_http_kv.py DB PORT). Needs /tmp/kv_http_fixture_<DB>.json from tests_kavenegar.py.
 import json, sys, urllib.request, urllib.error
 db, port = sys.argv[1], sys.argv[2]
 assert db.startswith('eot_ts')
-fx = json.load(open('/tmp/kv_http_fixture.json'))
+fx = json.load(open('/tmp/kv_http_fixture_%s.json' % sys.argv[1]))
 res = []
 
 

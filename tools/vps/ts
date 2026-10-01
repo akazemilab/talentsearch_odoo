@@ -1,40 +1,124 @@
 #!/bin/bash
-# ts - Talent Search toolkit (VPS side). Mirrors the `eot` toolkit's style:
-# short verdicts, long work detached. Source of truth: /root/talentsearch_odoo.
+# ts - Talent Search toolkit (VPS side). Short verdicts, long work detached.
+# Source of truth: /root/talentsearch_odoo (symlinked to /usr/local/bin/ts - editing this file changes the tool).
 #
-#   ts sync                 rsync repo -> eot-odoo-prod:/opt/odoo/talentsearch_stage (rehearsal only; LIVE code changes only via ts_ship.sh)
-#   ts db CMD DB [ARGS]     run tools/prod/ts_db.sh on prod (clone/install/upgrade/serve/stop/modules)
+#   ts check [REPO]         preflight (2 s): py/xml/manifest/QWeb t-else/new-view-in-non-website-module/phones
+#   ts sync                 rsync the slot's repo -> its stage dir on prod (refused while a ship runs on slot 0)
+#   ts db CMD DB [ARGS]     tools/prod/ts_db.sh on prod: clone|apply|install|upgrade|serve|halt|reload|stop|errors|modules
 #   ts guard MODE DB PORT LABEL   snapshot|compare eot.ir fingerprint on prod
-#   ts bg NAME CMD...       detached job, log in /root/ts-jobs/NAME.log
-#   ts job NAME             state + tail
+#   ts test DB FILE...      run test files on the slot's clone (tests_*: odoo shell, ts_http_*: HTTP); verdict lines only
+#   ts bg NAME CMD...       detached job (log /root/ts-jobs/NAME.log; exports TS_JOB, TS_SLOT)
+#   ts job NAME [N]         state + last N lines
+#   ts status NAME          digest: phase, checks passed, FAIL lines (known ones marked), verdicts
+#   ts wait NAME [SECS]     like status, but blocks (max 50 s) until the job ends or something meaningful happens
+#   ts ship INS UPG LABEL   preflight + slot-0 lock + detached ship on prod; mirrored to job ship_LABEL; ends with `ts live`
+#   ts live                 live probes (both sites), odoo20 state, real journal errors, clone servers, RAM
+#   ts slots                which rehearsal slot / clone / ship is busy right now
+#   ts wt N [BRANCH]        worktree /root/ts_wt_sN for slot N (parallel rehearsal of another branch)
+#   ts clean [--yes]        list (or remove) leftovers: unserved eot_ts* clones, old prev code dirs, old guard snapshots/logs
 #   ts sql DB "SELECT ..."  read-only psql on prod
 #   ts get PORT PATH [HOST] status + title + first text of a page from prod
-#   ts domain check DOMAIN [--website ID]      DNS(authoritative)+cert+nginx+live probes, verdict line
-#   ts domain cutover DOMAIN --website ID --from-domain URL [--wait S] [--dry-run]   whole domain go-live; run via `ts bg`
-#   ts push [MSG]           commit all + push origin main
+#   ts domain ...           see tools/prod/ts_domain.py
+#   ts push [MSG]           commit TRACKED changes (never untracked / pycache) + push the current branch
+# Slots: TS_SLOT=0 (default) -> repo /root/talentsearch_odoo, stage /opt/odoo/talentsearch_stage, port 8071.
+#        TS_SLOT=1|2         -> repo /root/ts_wt_sN, stage /opt/odoo/talentsearch_stage_sN, port 8073|8075.
+#        Ships always use slot 0. Each slot has a lock (/root/ts-jobs/slotN.lock) held by its rehearsal.
 set -uo pipefail
-REPO=/root/talentsearch_odoo; J=/root/ts-jobs; mkdir -p $J
+J=/root/ts-jobs; mkdir -p $J
 P=eot-odoo-prod
+TOOLS=/root/talentsearch_odoo/tools/vps
+SLOT=${TS_SLOT:-0}
+[[ $SLOT =~ ^[012]$ ]] || { echo "!! TS_SLOT must be 0, 1 or 2"; exit 2; }
+if [ "$SLOT" = 0 ]; then REPO=/root/talentsearch_odoo; STAGE=/opt/odoo/talentsearch_stage
+else REPO=/root/ts_wt_s$SLOT; STAGE=/opt/odoo/talentsearch_stage_s$SLOT; fi
+PORT=$((8071 + 2 * SLOT))
+q(){ printf '%q ' "$@"; }          # keep empty and spaced arguments intact across ssh
+ship_running(){ ssh $P "pgrep -f '[t]s_ship.sh' >/dev/null"; }
 cmd=${1:-help}; shift || true
 case $cmd in
+  check) python3 $TOOLS/ts_check.py "${1:-$REPO}" ;;
   sync)
-    rsync -a --delete --exclude .git "$REPO/" $P:/opt/odoo/talentsearch_stage/ && ssh $P 'chown -R odoo:odoo /opt/odoo/talentsearch_stage && chmod +x /opt/odoo/talentsearch_stage/tools/prod/*' && echo "synced $(cd $REPO && git rev-parse --short HEAD 2>/dev/null || echo uncommitted)" ;;
-  db)    ts sync >/dev/null; ssh $P "bash /opt/odoo/talentsearch_stage/tools/prod/ts_db.sh $*" ;;
-  guard) ts sync >/dev/null; ssh $P "python3 -u /opt/odoo/talentsearch_stage/tools/prod/ts_guard.py $*" ;;
-  bg)    name=$1; shift; ( setsid nohup bash -c "$* ; echo \"[rc=\$?]\"" > $J/$name.log 2>&1 & ); echo "started $name" ;;
+    [ -d "$REPO/addons" ] || { echo "!! no repo at $REPO (ts wt $SLOT BRANCH)"; exit 2; }
+    if [ "$SLOT" = 0 ] && ship_running; then echo "!! a ship is reading $STAGE right now; sync refused"; exit 2; fi
+    rsync -a --delete --exclude .git --exclude __pycache__ "$REPO/" $P:$STAGE/ \
+      && ssh $P "chown -R odoo:odoo $STAGE && chmod +x $STAGE/tools/prod/*" \
+      && echo "synced slot $SLOT $(cd $REPO && git rev-parse --short HEAD) $(cd $REPO && git branch --show-current)$(cd $REPO && git status --porcelain --untracked-files=no | grep -q . && echo ' +uncommitted')" ;;
+  db)    ts sync >/dev/null || exit 2; ssh $P "TS_CODE=$STAGE bash $STAGE/tools/prod/ts_db.sh $(q "$@")" ;;
+  guard) ts sync >/dev/null || exit 2; ssh $P "python3 -u $STAGE/tools/prod/ts_guard.py $(q "$@")" ;;
+  test)
+    db=${1:?db}; shift; ts sync >/dev/null || exit 2
+    for f in "$@"; do
+      f=$(basename "$f"); echo "=== $(date +%T) $f"
+      case $f in
+        tests_*) ssh $P "cd /tmp && sudo -u odoo env HOME=/opt/odoo /opt/odoo/venv/bin/python3 /opt/odoo/odoo/odoo-bin shell -c /etc/odoo20.conf -d $db --db-filter='^$db\$' --addons-path=$STAGE/addons,/opt/odoo/themes,/opt/odoo/enterprise,/opt/odoo/odoo/addons --no-http --log-level=warn < $STAGE/tools/prod/$f 2>&1 | grep -E '^(FAIL|SUMMARY|    unexpected)|Error|Traceback'" ;;
+        ts_http_*) ssh $P "TS_SLOT=$SLOT PYTHONIOENCODING=utf-8 python3 -u $STAGE/tools/prod/$f $db $PORT 2>&1 | grep -E '^(FAIL|SUMMARY)|Traceback|Error'" ;;
+        *) echo "!! unknown test kind $f" ;;
+      esac
+    done ;;
+  bg)    name=$1; shift; ( TS_JOB=$name TS_SLOT=$SLOT setsid nohup bash -c "export TS_JOB=$name TS_SLOT=$SLOT; $* ; echo \"[rc=\$?]\"" > $J/$name.log 2>&1 & ); echo "started $name (slot $SLOT)" ;;
   job)   f=$J/$1.log; if grep -q '^\[rc=' $f 2>/dev/null; then echo "[$1] done $(grep -o 'rc=[0-9]*' $f | tail -1)"; else echo "[$1] running"; fi; tail -n ${2:-25} $f ;;
+  status) python3 $TOOLS/ts_digest.py $J/$1.log ;;
+  wait)   python3 $TOOLS/ts_digest.py $J/$1.log ${2:-45} ;;
+  ship)
+    INS=${1-}; UPG=${2-}; LABEL=${3:?usage: ts ship INS UPG LABEL}
+    [ "$SLOT" = 0 ] || { echo "!! ships run from slot 0 only"; exit 2; }
+    [ -n "$INS$UPG" ] || { echo "!! nothing to install or upgrade"; exit 2; }
+    cd $REPO
+    git status --porcelain --untracked-files=no | grep -q . && { echo "!! uncommitted changes in $REPO; commit first"; exit 2; }
+    python3 $TOOLS/ts_check.py $REPO >/dev/null || { echo "!! preflight failed (ts check)"; exit 2; }
+    ship_running && { echo "!! a ship is already running"; exit 2; }
+    ts bg ship_$LABEL "$TOOLS/ts_shipjob.sh $(q "$INS" "$UPG" "$LABEL")"
+    echo "follow: ts wait ship_$LABEL" ;;
+  live)
+    for u in https://talentsearch.ir/ https://talentsearch.ir/panel https://talentsearch.ir/signup https://talentsearch.ir/assessments https://www.eot.ir/ https://www.eot.ir/panel https://www.eot.ir/signup; do
+      printf '%s %s\n' "$(curl -s -o /dev/null -m 20 -w '%{http_code}' $u)" "$u"; done
+    ssh $P "echo \"odoo20 \$(systemctl is-active odoo20) since \$(systemctl show odoo20 -p ActiveEnterTimestamp --value)\"
+      echo \"journal errors (15 min, without .map noise): \$(journalctl -u odoo20 --since '-15min' --no-pager | grep -E ' (ERROR|CRITICAL) ' | grep -vc '.map should')\"
+      journalctl -u odoo20 --since '-15min' --no-pager | grep -E ' (ERROR|CRITICAL) ' | grep -v '.map should' | tail -3 | cut -c1-220
+      echo \"clone servers: \$(pgrep -af '[o]doo-bin.*-d eot_ts' | grep -o -- '-d eot_ts[^ ]*' | sort -u | tr '\n' ' ')\"
+      echo \"RAM available: \$(awk '/MemAvailable/{print int(\$2/1024)}' /proc/meminfo) MB\"" ;;
+  slots)
+    for s in 0 1 2; do
+      if flock -n $J/slot$s.lock true 2>/dev/null; then echo "slot $s free (port $((8071+2*s)))"; else echo "slot $s BUSY: $(cat $J/slot$s.owner 2>/dev/null)"; fi
+    done
+    ship_running && echo "ship RUNNING on prod" || echo "no ship running"
+    ssh $P "for p in 8071 8073 8075; do h=\$(ss -ltnp \"sport = :\$p\" | grep -o 'pid=[0-9]*' | head -1 | cut -d= -f2); [ -n \"\$h\" ] && echo \"port \$p: \$(tr '\0' ' ' < /proc/\$h/cmdline | grep -o -- '-d [^ ]*')\"; done; echo \"RAM available: \$(awk '/MemAvailable/{print int(\$2/1024)}' /proc/meminfo) MB\"" ;;
+  wt)
+    n=${1:?slot 1 or 2}; br=${2:-}; [[ $n =~ ^[12]$ ]] || { echo "!! slot 1 or 2"; exit 2; }
+    d=/root/ts_wt_s$n; cd /root/talentsearch_odoo
+    if [ -d $d ]; then
+      [ -n "$br" ] && git -C $d checkout -q "$br"; echo "worktree $d: $(git -C $d branch --show-current) $(git -C $d rev-parse --short HEAD)"
+    else
+      [ -n "$br" ] || { echo "!! give a branch for the new worktree"; exit 2; }
+      if git show-ref -q --verify refs/heads/$br; then git worktree add -q $d $br; else git worktree add -q -b $br $d; fi
+      echo "worktree $d created on $br; run slot $n with: TS_SLOT=$n ts ..."
+    fi ;;
+  clean)
+    yes=${1:-}; echo "== leftovers (dry run unless --yes)"
+    served=$(ssh $P "pgrep -af '[o]doo-bin.*-d eot_ts' | grep -o -- '-d eot_ts[^ ]*' | cut -c4- | sort -u")
+    for d in $(ssh $P "sudo -u postgres psql -Atc \"select datname from pg_database where datname like 'eot\\_ts%'\""); do
+      if echo "$served" | grep -qx "$d"; then echo "keep $d (served)"; else echo "clone $d (not served)"; [ "$yes" = --yes ] && ssh $P "bash /opt/odoo/talentsearch_stage/tools/prod/ts_db.sh stop $d"; fi
+    done
+    ssh $P "ls -d /opt/odoo/talentsearch_prev_* | awk -F_ '{print \$NF, \$0}' | sort -r | tail -n +4 | cut -d' ' -f2" | while read d; do echo "prev code $d"; [ "$yes" = --yes ] && ssh $P "rm -rf $d"; done
+    ssh $P "find /var/lib/ts_guard -name '*.json' -mtime +3 ! -name 'live_*'" | while read f; do echo "guard snapshot $f"; [ "$yes" = --yes ] && ssh $P "rm -f $f"; done
+    find $J -name '*.log' -mtime +14 | while read f; do echo "log $f"; [ "$yes" = --yes ] && rm -f $f; done
+    echo "(eot_ent_test is not a clone name pattern and is never touched)" ;;
   sql)   db=$1; shift; ssh $P "sudo -u postgres psql -d $db -AtF ' | ' -v ON_ERROR_STOP=0" <<<"BEGIN READ ONLY; $*; ROLLBACK;" ;;
   get)   port=$1; path=$2; host=${3:-talentsearch.ir}
-         ssh $P "curl -s -o /tmp/ts_get.html -w '%{http_code} %{redirect_url}\n' -H 'Host: $host' -H 'X-Forwarded-Proto: https' 'http://127.0.0.1:$port$path'; python3 - <<'PY'
-import re,html
-s=open('/tmp/ts_get.html',encoding='utf-8',errors='ignore').read()
+         ssh $P "curl -s -o /tmp/ts_get_$$.html -w '%{http_code} %{redirect_url}\n' -H 'Host: $host' -H 'X-Forwarded-Proto: https' 'http://127.0.0.1:$port$path'; python3 - /tmp/ts_get_$$.html <<'PY'
+import re,html,sys
+s=open(sys.argv[1],encoding='utf-8',errors='ignore').read()
 t=re.findall(r'<title>(.*?)</title>',s,re.S); print('title:',html.unescape(t[0].strip()) if t else '-')
 m=re.search(r'data-website-id=\"(\d+)\"',s); print('website_id:',m.group(1) if m else '-')
 b=re.sub(r'(?is)<(script|style)[^>]*>.*?</\1>','',s); b=re.sub(r'<[^>]+>','\n',b)
 print(' | '.join(l.strip() for l in html.unescape(b).split('\n') if l.strip())[:600])
 for e in re.findall(r'(Traceback.*?)</', s, re.S)[:1]: print('TRACEBACK', e[:500])
-PY" ;;
-  domain) ts sync >/dev/null; ssh -o ConnectionAttempts=3 $P "python3 -u /opt/odoo/talentsearch_stage/tools/prod/ts_domain.py $*" ;;
-  push)  cd $REPO && git add -A && git commit -qm "${*:-update}" ; git push -q origin main 2>&1 | tail -2; git log -1 --oneline ;;
-  *)     sed -n '2,15p' "$0" ;;
+PY
+rm -f /tmp/ts_get_$$.html" ;;
+  domain) ts sync >/dev/null; ssh -o ConnectionAttempts=3 $P "python3 -u $STAGE/tools/prod/ts_domain.py $(q "$@")" ;;
+  push)  cd $REPO && git add -u
+         git diff --cached --name-only | grep -q __pycache__ && { echo "!! __pycache__ staged; untrack it (git rm -r --cached) first"; exit 2; }
+         git diff --cached --quiet || git commit -qm "${*:-update}"
+         b=$(git branch --show-current); git push -q origin "$b" 2>&1 | grep -v '^remote:' | tail -2; git log -1 --oneline ;;
+  *)     sed -n '2,28p' "$0" ;;
 esac

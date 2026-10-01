@@ -4,6 +4,7 @@
 Checks: phone OTP page (send/verify/limits/prefs/remove), invitation SMS with consent,
 result-ready SMS without result text, secrets masked in the log, eot.ir isolation."""
 import http.server, json, os, re, sys, threading, urllib.parse
+FAKE_PORT = 18099 + 10 * int(__import__('os').environ.get('TS_SLOT', '0'))   # one fake Kavenegar per rehearsal slot
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 DB, PORT = sys.argv[1], sys.argv[2]
@@ -43,18 +44,18 @@ class Fake(http.server.BaseHTTPRequestHandler):
     do_GET = do_POST = do_DELETE = _do
 
 
-srv = http.server.ThreadingHTTPServer(('127.0.0.1', 18099), Fake)
+srv = http.server.ThreadingHTTPServer(('127.0.0.1', FAKE_PORT), Fake)
 threading.Thread(target=srv.serve_forever, daemon=True).start()
 
 shell("""
-env['ir.config_parameter'].sudo().set_str('ts_kavenegar.api_base', 'http://127.0.0.1:18099/v1/%s/%s.json')
+env['ir.config_parameter'].sudo().set_str('ts_kavenegar.api_base', 'http://127.0.0.1:@FAKEPORT@/v1/%s/%s.json')
 c = env.company.sudo()
 c.write({'kv_lines': '10004346'})
 c.write({'kv_enabled': True, 'kv_api_key': 'FAKEKEY', 'kv_sender': '10004346', 'ts_sms_invite': True, 'ts_sms_result': True, 'ts_sms_otp': True, 'ts_sms_otp_template_id': False})
 env['sms.sms'].search([]).unlink()
 env['ts.phone.otp'].sudo().search([]).unlink()
 env.cr.commit()
-""")
+""".replace('@FAKEPORT@', str(FAKE_PORT)))
 
 TS = 'talentsearch.ir'
 PART = 'ts.sms.part.http@example.invalid'

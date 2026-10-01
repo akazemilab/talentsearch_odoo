@@ -2,6 +2,7 @@
 """Mobile sign-in/sign-up + invite links over HTTP against a served CLONE with a LOCAL fake Kavenegar:
     ts_http_signup.py DB PORT"""
 import http.server, json, os, re, sys, threading, urllib.parse
+FAKE_PORT = 18098 + 10 * int(__import__('os').environ.get('TS_SLOT', '0'))   # one fake Kavenegar per rehearsal slot
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 DB, PORT = sys.argv[1], sys.argv[2]
@@ -36,11 +37,11 @@ class Fake(http.server.BaseHTTPRequestHandler):
     do_GET = do_POST = do_DELETE = _do
 
 
-srv = http.server.ThreadingHTTPServer(('127.0.0.1', 18098), Fake)
+srv = http.server.ThreadingHTTPServer(('127.0.0.1', FAKE_PORT), Fake)
 threading.Thread(target=srv.serve_forever, daemon=True).start()
 PHONE, NAME = '09127770001', 'ثبت‌نام‌کنندهٔ HTTP'
 out = shell("""
-env['ir.config_parameter'].sudo().set_str('ts_kavenegar.api_base', 'http://127.0.0.1:18098/v1/%s/%s.json')
+env['ir.config_parameter'].sudo().set_str('ts_kavenegar.api_base', 'http://127.0.0.1:@FAKEPORT@/v1/%s/%s.json')
 c = env.company.sudo()
 c.write({'kv_lines': '10004346'})
 c.write({'kv_enabled': True, 'kv_api_key': 'FAKEKEY', 'kv_sender': '10004346', 'ts_sms_otp': True, 'ts_sms_otp_template_id': False})
@@ -57,7 +58,7 @@ old = A.create({'workspace_id': ws.id, 'instrument_id': inst.id, 'invitee_name':
 env.cr.execute("update ts_assignment set create_date = now() - interval '40 days' where id = %s", [old.id])
 env.cr.commit()
 print('TOK', a.token, old.token)
-""".replace('@PHONE@', PHONE))
+""".replace('@FAKEPORT@', str(FAKE_PORT)).replace('@PHONE@', PHONE))
 tok, tok_old = re.search(r'TOK (\S+) (\S+)', out).groups()
 TS = 'talentsearch.ir'
 

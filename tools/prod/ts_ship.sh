@@ -14,6 +14,8 @@ ARGS=(); [ -n "$INS" ] && ARGS+=(-i "$INS"); [ -n "$UPG" ] && ARGS+=(-u "$UPG")
 step(){ echo "=== $(date -u +%T) $*"; }
 fail(){ echo "!! $*"; exit 1; }
 
+exec 9>/root/ts-jobs/ship.lock
+flock -n 9 || { echo "!! another ship is running"; exit 1; }
 step preconditions
 [[ -d $STAGE/addons/ts_core && -d $STAGE/addons/ts_website && -d $STAGE/addons/ts_assessment && -d $STAGE/addons/ts_org ]] || fail "modules not staged in $STAGE (run ts sync)"
 grep -q "^addons_path.*$TS_AP" $CONF || {
@@ -24,10 +26,18 @@ grep -q "^addons_path.*$TS_AP" $CONF || {
 }
 systemctl is-active --quiet odoo20 || fail "odoo20 not active before ship"
 
+if [ "${TS_SHIP_DRY:-0}" = 1 ]; then
+  # dry run: exercise lock, staging and the live baseline (read-only), then stop before touching anything
+  step "DRY RUN: live eot.ir baseline only"
+  python3 -u $STAGE/tools/prod/ts_guard.py snapshot eot_main 8069 dry_${LABEL} || fail "baseline failed"
+  rm -f /var/lib/ts_guard/dry_${LABEL}.json
+  step "done guard_rc=0 (dry run: nothing installed, odoo20 untouched)"; exit 0
+fi
 step backup
 TS=$(date +%Y%m%d-%H%M)
 DUMP=/var/backups/odoo/eot_main_pre_ts_${LABEL}_$TS.dump
-sudo -u postgres pg_dump -Fc eot_main -f "$DUMP" || fail "pg_dump failed"
+# written as .part and renamed: `ts db clone` picks the newest *.dump and must never restore a half-written one
+sudo -u postgres pg_dump -Fc eot_main -f "$DUMP.part" && mv "$DUMP.part" "$DUMP" || fail "pg_dump failed"
 tar -czf /var/backups/odoo/filestore_eot_main_pre_ts_${LABEL}_$TS.tgz -C /opt/odoo/.local/share/Odoo/filestore eot_main || fail "filestore backup failed"
 echo "restore if needed: systemctl stop odoo20; sudo -u postgres dropdb eot_main; sudo -u postgres createdb -O odoo eot_main; sudo -u postgres pg_restore -d eot_main --no-owner --role=odoo $DUMP; systemctl start odoo20"
 
