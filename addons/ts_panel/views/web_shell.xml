@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- The shell: panel switcher, role-aware menu, flash line. Every staff page of the panel is
+         <t t-call="website.layout"> + <t t-call="ts_panel.shell_frame"> (08_design_system.md section 2). -->
+    <record id="tpl_shell_frame" model="ir.ui.view">
+        <field name="name">TS panel: shell frame</field>
+        <field name="type">qweb</field>
+        <field name="key">ts_panel.shell_frame</field>
+        <field name="website_id" ref="ts_website.website_ts"/>
+        <field name="arch" type="xml">
+            <t t-name="ts_panel.shell_frame">
+                <section class="ts-section tsp-section">
+                    <div class="ts-container tsp-shell">
+                        <aside class="tsp-shell__nav">
+                            <div class="tsp-switch">
+                                <strong class="tsp-switch__name" t-out="ws.name"/>
+                                <span class="tsp-switch__meta"><bdi dir="ltr" t-out="ws.code"/> · <t t-out="role_label"/></span>
+                                <a href="/my/workspaces" class="tsp-switch__link">تغییر پنل</a>
+                            </div>
+                            <nav class="tsp-nav" aria-label="منوی پنل">
+                                <button type="button" class="tsp-nav__toggle" aria-expanded="false" aria-controls="tsp-menu">منوی پنل</button>
+                                <ul id="tsp-menu" class="tsp-nav__list">
+                                    <li t-foreach="menu" t-as="it">
+                                        <a class="tsp-nav__item" t-att-href="it['url']" t-att-aria-current="'page' if it['current'] else None" t-out="it['label']"/>
+                                    </li>
+                                </ul>
+                            </nav>
+                        </aside>
+                        <div class="tsp-shell__main">
+                            <p t-if="flash_ok" class="tsp-flash tsp-flash--ok" role="status" t-out="flash_ok"/>
+                            <p t-if="flash_err" class="tsp-flash tsp-flash--danger" role="alert" t-out="flash_err"/>
+                            <t t-out="0"/>
+                        </div>
+                    </div>
+                </section>
+            </t>
+        </field>
+    </record>
+
+    <!-- State 3 of the page conventions: no permission -->
+    <record id="tpl_forbidden" model="ir.ui.view">
+        <field name="name">TS panel: forbidden</field>
+        <field name="type">qweb</field>
+        <field name="key">ts_panel.forbidden</field>
+        <field name="website_id" ref="ts_website.website_ts"/>
+        <field name="arch" type="xml">
+            <t t-name="ts_panel.forbidden">
+                <t t-call="website.layout" additional_title="title">
+                    <div id="wrap" class="ts-page">
+                        <t t-call="ts_panel.shell_frame">
+                            <header class="tsp-head"><div><h1 class="tsp-head__title">به این بخش دسترسی ندارید</h1></div></header>
+                            <div class="tsp-empty tsp-empty--denied">
+                                <p>این بخش برای نقش شما باز نیست. مالک پنل می‌تواند نقش شما را تغییر دهد.</p>
+                                <a t-attf-href="/my/workspaces/#{ws.id}/home" class="ts-btn ts-btn--outline">بازگشت به داشبورد</a>
+                            </div>
+                        </t>
+                    </div>
+                </t>
+            </t>
+        </field>
+    </record>
+
+    <!-- A panel that cannot work yet (draft, suspended, closed) or an account awaiting verification -->
+    <record id="tpl_state_page" model="ir.ui.view">
+        <field name="name">TS panel: state page</field>
+        <field name="type">qweb</field>
+        <field name="key">ts_panel.state_page</field>
+        <field name="website_id" ref="ts_website.website_ts"/>
+        <field name="arch" type="xml">
+            <t t-name="ts_panel.state_page">
+                <t t-call="website.layout" additional_title="title">
+                    <div id="wrap" class="ts-page">
+                        <t t-call="ts_panel.shell_frame">
+                            <header class="tsp-head"><div><h1 class="tsp-head__title" t-out="state_title"/></div></header>
+                            <div class="tsp-empty">
+                                <p t-out="state_text"/>
+                                <a href="/contact" class="ts-btn ts-btn--outline">تماس با پشتیبانی</a>
+                            </div>
+                        </t>
+                    </div>
+                </t>
+            </t>
+        </field>
+    </record>
+</odoo>

@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Dashboard v1 (S2): today's six counters as tiles. The role-based dashboard arrives in S12. -->
+    <record id="tpl_dashboard" model="ir.ui.view">
+        <field name="name">TS panel: dashboard v1</field>
+        <field name="type">qweb</field>
+        <field name="key">ts_panel.dashboard</field>
+        <field name="website_id" ref="ts_website.website_ts"/>
+        <field name="arch" type="xml">
+            <t t-name="ts_panel.dashboard">
+                <t t-call="website.layout" additional_title="title">
+                    <div id="wrap" class="ts-page">
+                        <t t-call="ts_panel.shell_frame">
+                            <header class="tsp-head">
+                                <div>
+                                    <h1 class="tsp-head__title">داشبورد</h1>
+                                    <p class="tsp-head__help">وضعیت دعوت‌هایی که می‌توانید ببینید. هر کادر شما را به فهرست همان وضعیت می‌برد.</p>
+                                </div>
+                                <div class="tsp-head__actions">
+                                    <span t-attf-class="ts-pill #{'ts-pill--ok' if ws.state in ('pilot', 'active') and not gated else 'ts-pill--warn'}"><t t-out="'در انتظار تأیید' if gated else panel_state"/></span>
+                                </div>
+                            </header>
+                            <section t-if="gated" class="ts-notice ts-notice--warn" role="status">
+                                <strong>پنل در انتظار تأیید است.</strong>
+                                می‌توانید پنل را کامل کنید و همکارانتان را دعوت کنید؛ دعوت شرکت‌کنندهٔ واقعی و دریافت نتیجه پس از تأیید تیم تلنت سرچ باز می‌شود.
+                                <t t-if="rejected"><br/>درخواست رد شد<t t-if="rejection_note">: <span t-out="rejection_note"/></t>. می‌توانید اطلاعات پنل را اصلاح کنید و با پشتیبانی تماس بگیرید.</t>
+                            </section>
+                            <p t-if="not total" class="tsp-empty">هنوز دعوتی نفرستاده‌اید. دعوت‌ها را از «دعوت و فهرست (نسخهٔ قبلی)» می‌سازید؛ بخش تازهٔ دعوت به‌زودی جایگزین آن می‌شود.</p>
+                            <ul class="tsp-stats" aria-label="شمار دعوت‌ها به تفکیک وضعیت">
+                                <li t-foreach="tiles" t-as="t">
+                                    <a class="tsp-stat" t-att-href="t['url']">
+                                        <strong class="ts-num" t-out="fa(t['n'])"/>
+                                        <span t-out="t['label']"/>
+                                    </a>
+                                </li>
+                            </ul>
+                        </t>
+                    </div>
+                </t>
+            </t>
+        </field>
+    </record>
+</odoo>

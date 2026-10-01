@@ -17,6 +17,10 @@
     --space-8: 32px; --space-12: 48px; --space-16: 64px;
     --radius-sm: 8px; --radius-md: 12px; --radius-lg: 16px;
     --content-max: 1200px; --control-min: 44px;
+    // Panel v2 tokens (08_design_system.md section 1)
+    --warn: #6b4600; --warn-soft: #fbf3e2; --info: #1f4e79; --info-soft: #e4eef7;
+    --success-soft: #dff0e8; --danger-soft: #f9e7e9; --neutral: #3d4a4f; --neutral-soft: #eceeea;
+    --field-line: #7d86b3; --shell-nav: 264px;
 }
 
 // Scope everything under #wrapwrap so it beats Odoo's own .o_cc / #wrap rules

@@ -1,1 +1,69 @@
-// Panel v2 styles (tsp- prefix). Filled from S2 on; tokens live in ts_website (08_design_system.md).
+// Panel v2 styles (tsp- prefix, 08_design_system.md). Logical properties only; everything under #wrapwrap.
+#wrapwrap {
+    // ---------- modifiers added to site components ----------
+    .ts-notice--ok { border-inline-start-color: var(--success); background: var(--success-soft); color: var(--success); }
+    .ts-notice--danger { border-inline-start-color: var(--danger); background: var(--danger-soft); color: var(--danger); }
+    .ts-notice--info { border-inline-start-color: var(--info); background: var(--info-soft); color: var(--info); }
+    .ts-pill--info { background: var(--info-soft); color: var(--info); }
+    .ts-pill--danger { background: var(--danger-soft); color: var(--danger); }
+    .ts-pill--neutral { background: var(--neutral-soft); color: var(--neutral); }
+    .ts-btn--danger { background: var(--danger); color: var(--white); border-color: var(--danger); }
+    .ts-num { font-variant-numeric: tabular-nums; }
+
+    // ---------- shell ----------
+    .tsp-shell { display: grid; grid-template-columns: var(--shell-nav) minmax(0, 1fr); gap: var(--space-6); align-items: start; }
+    .tsp-section { padding-block: var(--space-6); }
+    .tsp-shell__main { min-width: 0; display: grid; gap: var(--space-4); }
+    .tsp-switch { display: grid; gap: 2px; padding: var(--space-3) var(--space-4); background: var(--white); border: 1px solid var(--line); border-radius: var(--radius-md); margin-block-end: var(--space-3); }
+    .tsp-switch__name { color: var(--brand-deep); font-weight: 750; overflow-wrap: anywhere; }
+    .tsp-switch__meta { color: var(--muted); font-size: .9rem; }
+    .tsp-switch__link { font-size: .9rem; min-height: 24px; display: inline-flex; align-items: center; }
+    .tsp-nav__toggle { display: none; width: 100%; min-height: var(--control-min); padding: 0 var(--space-4); text-align: start; background: var(--white); color: var(--brand-deep); border: 1px solid var(--field-line); border-radius: var(--radius-sm); font-weight: 700; }
+    .tsp-nav__list { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--space-1); }
+    .tsp-nav__item { display: flex; align-items: center; min-height: var(--control-min); padding: 0 var(--space-4); border-radius: var(--radius-sm); color: var(--ink); text-decoration: none; border-inline-start: 4px solid transparent; }
+    .tsp-nav__item:hover { background: var(--brand-soft); }
+    .tsp-nav__item[aria-current="page"] { background: var(--brand-soft); color: var(--brand-deep); font-weight: 750; border-inline-start-color: var(--brand-accent); }
+
+    // ---------- page head, flash, empty ----------
+    .tsp-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-start; gap: var(--space-3) var(--space-6); }
+    .tsp-head__title { font-size: 1.6rem; }
+    .tsp-head__help { color: var(--muted); margin: var(--space-1) 0 0; max-width: 60ch; }
+    .tsp-head__actions { display: flex; flex-wrap: wrap; gap: var(--space-2); align-items: center; }
+    .tsp-flash { margin: 0; padding: var(--space-3) var(--space-4); border-radius: var(--radius-sm); border-inline-start: 4px solid var(--brand-deep); background: var(--brand-soft); }
+    .tsp-flash--ok { border-inline-start-color: var(--success); background: var(--success-soft); color: var(--success); }
+    .tsp-flash--danger { border-inline-start-color: var(--danger); background: var(--danger-soft); color: var(--danger); }
+    .tsp-empty { padding: var(--space-6); background: var(--white); border: 1px dashed var(--field-line); border-radius: var(--radius-md); text-align: start; }
+    .tsp-empty > p:last-child { margin-block-end: 0; }
+    .tsp-empty--denied { border-style: solid; }
+
+    // ---------- stat tiles ----------
+    .tsp-stats { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: var(--space-4); }
+    .tsp-stat { display: grid; gap: 2px; min-height: 96px; padding: var(--space-4); background: var(--white); border: 1px solid var(--line); border-radius: var(--radius-md); text-decoration: none; color: var(--ink); }
+    .tsp-stat strong { font-size: 1.8rem; color: var(--brand-deep); line-height: 1.2; }
+    .tsp-stat span { color: var(--muted); }
+    .tsp-stat:hover { border-color: var(--brand-accent); }
+
+    // ---------- forms ----------
+    .tsp-form { display: grid; gap: var(--space-4); max-width: 640px; }
+    .tsp-field { display: grid; gap: var(--space-1); }
+    .tsp-field__label { font-weight: 700; font-size: .92rem; }
+    .tsp-field__hint { color: var(--muted); font-size: .9rem; margin: 0; }
+    .tsp-field__error { color: var(--danger); font-size: .9rem; margin: 0; }
+    .tsp-field input[type=text], .tsp-field input[type=email], .tsp-field input[type=tel], .tsp-field input[type=file], .tsp-field select, .tsp-field textarea {
+        min-height: var(--control-min); padding: 8px 12px; border: 1px solid var(--field-line); border-radius: var(--radius-sm); background: var(--white); font-family: Vazirmatn, Tahoma, Arial, sans-serif; font-size: 1rem; width: 100%;
+    }
+    .tsp-shell__main .ts-card { padding: var(--space-6); }
+    .tsp-shell__main .ts-card h2 { margin-block-end: var(--space-3); }
+
+    // ---------- narrow screens: the menu is a button ----------
+    @media (max-width: 991.98px) {
+        .tsp-shell { grid-template-columns: 1fr; gap: var(--space-4); }
+        .tsp-nav__toggle { display: block; }
+        .tsp-nav[data-js] .tsp-nav__list[hidden] { display: none; }
+        .tsp-nav__list { margin-block-start: var(--space-2); }
+    }
+    @media (min-width: 992px) {
+        .tsp-nav .tsp-nav__list[hidden] { display: grid; }
+        .tsp-shell__nav { position: sticky; inset-block-start: var(--space-4); }
+    }
+}

@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Header: one role-aware link for people who belong to a panel (03_ia_and_ux.md 1.1). Website 4 only. -->
+    <record id="layout_ts_panel_link" model="ir.ui.view">
+        <field name="name">TS panel: header link «پنل من»</field>
+        <field name="type">qweb</field>
+        <field name="inherit_id" ref="ts_website.layout_ts"/>
+        <field name="website_id" ref="ts_website.website_ts"/>
+        <field name="priority">95</field>
+        <field name="arch" type="xml">
+            <data>
+                <xpath expr="(//a[@href='/my/assessments'])[1]" position="before">
+                    <a t-if="request.env.user.ts_panel_home()" t-att-href="request.env.user.ts_panel_home()" class="ts-btn ts-btn--quiet">پنل من</a>
+                </xpath>
+                <xpath expr="(//a[@href='/my/assessments'])[2]" position="before">
+                    <a t-if="request.env.user.ts_panel_home()" t-att-href="request.env.user.ts_panel_home()" class="ts-btn ts-btn--quiet">پنل من</a>
+                </xpath>
+            </data>
+        </field>
+    </record>
+
+    <!-- Old one-page panel stays until S6; a short notice points to the new pages -->
+    <record id="tpl_workspace_notice" model="ir.ui.view">
+        <field name="name">TS panel: notice on the old panel page</field>
+        <field name="type">qweb</field>
+        <field name="inherit_id" ref="ts_org.tpl_workspace"/>
+        <field name="website_id" ref="ts_website.website_ts"/>
+        <field name="arch" type="xml">
+            <xpath expr="//a[hasclass('ts-back')]" position="after">
+                <p class="ts-notice" role="status">پنل صفحهٔ تازه‌ای دارد: <a t-attf-href="/my/workspaces/#{ws.id}/home">داشبورد و تنظیمات پنل</a>. دعوت‌ها و فهرست شرکت‌کنندگان فعلاً در همین صفحه می‌مانند.</p>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- The list of my panels enters the new dashboard -->
+    <record id="tpl_workspaces_home_link" model="ir.ui.view">
+        <field name="name">TS panel: panel list links to the dashboard</field>
+        <field name="type">qweb</field>
+        <field name="inherit_id" ref="ts_org.tpl_workspaces"/>
+        <field name="website_id" ref="ts_website.website_ts"/>
+        <field name="arch" type="xml">
+            <xpath expr="//article[hasclass('ts-org-card')]//a[hasclass('ts-btn--primary')]" position="attributes">
+                <attribute name="t-attf-href">/my/workspaces/#{r['ws'].id}/home</attribute>
+            </xpath>
+        </field>
+    </record>
+</odoo>

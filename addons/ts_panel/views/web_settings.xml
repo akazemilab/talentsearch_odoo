@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- W/settings (S2): مشخصات and تماس for panel:profile, شرایط استفاده for panel:settings (owner). -->
+    <record id="tpl_settings" model="ir.ui.view">
+        <field name="name">TS panel: settings</field>
+        <field name="type">qweb</field>
+        <field name="key">ts_panel.settings</field>
+        <field name="website_id" ref="ts_website.website_ts"/>
+        <field name="arch" type="xml">
+            <t t-name="ts_panel.settings">
+                <t t-call="website.layout" additional_title="title">
+                    <div id="wrap" class="ts-page">
+                        <t t-call="ts_panel.shell_frame">
+                            <header class="tsp-head">
+                                <div>
+                                    <h1 class="tsp-head__title">تنظیمات</h1>
+                                    <p class="tsp-head__help">مشخصات و اطلاعات تماس پنل.</p>
+                                </div>
+                            </header>
+
+                            <section class="ts-card" id="tsp-profile" aria-labelledby="tsp-profile-h">
+                                <h2 id="tsp-profile-h" class="h5">مشخصات</h2>
+                                <form t-attf-action="/my/workspaces/#{ws.id}/settings/save" method="post" enctype="multipart/form-data" class="tsp-form" data-tsp-once="1">
+                                    <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                                    <div class="tsp-field">
+                                        <label class="tsp-field__label" for="tsp_name">نام پنل</label>
+                                        <p class="tsp-field__hint" id="tsp_name_h">نام در صفحهٔ دعوت و گزارش‌های شرکت‌کنندگان دیده می‌شود. ۲ تا ۱۰۰ نویسه.</p>
+                                        <input id="tsp_name" name="name" type="text" maxlength="100" required="required" t-att-value="ws.name" aria-describedby="tsp_name_h"/>
+                                    </div>
+                                    <div class="tsp-field">
+                                        <label class="tsp-field__label" for="tsp_logo">لوگو</label>
+                                        <p class="tsp-field__hint" id="tsp_logo_h">PNG، JPG یا WEBP، کمتر از ۵۰۰ کیلوبایت. <t t-if="has_logo">لوگوی فعلی حفظ می‌شود مگر فایل تازه‌ای انتخاب کنید.</t></p>
+                                        <input id="tsp_logo" name="logo" type="file" accept="image/png,image/jpeg,image/webp" aria-describedby="tsp_logo_h"/>
+                                    </div>
+                                    <p><button type="submit" class="ts-btn ts-btn--primary">ذخیره</button></p>
+                                </form>
+                            </section>
+
+                            <section class="ts-card" id="tsp-contact" aria-labelledby="tsp-contact-h">
+                                <h2 id="tsp-contact-h" class="h5">تماس</h2>
+                                <dl class="ts-meta">
+                                    <dt>نوع پنل</dt><dd t-out="purpose_label"/>
+                                    <dt>مسئول داده</dt><dd t-out="contact or 'ثبت نشده'"/>
+                                    <t t-if="escalation"><dt>مسئول پاسخ فوری بالینی</dt><dd t-out="escalation"/></t>
+                                </dl>
+                                <p class="ts-hint">برای تغییر این اطلاعات با پشتیبانی تماس بگیرید.</p>
+                            </section>
+
+                            <section t-if="can_terms" class="ts-card" id="tsp-terms" aria-labelledby="tsp-terms-h">
+                                <h2 id="tsp-terms-h" class="h5">شرایط استفاده</h2>
+                                <p t-if="terms_version">
+                                    نسخهٔ پذیرفته‌شده: <bdi dir="ltr" t-out="terms_version"/>
+                                    <t t-if="terms_on"> · <t t-out="jalali(terms_on, with_time=False)"/></t>
+                                </p>
+                                <p t-else="">برای این پنل هنوز پذیرش شرایط ثبت نشده است.</p>
+                                <p t-if="terms_version and not terms_current" class="ts-notice ts-notice--warn">نسخهٔ تازه‌ای از شرایط منتشر شده است. <a href="/panel/terms">متن شرایط را بخوانید</a>.</p>
+                                <p><a href="/panel/terms">متن شرایط استفاده</a></p>
+                            </section>
+                        </t>
+                    </div>
+                </t>
+            </t>
+        </field>
+    </record>
+</odoo>
