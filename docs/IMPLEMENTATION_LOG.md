@@ -209,3 +209,9 @@ Data step (owner-only, NOT in code): approve workspace 1, set pilot, add the cou
 - Deviations from the plan: `channel` and `expires_at` on assignment are deferred to S6; `responsible_id` on assignment/attempt is a non-stored related field (a stored one made `tests_edge` fail because recompute runs constraints); audit event `client.responsible_change` is added alongside the old assignment/attempt events.
 - Lessons: stored related fields re-run constraints on recompute, so use non-stored related fields for write-through; `odoo.osv.expression` does not exist in Odoo 20 (list domains with explicit `'|'`); the shell frame already prints flash messages; a test that converts an attempt to an import with `write()` bypasses `create`, so `attempt.write` must link the client too (found by the old responsible-specialist HTTP suite); `pkill -f` over ssh matches its own command line (use a bracket pattern); `git add -A tools addons` before `ts sync`.
 
+
+## pv2s5 — Panel v2, stage S5 clients-edit (2026-10-01)
+
+- `ts_panel` 20.0.2.1.0: client edit, archive/restore, merge (`ts_merge` flushes between freeing and re-taking unique values), groups page `W/groups` (menu seq 25, `groups:manage`), perm labels, CSS/JS.
+- Tests: `tests_pv2_5.py` (33 ORM), `ts_http_pv2_5.py` (38 HTTP). Rehearsal eot_ts35 (second run): eot.ir UNCHANGED, portal UNCHANGED, unexpected failures 0. Ship `pv2s5` (commit bb2e414): eot.ir UNCHANGED live.
+- Lessons: flush ordering with unique indexes (also around `raises()` savepoints); the test client does not follow redirects (`lib.follow`); an overridden compute must list all `@api.depends` inputs; menu tests should not depend on menu length.
