@@ -22,8 +22,9 @@
 
     <record id="consent_age_assessment" model="ir.ui.view">
         <field name="name">ts_panel.consent.age.assessment</field>
-        <field name="inherit_id" ref="ts_assessment.consent"/>
+        <field name="inherit_id" ref="ts_assessment.tpl_consent"/>
         <field name="mode">extension</field>
+        <field name="website_id" ref="ts_website.website_ts"/>
         <field name="arch" type="xml">
             <xpath expr="//input[@name='consent_service']/.." position="before">
                 <t t-call="ts_panel.consent_age_ass"/>
@@ -34,6 +35,7 @@
         <field name="name">ts_panel.consent.age.talent</field>
         <field name="inherit_id" ref="ts_talent.tpl_consent"/>
         <field name="mode">extension</field>
+        <field name="website_id" ref="ts_website.website_ts"/>
         <field name="arch" type="xml">
             <xpath expr="//input[@name='consent_service']/.." position="before">
                 <t t-call="ts_panel.consent_age_ass"/>
