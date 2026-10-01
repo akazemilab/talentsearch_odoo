@@ -82,7 +82,10 @@ edu.ts_transfer(adm, couns, stay='owner')
 check('stay as owner keeps two owners', adm.role == 'owner' and couns.role == 'owner')
 check('an already-owner target is refused', raises(lambda: edu.ts_transfer(adm, couns)))
 
-edu_inst = Inst.search([('state', '=', 'published'), ('purpose', '=', 'education')], limit=1)
+c1 = CL.create({'workspace_id': edu.id, 'name': 'Real Name', 'phone': '09121110001', 'email': 'a@example.invalid',
+                'guardian_name': 'G', 'code': 'S18-1'})
+ia = A.sudo().create({'workspace_id': edu.id, 'instrument_id': inst.id, 'invitee_name': 'Real Name', 'invitee_email': 'a@example.invalid',
+                      'client_id': c1.id})
 # ---- ORG-8 close
 check('a non-owner cannot close', raises(lambda: edu.ts_close(o1)))
 nc = N.sudo().search_count([('type', '=', 'panel_closed')])
@@ -99,10 +102,6 @@ check('a closed panel cannot be closed again', raises(lambda: edu.ts_close(adm))
 check('the close is audited', env['ts.audit.event'].sudo().search_count([('event_type', '=', 'panel.close'), ('res_id', '=', edu.id)]) == 1)
 
 # ---- anonymise
-c1 = CL.create({'workspace_id': edu.id, 'name': 'Real Name', 'phone': '09121110001', 'email': 'a@example.invalid',
-                'guardian_name': 'G', 'code': 'S18-1'})
-ia = A.sudo().create({'workspace_id': edu.id, 'instrument_id': edu_inst.id, 'invitee_name': 'Real Name', 'invitee_email': 'a@example.invalid',
-                      'client_id': c1.id})
 check('anonymise counts one client', c1.ts_anonymise() == 1)
 check('contact fields are emptied', not (c1.phone or c1.email or c1.guardian_name or c1.code) and c1.name != 'Real Name' and c1.anonymised_on)
 check('the invitation identity is emptied', ia.invitee_name != 'Real Name' and not ia.invitee_email)
