@@ -54,12 +54,12 @@ for role in ('owner', 'admin', 'counselor'):
         m.write({'license_number': 'T', 'verification_state': 'verified'})
     keys[role] = [i['key'] for i in build_menu(m, 'home')]
 check('menu per role: owner has settings, admin and counselor do not',
-      keys['owner'] == ['home', 'legacy', 'members', 'settings', 'help'] and keys['admin'] == ['home', 'legacy', 'members', 'help']
-      and keys['counselor'] == ['home', 'legacy', 'help'], str(keys))
+      keys['owner'] == ['home', 'legacy', 'clients', 'members', 'settings', 'help']
+      and keys['admin'] == ['home', 'legacy', 'clients', 'members', 'help'] and keys['counselor'] == ['home', 'legacy', 'clients', 'help'], str(keys))
 cl = panel('clinical')
 unv = M.create({'workspace_id': cl.id, 'user_id': puser().id, 'role': 'clinician'})
 check('menu for an unverified clinician: dashboard and help only', [i['key'] for i in build_menu(unv, 'home')] == ['home', 'help'])
-check('current item is flagged', [i['current'] for i in build_menu(m1, 'settings')] == [False, False, False, True, False])
+check('current item is flagged', [i['current'] for i in build_menu(m1, 'settings')] == [False, False, False, False, True, False])
 
 print('SUMMARY %d/%d passed' % (sum(ok for _, ok in results), len(results)))
 env.cr.rollback()

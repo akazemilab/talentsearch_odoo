@@ -5,8 +5,7 @@ class TsAttempt(models.Model):
     _inherit = 'ts.attempt'
 
     client_id = fields.Many2one('ts.panel.client', 'مراجع', index=True, ondelete='restrict')
-    responsible_id = fields.Many2one(related='client_id.responsible_id', store=True, readonly=False,
-                                     string='کارشناس مسئول', index=True)
+    responsible_id = fields.Many2one(related='client_id.responsible_id', readonly=False, string='کارشناس مسئول')
 
     @api.model_create_multi
     def create(self, vals_list):

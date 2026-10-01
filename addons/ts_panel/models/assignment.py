@@ -10,8 +10,7 @@ class TsAssignment(models.Model):
     client_id = fields.Many2one('ts.panel.client', 'مراجع', index=True, ondelete='restrict')
     # The client is the single place where responsibility is set (04_data_model.md 2.4). Writing this field
     # writes the client, so every older writer (old page, member leaving, accept) keeps working.
-    responsible_id = fields.Many2one(related='client_id.responsible_id', store=True, readonly=False,
-                                     string='کارشناس مسئول', index=True)
+    responsible_id = fields.Many2one(related='client_id.responsible_id', readonly=False, string='کارشناس مسئول')
 
     @api.model_create_multi
     def create(self, vals_list):
