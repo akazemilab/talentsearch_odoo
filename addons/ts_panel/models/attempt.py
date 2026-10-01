@@ -19,6 +19,10 @@ class TsAttempt(models.Model):
 
     def write(self, vals):
         res = super().write(vals)
+        if vals.keys() & {'source', 'person_id', 'workspace_id'}:
+            Client = self.env['ts.panel.client'].sudo()
+            for at in self.sudo().filtered(lambda r: r.source == 'import' and r.person_id and r.workspace_id and not r.client_id):
+                at.client_id = Client.ts_for_import(at.workspace_id.id, at.person_id).id
         if 'state' in vals:
             self.sudo().client_id.ts_touch()
         return res
