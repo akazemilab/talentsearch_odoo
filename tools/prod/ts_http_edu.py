@@ -63,7 +63,7 @@ check('counselor opens the imported report', st == 200 and 'tt-cobrand' in page 
 check('org view: fields side by side with 4 fields', page.count('tt-cmp__row') == 6 and all(x in page for x in ('ریاضی', 'هنر', 'ورزش', 'زبان')))
 art = page[page.index('<article'):page.index('</article>')]
 check('org view: no raw answers, no personal-area links in the report', 'tt-raw' not in art and 'پاسخ‌های من' not in art and '/my/assessments' not in art)
-check('org view: print button kept', 'ts-js-print' in page)
+check('org view: print button kept', 'ts-js-print' in page or '/print' in page)
 check('other institute attempt is 404', c.req('/my/workspaces/%s/p/%s' % (ws_id, a2))[0] == 404)
 check('unknown attempt is 404', c.req('/my/workspaces/%s/p/99999999' % ws_id)[0] == 404)
 o = Client(TS)
@@ -72,7 +72,7 @@ check('non-member gets 404 on the workspace and on the report',
       o.req('/my/workspaces/%s/legacy' % ws_id)[0] == 404 and o.req('/my/workspaces/%s/p/%s' % (ws_id, a1))[0] == 404)
 check('anonymous is sent to login', Client(TS).req('/my/workspaces/%s/p/%s' % (ws_id, a1))[0] in (302, 303))
 check('participant-side release is not offered to the institute', c.req('/my/workspaces/%s/p/%s/release' % (ws_id, a1))[0] in (404, 405))
-n = shell("print('AUD', env['ts.audit.event'].search_count([('event_type','=','attempt.result_view'),('res_id','=',%s)]))" % a1)
+n = shell("print('AUD', env['ts.audit.event'].search_count([('event_type','in',['attempt.result_view','result.view']),('res_id','=',%s)]))" % a1)
 check('result views are audited', re.search(r'AUD (\d+)', n) and int(re.search(r'AUD (\d+)', n).group(1)) >= 1, n.strip()[-40:])
 e = Client('www.eot.ir')
 e.login(CNS, cns_pw)

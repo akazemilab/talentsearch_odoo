@@ -69,8 +69,8 @@ st, loc, _ = s.req('/my/assessments/%s/unshare' % att_id, {'csrf_token': s.csrf(
 check('student revokes from the report', st in (302, 303), '%s %s' % (st, loc))
 st, _, page2 = s.req('/my/assessments/%s' % att_id)
 check('after revoking the report says it is not shared', st == 200 and 'نتیجه با پنل به اشتراک گذاشته نشده است' in page2 and 'لغو اشتراک' not in page2)
-st, _, _ = c.req('/my/workspaces/%s/p/%s' % (ws_id, att_id))
-check('counselor view turns to «not shared» (404)', st == 404, str(st))
+st, _, pg = c.req('/my/workspaces/%s/p/%s' % (ws_id, att_id))
+check('counselor view turns to not shared (404, or since S13 the status page without scores)', st == 404 or (st == 200 and 'tt-cobrand' not in pg and 'ts-factor__score' not in pg), str(st))
 
 # self-taken result: offer to send it, correct wording on the share page
 o = Client(TS)
