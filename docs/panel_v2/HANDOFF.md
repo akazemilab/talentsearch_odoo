@@ -1,4 +1,4 @@
-STATUS: PHASE 1 DRAFT
+STATUS: PHASE 1 APPROVED
 
 # Panel v2 — handoff between Phase 1 (design) and Phase 2 (implementation)
 
@@ -6,7 +6,7 @@ The first line is the switch. It becomes `STATUS: PHASE 1 APPROVED` only after t
 explicit approval («تأیید فاز ۱»). While it says DRAFT, Phase 2 must not start and `addons/`
 must not change.
 
-- Design written: 2026-10-01 (9 Mehr 1405), on `main` at 03ad6d6, branch `panel-v2-design`.
+- Design written: 2026-10-01 (9 Mehr 1405). Approved by the owner 2026-10-01 (defaults for D4, D6, D7, D8 accepted).
 - Last finished stage: none.
 - **Next stage to start after approval: S0 `tooling`** (`07_build_plan.md`).
 
