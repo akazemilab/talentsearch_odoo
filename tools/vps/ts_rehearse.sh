@@ -64,7 +64,7 @@ GPID=$!
 NOCOMMIT=(tests_stage1.py tests_assessment.py)
 has ts_talent && NOCOMMIT+=(tests_talent.py)
 has ts_org && NOCOMMIT+=(tests_org.py tests_org_resp.py tests_panel.py tests_edge.py tests_signup.py)
-has ts_panel && NOCOMMIT+=(tests_pv2_0.py tests_pv2_1.py tests_pv2_2.py tests_pv2_3.py tests_pv2_4.py tests_pv2_5.py)
+has ts_panel && NOCOMMIT+=(tests_pv2_0.py tests_pv2_1.py tests_pv2_2.py tests_pv2_3.py tests_pv2_4.py tests_pv2_5.py tests_pv2_6.py)
 for f in "${NOCOMMIT[@]}"; do
   [ -f $REPO_DIR/tools/prod/$f ] || continue
   grep -q "cr.commit" $REPO_DIR/tools/prod/$f && { echo "!! $f commits; it cannot run beside the guard"; continue; }

@@ -2,10 +2,11 @@ from odoo import http
 from odoo.exceptions import UserError, ValidationError
 from odoo.http import request
 
-from odoo.addons.ts_org.controllers.main import _counts, _scope
+from odoo.addons.ts_org.controllers.main import TsOrg
 from odoo.addons.ts_org.models.panel import TERMS_VERSION
 
 from .base import STATE_LABELS, flash_error, flash_ok, member_or_404, render_in_shell, require
+from .invites import STATE_ORDER, invite_count_by_state
 
 # What a member sees instead of the dashboard when the panel or their own account cannot work yet.
 STATE_PAGES = {
@@ -29,24 +30,51 @@ def _page_state(member):
     return None
 
 
+OLD_ERRORS = {'pending': 'پنل در انتظار تأیید است؛ دعوت شرکت‌کنندهٔ واقعی پس از تأیید ممکن می‌شود.',
+              'form': 'نام و سنجه را کامل کنید.', 'rule': 'این تغییر مجاز نیست.'}
+
+
+class TsPanelWorkspace(TsOrg):
+    """S6: the panel address itself is the dashboard. The old one-page panel moves to W/legacy (no menu entry; it is
+    deleted in S20) and the old POST routes of ts_org land on the new pages through the query parameters they use."""
+
+    @http.route()
+    def workspace(self, ws_id, state=None, **kw):
+        member = member_or_404(ws_id)
+        if (kw.get('created') or '').isdigit():
+            return request.redirect('/my/workspaces/%s/invites/%s?new=1' % (ws_id, kw['created']))
+        if kw.get('error') in OLD_ERRORS:
+            flash_error(OLD_ERRORS[kw['error']])
+        if state in STATE_LABELS:
+            return request.redirect('/my/workspaces/%s/invites?state=%s' % (ws_id, state))
+        return self._dashboard(member)
+
+    @http.route('/my/workspaces/<int:ws_id>/legacy', type='http', auth='user', website=True, sitemap=False)
+    def workspace_legacy(self, ws_id, state=None, **kw):
+        return super().workspace(ws_id, state=state, **kw)
+
+    def _dashboard(self, member):
+        if not member.has_perm('panel:view'):
+            return require(member, 'panel:view', 'home')
+        ws = member.workspace_id
+        page_state = _page_state(member)
+        if page_state:
+            title, text = STATE_PAGES[page_state]
+            return render_in_shell('ts_panel.state_page', member, 'home', title, state_title=title, state_text=text)
+        counts = invite_count_by_state(member) if member.can_act() and member.has_perm('invites:manage') else {k: 0 for k in STATE_ORDER}
+        tiles = [{'key': k, 'label': STATE_LABELS[k], 'n': counts[k],
+                  'url': '/my/workspaces/%s/invites?state=%s' % (ws.id, k)} for k in STATE_ORDER]
+        return render_in_shell('ts_panel.dashboard', member, 'home', 'داشبورد', tiles=tiles,
+                               total=sum(counts.values()), gated=ws.gated, can_invite=member.can_act() and member.has_perm('invites:create'),
+                               rejected=ws.rejected_on, rejection_note=ws.rejection_note)
+
+
 class TsPanelShell(http.Controller):
 
     @http.route('/my/workspaces/<int:ws_id>/home', type='http', auth='user', website=True, sitemap=False)
     def home(self, ws_id, **kw):
-        member = member_or_404(ws_id)
-        if not member.has_perm('panel:view'):
-            return require(member, 'panel:view', 'home')
-        ws = member.workspace_id
-        state = _page_state(member)
-        if state:
-            title, text = STATE_PAGES[state]
-            return render_in_shell('ts_panel.state_page', member, 'home', title, state_title=title, state_text=text)
-        counts = _counts(_scope(member, request.env['ts.assignment'].sudo().search([('workspace_id', '=', ws.id)])))
-        tiles = [{'key': k, 'label': STATE_LABELS[k], 'n': counts[k],
-                  'url': '/my/workspaces/%s?state=%s' % (ws.id, k)} for k in STATE_LABELS]
-        return render_in_shell('ts_panel.dashboard', member, 'home', 'داشبورد', tiles=tiles,
-                               total=sum(counts.values()), gated=ws.gated,
-                               rejected=ws.rejected_on, rejection_note=ws.rejection_note)
+        member_or_404(ws_id)
+        return request.redirect('/my/workspaces/%s' % ws_id)
 
     # ------------------------------------------------------------------ settings
     @http.route('/my/workspaces/<int:ws_id>/settings', type='http', auth='user', website=True,

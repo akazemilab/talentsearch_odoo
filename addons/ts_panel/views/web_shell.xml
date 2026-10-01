@@ -51,7 +51,7 @@
                             <header class="tsp-head"><div><h1 class="tsp-head__title">به این بخش دسترسی ندارید</h1></div></header>
                             <div class="tsp-empty tsp-empty--denied">
                                 <p>این بخش برای نقش شما باز نیست. مالک پنل می‌تواند نقش شما را تغییر دهد.</p>
-                                <a t-attf-href="/my/workspaces/#{ws.id}/home" class="ts-btn ts-btn--outline">بازگشت به داشبورد</a>
+                                <a t-attf-href="/my/workspaces/#{ws.id}" class="ts-btn ts-btn--outline">بازگشت به داشبورد</a>
                             </div>
                         </t>
                     </div>

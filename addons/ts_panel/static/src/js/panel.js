@@ -51,6 +51,26 @@
         boxes.forEach(function (b) { b.addEventListener('change', count); });
     }
 
-    function init() { initMenus(); initOnce(); initSelect(); }
+    // Copy button: shown only when the browser can copy; the field stays selectable without it.
+    function initCopy() {
+        document.querySelectorAll('[data-tsp-copy]').forEach(function (btn) {
+            var field = document.getElementById(btn.getAttribute('data-tsp-copy'));
+            var note = btn.parentNode.querySelector('[data-tsp-copied]');
+            if (!field) { return; }
+            field.addEventListener('focus', function () { field.select(); });
+            btn.hidden = false;
+            btn.addEventListener('click', function () {
+                function done(ok) { if (note) { note.textContent = ok ? 'پیوند رونوشت شد.' : 'رونوشت نشد؛ پیوند را انتخاب و کپی کنید.'; } }
+                field.select();
+                if (navigator.clipboard && window.isSecureContext) {
+                    navigator.clipboard.writeText(field.value).then(function () { done(true); }, function () { done(false); });
+                } else {
+                    try { done(document.execCommand('copy')); } catch (e) { done(false); }
+                }
+            });
+        });
+    }
+
+    function init() { initMenus(); initOnce(); initSelect(); initCopy(); }
     if (document.readyState === 'loading') { document.addEventListener('DOMContentLoaded', init); } else { init(); }
 })();

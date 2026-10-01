@@ -63,7 +63,7 @@ m = re.search(r'value="https://talentsearch\.ir/join/([0-9a-f]{32})"', page2)
 check('join link displayed for copying', bool(m))
 tok = m.group(1)
 st, loc3, _ = own.req('/my/workspaces/%s/members/invite' % ws_id, {'csrf_token': own.csrf(page2), 'role': 'clinician', 'phone': '09126660009'})
-st, _, page3 = own.req('/my/workspaces/%s' % ws_id)
+st, _, page3 = own.req('/my/workspaces/%s/legacy' % ws_id)
 check('role outside the panel kind refused (flash shown)', 'برای این نوع پنل مجاز نیست' in page3)
 
 st, _, jp = anon.req('/join/' + tok)

@@ -71,7 +71,7 @@ class TsPanelClient(models.Model):
         for c in self:
             st = c.assignment_ids.mapped('state')
             imported = c.attempt_ids.filtered(lambda a: a.source == 'import' and a.state == 'done')
-            c.open_count = sum(1 for s in st if s in ('invited', 'accepted', 'in_progress'))
+            c.open_count = sum(1 for s in st if s in ('invited', 'opened', 'accepted', 'in_progress'))
             c.done_count = sum(1 for s in st if s == 'done') + len(imported)
 
     @api.model

@@ -40,12 +40,12 @@ check('header link: nobody -> False', u0.ts_panel_home() is False)
 check('header link: public user -> False', env.ref('base.public_user').ts_panel_home() is False)
 a, b = panel('education'), panel('employment')
 m1 = M.create({'workspace_id': a.id, 'user_id': u0.id, 'role': 'owner'})
-check('header link: exactly one panel -> its dashboard', u0.ts_panel_home() == '/my/workspaces/%s/home' % a.id)
+check('header link: exactly one panel -> its dashboard', u0.ts_panel_home() == '/my/workspaces/%s' % a.id)
 M.create({'workspace_id': b.id, 'user_id': u0.id, 'role': 'owner'})
 check('header link: several panels -> the list', u0.ts_panel_home() == '/my/workspaces')
 M.create({'workspace_id': b.id, 'user_id': puser().id, 'role': 'owner'})   # a panel keeps one active owner
 M.search([('workspace_id', '=', b.id), ('user_id', '=', u0.id)]).active = False
-check('header link: a deactivated membership does not count', u0.ts_panel_home() == '/my/workspaces/%s/home' % a.id)
+check('header link: a deactivated membership does not count', u0.ts_panel_home() == '/my/workspaces/%s' % a.id)
 
 keys = {}
 for role in ('owner', 'admin', 'counselor'):
@@ -54,8 +54,8 @@ for role in ('owner', 'admin', 'counselor'):
         m.write({'license_number': 'T', 'verification_state': 'verified'})
     keys[role] = [i['key'] for i in build_menu(m, 'home')]
 check('menu per role: owner has settings, admin and counselor do not',
-      keys['owner'] == ['home', 'legacy', 'clients', 'groups', 'members', 'settings', 'help']
-      and keys['admin'] == ['home', 'legacy', 'clients', 'groups', 'members', 'help'] and keys['counselor'] == ['home', 'legacy', 'clients', 'groups', 'help'], str(keys))
+      keys['owner'] == ['home', 'clients', 'groups', 'invites', 'members', 'settings', 'help']
+      and keys['admin'] == ['home', 'clients', 'groups', 'invites', 'members', 'help'] and keys['counselor'] == ['home', 'clients', 'groups', 'invites', 'help'], str(keys))
 cl = panel('clinical')
 unv = M.create({'workspace_id': cl.id, 'user_id': puser().id, 'role': 'clinician'})
 check('menu for an unverified clinician: dashboard and help only', [i['key'] for i in build_menu(unv, 'home')] == ['home', 'help'])

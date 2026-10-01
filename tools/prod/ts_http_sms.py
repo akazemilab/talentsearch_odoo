@@ -135,7 +135,7 @@ out = shell(
 ws_id, inst_id = re.search(r'WS (\d+) INST (\d+)', out).groups()
 hr = Client(TS)
 check('hr login', hr.login(HR, hr_pw))
-st, _, page = hr.req('/my/workspaces/%s' % ws_id)
+st, _, page = hr.req('/my/workspaces/%s/legacy' % ws_id)
 check('invite form has phone + consent when SMS enabled', st == 200 and 'name="invitee_phone"' in page and 'name="sms_consent"' in page)
 check('old "no SMS" hint replaced', 'تلنت سرچ ایمیل یا پیامک نمی‌فرستد' not in page)
 n = len([r for r in REQS if r[0] == 'sms/send'])
@@ -159,7 +159,7 @@ check('disabled: phone page says not active', st == 200 and 'هنوز فعال �
 _, _, home = p.req('/my/account')
 st, loc, _ = p.req('/my/phone/send', {'csrf_token': p.csrf(home), 'phone': '09121112222'})
 check('disabled: send refused', 'msg=disabled' in loc or 'msg=cooldown' in loc, '%s %s' % (st, loc))
-st, _, page = hr.req('/my/workspaces/%s' % ws_id)
+st, _, page = hr.req('/my/workspaces/%s/legacy' % ws_id)
 check('disabled: invite form keeps old text, no phone field', 'name="invitee_phone"' not in page and 'تلنت سرچ ایمیل یا پیامک نمی‌فرستد' in page)
 
 # ---- eot.ir isolation

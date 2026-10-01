@@ -16,19 +16,19 @@ from odoo.addons.ts_org.models.panel import ROLE_LABELS
 
 # seq, key, label, path suffix below /my/workspaces/<id>, permission, needs_act, absolute url
 MENU = [
-    {'seq': 10, 'key': 'home', 'label': 'داشبورد', 'suffix': '/home', 'perm': 'panel:view'},
-    {'seq': 15, 'key': 'legacy', 'label': 'دعوت و فهرست (نسخهٔ قبلی)', 'suffix': '', 'perm': 'panel:view',
-     'needs_act': True},
+    {'seq': 10, 'key': 'home', 'label': 'داشبورد', 'suffix': '', 'perm': 'panel:view'},
     {'seq': 20, 'key': 'clients', 'label': 'شرکت‌کنندگان', 'suffix': '/clients', 'perm': 'clients:read_own',
      'needs_act': True},
     {'seq': 25, 'key': 'groups', 'label': 'گروه‌ها', 'suffix': '/groups', 'perm': 'groups:manage',
+     'needs_act': True},
+    {'seq': 30, 'key': 'invites', 'label': 'دعوت‌ها', 'suffix': '/invites', 'perm': 'invites:manage',
      'needs_act': True},
     {'seq': 40, 'key': 'members', 'label': 'اعضا و نقش‌ها', 'suffix': '/members', 'perm': 'members:read'},
     {'seq': 90, 'key': 'settings', 'label': 'تنظیمات', 'suffix': '/settings', 'perm': 'panel:profile'},
     {'seq': 999, 'key': 'help', 'label': 'راهنما', 'url': '/help', 'perm': None},   # always last, for every state (WCAG 3.2.6)
 ]
 
-STATE_LABELS = {'invited': 'دعوت‌شده', 'accepted': 'پذیرفته', 'in_progress': 'در حال پاسخ',
+STATE_LABELS = {'invited': 'دعوت‌شده', 'opened': 'بازشده', 'expired': 'منقضی', 'accepted': 'پذیرفته', 'in_progress': 'در حال پاسخ',
                 'done': 'تکمیل‌شده', 'declined': 'ردشده', 'withdrawn': 'لغوشده'}
 PANEL_STATE_LABELS = {'draft': 'پیش‌نویس', 'pilot': 'فعال', 'active': 'فعال', 'suspended': 'معلق', 'closed': 'بسته'}
 

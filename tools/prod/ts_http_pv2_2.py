@@ -56,15 +56,16 @@ def menu(page):
     return [re.sub(r'\s+', ' ', t).strip() for t in re.findall(r'<a[^>]*class="tsp-nav__item"[^>]*>(.*?)</a>', page, re.S)]
 
 
-BASE = ['داشبورد', 'دعوت و فهرست (نسخهٔ قبلی)']
+BASE = ['داشبورد']
+INV = ['دعوت‌ها']
 HELP = ['راهنما']
 SETT = ['تنظیمات']
 MEM = ['اعضا و نقش‌ها']
 CLI = ['شرکت‌کنندگان']
 GRP = ['گروه‌ها']
 want = {
-    ('owner', A): BASE + CLI + GRP + MEM + SETT + HELP, ('admin', A): BASE + CLI + GRP + MEM + HELP, ('counselor', A): BASE + CLI + GRP + HELP,
-    ('hr', B): BASE + CLI + GRP + MEM + SETT + HELP, ('hm', B): BASE + CLI + HELP,
+    ('owner', A): BASE + CLI + GRP + INV + MEM + SETT + HELP, ('admin', A): BASE + CLI + GRP + INV + MEM + HELP, ('counselor', A): BASE + CLI + GRP + INV + HELP,
+    ('hr', B): BASE + CLI + GRP + INV + MEM + SETT + HELP, ('hm', B): BASE + CLI + INV + HELP,
 }
 pages = {}
 for (n, w), items in want.items():
@@ -146,7 +147,7 @@ check('anonymous visitor is sent to sign in', Client(TS).req('/my/workspaces/%s/
 # header link «پنل من»
 st, _, home = login('counselor').req('/')
 check('header link «پنل من» for a single-panel member goes straight to the panel',
-      'پنل من' in home and ('/my/workspaces/%s/home' % A) in home)
+      'پنل من' in home and ('href="/my/workspaces/%s"' % A) in home)
 st, _, home = login('multi').req('/')
 check('header link for a member of several panels goes to the list', re.search(r'href="/my/workspaces"[^>]*>پنل من', home) is not None)
 st, _, home = login('nopanel').req('/')
@@ -155,8 +156,8 @@ check('anonymous header has no «پنل من»', 'پنل من' not in Client(TS)
 
 # old pages
 c, _ = pages[('owner', A)]
-st, _, old = c.req('/my/workspaces/%s' % A)
-check('old panel page shows the notice with a link to the new dashboard', st == 200 and ('/my/workspaces/%s/home' % A) in old and 'داشبورد و تنظیمات پنل' in old, str(st))
+st, _, old = c.req('/my/workspaces/%s/legacy' % A)
+check('old panel page (W/legacy) shows the notice with a link to the dashboard', st == 200 and ('href="/my/workspaces/%s"' % A) in old and 'رفتن به داشبورد' in old, str(st))
 st, _, lst = c.req('/my/workspaces')
-check('panel list enters the new dashboard', st == 200 and ('/my/workspaces/%s/home' % A) in lst)
+check('panel list enters the new dashboard', st == 200 and ('href="/my/workspaces/%s"' % A) in lst)
 summary()

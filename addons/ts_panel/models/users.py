@@ -14,5 +14,5 @@ class ResUsers(models.Model):
         if not ms:
             return False
         if len(ms) == 1:
-            return '/my/workspaces/%s/home' % ms.workspace_id.id
+            return '/my/workspaces/%s' % ms.workspace_id.id
         return '/my/workspaces'

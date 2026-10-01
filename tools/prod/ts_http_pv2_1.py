@@ -62,7 +62,7 @@ check('POST with a bad CSRF token is refused', st in (400, 403), str(st))
 # ---- the coordinator (admin)
 a = Client(TS)
 check('admin login', a.login(ADM, pw[ADM]))
-st, _, page = a.req('/my/workspaces/%s' % ws_id)
+st, _, page = a.req('/my/workspaces/%s/legacy' % ws_id)
 check('admin opens the panel page', st == 200 and 'Traceback' not in page, str(st))
 check('admin does not get the members or settings sections', 'id="ts-members"' not in page and 'id="ts-settings"' not in page)
 csrf = a.csrf(a.req('/my/workspaces/new')[2])   # the coordinator's panel page has no form of its own
@@ -75,11 +75,11 @@ check('admin cannot invite colleagues', st in (302, 303, 404) and 'N 0' in n_inv
 # ---- counselor and owner
 c = Client(TS)
 check('counselor login', c.login(CNS, pw[CNS]))
-st, _, page = c.req('/my/workspaces/%s' % ws_id)
+st, _, page = c.req('/my/workspaces/%s/legacy' % ws_id)
 check('counselor opens the panel without members and settings', st == 200 and 'id="ts-members"' not in page and 'id="ts-settings"' not in page)
 o = Client(TS)
 check('owner login', o.login(OWN, pw[OWN]))
-st, _, page = o.req('/my/workspaces/%s' % ws_id)
+st, _, page = o.req('/my/workspaces/%s/legacy' % ws_id)
 check('owner sees the members and settings sections', st == 200 and 'id="ts-members"' in page and 'id="ts-settings"' in page and 'Traceback' not in page)
 check('owner role label is «مالک پنل»', 'مالک پنل' in page)
 

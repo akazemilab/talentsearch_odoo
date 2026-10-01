@@ -1,13 +1,14 @@
 {
     'name': 'Talent Search - Panel v2',
     'summary': 'Panel v2: roles and permissions, clients, invitations, reports, audit, lifecycle (website 2 only). S0 = tooling and two fixes.',
-    'version': '20.0.2.1.0',
+    'version': '20.0.3.0.0',
     'category': 'Services/Talent Search',
     'author': 'EOT',
     'license': 'LGPL-3',
     'depends': ['ts_talent', 'ts_sms'],
     'data': [
         'security/ir.access.csv',
+        'data/cron.xml',
         'views/report_share.xml',
         'views/web_shell.xml',
         'views/web_dashboard.xml',
@@ -16,6 +17,7 @@
         'views/web_client.xml',
         'views/web_client_form.xml',
         'views/web_client_merge.xml',
+        'views/web_invites.xml',
         'views/web_groups.xml',
         'views/web_members.xml',
         'views/web_member.xml',

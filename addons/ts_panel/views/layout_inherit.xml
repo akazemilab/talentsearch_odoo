@@ -27,7 +27,7 @@
         <field name="website_id" ref="ts_website.website_ts"/>
         <field name="arch" type="xml">
             <xpath expr="//a[hasclass('ts-back')]" position="after">
-                <p class="ts-notice" role="status">پنل صفحهٔ تازه‌ای دارد: <a t-attf-href="/my/workspaces/#{ws.id}/home">داشبورد و تنظیمات پنل</a>. دعوت‌ها و فهرست شرکت‌کنندگان فعلاً در همین صفحه می‌مانند.</p>
+                <p class="ts-notice" role="status">این صفحهٔ قدیمی پنل است و به‌زودی برداشته می‌شود. <a t-attf-href="/my/workspaces/#{ws.id}">رفتن به داشبورد</a></p>
             </xpath>
         </field>
     </record>
@@ -40,7 +40,7 @@
         <field name="website_id" ref="ts_website.website_ts"/>
         <field name="arch" type="xml">
             <xpath expr="//article[hasclass('ts-org-card')]//a[hasclass('ts-btn--primary')]" position="attributes">
-                <attribute name="t-attf-href">/my/workspaces/#{r['ws'].id}/home</attribute>
+                <attribute name="t-attf-href">/my/workspaces/#{r['ws'].id}</attribute>
             </xpath>
         </field>
     </record>

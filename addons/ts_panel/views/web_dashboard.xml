@@ -14,9 +14,10 @@
                             <header class="tsp-head">
                                 <div>
                                     <h1 class="tsp-head__title">داشبورد</h1>
-                                    <p class="tsp-head__help">وضعیت دعوت‌هایی که می‌توانید ببینید. هر کادر شما را به فهرست همان وضعیت می‌برد.</p>
+                                    <p class="tsp-head__help">وضعیت دعوت‌هایی که می‌توانید ببینید. هر کادر شما را به فهرست دعوت‌های همان وضعیت می‌برد.</p>
                                 </div>
                                 <div class="tsp-head__actions">
+                                    <a t-if="can_invite" t-attf-href="/my/workspaces/#{ws.id}/invites/new?fresh=1" class="ts-btn ts-btn--primary">دعوت تازه</a>
                                     <span t-attf-class="ts-pill #{'ts-pill--ok' if ws.state in ('pilot', 'active') and not gated else 'ts-pill--warn'}"><t t-out="'در انتظار تأیید' if gated else panel_state"/></span>
                                 </div>
                             </header>
@@ -25,7 +26,7 @@
                                 می‌توانید پنل را کامل کنید و همکارانتان را دعوت کنید؛ دعوت شرکت‌کنندهٔ واقعی و دریافت نتیجه پس از تأیید تیم تلنت سرچ باز می‌شود.
                                 <t t-if="rejected"><br/>درخواست رد شد<t t-if="rejection_note">: <span t-out="rejection_note"/></t>. می‌توانید اطلاعات پنل را اصلاح کنید و با پشتیبانی تماس بگیرید.</t>
                             </section>
-                            <p t-if="not total" class="tsp-empty">هنوز دعوتی نفرستاده‌اید. دعوت‌ها را از «دعوت و فهرست (نسخهٔ قبلی)» می‌سازید؛ بخش تازهٔ دعوت به‌زودی جایگزین آن می‌شود.</p>
+                            <p t-if="not total" class="tsp-empty">هنوز دعوتی نفرستاده‌اید. با «دعوت تازه» اولین دعوت را بسازید.</p>
                             <ul class="tsp-stats" aria-label="شمار دعوت‌ها به تفکیک وضعیت">
                                 <li t-foreach="tiles" t-as="t">
                                     <a class="tsp-stat" t-att-href="t['url']">
