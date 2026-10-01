@@ -52,7 +52,7 @@ def digest(path, lines):
             seen.add(key)
             mark = ' (known)' if any(k in l for k in kn) else ''
             fails.append(l[:160] + mark)
-    verdicts = [l[:120] for l in lines if 'verdict' in l or l.startswith('portal: ') or l.startswith('REHEARSAL')]
+    verdicts = [l[:120] for l in lines if 'verdict' in l or l.startswith(('portal: ', 'REHEARSAL', 'SHIP ', '=== ') ) and ('done guard_rc' in l or not l.startswith('=== '))]
     out = [f'[{name}] {state} | phase: {phases[-1][4:][:90] if phases else "-"}',
            f'suites: {len(sums)} | checks {ok}/{tot}' + (f' | failing {tot - ok}' if tot - ok else '')]
     out += verdicts[-3:]
