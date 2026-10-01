@@ -181,10 +181,16 @@ check('a solo practising owner is responsible for their invitations', s.responsi
 if imp_clients:
     ic = imp_clients[0]
     before = C.search_count([])
-    t = T.sudo().create({'user_id': False, 'instrument_id': inst.id, 'version_id': inst.current_version_id.id,
-                         'workspace_id': ic.workspace_id.id, 'person_id': ic.partner_id.id, 'source': 'import'}) \
-        if 'user_id' in T._fields and not T._fields['user_id'].required else None
-    check('a new imported result of a known person joins the existing client', t is None or (t.client_id == ic and C.search_count([]) == before))
+    t = T.sudo().create({'person_id': ic.partner_id.id, 'instrument_id': inst.id, 'version_id': inst.current_version_id.id,
+                         'source': 'import', 'workspace_id': ic.workspace_id.id, 'state': 'done', 'released': False,
+                         'consent_service': False, 'consent_research': False, 'consent_version': 'IMPORT-X'})
+    check('a new imported result of a known person joins the existing client', t.client_id == ic and C.search_count([]) == before)
+    fresh = env['res.partner'].create({'name': 'فرد تازهٔ واردشده'})
+    t2 = T.sudo().create({'person_id': fresh.id, 'instrument_id': inst.id, 'version_id': inst.current_version_id.id,
+                          'source': 'import', 'workspace_id': ic.workspace_id.id, 'state': 'done', 'released': False,
+                          'consent_service': False, 'consent_research': False, 'consent_version': 'IMPORT-X'})
+    check('a new person gets a locked client without contact data', t2.client_id.source == 'import' and t2.client_id.contact_locked
+          and not t2.client_id.phone and not t2.client_id.email and t2.client_id.partner_id == fresh)
 
 # ---- counts
 check('open and done counters', a1.client_id.open_count + a1.client_id.done_count >= 1)
