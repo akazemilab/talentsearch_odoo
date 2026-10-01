@@ -192,5 +192,5 @@ Data step (owner-only, NOT in code): approve workspace 1, set pilot, add the cou
 ## pv2s2 — Panel v2, stage S2 shell (2026-10-01)
 
 - `ts_panel` 20.0.1.1.0: shared shell (menu per permission, mobile menu button, 403 inside the shell), dashboard `W/home` with six counters, state pages (draft, suspended, closed, awaiting verification), `W/settings` (profile and contact for `panel:profile`, terms for `panel:settings`), header link «پنل من» (`res.users.ts_panel_home()`), notice on the old page. New design tokens in `ts.scss`.
-- Tests: `tests_pv2_2.py` (9 ORM), `ts_http_pv2_2.py` (46 HTTP). Rehearsal eot_ts32: eot.ir UNCHANGED, portal UNCHANGED, unexpected failures 0. Ship `pv2s2` (commit 7ca39bb): eot.ir UNCHANGED live.
+- Tests: `tests_pv2_2.py` (9 ORM), `ts_http_pv2_2.py` (46 HTTP). Rehearsal eot_ts32: eot.ir UNCHANGED, portal UNCHANGED, unexpected failures 0. Ship `pv2s2` (commit bc08113): eot.ir UNCHANGED live.
 - Lesson: Bootstrap's `:root` overrides `--success`/`--danger`, so panel-local tokens are needed (pill contrast was 2.7:1). Running each new test file by hand on a kept clone first saved a full rehearsal.

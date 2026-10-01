@@ -146,4 +146,4 @@ The full list is `06_gap_analysis.md` section 2.
 |---|---|---|---|---|
 | S0 | tooling | 2026-10-01 | d378b5d | `ts_panel` installed; G28, G30, G31 fixed; fixtures + ts_check/ts_shot rules; rehearsal eot_ts30 green, eot.ir UNCHANGED. Slow step: three rehearsals (fixtures failed twice: clinical panel needs an emergency contact; member verification needs the manager group). |
 | S1 | perms | 2026-10-01 | 7ca39bb | `admin` role, permission registry (33 strings), one active membership, audit hardening + deny events; rehearsal eot_ts31 green, eot.ir UNCHANGED. Slow step: first rehearsal wasted on three test-infra bugs (ICP API, slot path, can_invite). |
-| S2 | shell | 2026-10-01 | 7ca39bb | Shared shell, dashboard, settings, state pages, header link; rehearsal eot_ts32 green, eot.ir UNCHANGED. Lesson: Bootstrap overrides --success/--danger. |
+| S2 | shell | 2026-10-01 | bc08113 | Shared shell, dashboard, settings, state pages, header link; rehearsal eot_ts32 green, eot.ir UNCHANGED. Lesson: Bootstrap overrides --success/--danger. |
