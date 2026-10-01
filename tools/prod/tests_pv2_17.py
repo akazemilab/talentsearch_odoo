@@ -97,4 +97,17 @@ ws.with_user(manager).action_suspend()
 after = env['ts.notification'].sudo().search_count([('user_id', '=', puser.id), ('type', '=', 'panel_suspended')])
 check('suspending a panel notifies its owner', after == before + 1, (before, after))
 
+# ---- the back-office screens load for a manager
+for xid in ('ts_panel.action_ts_workspace_health', 'ts_core.ts_workspace_pending_action', 'ts_panel.action_ts_data_request'):
+    act = env.ref(xid).with_user(manager)
+    ok = True
+    try:
+        Mo = env[act.res_model].with_user(manager)
+        Mo.get_views([[False, 'list'], [False, 'form'], [False, 'search']])
+        Mo.web_search_read([], ['id'], limit=5)
+    except Exception as e:                      # noqa: BLE001
+        ok = False
+        print(xid, type(e).__name__)
+    check('screen loads: %s' % xid, ok)
+
 print('SUMMARY %d/%d passed' % (sum(1 for _, ok in results if ok), len(results)))
