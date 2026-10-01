@@ -33,8 +33,9 @@ def member(ws, n, role):
 A = panel('پنل S14 آموزشی', 'education'); B = panel('پنل S14 دیگر', 'employment')
 mo = member(A, 'owner', 'owner'); mc = member(A, 'c1', 'counselor'); mb = member(B, 'other', 'owner')
 Ev = env['ts.audit.event'].sudo()
-if not Ev.search_count([('workspace_id', '=', A.id), ('event_type', '=', 'member.add')]):
+if not Ev.search_count([('workspace_id', '=', A.id), ('event_type', '=', 'member.add'), ('actor_id', '=', mc.user_id.id)]):
     Ev.with_user(mc.user_id).log('member.add', A, workspace=A, member=mc)
+if not Ev.search_count([('workspace_id', '=', B.id), ('event_type', '=', 'export.create'), ('actor_id', '=', mb.user_id.id)]):
     Ev.with_user(mb.user_id).log('export.create', B, workspace=B, member=mb, secretmark=1)
 mgr = env['res.users'].search([('login', '=', 'ts.pv2s14.mgr.http@example.invalid')]) or env['res.users'].with_context(no_reset_password=True).create(
     {'name': 'مدیر S14 http', 'login': 'ts.pv2s14.mgr.http@example.invalid', 'email': 'ts.pv2s14.mgr.http@example.invalid',
