@@ -66,8 +66,8 @@ m_a.write({'active': False})
 check('leaving counselor: their participants become unassigned', not a1.responsible_id and not a2.responsible_id)
 check('leaving counselor: their imported results become unassigned', not at_i.responsible_id)
 check('other counselor keeps their own client', b1.responsible_id == m_b)
-check('each release is audit-logged', AUD.search_count([('event_type', '=', 'assignment.responsible_change')]) == before + 2)
-check('import release audit-logged', AUD.search_count([('event_type', '=', 'attempt.responsible_change'), ('res_id', '=', at_i.id)]) >= 2)
+check('each release is audit-logged', AUD.search_count([('event_type', '=', 'assignment.responsible_change')])      >= before + 2)   # S4: the import below shares its client with an invitation, so a third event is normal
+check('import release audit-logged (S4: on the client, the single place of responsibility)', AUD.search_count([('event_type', '=', 'client.responsible_change'), ('res_id', '=', at_i.client_id.id)]) >= 2)
 check('owner still sees the released results', a1.visible_results(m_o)[0] == 'education' and at_i.ts_org_visible_to(m_o))
 check('the leaver no longer has access', a1.visible_results(m_a)[0] == 'none' and not m_a.can_act())
 check('nothing disappeared: released results are in the unassigned queue',
