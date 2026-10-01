@@ -29,6 +29,8 @@ def member(ws, n, role):
     u = user(n)
     m = env['ts.workspace.member'].search([('workspace_id', '=', ws.id), ('user_id', '=', u.id)]) or env['ts.workspace.member'].create(
         {'workspace_id': ws.id, 'user_id': u.id, 'role': role})
+    if m.role != role:
+        m.write({'role': role})
     return m
 T1 = panel('S18 http transfer', 'education'); T2 = panel('S18 http close', 'education')
 mo, ma, mc = member(T1, 'owner', 'owner'), member(T1, 'adm', 'admin'), member(T1, 'cns', 'counselor')
