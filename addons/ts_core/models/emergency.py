@@ -54,7 +54,7 @@ class TsEmergencyAccess(models.Model):
         recs = super().create(vals_list)
         for r in recs:
             ws = r.workspace_id
-            hours = self._hours({'workspace_id': ws.id})
+            hours = self._hours({'workspace_id': ws.id, 'kind': r['kind'] if 'kind' in r._fields else False})
             self.env['ts.audit.event'].log('emergency.open', r, workspace=ws, hours=hours, reason_len=len(r.reason or ''))
             owners = ws.member_ids.filtered(lambda m: m.active and m.role == 'owner').user_id.partner_id
             ws.message_post(body='مدیر پلتفرم برای %d ساعت دسترسی اضطراری به نتایج این پنل باز کرد. دلیل: %s' % (

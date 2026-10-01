@@ -53,7 +53,8 @@ class TsPanelReports(http.Controller):
         return render_in_shell(
             'ts_panel.result_bands', me, 'clients', 'نتیجه', client=client, attempt=at, inst=at.instrument_id, level=level,
             results=results, kind=LEVEL_KIND[level], back_url=back, print_url=url + '/print', autoprint=bool(print),
-            when=at.submitted_at)
+            when=at.submitted_at,
+            viewers=request.env['ts.audit.view'].viewers(me.workspace_id, at) if me.has_perm('audit:read') else None)
 
     @http.route('/my/workspaces/<int:ws_id>/clients/<int:cid>/r/<int:aid>/print', type='http', auth='user', website=True,
                 methods=['POST'], sitemap=False)

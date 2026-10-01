@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- W/audit: the panel's own events in plain Persian, support accesses, export (AUD-3, SUP-1, EXP-4) -->
+    <record id="tpl_audit" model="ir.ui.view">
+        <field name="name">TS panel: audit</field>
+        <field name="type">qweb</field>
+        <field name="key">ts_panel.audit</field>
+        <field name="website_id" ref="ts_website.website_ts"/>
+        <field name="arch" type="xml">
+            <t t-name="ts_panel.audit">
+                <t t-call="website.layout" additional_title="title">
+                    <div id="wrap" class="ts-page">
+                        <t t-call="ts_panel.shell_frame">
+                            <header class="tsp-head">
+                                <div>
+                                    <h1 class="tsp-head__title">ممیزی پنل</h1>
+                                    <p class="tsp-head__help">هر کار مهم در این پنل اینجا ثبت می‌شود. فقط مالک پنل این صفحه را می‌بیند و رویدادها هرگز تغییر یا حذف نمی‌شوند.</p>
+                                </div>
+                                <a t-if="can_export" t-attf-href="/my/workspaces/#{ws.id}/audit/export?#{qs}" class="ts-btn ts-btn--outline">خروجی CSV</a>
+                            </header>
+                            <section t-if="support" class="ts-card" aria-labelledby="tsp-au-s">
+                                <h2 id="tsp-au-s" class="h5">دسترسی پشتیبانی پلتفرم</h2>
+                                <p class="ts-hint">هر بار که پشتیبانی پلتفرم دسترسی باز کند، شما آگاه می‌شوید و این‌جا فهرست می‌شود.</p>
+                                <table class="ts-table tsp-table tsp-table--cards">
+                                    <caption class="tsp-sr">دسترسی‌های پشتیبانی</caption>
+                                    <thead><tr><th scope="col">نوع</th><th scope="col">شروع</th><th scope="col">پایان</th><th scope="col">وضعیت</th><th scope="col">تیکت</th></tr></thead>
+                                    <tbody>
+                                        <tr t-foreach="support" t-as="s">
+                                            <th scope="row" data-label="نوع" t-out="s['kind']"/>
+                                            <td data-label="شروع" t-out="s['opened']"/>
+                                            <td data-label="پایان" t-out="s['expires']"/>
+                                            <td data-label="وضعیت" t-out="s['state']"/>
+                                            <td data-label="تیکت"><bdi dir="ltr" t-out="s['ticket'] or '—'"/></td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </section>
+                            <form method="get" class="ts-card tsp-filters" aria-label="پالایه‌های ممیزی">
+                                <label>از تاریخ (میلادی)<input type="date" name="from" t-att-value="f.get('from')"/></label>
+                                <label>تا تاریخ (میلادی)<input type="date" name="to" t-att-value="f.get('to')"/></label>
+                                <label>دسته
+                                    <select name="family"><option value="">همه</option>
+                                        <option t-foreach="families" t-as="fa_" t-att-value="fa_[0]" t-att-selected="'selected' if f.get('family') == fa_[0] else None" t-out="fa_[1]"/>
+                                    </select></label>
+                                <label>عضو
+                                    <select name="member"><option value="">همه</option>
+                                        <option t-foreach="members" t-as="m" t-att-value="m.id" t-att-selected="'selected' if f.get('member') == str(m.id) else None" t-out="m.user_id.name"/>
+                                    </select></label>
+                                <button type="submit" class="ts-btn ts-btn--outline">اعمال</button>
+                            </form>
+                            <section class="ts-card" aria-labelledby="tsp-au-1">
+                                <h2 id="tsp-au-1" class="h5">رویدادها <small class="ts-hint">(<t t-out="fa(total)"/> مورد)</small></h2>
+                                <p t-if="not rows" class="ts-hint">رویدادی با این پالایه ثبت نشده است.</p>
+                                <table t-if="rows" class="ts-table tsp-table tsp-table--cards">
+                                    <caption class="tsp-sr">رویدادهای ممیزی</caption>
+                                    <thead><tr><th scope="col">زمان</th><th scope="col">شرح</th><th scope="col">دسته</th><th scope="col">نتیجه</th></tr></thead>
+                                    <tbody>
+                                        <tr t-foreach="rows" t-as="r">
+                                            <th scope="row" data-label="زمان" t-out="r['when']"/>
+                                            <td data-label="شرح"><t t-out="r['text']"/><small t-if="r['role']" class="ts-hint"> · <t t-out="r['role']"/></small></td>
+                                            <td data-label="دسته" t-out="r['family']"/>
+                                            <td data-label="نتیجه"><span t-if="r['outcome'] != 'ok'" class="ts-pill ts-pill--warn">ردشد یا ناموفق</span><t t-else="">انجام شد</t></td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                                <nav t-if="pages &gt; 1" class="tsp-pager" aria-label="صفحه‌بندی">
+                                    <a t-if="page &gt; 0" t-attf-href="/my/workspaces/#{ws.id}/audit?#{qs}&amp;page=#{page - 1}">قبلی</a>
+                                    <span>صفحهٔ <t t-out="fa(page + 1)"/> از <t t-out="fa(pages)"/></span>
+                                    <a t-if="page + 1 &lt; pages" t-attf-href="/my/workspaces/#{ws.id}/audit?#{qs}&amp;page=#{page + 1}">بعدی</a>
+                                </nav>
+                            </section>
+                        </t>
+                    </div>
+                </t>
+            </t>
+        </field>
+    </record>
+</odoo>

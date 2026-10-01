@@ -49,6 +49,11 @@
                                         <div t-out="sec[1]"/>
                                     </t>
                                 </section>
+                                <section t-if="viewers is not None" class="ts-card tsp-noprint" aria-labelledby="tsp-r-v">
+                                    <h2 id="tsp-r-v" class="h5">چه کسانی این نتیجه را دیده‌اند</h2>
+                                    <p t-if="not viewers" class="ts-hint">هنوز کسی این نتیجه را باز نکرده است.</p>
+                                    <ul t-if="viewers"><li t-foreach="viewers" t-as="v"><t t-out="v[1]"/> · <t t-out="v[0]"/></li></ul>
+                                </section>
                                 <section class="ts-card">
                                     <h2 class="h5">محدودیت‌ها</h2>
                                     <p t-out="inst.limitations"/>

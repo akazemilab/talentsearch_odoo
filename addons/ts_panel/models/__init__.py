@@ -16,3 +16,5 @@ from . import company
 from . import wallet
 from . import dashboard
 from . import group_report
+from . import audit_view
+from . import support_access

@@ -34,6 +34,7 @@ MENU = [
     {'seq': 42, 'key': 'reports', 'label': 'گزارش‌ها', 'suffix': '/reports', 'perm_any': RESULT_PERMS, 'needs_act': True},
     {'seq': 50, 'key': 'credits', 'label': 'اعتبار و مصرف', 'suffix': '/credits', 'perm': 'credits:read'},
     {'seq': 40, 'key': 'members', 'label': 'اعضا و نقش‌ها', 'suffix': '/members', 'perm': 'members:read'},
+    {'seq': 80, 'key': 'audit', 'label': 'ممیزی', 'suffix': '/audit', 'perm': 'audit:read'},
     {'seq': 90, 'key': 'settings', 'label': 'تنظیمات', 'suffix': '/settings', 'perm': 'panel:profile'},
     {'seq': 999, 'key': 'help', 'label': 'راهنما', 'url': '/help', 'perm': None},   # always last, for every state (WCAG 3.2.6)
 ]

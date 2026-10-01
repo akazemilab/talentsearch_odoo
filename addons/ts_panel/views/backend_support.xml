@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Back office: the emergency access form also opens a support access (S14, SUP-1) -->
+    <record id="ts_emergency_form_support" model="ir.ui.view">
+        <field name="name">ts.emergency.access.form.support</field>
+        <field name="model">ts.emergency.access</field>
+        <field name="inherit_id" ref="ts_org.ts_emergency_form"/>
+        <field name="arch" type="xml">
+            <field name="workspace_id" position="before">
+                <field name="kind" readonly="id"/>
+                <field name="ticket_ref" readonly="id" invisible="kind != 'support'" required="kind == 'support'"/>
+            </field>
+        </field>
+    </record>
+    <record id="ts_emergency_list_support" model="ir.ui.view">
+        <field name="name">ts.emergency.access.list.support</field>
+        <field name="model">ts.emergency.access</field>
+        <field name="inherit_id" ref="ts_org.ts_emergency_list"/>
+        <field name="arch" type="xml">
+            <field name="workspace_id" position="before"><field name="kind"/></field>
+        </field>
+    </record>
+</odoo>
