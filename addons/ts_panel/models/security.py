@@ -66,11 +66,11 @@ class IrHttp(models.AbstractModel):
 class ResUsersPassword(models.Model):
     _inherit = 'res.users'
 
-    @api.constrains('password')
-    def _ts_check_password_length(self):
+    def _set_password(self):
         """Only for requests on the Talent Search website: a password that is set must have 15 characters or more."""
-        if not on_ts_site():
-            return
-        for pw in self.mapped('password'):
-            if pw and len(pw) < MIN_PASSWORD:
-                raise ValidationError('گذرواژه باید دست‌کم ۱۵ نویسه باشد.')
+        if on_ts_site():
+            for user in self:
+                pw = user.password
+                if pw and len(pw) < MIN_PASSWORD:
+                    raise ValidationError('گذرواژه باید دست‌کم ۱۵ نویسه باشد.')
+        return super()._set_password()

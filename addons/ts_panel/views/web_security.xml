@@ -21,7 +21,7 @@
                                     <li t-foreach="sessions" t-as="s">
                                         <span><t t-out="(s.platform or '').capitalize()"/> <t t-out="(s.browser or '').capitalize()"/></span>
                                         <span class="ts-hint"> آخرین فعالیت: <t t-out="jalali(s.last_activity)"/></span>
-                                        <strong t-if="s.is_current"> (همین دستگاه)</strong>
+                                        <strong t-if="s.is_current" class="ts-sess-current"> (همین دستگاه)</strong>
                                         <form t-else="" action="/my/sessions/revoke" method="post" style="display:inline" data-tsp-once="1">
                                             <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
                                             <input type="hidden" name="sid" t-att-value="s.id"/>
