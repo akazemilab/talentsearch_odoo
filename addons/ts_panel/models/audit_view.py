@@ -173,7 +173,7 @@ class TsAuditView(models.AbstractModel):
         out = []
         for e in events:
             fam, sentence = EVENTS.get(e.event_type, (OTHER[0], OTHER[1]))
-            who = e.actor_id.name or 'سامانه'
+            who = 'سامانه' if e.actor_id.id == SUPERUSER_ID else (e.actor_id.name or 'سامانه')      # the system user is never shown as OdooBot
             obj = names.get((e.res_model, e.res_id)) or 'یک شرکت‌کننده'
             text = sentence.replace('{who}', who).replace('{obj}', obj)
             out.append({
