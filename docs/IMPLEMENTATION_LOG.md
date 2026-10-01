@@ -188,3 +188,9 @@ Data step (owner-only, NOT in code): approve workspace 1, set pilot, add the cou
 - Tests: `tests_pv2_1.py` 48 (P01-P17, P23; the table of 05_permissions_matrix.md is parsed from a copy embedded in the test and compared with `ROLE_PERMS`), `ts_http_pv2_1.py` 20 (P24 deny event + throttle, admin sees no members/settings, POSTs refused, solo licence + owner_practices). `ts_check`: audit calls with personal keywords are now errors.
 - Rehearsal eot_ts31 (second run): eot.ir UNCHANGED, portal UNCHANGED, all old suites green (org 35, org_resp 22, panel 68, edge 25, signup 27, HTTP suites). Ship `pv2s1` (commit 7ca39bb): eot.ir UNCHANGED live.
 - Lessons: Odoo 20 `ir.config_parameter` has `get_str/set_str` (no `get_param`); `ts_flowlib`/`ts_http_flow` hardcoded the slot-0 stage path, so HTTP-suite shells ran old code on slot 1 (now slot-aware); a write followed by a create of the same unique key needs `env.flush_all()` in tests; the first rehearsal run was wasted on these three, so run one new test file by hand on a kept clone before the full rehearsal.
+
+## pv2s2 — Panel v2, stage S2 shell (2026-10-01)
+
+- `ts_panel` 20.0.1.1.0: shared shell (menu per permission, mobile menu button, 403 inside the shell), dashboard `W/home` with six counters, state pages (draft, suspended, closed, awaiting verification), `W/settings` (profile and contact for `panel:profile`, terms for `panel:settings`), header link «پنل من» (`res.users.ts_panel_home()`), notice on the old page. New design tokens in `ts.scss`.
+- Tests: `tests_pv2_2.py` (9 ORM), `ts_http_pv2_2.py` (46 HTTP). Rehearsal eot_ts32: eot.ir UNCHANGED, portal UNCHANGED, unexpected failures 0. Ship `pv2s2` (commit 7ca39bb): eot.ir UNCHANGED live.
+- Lesson: Bootstrap's `:root` overrides `--success`/`--danger`, so panel-local tokens are needed (pill contrast was 2.7:1). Running each new test file by hand on a kept clone first saved a full rehearsal.
