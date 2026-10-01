@@ -83,14 +83,12 @@ st, loc, _ = c.req('/my/sessions')
 check('an idle staff session is signed out', st in (302, 303) and 'login' in (loc or ''), '%s %s' % (st, loc))
 
 # a participant (not a panel member) is not subject to the timeout
-shell("env['ts.workspace.member'].search([('user_id.login', '=', %r)]).write({'active': False}); env.cr.commit()" % L['staff'])
-c = login('staff')
+c = login('part')
 get(c, '/my')
 time.sleep(4)
 st, loc, _ = c.req('/my')
 check('a person who is no panel member keeps the session', st == 200 or (st in (302, 303) and 'login' not in (loc or '')), '%s %s' % (st, loc))
-shell("env['ts.workspace.member'].with_context(active_test=False).search([('user_id.login', '=', %r)]).write({'active': True}); "
-      "env['ir.config_parameter'].sudo().set_float('ts_panel.staff_idle_hours', 8.0); env.cr.commit()" % L['staff'])
+shell("env['ir.config_parameter'].sudo().set_float('ts_panel.staff_idle_hours', 8.0); env.cr.commit()")
 
 # ---- SMS risk notice
 st, body = get(Client(TS), '/signup')
