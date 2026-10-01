@@ -21,7 +21,10 @@ def on_ts_site():
     try:
         env = request.env
         site = env.ref('ts_website.website_ts', raise_if_not_found=False)
-        return bool(site) and env['website'].sudo().get_current_website().id == site.id
+        wid = env.context.get('website_id') or env.context.get('host_id')       # set by ir.http._match, before _authenticate
+        if not wid:
+            wid = env['website'].sudo().get_current_website().id
+        return bool(site) and wid == site.id
     except Exception:                                   # noqa: BLE001  (no request: cron, shell)
         return False
 
