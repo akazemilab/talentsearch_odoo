@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- W/clients/<id> (S4): one person: details, responsible specialist, assessments -->
+    <record id="tpl_client" model="ir.ui.view">
+        <field name="name">TS panel: client</field>
+        <field name="type">qweb</field>
+        <field name="key">ts_panel.client</field>
+        <field name="website_id" ref="ts_website.website_ts"/>
+        <field name="arch" type="xml">
+            <t t-name="ts_panel.client">
+                <t t-call="website.layout" additional_title="title">
+                    <div id="wrap" class="ts-page">
+                        <t t-call="ts_panel.shell_frame">
+                            <header class="tsp-head">
+                                <div>
+                                    <p class="tsp-field__hint"><a t-attf-href="/my/workspaces/#{ws.id}/clients">← شرکت‌کنندگان</a></p>
+                                    <h1 class="tsp-head__title" t-out="c.name"/>
+                                    <p class="tsp-head__help">
+                                        <span t-if="c.source == 'import'" class="ts-pill ts-pill--info">واردشده از دادهٔ تاریخی</span>
+                                        <span t-if="c.state == 'archived'" class="ts-pill">بایگانی</span>
+                                    </p>
+                                </div>
+                            </header>
+                            <p t-if="flash_ok" class="tsp-flash tsp-flash--ok" role="status" t-out="flash_ok"/>
+                            <p t-if="flash_err" class="tsp-flash tsp-flash--danger" role="alert" t-out="flash_err"/>
+
+                            <section class="ts-card" aria-labelledby="tsp-c-info">
+                                <h2 id="tsp-c-info" class="h5">مشخصات</h2>
+                                <dl class="tsp-dl">
+                                    <dt>شناسهٔ پنل</dt><dd><t t-out="c.code or '—'"/></dd>
+                                    <dt>منبع</dt><dd t-out="source_label"/>
+                                    <t t-if="c.contact_locked">
+                                        <dt>اطلاعات تماس</dt><dd>برای افراد واردشده از دادهٔ تاریخی ثبت و نمایش داده نمی‌شود.</dd>
+                                    </t>
+                                    <t t-else="">
+                                        <dt>موبایل</dt><dd><bdi dir="ltr" t-out="c.phone or '—'"/></dd>
+                                        <dt>ایمیل</dt><dd><bdi dir="ltr" t-out="c.email or '—'"/></dd>
+                                    </t>
+                                    <dt>حساب کاربری</dt><dd><t t-if="c.user_id">پیوند خورده</t><t t-else="">هنوز پیوند نخورده</t></dd>
+                                    <dt>آخرین فعالیت</dt><dd t-out="jalali(c.last_activity_at, with_time=False)"/>
+                                </dl>
+                            </section>
+
+                            <section class="ts-card" aria-labelledby="tsp-c-resp">
+                                <h2 id="tsp-c-resp" class="h5">کارشناس مسئول</h2>
+                                <p><t t-if="c.responsible_id"><strong t-out="c.responsible_id.user_id.name"/> (<t t-out="role_labels.get(c.responsible_id.role, c.responsible_id.role)"/>)</t><t t-else="">این شرکت‌کننده کارشناس مسئول ندارد.</t></p>
+                                <form t-if="can_assign" t-attf-action="/my/workspaces/#{ws.id}/clients/#{c.id}/responsible" method="post" class="tsp-form" data-tsp-once="1">
+                                    <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                                    <div class="tsp-field">
+                                        <label class="tsp-field__label" for="tsp_resp">تغییر کارشناس مسئول</label>
+                                        <select id="tsp_resp" name="responsible_id">
+                                            <option value="">بدون کارشناس</option>
+                                            <option t-foreach="cands" t-as="m" t-att-value="m.id" t-att-selected="'selected' if m == c.responsible_id else None">
+                                                <t t-out="m.user_id.name"/> — <t t-out="role_labels.get(m.role, m.role)"/>
+                                            </option>
+                                        </select>
+                                    </div>
+                                    <p><button type="submit" class="ts-btn ts-btn--primary">ذخیره</button></p>
+                                </form>
+                            </section>
+
+                            <section class="ts-card" aria-labelledby="tsp-c-ass">
+                                <h2 id="tsp-c-ass" class="h5">سنجه‌ها</h2>
+                                <p t-if="not assignments and not imports" class="tsp-empty">هنوز سنجه‌ای برای این فرد ثبت نشده است.</p>
+                                <div t-else="" class="ts-table-wrap">
+                                    <table class="ts-table tsp-table tsp-table--cards">
+                                        <caption class="tsp-sr">سنجه‌های این شرکت‌کننده</caption>
+                                        <thead><tr><th scope="col">سنجه</th><th scope="col">وضعیت</th><th scope="col">تاریخ</th><th scope="col"><span class="tsp-sr">نتیجه</span></th></tr></thead>
+                                        <tbody>
+                                            <tr t-foreach="assignments" t-as="a">
+                                                <th scope="row" data-label="سنجه" t-out="a.instrument_id.name"/>
+                                                <td data-label="وضعیت"><span class="ts-pill" t-out="state_labels.get(a.state, a.state)"/></td>
+                                                <td data-label="تاریخ" t-out="jalali(a.create_date, with_time=False)"/>
+                                                <td><a t-if="a.state == 'done' and level(a) != 'none'" t-attf-href="/my/workspaces/#{ws.id}/a/#{a.id}">نتیجه</a></td>
+                                            </tr>
+                                            <tr t-foreach="imports" t-as="t">
+                                                <th scope="row" data-label="سنجه" t-out="t.instrument_id.name"/>
+                                                <td data-label="وضعیت"><span class="ts-pill ts-pill--info">واردشده</span></td>
+                                                <td data-label="تاریخ" t-out="jalali(t.create_date, with_time=False)"/>
+                                                <td><a t-if="level_t(t) != 'none'" t-attf-href="/my/workspaces/#{ws.id}/p/#{t.id}">نتیجه</a></td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </section>
+                        </t>
+                    </div>
+                </t>
+            </t>
+        </field>
+    </record>
+</odoo>

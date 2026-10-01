@@ -81,6 +81,21 @@
         .tsp-table--cards td[data-label]::before { content: attr(data-label) ": "; color: var(--muted); font-weight: 700; }
     }
 
+    // ---------- S4: clients list ----------
+    .tsp-search { display: flex; flex-wrap: wrap; gap: var(--space-2); align-items: center; }
+    .tsp-search input[type=search] { flex: 1 1 260px; min-height: var(--control-min); padding: 8px 12px; border: 1px solid var(--field-line); border-radius: var(--radius-sm); background: var(--white); font-family: Vazirmatn, Tahoma, Arial, sans-serif; font-size: 1rem; }
+    .tsp-chips { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+    .tsp-chip { display: inline-flex; align-items: center; min-height: var(--control-min); padding: 0 var(--space-4); border: 1px solid var(--field-line); border-radius: 999px; background: var(--white); color: var(--ink); text-decoration: none; }
+    .tsp-chip:hover { background: var(--brand-soft); }
+    .tsp-chip.is-on { background: var(--brand-soft); color: var(--brand-deep); border-color: var(--brand-accent); font-weight: 750; }
+    .tsp-pager { display: flex; flex-wrap: wrap; gap: var(--space-4); align-items: center; justify-content: center; }
+    .tsp-pager a { display: inline-flex; align-items: center; min-height: var(--control-min); padding: 0 var(--space-3); }
+    .tsp-dl { display: grid; grid-template-columns: max-content 1fr; gap: var(--space-2) var(--space-6); margin: 0; }
+    .tsp-dl dt { color: var(--muted); font-weight: 700; }
+    .tsp-dl dd { margin: 0; }
+    .tsp-table th a { color: inherit; text-decoration: underline; }
+    @media (max-width: 575.98px) { .tsp-dl { grid-template-columns: 1fr; gap: 0; } .tsp-dl dd { margin-block-end: var(--space-3); } }
+
     // ---------- narrow screens: the menu is a button ----------
     @media (max-width: 991.98px) {
         .tsp-shell { grid-template-columns: 1fr; gap: var(--space-4); }

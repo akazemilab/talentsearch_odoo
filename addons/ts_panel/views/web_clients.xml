@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- W/clients (S4): the people of the panel, as a table that becomes cards on a phone (TBL-1..4) -->
+    <record id="tpl_clients" model="ir.ui.view">
+        <field name="name">TS panel: clients</field>
+        <field name="type">qweb</field>
+        <field name="key">ts_panel.clients</field>
+        <field name="website_id" ref="ts_website.website_ts"/>
+        <field name="arch" type="xml">
+            <t t-name="ts_panel.clients">
+                <t t-call="website.layout" additional_title="title">
+                    <div id="wrap" class="ts-page">
+                        <t t-call="ts_panel.shell_frame">
+                            <header class="tsp-head">
+                                <div>
+                                    <h1 class="tsp-head__title">شرکت‌کنندگان</h1>
+                                    <p class="tsp-head__help">افرادی که در این پنل دعوت شده‌اند یا نتیجهٔ آن‌ها به پنل رسیده است. دعوت جدید فعلاً از «دعوت و فهرست (نسخهٔ قبلی)» انجام می‌شود.</p>
+                                </div>
+                            </header>
+
+                            <form t-attf-action="/my/workspaces/#{ws.id}/clients" method="post" class="tsp-search" role="search">
+                                <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                                <input type="hidden" name="filter" t-att-value="flt"/>
+                                <label class="tsp-sr" for="tsp_q">جست‌وجو در نام، شناسه، موبایل یا ایمیل</label>
+                                <input id="tsp_q" name="q" type="search" t-att-value="q" maxlength="100" autocomplete="off" placeholder="جست‌وجو در نام، شناسه، موبایل یا ایمیل"/>
+                                <button type="submit" class="ts-btn ts-btn--primary">جست‌وجو</button>
+                            </form>
+                            <p t-if="q" class="tsp-field__hint" role="status">نتیجهٔ جست‌وجو برای «<t t-out="q"/>».
+                                <form t-attf-action="/my/workspaces/#{ws.id}/clients" method="post" class="tsp-inline">
+                                    <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                                    <input type="hidden" name="filter" t-att-value="flt"/>
+                                    <input type="hidden" name="q" value=""/>
+                                    <button type="submit" class="ts-btn ts-btn--quiet ts-btn--sm">پاک‌کردن جست‌وجو</button>
+                                </form>
+                            </p>
+
+                            <nav class="tsp-chips" aria-label="پالایش فهرست">
+                                <t t-foreach="filters" t-as="f">
+                                    <a t-attf-href="/my/workspaces/#{ws.id}/clients#{'' if f[0] == 'all' else '?filter=' + f[0]}"
+                                       t-attf-class="tsp-chip #{'is-on' if f[0] == flt else ''}"
+                                       t-att-aria-current="'true' if f[0] == flt else None" t-out="f[1]"/>
+                                </t>
+                            </nav>
+
+                            <p t-if="not rows and not q and flt == 'all'" class="tsp-empty">هنوز شرکت‌کننده‌ای در این پنل نیست. با «دعوت و فهرست (نسخهٔ قبلی)» اولین دعوت را بفرستید.</p>
+                            <p t-elif="not rows" class="tsp-empty">موردی پیدا نشد. جست‌وجو یا پالایش را تغییر دهید.</p>
+                            <t t-else="">
+                                <p class="tsp-field__hint" role="status"><t t-out="fa(total)"/> مورد · صفحهٔ <t t-out="fa(page)"/> از <t t-out="fa(pages)"/></p>
+                                <div class="ts-table-wrap">
+                                    <table class="ts-table tsp-table tsp-table--cards">
+                                        <caption class="tsp-sr">فهرست شرکت‌کنندگان</caption>
+                                        <thead>
+                                            <tr>
+                                                <th scope="col" t-att-aria-sort="('descending' if desc else 'ascending') if sort == 'name' else None">
+                                                    <a t-att-href="url(sort='name', dir='desc' if (sort == 'name' and not desc) else 'asc', page=1)">نام</a></th>
+                                                <th scope="col">منبع</th>
+                                                <th scope="col">کارشناس مسئول</th>
+                                                <th scope="col" t-att-aria-sort="('descending' if desc else 'ascending') if sort == 'open' else None">
+                                                    <a t-att-href="url(sort='open', dir='asc' if (sort == 'open' and desc) else 'desc', page=1)">در جریان</a></th>
+                                                <th scope="col" t-att-aria-sort="('descending' if desc else 'ascending') if sort == 'done' else None">
+                                                    <a t-att-href="url(sort='done', dir='asc' if (sort == 'done' and desc) else 'desc', page=1)">تکمیل‌شده</a></th>
+                                                <th scope="col" t-att-aria-sort="('descending' if desc else 'ascending') if sort == 'activity' else None">
+                                                    <a t-att-href="url(sort='activity', dir='asc' if (sort == 'activity' and desc) else 'desc', page=1)">آخرین فعالیت</a></th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr t-foreach="rows" t-as="c">
+                                                <th scope="row" data-label="نام">
+                                                    <a t-attf-href="/my/workspaces/#{ws.id}/clients/#{c.id}" t-out="c.name"/>
+                                                    <span t-if="c.state == 'archived'" class="ts-pill"> بایگانی</span>
+                                                </th>
+                                                <td data-label="منبع"><span class="ts-pill ts-pill--info" t-if="c.source == 'import'">واردشده</span><t t-else="" t-out="source_labels.get(c.source)"/></td>
+                                                <td data-label="کارشناس مسئول"><t t-if="c.responsible_id" t-out="c.responsible_id.user_id.name"/><span t-else="" class="ts-hint">بدون کارشناس</span></td>
+                                                <td data-label="در جریان" class="ts-num" t-out="fa(c.open_count)"/>
+                                                <td data-label="تکمیل‌شده" class="ts-num" t-out="fa(c.done_count)"/>
+                                                <td data-label="آخرین فعالیت" t-out="jalali(c.last_activity_at, with_time=False)"/>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <nav t-if="pages &gt; 1" class="tsp-pager" aria-label="صفحه‌بندی">
+                                    <a t-if="page &gt; 1" t-att-href="url(page=page - 1)" rel="prev">صفحهٔ قبل</a>
+                                    <span aria-current="page">صفحهٔ <t t-out="fa(page)"/></span>
+                                    <a t-if="page &lt; pages" t-att-href="url(page=page + 1)" rel="next">صفحهٔ بعد</a>
+                                </nav>
+                            </t>
+                        </t>
+                    </div>
+                </t>
+            </t>
+        </field>
+    </record>
+</odoo>

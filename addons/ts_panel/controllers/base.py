@@ -19,6 +19,8 @@ MENU = [
     {'seq': 10, 'key': 'home', 'label': 'داشبورد', 'suffix': '/home', 'perm': 'panel:view'},
     {'seq': 15, 'key': 'legacy', 'label': 'دعوت و فهرست (نسخهٔ قبلی)', 'suffix': '', 'perm': 'panel:view',
      'needs_act': True},
+    {'seq': 20, 'key': 'clients', 'label': 'شرکت‌کنندگان', 'suffix': '/clients', 'perm': 'clients:read_own',
+     'needs_act': True},
     {'seq': 40, 'key': 'members', 'label': 'اعضا و نقش‌ها', 'suffix': '/members', 'perm': 'members:read'},
     {'seq': 90, 'key': 'settings', 'label': 'تنظیمات', 'suffix': '/settings', 'perm': 'panel:profile'},
     {'seq': 999, 'key': 'help', 'label': 'راهنما', 'url': '/help', 'perm': None},   # always last, for every state (WCAG 3.2.6)

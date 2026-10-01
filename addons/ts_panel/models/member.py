@@ -1,4 +1,4 @@
-from odoo import fields, models
+from odoo import api, fields, models
 from odoo.exceptions import UserError
 
 from odoo.addons.ts_core.models.workspace import ROLES_BY_PURPOSE
@@ -99,3 +99,17 @@ class TsWorkspaceMember(models.Model):
         self.sudo().write(vals)
         self.env['ts.audit.event'].sudo().log('member.practice', self, workspace=self.workspace_id,
                                               practising=bool(flag))
+
+    # ------------------------------------------------------------------ responsibility lives on the client
+    @api.model
+    def ts_default_responsible(self, workspace_id, user_id):
+        """The assignment no longer takes a default of its own: the CLIENT does (see ts_panel_default_responsible)."""
+        return self.browse()
+
+    @api.model
+    def ts_panel_default_responsible(self, workspace_id, user_id):
+        return super().ts_default_responsible(workspace_id, user_id)
+
+    def _ts_release_clients(self):
+        super()._ts_release_clients()
+        self.env['ts.panel.client'].sudo().search([('responsible_id', 'in', self.ids)]).write({'responsible_id': False})

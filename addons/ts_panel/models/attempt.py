@@ -1,8 +1,28 @@
-from odoo import models
+from odoo import api, fields, models
 
 
 class TsAttempt(models.Model):
     _inherit = 'ts.attempt'
+
+    client_id = fields.Many2one('ts.panel.client', 'مراجع', index=True, ondelete='restrict')
+    responsible_id = fields.Many2one(related='client_id.responsible_id', store=True, readonly=False,
+                                     string='کارشناس مسئول', index=True)
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        """An imported result gets (or joins) the client of its historical person: contact data is never copied."""
+        Client = self.env['ts.panel.client'].sudo()
+        for vals in vals_list:
+            if vals.get('source') == 'import' and vals.get('workspace_id') and vals.get('person_id') \
+                    and not vals.get('client_id'):
+                vals['client_id'] = Client.ts_for_import(vals['workspace_id'], self.env['res.partner'].browse(vals['person_id'])).id
+        return super().create(vals_list)
+
+    def write(self, vals):
+        res = super().write(vals)
+        if 'state' in vals:
+            self.sudo().client_id.ts_touch()
+        return res
 
     def action_submit(self, *args, **kwargs):
         """Panel v2 (G28): ts_talent's matrix branch of action_submit never calls super(), so the
