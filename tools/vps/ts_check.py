@@ -11,7 +11,7 @@ Catches, before a 25-minute rehearsal, the failures that cost whole cycles on 20
   W phone    the same test mobile number used in two test files (fixtures collide)
   W pycache  __pycache__ files tracked by git
   Panel v2 rules (ts_panel only):
-  W audit    an audit `.log(` call passes a keyword that can carry personal data (name, phone, ...); warning until S1
+  E audit    an audit `.log(` call passes a keyword that can carry personal data (name, phone, ...); error from S1
   E scope    `sudo().search/browse/...` in ts_panel/controllers (outside base.py) without `workspace_id` in the
              domain (browse: add a `# ts-scope-ok` comment on the line when the id was already scoped)
   E words    a forbidden claim in a ts_panel template (08_design_system.md section 6)
@@ -37,7 +37,7 @@ if SELFTEST:   # prove the Panel v2 rules fire on a sample bad module, then exit
     open(f'{d}/addons/ts_panel/views/v.xml', 'w', encoding='utf-8').write('<odoo><p>تضمین قبولی</p></odoo>')
     r = subprocess.run([sys.executable, __file__, d], capture_output=True, text=True).stdout
     want = ['E scope addons/ts_panel/controllers/main.py:2', 'E scope addons/ts_panel/controllers/main.py:3',
-            'W audit addons/ts_panel/controllers/main.py:4', 'E words addons/ts_panel/views/v.xml']
+            'E audit addons/ts_panel/controllers/main.py:4', 'E words addons/ts_panel/views/v.xml']
     miss = [w for w in want if w not in r]
     extra = 'E scope addons/ts_panel/controllers/main.py:5' in r
     print('SELFTEST ' + ('OK' if not miss and not extra else 'FAILED missing=%s extra_flag_on_scoped_search=%s' % (miss, extra)))
@@ -177,7 +177,7 @@ if os.path.isdir(PANEL):
             if node.func.attr == 'log':
                 bad = sorted({k.arg for k in node.keywords if k.arg in DENY_KW})
                 if bad:
-                    warns.append(f'audit {rel(p)}:{node.lineno} .log() passes {bad}: no names, phones, emails or search text in audit detail')
+                    errors.append(f'audit {rel(p)}:{node.lineno} .log() passes {bad}: no names, phones, emails or search text in audit detail')
             if is_ctrl and node.func.attr in SCOPED and isinstance(node.func.value, ast.Call) \
                     and isinstance(node.func.value.func, ast.Attribute) and node.func.value.func.attr == 'sudo':
                 seg = ast.get_source_segment(src, node) or ''

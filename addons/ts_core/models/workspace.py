@@ -13,13 +13,14 @@ PURPOSES = [
 GATED_PURPOSES = {'employment', 'clinical', 'benefits'}
 
 ROLES_BY_PURPOSE = {
-    'employment': {'owner', 'hr_admin', 'hiring_manager', 'reviewer'},
-    'clinical': {'owner', 'clinic_director', 'clinician'},
-    'education': {'owner', 'counselor'},
+    'employment': {'owner', 'admin', 'hr_admin', 'hiring_manager', 'reviewer'},
+    'clinical': {'owner', 'admin', 'clinic_director', 'clinician'},
+    'education': {'owner', 'admin', 'counselor'},
     'benefits': {'owner', 'benefit_admin'},
 }
 ROLES = [
-    ('owner', 'مالک سازمان'),
+    ('owner', 'مالک پنل'),
+    ('admin', 'هماهنگ‌کنندهٔ پنل'),
     ('hr_admin', 'مدیر منابع انسانی'),
     ('hiring_manager', 'مدیر استخدام'),
     ('reviewer', 'ارزیاب'),
@@ -110,7 +111,7 @@ class TsWorkspace(models.Model):
                 raise UserError('دلیل رد را در فیلد «دلیل رد» بنویسید.')
             ws.rejected_on = fields.Datetime.now()
             self.env['ts.audit.event'].log('workspace.reject', ws, workspace=ws, purpose=ws.purpose,
-                                           note=ws.rejection_note)
+                                           has_note=True)
 
     def action_suspend(self):
         self._check_manager()
@@ -118,7 +119,7 @@ class TsWorkspace(models.Model):
             if ws.state not in ('pilot', 'active'):
                 raise UserError('فقط فضای پایلوت یا فعال معلق می‌شود.')
             ws.write({'state': 'suspended'})
-            self.env['ts.audit.event'].log('workspace.suspend', ws, workspace=ws, note=ws.approval_note or False)
+            self.env['ts.audit.event'].log('workspace.suspend', ws, workspace=ws, has_note=bool(ws.approval_note))
 
     def action_resume(self):
         self._check_manager()
@@ -191,14 +192,22 @@ class TsWorkspaceMember(models.Model):
     ], 'وضعیت احراز صلاحیت', compute='_compute_verification_state', store=True, readonly=False)
     verified_by_id = fields.Many2one('res.users', 'تأییدکننده', readonly=True)
     verified_on = fields.Datetime('تاریخ تأیید', readonly=True)
+    owner_practices = fields.Boolean(
+        'مالک خودش هم کارشناس است', help='مالکی که خودش مراجعان را می‌بیند (مشاور یا روان‌شناس مستقل). '
+        'در پنل بالینی، دیدن نتیجهٔ بالینی منوط به تأیید صلاحیت است.')
+    deactivated_on = fields.Datetime('تاریخ غیرفعال‌سازی', readonly=True)
+    deactivated_by_id = fields.Many2one('res.users', 'غیرفعال‌کننده', readonly=True)
 
-    _user_ws_role_unique = models.Constraint('unique(workspace_id, user_id, role)', 'این نقش قبلاً برای این کاربر ثبت شده است.')
+    # one active membership per person per panel (the same person may hold roles in other panels)
+    _one_active_member = models.UniqueIndex('(workspace_id, user_id) WHERE active IS TRUE')
 
-    @api.depends('role')
+    @api.depends('role', 'owner_practices', 'purpose')
     def _compute_verification_state(self):
         for m in self:
             if not m.verification_state or m.verification_state == 'not_required':
-                m.verification_state = 'pending' if m.role in ('clinician', 'clinic_director', 'counselor') else 'not_required'
+                needs = m.role in ('clinician', 'clinic_director', 'counselor') or (
+                    m.role == 'owner' and m.owner_practices and m.purpose == 'clinical')
+                m.verification_state = 'pending' if needs else 'not_required'
 
     @api.constrains('role', 'workspace_id')
     def _check_role_matches_purpose(self):
@@ -238,6 +247,10 @@ class TsWorkspaceMember(models.Model):
         return super().unlink()
 
     def write(self, vals):
+        if vals.get('active') is False and 'deactivated_on' not in vals:
+            vals = dict(vals, deactivated_on=fields.Datetime.now(), deactivated_by_id=self.env.uid)
+        elif vals.get('active') is True:
+            vals = dict(vals, deactivated_on=False, deactivated_by_id=False)
         if vals.get('active') is False or ('role' in vals and vals['role'] != 'owner'):
             for m in self.filtered(lambda m: m.active and m.role == 'owner'):
                 others = m.workspace_id.member_ids.filtered(lambda x: x.active and x.role == 'owner' and x not in self)

@@ -33,23 +33,31 @@ class TsAttempt(models.Model):
         return self.env['ts.assignment'].sudo().search(
             [('attempt_id', '=', self.id), ('user_id', '=', self.user_id.id)], limit=1)
 
-    def ts_org_visible_to(self, member):
-        """Education workspaces: may this member (owner/counselor of the institute)
-        open the participant report of this attempt? Answers are never included.
-
-        Imported historical results of the workspace are visible to its usable
-        members; web attempts only through a released assignment with sharing on."""
+    def ts_result_level(self, member):
+        """How much of this attempt `member` may see: 'none' | 'status' | 'summary' | 'education' | 'clinical'
+        (05_permissions_matrix.md section 5). Imported results have no invitation: step 4 applies."""
         self.ensure_one()
         ws = member.workspace_id
-        if ws.purpose != 'education' or not member.can_act() or self.workspace_id != ws:
-            return False
-        if self.state != 'done':
-            return False
+        if self.workspace_id != ws or not member.can_act():
+            return 'none'
         if self.source == 'import':
-            return member.can_see(self)
+            if not member.can_see(self):
+                return 'none'
+            if self.state != 'done':
+                return 'status'
+            if ws.purpose == 'education' and member.has_perm('results:education'):   # owner decision 8 Mehr 1405
+                return 'education'
+            return 'status'
         a = self.env['ts.assignment'].sudo().search(
             [('attempt_id', '=', self.id), ('workspace_id', '=', ws.id)], limit=1)
-        return bool(a) and a.visible_results(member)[0] == 'education'
+        return a.result_level(member) if a else 'none'
+
+    def ts_org_visible_to(self, member):
+        """Education panels: may this member (owner/counselor of the institute) open the participant report of
+        this attempt? Answers are never included. Imported historical results of the panel are visible to its
+        usable members; web attempts only through a released invitation with sharing on."""
+        self.ensure_one()
+        return self.ts_result_level(member) == 'education'
 
     def action_submit(self, *args, **kwargs):
         res = super().action_submit(*args, **kwargs)

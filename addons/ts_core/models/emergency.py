@@ -23,6 +23,18 @@ class TsEmergencyAccess(models.Model):
     closed_at = fields.Datetime('بسته‌شده در', readonly=True)
     state = fields.Selection([('open', 'باز'), ('expired', 'منقضی'), ('closed', 'بسته')], compute='_compute_state')
 
+    @api.model
+    def _check_scope(self, vals):
+        """Which panels this access may be opened on (hook: S14 widens it to every purpose)."""
+        ws = self.env['ts.workspace'].browse(vals.get('workspace_id'))
+        if ws.purpose != 'clinical':
+            raise UserError('دسترسی اضطراری فقط برای پنل بالینی است.')
+
+    @api.model
+    def _hours(self, vals):
+        """Length of the access in hours (hook: S14 lets a support access use another length)."""
+        return EMERGENCY_HOURS
+
     @api.depends('expires_at', 'closed_at')
     def _compute_state(self):
         now = fields.Datetime.now()
@@ -34,20 +46,19 @@ class TsEmergencyAccess(models.Model):
         if not self.env.user.has_group('ts_core.group_ts_manager'):
             raise UserError('فقط مدیر پلتفرم می‌تواند دسترسی اضطراری باز کند.')
         for vals in vals_list:
-            ws = self.env['ts.workspace'].browse(vals.get('workspace_id'))
-            if ws.purpose != 'clinical':
-                raise UserError('دسترسی اضطراری فقط برای پنل بالینی است.')
+            self._check_scope(vals)
             if len((vals.get('reason') or '').strip()) < 15:
                 raise UserError('دلیل اضطراری را دست‌کم در یک جمله کامل بنویسید.')
             vals.update({'user_id': self.env.uid, 'opened_at': fields.Datetime.now(),
-                         'expires_at': fields.Datetime.now() + timedelta(hours=EMERGENCY_HOURS)})
+                         'expires_at': fields.Datetime.now() + timedelta(hours=self._hours(vals))})
         recs = super().create(vals_list)
         for r in recs:
             ws = r.workspace_id
-            self.env['ts.audit.event'].log('emergency.open', r, workspace=ws, hours=EMERGENCY_HOURS, reason=r.reason)
+            hours = self._hours({'workspace_id': ws.id})
+            self.env['ts.audit.event'].log('emergency.open', r, workspace=ws, hours=hours, reason_len=len(r.reason or ''))
             owners = ws.member_ids.filtered(lambda m: m.active and m.role == 'owner').user_id.partner_id
             ws.message_post(body='مدیر پلتفرم برای %d ساعت دسترسی اضطراری به نتایج این پنل باز کرد. دلیل: %s' % (
-                EMERGENCY_HOURS, r.reason), partner_ids=owners.ids, message_type='notification',
+                hours, r.reason), partner_ids=owners.ids, message_type='notification',
                 subtype_xmlid='mail.mt_comment')
         return recs
 

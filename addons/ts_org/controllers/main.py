@@ -20,6 +20,9 @@ def _membership(ws_id):
     members = _memberships().filtered(lambda m: m.workspace_id.id == int(ws_id))
     member = members.filtered(lambda m: m.can_act())[:1]
     if not member:
+        request.env['ts.audit.event'].sudo().log_denied(
+            'authz.deny', route=request.httprequest.path, workspace_id=int(ws_id),
+            member_id=members[:1].id or None, why='no_usable_membership')
         raise request.not_found()
     return member
 
@@ -112,17 +115,17 @@ class TsOrg(http.Controller):
             'is_new': bool(kw.get('new')), 'flash': request.session.pop('ts_flash', None),
             'can_invite_participants': member.can_invite_participants(),
             'checklist': self._checklist(member, ws),
-            'members': ws.member_ids.filtered('active') if member.can_assign() else request.env['ts.workspace.member'],
+            'members': ws.member_ids.filtered('active') if member.has_perm('members:invite') else request.env['ts.workspace.member'],
             'pending_invites': request.env['ts.member.invite'].sudo().search(
-                [('workspace_id', '=', ws.id), ('state', '=', 'pending')]) if member.can_assign() else None,
+                [('workspace_id', '=', ws.id), ('state', '=', 'pending')]) if member.has_perm('members:invite') else None,
             'new_invite': request.env['ts.member.invite'].sudo().search(
                 [('id', '=', int(kw['minv'])), ('workspace_id', '=', ws.id)], limit=1)
-            if member.can_assign() and (kw.get('minv') or '').isdigit() else None,
-            'role_choices': role_choices(ws) if member.can_assign() else [],
+            if member.has_perm('members:invite') and (kw.get('minv') or '').isdigit() else None,
+            'role_choices': role_choices(ws) if member.has_perm('members:invite') else [],
         })
 
     def _checklist(self, member, ws):
-        if not member.can_assign():
+        if not member.has_perm('members:invite'):
             return []
         others = len(ws.member_ids.filtered(lambda m: m.active and m != member)) + \
             request.env['ts.member.invite'].sudo().search_count([('workspace_id', '=', ws.id)])

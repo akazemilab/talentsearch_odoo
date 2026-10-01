@@ -57,7 +57,8 @@ class TsPanel(http.Controller):
         try:
             ws = request.env['ts.workspace'].ts_panel_create(
                 request.env.user, post.get('name'), post.get('kind'), solo_as=post.get('solo_as'),
-                terms=bool(post.get('terms')), escalation_ok=bool(post.get('escalation_ok')))
+                terms=bool(post.get('terms')), escalation_ok=bool(post.get('escalation_ok')),
+                license_number=post.get('license_number'))
         except (UserError, ValidationError) as e:
             return request.render('ts_org.panel_new', {
                 'error': str(e.args[0] if e.args else e), 'vals': vals, 'page_name': 'ts_panel'})
@@ -69,7 +70,7 @@ class TsPanel(http.Controller):
     def settings(self, ws_id, **post):
         _ts_site_or_404()
         member = _membership(ws_id)
-        if not member.can_assign():
+        if not member.has_perm('panel:profile'):
             raise request.not_found()
         logo = request.httprequest.files.get('logo')
         try:
@@ -99,7 +100,7 @@ class TsPanel(http.Controller):
         _ts_site_or_404()
         member = _membership(ws_id)
         inv = request.env['ts.member.invite'].sudo().search([('id', '=', inv_id), ('workspace_id', '=', ws_id)], limit=1)
-        if not inv or not member.can_assign():
+        if not inv or not member.has_perm('members:invite'):
             raise request.not_found()
         inv.action_revoke()
         return request.redirect('/my/workspaces/%s#ts-members' % ws_id)

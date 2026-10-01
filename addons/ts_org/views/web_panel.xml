@@ -115,6 +115,8 @@
                                         <option value="psychologist" t-att-selected="'selected' if vals.get('solo_as') == 'psychologist' else None">روان‌شناس یا متخصص بالینی</option>
                                         <option value="hr" t-att-selected="'selected' if vals.get('solo_as') == 'hr' else None">منابع انسانی</option>
                                     </select>
+                                    <label for="ts_p_lic">(فقط روان‌شناس یا متخصص بالینی) شمارهٔ پروانه یا نظام حرفه‌ای</label>
+                                    <input id="ts_p_lic" name="license_number" type="text" maxlength="60" dir="ltr"/>
                                     <label><input type="checkbox" name="escalation_ok" value="1"/> (فقط پنل بالینی) می‌پذیرم که پاسخ‌گویی فوری به نشانهٔ خطر بالینی با من است.</label>
                                     <label><input type="checkbox" name="terms" value="1" required="required"/> <a href="/panel/terms" target="_blank">شرایط استفاده</a> را خوانده و می‌پذیرم.</label>
                                     <button type="submit" class="ts-btn ts-btn--primary">ساخت پنل</button>

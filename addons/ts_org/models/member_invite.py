@@ -46,7 +46,7 @@ class TsMemberInvite(models.Model):
     @api.model
     def ts_create(self, by_member, role, phone_raw=None, email_raw=None):
         ws = by_member.workspace_id
-        if not by_member.can_assign():
+        if not by_member.has_perm('members:invite'):
             raise UserError('فقط مالک یا مدیر پنل می‌تواند همکار دعوت کند.')
         if role not in ROLES_BY_PURPOSE.get(ws.purpose, set()):
             raise UserError('این نقش برای این نوع پنل مجاز نیست.')
@@ -105,8 +105,8 @@ class TsMemberInvite(models.Model):
         if self.role in ('clinician', 'clinic_director') and not (license_number or '').strip():
             raise UserError('شمارهٔ پروانه یا نظام حرفه‌ای لازم است.')
         M = self.env['ts.workspace.member'].sudo()
-        if M.search_count([('workspace_id', '=', self.workspace_id.id), ('user_id', '=', user.id), ('role', '=', self.role)]):
-            raise UserError('شما قبلاً با این نقش عضو این پنل هستید.')
+        if M.search_count([('workspace_id', '=', self.workspace_id.id), ('user_id', '=', user.id), ('active', '=', True)]):
+            raise UserError('شما هم‌اکنون عضو فعال این پنل هستید؛ نقش را مالک پنل تغییر می‌دهد.')
         member = M.create({'workspace_id': self.workspace_id.id, 'user_id': user.id, 'role': self.role,
                            'license_number': (license_number or '').strip()[:60] or False})
         self.sudo().write({'state': 'accepted', 'accepted_at': fields.Datetime.now(), 'member_id': member.id})

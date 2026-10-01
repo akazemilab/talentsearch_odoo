@@ -199,7 +199,7 @@
                                     </aside>
                                 </div>
 
-                                <section t-if="member.can_assign()" id="ts-members" class="ts-card ts-card--soft">
+                                <section t-if="member.has_perm('members:invite')" id="ts-members" class="ts-card ts-card--soft">
                                     <h2 class="h5">اعضای پنل</h2>
                                     <ul>
                                         <li t-foreach="members" t-as="m"><strong t-out="m.user_id.name"/> · <t t-out="dict(m._fields['role'].selection).get(m.role)"/></li>
@@ -236,7 +236,7 @@
                                     </form>
                                 </section>
 
-                                <section t-if="member.can_assign()" id="ts-settings" class="ts-card ts-card--soft">
+                                <section t-if="member.has_perm('panel:profile')" id="ts-settings" class="ts-card ts-card--soft">
                                     <h2 class="h5">نام و لوگو</h2>
                                     <form t-attf-action="/my/workspaces/#{ws.id}/settings" method="post" enctype="multipart/form-data" class="ts-form">
                                         <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>

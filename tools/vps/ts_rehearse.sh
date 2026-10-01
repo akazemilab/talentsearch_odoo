@@ -64,7 +64,7 @@ GPID=$!
 NOCOMMIT=(tests_stage1.py tests_assessment.py)
 has ts_talent && NOCOMMIT+=(tests_talent.py)
 has ts_org && NOCOMMIT+=(tests_org.py tests_org_resp.py tests_panel.py tests_edge.py tests_signup.py)
-has ts_panel && NOCOMMIT+=(tests_pv2_0.py)
+has ts_panel && NOCOMMIT+=(tests_pv2_0.py tests_pv2_1.py)
 for f in "${NOCOMMIT[@]}"; do
   [ -f $REPO_DIR/tools/prod/$f ] || continue
   grep -q "cr.commit" $REPO_DIR/tools/prod/$f && { echo "!! $f commits; it cannot run beside the guard"; continue; }
@@ -108,6 +108,7 @@ if has ts_panel; then
   f1=$(fx); f2=$(fx); echo "$f1"
   if [[ "$f1" == FIXTURES* ]] && [ "$f1" = "$f2" ]; then echo "PASS  fixtures run twice with identical counts"; else echo "FAIL  fixtures differ between runs: [$f1] [$f2]"; fi
   echo "=== $(date +%T) http panel v2 S0"; http ts_http_pv2_0.py
+  echo "=== $(date +%T) http panel v2 S1"; http ts_http_pv2_1.py
 fi
 if has ts_kavenegar; then
   echo "=== $(date +%T) kavenegar tests (fake API, commits)"; orm tests_kavenegar.py

@@ -1,7 +1,7 @@
 {
     'name': 'Talent Search - Core',
     'summary': 'Workspaces, memberships, purpose separation and audit trail for Talent Search (website 2)',
-    'version': '20.0.1.0.0',
+    'version': '20.0.1.1.0',
     'category': 'Services/Talent Search',
     'author': 'EOT',
     'license': 'LGPL-3',

@@ -1,3 +1,4 @@
+from . import perms
 from . import assignment
 from . import attempt
 from . import panel

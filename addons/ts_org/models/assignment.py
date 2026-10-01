@@ -4,18 +4,17 @@ from datetime import timedelta
 from odoo import api, fields, models
 from odoo.exceptions import UserError, ValidationError
 
-# Who may do what inside a workspace (blueprint §4, purpose-bound roles).
-INVITE_ROLES = {'owner', 'hr_admin', 'hiring_manager', 'clinic_director', 'clinician', 'counselor'}
-VIEW_ROLES = INVITE_ROLES | {'reviewer'}
-# Roles that need a recorded professional verification before they can act.
-VERIFIED_ROLES = {'clinician', 'clinic_director'}
-# Education: the institute's owner and counselors read the participant report (never the answers).
-EDU_ROLES = {'owner', 'counselor'}
-# Owners and managers see every result of the workspace; other specialists see only
-# the participants they are responsible for (plus the unassigned queue where allowed).
+from .perms import roles_with
+
+# Who may do what inside a workspace now lives in perms.py (05_permissions_matrix.md). The sets below are kept,
+# derived from that table, for old callers; `admin` (new in Panel v2) is not in them on purpose.
 INVITE_TTL_DAYS = 30
-SEE_ALL_ROLES = {'owner', 'hr_admin', 'clinic_director', 'reviewer'}
-RESPONSIBLE_ROLES = INVITE_ROLES
+INVITE_ROLES = roles_with('invites:create') - {'admin', 'benefit_admin'}
+VIEW_ROLES = roles_with('results:summary') | {'reviewer'}
+VERIFIED_ROLES = {'clinician', 'clinic_director'}
+EDU_ROLES = roles_with('results:education')
+SEE_ALL_ROLES = roles_with('clients:read_all') - {'admin', 'benefit_admin'}
+RESPONSIBLE_ROLES = roles_with('clients:be_responsible')
 
 from odoo.addons.ts_assessment.models.loader import EMPLOYMENT_CATEGORIES  # noqa: F401 (single source)
 
@@ -231,40 +230,52 @@ class TsAssignment(models.Model):
         self.share_level = 'none'
         self.env['ts.audit.event'].log('assignment.share_revoke', self, workspace=self.workspace_id)
 
-    def visible_results(self, member):
-        """What `member` (ts.workspace.member) may see of this assignment's result.
-
-        Returns (level, results) with level in 'none' | 'summary' | 'clinical'."""
+    def result_level(self, member):
+        """How much of this invitation's result `member` may see (05_permissions_matrix.md section 5):
+        'none' | 'status' | 'summary' | 'education' | 'clinical'. First match wins."""
         self.ensure_one()
-        empty = self.env['ts.attempt.result']
-        if member.workspace_id != self.workspace_id or not member.can_act():
-            return 'none', empty
-        if not member.can_see(self):
-            return 'none', empty
-        if self.state != 'done' or self.share_level == 'none' or not self.attempt_id.released:
-            return 'none', empty
-        results = self.attempt_id.result_rows()
-        if self.purpose == 'clinical':
-            if self.share_level == 'clinical' and member.role in VERIFIED_ROLES:
-                return 'clinical', results
-            return 'none', empty
-        if self.purpose == 'employment' and self.share_level == 'summary' and member.role in VIEW_ROLES:
-            return 'summary', results
-        if self.purpose == 'education' and self.share_level == 'summary' and member.role in EDU_ROLES:
-            return 'education', results
-        return 'none', empty
+        if member.workspace_id != self.workspace_id or not member.can_act() or not member.can_see(self):  # step 1
+            return 'none'
+        at = self.attempt_id
+        if not at or at.state != 'done':                                                                   # 2, 3
+            return 'status'
+        if not at.released or self.share_level == 'none':                                                  # 5, 6
+            return 'status'
+        if self._ts_guardian_blocks():                                                                     # 7
+            return 'status'
+        purpose = self.purpose
+        if purpose == 'employment' and self.share_level == 'summary' and member.has_perm('results:summary'):  # 8
+            return 'summary'
+        if purpose == 'education' and self.share_level == 'summary' and member.has_perm('results:education'):  # 9
+            return 'education'
+        if purpose == 'clinical' and self.share_level == 'clinical' and member.has_perm('results:clinical'):  # 10
+            return 'clinical'
+        return 'status'
+
+    def _ts_guardian_blocks(self):
+        """Hook for S16: a minor's result is withheld while no guardian consent is recorded."""
+        return False
+
+    def visible_results(self, member):
+        """Old interface: (level, results) with level 'none' | 'summary' | 'education' | 'clinical'.
+        The levels 'none' and 'status' both give an empty result set and the old answer 'none'."""
+        self.ensure_one()
+        level = self.result_level(member)
+        if level in ('none', 'status'):
+            return 'none', self.env['ts.attempt.result']
+        return level, self.attempt_id.result_rows()
 
 
 class TsWorkspaceMember(models.Model):
     _inherit = 'ts.workspace.member'
 
     def can_act(self):
+        """May this member work in the panel at all: active, panel running, and (clinicians, clinic directors)
+        professionally verified. A suspended or draft panel gives False (A2, A3)."""
         self.ensure_one()
         if not self.active or self.workspace_id.state not in ('pilot', 'active'):
             return False
-        if self.role in VERIFIED_ROLES and self.verification_state != 'verified':
-            return False
-        return True
+        return not self._ts_unverified_pro()
 
     # ------------------------------------------------ a specialist leaves or changes role
     def _ts_release_clients(self):
@@ -289,7 +300,7 @@ class TsWorkspaceMember(models.Model):
         return super().unlink()
 
     def can_invite(self):
-        return self.can_act() and self.role in INVITE_ROLES
+        return self.has_perm('invites:create')
 
     def can_invite_participants(self):
         """Real participants can be invited only once the platform owner approved gated panels."""
@@ -299,37 +310,37 @@ class TsWorkspaceMember(models.Model):
     # ------------------------------------------------ responsible specialist
     def sees_all(self):
         self.ensure_one()
-        return self.role in SEE_ALL_ROLES
+        return self.has_perm('clients:read_all')
 
     def sees_unassigned(self):
-        """Owners and managers always; counselors only in education workspaces."""
+        """Owners, coordinators and managers always; counselors only in education panels."""
         self.ensure_one()
-        return self.sees_all() or (self.workspace_id.purpose == 'education' and self.role == 'counselor')
+        return self.has_perm('clients:read_unassigned')
 
     def can_assign(self):
-        """Who may hand a participant to a specialist: owner and managers."""
+        """Who may hand a participant to a specialist."""
         self.ensure_one()
-        return self.can_act() and self.sees_all() and self.role != 'reviewer'
+        return self.has_perm('clients:assign')
 
     def can_see(self, rec):
-        """rec is a ts.assignment or an imported ts.attempt with a responsible_id."""
+        """rec is a ts.assignment or an imported ts.attempt with a responsible_id (relationship rules R0-R3)."""
         self.ensure_one()
         if rec.workspace_id != self.workspace_id:
             return False
-        if self.sees_all():
+        if self.has_perm('clients:read_all'):
             return True
         if rec.responsible_id:
-            return rec.responsible_id == self
-        return self.sees_unassigned()
+            return rec.responsible_id == self and self.has_perm('clients:read_own')
+        return self.has_perm('clients:read_unassigned')
 
     @api.model
     def ts_default_responsible(self, workspace_id, user_id):
-        """The inviter is responsible if they are a specialist; an owner only when working alone."""
+        """The creator is responsible if their role can be; an owner only when working alone or practising."""
         m = self.sudo().search([('workspace_id', '=', int(workspace_id)), ('user_id', '=', user_id),
                                 ('active', '=', True)], limit=1)
         if not m or m.role not in RESPONSIBLE_ROLES or not m.can_act():
             return self.browse()
-        if m.role == 'owner' and self.sudo().search_count(
+        if m.role == 'owner' and not m.owner_practices and self.sudo().search_count(
                 [('workspace_id', '=', m.workspace_id.id), ('active', '=', True)]) > 1:
             return self.browse()
         return m

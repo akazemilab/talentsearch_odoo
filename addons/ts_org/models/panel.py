@@ -12,7 +12,7 @@ MAX_PANELS_PER_DAY = 3
 KINDS = {'school': 'education', 'org': 'employment', 'clinic': 'clinical'}
 SOLO_AS = {'counselor': 'education', 'psychologist': 'clinical', 'hr': 'employment'}
 ROLE_LABELS = {
-    'owner': 'مالک (مدیر اصلی)', 'hr_admin': 'مدیر منابع انسانی', 'hiring_manager': 'مدیر استخدام',
+    'owner': 'مالک پنل', 'admin': 'هماهنگ‌کنندهٔ پنل', 'hr_admin': 'مدیر منابع انسانی', 'hiring_manager': 'مدیر استخدام',
     'clinic_director': 'مدیر درمانگاه', 'clinician': 'متخصص بالینی', 'counselor': 'مشاور',
     'reviewer': 'بازبین', 'school_admin': 'مدیر مدرسه',
 }
@@ -48,7 +48,8 @@ class TsWorkspace(models.Model):
     _inherit = 'ts.workspace'
 
     @api.model
-    def ts_panel_create(self, user, name, kind, solo_as=None, terms=False, escalation_ok=False):
+    def ts_panel_create(self, user, name, kind, solo_as=None, terms=False, escalation_ok=False,
+                       license_number=None):
         """Self-service panel: the person becomes owner. Education is active at once; organizations and
         clinics start in the limited «pending approval» mode (panel + colleagues, no real participants)."""
         name = ' '.join((name or '').split())
@@ -82,7 +83,10 @@ class TsWorkspace(models.Model):
             'terms_version': TERMS_VERSION, 'terms_accepted_on': fields.Datetime.now(),
             'terms_accepted_by_id': user.id,
         })
-        self.env['ts.workspace.member'].sudo().create({'workspace_id': ws.id, 'user_id': user.id, 'role': 'owner'})
+        lic = (license_number or '').strip()[:60] or False
+        self.env['ts.workspace.member'].sudo().create({
+            'workspace_id': ws.id, 'user_id': user.id, 'role': 'owner',
+            'owner_practices': kind == 'solo', 'license_number': lic if kind == 'solo' else False})
         audit = self.env['ts.audit.event'].sudo()
         audit.log('workspace.self_create', ws, workspace=ws, purpose=purpose, kind=kind)
         audit.log('workspace.terms_accept', ws, workspace=ws, version=TERMS_VERSION,
