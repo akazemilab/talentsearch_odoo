@@ -22,11 +22,12 @@ org.write({'is_company': True})
 ws = env['ts.workspace'].search([('partner_id', '=', org.id)], limit=1) or env['ts.workspace'].create({'name': 'S16 http school', 'purpose': 'education', 'partner_id': org.id})
 ws.write({'approved_on': '2026-01-01 00:00:00'}); ws.state = 'pilot'
 ou = user('owner')
-env['ts.workspace.member'].search([('workspace_id', '=', ws.id), ('user_id', '=', ou.id)]) or env['ts.workspace.member'].create(
+om = env['ts.workspace.member'].search([('workspace_id', '=', ws.id), ('user_id', '=', ou.id)]) or env['ts.workspace.member'].create(
     {'workspace_id': ws.id, 'user_id': ou.id, 'role': 'owner'})
 mc = env['ts.panel.client'].search([('workspace_id', '=', ws.id), ('name', '=', 'S16 minor http')], limit=1) or env['ts.panel.client'].create(
     {'workspace_id': ws.id, 'name': 'S16 minor http', 'age_group': 'minor'})
 inst = env['ts.instrument'].search([('state', '=', 'published'), ('code', '!=', 'TALENT-INV-15')], limit=1)
+winst = om.allowed_instruments()[:1]
 T = env['ts.attempt']
 toks = []
 for n in ('adult', 'teen', 'noage'):
@@ -35,7 +36,7 @@ for n in ('adult', 'teen', 'noage'):
         {'user_id': u.id, 'instrument_id': inst.id, 'version_id': inst.current_version_id.id})
     toks.append(a.access_token)
 env.cr.commit()
-print('IDS', ws.id, mc.id, inst.id, *toks)
+print('IDS', ws.id, mc.id, winst.id, *toks)
 """ % L
 out = shell(code)
 mm = re.search(r'IDS (\d+) (\d+) (\d+) (\S+) (\S+) (\S+)', out)
