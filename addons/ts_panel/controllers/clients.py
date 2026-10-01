@@ -3,7 +3,6 @@ from urllib.parse import urlencode
 from odoo import http
 from odoo.exceptions import UserError, ValidationError
 from odoo.http import request
-from odoo.osv import expression
 
 from odoo.addons.ts_org.models.assignment import RESPONSIBLE_ROLES
 from odoo.addons.ts_org.models.panel import ROLE_LABELS
@@ -25,10 +24,11 @@ def visible_domain(me):
     dom = [('workspace_id', '=', me.workspace_id.id)]
     if me.has_perm('clients:read_all'):
         return dom
-    own = [('responsible_id', '=', me.id)] if me.has_perm('clients:read_own') else [('id', '=', 0)]
+    if not me.has_perm('clients:read_own'):
+        return dom + [('id', '=', 0)]
     if me.has_perm('clients:read_unassigned'):
-        own = expression.OR([own, [('responsible_id', '=', False)]])
-    return expression.AND([dom, own])
+        return dom + ['|', ('responsible_id', '=', me.id), ('responsible_id', '=', False)]
+    return dom + [('responsible_id', '=', me.id)]
 
 
 def _client_or_404(me, cid):
@@ -89,7 +89,7 @@ class TsPanelClients(http.Controller):
         return render_in_shell(
             'ts_panel.clients', me, 'clients', 'شرکت‌کنندگان', rows=rows, total=total, page=page, pages=pages,
             filters=FILTERS, flt=flt, q=q, sort=sort, desc=desc, url=url, source_labels=SOURCE_LABELS,
-            n_all=C.search_count(expression.AND([visible_domain(me), [('state', '=', 'active')]])))
+            n_all=C.search_count(visible_domain(me) + [('state', '=', 'active')]))
 
     @http.route('/my/workspaces/<int:ws_id>/clients/<int:cid>', type='http', auth='user', website=True, sitemap=False)
     def client_page(self, ws_id, cid, **kw):
