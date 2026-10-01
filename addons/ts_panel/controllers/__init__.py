@@ -15,3 +15,4 @@ from . import audit
 from . import portal
 from . import consent
 from . import lifecycle
+from . import sessions

@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- S18b: my sessions (ACC-3, ACC-4) and the sign-in risk notice on /signup (ACC-10) -->
+    <record id="tpl_my_sessions" model="ir.ui.view">
+        <field name="name">TS panel: my sessions</field>
+        <field name="type">qweb</field>
+        <field name="key">ts_panel.my_sessions</field>
+        <field name="website_id" ref="ts_website.website_ts"/>
+        <field name="arch" type="xml">
+            <t t-name="ts_panel.my_sessions">
+                <t t-call="website.layout" additional_title.f="نشست‌های من">
+                    <div id="wrap" class="ts-page">
+                        <section class="tsp-section container" style="max-width:760px">
+                            <h1 class="tsp-head__title">نشست‌های من</h1>
+                            <t t-call="ts_panel.my_nav" active="sessions"/>
+                            <p t-if="ok" class="tsp-flash" role="status" t-out="ok"/>
+                            <p t-if="error" class="tsp-flash tsp-flash--err" role="alert" t-out="error"/>
+                            <div class="ts-card" id="ses-list">
+                                <h2>دستگاه‌هایی که با حساب شما وارد شده‌اند</h2>
+                                <ul class="tsp-list">
+                                    <li t-foreach="sessions" t-as="s">
+                                        <span><t t-out="(s.platform or '').capitalize()"/> <t t-out="(s.browser or '').capitalize()"/></span>
+                                        <span class="ts-hint"> آخرین فعالیت: <t t-out="jalali(s.last_activity)"/></span>
+                                        <strong t-if="s.is_current"> (همین دستگاه)</strong>
+                                        <form t-else="" action="/my/sessions/revoke" method="post" style="display:inline" data-tsp-once="1">
+                                            <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                                            <input type="hidden" name="sid" t-att-value="s.id"/>
+                                            <button type="submit" class="ts-btn ts-btn--outline ts-btn--sm">خروج از این دستگاه</button>
+                                        </form>
+                                    </li>
+                                </ul>
+                                <p t-if="not sessions" class="ts-hint">نشستی ثبت نشده است.</p>
+                            </div>
+                            <div class="ts-card" id="ses-others">
+                                <h2>خروج از همهٔ دستگاه‌های دیگر</h2>
+                                <p>اگر دستگاهی را گم کرده‌اید یا به آن اطمینان ندارید، از همهٔ دستگاه‌های دیگر خارج شوید. این دستگاه وارد می‌ماند. برای این کار باید دوباره هویت خود را تأیید کنید.</p>
+                                <form action="/my/sessions/revoke" method="post" data-tsp-once="1">
+                                    <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                                    <input type="hidden" name="sid" value="others"/>
+                                    <button type="submit" class="ts-btn ts-btn--primary">خروج از دستگاه‌های دیگر</button>
+                                </form>
+                            </div>
+                        </section>
+                    </div>
+                </t>
+            </t>
+        </field>
+    </record>
+
+    <record id="tpl_my_nav_sessions" model="ir.ui.view">
+        <field name="name">TS panel: participant navigation, sessions link</field>
+        <field name="inherit_id" ref="ts_panel.tpl_my_nav"/>
+        <field name="mode">extension</field>
+        <field name="website_id" ref="ts_website.website_ts"/>
+        <field name="arch" type="xml">
+            <xpath expr="//a[@href='/my/privacy']" position="after">
+                <a href="/my/sessions" t-attf-class="ts-btn #{'ts-btn--primary' if active == 'sessions' else 'ts-btn--outline'}" t-att-aria-current="'page' if active == 'sessions' else None">نشست‌ها</a>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="tpl_signup_risk" model="ir.ui.view">
+        <field name="name">TS panel: signup, SMS sign-in risk notice</field>
+        <field name="inherit_id" ref="ts_sms.tpl_signup"/>
+        <field name="mode">extension</field>
+        <field name="website_id" ref="ts_website.website_ts"/>
+        <field name="arch" type="xml">
+            <xpath expr="//p[@t-if='msg']" position="after">
+                <p id="ts-sms-risk" class="ts-hint">ورود با کد پیامکی روش ضعیف‌تری از ورود با ایمیل و گذرواژه است. اگر ایمیل دارید، <a href="/web/login">با ایمیل وارد شوید</a>.</p>
+            </xpath>
+        </field>
+    </record>
+</odoo>

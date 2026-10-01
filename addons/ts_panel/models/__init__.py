@@ -26,3 +26,4 @@ from . import backoffice
 from . import lifecycle
 from . import retention
 from . import erase
+from . import security
