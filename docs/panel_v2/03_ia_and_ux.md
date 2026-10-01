@@ -287,8 +287,6 @@ Owner deactivates a member → confirmation shows how many clients return to the
 queue → clients released (existing behaviour), the member loses access at the next request,
 owner sees the queue count on the dashboard.
 
-## 7. Optional mockups
-Four clickable HTML mockups (owner dashboard, client list, client page with a result,
-participant home) can be produced as Design artifacts in the Talent Search visual style before
-coding, if the owner asks for them at the Phase 1 gate. They are not required for Phase 2:
-stage S2 builds the shell first and the owner can judge the real pages on a clone.
+## 7. Mockups
+The owner chose not to have separate mockups (decision D1, 2026-10-01). Stage S2 builds the
+shell first, and the owner judges the real pages on a clone before they ship.

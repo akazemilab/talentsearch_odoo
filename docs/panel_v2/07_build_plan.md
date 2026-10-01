@@ -98,7 +98,7 @@ the session. One stage is one working session in most cases, two for an L.
 | S20 | `cleanup` | v1 pages and styles removed | `ts_org,ts_sms,ts_panel` | S | no |
 
 Optional, only if the owner decides: **S14b** technical lock on clinical data for platform
-managers (D4); **S16b** guardian-link consent (D2).
+managers (D4). Guardian-link consent (S16b) is not built: the owner chose attestation (D2).
 
 A release the owner can announce exists after S3 (people), S8 (clients and invitations at
 scale), S13 (insight), S18 (trust).
@@ -138,8 +138,7 @@ are moved to the new pages (most are already covered by the `ts_http_pv2_<n>.py`
 S2–S5); the model-level and participant-side checks stay as they are.
 
 After S4 the old page's responsible dropdowns keep working because the overridden
-`_set_responsible` writes the client. If decision D5 is refused, imported results have no
-client: an inherited view hides the dropdown on their rows.
+`_set_responsible` writes the client (imported results have client rows too, decision D5).
 
 ## 3. Stages in detail
 
@@ -233,7 +232,7 @@ client: an inherited view hides the dropdown on their rows.
   roles without `members:read`.
 - **Risk**: low.
 
-### S4 — clients (size L) — decision D5 decides whether M4 runs (default: it does not)
+### S4 — clients (size L) — M4 runs (owner decision D5: yes, locked)
 - **Scope**: CLI-1, CLI-2 (assessments tab), CLI-4, CLI-7b, ORG-3, TBL-1…4, TBL-7…9, GRD-1
   (field only), L10N-4; migration M3–M5; G10, G11.
 - **Files**: `ts_panel/models/client.py` (incl. `contact_locked` and its model-level
@@ -246,9 +245,8 @@ client: an inherited view hides the dropdown on their rows.
   whitelist, pagination, posted search; client page; responsible POST), `views/web_clients.xml`,
   `panel.scss` (table, chips, pager, cards), back-office list view for clients (manager only).
 - The clients page is `W/clients`; the old page at `W` stays (section 2). The existing
-  responsible POST routes keep working by writing the client. If D5 is refused: M4 is
-  skipped, the clients page gets the «نتایج واردشده» tab, and the responsible control is
-  hidden for imported results (`04_data_model.md` section 5).
+  responsible POST routes keep working by writing the client. The 108 imported people appear
+  as locked clients (`contact_locked`) with a filter «واردشده».
 - **Tests**: ORM: backfill idempotent (run twice), import clients = distinct people, no SMS or
   notification rows created, 114 stay unreleased, `can_see(client)` R0–R3, linking rules 1–4
   incl. the automatic account link, default responsible rule per role, P20 (lock); HTTP: list
@@ -394,7 +392,7 @@ client: an inherited view hides the dropdown on their rows.
 - **Risk**: medium-high (stock portal routes are shared with eot.ir: rule 13).
 
 ### S16 — minors (size M)
-- **Scope**: GRD-1…GRD-4, GRD-7; G7, G8; migration M7; decision D2.
+- **Scope**: GRD-1…GRD-4, GRD-7; G7, G8; migration M7; attest mode (owner decision D2).
 - **Files**: client age-group rules, campaign and invite attestation, inherited views on the
   two consent pages (`ts_assessment.consent`, `ts_talent.consent`) for the minor wording (new
   consent text version; **the owner approves the Persian text before the ship**), age question

@@ -264,7 +264,7 @@ client is only a matching key and a contact detail for the panel's own use.
 | PRT-2 | Results list | MVP | `/my/assessments` keeps its URL; adds the sharing state per result | S15 |
 | PRT-0 | Share and revoke on the TALENT-INV-15 report | MVP | The block «اشتراک با سازمان» with «لغو اشتراک», and «ارسال نتیجه برای مشاورم», exist today only on the report of the other instruments (`ts_assessment.report`); the matrix report (`ts_talent.report`) has neither (gap G30). Added to the matrix report, with wording that says what the counselor sees for this instrument: «گزارش نتیجهٔ شما، بدون پاسخ‌هایتان» | S0 |
 | PRT-3 | Report page | exists | Both report templates get the "چه کسی این نتیجه را می‌بیند" block; plain-language limits text stays | S15 |
-| PRT-4 | Share with my counselor by code | exists | Limit from `ts_panel.share_max_panels`; consent record written | S15 |
+| PRT-4 | Share with my counselor by code | exists | Up to 3 panels at a time (owner decision D3, `ts_panel.share_max_panels`), each revocable on its own; consent record written | S15 |
 | PRT-5 | Player: autosave, resume, mobile | exists | Checked against ITC/ATP 3.3 and 3.9 in the S19 pass; resume card on the home page | S15, S19 |
 | PRT-6 | PDF | exists (print) | Print page verified in the S13 check | S13 |
 | PRT-7 | Notifications, account, privacy | MVP | NOT-1, ACC-1…7 | S10, S15 |
@@ -275,9 +275,9 @@ client is only a matching key and a contact detail for the panel's own use.
 | Id | Feature | Pri | Acceptance criteria | Stage |
 |---|---|---|---|---|
 | GRD-1 | Age group on the client | MVP | `adult / minor / unknown`; schools preselect minor | S4 (field), S16 (rules) |
-| GRD-2 | Attest mode (default, decision D2) | MVP | When a campaign or invitation includes minors, the member must tick «رضایت ولی یا سرپرست قانونی را گرفته‌ایم» → consent record `guardian_attest` with member and time. Without it the invitation cannot be sent | S16 |
+| GRD-2 | Attest mode (owner decision D2) | MVP | When a campaign or invitation includes minors, the member must tick «رضایت ولی یا سرپرست قانونی را گرفته‌ایم» → consent record `guardian_attest` with member and time. Without it the invitation cannot be sent | S16 |
 | GRD-3 | Minor's assent wording | MVP | The consent page for a minor uses age-appropriate text, says who will see the result, and records `assent`; new consent text version, owner approves the text | S16 |
 | GRD-4 | Self-taken by a minor | MVP | First consent page asks «۱۸ سال یا بیشتر دارید؟»; "no" shows the guardian notice and requires a tick that a parent or guardian agrees | S16 |
-| GRD-5 | Guardian-link mode | Next (or MVP if D2 says so) | Guardian opens a link, reads, confirms with name, relation and a mobile OTP → `guardian` record; the minor cannot start before it | S16b |
+| GRD-5 | Guardian-link mode | Later (owner chose attestation, D2) | Guardian opens a link, reads, confirms with name, relation and a mobile OTP → `guardian` record; the minor cannot start before it | — |
 | GRD-6 | Guardian sees the child's status and result | Next | Only as the consent defines | — |
 | GRD-7 | Parent-report instruments linked to a client | MVP | `account_is_guardian`; result attached to the child's client row | S16 |

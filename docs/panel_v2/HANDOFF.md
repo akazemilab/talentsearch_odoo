@@ -48,14 +48,18 @@ must not change.
 | T21 | Accepting a colleague invitation while already a member of that panel is refused; the owner changes roles |
 | T22 | Moved out of this plan (the brief listed them under "must have now"): co-brand colour, invoices list (comes with the paid phase), low-credit notification (meaningless while free), guardian's own view of the child's status and result, email as a notification channel (D8). Sessions list is in the plan (S18) but depends on Odoo's stock device models working for accounts without a password |
 
-### 2.2 Waiting for the owner (each has a default that Phase 2 uses if nothing else is said)
+### 2.2 Answered by the owner on 2026-10-01 (9 Mehr 1405)
+| # | Question | Answer | Affects |
+|---|---|---|---|
+| D1 | Clickable mockups of four screens before coding? | **No.** The owner judges the real pages on a clone after S2 | — |
+| D2 | Minors: how is the guardian's consent recorded? | **The panel attests** that it holds the guardian's consent, plus the minor's own assent text. Guardian-link mode (S16b) is not built | S16 |
+| D3 | May a self-taken result be shared with more than one panel at a time? | **Yes, up to 3 panels**; each share is revoked separately (`ts_panel.share_max_panels = 3`) | S15 |
+| D5 | Create client rows for the 108 historical people in workspace 1? | **Yes, locked**: names only; no invitation, message, contact detail, merge or release until the owner decides otherwise (T18). Migration M4 is approved | S4 |
+
+### 2.2b Still open (each has a default that Phase 2 uses if nothing else is said)
 | # | Question | Default | Affects |
 |---|---|---|---|
-| D1 | Clickable mockups of four screens before coding? | No; judge the real pages on a clone after S2 | Phase 1 only |
-| D2 | Minors: is the panel's attestation that it holds the guardian's consent enough, or must the guardian confirm through a link? | Attestation + the minor's assent | S16 (S16b if link) |
-| D3 | May a self-taken result be shared with more than one panel at a time? | One at a time (as today) | S15, one setting |
 | D4 | Make support/emergency access a technical lock on clinical data for platform managers? | No; logged procedure, owner notified | S14b |
-| D5 | **Create client rows for the 108 historical people in workspace 1** (names only; nothing released, no message, no account link; the rows are locked, T18)? | No answer = not done: the imports stay in a separate «نتایج واردشده» tab, as on today's page, and cannot be assigned to a specialist | S4 (does not block the stage) |
 | D6 | Group-report threshold 10 for schools (education practice) instead of 5? | 5 everywhere | one setting |
 | D7 | Retention table (`04_data_model.md` 6): approve or change periods, then switch the job on | As proposed, job off | S18 |
 | D8 | Email as a notification channel (needs a sender address and a mail setup that does not touch eot.ir)? | No email | after the plan |
@@ -64,7 +68,7 @@ Approving Phase 1 also approves the bookkeeping migrations M1–M3 and M5–M8 o
 `04_data_model.md` section 5: they add columns and rows about records that already exist
 (audit IP hashes, one client row per existing invitation, expiry dates, consent rows copied
 from existing consent fields, last-activity dates). They send nothing and change nothing a
-person can see. M4 (the 108 people) is D5 and is not covered by the general approval.
+person can see. M4 (the 108 people) was approved separately as D5.
 
 ### 2.3 Carried over, not blocking
 - Approve or reject the organization/clinic panels waiting in the pending queue.

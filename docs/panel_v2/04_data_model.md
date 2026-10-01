@@ -121,7 +121,7 @@ a warning in S0 and fails the preflight from S1, when the three calls above are 
 | `invitee_name`, `invitee_email`, `invitee_phone` | existing | Kept as the snapshot used when the invitation was sent; new invitations copy them from the client |
 | `share_level`, `accepted_at`, `user_id`, `attempt_id` | existing | Unchanged. The assignment **is** the share grant: level + who + revocable |
 | `share_changed_at` | Datetime | Set on accept, self-share and revoke |
-| Uniqueness | `models.UniqueIndex('(attempt_id, workspace_id) WHERE attempt_id IS NOT NULL')` | One share row per result per panel. The "one panel at a time" limit becomes the setting `ts_panel.share_max_panels` (decision D3) |
+| Uniqueness | `models.UniqueIndex('(attempt_id, workspace_id) WHERE attempt_id IS NOT NULL')` | One share row per result per panel. The "one panel at a time" limit becomes the setting `ts_panel.share_max_panels`, set to 3 by owner decision D3 |
 
 ### 2.5 `ts.attempt` (extended from `ts_panel`)
 | Field | Type | Notes |
@@ -400,22 +400,16 @@ every upgrade, each one a no-op the second time). Each prints counts only.
 | M1 (S1) | Audit rows: fill `ip_hash`, null `ip_address` | 75 | SQL |
 | M2 (S1) | Members: enforce one active row per person per panel; set `owner_practices` on owners of solo panels (panels whose `workspace.self_create` audit detail has `kind = solo`) | 2 | No live conflict. The de-duplication must run **before** the unique index is built, so it is a `ts_core` pre-migration script (`ts_core/migrations/20.0.1.1.0/pre-migrate.py`, with the module version raised to `20.0.1.1.0`), not a `<function>` record. Test clones may hold duplicates created by older suites |
 | M3 (S4) | For every `ts.assignment` without `client_id`, oldest first: find a client in the same panel by `user_id`, else by exact `phone`, else by exact `email`; else create one (`source='invite'`). Set `client_id`, `expires_at`, `channel` (`self_share` when `invited_by_id == user_id`, else `sms` if `sms_sent_at`, else `link`). The client's responsible = the `responsible_id` of its newest assignment that has one | 3 (none has a responsible member) | |
-| M4 (S4) | For every imported attempt (`source='import'`, has `workspace_id`): one client per `(workspace_id, person_id)` with `source='import'`, `partner_id = person_id`, `name` from the partner, **phone and email not copied**, `age_group='unknown'`. Set `attempt.client_id`. Carry over an existing `responsible_id` | 114 attempts → 108 clients in workspace 1 | Nothing is released, no message is sent, no account is linked. **Needs the owner's go-ahead (decision D5)** because it touches historical participant data |
+| M4 (S4) | For every imported attempt (`source='import'`, has `workspace_id`): one client per `(workspace_id, person_id)` with `source='import'`, `partner_id = person_id`, `name` from the partner, **phone and email not copied**, `age_group='unknown'`. Set `attempt.client_id`. Carry over an existing `responsible_id` | 114 attempts → 108 clients in workspace 1 | Nothing is released, no message is sent, no account is linked; the rows are `contact_locked`. **Approved by the owner on 2026-10-01 (decision D5)** |
 | M5 (S4) | Web attempts with a `workspace_id` and an assignment: `attempt.client_id = assignment.client_id` | 1 | |
 | M6 (S11) | One wallet per panel; one `debit_usage` (free) per existing `ts.usage.event` | 0 events | |
 | M7 (S16) | `ts.consent.record` rows from existing attempt consent fields and panel terms acceptance | 5 + 1 | `method='checkbox'` |
 | M8 (S18) | `ts.attempt.last_activity_at` backfill (2.5) | 121 | |
 
-If D5 is refused, an imported attempt has no client, so its related `responsible_id` is
-always empty: imported results are then seen by the members who see the unassigned queue
-(owner; counselors in education), exactly as today while nobody is assigned, and the
-"responsible" control is not shown for them.
-
-Owner approval: M4 is decision D5. M1–M3 and M5–M8 only add bookkeeping columns and rows about
-records that already exist; they change nothing a person can see and send nothing. Approving
-Phase 1 approves them; they are listed in `HANDOFF.md` so the approval is explicit. If D5 is
-refused, M4 does not run, imported results stay outside the client list and are reached from a
-separate «نتایج واردشده» tab on the clients page that lists the attempts as the v1 page does.
+Owner approval: M4 was approved as decision D5 (2026-10-01). M1–M3 and M5–M8 only add
+bookkeeping columns and rows about records that already exist; they change nothing a person
+can see and send nothing. Approving Phase 1 approves them; they are listed in `HANDOFF.md` so
+the approval is explicit.
 
 Rehearsal check for M4: client count per panel equals `count(distinct person_id)`; no
 `sms.sms` row and no `ts.notification` row is created by the migration; `released` stays False
@@ -490,7 +484,7 @@ Lists are read with `search(domain, order, limit, offset)` and `search_count`, n
 |---|---|---|
 | `ts_panel.credit_mode` | `free` | wallet |
 | `ts_panel.group_min_n` | `5` | group reports (D6: 10 for schools?) |
-| `ts_panel.share_max_panels` | `1` | self-share (D3) |
+| `ts_panel.share_max_panels` | `3` | self-share (owner decision D3) |
 | `ts_panel.invite_ttl_days` | `30` | assignments |
 | `ts_panel.open_link_max` | `60` | campaigns |
 | `ts_panel.reminder_after_days` | `7` | reminder if no deadline |
@@ -503,7 +497,7 @@ Lists are read with `search(domain, order, limit, offset)` and `search_count`, n
 | `ts_panel.job_inline_rows` | `500` | jobs |
 | `ts_panel.import_max_rows` | `2000` | CSV import |
 | `ts_panel.abandon_days` | `180` | attempts |
-| `ts_panel.minor_consent_mode` | `attest` | minors (D2) |
+| `ts_panel.minor_consent_mode` | `attest` | minors (owner decision D2) |
 | `ts_panel.import_contact_unlocked` | `False` | protection of the historical people (3.1) |
 | `ts_panel.retention_enabled` | `False` | retention job (section 6) |
 | `ts_core.audit_ip_salt` | generated | audit |
