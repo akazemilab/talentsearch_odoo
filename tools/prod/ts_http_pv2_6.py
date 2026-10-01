@@ -59,7 +59,7 @@ def panel(name, purpose, approved=True):
     org.write({'is_company': True})
     ws = env['ts.workspace'].search([('partner_id', '=', org.id)], limit=1) or env['ts.workspace'].create(
         {'name': name, 'purpose': purpose, 'partner_id': org.id})
-    ws.write({'purpose': purpose, 'approved_on': '2026-01-01 00:00:00' if approved else False})
+    ws.write({'approved_on': '2026-01-01 00:00:00' if approved else False})
     ws.state = 'pilot'
     return ws
 def member(ws, n, role):
@@ -69,7 +69,7 @@ def member(ws, n, role):
     if role in ('counselor', 'clinician'):
         m.write({'license_number': 'T-1', 'verification_state': 'verified'})
     return m
-A = panel('پنل S6 آموزشی', 'education'); G = panel('پنل S6 در انتظار', 'employment', approved=False)
+A = panel('پنل S6 آموزشی', 'education'); G = panel('پنل S6 کاری در انتظار', 'employment', approved=False)
 mo = member(A, 'owner', 'owner'); member(A, 'admin', 'admin'); m1 = member(A, 'c1', 'counselor'); m2 = member(A, 'c2', 'counselor')
 member(G, 'gowner', 'owner')
 C = env['ts.panel.client']; AS = env['ts.assignment'].sudo()
