@@ -13,7 +13,6 @@ from .clients import visible_domain
 
 PAGE = 25
 STATE_ORDER = ['invited', 'opened', 'accepted', 'in_progress', 'done', 'expired', 'declined', 'withdrawn']
-MAX_PER_HOUR = 200
 DRAFT = 'ts_invite_draft_%s'
 
 
@@ -230,9 +229,10 @@ class TsPanelInvites(http.Controller):
         if not d.get('instrument_id') or d['instrument_id'] not in me.allowed_instruments().ids:
             flash_error('سنجهٔ انتخاب‌شده برای این پنل مجاز نیست.')
             return request.redirect(back + '?step=2')
+        limit = request.env['ir.config_parameter'].sudo().get_int('ts_panel.invites_per_hour', 200) or 200
         since = fields.Datetime.now() - timedelta(hours=1)
-        if A.search_count([('workspace_id', '=', ws_id), ('invited_by_id', '=', request.env.user.id), ('create_date', '>=', since)]) >= MAX_PER_HOUR:
-            flash_error('در یک ساعت بیش از ۲۰۰ دعوت نمی‌توان ساخت. کمی بعد دوباره امتحان کنید.')
+        if A.search_count([('workspace_id', '=', ws_id), ('invited_by_id', '=', request.env.user.id), ('create_date', '>=', since)]) >= limit:
+            flash_error('در یک ساعت بیش از %s دعوت نمی‌توان ساخت. کمی بعد دوباره امتحان کنید.' % _fa(limit))
             return request.redirect('/my/workspaces/%s/invites' % ws_id)
         C = request.env['ts.panel.client'].sudo()
         vals = {'workspace_id': ws_id, 'instrument_id': d['instrument_id'], 'invited_by_id': request.env.user.id,

@@ -47,13 +47,37 @@ class TsPanelWorkspace(TsOrg):
             flash_error(OLD_ERRORS[kw['error']])
         if state in STATE_LABELS:
             return request.redirect('/my/workspaces/%s/invites?state=%s' % (ws_id, state))
-        return self._dashboard(member)
+        return self._dashboard(member, is_new=bool(kw.get('new')))
 
     @http.route('/my/workspaces/<int:ws_id>/legacy', type='http', auth='user', website=True, sitemap=False)
     def workspace_legacy(self, ws_id, state=None, **kw):
         return super().workspace(ws_id, state=state, **kw)
 
-    def _dashboard(self, member):
+    @http.route()
+    def invite_page(self, token, **kw):
+        res = super().invite_page(token, **kw)
+        a = request.env['ts.assignment'].sudo().search([('token', '=', token)], limit=1)   # ts-scope-ok: the secret token is the key of a public link
+        if a and not a.user_id and a.invite_state() == 'ok':
+            a.action_mark_opened()   # first visit of the link; a link preview may count too, so the panel says «بازشده», not «خوانده‌شده»
+        return res
+
+    def _setup_steps(self, member):
+        """The first-steps list of a new panel (moved from the old page), pointing at the new pages."""
+        ws = member.workspace_id
+        if not member.has_perm('members:invite'):
+            return []
+        base = '/my/workspaces/%s' % ws.id
+        others = len(ws.member_ids.filtered(lambda m: m.active and m != member))
+        others += request.env['ts.member.invite'].sudo().search_count([('workspace_id', '=', ws.id)])
+        first = request.env['ts.assignment'].sudo().search_count([('workspace_id', '=', ws.id)])
+        return [
+            ('پنل ساخته شد', True, None),
+            ('نام و لوگوی پنل', bool(ws.partner_id.image_1920), base + '/settings'),
+            ('دعوت اولین همکار', bool(others), base + '/members'),
+            ('دعوت اولین شرکت‌کننده' + (' (پس از تأیید)' if ws.gated else ''), bool(first), base + '/invites/new?fresh=1'),
+        ]
+
+    def _dashboard(self, member, is_new=False):
         if not member.has_perm('panel:view'):
             return require(member, 'panel:view', 'home')
         ws = member.workspace_id
@@ -65,6 +89,7 @@ class TsPanelWorkspace(TsOrg):
         tiles = [{'key': k, 'label': STATE_LABELS[k], 'n': counts[k],
                   'url': '/my/workspaces/%s/invites?state=%s' % (ws.id, k)} for k in STATE_ORDER]
         return render_in_shell('ts_panel.dashboard', member, 'home', 'داشبورد', tiles=tiles,
+                               checklist=self._setup_steps(member) if is_new or not sum(counts.values()) else [], is_new=is_new,
                                total=sum(counts.values()), gated=ws.gated, can_invite=member.can_act() and member.has_perm('invites:create'),
                                rejected=ws.rejected_on, rejection_note=ws.rejection_note)
 

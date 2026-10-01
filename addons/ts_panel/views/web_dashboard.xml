@@ -26,6 +26,15 @@
                                 می‌توانید پنل را کامل کنید و همکارانتان را دعوت کنید؛ دعوت شرکت‌کنندهٔ واقعی و دریافت نتیجه پس از تأیید تیم تلنت سرچ باز می‌شود.
                                 <t t-if="rejected"><br/>درخواست رد شد<t t-if="rejection_note">: <span t-out="rejection_note"/></t>. می‌توانید اطلاعات پنل را اصلاح کنید و با پشتیبانی تماس بگیرید.</t>
                             </section>
+                            <p t-if="is_new" class="ts-notice" role="status">پنل ساخته شد.</p>
+                            <section t-if="checklist" class="ts-card ts-card--soft" id="ts-checklist">
+                                <h2 class="h5">گام‌های راه‌اندازی</h2>
+                                <ol class="ts-checklist">
+                                    <li t-foreach="checklist" t-as="c" t-attf-class="#{'is-done' if c[1] else ''}">
+                                        <a t-if="c[2] and not c[1]" t-att-href="c[2]" t-out="c[0]"/><span t-else="" t-out="c[0]"/><span t-if="c[1]" class="tsp-sr"> (انجام شد)</span>
+                                    </li>
+                                </ol>
+                            </section>
                             <p t-if="not total" class="tsp-empty">هنوز دعوتی نفرستاده‌اید. با «دعوت تازه» اولین دعوت را بسازید.</p>
                             <ul class="tsp-stats" aria-label="شمار دعوت‌ها به تفکیک وضعیت">
                                 <li t-foreach="tiles" t-as="t">

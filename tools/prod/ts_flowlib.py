@@ -51,6 +51,18 @@ class NoRedirect(urllib.request.HTTPRedirectHandler):
         return None
 
 
+def follow(client, loc, hops=3):
+    """GET `loc` and follow up to `hops` redirects (the test client never does). Returns (status, location, body)."""
+    path = path_of(loc)
+    for _ in range(hops + 1):
+        st, loc, body = client.req(path)
+        if st in (301, 302, 303) and loc:
+            path = path_of(loc)
+            continue
+        break
+    return st, loc, body
+
+
 def path_of(loc):
     s = urllib.parse.urlsplit(loc)
     return s.path + (('?' + s.query) if s.query else '')

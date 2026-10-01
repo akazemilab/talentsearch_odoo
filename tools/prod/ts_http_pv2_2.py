@@ -70,7 +70,7 @@ want = {
 pages = {}
 for (n, w), items in want.items():
     c = login(n)
-    st, _, page = c.req('/my/workspaces/%s/home' % w)
+    st, _, page = c.req('/my/workspaces/%s' % w)
     pages[(n, w)] = (c, page)
     check('%s: dashboard opens' % n, st == 200 and 'Traceback' not in page, str(st))
     check('%s: menu has exactly the items of its permissions, help last' % n, menu(page) == items, str(menu(page)))
@@ -124,14 +124,14 @@ check('and the name did not change', 'NAME پنل S2 آموزشی' in name, name
 
 # unverified clinician
 u = login('unv')
-st, _, page = u.req('/my/workspaces/%s/home' % C)
-check('unverified clinician sees the notice page at W/home', st == 200 and 'در حال بررسی است' in page and menu(page) == ['داشبورد', 'راهنما'], '%s %s' % (st, menu(page)))
+st, _, page = u.req('/my/workspaces/%s' % C)
+check('unverified clinician sees the notice page on the panel address', st == 200 and 'در حال بررسی است' in page and menu(page) == ['داشبورد', 'راهنما'], '%s %s' % (st, menu(page)))
 check('the old page still answers 404 for them', u.req('/my/workspaces/%s' % C)[0] == 404)
 check('and settings is 403', u.req('/my/workspaces/%s/settings' % C)[0] == 403)
 
 # suspended panel
 shell("w = env['ts.workspace'].browse(%s); w.state = 'suspended'; env.cr.commit()" % B)
-st, _, page = pages[('hr', B)][0].req('/my/workspaces/%s/home' % B)
+st, _, page = pages[('hr', B)][0].req('/my/workspaces/%s' % B)
 check('suspended panel shows its notice page', st == 200 and 'موقتاً معلق' in page and menu(page) == ['داشبورد', 'راهنما'], '%s %s' % (st, menu(page)))
 shell("w = env['ts.workspace'].browse(%s); w.state = 'pilot'; env.cr.commit()" % B)
 

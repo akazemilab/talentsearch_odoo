@@ -147,7 +147,7 @@ st, loc, _ = hr.req('/my/workspaces/%s/invite' % ws_id, {'csrf_token': hr.csrf(p
 inv = [r for r in REQS if r[0] == 'sms/send'][n:]
 check('consented invite -> exactly one SMS', len(inv) == 1 and inv[0][1]['receptor'] == '09123335555', str(len(inv)))
 check('invite SMS carries invite link, no test content', inv and '/invite/' in inv[0][1]['message'] and 'فضای آزمون پیامک' in inv[0][1]['message'])
-st, _, page = hr.req(path_of(loc))
+st, _, page = lib.follow(hr, loc)
 check('dashboard confirms SMS sent', 'پیامک دعوت ارسال شد' in page)
 st, loc, _ = hr.req('/my/workspaces/%s/invite' % ws_id, {'csrf_token': hr.csrf(page), 'invitee_name': 'بدون پیامک', 'instrument_id': inst_id})
 check('invite without phone sends nothing', len([r for r in REQS if r[0] == 'sms/send']) == n + 1)
