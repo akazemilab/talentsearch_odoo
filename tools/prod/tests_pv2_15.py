@@ -152,4 +152,6 @@ check('the other person has no request of mine', not DR.sudo().search_count([('u
 check('an unknown request kind is refused', raises(lambda: DR.ts_open(me, 'sell')))
 check('the audit trail records the request without content', env['ts.audit.event'].sudo().search_count([('event_type', '=', 'data.request'), ('res_id', '=', er.id)]) == 1)
 
+check('the person is told in the notification centre', env['ts.notification'].sudo().search_count([('user_id', '=', me.id), ('type', '=', 'data_request_update')]) >= 1)
+
 print('SUMMARY %d/%d passed' % (sum(1 for _, ok in results if ok), len(results)))

@@ -52,6 +52,7 @@ class TsDataRequest(models.Model):
             if job.state == 'done':
                 req.decision_code = 'done'
         self.env['ts.audit.event'].sudo().log('data.request', req, kind=kind)
+        self.env['ts.notification']._notify(user, 'data_request_update', '/my/privacy/jobs/%s' % req.job_id.id if req.job_id else '/my/privacy')
         return req
 
     # ------------------------------------------------------------------ the export content
