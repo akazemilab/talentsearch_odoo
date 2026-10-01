@@ -15,6 +15,7 @@ def check(name, ok, detail=''):
 
 
 def raises(fn, exc=(UserError, ValidationError, psycopg2.IntegrityError)):
+    env.flush_all()
     try:
         with env.cr.savepoint():
             fn()
