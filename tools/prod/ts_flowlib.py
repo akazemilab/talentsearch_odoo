@@ -74,7 +74,18 @@ class Client:
         self.jar = http.cookiejar.CookieJar()
         self.op = urllib.request.build_opener(urllib.request.HTTPCookieProcessor(self.jar), NoRedirect())
 
-    def req(self, path, data=None):
+    OLD_RESULT = re.compile(r'^/my/workspaces/\d+/(a|p)/\d+$')
+
+    def req(self, path, data=None, follow_old=True):
+        """One request. S13 moved the result pages: the old `W/a/<id>` and `W/p/<id>` GET routes redirect to
+        `W/clients/<c>/r/<attempt>`; older suites still ask for the old URLs, so that one redirect is followed
+        (follow_old=False shows the redirect itself)."""
+        st, loc, body = self._req(path, data)
+        if follow_old and data is None and st in (302, 303) and self.OLD_RESULT.match(path.split('?')[0]) and '/clients/' in loc:
+            return self._req(urllib.parse.urlsplit(loc).path)
+        return st, loc, body
+
+    def _req(self, path, data=None):
         body = urllib.parse.urlencode(data).encode() if data is not None else None
         path = urllib.parse.quote(path, safe="/?=&%:#;,+")  # hrefs carry raw Persian slugs
         r = urllib.request.Request(BASE + path, data=body, headers={'Host': self.host, 'X-Forwarded-Proto': 'https'})

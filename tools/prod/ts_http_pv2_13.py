@@ -142,9 +142,9 @@ check('the page asked to print marks itself for the print script', 'data-tsp-aut
 check('a plain visit does not', 'data-tsp-autoprint' not in get(hr, RP)[1])
 
 # ---- the old routes land on the new page
-st, loc, _ = hr.req('%s/a/%s' % (WB, pa))
+st, loc, _ = hr.req('%s/a/%s' % (WB, pa), follow_old=False)
 check('the old invitation result URL redirects to the new page', st in (302, 303) and (loc or '').endswith('/r/%s' % pat), '%s %s' % (st, loc))
-st, loc, _ = own.req('%s/p/%s' % (WA, tat))
+st, loc, _ = own.req('%s/p/%s' % (WA, tat), follow_old=False)
 check('the old profile URL redirects to the new page', st in (302, 303) and (loc or '').endswith('/r/%s' % tat), '%s %s' % (st, loc))
 
 # ---- entry page and menu
