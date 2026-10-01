@@ -20,6 +20,10 @@ has(){ [[ $ALL == *" $1 "* ]]; }
 
 exec 8>$J/slot$SLOT.lock
 flock -n 8 || { echo "!! slot $SLOT is busy ($(cat $J/slot$SLOT.owner 2>/dev/null)); use another TS_SLOT"; exit 2; }
+# capacity rule (4 cores): at most 2 rehearsals at once, and only 1 while a ship runs (live visitors first)
+busy=0; for s in 0 1 2; do [ $s != $SLOT ] && ! flock -n $J/slot$s.lock true 2>/dev/null && ! grep -q "^ship" $J/slot$s.owner 2>/dev/null && busy=$((busy+1)); done
+shipping=$(ssh $P "pgrep -f '[t]s_ship.sh' >/dev/null && echo 1 || echo 0")
+if [ $busy -ge 2 ] || { [ "$shipping" = 1 ] && [ $busy -ge 1 ]; }; then echo "!! capacity: $busy other rehearsal(s) running, ship running: $shipping"; exit 2; fi
 echo "$DB pid $$ since $(date +%T)" > $J/slot$SLOT.owner
 trap 'rm -f $J/slot$SLOT.owner' EXIT
 echo "=== $(date +%T) slot $SLOT: $DB on :$PORT, stage $STAGE, repo $REPO_DIR ($(git -C $REPO_DIR rev-parse --short HEAD) $(git -C $REPO_DIR branch --show-current))"
