@@ -222,3 +222,9 @@ Data step (owner-only, NOT in code): approve workspace 1, set pilot, add the cou
 - Tests: `tests_pv2_6.py`, `ts_http_pv2_6.py` (48 checks); older suites moved to `/legacy` and to stored expiry. Rehearsal eot_ts36s (second run): eot.ir UNCHANGED, portal UNCHANGED, unexpected failures 0. Ship `pv2s6` (commit c722bb9): eot.ir UNCHANGED live.
 - Deviations: attempt state `stopped` on withdraw is deferred to S18; the QR check has no decoder; `opened` can be set by link previews; `ts.job` gets a `draft` state in S8.
 - Lessons: when a page moves, move the old suites that read it in the same stage; stored expiry replaces read-time age; a kept clone on a slot's port blocks the rehearsal; a stale ts_shot tunnel on 18071 needs `fuser -k`.
+
+## pv2s7 — Panel v2, stage S7 campaigns (2026-10-01)
+
+- `ts_panel` 20.0.4.0.0: `ts.campaign` (group invitation and open link), pages `W/campaigns`, `/new`, `/<id>`, `/sheet`, `/qr.png`, public `/c/<token>` and `/c/<token>/join`, button «دعوت گروه» on the groups page. Both launch and join are refused on gated panels; locked (import), archived and busy clients are skipped with the reason shown.
+- Tests: `tests_pv2_7.py` (36 ORM), `ts_http_pv2_7.py` (48 HTTP, fake Kavenegar, SMS sender patched in ORM). Rehearsal eot_ts37r (second run, after adding `# ts-scope-ok` comments): eot.ir UNCHANGED, portal UNCHANGED, unexpected failures 0. Ship `pv2s7` (commit 0f70cf3): eot.ir UNCHANGED live.
+- Lessons: `ts check` run in the main repo does not check a worktree's new files, so run it inside the worktree; HTTP-test SQL inside `% L` strings needs `%%`; menu tests must not depend on later menu items.
