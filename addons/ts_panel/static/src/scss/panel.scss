@@ -70,6 +70,9 @@
     .tsp-subnav__item:hover { background: var(--brand-soft); color: var(--brand-deep); text-decoration: none; }
     .tsp-subnav__item.is-on { background: var(--brand-deep); border-color: var(--brand-deep); color: var(--white); }
 
+    #ts-home-going li, #ts-home-results li, #ts-home-invites li { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: var(--space-2) var(--space-4); padding-block: var(--space-2); border-block-end: 1px solid var(--line); }
+    #ts-home-going li:last-child, #ts-home-results li:last-child, #ts-home-invites li:last-child { border-block-end: 0; }
+
     // ---------- page head, flash, empty ----------
     .tsp-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-start; gap: var(--space-3) var(--space-6); }
     .tsp-head > div:first-child { min-inline-size: 0; flex: 1 1 320px; }
