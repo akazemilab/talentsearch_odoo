@@ -315,3 +315,19 @@ Data step (owner-only, NOT in code): approve workspace 1, set pilot, add the cou
 
 - `ts_panel` 20.0.17.0.0 (ship label `pv2s20`, commit 325b177): the unused first-steps helper `_setup_steps` removed. Rehearsal reh65: 1369/1369, guard and portal UNCHANGED. Ship: OK, eot.ir UNCHANGED.
 - Deliberately NOT done: `W/legacy`, `ts_org.tpl_workspace` / `tpl_assignment` and `ts_sms.tpl_workspace_sms` stay. Nine old suites test responsible-assignment, invite and phone-card behaviour through W/legacy; deleting the page means moving those checks to the new pages first. Open decision for the owner.
+
+## ui1 — Design system v2, layout modes, panel navigation (2026-10-02)
+
+- `ts_website` 20.0.2.0.0, `ts_org` 20.0.4.0.0, `ts_panel` 20.0.17.0.0 (ship label `ui1`, commit 8f39565). Estedad + Vazirmatn variable fonts with Persian digits mapped onto 0-9 (built with `tools/fonts/build_fd.py` + `woff2enc.js`), design tokens v2, three layout modes (marketing / app / focus / auth) decided from the path, compact app bar, slim footer, panel rail on wide screens + drawer and bottom tab bar on phones (fixes the invisible desktop menu: `panel.js` had hidden the list for every width), Persian sign-in form for website 4, home page with the five-angle profile figure, pricing page «پنل رایگان / همیار تفسیر به‌زودی», `/panel` copy, website menu reduced to six items.
+- Benchmark and plan: `docs/panel_v2/09_ui_benchmark.md`. Rehearsal reh66: guard and portal UNCHANGED, two stale checks rewritten. Ship: OK, eot.ir UNCHANGED.
+
+## ui2 — Panel pages, portal and player polish, inner pages (2026-10-02)
+
+- `ts_website`, `ts_assessment`, `ts_panel` (ship label `ui2`, commit eeb1b11): clients page order with a folding saved-views card, one-row search, scrolling filter chips and wizard steps, tables in cards, 44 px controls everywhere, participant pills, player sticky progress and sticky actions on phones, option-label contrast, inner page hero without the eyebrow label. Rehearsal reh67: 1387/1387, guard and portal UNCHANGED. Ship: OK, eot.ir UNCHANGED.
+- Lessons: `.ts-band` existed twice (CTA band and score pill); `hasclass()` needs a static class; `ts_shot.py` must open one tunnel per clone port.
+
+## pv3a — Client portal v3, first release (2026-10-02)
+
+- `ts_website` 20.0.3.0.0, `ts_org` 20.0.5.0.0, `ts_assessment` 20.0.3.0.0, `ts_panel` 20.0.20.0.0 (ship label `pv3a`): see `docs/portal_v3/02_handoff.md`. Home with one dominant action, four-item navigation, account hub, consent «چه کسی می‌بیند» from the real invitation, submission block, unavailable-result page (no redirect loop), report lead + folded details + same-instrument history, grouped results list, quiet layout for invitations, visible sharing checkbox, site-wide status colours, Latin digits for identifiers.
+- Tests: `ts_http_pv3.py` (24), older suites green; shots at 320/390/430/768/1280. Rehearsal reh68 and ship: see HANDOFF.
+

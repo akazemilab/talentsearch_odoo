@@ -7,8 +7,8 @@ explicit approval («تأیید فاز ۱»). While it says DRAFT, Phase 2 must 
 must not change.
 
 - Design written: 2026-10-01 (9 Mehr 1405). Approved by the owner 2026-10-01 (defaults for D4, D6, D7, D8 accepted).
-- Last finished stage: **S20 `cleanup` (lite)** (shipped 2026-10-02, label `pv2s20`). Phase 2 build is complete; see the open items.
-- **Next: none scheduled.** Open items: (1) owner approval of the minors wording (`TS-GUARDIAN-1405-07-v1`, `TS-MINOR-1405-07-v1`); (2) retention ships OFF (`ts_panel.retention_enabled`), abandoned attempts and audit purge are report-only; (3) clinical erase = legal hold (L2); (4) W/legacy and old ts_org templates kept (migrate old suites first); (5) no headless 1280/375 px audit beyond the HTTP scan; (6) eot.ir old-server incident root cause still open.
+- Last finished stage: **pv3a** — client portal v3 first release (2026-10-02), after ui1 and ui2 (design system v2). Panel v2 S1–S20 complete.
+- **Next: none scheduled.** Open items: (1) owner approval of the minors wording (`TS-GUARDIAN-1405-07-v1`, `TS-MINOR-1405-07-v1`); (2) retention ships OFF (`ts_panel.retention_enabled`), abandoned attempts and audit purge are report-only; (3) clinical erase = legal hold (L2); (4) W/legacy and old ts_org templates kept (migrate old suites first); (5) no headless 1280/375 px audit beyond the HTTP scan; (6) eot.ir old-server incident root cause still open. (7) Portal v3 open dependencies: `docs/portal_v3/02_handoff.md` (release queue for clinical results, notification action/info split, stock `/my/security` page).
 
 ## 1. Read in this order (Phase 2)
 1. This file.
@@ -164,5 +164,8 @@ The full list is `06_gap_analysis.md` section 2.
 | S18b | security | 2026-10-01 | ab96600 | Idle timeout, sessions page, 15-char password (website 4), SMS notice. Rehearsal reh63 green. Ship OK, eot.ir UNCHANGED. |
 | S19 | help-a11y | 2026-10-02 | 52bd0ca | Help center, contextual help, scan test, trust text. Rehearsal reh64b green. Ship OK, eot.ir UNCHANGED. |
 | S20 | cleanup (lite) | 2026-10-02 | 325b177 | Unused helper removed; legacy page kept. Rehearsal reh65 green. Ship OK, eot.ir UNCHANGED. |
+| ui1 | design system v2 | 2026-10-02 | 8f39565 | Fonts with Persian digits, layout modes, panel rail/drawer/tab bar, home + pricing, Persian sign-in. Ship OK, eot.ir UNCHANGED. |
+| ui2 | panel/portal/player polish | 2026-10-02 | eeb1b11 | Clients page, chips, tables, player sticky actions, pills. Ship OK, eot.ir UNCHANGED. |
+| pv3a | client portal v3 | 2026-10-02 | — | Home next action, navigation, consent who-sees, submission block, unavailable page, report lead/history. |
 | S15 | portal | 2026-10-01 | aeb1ec4 | Participant home/account/sharing/privacy, consent ledger, data requests. Rehearsal eot_ts58r green; ship compare noisy because of concurrent eot.ir work. |
 | S14 | audit | 2026-10-01 | 39329d5 | Panel audit page + CSV, support access, who-viewed list. Rehearsal eot_ts55r green, eot.ir UNCHANGED. |
