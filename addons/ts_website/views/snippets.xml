@@ -10,7 +10,7 @@
             <t t-name="ts_website.cta">
                 <section class="ts-section">
                     <div class="ts-container">
-                        <div class="ts-band">
+                        <div class="ts-cta">
                             <div>
                                 <h2 t-out="cta_title or 'از یک گفت‌وگوی کوتاه شروع کنیم'"/>
                                 <p t-out="cta_text or 'نیاز شما را می‌شنویم و می‌گوییم تلنت سرچ کجا کمک می‌کند و کجا نه.'"/>

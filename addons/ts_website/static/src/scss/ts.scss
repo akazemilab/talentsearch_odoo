@@ -136,6 +136,9 @@
     .ts-appnav a { display: inline-flex; align-items: center; gap: 6px; min-block-size: 40px; padding: 6px 12px; border-radius: 10px; text-decoration: none; color: var(--ink-2); font-weight: 600; font-size: var(--fs-1); }
     .ts-appnav a:hover, .ts-appnav a[aria-current='page'] { background: var(--brand-soft); color: var(--brand-deep); }
     .ts-appnav svg { inline-size: 20px; block-size: 20px; flex: none; }
+    .ts-appnav a { position: relative; order: 2; }
+    .ts-appnav a[href^='/my/workspaces'], .ts-appnav a[href='/my/notifications'] { order: 1; }
+    .ts-appnav__badge { position: absolute; inset-block-start: 2px; inset-inline-end: 2px; min-inline-size: 18px; block-size: 18px; padding: 0 5px; border-radius: 999px; background: var(--brand-bright); color: var(--white); font-size: .68rem; font-weight: 700; display: grid; place-items: center; line-height: 1; }
     @media (max-width: 575.98px) { .ts-appnav a span { position: absolute; inline-size: 1px; block-size: 1px; overflow: hidden; clip-path: inset(50%); } .ts-appnav a { padding: 6px 10px; } }
 
     // ---------- hero ----------
@@ -166,7 +169,7 @@
 
     // the profile figure: five scales of one invented person, nothing real
     .ts-profile { background: var(--mist); border-radius: var(--radius-xl); padding: clamp(18px, 3vw, 28px); display: grid; gap: 14px; box-shadow: var(--shadow-1); }
-    .ts-profile__head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; font-size: var(--fs-1); color: var(--muted); }
+    .ts-profile__head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 4px 12px; font-size: var(--fs-1); color: var(--muted); }
     .ts-profile__head strong { color: var(--ink); font-family: var(--font-display); font-size: var(--fs-3); }
     .ts-profile__rows { display: grid; gap: 10px; margin: 0; padding: 0; list-style: none; }
     .ts-profile__row { display: grid; grid-template-columns: 5.5em minmax(0, 1fr) 2.2em; align-items: center; gap: 12px; font-size: var(--fs-1); }
@@ -241,15 +244,18 @@
     .ts-list-check li::before { content: ''; position: absolute; inset-inline-start: 0; inset-block-start: .6em; inline-size: 14px; block-size: 8px; border-inline-start: 2.5px solid var(--success); border-block-end: 2.5px solid var(--success); transform: rotate(-45deg); }
     .ts-list-no li::before { content: ''; inline-size: 12px; block-size: 12px; border: 0; background: linear-gradient(45deg, transparent 44%, var(--danger) 44%, var(--danger) 56%, transparent 56%), linear-gradient(-45deg, transparent 44%, var(--danger) 44%, var(--danger) 56%, transparent 56%); transform: none; inset-block-start: .5em; }
 
-    .ts-band { background: var(--brand-deep); color: var(--white); border-radius: var(--radius-xl); padding: clamp(28px, 5vw, 48px); display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 20px; }
-    .ts-band h2 { font-size: clamp(1.4rem, 2.6vw, 1.9rem); color: var(--white); }
-    .ts-band p { margin: 6px 0 0; color: #dfe2f6; max-inline-size: 48ch; }
+    .ts-cta { background: var(--brand-deep); color: var(--white); border-radius: var(--radius-xl); padding: clamp(28px, 5vw, 48px); display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 20px; }
+    .ts-cta > div { min-inline-size: 0; flex: 1 1 320px; }
+    .ts-cta h2 { font-size: clamp(1.4rem, 2.6vw, 1.9rem); color: var(--white); }
+    .ts-cta p { margin: 6px 0 0; color: #dfe2f6; max-inline-size: 48ch; }
+    .ts-cta .ts-btn--primary { background: var(--white); color: var(--brand-deep); }
+    .ts-cta .ts-btn--primary:hover { background: var(--brand-soft); color: var(--brand-deep); }
 
     // plans (free panel, pro soon)
     .ts-plans { display: grid; gap: 20px; grid-template-columns: 1fr; align-items: stretch; }
     @media (min-width: 800px) { .ts-plans { grid-template-columns: 1fr 1fr; } }
     .ts-plan { position: relative; display: flex; flex-direction: column; gap: 16px; padding: clamp(24px, 4vw, 36px); border-radius: var(--radius-xl); border: 1px solid var(--line); background: var(--white); }
-    .ts-plan--free { background: var(--mist); border-color: transparent; }
+    .ts-plan--free { background: var(--white); }
     .ts-plan--pro { border: 1.5px solid var(--brand-accent); }
     .ts-plan h3 { font-size: var(--fs-5); }
     .ts-plan__price { font-family: var(--font-display); font-size: var(--fs-7); font-weight: 800; color: var(--brand-deep); line-height: 1.1; }

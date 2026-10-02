@@ -2,22 +2,35 @@
 <odoo>
     <!-- Header: one role-aware link for people who belong to a panel (03_ia_and_ux.md 1.1). Website 4 only. -->
     <record id="layout_ts_panel_link" model="ir.ui.view">
-        <field name="name">TS panel: header link «پنل من»</field>
+        <field name="name">TS panel: header links (panel, notifications)</field>
         <field name="type">qweb</field>
         <field name="inherit_id" ref="ts_website.layout_ts"/>
         <field name="website_id" ref="ts_website.website_ts"/>
         <field name="priority">95</field>
         <field name="arch" type="xml">
             <data>
-                <xpath expr="(//a[@href='/my/assessments'])[1]" position="before">
-                    <a t-if="not request.env.user._is_public()" href="/my/notifications" class="ts-btn ts-btn--quiet" aria-label="اعلان‌ها">اعلان‌ها<t t-set="ts_unread" t-value="request.env.user._ts_unread_label()"/><span t-if="ts_unread" class="ts-pill ts-pill--info" t-out="ts_unread"/></a>
-
-                    <a t-if="request.env.user.ts_panel_home()" t-att-href="request.env.user.ts_panel_home()" class="ts-btn ts-btn--quiet">پنل من</a>
+                <!-- app bar: panel first, then notifications with the unread count -->
+                <xpath expr="//nav[@id='ts-appnav']" position="inside">
+                    <t t-set="ts_panel_url" t-value="request.env.user.ts_panel_home()"/>
+                    <a t-if="ts_panel_url" t-att-href="ts_panel_url" t-att-aria-current="'page' if ts_path.startswith('/my/workspaces') else None">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18M9 20V9"/></svg>
+                        <span>پنل</span>
+                    </a>
+                    <t t-set="ts_unread" t-value="request.env.user._ts_unread_label()"/>
+                    <a href="/my/notifications" t-att-aria-current="'page' if ts_path.startswith('/my/notifications') else None" t-att-aria-label="'اعلان‌ها' + ((' - ' + ts_unread + ' نخوانده') if ts_unread else '')">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15z"/><path d="M10 20a2 2 0 0 0 4 0"/></svg>
+                        <span>اعلان‌ها</span>
+                        <b t-if="ts_unread" class="ts-appnav__badge" t-out="ts_unread"/>
+                    </a>
                 </xpath>
-                <xpath expr="(//a[@href='/my/assessments'])[2]" position="before">
-                    <a t-if="not request.env.user._is_public()" href="/my/notifications" class="ts-btn ts-btn--quiet" aria-label="اعلان‌ها">اعلان‌ها<t t-set="ts_unread2" t-value="request.env.user._ts_unread_label()"/><span t-if="ts_unread2" class="ts-pill ts-pill--info" t-out="ts_unread2"/></a>
-
-                    <a t-if="request.env.user.ts_panel_home()" t-att-href="request.env.user.ts_panel_home()" class="ts-btn ts-btn--quiet">پنل من</a>
+                <!-- marketing menus (desktop and phone): one role-aware link for members -->
+                <xpath expr="(//div[hasclass('ts-nav__actions')])[1]" position="inside">
+                    <t t-set="ts_panel_url" t-value="request.env.user.ts_panel_home()"/>
+                    <a t-if="ts_panel_url" t-att-href="ts_panel_url" class="ts-btn ts-btn--outline">پنل من</a>
+                </xpath>
+                <xpath expr="(//div[hasclass('ts-nav__actions')])[2]" position="inside">
+                    <t t-set="ts_panel_url2" t-value="request.env.user.ts_panel_home()"/>
+                    <a t-if="ts_panel_url2" t-att-href="ts_panel_url2" class="ts-btn ts-btn--outline">پنل من</a>
                 </xpath>
             </data>
         </field>

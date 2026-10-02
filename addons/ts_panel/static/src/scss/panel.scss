@@ -76,7 +76,7 @@
     // ---------- stat tiles ----------
     .tsp-bar { display: block; height: 10px; min-width: 2px; background: var(--brand-deep); border-radius: 5px; }
     .tsp-stat small { color: var(--ink-2, #4a4a4a); }
-    .tsp-stats { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: var(--space-4); }
+    .tsp-stats { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: var(--space-3); }
     .tsp-stat { display: grid; gap: 2px; min-height: 96px; padding: var(--space-4); background: var(--white); border: 1px solid var(--line); border-radius: var(--radius-md); text-decoration: none; color: var(--ink); }
     .tsp-stat strong { font-size: 2rem; color: var(--brand-deep); line-height: 1.15; font-family: var(--font-display); font-weight: 800; }
     .tsp-stat span { color: var(--muted); }
