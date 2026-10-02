@@ -82,7 +82,7 @@ def rows(page):
 
 
 def menu(page):
-    return [re.sub(r'\s+', ' ', t).strip() for t in re.findall(r'<a[^>]*class="tsp-nav__item"[^>]*>(.*?)</a>', page, re.S)]
+    return [re.sub(r'\s+', ' ', re.sub(r'<[^>]+>', '', t)).strip() for t in re.findall(r'<a[^>]*class="tsp-nav__item"[^>]*>(.*?)</a>', page, re.S)]
 
 
 own = login('owner')

@@ -1,10 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <!-- Every view here carries website_id = website 2, so eot.ir (website 1)
-         never renders it. Priority 90 applies it after Odoo's own header /
-         footer template views. -->
+    <!-- Every view here carries website_id = website 4 (Talent Search), so eot.ir (website 1) never renders it.
+         Priority 90 applies it after Odoo's own header / footer template views.
+         Three layout modes (docs/panel_v2/09_ui_benchmark.md section 4), decided from the path:
+           marketing  public pages: full menu, full footer
+           app        /my/*, /help/roles: a quiet bar (logo, participant links, account), slim footer
+           focus      /take/*: logo only, no footer (the player keeps its own progress line)
+           auth       /web/login, /web/signup, /web/reset_password, /signup*: logo only, slim footer -->
     <record id="layout_ts" model="ir.ui.view">
-        <field name="name">Talent Search layout (website 2)</field>
+        <field name="name">Talent Search layout (website 4)</field>
         <field name="type">qweb</field>
         <field name="key">ts_website.layout_ts</field>
         <field name="inherit_id" ref="website.layout"/>
@@ -14,7 +18,8 @@
             <data>
                 <xpath expr="//head/meta[last()]" position="after">
                     <meta name="theme-color" content="#393E70"/>
-                    <link rel="preload" href="/ts_website/static/fonts/Vazirmatn-Variable.woff2" as="font" type="font/woff2" crossorigin=""/>
+                    <link rel="preload" href="/ts_website/static/fonts/Vazirmatn-FD-Var.woff2" as="font" type="font/woff2" crossorigin=""/>
+                    <link rel="preload" href="/ts_website/static/fonts/Estedad-FD-Var.woff2" as="font" type="font/woff2" crossorigin=""/>
                     <t t-call-assets="ts_website.assets_ts" t-js="false"/>
                     <t t-call-assets="ts_website.assets_ts_js" t-css="false"/>
                 </xpath>
@@ -22,55 +27,78 @@
                     <a class="o_skip_to_content ts-skip" href="#wrap" groups="!base.group_user">رفتن به محتوای اصلی</a>
                 </xpath>
                 <xpath expr="//header[@id='top']" position="replace">
+                    <t t-set="ts_path" t-value="request.httprequest.path"/>
+                    <t t-set="ts_mode" t-value="'focus' if ts_path.startswith('/take/') else ('auth' if (ts_path.startswith('/web/login') or ts_path.startswith('/web/signup') or ts_path.startswith('/web/reset_password') or ts_path.startswith('/signup')) else ('app' if (ts_path.startswith('/my') or ts_path.startswith('/help/roles')) else 'marketing'))"/>
                     <!-- o_no_autohide_menu + .top_menu: Odoo's frontend menu-autohide script expects header#top .top_menu (null error otherwise) -->
-                    <header id="top" class="ts-header o_no_autohide_menu" data-anchor="true">
+                    <header id="top" t-attf-class="ts-header o_no_autohide_menu ts-header--#{ts_mode} #{'ts-header--app' if ts_mode != 'marketing' else ''}" data-anchor="true" t-att-data-ts-mode="ts_mode">
                         <div class="ts-container ts-header__bar">
-                            <a href="/" class="ts-lockup" aria-label="تلنت سرچ، از خانوادهٔ EOT - صفحهٔ اصلی">
-                                <img src="/ts_website/static/img/talentsearch-logo.webp" width="44" height="44" alt=""/>
+                            <a href="/" class="ts-lockup" aria-label="تلنت سرچ - صفحهٔ اصلی">
+                                <img src="/ts_website/static/img/talentsearch-logo.webp" width="40" height="40" alt=""/>
                                 <span class="ts-lockup__text">
                                     <strong>تلنت سرچ</strong>
-                                    <small>از خانوادهٔ <bdi dir="ltr">EOT</bdi></small>
+                                    <small>سنجش روان‌شناختی، از خانوادهٔ <bdi dir="ltr">EOT</bdi></small>
                                 </span>
                             </a>
-                            <nav class="ts-dnav" aria-label="منوی اصلی">
-                                <ul class="ts-nav__list top_menu">
-                                    <t t-foreach="website.menu_id.child_id" t-as="m">
-                                        <li><a t-att-href="m.url" t-out="m.name" t-att-aria-current="'page' if request.httprequest.path == m.url else None"/></li>
-                                    </t>
-                                </ul>
-                                <div class="ts-nav__actions">
-                                    <a t-if="request.env.user._is_public()" href="/web/login" class="ts-btn ts-btn--quiet">ورود</a>
-                                    <t t-else=""><a href="/my/assessments" class="ts-btn ts-btn--quiet">سنجه‌های من</a><a href="/my" class="ts-btn ts-btn--quiet">حساب من</a></t>
-                                    <a href="/contact?topic=demo" class="ts-btn ts-btn--primary">درخواست جلسهٔ معرفی</a>
-                                </div>
-                            </nav>
-                            <div class="ts-nav">
-                                <button type="button" class="ts-nav__toggle" aria-expanded="false" aria-controls="ts-mnav" aria-label="منو">
-                                    <span class="ts-nav__bars" aria-hidden="true"/>
-                                    <span class="ts-nav__label">منو</span>
-                                </button>
-                                <nav id="ts-mnav" class="ts-nav__panel" aria-label="منوی اصلی" hidden="hidden">
-                                    <ul class="ts-nav__list">
-                                        <t t-foreach="website.menu_id.child_id" t-as="m">
-                                            <li><a t-att-href="m.url" t-out="m.name" t-att-aria-current="'page' if request.httprequest.path == m.url else None"/></li>
+                            <t t-if="ts_mode == 'marketing'">
+                                <t t-set="ts_menu" t-value="website.menu_id.child_id[:6]"/>
+                                <nav class="ts-dnav" aria-label="منوی اصلی">
+                                    <ul class="ts-nav__list top_menu">
+                                        <t t-foreach="ts_menu" t-as="m">
+                                            <li><a t-att-href="m.url" t-out="m.name" t-att-aria-current="'page' if ts_path == m.url else None"/></li>
                                         </t>
                                     </ul>
                                     <div class="ts-nav__actions">
                                         <a t-if="request.env.user._is_public()" href="/web/login" class="ts-btn ts-btn--quiet">ورود</a>
-                                        <t t-else=""><a href="/my/assessments" class="ts-btn ts-btn--quiet">سنجه‌های من</a><a href="/my" class="ts-btn ts-btn--quiet">حساب من</a></t>
-                                        <a href="/contact?topic=demo" class="ts-btn ts-btn--primary">درخواست جلسهٔ معرفی</a>
+                                        <a t-else="" href="/my" class="ts-btn ts-btn--quiet">حساب من</a>
+                                        <a href="/panel" class="ts-btn ts-btn--primary">ساخت پنل رایگان</a>
                                     </div>
                                 </nav>
-                            </div>
+                                <div class="ts-nav">
+                                    <button type="button" class="ts-nav__toggle" aria-expanded="false" aria-controls="ts-mnav" aria-label="منو">
+                                        <span class="ts-nav__bars" aria-hidden="true"/>
+                                        <span class="ts-nav__label">منو</span>
+                                    </button>
+                                    <nav id="ts-mnav" class="ts-nav__panel" aria-label="منوی اصلی" hidden="hidden">
+                                        <ul class="ts-nav__list">
+                                            <t t-foreach="website.menu_id.child_id" t-as="m">
+                                                <li><a t-att-href="m.url" t-out="m.name" t-att-aria-current="'page' if ts_path == m.url else None"/></li>
+                                            </t>
+                                        </ul>
+                                        <div class="ts-nav__actions">
+                                            <a t-if="request.env.user._is_public()" href="/web/login" class="ts-btn ts-btn--quiet">ورود</a>
+                                            <a t-else="" href="/my" class="ts-btn ts-btn--quiet">حساب من</a>
+                                            <a href="/panel" class="ts-btn ts-btn--primary">ساخت پنل رایگان</a>
+                                        </div>
+                                    </nav>
+                                </div>
+                            </t>
+                            <ul t-if="ts_mode != 'marketing'" class="top_menu" hidden="hidden"/>
+                            <nav t-if="ts_mode == 'app'" class="ts-appnav" id="ts-appnav" aria-label="حساب">
+                                <a href="/my/assessments" t-att-aria-current="'page' if ts_path.startswith('/my/assessments') else None">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M5 4h14v16H5z"/><path d="M9 9h6M9 13h6M9 17h3"/></svg>
+                                    <span>سنجه‌های من</span>
+                                </a>
+                                <a href="/my" t-att-aria-current="'page' if ts_path in ('/my', '/my/account') else None">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-6 8-6s8 2 8 6"/></svg>
+                                    <span>حساب من</span>
+                                </a>
+                                <a href="/web/session/logout?redirect=/" rel="nofollow">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M10 4H5v16h5M14 8l4 4-4 4M18 12H9"/></svg>
+                                    <span>خروج</span>
+                                </a>
+                            </nav>
+                            <a t-if="ts_mode == 'focus' and not request.env.user._is_public()" href="/my/assessments" class="ts-btn ts-btn--quiet ts-btn--sm">ذخیره و خروج</a>
                         </div>
                     </header>
                 </xpath>
                 <xpath expr="//footer[@id='bottom']" position="replace">
-                    <footer id="bottom" class="ts-footer" data-anchor="true">
+                    <t t-set="ts_path" t-value="request.httprequest.path"/>
+                    <t t-set="ts_mode" t-value="'focus' if ts_path.startswith('/take/') else ('auth' if (ts_path.startswith('/web/login') or ts_path.startswith('/web/signup') or ts_path.startswith('/web/reset_password') or ts_path.startswith('/signup')) else ('app' if (ts_path.startswith('/my') or ts_path.startswith('/help/roles')) else 'marketing'))"/>
+                    <footer t-if="ts_mode == 'marketing'" id="bottom" class="ts-footer" data-anchor="true">
                         <div class="ts-container ts-footer__grid">
                             <section>
                                 <p class="ts-footer__brand">تلنت سرچ <small>از خانوادهٔ <bdi dir="ltr">EOT</bdi></small></p>
-                                <p>خدمت سنجش روان‌شناختی مؤسسهٔ <bdi dir="ltr">EOT</bdi> برای سازمان‌ها و مراکز بالینی، با رضایت آگاهانه، حریم خصوصی و بازبینی انسانی.</p>
+                                <p>خدمت سنجش روان‌شناختی مؤسسهٔ <bdi dir="ltr">EOT</bdi> برای مدرسه‌ها، مراکز مشاوره، سازمان‌ها و مراکز بالینی؛ با رضایت آگاهانه، حریم خصوصی و بازبینی انسانی.</p>
                                 <p><a href="https://www.eot.ir/">بازگشت به <bdi dir="ltr">EOT</bdi></a></p>
                             </section>
                             <nav aria-label="راهنما">
@@ -80,29 +108,42 @@
                                     <li><a href="/sample-report">گزارش نمونه چگونه خوانده می‌شود</a></li>
                                     <li><a href="/evidence">شواهد و محدودیت‌ها</a></li>
                                     <li><a href="/help">پرسش‌های رایج</a></li>
+                                    <li><a href="/help/panel">راهنمای پنل</a></li>
                                 </ul>
                             </nav>
                             <nav aria-label="همکاری">
                                 <h2>همکاری</h2>
                                 <ul>
+                                    <li><a href="/panel">ساخت پنل رایگان</a></li>
+                                    <li><a href="/pricing">پنل رایگان و همیار تفسیر</a></li>
                                     <li><a href="/employers">برای سازمان‌ها</a></li>
                                     <li><a href="/clinics">برای مراکز بالینی</a></li>
-                                    <li><a href="/pricing">درخواست پیش‌فاکتور</a></li>
-                                    <li><a href="/about">درباره ما</a></li>
+                                    <li><a href="/about">دربارهٔ ما</a></li>
                                 </ul>
                             </nav>
                             <section>
                                 <h2>تماس</h2>
                                 <ul>
                                     <li><a href="mailto:info@eot.ir"><bdi dir="ltr">info@eot.ir</bdi></a></li>
-                                    <li><a href="tel:+982188174100"><bdi dir="ltr">021-88174100</bdi></a></li>
-                                    <li><a href="/privacy">حریم خصوصی</a> · <a href="/consent-policy">رضایت آگاهانه</a></li>
+                                    <li><a href="tel:+982188174100"><bdi dir="ltr">۰۲۱-۸۸۱۷۴۱۰۰</bdi></a></li>
+                                    <li><a href="/privacy">حریم خصوصی</a> و <a href="/consent-policy">رضایت آگاهانه</a></li>
                                 </ul>
                             </section>
                         </div>
                         <div class="ts-container ts-footer__legal">
-                            <p>تلنت سرچ ابزار تشخیص پزشکی یا خدمت اورژانسی نیست. در شرایط اضطراری با اورژانس <bdi dir="ltr">115</bdi> تماس بگیرید.</p>
+                            <p>تلنت سرچ ابزار تشخیص پزشکی یا خدمت اورژانسی نیست. در شرایط اضطراری با اورژانس <bdi dir="ltr">۱۱۵</bdi> تماس بگیرید.</p>
                             <p>© مؤسسهٔ <bdi dir="ltr">EOT</bdi></p>
+                        </div>
+                    </footer>
+                    <footer t-elif="ts_mode != 'focus'" id="bottom" class="ts-footer ts-footer--slim" data-anchor="true">
+                        <div class="ts-container ts-footer__row">
+                            <ul>
+                                <li><a href="/help/panel">راهنما</a></li>
+                                <li><a href="/privacy">حریم خصوصی</a></li>
+                                <li><a href="/consent-policy">رضایت آگاهانه</a></li>
+                                <li><a href="/contact">تماس با پشتیبانی</a></li>
+                            </ul>
+                            <p>© مؤسسهٔ <bdi dir="ltr">EOT</bdi> · تلنت سرچ ابزار تشخیص پزشکی نیست.</p>
                         </div>
                     </footer>
                 </xpath>

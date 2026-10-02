@@ -9,6 +9,7 @@ EMAIL_RE = re.compile(r'^[^@\s]+@[^@\s]+\.[^@\s]+$')
 TOPICS = {
     'demo': 'درخواست جلسهٔ معرفی',
     'quote': 'درخواست پیش‌فاکتور',
+    'pro': 'فهرست انتظار همیار تفسیر',
     'evidence': 'پرسش دربارهٔ شواهد',
     'support': 'پشتیبانی شرکت‌کننده',
     'other': 'موضوع دیگر',
@@ -27,7 +28,7 @@ class TsWebsite(http.Controller):
         name = (post.get('name') or '').strip()[:120]
         email = (post.get('email') or '').strip()[:160]
         topic = post.get('topic') if post.get('topic') in TOPICS else 'other'
-        back = '/pricing' if topic == 'quote' else '/contact'
+        back = '/pricing' if topic in ('quote', 'pro') else '/contact'
         if not name or not EMAIL_RE.match(email) or post.get('consent_contact') != '1':
             return request.redirect('%s?topic=%s&error=1' % (back, topic))
         segment = SEGMENTS.get(post.get('segment') or '', '')

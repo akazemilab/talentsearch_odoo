@@ -78,6 +78,7 @@ def scan(path, html):
             bad.append('forbidden: %s' % w)
     eng = re.findall(r'(?<![\w/#.@-])[A-Za-z]{4,}(?![\w/@.-])', visible(html))
     eng = [w for w in eng if w.lower() not in ('http', 'https', 'www', 'csv', 'xlsx', 'json', 'webp', 'png', 'jpg', 'jpeg', 'pdf', 'zip')]      # file-format names are codes
+    # ASCII digits are drawn as Persian by the FD fonts; still counted so templates keep preferring ۰-۹ (info in the detail, not a failure)
     if eng:
         bad.append('English: %s' % ','.join(sorted(set(eng))[:6]))
     labels = ' '.join(re.findall(r'(?is)<label\b[^>]*>.*?</label>', html))
@@ -139,5 +140,25 @@ for who in ('owner', 'cns'):
         bad = scan(r, html)
         check('%s: %s passes the text and accessibility scan' % (who, r.replace(W, 'W')), not bad, '; '.join(bad)[:300])
     check('%s: at least 8 pages were scanned' % who, seen >= 8, seen)
+
+# ---- public pages and the sign-in page (UI-1): Persian only, the marketing header, the Persian sign-in form
+pub = Client(TS)
+for r in ('/', '/assessments', '/panel', '/pricing', '/how-it-works', '/evidence', '/help', '/help/panel', '/contact', '/signup', '/web/login'):
+    st, html = get(pub, r)
+    bad = scan(r, html) if st == 200 else ['status %s' % st]
+    check('public: %s passes the text and accessibility scan' % r, not bad, '; '.join(bad)[:300])
+st, html = get(pub, '/')
+check('the home page uses the marketing header and the full footer', 'ts-header--marketing' in html and 'ts-footer__grid' in html)
+check('the home page shows the free panel and the coming interpretation helper', 'ساخت پنل رایگان' in html and 'همیار تفسیر' in html and 'به‌زودی' in html)
+st, html = get(pub, '/web/login')
+check('the sign-in page is the Persian card without the stock English form', 'ورود به تلنت سرچ' in html and 'Enter your' not in html and 'Passkey' not in html)
+st, html = get(pub, '/pricing')
+check('the pricing page presents the free panel and the pro plan', 'id="free"' in html and 'id="pro"' in html and 'خبرم کنید' in html)
+st, html = get(ow, '/my')
+check('participant pages use the app header and the slim footer', 'ts-header--app' in html and 'ts-footer--slim' in html and 'ts-footer__grid' not in html)
+st, html = get(ow, W)
+check('the panel shell has the rail, the drawer controls and the tab bar', 'id="tsp-rail"' in html and 'data-tsp-open' in html and 'tsp-tabbar' in html and 'tsp-nav__item' in html)
+st, html = get(ow, W + '/clients')
+check('the shell menu marks the current page', 'aria-current="page" data-key="clients"' in html or 'data-key="clients" aria-current="page"' in html or ('aria-current="page"' in html and 'data-key="clients"' in html))
 
 summary()

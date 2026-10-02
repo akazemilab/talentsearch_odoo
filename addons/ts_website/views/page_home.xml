@@ -9,76 +9,121 @@
             <t t-name="ts_website.home">
                 <t t-call="website.layout" pageName.f="homepage" additional_title.f="سنجش روان‌شناختی با مرزهای روشن">
                     <div id="wrap" class="ts-page">
-                        <section class="ts-hero">
-                            <div class="ts-container">
-                                <span class="ts-hero__kicker">سنجش روان‌شناختی، از خانوادهٔ <bdi dir="ltr">EOT</bdi></span>
-                                <h1>بدانید یک سنجش چه چیزی را می‌تواند بگوید، و چه چیزی را نه.</h1>
-                                <p class="ts-hero__lead">تلنت سرچ به سازمان‌ها و مراکز مشاوره کمک می‌کند پرسشنامه‌های روان‌شناختی را با هدف روشن، رضایت آگاهانه، حفظ حریم خصوصی و بازبینی انسانی اجرا کنند و نتیجه را همراه با محدودیت‌هایش بخوانند.</p>
-                                <div class="ts-hero__actions">
-                                    <a href="/panel" class="ts-btn ts-btn--light">پنل بساز</a>
-                                    <a href="/assessments" class="ts-btn ts-btn--quiet">فقط می‌خواهم آزمون بدهم</a>
+                        <section class="ts-hero ts-hero--split">
+                            <div class="ts-container ts-hero__grid">
+                                <div>
+                                    <h1>سنجشی که می‌گوید چه چیزی را می‌داند، و چه چیزی را نه.</h1>
+                                    <p class="ts-hero__lead">تلنت سرچ به مدرسه‌ها، مراکز مشاوره، سازمان‌ها و مراکز بالینی کمک می‌کند پرسشنامه‌های روان‌شناختی را با هدف روشن و رضایت آگاهانه اجرا کنند و نتیجه را همراه با محدودیت‌هایش بخوانند. پنل مراکز رایگان است.</p>
+                                    <div class="ts-hero__actions">
+                                        <a href="/panel" class="ts-btn ts-btn--primary ts-btn--lg">ساخت پنل رایگان</a>
+                                        <a href="/assessments" class="ts-btn ts-btn--quiet ts-btn--lg">فقط می‌خواهم آزمون بدهم</a>
+                                    </div>
+                                    <ul class="ts-hero__note">
+                                        <li>رضایت آگاهانه و قابل پس‌گرفتن</li>
+                                        <li>نتیجه مال شرکت‌کننده است</li>
+                                        <li>بازبینی انسانی، نه تصمیم خودکار</li>
+                                    </ul>
                                 </div>
+                                <figure class="ts-profile" aria-labelledby="ts-profile-title">
+                                    <figcaption class="ts-profile__head">
+                                        <strong id="ts-profile-title">نیم‌رخ پنج‌زاویه‌ای، نمونهٔ نمایشی</strong>
+                                        <span>زمینهٔ «برنامه‌نویسی»</span>
+                                    </figcaption>
+                                    <ul class="ts-profile__rows">
+                                        <li class="ts-profile__row"><span>تحلیلی</span><span class="ts-profile__track"><i class="ts-profile__fill" style="inline-size: 86%"/></span><span>۸۶</span></li>
+                                        <li class="ts-profile__row"><span>تجربی</span><span class="ts-profile__track"><i class="ts-profile__fill ts-profile__fill--2" style="inline-size: 60%"/></span><span>۶۰</span></li>
+                                        <li class="ts-profile__row"><span>علمی</span><span class="ts-profile__track"><i class="ts-profile__fill" style="inline-size: 73%"/></span><span>۷۳</span></li>
+                                        <li class="ts-profile__row"><span>نوآوری</span><span class="ts-profile__track"><i class="ts-profile__fill ts-profile__fill--3" style="inline-size: 46%"/></span><span>۴۶</span></li>
+                                        <li class="ts-profile__row"><span>وظیفه‌مندی</span><span class="ts-profile__track"><i class="ts-profile__fill ts-profile__fill--2" style="inline-size: 80%"/></span><span>۸۰</span></li>
+                                    </ul>
+                                    <p class="ts-profile__foot">نمره‌ها توصیف پاسخ‌های خود فرد در همان پرسشنامه‌اند، نه برچسب و نه تشخیص. این نمونه ساختگی است.</p>
+                                </figure>
                             </div>
-                            <div class="ts-hero__mark" aria-hidden="true"/>
                         </section>
 
-                        <section class="ts-section">
+                        <section class="ts-section ts-section--mist">
                             <div class="ts-container">
                                 <div class="ts-section__head">
                                     <h2>برای چه کسانی</h2>
-                                    <p>هر مسیر فضای کاری، دسترسی‌ها و گزارش‌های جداگانه دارد. دادهٔ بالینی هرگز به کارفرما نمی‌رسد.</p>
+                                    <p>هر مسیر پنل، دسترسی‌ها و گزارش‌های جداگانه دارد. دادهٔ بالینی هرگز به کارفرما نمی‌رسد.</p>
                                 </div>
-                                <div class="ts-grid ts-grid--3">
-                                    <article class="ts-card">
-                                        <span class="ts-card__band" aria-hidden="true"/>
+                                <div class="ts-paths">
+                                    <a class="ts-path" href="/panel">
+                                        <h3>مدرسه‌ها و مراکز مشاوره</h3>
+                                        <p>دانش‌آموز زمینه‌های کاندیدش را خودش می‌نویسد و هر کدام را از پنج زاویه می‌سنجد؛ مشاور با اجازهٔ او نتیجه را کنار هم می‌بیند. پنل بلافاصله فعال می‌شود.</p>
+                                        <span class="ts-path__go">ساخت پنل رایگان</span>
+                                    </a>
+                                    <a class="ts-path" href="/employers">
                                         <h3>سازمان‌ها و منابع انسانی</h3>
-                                        <p>تحلیل شغل، مجموعهٔ سنجش مرتبط با نقش، دعوت از داوطلبان، کارت ارزیابی و مصاحبهٔ ساختاریافته؛ تصمیم نهایی با انسان.</p>
-                                        <a class="ts-card__link" href="/employers">مسیر سازمان‌ها</a>
-                                    </article>
-                                    <article class="ts-card">
-                                        <span class="ts-card__band" aria-hidden="true"/>
+                                        <p>تحلیل شغل، مجموعهٔ سنجش مرتبط با نقش، دعوت از داوطلبان و کارت ارزیابی؛ تصمیم نهایی با انسان و پس از مصاحبهٔ ساختاریافته.</p>
+                                        <span class="ts-path__go">مسیر سازمان‌ها</span>
+                                    </a>
+                                    <a class="ts-path" href="/clinics">
                                         <h3>مراکز مشاوره و درمان</h3>
                                         <p>پذیرش مراجع، رضایت آگاهانه، اجرای پرسشنامه روی موبایل، بازبینی متخصص پیش از انتشار نتیجه و پیگیری روند تغییرات.</p>
-                                        <a class="ts-card__link" href="/clinics">مسیر مراکز بالینی</a>
-                                    </article>
-                                    <article class="ts-card">
-                                        <span class="ts-card__band" aria-hidden="true"/>
+                                        <span class="ts-path__go">مسیر مراکز بالینی</span>
+                                    </a>
+                                    <a class="ts-path" href="/how-it-works#participants">
                                         <h3>شرکت‌کنندگان</h3>
-                                        <p>پیش از شروع می‌دانید چرا دعوت شده‌اید، چه کسی نتیجه را می‌بیند و چه حقی دارید. پاسخ‌ها خودکار ذخیره می‌شوند.</p>
-                                        <a class="ts-card__link" href="/how-it-works#participants">حقوق و روند شرکت‌کننده</a>
+                                        <p>پیش از شروع می‌دانید چرا دعوت شده‌اید، چه کسی نتیجه را می‌بیند و چه حقی دارید. پاسخ‌ها خودکار ذخیره می‌شوند و نتیجه در حساب خودتان می‌ماند.</p>
+                                        <span class="ts-path__go">حقوق و روند شرکت‌کننده</span>
+                                    </a>
+                                </div>
+                            </div>
+                        </section>
+
+                        <section class="ts-section">
+                            <div class="ts-container ts-split">
+                                <h2>یک پنل در سه گام کار می‌کند</h2>
+                                <ol class="ts-steps">
+                                    <li><div><strong>پنل را بسازید</strong><span>نام مرکز، هدف پنل و همکارانتان با نقش مشخص. برای مدرسه و مرکز مشاوره همان لحظه فعال است.</span></div></li>
+                                    <li><div><strong>دعوت بفرستید</strong><span>با پیوند یا کد گروهی. شرکت‌کننده پیش از شروع، هدف و گیرندهٔ نتیجه را می‌بیند و رضایتش را ثبت می‌کند.</span></div></li>
+                                    <li><div><strong>نتیجه را با هم بخوانید</strong><span>شرکت‌کننده تعیین می‌کند چه سطحی را با پنل به اشتراک بگذارد. گزارش گروهی فقط شمار افراد را نشان می‌دهد.</span></div></li>
+                                </ol>
+                            </div>
+                        </section>
+
+                        <section class="ts-section ts-section--mist">
+                            <div class="ts-container">
+                                <div class="ts-plans">
+                                    <article class="ts-plan ts-plan--free">
+                                        <h3>پنل مراکز</h3>
+                                        <p class="ts-plan__price">رایگان<small>برای مدرسه‌ها، مراکز مشاوره، سازمان‌ها و مراکز بالینی</small></p>
+                                        <ul>
+                                            <li>اعضا و نقش‌ها، دعوت تکی و گروهی</li>
+                                            <li>فهرست شرکت‌کننده‌ها، گروه‌ها و گزارش فردی</li>
+                                            <li>گزارش گروهی، خروجی و گزارش رویدادها</li>
+                                        </ul>
+                                        <div class="ts-plan__foot"><a href="/panel" class="ts-btn ts-btn--primary">ساخت پنل رایگان</a></div>
+                                    </article>
+                                    <article class="ts-plan ts-plan--pro">
+                                        <span class="ts-soon">به‌زودی</span>
+                                        <h3>همیار تفسیر</h3>
+                                        <p class="ts-plan__price">حرفه‌ای<small>برای مراکزی که نتیجه‌ها را برای مراجع تفسیر می‌کنند</small></p>
+                                        <ul>
+                                            <li>پیش‌نویس تفسیر برای متخصص، نه برای شرکت‌کننده</li>
+                                            <li>نکته‌های گفت‌وگو برای جلسهٔ بازخورد</li>
+                                            <li>هر متن پیش از استفاده توسط متخصص بازبینی می‌شود؛ تشخیص نمی‌دهد</li>
+                                        </ul>
+                                        <div class="ts-plan__foot"><a href="/pricing#pro" class="ts-btn ts-btn--outline">بیشتر بدانید و خبرم کنید</a></div>
                                     </article>
                                 </div>
                             </div>
                         </section>
 
                         <section class="ts-section">
-                            <div class="ts-container">
-                                <div class="ts-section__head">
-                                    <h2>اصولی که کوتاه نمی‌آییم</h2>
-                                </div>
-                                <div class="ts-grid ts-grid--2">
-                                    <div class="ts-card ts-card--soft">
-                                        <h3>هدف، پیش از هر چیز</h3>
-                                        <p>استخدام، مراقبت بالینی و آموزش هر کدام قرارداد، اطلاع‌رسانی، سنجه و گزارش جدا دارند و داده‌ها بین آن‌ها جابه‌جا نمی‌شود.</p>
-                                    </div>
-                                    <div class="ts-card ts-card--soft">
-                                        <h3>رضایت جداگانه و قابل پس‌گرفتن</h3>
-                                        <p>رضایت برای خدمت اصلی و برای پژوهش جدا گرفته می‌شود، هیچ گزینه‌ای از پیش تیک‌خورده نیست و مسیر انصراف روشن است.</p>
-                                    </div>
-                                    <div class="ts-card ts-card--soft">
-                                        <h3>پرسشنامه، ورودی تصمیم انسانی است</h3>
-                                        <p>هیچ تشخیص خودکار، رد خودکار استخدام یا تصمیم درمانی خودکاری وجود ندارد. نتیجهٔ بالینی تا بازبینی متخصص منتشر نمی‌شود.</p>
-                                    </div>
-                                    <div class="ts-card ts-card--soft">
-                                        <h3>نمره همراه با معنا و محدودیت</h3>
-                                        <p>هر نمره با جهت مقیاس، نسخهٔ سنجه، گروه هدف و مرز تفسیرش نمایش داده می‌شود؛ بدون برچسب قطعی شخصیتی.</p>
-                                    </div>
-                                </div>
-                                <p class="ts-notice"><strong>هر سنجه با شناسنامهٔ کامل منتشر می‌شود:</strong> کاربرد، مخاطب، زمان، ابعاد، روش نمره‌گذاری و محدودیت‌ها. <a href="/assessments">مشاهدهٔ سنجه‌ها</a> · <a href="/evidence">شواهد و محدودیت‌ها</a></p>
+                            <div class="ts-container ts-split">
+                                <h2>اصولی که کوتاه نمی‌آییم</h2>
+                                <ul class="ts-principles">
+                                    <li><strong>هدف، پیش از هر چیز</strong><span>استخدام، مراقبت بالینی و آموزش هر کدام قرارداد، اطلاع‌رسانی، سنجه و گزارش جدا دارند و داده‌ها بین آن‌ها جابه‌جا نمی‌شود.</span></li>
+                                    <li><strong>رضایت جداگانه و قابل پس‌گرفتن</strong><span>رضایت برای خدمت اصلی و برای پژوهش جدا گرفته می‌شود، هیچ گزینه‌ای از پیش تیک‌خورده نیست و مسیر انصراف روشن است.</span></li>
+                                    <li><strong>پرسشنامه، ورودی تصمیم انسانی است</strong><span>هیچ تشخیص خودکار، رد خودکار استخدام یا تصمیم درمانی خودکاری وجود ندارد. نتیجهٔ بالینی تا بازبینی متخصص منتشر نمی‌شود.</span></li>
+                                    <li><strong>نمره همراه با معنا و محدودیت</strong><span>هر نمره با جهت مقیاس، نسخهٔ سنجه، گروه هدف و مرز تفسیرش نمایش داده می‌شود؛ بدون برچسب قطعی شخصیتی.</span></li>
+                                </ul>
                             </div>
                         </section>
 
-                        <t t-call="ts_website.cta"/>
+                        <t t-call="ts_website.cta" cta_title.f="سنجه‌ها را با شناسنامهٔ کامل ببینید" cta_text.f="کاربرد، مخاطب، زمان، ابعاد، روش نمره‌گذاری و محدودیت‌های هر سنجه، پیش از آنکه کسی را دعوت کنید." cta_href.f="/assessments" cta_label.f="مشاهدهٔ سنجه‌ها"/>
                     </div>
                 </t>
             </t>

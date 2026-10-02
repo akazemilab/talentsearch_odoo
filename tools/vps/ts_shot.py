@@ -23,7 +23,7 @@ PATHS = args or ['/']
 CHROME = '/snap/chromium/current/usr/lib/chromium-browser/chrome'
 subprocess.run('ssh -fN -o ExitOnForwardFailure=yes -L 18071:127.0.0.1:%s eot-odoo-prod 2>/dev/null || true' % PORT, shell=True)
 os.makedirs('/root/ts-jobs/shots', exist_ok=True)
-EN = re.compile(r'\b(Loading|Search|Submit|Login|Log in|Sign in|Logout|My Account|Home|Next|Previous|Back|Save|Cancel|Delete|Edit|Error|Page Not Found|Powered by|Skip to Content)\b')
+EN = re.compile(r'\b(Loading|Search|Submit|Login|Log in|Sign in|Logout|My Account|Home|Next|Previous|Back|Save|Cancel|Delete|Edit|Error|Page Not Found|Powered by|Skip to Content|Enter your|Passkey|Password|Email|or|OdooBot)\b')
 
 JS = r"""() => {
   const vw = window.innerWidth, out = {};
@@ -47,6 +47,8 @@ JS = r"""() => {
   out.h1 = document.querySelectorAll('h1').length;
   out.title = document.title;
   out.text = document.body.innerText;
+  let ascii = 0; for (const el of document.querySelectorAll('#wrap *:not(bdi):not(code):not(script):not(style)')) { for (const n of el.childNodes) { if (n.nodeType === 3 && !n.parentElement.closest('bdi, code')) { ascii += (n.textContent.match(/[0-9]/g) || []).length; } } }
+  out.ascii = ascii;
   out.dir = document.documentElement.dir || getComputedStyle(document.body).direction;
   // inputs without a visible or aria label (checklist 2)
   const nolabel = [];
@@ -120,10 +122,11 @@ def audit(p, login, paths):
             if m['lowcontrast']: probs.append('contrast ' + '|'.join(m['lowcontrast']))
             if errors: probs.append('console ' + ' | '.join(errors[:2]))
             if m['dir'] != 'rtl': probs.append('dir=' + m['dir'])
+            info = (' [ascii-digits %d]' % m['ascii']) if m.get('ascii') else ''
             bad += 1 if probs else 0
             name = re.sub(r'[^a-z0-9]+', '_', path.lower()).strip('_') or 'home'
             page.screenshot(path='/root/ts-jobs/shots/%s%s_%d.png' % ((login.split('@')[0] + '_') if MATRIX else '', name, w), full_page=True)
-            print('%s %-4s %-40s %s' % (r.status if r else '-', w, path[:40], '; '.join(probs) or 'ok'), flush=True)
+            print('%s %-4s %-40s %s%s' % (r.status if r else '-', w, path[:40], '; '.join(probs) or 'ok', info), flush=True)
         if '/my/assessments/' in path or '/a/' in path:
             page.emulate_media(media='print'); page.set_viewport_size({'width': 794, 'height': 1123})
             hidden = page.evaluate("() => [...document.querySelectorAll('.ts-noprint, header#top, footer')].filter(e => getComputedStyle(e).display !== 'none').length")

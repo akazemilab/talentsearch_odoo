@@ -1,7 +1,7 @@
 {
     'name': 'Talent Search - Organizations and Clinicians',
     'summary': 'Workspace invitations, purpose-bound result sharing, clinician reports, operations dashboards (website 2)',
-    'version': '20.0.3.0.0',
+    'version': '20.0.4.0.0',
     'category': 'Services/Talent Search',
     'author': 'EOT',
     'license': 'LGPL-3',

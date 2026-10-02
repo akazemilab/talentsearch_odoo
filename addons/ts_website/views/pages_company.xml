@@ -16,6 +16,7 @@
                         <select id="ts_topic" name="topic">
                             <option value="demo" t-att-selected="topic == 'demo'">درخواست جلسهٔ معرفی</option>
                             <option value="quote" t-att-selected="topic == 'quote'">درخواست پیش‌فاکتور</option>
+                            <option value="pro" t-att-selected="topic == 'pro'">خبرم کنید: همیار تفسیر</option>
                             <option value="evidence" t-att-selected="topic == 'evidence'">پرسش دربارهٔ شواهد یک سنجه</option>
                             <option value="support" t-att-selected="topic == 'support'">پشتیبانی شرکت‌کننده</option>
                             <option value="other" t-att-selected="topic == 'other'">موضوع دیگر</option>
@@ -115,22 +116,59 @@
         <field name="website_id" ref="website_ts"/>
         <field name="arch" type="xml">
             <t t-name="ts_website.page_pricing">
-                <t t-call="website.layout" additional_title.f="درخواست پیش‌فاکتور">
+                <t t-call="website.layout" additional_title.f="پنل رایگان و همیار تفسیر">
                     <div id="wrap" class="ts-page">
-                        <t t-call="ts_website.page_hero" kicker.f="هزینه و پیش‌فاکتور" title.f="هزینه بر اساس دامنهٔ واقعی کار شما" lead.f="قیمت ثابتی روی سایت اعلام نمی‌کنیم، چون هزینه به نوع سنجه، تعداد تکمیل‌ها، خدمات بازبینی و حق استفادهٔ سنجه‌ها بستگی دارد. پیش‌فاکتور به تومان صادر می‌شود."/>
+                        <section class="ts-hero ts-hero--soft">
+                            <div class="ts-container">
+                                <h1>پنل مراکز رایگان است. همیار تفسیر در راه است.</h1>
+                                <p class="ts-hero__lead">ساخت پنل، دعوت شرکت‌کننده‌ها و دیدن نتیجه‌هایی که با شما به اشتراک گذاشته می‌شود هزینه‌ای ندارد. قابلیت حرفه‌ای برای مراکزی که نتیجه‌ها را تفسیر می‌کنند جداگانه عرضه می‌شود.</p>
+                            </div>
+                        </section>
                         <section class="ts-section">
-                            <div class="ts-container ts-grid ts-grid--2">
-                                <div class="ts-prose">
-                                    <h2>پیش‌فاکتور چه چیزهایی را مشخص می‌کند</h2>
-                                    <ul class="ts-list-check">
-                                        <li>دامنهٔ پایلوت یا قرارداد سالانه و مدت آن</li>
-                                        <li>تعداد تکمیل‌های پیش‌بینی‌شده و اعتبار مصرفی</li>
-                                        <li>سنجه‌ها و شرایط حق استفادهٔ هر کدام</li>
-                                        <li>خدمات بازبینی، پشتیبانی و راه‌اندازی</li>
-                                        <li>آنچه شامل نمی‌شود</li>
-                                    </ul>
+                            <div class="ts-container">
+                                <div class="ts-plans">
+                                    <article class="ts-plan ts-plan--free" id="free">
+                                        <h2>پنل مراکز</h2>
+                                        <p class="ts-plan__price">رایگان<small>برای مدرسه‌ها، مراکز مشاوره، سازمان‌ها و مراکز بالینی</small></p>
+                                        <ul>
+                                            <li>اعضا با نقش‌های مشخص و دسترسی‌های جدا</li>
+                                            <li>دعوت تکی با پیوند و دعوت گروهی با کد</li>
+                                            <li>فهرست شرکت‌کننده‌ها، گروه‌ها و کارشناس مسئول</li>
+                                            <li>گزارش فردی در سطحی که شرکت‌کننده تعیین می‌کند</li>
+                                            <li>گزارش گروهی با پنهان‌کردن خانه‌های کوچک</li>
+                                            <li>خروجی، گزارش رویدادها و راهنمای کامل</li>
+                                            <li>شمار تکمیل‌ها ثبت می‌شود، اما چیزی کسر نمی‌شود</li>
+                                        </ul>
+                                        <div class="ts-plan__foot">
+                                            <a href="/panel" class="ts-btn ts-btn--primary ts-btn--lg">ساخت پنل رایگان</a>
+                                            <a href="/panel/terms" class="ts-hint">شرایط استفاده از پنل</a>
+                                        </div>
+                                    </article>
+                                    <article class="ts-plan ts-plan--pro" id="pro">
+                                        <span class="ts-soon">به‌زودی</span>
+                                        <h2>همیار تفسیر</h2>
+                                        <p class="ts-plan__price">حرفه‌ای<small>برای مراکزی که نتیجه‌ها را برای مراجع یا دانش‌آموز تفسیر می‌کنند. قیمت هنگام عرضه اعلام می‌شود.</small></p>
+                                        <ul>
+                                            <li>پیش‌نویس تفسیر برای متخصص، بر پایهٔ همان نتیجه و همان سنجه</li>
+                                            <li>نکته‌های گفت‌وگو برای جلسهٔ بازخورد با شرکت‌کننده</li>
+                                            <li>مقایسهٔ کنار هم نتیجه‌های یک نفر در زمان</li>
+                                            <li>نسخهٔ چاپی با نام مرکز</li>
+                                        </ul>
+                                        <p class="ts-notice ts-notice--warn">همیار تفسیر تشخیص نمی‌دهد و جای متخصص را نمی‌گیرد. هیچ متنی بدون بازبینی متخصص به شرکت‌کننده نمی‌رسد.</p>
+                                        <div class="ts-plan__foot">
+                                            <a href="#notify" class="ts-btn ts-btn--outline ts-btn--lg">وقتی آماده شد خبرم کنید</a>
+                                        </div>
+                                    </article>
                                 </div>
-                                <t t-call="ts_website.lead_form" default_topic.f="quote"/>
+                            </div>
+                        </section>
+                        <section class="ts-section ts-section--mist" id="notify">
+                            <div class="ts-container ts-split">
+                                <div>
+                                    <h2>خبرم کنید</h2>
+                                    <p class="ts-hint">نام و راه تماس شما فقط برای همین اطلاع‌رسانی به کار می‌رود. اگر دربارهٔ قرارداد سازمانی یا تعداد زیاد تکمیل پرسش دارید، موضوع «درخواست پیش‌فاکتور» را انتخاب کنید.</p>
+                                </div>
+                                <t t-call="ts_website.lead_form" default_topic.f="pro"/>
                             </div>
                         </section>
                     </div>

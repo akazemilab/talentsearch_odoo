@@ -3,19 +3,34 @@
 (function () {
     'use strict';
 
+    // The panel menu: a rail on wide screens; on narrow ones a drawer opened by the top bar and the tab bar.
     function initMenus() {
-        document.querySelectorAll('.tsp-nav').forEach(function (nav) {
-            var btn = nav.querySelector('.tsp-nav__toggle');
-            var list = nav.querySelector('.tsp-nav__list');
-            if (!btn || !list) { return; }
-            nav.setAttribute('data-js', '1');
-            list.hidden = true;
-            btn.addEventListener('click', function () {
-                var open = btn.getAttribute('aria-expanded') === 'true';
-                btn.setAttribute('aria-expanded', open ? 'false' : 'true');
-                list.hidden = open;
-            });
-        });
+        var shell = document.getElementById('tsp-shell');
+        var rail = document.getElementById('tsp-rail');
+        if (!shell || !rail) { return; }
+        var scrim = shell.querySelector('.tsp-scrim');
+        var openers = document.querySelectorAll('[data-tsp-open]');
+        var lastOpener = null;
+        shell.setAttribute('data-js', '1');
+        function setOpen(open, opener) {
+            if (open) { shell.setAttribute('data-open', '1'); } else { shell.removeAttribute('data-open'); }
+            if (scrim) { scrim.hidden = !open; }
+            openers.forEach(function (b) { b.setAttribute('aria-expanded', open ? 'true' : 'false'); });
+            document.documentElement.style.overflow = open ? 'hidden' : '';
+            if (open) {
+                lastOpener = opener || lastOpener;
+                var first = rail.querySelector('a, button');
+                if (first) { first.focus(); }
+            } else if (lastOpener) {
+                lastOpener.focus();
+            }
+        }
+        openers.forEach(function (b) { b.addEventListener('click', function () { setOpen(!shell.hasAttribute('data-open'), b); }); });
+        document.querySelectorAll('[data-tsp-close]').forEach(function (b) { b.addEventListener('click', function () { setOpen(false); }); });
+        document.addEventListener('keydown', function (ev) { if (ev.key === 'Escape' && shell.hasAttribute('data-open')) { setOpen(false); } });
+        var mq = window.matchMedia('(min-width: 1024px)');
+        var onChange = function () { if (mq.matches && shell.hasAttribute('data-open')) { setOpen(false); } };
+        if (mq.addEventListener) { mq.addEventListener('change', onChange); } else if (mq.addListener) { mq.addListener(onChange); }
     }
 
     // A form marked data-tsp-once cannot be sent twice: the button says what is happening.

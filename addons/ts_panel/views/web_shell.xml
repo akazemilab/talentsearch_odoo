@@ -9,29 +9,59 @@
         <field name="website_id" ref="ts_website.website_ts"/>
         <field name="arch" type="xml">
             <t t-name="ts_panel.shell_frame">
+                <t t-set="tabs" t-value="[m for m in menu if m['key'] in ('home', 'clients', 'invites', 'reports')][:4]"/>
                 <section class="ts-section tsp-section">
-                    <div class="ts-container tsp-shell">
-                        <aside class="tsp-shell__nav">
+                    <div class="ts-container tsp-shell" id="tsp-shell">
+                        <aside class="tsp-shell__nav" id="tsp-rail" aria-label="پنل">
+                            <div class="tsp-drawer__head">
+                                <strong t-out="ws.name"/>
+                                <button type="button" class="tsp-drawer__close" data-tsp-close="1" aria-label="بستن منو">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+                                </button>
+                            </div>
                             <div class="tsp-switch">
                                 <strong class="tsp-switch__name" t-out="ws.name"/>
                                 <span class="tsp-switch__meta"><bdi dir="ltr" t-out="ws.code"/> · <t t-out="role_label"/></span>
                                 <a href="/my/workspaces" class="tsp-switch__link">تغییر پنل</a>
                             </div>
                             <nav class="tsp-nav" aria-label="منوی پنل">
-                                <button type="button" class="tsp-nav__toggle" aria-expanded="false" aria-controls="tsp-menu">منوی پنل</button>
                                 <ul id="tsp-menu" class="tsp-nav__list">
                                     <li t-foreach="menu" t-as="it">
-                                        <a class="tsp-nav__item" t-att-href="it['url']" t-att-aria-current="'page' if it['current'] else None" t-out="it['label']"/>
+                                        <a class="tsp-nav__item" t-att-href="it['url']" t-att-aria-current="'page' if it['current'] else None" t-att-data-key="it['key']">
+                                            <t t-call="ts_panel.nav_icon" key="it['key']"/>
+                                            <span t-out="it['label']"/>
+                                        </a>
                                     </li>
                                 </ul>
                             </nav>
                         </aside>
+                        <div class="tsp-scrim" data-tsp-close="1" hidden="hidden"/>
                         <div class="tsp-shell__main">
+                            <div class="tsp-topbar">
+                                <div class="tsp-topbar__ws">
+                                    <strong t-out="ws.name"/>
+                                    <span class="ts-hint"><bdi dir="ltr" t-out="ws.code"/> · <t t-out="role_label"/></span>
+                                </div>
+                                <button type="button" class="tsp-nav__toggle" aria-expanded="false" aria-controls="tsp-rail" data-tsp-open="1">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+                                    <span>منو</span>
+                                </button>
+                            </div>
                             <p t-if="flash_ok" class="tsp-flash tsp-flash--ok" role="status" t-out="flash_ok"/>
                             <p t-if="flash_err" class="tsp-flash tsp-flash--danger" role="alert" t-out="flash_err"/>
                             <t t-out="0"/>
                         </div>
                     </div>
+                    <nav class="tsp-tabbar" aria-label="میان‌بر پنل">
+                        <a t-foreach="tabs" t-as="it" class="tsp-tabbar__item" t-att-href="it['url']" t-att-aria-current="'page' if it['current'] else None">
+                            <t t-call="ts_panel.nav_icon" key="it['key']"/>
+                            <span t-out="it['label']"/>
+                        </a>
+                        <button type="button" class="tsp-tabbar__item" data-tsp-open="1" aria-controls="tsp-rail" aria-expanded="false">
+                            <t t-call="ts_panel.nav_icon" key.f="more"/>
+                            <span>بیشتر</span>
+                        </button>
+                    </nav>
                 </section>
             </t>
         </field>
@@ -79,6 +109,33 @@
                         </t>
                     </div>
                 </t>
+            </t>
+        </field>
+    </record>
+    <!-- Line icons of the panel menu, 24-box, stroke only. `key` names the menu item. -->
+    <record id="tpl_nav_icon" model="ir.ui.view">
+        <field name="name">TS panel: menu icon</field>
+        <field name="type">qweb</field>
+        <field name="key">ts_panel.nav_icon</field>
+        <field name="website_id" ref="ts_website.website_ts"/>
+        <field name="arch" type="xml">
+            <t t-name="ts_panel.nav_icon">
+                <svg class="tsp-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <t t-if="key == 'home'"><path d="M4 11l8-7 8 7v9H4z"/><path d="M10 20v-6h4v6"/></t>
+                    <t t-elif="key == 'clients'"><circle cx="9" cy="8" r="3.2"/><path d="M3 19c0-3.3 2.7-5.5 6-5.5s6 2.2 6 5.5"/><circle cx="17" cy="9" r="2.5"/><path d="M16 13.6c2.9.2 5 2.2 5 5.4"/></t>
+                    <t t-elif="key == 'groups'"><rect x="3" y="4" width="7" height="7" rx="1.5"/><rect x="14" y="4" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></t>
+                    <t t-elif="key == 'invites'"><path d="M4 6h16v12H4z"/><path d="M4 7l8 6 8-6"/></t>
+                    <t t-elif="key == 'campaigns'"><path d="M4 12a8 8 0 1 0 16 0 8 8 0 0 0-16 0z"/><path d="M12 8v4l3 2"/></t>
+                    <t t-elif="key == 'import'"><path d="M12 4v11"/><path d="M8 11l4 4 4-4"/><path d="M4 19h16"/></t>
+                    <t t-elif="key == 'exports'"><path d="M12 15V4"/><path d="M8 8l4-4 4 4"/><path d="M4 19h16"/></t>
+                    <t t-elif="key == 'reports'"><path d="M4 20h16"/><path d="M7 17V11"/><path d="M12 17V6"/><path d="M17 17v-4"/></t>
+                    <t t-elif="key == 'credits'"><rect x="3" y="6" width="18" height="12" rx="2"/><path d="M3 10h18"/></t>
+                    <t t-elif="key == 'members'"><circle cx="12" cy="8" r="3.5"/><path d="M5 20c0-3.6 3.1-6 7-6s7 2.4 7 6"/></t>
+                    <t t-elif="key == 'audit'"><path d="M12 3l8 3v6c0 4.5-3.4 8-8 9-4.6-1-8-4.5-8-9V6z"/><path d="M9 12l2 2 4-4"/></t>
+                    <t t-elif="key == 'settings'"><circle cx="12" cy="12" r="3"/><path d="M19 12a7 7 0 0 0-.1-1.2l2-1.5-2-3.4-2.4.9a7 7 0 0 0-2-1.2L14 3h-4l-.5 2.6a7 7 0 0 0-2 1.2l-2.4-.9-2 3.4 2 1.5a7 7 0 0 0 0 2.4l-2 1.5 2 3.4 2.4-.9a7 7 0 0 0 2 1.2L10 21h4l.5-2.6a7 7 0 0 0 2-1.2l2.4.9 2-3.4-2-1.5c.1-.4.1-.8.1-1.2z"/></t>
+                    <t t-elif="key == 'help'"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.7.3-1 .8-1 1.5"/><path d="M12 17h.01"/></t>
+                    <t t-else=""><circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/></t>
+                </svg>
             </t>
         </field>
     </record>

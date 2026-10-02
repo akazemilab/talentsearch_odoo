@@ -8,12 +8,12 @@
         <field name="website_id" ref="ts_website.website_ts"/>
         <field name="arch" type="xml">
             <t t-name="ts_org.panel_landing">
-                <t t-call="website.layout" additional_title.f="ساخت پنل">
+                <t t-call="website.layout" additional_title.f="ساخت پنل رایگان">
                     <div id="wrap" class="ts-page">
                         <section class="ts-section">
                             <div class="ts-container">
                                 <div class="ts-section__head">
-                                    <h1>پنل بسازید</h1>
+                                    <h1>پنل مرکز خود را رایگان بسازید</h1>
                                     <p>یک پنل، فضای کار شما برای دعوت شرکت‌کننده‌ها، دیدن گزارش‌هایی است که خودشان با شما به اشتراک می‌گذارند، و هم‌کاری با همکارانتان. ساخت پنل در این فصل رایگان است.</p>
                                 </div>
                                 <div class="ts-grid">
@@ -90,7 +90,7 @@
         <field name="website_id" ref="ts_website.website_ts"/>
         <field name="arch" type="xml">
             <t t-name="ts_org.panel_new">
-                <t t-call="website.layout" additional_title.f="ساخت پنل">
+                <t t-call="website.layout" additional_title.f="ساخت پنل رایگان">
                     <div id="wrap" class="ts-page">
                         <section class="ts-section">
                             <div class="ts-container">
