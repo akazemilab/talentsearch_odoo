@@ -2,3 +2,4 @@ Fonts of the Talent Search website (website 4), both SIL Open Font License:
 - Vazirmatn-FD-Var.woff2 : Vazirmatn variable (wght 100-900) by Saber Rastikerdar, with ASCII digits mapped to the Persian digit glyphs (built from fonts/variable/Vazirmatn[wght].ttf with tools/fonts/build_fd.py).
 - Estedad-FD-Var.woff2   : Estedad variable (wght 100-900) by Amin Abedi, same digit mapping.
 "FD" = Farsi digits: every 0-9 in the interface renders as ۰-۹ without template changes.
+- Vazirmatn-Var.woff2   : the unmodified Vazirmatn variable file, used only for LTR identifiers (e-mail, codes, versions) so they keep Latin digits.

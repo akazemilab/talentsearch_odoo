@@ -10,6 +10,13 @@
     font-display: swap;
 }
 @font-face {
+    font-family: 'Vazirmatn';                       // plain digits: for codes, e-mail addresses, versions and other LTR strings
+    src: url('/ts_website/static/fonts/Vazirmatn-Var.woff2') format('woff2-variations'),
+         url('/ts_website/static/fonts/Vazirmatn-Var.woff2') format('woff2');
+    font-weight: 100 900;
+    font-display: swap;
+}
+@font-face {
     font-family: 'Estedad FD';
     src: url('/ts_website/static/fonts/Estedad-FD-Var.woff2') format('woff2-variations'),
          url('/ts_website/static/fonts/Estedad-FD-Var.woff2') format('woff2');
@@ -67,6 +74,7 @@
     .container::before, .container::after { content: none; display: none; }
     img { max-inline-size: 100%; block-size: auto; }
     bdi, code, .ts-ltr { unicode-bidi: isolate; }
+    bdi[dir=ltr], code, kbd, .ts-ltr, input[type=email], input[type=url], input[dir=ltr] { font-family: Vazirmatn, var(--font-text); }   // identifiers keep Latin digits
     code { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: .9em; }
 
     .ts-container { max-inline-size: var(--content-max); margin-inline: auto; padding-inline: clamp(16px, 4vw, 32px); }
