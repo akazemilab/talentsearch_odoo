@@ -44,10 +44,10 @@
     </record>
 
     <!-- portal v3 (P2): who sees the result, from the real invitation (purpose + accepted share level), never a fixed sentence -->
-    <template id="who_sees" name="Who sees this result">
+    <template id="who_sees_line" name="Who sees this result (one line)">
         <t t-set="asg" t-value="attempt.ts_org_assignment()"/>
         <t t-set="org" t-value="asg.workspace_id.partner_id.name if asg else ''"/>
-        <span id="ts-who-sees" t-att-data-level="asg.share_level if asg else 'self'">
+        <span id="ts-who-sees-line" t-att-data-level="asg.share_level if asg else 'self'">
             <t t-if="asg and asg.share_level != 'none'">
                 <t t-if="asg.workspace_id.purpose == 'education'">شما، و <strong t-out="org"/> (مشاور مسئول شما) گزارش نتیجه را می‌بیند؛ پاسخ‌های خام را فقط خودتان می‌بینید.</t>
                 <t t-elif="asg.workspace_id.purpose == 'clinical'">شما، و گزارش کامل همراه با راهنمای متخصص فقط برای متخصص بالینی تأییدشدهٔ <strong t-out="org"/>.</t>
@@ -66,7 +66,7 @@
         <field name="website_id" ref="ts_website.website_ts"/>
         <field name="arch" type="xml">
             <xpath expr="//dt[text()='چه کسی نتیجه را می‌بیند']/following-sibling::dd[1]" position="replace">
-                <dd><t t-call="ts_panel.who_sees"/></dd>
+                <dd><t t-call="ts_panel.who_sees_line"/></dd>
             </xpath>
         </field>
     </record>
@@ -78,7 +78,7 @@
         <field name="arch" type="xml">
             <xpath expr="//p[hasclass('tt-mini')][1]" position="replace">
                 <p class="tt-mini">زمینه‌ها را خودتان می‌نویسید و برای هر کدام ۱۵ جمله را پاسخ می‌دهید. هر زمینه حدود یک دقیقه است.</p>
-                <p class="tt-mini"><strong>چه کسی نتیجه را می‌بیند:</strong> <t t-call="ts_panel.who_sees"/></p>
+                <p class="tt-mini"><strong>چه کسی نتیجه را می‌بیند:</strong> <t t-call="ts_panel.who_sees_line"/></p>
             </xpath>
         </field>
     </record>
@@ -88,7 +88,7 @@
         <section class="ts-received ts-noprint" role="status" aria-labelledby="ts-received-h">
             <h2 id="ts-received-h">پاسخ‌های شما دریافت و ثبت شد</h2>
             <p>نتیجه آماده است و همین‌جا می‌ماند؛ هر وقت خواستید از «سنجه‌ها و نتیجه‌ها» به آن برگردید. پاسخ‌ها پس از ارسال تغییر نمی‌کنند.</p>
-            <p><strong>چه کسی این نتیجه را می‌بیند:</strong> <t t-call="ts_panel.who_sees"/></p>
+            <p><strong>چه کسی این نتیجه را می‌بیند:</strong> <t t-call="ts_panel.who_sees_line"/></p>
             <p class="ts-received__actions"><a href="#ts-summary" class="ts-btn ts-btn--primary">خواندن نتیجه</a> <a href="/my" class="ts-btn ts-btn--quiet">بازگشت به کارهای من</a></p>
         </section>
     </template>
