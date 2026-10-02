@@ -415,7 +415,7 @@
                                     <t t-else="">
                                         <form t-attf-action="/invite/#{a.token}/accept" method="post" class="ts-form">
                                             <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
-                                            <label class="ts-opt">
+                                            <label class="ts-check">
                                                 <input type="checkbox" name="share" value="1" checked="checked"/>
                                                 <span t-if="ws.purpose == 'education'">اجازه می‌دهم گزارش نتیجه‌ام با مؤسسه و مشاور مسئول به اشتراک گذاشته شود.</span>
                                                 <span t-elif="ws.purpose == 'employment'">اجازه می‌دهم بازهٔ هر بُعد با این سازمان به اشتراک گذاشته شود.</span>

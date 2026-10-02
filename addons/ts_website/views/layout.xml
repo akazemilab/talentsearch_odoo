@@ -6,7 +6,7 @@
            marketing  public pages: full menu, full footer
            app        /my/*, /help/roles: a quiet bar (logo, participant links, account), slim footer
            focus      /take/*: logo only, no footer (the player keeps its own progress line)
-           auth       /web/login, /web/signup, /web/reset_password, /signup*: logo only, slim footer -->
+           auth       /web/login, /web/signup, /web/reset_password, /signup*, /invite/*, /join/*, /c/*: logo only, slim footer -->
     <record id="layout_ts" model="ir.ui.view">
         <field name="name">Talent Search layout (website 4)</field>
         <field name="type">qweb</field>
@@ -28,7 +28,7 @@
                 </xpath>
                 <xpath expr="//header[@id='top']" position="replace">
                     <t t-set="ts_path" t-value="request.httprequest.path"/>
-                    <t t-set="ts_mode" t-value="'focus' if ts_path.startswith('/take/') else ('auth' if (ts_path.startswith('/web/login') or ts_path.startswith('/web/signup') or ts_path.startswith('/web/reset_password') or ts_path.startswith('/signup')) else ('app' if (ts_path.startswith('/my') or ts_path.startswith('/help/roles')) else 'marketing'))"/>
+                    <t t-set="ts_mode" t-value="'focus' if ts_path.startswith('/take/') else ('auth' if (ts_path.startswith('/web/login') or ts_path.startswith('/web/signup') or ts_path.startswith('/web/reset_password') or ts_path.startswith('/signup') or ts_path.startswith('/invite/') or ts_path.startswith('/join/') or ts_path.startswith('/c/')) else ('app' if (ts_path.startswith('/my') or ts_path.startswith('/help/roles')) else 'marketing'))"/>
                     <!-- o_no_autohide_menu + .top_menu: Odoo's frontend menu-autohide script expects header#top .top_menu (null error otherwise) -->
                     <header id="top" t-attf-class="ts-header o_no_autohide_menu ts-header--#{ts_mode} #{'ts-header--app' if ts_mode != 'marketing' else ''}" data-anchor="true" t-att-data-ts-mode="ts_mode">
                         <div class="ts-container ts-header__bar">
@@ -93,7 +93,7 @@
                 </xpath>
                 <xpath expr="//footer[@id='bottom']" position="replace">
                     <t t-set="ts_path" t-value="request.httprequest.path"/>
-                    <t t-set="ts_mode" t-value="'focus' if ts_path.startswith('/take/') else ('auth' if (ts_path.startswith('/web/login') or ts_path.startswith('/web/signup') or ts_path.startswith('/web/reset_password') or ts_path.startswith('/signup')) else ('app' if (ts_path.startswith('/my') or ts_path.startswith('/help/roles')) else 'marketing'))"/>
+                    <t t-set="ts_mode" t-value="'focus' if ts_path.startswith('/take/') else ('auth' if (ts_path.startswith('/web/login') or ts_path.startswith('/web/signup') or ts_path.startswith('/web/reset_password') or ts_path.startswith('/signup') or ts_path.startswith('/invite/') or ts_path.startswith('/join/') or ts_path.startswith('/c/')) else ('app' if (ts_path.startswith('/my') or ts_path.startswith('/help/roles')) else 'marketing'))"/>
                     <footer t-if="ts_mode == 'marketing'" id="bottom" class="ts-footer" data-anchor="true">
                         <div class="ts-container ts-footer__grid">
                             <section>
