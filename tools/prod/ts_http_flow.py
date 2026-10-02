@@ -125,7 +125,7 @@ check('my assessments lists the report', st == 200 and report.split('?')[0] in p
 st, _, page = u.req('/my')
 check('portal home lists my results (S15 home)', st == 200 and 'ts-home-results' in page and 'href="/my/assessments"' in page)
 check('panels card hidden for a non-member', 'ts-home-panels' not in page)
-check('header has a «سنجه‌های من» link for signed-in users', page.count('href="/my/assessments" class="ts-btn ts-btn--quiet"') >= 1)
+check('header has a «سنجه‌های من» link for signed-in users', 'id="ts-appnav"' in page and 'href="/my/assessments"' in page)   # UI-1: the app bar carries the link
 
 v = Client(TS)
 v.login('ts.flow.b@example.invalid', ensure_user('ts.flow.b@example.invalid'))
