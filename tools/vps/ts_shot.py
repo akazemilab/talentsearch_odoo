@@ -31,7 +31,8 @@ JS = r"""() => {
   const wide = [];
   for (const el of document.querySelectorAll('#wrapwrap *')) {
     const r = el.getBoundingClientRect();
-    if (r.width && (r.right > vw + 1 || r.left < -1) && getComputedStyle(el).position !== 'fixed') {
+    let fixed = false; for (let a = el; a && a !== document.body; a = a.parentElement) { if (getComputedStyle(a).position === 'fixed') { fixed = true; break; } }
+    if (r.width && (r.right > vw + 1 || r.left < -1) && !fixed) {
       const p = el.closest('.ts-table-wrap, .o_offcanvas, [aria-hidden=true]');
       if (!p) wide.push(el.tagName.toLowerCase() + '.' + [...el.classList].slice(0,2).join('.'));
     }

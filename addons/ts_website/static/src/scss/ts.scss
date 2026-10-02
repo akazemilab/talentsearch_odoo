@@ -23,7 +23,7 @@
     --paper: #f5f6fa; --mist: #eef0f8; --white: #fff;
     --brand-deep: #393e70; --brand: #4650a8; --brand-bright: #5a65d6; --brand-soft: #e8eaf8; --brand-warm: #dbeee7;
     --brand-accent: #6774b7;
-    --signal: #a3680a; --signal-soft: #fbf1dc;         // «به‌زودی» and other sparse highlights
+    --signal: #8a5607; --signal-soft: #fbf1dc;         // «به‌زودی» and other sparse highlights
     --danger: #a12b37; --danger-soft: #f9e7e9; --success: #1f6b4e; --success-soft: #dff0e8;
     --warn: #6b4600; --warn-soft: #fbf3e2; --info: #1f4e79; --info-soft: #e4eef7;
     --neutral: #3d4a4f; --neutral-soft: #eceeea; --field-line: #8b93b8;
@@ -101,7 +101,7 @@
 
     // ---------- header (marketing) ----------
     .ts-header { background: rgba(255, 255, 255, .92); backdrop-filter: saturate(140%) blur(10px); border-block-end: 1px solid var(--line); position: sticky; inset-block-start: 0; z-index: 30; }
-    .ts-header__bar { display: flex; align-items: center; justify-content: space-between; gap: 16px; min-block-size: 68px; }
+    .ts-header__bar { display: flex; align-items: center; justify-content: space-between; gap: 16px; min-block-size: 68px; min-inline-size: 0; }
     .ts-lockup { display: flex; align-items: center; gap: 10px; text-decoration: none; color: var(--brand-deep); flex: none; }
     .ts-lockup:hover { text-decoration: none; }
     .ts-lockup img { border-radius: 50%; inline-size: 40px; block-size: 40px; }
@@ -139,7 +139,12 @@
     .ts-appnav a { position: relative; order: 2; }
     .ts-appnav a[href^='/my/workspaces'], .ts-appnav a[href='/my/notifications'] { order: 1; }
     .ts-appnav__badge { position: absolute; inset-block-start: 2px; inset-inline-end: 2px; min-inline-size: 18px; block-size: 18px; padding: 0 5px; border-radius: 999px; background: var(--brand-bright); color: var(--white); font-size: .68rem; font-weight: 700; display: grid; place-items: center; line-height: 1; }
-    @media (max-width: 575.98px) { .ts-appnav a span { position: absolute; inline-size: 1px; block-size: 1px; overflow: hidden; clip-path: inset(50%); } .ts-appnav a { padding: 6px 10px; } }
+    @media (max-width: 639.98px) {
+        .ts-appnav { gap: 0; flex-wrap: nowrap; }
+        .ts-appnav a span { position: absolute; inline-size: 1px; block-size: 1px; overflow: hidden; clip-path: inset(50%); }
+        .ts-appnav a { padding: 6px; min-inline-size: 40px; justify-content: center; }
+        .ts-header--app .ts-lockup__text { position: absolute; inline-size: 1px; block-size: 1px; overflow: hidden; clip-path: inset(50%); }
+    }
 
     // ---------- hero ----------
     .ts-hero { background: var(--brand-deep); color: var(--white); padding-block: clamp(48px, 8vw, 104px); position: relative; overflow: hidden; }
