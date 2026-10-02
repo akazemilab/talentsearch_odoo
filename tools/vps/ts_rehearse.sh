@@ -127,6 +127,7 @@ if has ts_panel; then
   echo "=== $(date +%T) http panel v2 S18"; http ts_http_pv2_18.py
   echo "=== $(date +%T) http panel v2 S18b"; http ts_http_pv2_18b.py
   echo "=== $(date +%T) http panel v2 S19"; http ts_http_pv2_19.py
+  echo "=== $(date +%T) http portal v3"; http ts_http_pv3.py
 fi
 if has ts_kavenegar; then
   echo "=== $(date +%T) kavenegar tests (fake API, commits)"; orm tests_kavenegar.py

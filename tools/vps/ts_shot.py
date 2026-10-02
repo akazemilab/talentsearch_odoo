@@ -20,6 +20,7 @@ if args and args[0] == '--as':
 elif args and args[0] == '--matrix':
     MATRIX, args = json.load(open(args[1])), []
 PATHS = args or ['/']
+WIDTHS = tuple(int(x) for x in os.environ.get('TS_SHOT_WIDTHS', '1280,375').split(','))   # portal v3: 320,390,430,768,1280
 CHROME = '/snap/chromium/current/usr/lib/chromium-browser/chrome'
 LOCAL = 10000 + int(PORT)          # one tunnel per clone port: a stale 18071 tunnel once pointed the shots at another slot's clone
 subprocess.run('ssh -fN -o ExitOnForwardFailure=yes -L %s:127.0.0.1:%s eot-odoo-prod 2>/dev/null || true' % (LOCAL, PORT), shell=True)
@@ -103,7 +104,7 @@ def audit(p, login, paths):
         print(('signed in as %s' % login.split('@')[0]) if ok else '!! sign-in failed for %s' % login.split('@')[0], flush=True)
         bad += 0 if ok else 1
     for path in paths:
-        for w in (1280, 375):
+        for w in WIDTHS:
             errors.clear()
             page.set_viewport_size({'width': w, 'height': 900})
             r = page.goto(BASE + path, timeout=90000, wait_until='networkidle')
