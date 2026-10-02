@@ -33,6 +33,24 @@
         if (mq.addEventListener) { mq.addEventListener('change', onChange); } else if (mq.addListener) { mq.addListener(onChange); }
     }
 
+    // A card marked data-tsp-collapse opens on demand; without JavaScript it is simply visible.
+    function initCollapse() {
+        document.querySelectorAll('[data-tsp-collapse]').forEach(function (card) {
+            var h = card.querySelector('h2');
+            if (!h) { return; }
+            var btn = document.createElement('button');
+            btn.type = 'button'; btn.className = 'tsp-collapse__btn'; btn.setAttribute('aria-expanded', 'false');
+            btn.textContent = h.textContent;
+            h.textContent = ''; h.appendChild(btn);
+            card.setAttribute('data-js', '1');
+            btn.addEventListener('click', function () {
+                var open = card.hasAttribute('data-open');
+                if (open) { card.removeAttribute('data-open'); } else { card.setAttribute('data-open', '1'); }
+                btn.setAttribute('aria-expanded', open ? 'false' : 'true');
+            });
+        });
+    }
+
     // A form marked data-tsp-once cannot be sent twice: the button says what is happening.
     function initOnce() {
         document.querySelectorAll('form[data-tsp-once]').forEach(function (form) {
@@ -94,6 +112,6 @@
         }
     }
 
-    function init() { initMenus(); initOnce(); initSelect(); initCopy(); initAutoPrint(); }
+    function init() { initMenus(); initCollapse(); initOnce(); initSelect(); initCopy(); initAutoPrint(); }
     if (document.readyState === 'loading') { document.addEventListener('DOMContentLoaded', init); } else { init(); }
 })();

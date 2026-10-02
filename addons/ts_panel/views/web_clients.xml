@@ -26,8 +26,8 @@
                                 <input t-if="group" type="hidden" name="group" t-att-value="group.id"/>
                                 <label class="tsp-sr" for="tsp_q">جست‌وجو در نام، شناسه، موبایل یا ایمیل</label>
                                 <input id="tsp_q" name="q" type="search" t-att-value="q" maxlength="100" autocomplete="off" placeholder="جست‌وجو در نام، شناسه، موبایل یا ایمیل"/>
-                                <button type="submit" class="ts-btn ts-btn--primary">جست‌وجو</button>
-                                <button t-if="q" type="submit" name="q" value="" class="ts-btn ts-btn--quiet">پاک‌کردن جست‌وجو</button>
+                                <button type="submit" class="ts-btn ts-btn--primary tsp-search__go" aria-label="جست‌وجو"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l4 4"/></svg><span>جست‌وجو</span></button>
+                                <button t-if="q" type="submit" name="q" value="" class="ts-btn ts-btn--quiet ts-btn--sm">پاک‌کردن</button>
                             </form>
                             <p t-if="q" class="tsp-field__hint" role="status">نتیجهٔ جست‌وجو برای «<t t-out="q"/>».</p>
 
@@ -47,44 +47,6 @@
                                 <button type="submit" class="ts-btn ts-btn--outline ts-btn--sm">اعمال</button>
                             </form>
 
-                            <section class="ts-card" aria-labelledby="tsp-views-h">
-                                <h2 id="tsp-views-h" class="h5">نماهای ذخیره‌شده و ستون‌ها</h2>
-                                <ul t-if="views" class="tsp-list">
-                                    <li t-foreach="views" t-as="v">
-                                        <a t-attf-href="/my/workspaces/#{ws.id}/clients?view=#{v.id}" t-att-aria-current="'true' if v == view else None"><strong t-out="v.name"/></a>
-                                        <span t-if="v.is_default" class="ts-pill ts-pill--info">پیش‌فرض</span>
-                                        <form t-attf-action="/my/workspaces/#{ws.id}/clients/views/#{v.id}/default" method="post" class="tsp-inline">
-                                            <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
-                                            <button type="submit" class="ts-btn ts-btn--quiet ts-btn--sm"><t t-if="v.is_default">برداشتن پیش‌فرض</t><t t-else="">پیش‌فرض شود</t></button>
-                                        </form>
-                                        <form t-attf-action="/my/workspaces/#{ws.id}/clients/views/#{v.id}/delete" method="post" class="tsp-inline">
-                                            <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
-                                            <button type="submit" class="ts-btn ts-btn--quiet ts-btn--sm">حذف</button>
-                                        </form>
-                                    </li>
-                                </ul>
-                                <form t-attf-action="/my/workspaces/#{ws.id}/clients/views/save" method="post" class="tsp-form" data-tsp-once="1">
-                                    <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
-                                    <input type="hidden" name="filter" t-att-value="flt"/>
-                                    <input type="hidden" name="sort" t-att-value="sort"/>
-                                    <input type="hidden" name="dir" t-att-value="direction"/>
-                                    <input t-if="group" type="hidden" name="group" t-att-value="group.id"/>
-                                    <fieldset class="tsp-field">
-                                        <legend class="tsp-field__label">ستون‌های نمایش‌داده‌شده</legend>
-                                        <label t-foreach="all_cols" t-as="col" class="tsp-check">
-                                            <input type="checkbox" name="col" t-att-value="col[0]" t-att-checked="'checked' if col[0] in cols else None"/>
-                                            <span t-out="col[1]"/>
-                                        </label>
-                                    </fieldset>
-                                    <div class="tsp-field">
-                                        <label class="tsp-field__label" for="tsp_view_name">نام نما</label>
-                                        <p class="tsp-field__hint" id="tsp_view_name_h">پالایش، ترتیب و ستون‌های فعلی ذخیره می‌شود. متن جست‌وجو ذخیره نمی‌شود. حداکثر ۱۰ نما.</p>
-                                        <input id="tsp_view_name" name="name" type="text" maxlength="40" required="required" aria-describedby="tsp_view_name_h"/>
-                                    </div>
-                                    <label class="tsp-check"><input type="checkbox" name="is_default" value="1"/><span>این نما پیش‌فرض باشد</span></label>
-                                    <p><button type="submit" class="ts-btn ts-btn--outline">ذخیرهٔ نما</button></p>
-                                </form>
-                            </section>
 
                             <p t-if="not rows and not q and flt == 'all' and not group" class="tsp-empty">هنوز شرکت‌کننده‌ای در این پنل نیست. با «دعوت و فهرست (نسخهٔ قبلی)» اولین دعوت را بفرستید<t t-if="can_write"> یا فردی را دستی ثبت کنید</t>.</p>
                             <p t-elif="not rows" class="tsp-empty">موردی پیدا نشد. جست‌وجو یا پالایش را تغییر دهید.</p>
@@ -161,6 +123,44 @@
                                     <a t-if="page &lt; pages" t-att-href="url(page=page + 1)" rel="next">صفحهٔ بعد</a>
                                 </nav>
                             </form>
+                            <section class="ts-card tsp-collapse" aria-labelledby="tsp-views-h" data-tsp-collapse="1">
+                                <h2 id="tsp-views-h" class="h5">نماهای ذخیره‌شده و ستون‌ها</h2>
+                                <ul t-if="views" class="tsp-list">
+                                    <li t-foreach="views" t-as="v">
+                                        <a t-attf-href="/my/workspaces/#{ws.id}/clients?view=#{v.id}" t-att-aria-current="'true' if v == view else None"><strong t-out="v.name"/></a>
+                                        <span t-if="v.is_default" class="ts-pill ts-pill--info">پیش‌فرض</span>
+                                        <form t-attf-action="/my/workspaces/#{ws.id}/clients/views/#{v.id}/default" method="post" class="tsp-inline">
+                                            <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                                            <button type="submit" class="ts-btn ts-btn--quiet ts-btn--sm"><t t-if="v.is_default">برداشتن پیش‌فرض</t><t t-else="">پیش‌فرض شود</t></button>
+                                        </form>
+                                        <form t-attf-action="/my/workspaces/#{ws.id}/clients/views/#{v.id}/delete" method="post" class="tsp-inline">
+                                            <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                                            <button type="submit" class="ts-btn ts-btn--quiet ts-btn--sm">حذف</button>
+                                        </form>
+                                    </li>
+                                </ul>
+                                <form t-attf-action="/my/workspaces/#{ws.id}/clients/views/save" method="post" class="tsp-form" data-tsp-once="1">
+                                    <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                                    <input type="hidden" name="filter" t-att-value="flt"/>
+                                    <input type="hidden" name="sort" t-att-value="sort"/>
+                                    <input type="hidden" name="dir" t-att-value="direction"/>
+                                    <input t-if="group" type="hidden" name="group" t-att-value="group.id"/>
+                                    <fieldset class="tsp-field">
+                                        <legend class="tsp-field__label">ستون‌های نمایش‌داده‌شده</legend>
+                                        <label t-foreach="all_cols" t-as="col" class="tsp-check">
+                                            <input type="checkbox" name="col" t-att-value="col[0]" t-att-checked="'checked' if col[0] in cols else None"/>
+                                            <span t-out="col[1]"/>
+                                        </label>
+                                    </fieldset>
+                                    <div class="tsp-field">
+                                        <label class="tsp-field__label" for="tsp_view_name">نام نما</label>
+                                        <p class="tsp-field__hint" id="tsp_view_name_h">پالایش، ترتیب و ستون‌های فعلی ذخیره می‌شود. متن جست‌وجو ذخیره نمی‌شود. حداکثر ۱۰ نما.</p>
+                                        <input id="tsp_view_name" name="name" type="text" maxlength="40" required="required" aria-describedby="tsp_view_name_h"/>
+                                    </div>
+                                    <label class="tsp-check"><input type="checkbox" name="is_default" value="1"/><span>این نما پیش‌فرض باشد</span></label>
+                                    <p><button type="submit" class="ts-btn ts-btn--outline">ذخیرهٔ نما</button></p>
+                                </form>
+                            </section>
                         </t>
                     </div>
                 </t>
