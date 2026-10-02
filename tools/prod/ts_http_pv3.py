@@ -52,6 +52,9 @@ u = user('done')
 da = T.search([('user_id', '=', u.id), ('state', '=', 'done')], limit=1)
 if not da:
     da = T.create({'user_id': u.id, 'instrument_id': inst.id, 'version_id': inst.current_version_id.id}); finish(da)
+if T.search_count([('user_id', '=', u.id), ('state', '=', 'done'), ('instrument_id', '=', inst.id)]) < 2:
+    d2 = T.create({'user_id': u.id, 'instrument_id': inst.id, 'version_id': inst.current_version_id.id}); finish(d2)
+da = T.search([('user_id', '=', u.id), ('state', '=', 'done'), ('instrument_id', '=', inst.id)], order='id desc', limit=1)
 # emp: invited by the company, accepted with sharing -> consent page pending
 u = user('emp'); cl = client_for(EMP, u, 'داوطلب پرتال')
 ea = A.search([('client_id', '=', cl.id)], limit=1) or A.create({'workspace_id': EMP.id, 'instrument_id': inst.id, 'invitee_name': 'داوطلب پرتال', 'client_id': cl.id})
@@ -142,6 +145,18 @@ check('after submission the report opens with what was received, who sees it and
       st == 200 and 'پاسخ‌های شما دریافت و ثبت شد' in page and 'id="ts-who-sees-line"' in page and 'href="/my"' in page and 'id="ts-summary"' in page, st)
 st, page = get(d, '/my/assessments/%s' % DA)
 check('without the flag the block is absent', 'پاسخ‌های شما دریافت و ثبت شد' not in page)
+
+# ---- results: grouped list, summary first, folded details, history of the same instrument
+st, page = get(d, '/my/assessments')
+check('the list groups results per instrument and says when each was taken', st == 200 and 'id="ts-list-inst-' in page and 'نتیجه آماده' in page and 'بار انجام شده' in page, st)
+st, page = get(login('going'), '/my/assessments')
+check('…and shows unfinished attempts first', st == 200 and 'id="ts-list-going"' in page, st)
+st, page = get(d, '/my/assessments/%s' % DA)
+check('the report opens with a plain-language lead before the summary table', st == 200 and 0 < page.find('ts-doc__lead') < page.find('id="ts-summary"'), st)
+check('…the report metadata is a folded details card', 'data-tsp-collapse' in page and 'جزئیات گزارش' in page)
+check('…and earlier results of the same instrument are listed with the comparability note', 'id="ts-history"' in page and 'همین نسخهٔ نمره‌گذاری' in page and 'به معنای بهتر یا بدتر شدن نیست' in page)
+st, page = get(emp, '/take/%s' % ETOK)
+check('the consent page names who invited', 'به دعوت' in page and 'شرکت نمونهٔ پرتال' in page)
 
 # ---- account hub
 st, page = get(d, '/my/account')

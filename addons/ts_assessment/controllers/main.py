@@ -187,8 +187,19 @@ class TsAssessment(http.Controller):
     @http.route('/my/assessments', type='http', auth='user', website=True, sitemap=False)
     def my_list(self, **kw):
         _ts_site_or_404()
-        attempts = request.env['ts.attempt'].sudo().search([('user_id', '=', request.env.user.id)])
-        return request.render('ts_assessment.my_list', {'attempts': attempts, 'fa': fa_digits, 'page_name': 'ts_assessments'})
+        attempts = request.env['ts.attempt'].sudo().search([('user_id', '=', request.env.user.id)], order='id desc')
+        # portal v3 (P3): unfinished first, then results grouped per instrument, newest first
+        going = attempts.filtered(lambda a: a.state in ('consent', 'in_progress'))
+        groups = []
+        for a in attempts.filtered(lambda a: a.state not in ('consent', 'in_progress')):
+            for g in groups:
+                if g['inst'] == a.instrument_id:
+                    g['rows'].append(a)
+                    break
+            else:
+                groups.append({'inst': a.instrument_id, 'rows': [a]})
+        return request.render('ts_assessment.my_list', {'attempts': attempts, 'going': going, 'groups': groups,
+                                                         'fa': fa_digits, 'page_name': 'ts_assessments'})
 
     @http.route('/my/assessments/<int:attempt_id>', type='http', auth='user', website=True, sitemap=False)
     def my_report(self, attempt_id, **kw):
@@ -202,8 +213,12 @@ class TsAssessment(http.Controller):
             return request.render('ts_assessment.unavailable', {'attempt': attempt, 'inst': attempt.instrument_id,
                                                                   'page_name': 'ts_assessments'})
         request.env['ts.audit.event'].sudo().log('report.view', attempt)
+        # portal v3 (P3): earlier released results of the same instrument; only the same scoring contract is comparable
+        history = request.env['ts.attempt'].sudo().search([
+            ('user_id', '=', request.env.user.id), ('instrument_id', '=', attempt.instrument_id.id), ('state', '=', 'done'),
+            ('released', '=', True), ('id', '!=', attempt.id)], order='submitted_at desc')
         return request.render('ts_assessment.report', {
             'attempt': attempt, 'inst': attempt.instrument_id, 'version': attempt.version_id,
             'results': attempt.result_rows(), 'fa': fa_digits, 'submitted': kw.get('submitted'),
-            'page_name': 'ts_assessments',
+            'history': history, 'page_name': 'ts_assessments',
         })

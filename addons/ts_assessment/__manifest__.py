@@ -1,7 +1,7 @@
 {
     'name': 'Talent Search - Assessments',
     'summary': 'Versioned instrument catalog, Persian RTL player, S09-V3.0 scoring engine, participant results (website 2)',
-    'version': '20.0.2.0.0',
+    'version': '20.0.3.0.0',
     'category': 'Services/Talent Search',
     'author': 'EOT',
     'license': 'LGPL-3',

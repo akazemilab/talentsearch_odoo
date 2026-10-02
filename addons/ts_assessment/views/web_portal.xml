@@ -30,29 +30,39 @@
                                         <a href="/assessments" class="ts-btn ts-btn--primary">مشاهدهٔ سنجه‌ها</a>
                                     </div>
                                 </t>
-                                <div t-else="" class="ts-table-wrap">
-                                    <table class="ts-table">
-                                        <thead><tr><th scope="col">سنجه</th><th scope="col">وضعیت</th><th scope="col">تاریخ</th><th scope="col"><span class="visually-hidden">اقدام</span></th></tr></thead>
-                                        <tbody>
-                                            <t t-foreach="attempts" t-as="a">
-                                                <tr>
-                                                    <td><strong t-out="a.instrument_id.title"/><div class="ts-hint" t-if="a.subject_label">دربارهٔ <t t-out="a.subject_label"/></div></td>
-                                                    <td>
-                                                        <span t-if="a.state == 'done'" class="ts-pill ts-pill--ok">تکمیل‌شده</span>
-                                                        <span t-elif="a.state == 'in_progress'" class="ts-pill">در حال پاسخ · <t t-out="fa(a.progress)"/>٪</span>
-                                                        <span t-elif="a.state == 'consent'" class="ts-pill">شروع نشده</span>
-                                                        <span t-else="" class="ts-pill ts-pill--warn">در حال بررسی</span>
-                                                    </td>
-                                                    <td t-out="a.jalali(a.submitted_at or a.started_at or a.create_date, False)"/>
-                                                    <td>
-                                                        <a t-if="a.state == 'done'" t-attf-href="/my/assessments/#{a.id}" class="ts-btn ts-btn--outline ts-btn--sm">مشاهدهٔ گزارش</a>
-                                                        <a t-elif="a.state in ('consent', 'in_progress')" t-attf-href="/take/#{a.access_token}" class="ts-btn ts-btn--primary ts-btn--sm">ادامه</a>
-                                                    </td>
-                                                </tr>
-                                            </t>
-                                        </tbody>
-                                    </table>
-                                </div>
+                                <t t-else="">
+                                    <section t-if="going" class="ts-card" id="ts-list-going" aria-labelledby="ts-list-going-h">
+                                        <h2 id="ts-list-going-h">نیمه‌تمام</h2>
+                                        <ul class="tsp-list tsp-rows">
+                                            <li t-foreach="going" t-as="a">
+                                                <div class="tsp-rows__text">
+                                                    <strong t-out="a.instrument_id.title"/>
+                                                    <span class="ts-hint"><t t-if="a.workspace_id">از طرف <t t-out="a.workspace_id.partner_id.name"/> · </t><t t-if="a.state == 'in_progress'"><t t-out="fa(a.progress)"/>٪ پاسخ داده‌اید · </t>آخرین ذخیره <t t-out="a.jalali(a.write_date, False)"/></span>
+                                                </div>
+                                                <a t-attf-href="/take/#{a.access_token}" class="ts-btn ts-btn--primary ts-btn--sm"><t t-if="a.state == 'in_progress'">ادامه</t><t t-else="">شروع</t></a>
+                                            </li>
+                                        </ul>
+                                    </section>
+                                    <section t-foreach="groups" t-as="g" class="ts-card" t-attf-id="ts-list-inst-#{g['inst'].id}">
+                                        <h2 t-out="g['inst'].title"/>
+                                        <p class="ts-hint" t-if="len(g['rows']) > 1"><t t-out="fa(len(g['rows']))"/> بار انجام شده؛ جدیدترین اول. نتیجه‌های نسخه‌های مختلف نمره‌گذاری با هم مقایسه‌پذیر نیستند.</p>
+                                        <ul class="tsp-list tsp-rows">
+                                            <li t-foreach="g['rows']" t-as="a">
+                                                <div class="tsp-rows__text">
+                                                    <strong><t t-out="a.jalali(a.submitted_at or a.create_date, False)"/><t t-if="a.subject_label"> · دربارهٔ <t t-out="a.subject_label"/></t></strong>
+                                                    <span class="ts-hint">
+                                                        <t t-if="a.state == 'done' and a.released">نتیجه آماده<t t-if="a.workspace_id"> · به دعوت <t t-out="a.workspace_id.partner_id.name"/></t></t>
+                                                        <t t-elif="a.state == 'done'">نتیجه در دسترس نیست</t>
+                                                        <t t-else="">محاسبه انجام نشد</t>
+                                                        <t t-if="a.version_id.contract_version"> · نسخهٔ نمره‌گذاری <bdi dir="ltr" t-out="a.version_id.contract_version"/></t>
+                                                    </span>
+                                                </div>
+                                                <a t-if="a.state == 'done' and a.released" t-attf-href="/my/assessments/#{a.id}" class="ts-btn ts-btn--outline ts-btn--sm">گزارش</a>
+                                                <a t-elif="a.state == 'done'" t-attf-href="/my/assessments/#{a.id}" class="ts-btn ts-btn--quiet ts-btn--sm">چرا؟</a>
+                                            </li>
+                                        </ul>
+                                    </section>
+                                </t>
                                 <p><a href="/assessments">مشاهدهٔ همهٔ سنجه‌ها</a></p>
                             </div>
                         </section>
@@ -87,6 +97,9 @@
                                         <div class="ts-doc__kind">گزارش نتیجهٔ سنجه</div>
                                     </header>
                                     <h1 class="ts-doc__title" t-out="inst.title"/>
+                                    <p class="ts-doc__lead">نتیجهٔ <t t-out="attempt.partner_id.name"/> در <t t-out="attempt.jalali(attempt.submitted_at, False)"/>. <t t-out="inst.intended_use"/></p>
+                                    <div class="ts-doc__details tsp-collapse" data-tsp-collapse="1">
+                                    <h2 class="h5">جزئیات گزارش</h2>
                                     <dl class="ts-meta ts-doc__meta">
                                         <dt>شرکت‌کننده</dt><dd t-out="attempt.partner_id.name"/>
                                         <t t-if="attempt.subject_label"><dt>دربارهٔ</dt><dd t-out="attempt.subject_label"/></t>
@@ -96,6 +109,7 @@
                                         <dt>نسخه</dt><dd><bdi dir="ltr"><t t-out="version.contract_version"/> · <t t-out="attempt.engine_version"/></bdi></dd>
                                         <dt>وضعیت</dt><dd>منتشرشده برای شرکت‌کننده؛ محتوای تفسیر تأییدشده</dd>
                                     </dl>
+                                    </div>
 
                                     <section class="ts-doc__sec" id="ts-summary">
                                         <h2>خلاصهٔ نتایج</h2>
@@ -134,6 +148,20 @@
                                             </t>
                                         </section>
                                     </t>
+
+                                    <section t-if="history" class="ts-doc__sec ts-noprint" id="ts-history">
+                                        <h2>نتیجه‌های قبلی همین سنجه</h2>
+                                        <p class="ts-hint">هر نتیجه توصیف همان روز است. فقط نتیجه‌های همین نسخهٔ نمره‌گذاری (<bdi dir="ltr" t-out="version.contract_version"/>) کنار هم خوانده می‌شوند؛ تغییر عدد به‌تنهایی به معنای بهتر یا بدتر شدن نیست.</p>
+                                        <ul class="tsp-list tsp-rows">
+                                            <li t-foreach="history" t-as="h">
+                                                <div class="tsp-rows__text">
+                                                    <strong t-out="h.jalali(h.submitted_at, False)"/>
+                                                    <span class="ts-hint"><t t-if="h.version_id == version">همین نسخهٔ نمره‌گذاری</t><t t-else="">نسخهٔ دیگر (<bdi dir="ltr" t-out="h.version_id.contract_version"/>)؛ مقایسهٔ مستقیم معتبر نیست</t></span>
+                                                </div>
+                                                <a t-attf-href="/my/assessments/#{h.id}" class="ts-btn ts-btn--outline ts-btn--sm">گزارش</a>
+                                            </li>
+                                        </ul>
+                                    </section>
 
                                     <section class="ts-doc__sec ts-doc__foot">
                                         <h2>محدودیت‌ها و گام بعدی</h2>

@@ -43,6 +43,7 @@
 
 // Everything under #wrapwrap so it beats Odoo's own .o_cc / #wrap rules.
 #wrapwrap {
+    --success: #1f6b4e; --danger: #a12b37; --info: #1f4e79; --warn: #6b4600;   // Odoo's Bootstrap :root redefines these; the design-system values win on the whole site
     background: var(--white);
     color: var(--ink);
     font-family: var(--font-text);
@@ -149,7 +150,8 @@
     // ---------- hero ----------
     .ts-hero { background: var(--brand-deep); color: var(--white); padding-block: clamp(48px, 8vw, 104px); position: relative; overflow: hidden; }
     .ts-hero h1 { color: var(--white); font-size: clamp(2rem, 4.6vw, 3.4rem); max-inline-size: 760px; line-height: 1.22; }
-    .ts-hero__kicker { display: inline-block; color: #d8dcf6; font-weight: 600; font-size: var(--fs-1); margin-block-end: 18px; }
+    .ts-hero__kicker { display: inline-block; color: var(--brand); font-weight: 600; font-size: var(--fs-1); margin-block-end: 18px; }
+    .ts-hero:not(.ts-hero--soft):not(.ts-hero--split) .ts-hero__kicker { color: #d8dcf6; }
     .ts-hero__lead { color: #e4e7f6; font-size: var(--fs-3); max-inline-size: 640px; margin-block: 20px 30px; }
     .ts-hero__actions { display: flex; flex-wrap: wrap; gap: 12px; }
     .ts-hero__actions .ts-btn--quiet { color: var(--white); border-color: rgba(255, 255, 255, .35); }

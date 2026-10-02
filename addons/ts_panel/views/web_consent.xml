@@ -68,6 +68,10 @@
             <xpath expr="//dt[text()='چه کسی نتیجه را می‌بیند']/following-sibling::dd[1]" position="replace">
                 <dd><t t-call="ts_panel.who_sees_line"/></dd>
             </xpath>
+            <xpath expr="//p[hasclass('ts-lead')]" position="replace">
+                <t t-set="asg0" t-value="attempt.ts_org_assignment()"/>
+                <p class="ts-lead"><t t-if="asg0">به دعوت <strong t-out="asg0.workspace_id.partner_id.name"/>. </t>پیش از شروع، این موارد را بخوانید.</p>
+            </xpath>
         </field>
     </record>
     <record id="consent_who_sees_talent" model="ir.ui.view">
