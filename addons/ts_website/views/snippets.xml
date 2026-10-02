@@ -31,7 +31,6 @@
             <t t-name="ts_website.page_hero">
                 <section class="ts-hero ts-hero--soft">
                     <div class="ts-container">
-                        <span class="ts-hero__kicker" t-out="kicker"/>
                         <h1 t-out="title"/>
                         <p class="ts-hero__lead" t-out="lead"/>
                     </div>
