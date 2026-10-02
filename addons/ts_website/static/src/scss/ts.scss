@@ -300,6 +300,7 @@
     .ts-form .ts-check input { inline-size: 22px; block-size: 22px; margin-block-start: 3px; flex: none; accent-color: var(--brand); }
     .ts-form__error { color: var(--danger); font-weight: 700; }
     input[type=checkbox], input[type=radio] { accent-color: var(--brand); }
+    #wrap input:not([type=checkbox]):not([type=radio]):not([type=hidden]):not([type=file]):not([type=range]), #wrap select { min-block-size: var(--control-min); }
 
     // auth pages (sign in, sign up): one quiet card
     .ts-auth { min-block-size: calc(100dvh - 60px); display: grid; place-items: start center; padding-block: clamp(24px, 6vw, 72px); background: var(--paper); }
