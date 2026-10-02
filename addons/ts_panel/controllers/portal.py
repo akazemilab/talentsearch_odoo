@@ -44,8 +44,26 @@ class TsPanelPortal(CustomerPortal):
         shared_n = {a.id: len([s for s in a.ts_shares() if s.share_level != 'none']) for a in done}
         memberships = env['ts.workspace.member'].sudo().search([('user_id', '=', user.id), ('active', '=', True)])  # ts-scope-ok: own memberships
         unread = env['ts.notification'].sudo()._unread_count(user)
+        # portal v3 (P1): one dominant action, decided from the real state — an open invitation, then an unfinished
+        # attempt, then a result released in the last 14 days; otherwise a peaceful state.
+        nxt = None
+        if invites:
+            inv = invites[0]
+            nxt = {'kind': 'invite', 'title': inv.instrument_id.title, 'org': inv.workspace_id.partner_id.name,
+                   'when': jalali(inv.create_date, with_time=False), 'deadline': jalali(datetime.combine(inv.deadline, time()), with_time=False) if inv.deadline else None,
+                   'url': '/invite/%s' % inv.token, 'label': 'مشاهدهٔ دعوت'}
+        elif going:
+            a = going[0]
+            nxt = {'kind': 'resume', 'title': a.instrument_id.title, 'org': a.workspace_id.partner_id.name if a.workspace_id else None,
+                   'progress': a.progress if a.state == 'in_progress' else 0, 'when': jalali(a.write_date, with_time=False),
+                   'url': '/take/%s' % a.access_token, 'label': 'ادامهٔ پاسخ‌دهی' if a.state == 'in_progress' else 'شروع'}
+        elif done and done[0].submitted_at and (datetime.utcnow() - done[0].submitted_at).days <= 14:
+            a = done[0]
+            nxt = {'kind': 'result', 'title': a.instrument_id.title, 'org': a.workspace_id.partner_id.name if a.workspace_id else None,
+                   'when': jalali(a.submitted_at, with_time=False), 'url': '/my/assessments/%s' % a.id, 'label': 'دیدن نتیجه'}
         return request.render('ts_panel.my_home', {
             'invites': invites, 'going': going, 'done': done, 'shared_n': shared_n, 'memberships': memberships, 'unread': unread,
+            'next_action': nxt, 'deadlines': {i.id: jalali(datetime.combine(i.deadline, time()), with_time=False) for i in invites if i.deadline},
             'fa': fa_digits, 'jalali': jalali, 'page_name': 'ts_my_home'})
 
     # ------------------------------------------------------------------ ACC-1, ACC-2 account

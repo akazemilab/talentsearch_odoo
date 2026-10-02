@@ -70,8 +70,24 @@
     .tsp-subnav__item:hover { background: var(--brand-soft); color: var(--brand-deep); text-decoration: none; }
     .tsp-subnav__item.is-on { background: var(--brand-deep); border-color: var(--brand-deep); color: var(--white); }
 
-    #ts-home-going li, #ts-home-results li, #ts-home-invites li { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: var(--space-2) var(--space-4); padding-block: var(--space-2); border-block-end: 1px solid var(--line); }
-    #ts-home-going li:last-child, #ts-home-results li:last-child, #ts-home-invites li:last-child { border-block-end: 0; }
+    // portal v3 (P1): the one next action, dated rows, the account hub list
+    .tsp-next { background: var(--brand-deep); color: var(--white); border-radius: var(--radius-xl); padding: clamp(20px, 4vw, 32px); display: grid; gap: var(--space-2); justify-items: start; margin-block-end: var(--space-2); }
+    .tsp-next__kicker { margin: 0; color: #d8dcf6; font-size: var(--fs-1); font-weight: 600; }
+    .tsp-next__title { color: var(--white); font-size: var(--fs-5); margin: 0; }
+    .tsp-next__meta { margin: 0 0 var(--space-2); color: #e4e7f6; font-size: var(--fs-1); }
+    .tsp-next__meta strong { color: var(--white); }
+    .tsp-next .ts-btn--primary { background: var(--white); color: var(--brand-deep); }
+    .tsp-next .ts-btn--primary:hover { background: var(--brand-soft); color: var(--brand-deep); }
+    @media (max-width: 575.98px) { .tsp-next .ts-btn { inline-size: 100%; } }
+    .tsp-rows li { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: var(--space-2) var(--space-4); padding-block: var(--space-3); border-block-end: 1px solid var(--line); }
+    .tsp-rows li:last-child { border-block-end: 0; padding-block-end: 0; }
+    .tsp-rows__text { display: grid; gap: 2px; min-inline-size: 0; flex: 1 1 240px; }
+    .tsp-rows__text strong { overflow-wrap: anywhere; }
+    .tsp-links { list-style: none; margin: 0; padding: 0; display: grid; }
+    .tsp-links li { display: grid; gap: 2px; padding-block: var(--space-3); border-block-end: 1px solid var(--line); }
+    .tsp-links li:last-child { border-block-end: 0; }
+    .tsp-links a { font-weight: 700; text-decoration: none; min-block-size: 24px; display: inline-flex; align-items: center; }
+    .tsp-links a:hover { text-decoration: underline; }
 
     // ---------- page head, flash, empty ----------
     .tsp-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-start; gap: var(--space-3) var(--space-6); }

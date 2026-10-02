@@ -11,12 +11,9 @@
             <t t-name="ts_panel.my_nav">
                 <nav class="tsp-subnav" aria-label="صفحه‌های من">
                     <a href="/my" t-attf-class="tsp-subnav__item #{'is-on' if active == 'home' else ''}" t-att-aria-current="'page' if active == 'home' else None">کارهای من</a>
-                    <a href="/my/assessments" t-attf-class="tsp-subnav__item #{'is-on' if active == 'results' else ''}" t-att-aria-current="'page' if active == 'results' else None">نتیجه‌ها</a>
+                    <a href="/my/assessments" t-attf-class="tsp-subnav__item #{'is-on' if active == 'results' else ''}" t-att-aria-current="'page' if active == 'results' else None">سنجه‌ها و نتیجه‌ها</a>
                     <a href="/my/sharing" t-attf-class="tsp-subnav__item #{'is-on' if active == 'sharing' else ''}" t-att-aria-current="'page' if active == 'sharing' else None">چه کسی می‌بیند</a>
-                    <a href="/my/notifications" t-attf-class="tsp-subnav__item #{'is-on' if active == 'notifications' else ''}" t-att-aria-current="'page' if active == 'notifications' else None">اعلان‌ها</a>
-                    <a href="/my/account" t-attf-class="tsp-subnav__item #{'is-on' if active == 'account' else ''}" t-att-aria-current="'page' if active == 'account' else None">حساب من</a>
-                    <a href="/my/privacy" t-attf-class="tsp-subnav__item #{'is-on' if active == 'privacy' else ''}" t-att-aria-current="'page' if active == 'privacy' else None">داده‌های من</a>
-                    <a href="/my/sessions" t-attf-class="tsp-subnav__item #{'is-on' if active == 'sessions' else ''}" t-att-aria-current="'page' if active == 'sessions' else None">نشست‌ها</a>
+                    <a href="/my/account" t-attf-class="tsp-subnav__item #{'is-on' if active in ('account', 'privacy', 'sessions', 'notifications') else ''}" t-att-aria-current="'page' if active in ('account', 'privacy', 'sessions', 'notifications') else None">حساب</a>
                 </nav>
             </t>
         </field>
@@ -38,43 +35,63 @@
                             <p t-if="unread" class="tsp-flash" role="status">
                                 <a href="/my/notifications"><t t-out="fa(unread)"/> اعلان تازه دارید.</a>
                             </p>
+                            <section t-if="next_action" class="tsp-next" id="ts-home-next" aria-labelledby="ts-next-h">
+                                <p class="tsp-next__kicker" id="ts-next-h">
+                                    <t t-if="next_action['kind'] == 'invite'">یک دعوت منتظر شماست</t>
+                                    <t t-elif="next_action['kind'] == 'resume'">یک سنجهٔ نیمه‌تمام دارید</t>
+                                    <t t-else="">نتیجهٔ تازه‌ای آماده است</t>
+                                </p>
+                                <h2 class="tsp-next__title" t-out="next_action['title']"/>
+                                <p class="tsp-next__meta">
+                                    <t t-if="next_action.get('org')">از طرف <strong t-out="next_action['org']"/> · </t>
+                                    <t t-elif="next_action['kind'] != 'invite'">به انتخاب خودتان · </t>
+                                    <t t-if="next_action['kind'] == 'invite'">دعوت در <t t-out="next_action['when']"/><t t-if="next_action.get('deadline')"> · مهلت تا <t t-out="next_action['deadline']"/></t></t>
+                                    <t t-elif="next_action['kind'] == 'resume'"><t t-out="fa(next_action['progress'])"/>٪ پاسخ داده‌اید · آخرین ذخیره <t t-out="next_action['when']"/></t>
+                                    <t t-else="">تکمیل در <t t-out="next_action['when']"/></t>
+                                </p>
+                                <a t-att-href="next_action['url']" class="ts-btn ts-btn--primary ts-btn--lg" t-out="next_action['label']"/>
+                            </section>
                             <div t-if="invites" class="ts-card" id="ts-home-invites">
-                                <h2>دعوت‌هایی که منتظر شما هستند</h2>
-                                <ul class="tsp-list">
+                                <h2>دعوت‌های باز</h2>
+                                <ul class="tsp-list tsp-rows">
                                     <li t-foreach="invites" t-as="inv">
-                                        <strong t-out="inv.instrument_id.title"/>
-                                        <span class="ts-hint"> — <t t-out="inv.workspace_id.name"/></span>
-                                        <a t-attf-href="/invite/#{inv.token}" class="ts-btn ts-btn--primary ts-btn--sm">مشاهدهٔ دعوت</a>
+                                        <div class="tsp-rows__text">
+                                            <strong t-out="inv.instrument_id.title"/>
+                                            <span class="ts-hint">از طرف <t t-out="inv.workspace_id.partner_id.name"/> · <t t-out="jalali(inv.create_date, with_time=False)"/><t t-if="deadlines.get(inv.id)"> · مهلت تا <t t-out="deadlines[inv.id]"/></t></span>
+                                        </div>
+                                        <a t-attf-href="/invite/#{inv.token}" class="ts-btn ts-btn--outline ts-btn--sm">مشاهدهٔ دعوت</a>
                                     </li>
                                 </ul>
                             </div>
                             <div t-if="going" class="ts-card" id="ts-home-going">
                                 <h2>سنجه‌های نیمه‌تمام</h2>
-                                <ul class="tsp-list">
+                                <ul class="tsp-list tsp-rows">
                                     <li t-foreach="going" t-as="a">
-                                        <strong t-out="a.instrument_id.title"/>
-                                        <span class="ts-hint" t-if="a.state == 'in_progress'"> — <t t-out="fa(a.progress)"/>٪ انجام شده</span>
-                                        <a t-attf-href="/take/#{a.access_token}" class="ts-btn ts-btn--primary ts-btn--sm">ادامه</a>
+                                        <div class="tsp-rows__text">
+                                            <strong t-out="a.instrument_id.title"/>
+                                            <span class="ts-hint"><t t-if="a.workspace_id">از طرف <t t-out="a.workspace_id.partner_id.name"/> · </t><t t-if="a.state == 'in_progress'"><t t-out="fa(a.progress)"/>٪ انجام شده · </t>آخرین ذخیره <t t-out="jalali(a.write_date, with_time=False)"/></span>
+                                        </div>
+                                        <a t-attf-href="/take/#{a.access_token}" class="ts-btn ts-btn--outline ts-btn--sm"><t t-if="a.state == 'in_progress'">ادامه</t><t t-else="">شروع</t></a>
                                     </li>
                                 </ul>
                             </div>
                             <div t-if="done" class="ts-card" id="ts-home-results">
                                 <h2>نتیجه‌های تازه</h2>
-                                <ul class="tsp-list">
+                                <ul class="tsp-list tsp-rows">
                                     <li t-foreach="done" t-as="a">
-                                        <strong t-out="a.instrument_id.title"/>
-                                        <span class="ts-hint"> — <t t-out="jalali(a.submitted_at, with_time=False)"/></span>
-                                        <span class="ts-hint" t-if="shared_n.get(a.id)"> — با <t t-out="fa(shared_n[a.id])"/> پنل به اشتراک گذاشته شده</span>
-                                        <span class="ts-hint" t-else=""> — فقط شما می‌بینید</span>
+                                        <div class="tsp-rows__text">
+                                            <strong t-out="a.instrument_id.title"/>
+                                            <span class="ts-hint"><t t-out="jalali(a.submitted_at, with_time=False)"/> · <t t-if="shared_n.get(a.id)">با <t t-out="fa(shared_n[a.id])"/> پنل به اشتراک گذاشته شده</t><t t-else="">فقط شما می‌بینید</t></span>
+                                        </div>
                                         <a t-attf-href="/my/assessments/#{a.id}" class="ts-btn ts-btn--outline ts-btn--sm">گزارش</a>
                                     </li>
                                 </ul>
-                                <p><a href="/my/assessments">همهٔ نتیجه‌ها</a> · <a href="/my/sharing">چه کسی نتیجه‌های من را می‌بیند؟</a></p>
+                                <p class="ts-hint"><a href="/my/assessments">همهٔ نتیجه‌ها</a> · <a href="/my/sharing">چه کسی نتیجه‌های من را می‌بیند؟</a></p>
                             </div>
                             <div t-if="not invites and not going and not done" class="ts-card ts-card--soft" id="ts-home-empty">
                                 <h2>فعلاً کاری ندارید</h2>
-                                <p>دعوتی منتظر شما نیست و سنجهٔ نیمه‌تمامی ندارید. هر وقت خواستید یک سنجه را خودتان انجام دهید.</p>
-                                <a href="/assessments" class="ts-btn ts-btn--primary">مشاهدهٔ سنجه‌ها</a>
+                                <p>دعوتی منتظر شما نیست و سنجهٔ نیمه‌تمامی ندارید. نتیجه‌های قبلی در <a href="/my/assessments">سنجه‌ها و نتیجه‌ها</a> می‌مانند؛ هر وقت خواستید می‌توانید یک سنجه را خودتان انجام دهید.</p>
+                                <a href="/assessments" class="ts-btn ts-btn--outline">مشاهدهٔ سنجه‌ها</a>
                             </div>
                             <div t-if="memberships" class="ts-card" id="ts-home-panels">
                                 <h2>پنل‌های من</h2>
@@ -116,12 +133,19 @@
                                 <p t-if="phone_verified">شمارهٔ موبایل شما تأیید شده است. <a href="/my/phone">مدیریت موبایل</a></p>
                                 <p t-else="">شمارهٔ موبایل تأییدشده‌ای ندارید. موبایل تنها با کد پیامکی تأیید می‌شود. <a href="/my/phone">تأیید موبایل</a></p>
                             </div>
-                            <div class="ts-card">
-                                <h2>داده‌ها و امنیت</h2>
-                                <p><a href="/my/privacy">داده‌های من: دریافت نسخه یا درخواست حذف</a></p>
-                                <p><a href="/my/notifications/prefs">ترجیح‌های اعلان</a></p>
-                                <p><a href="/my/security">رمز عبور و امنیت</a></p>
-                            </div>
+                            <nav class="ts-card" aria-labelledby="acc-more-h">
+                                <h2 id="acc-more-h">تنظیمات و پشتیبانی</h2>
+                                <ul class="tsp-links">
+                                    <li><a href="/my/notifications/prefs">اعلان‌ها و راه اطلاع‌رسانی</a><span class="ts-hint">چه خبری، از چه راهی</span></li>
+                                    <li><a href="/my/sharing">چه کسی نتیجه‌های من را می‌بیند</a><span class="ts-hint">اشتراک با پنل‌ها و لغو آن</span></li>
+                                    <li><a href="/my/privacy">داده‌های من</a><span class="ts-hint">دریافت نسخه یا درخواست حذف</span></li>
+                                    <li><a href="/my/sessions">دستگاه‌های واردشده</a><span class="ts-hint">خروج از دستگاه‌های دیگر</span></li>
+                                    <li><a href="/my/security">گذرواژه و امنیت</a><span class="ts-hint">تغییر گذرواژه</span></li>
+                                    <li><a href="/help">راهنما و پرسش‌های رایج</a><span class="ts-hint">روند کار و حقوق شما</span></li>
+                                    <li><a href="/contact?topic=support">تماس با پشتیبانی</a><span class="ts-hint">پاسخ در ساعت کاری؛ در شرایط اضطراری با اورژانس <bdi dir="ltr">۱۱۵</bdi> تماس بگیرید</span></li>
+                                    <li><a href="/web/session/logout?redirect=/" rel="nofollow">خروج از حساب</a></li>
+                                </ul>
+                            </nav>
                         </section>
                     </div>
                 </t>
