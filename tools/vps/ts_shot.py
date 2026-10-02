@@ -21,7 +21,8 @@ elif args and args[0] == '--matrix':
     MATRIX, args = json.load(open(args[1])), []
 PATHS = args or ['/']
 CHROME = '/snap/chromium/current/usr/lib/chromium-browser/chrome'
-subprocess.run('ssh -fN -o ExitOnForwardFailure=yes -L 18071:127.0.0.1:%s eot-odoo-prod 2>/dev/null || true' % PORT, shell=True)
+LOCAL = 10000 + int(PORT)          # one tunnel per clone port: a stale 18071 tunnel once pointed the shots at another slot's clone
+subprocess.run('ssh -fN -o ExitOnForwardFailure=yes -L %s:127.0.0.1:%s eot-odoo-prod 2>/dev/null || true' % (LOCAL, PORT), shell=True)
 os.makedirs('/root/ts-jobs/shots', exist_ok=True)
 EN = re.compile(r'\b(Loading|Search|Submit|Login|Log in|Sign in|Logout|My Account|Home|Next|Previous|Back|Save|Cancel|Delete|Edit|Error|Page Not Found|Powered by|Skip to Content|Enter your|Passkey|Password|Email|or|OdooBot)\b')
 
@@ -87,7 +88,7 @@ def audit(p, login, paths):
     pw_file = '/root/.ts_flow_%s_%s' % (DB, (login or '').split('@')[0])
     password = subprocess.run(['ssh', 'eot-odoo-prod', 'cat', pw_file], capture_output=True, text=True).stdout.strip() if login else None
     b = p.chromium.launch(executable_path=CHROME, args=['--no-sandbox', '--disable-dev-shm-usage', '--disable-gpu',
-                                                        '--host-resolver-rules=MAP talentsearch.ir:80 127.0.0.1:18071'])
+                                                        '--host-resolver-rules=MAP talentsearch.ir:80 127.0.0.1:%s' % LOCAL])
     ctx = b.new_context(locale='fa-IR')
     page = ctx.new_page()
     errors = []
