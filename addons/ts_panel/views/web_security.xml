@@ -47,17 +47,6 @@
         </field>
     </record>
 
-    <record id="tpl_my_nav_sessions" model="ir.ui.view">
-        <field name="name">TS panel: participant navigation, sessions link</field>
-        <field name="inherit_id" ref="ts_panel.tpl_my_nav"/>
-        <field name="mode">extension</field>
-        <field name="website_id" ref="ts_website.website_ts"/>
-        <field name="arch" type="xml">
-            <xpath expr="//a[@href='/my/privacy']" position="after">
-                <a href="/my/sessions" t-attf-class="ts-btn #{'ts-btn--primary' if active == 'sessions' else 'ts-btn--outline'}" t-att-aria-current="'page' if active == 'sessions' else None">نشست‌ها</a>
-            </xpath>
-        </field>
-    </record>
 
     <record id="tpl_signup_risk" model="ir.ui.view">
         <field name="name">TS panel: signup, SMS sign-in risk notice</field>

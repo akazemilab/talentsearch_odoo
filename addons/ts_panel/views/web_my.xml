@@ -9,13 +9,14 @@
         <field name="website_id" ref="ts_website.website_ts"/>
         <field name="arch" type="xml">
             <t t-name="ts_panel.my_nav">
-                <nav class="tsp-inline" aria-label="صفحه‌های من" style="margin-bottom:1rem;flex-wrap:wrap">
-                    <a href="/my" t-attf-class="ts-btn #{'ts-btn--primary' if active == 'home' else 'ts-btn--outline'}" t-att-aria-current="'page' if active == 'home' else None">کارهای من</a>
-                    <a href="/my/assessments" t-attf-class="ts-btn #{'ts-btn--primary' if active == 'results' else 'ts-btn--outline'}" t-att-aria-current="'page' if active == 'results' else None">نتیجه‌ها</a>
-                    <a href="/my/sharing" t-attf-class="ts-btn #{'ts-btn--primary' if active == 'sharing' else 'ts-btn--outline'}" t-att-aria-current="'page' if active == 'sharing' else None">چه کسی می‌بیند</a>
-                    <a href="/my/notifications" class="ts-btn ts-btn--outline">اعلان‌ها</a>
-                    <a href="/my/account" t-attf-class="ts-btn #{'ts-btn--primary' if active == 'account' else 'ts-btn--outline'}" t-att-aria-current="'page' if active == 'account' else None">حساب من</a>
-                    <a href="/my/privacy" t-attf-class="ts-btn #{'ts-btn--primary' if active == 'privacy' else 'ts-btn--outline'}" t-att-aria-current="'page' if active == 'privacy' else None">داده‌های من</a>
+                <nav class="tsp-subnav" aria-label="صفحه‌های من">
+                    <a href="/my" t-attf-class="tsp-subnav__item #{'is-on' if active == 'home' else ''}" t-att-aria-current="'page' if active == 'home' else None">کارهای من</a>
+                    <a href="/my/assessments" t-attf-class="tsp-subnav__item #{'is-on' if active == 'results' else ''}" t-att-aria-current="'page' if active == 'results' else None">نتیجه‌ها</a>
+                    <a href="/my/sharing" t-attf-class="tsp-subnav__item #{'is-on' if active == 'sharing' else ''}" t-att-aria-current="'page' if active == 'sharing' else None">چه کسی می‌بیند</a>
+                    <a href="/my/notifications" t-attf-class="tsp-subnav__item #{'is-on' if active == 'notifications' else ''}" t-att-aria-current="'page' if active == 'notifications' else None">اعلان‌ها</a>
+                    <a href="/my/account" t-attf-class="tsp-subnav__item #{'is-on' if active == 'account' else ''}" t-att-aria-current="'page' if active == 'account' else None">حساب من</a>
+                    <a href="/my/privacy" t-attf-class="tsp-subnav__item #{'is-on' if active == 'privacy' else ''}" t-att-aria-current="'page' if active == 'privacy' else None">داده‌های من</a>
+                    <a href="/my/sessions" t-attf-class="tsp-subnav__item #{'is-on' if active == 'sessions' else ''}" t-att-aria-current="'page' if active == 'sessions' else None">نشست‌ها</a>
                 </nav>
             </t>
         </field>

@@ -61,6 +61,14 @@
     @media (min-width: 1024px) { .tsp-shell__nav { position: sticky; inset-block-start: 76px; } }
     @media (max-width: 1023.98px) and (prefers-reduced-motion: reduce) { .tsp-shell[data-js] .tsp-shell__nav { transition: none; } }
 
+    // ---------- participant sub-navigation ----------
+    .tsp-subnav { display: flex; gap: var(--space-2); flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; margin-block: var(--space-2) var(--space-5); padding-block-end: 4px; }
+    .tsp-subnav::-webkit-scrollbar { display: none; }
+    .tsp-subnav__item { flex: none; display: inline-flex; align-items: center; min-block-size: 40px; padding: 0 var(--space-4); border-radius: 999px; border: 1px solid var(--line-strong); background: var(--white); color: var(--ink-2); text-decoration: none; font-weight: 600; font-size: var(--fs-1); }
+    .tsp-subnav__item:hover { background: var(--brand-soft); color: var(--brand-deep); text-decoration: none; }
+    .tsp-subnav__item.is-on { background: var(--brand-deep); border-color: var(--brand-deep); color: var(--white); }
+    @media (max-width: 767.98px) { .tsp-subnav { margin-inline: calc(-1 * clamp(16px, 4vw, 32px)); padding-inline: clamp(16px, 4vw, 32px); } }
+
     // ---------- page head, flash, empty ----------
     .tsp-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-start; gap: var(--space-3) var(--space-6); }
     .tsp-head > div:first-child { min-inline-size: 0; flex: 1 1 320px; }
