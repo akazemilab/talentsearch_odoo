@@ -336,4 +336,18 @@
             </t>
         </field>
     </record>
+
+    <!-- portal v3: the list page joins the participant navigation -->
+    <record id="tpl_my_list_nav" model="ir.ui.view">
+        <field name="name">TS panel: participant navigation on the results list</field>
+        <field name="type">qweb</field>
+        <field name="inherit_id" ref="ts_assessment.tpl_my_list"/>
+        <field name="website_id" ref="ts_website.website_ts"/>
+        <field name="arch" type="xml">
+            <xpath expr="//div[hasclass('ts-section__head')]" position="replace">
+                <h1 class="tsp-head__title">سنجه‌ها و نتیجه‌ها</h1>
+                <t t-call="ts_panel.my_nav" active="results"/>
+            </xpath>
+        </field>
+    </record>
 </odoo>
