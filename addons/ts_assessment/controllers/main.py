@@ -194,8 +194,13 @@ class TsAssessment(http.Controller):
     def my_report(self, attempt_id, **kw):
         _ts_site_or_404()
         attempt = _my_attempt(attempt_id=attempt_id)
-        if attempt.state != 'done' or not attempt.released:
+        if attempt.state != 'done':
             return request.redirect('/take/%s' % attempt.access_token)
+        if not attempt.released:
+            # finished but not available to the participant (erased under a legal hold, or imported without release):
+            # an honest page instead of the old redirect loop between /my/assessments/<id> and /take/<token>
+            return request.render('ts_assessment.unavailable', {'attempt': attempt, 'inst': attempt.instrument_id,
+                                                                  'page_name': 'ts_assessments'})
         request.env['ts.audit.event'].sudo().log('report.view', attempt)
         return request.render('ts_assessment.report', {
             'attempt': attempt, 'inst': attempt.instrument_id, 'version': attempt.version_id,

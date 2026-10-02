@@ -97,7 +97,7 @@
                                         <dt>وضعیت</dt><dd>منتشرشده برای شرکت‌کننده؛ محتوای تفسیر تأییدشده</dd>
                                     </dl>
 
-                                    <section class="ts-doc__sec">
+                                    <section class="ts-doc__sec" id="ts-summary">
                                         <h2>خلاصهٔ نتایج</h2>
                                         <p class="ts-hint">نمرهٔ هر بُعد میانگین پاسخ‌های شما روی مقیاس ۱ تا ۵ است (عبارت‌های معکوس پیش از میانگین‌گیری برگردانده می‌شوند). بازه‌ها: کم، متوسط و زیاد.</p>
                                         <table class="ts-table ts-summary">
@@ -142,6 +142,35 @@
                                         <p class="ts-hint">این گزارش فقط برای شرکت‌کننده است. شناسهٔ گزارش <bdi dir="ltr" t-out="attempt.name"/> · اثر نتیجه <bdi dir="ltr" t-out="(attempt.output_hash or '')[:12]"/></p>
                                     </section>
                                 </article>
+                            </div>
+                        </section>
+                    </div>
+                </t>
+            </t>
+        </field>
+    </record>
+
+    <!-- portal v3 (P2): a finished result that is not available to the participant -->
+    <record id="tpl_unavailable" model="ir.ui.view">
+        <field name="name">TS: result not available</field>
+        <field name="type">qweb</field>
+        <field name="key">ts_assessment.unavailable</field>
+        <field name="website_id" ref="ts_website.website_ts"/>
+        <field name="arch" type="xml">
+            <t t-name="ts_assessment.unavailable">
+                <t t-call="website.layout" additional_title.f="نتیجه در دسترس نیست">
+                    <div id="wrap" class="ts-page">
+                        <section class="ts-section">
+                            <div class="ts-container ts-narrow">
+                                <a href="/my/assessments" class="ts-back">سنجه‌ها و نتیجه‌ها</a>
+                                <h1 t-out="inst.title"/>
+                                <div class="ts-card ts-card--soft" role="status">
+                                    <h2 class="h4">این نتیجه در دسترس شما نیست</h2>
+                                    <p t-if="attempt.source == 'import'">این نتیجه از سامانهٔ قبلی وارد شده و هنوز برای نمایش به شما آزاد نشده است. مرکزی که سنجش را اجرا کرده می‌تواند آن را آزاد کند.</p>
+                                    <p t-else="">این نتیجه به درخواست شما یا طبق الزام قانونی از دسترس خارج شده است. اگر فکر می‌کنید اشتباهی رخ داده، با پشتیبانی تماس بگیرید.</p>
+                                    <p class="ts-hint">شناسهٔ پیگیری: <bdi dir="ltr" t-out="attempt.name"/></p>
+                                    <p><a href="/contact?topic=support" class="ts-btn ts-btn--outline">تماس با پشتیبانی</a></p>
+                                </div>
                             </div>
                         </section>
                     </div>

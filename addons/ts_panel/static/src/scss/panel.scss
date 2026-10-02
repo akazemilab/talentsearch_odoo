@@ -89,6 +89,11 @@
     .tsp-links a { font-weight: 700; text-decoration: none; min-block-size: 24px; display: inline-flex; align-items: center; }
     .tsp-links a:hover { text-decoration: underline; }
 
+    .ts-received { background: var(--success-soft); border: 1px solid #bfe0cf; border-radius: var(--radius-lg); padding: var(--space-5) var(--space-6); margin-block-end: var(--space-5); display: grid; gap: var(--space-2); }
+    .ts-received h2 { color: var(--success); font-size: var(--fs-4); }
+    .ts-received p { margin: 0; }
+    .ts-received__actions { display: flex; flex-wrap: wrap; gap: var(--space-2); margin-block-start: var(--space-2) !important; }
+
     // ---------- page head, flash, empty ----------
     .tsp-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-start; gap: var(--space-3) var(--space-6); }
     .tsp-head > div:first-child { min-inline-size: 0; flex: 1 1 320px; }

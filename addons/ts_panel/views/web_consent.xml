@@ -42,4 +42,76 @@
             </xpath>
         </field>
     </record>
+
+    <!-- portal v3 (P2): who sees the result, from the real invitation (purpose + accepted share level), never a fixed sentence -->
+    <template id="who_sees" name="Who sees this result">
+        <t t-set="asg" t-value="attempt.ts_org_assignment()"/>
+        <t t-set="org" t-value="asg.workspace_id.partner_id.name if asg else ''"/>
+        <span id="ts-who-sees" t-att-data-level="asg.share_level if asg else 'self'">
+            <t t-if="asg and asg.share_level != 'none'">
+                <t t-if="asg.workspace_id.purpose == 'education'">شما، و <strong t-out="org"/> (مشاور مسئول شما) گزارش نتیجه را می‌بیند؛ پاسخ‌های خام را فقط خودتان می‌بینید.</t>
+                <t t-elif="asg.workspace_id.purpose == 'clinical'">شما، و گزارش کامل همراه با راهنمای متخصص فقط برای متخصص بالینی تأییدشدهٔ <strong t-out="org"/>.</t>
+                <t t-else="">شما، و <strong t-out="org"/> فقط بازهٔ هر بُعد (کم، متوسط یا زیاد) را می‌بیند؛ نه پاسخ‌ها، نه نمره‌ها، نه متن تفسیر.</t>
+                <span class="ts-hint"> اشتراک را هر زمان می‌توانید از صفحهٔ گزارش لغو کنید.</span>
+            </t>
+            <t t-elif="asg">فقط شما. <strong t-out="org"/> فقط وضعیت انجام (شروع‌شده یا تکمیل‌شده) را می‌بیند، چون اشتراک نتیجه را نپذیرفته‌اید.</t>
+            <t t-else="">فقط شما، در حساب کاربری‌تان. بعداً می‌توانید خودتان نتیجه را برای مشاورتان بفرستید.</t>
+        </span>
+    </template>
+
+    <record id="consent_who_sees_assessment" model="ir.ui.view">
+        <field name="name">ts_panel.consent.who_sees.assessment</field>
+        <field name="inherit_id" ref="ts_assessment.tpl_consent"/>
+        <field name="mode">extension</field>
+        <field name="website_id" ref="ts_website.website_ts"/>
+        <field name="arch" type="xml">
+            <xpath expr="//dt[text()='چه کسی نتیجه را می‌بیند']/following-sibling::dd[1]" position="replace">
+                <dd><t t-call="ts_panel.who_sees"/></dd>
+            </xpath>
+        </field>
+    </record>
+    <record id="consent_who_sees_talent" model="ir.ui.view">
+        <field name="name">ts_panel.consent.who_sees.talent</field>
+        <field name="inherit_id" ref="ts_talent.tpl_consent"/>
+        <field name="mode">extension</field>
+        <field name="website_id" ref="ts_website.website_ts"/>
+        <field name="arch" type="xml">
+            <xpath expr="//p[hasclass('tt-mini')][1]" position="replace">
+                <p class="tt-mini">زمینه‌ها را خودتان می‌نویسید و برای هر کدام ۱۵ جمله را پاسخ می‌دهید. هر زمینه حدود یک دقیقه است.</p>
+                <p class="tt-mini"><strong>چه کسی نتیجه را می‌بیند:</strong> <t t-call="ts_panel.who_sees"/></p>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- portal v3 (P2): after submission the report opens with what was received, who sees it and one next step -->
+    <template id="submitted_block" name="Submission received">
+        <section class="ts-received ts-noprint" role="status" aria-labelledby="ts-received-h">
+            <h2 id="ts-received-h">پاسخ‌های شما دریافت و ثبت شد</h2>
+            <p>نتیجه آماده است و همین‌جا می‌ماند؛ هر وقت خواستید از «سنجه‌ها و نتیجه‌ها» به آن برگردید. پاسخ‌ها پس از ارسال تغییر نمی‌کنند.</p>
+            <p><strong>چه کسی این نتیجه را می‌بیند:</strong> <t t-call="ts_panel.who_sees"/></p>
+            <p class="ts-received__actions"><a href="#ts-summary" class="ts-btn ts-btn--primary">خواندن نتیجه</a> <a href="/my" class="ts-btn ts-btn--quiet">بازگشت به کارهای من</a></p>
+        </section>
+    </template>
+    <record id="report_submitted_assessment" model="ir.ui.view">
+        <field name="name">ts_panel.report.submitted.assessment</field>
+        <field name="inherit_id" ref="ts_assessment.tpl_report"/>
+        <field name="mode">extension</field>
+        <field name="website_id" ref="ts_website.website_ts"/>
+        <field name="arch" type="xml">
+            <xpath expr="//p[hasclass('ts-notice')][@t-if='submitted']" position="replace">
+                <t t-if="submitted" t-call="ts_panel.submitted_block"/>
+            </xpath>
+        </field>
+    </record>
+    <record id="report_submitted_talent" model="ir.ui.view">
+        <field name="name">ts_panel.report.submitted.talent</field>
+        <field name="inherit_id" ref="ts_talent.tpl_report"/>
+        <field name="mode">extension</field>
+        <field name="website_id" ref="ts_website.website_ts"/>
+        <field name="arch" type="xml">
+            <xpath expr="//p[hasclass('ts-notice')][@t-if='submitted']" position="replace">
+                <t t-if="submitted" t-call="ts_panel.submitted_block"/>
+            </xpath>
+        </field>
+    </record>
 </odoo>
