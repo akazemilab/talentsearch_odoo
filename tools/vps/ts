@@ -25,6 +25,7 @@
 #                           after the newest eot_main_pre_*.dump (a ship or deploy happened); keeps 2 refresh dumps
 #   ts rehearse DB INS [UPG]    detached: ts dump auto + ts_rehearse.sh (job reh_DB); follow with ts wait reh_DB 50
 #   ts keep DB UPG [INS]    kept clone for hand tests on the slot (default slot 1): clone + apply + serve (job keep_DB)
+#   ts testjob DB FILE...   detached `ts test` (job test_DB) for suites longer than one call
 #   ts shots DB [W,W,...]   detached ui matrix on a served clone of the slot (job shots_DB): fixtures, ts_shot.py at the
 #                           widths (default 375,1280), report + png in /root/share/out/shots_DB; read report.txt first
 # Slots: TS_SLOT=0 (default) -> repo /root/talentsearch_odoo, stage /opt/odoo/talentsearch_stage, port 8071.
@@ -151,6 +152,10 @@ rm -f /tmp/ts_get_$$.html" ;;
     [[ $db == eot_ts* ]] || { echo "!! clone names start with eot_ts"; exit 2; }
     TS_SLOT=$SLOT ts bg keep_$db "export TS_SLOT=$SLOT; ts db clone $db && ts db apply $(q "$db" "$ins" "$upg") && ts db serve $db $((8071 + 2 * SLOT)) && echo KEPT $db port $((8071 + 2 * SLOT))"
     echo "follow: TS_SLOT=$SLOT ts wait keep_$db 50; then TS_SLOT=$SLOT ts test $db FILE...; end with ts db stop $db" ;;
+  testjob)
+    db=${1:?db}; shift; [ $# -gt 0 ] || { echo "!! give test files"; exit 2; }
+    TS_SLOT=$SLOT ts bg test_$db "TS_SLOT=$SLOT ts test $db $(q "$@")"
+    echo "follow: TS_SLOT=$SLOT ts wait test_$db 40" ;;
   shots)
     db=${1:?db}; widths=${2:-375,1280}
     TS_SLOT=$SLOT ts bg shots_$db "TS_SHOT_WIDTHS=$widths bash $REPO/tools/vps/ts_ui_matrix.sh $db $PORT /root/share/out/shots_$db"

@@ -5,17 +5,19 @@ which ~20 h was waiting on tools. ~822 M tokens were cache re-reads: a 300–750
 poll, test re-run and screenshot. The fix is structural: VPS code does the work, cheap agents wait and read logs, the
 main session only decides and edits, and every round of work ends in a short handoff file.
 
-## 1. Places
+## 1. Places — no Mac in the path (2026-10-05)
 
 | Place | Reach | Holds / does | Never |
 |---|---|---|---|
-| Cloud session container | local shell | editing, `python3 tools/vps/ts_check.py .` (1 s, same check as `ts check`), research, docs, git read | push to GitHub (needs the Claude GitHub App on akazemilab — owner action) |
-| Tools VPS 95.38.234.86 | `vps_exec` through the owner's Mac (60 s per call, Mac must be awake) | `ts` toolkit (this repo, /root/talentsearch_odoo = source of truth, pushes with deploy key), `eot` toolkit (/root/eot-tools, theme repo), jobs in /root/ts-jobs and /root/eot-jobs, worktrees /root/ts_wt_s1|s2 | long commands in the foreground |
-| Prod eot-odoo-prod 95.38.235.225 | ssh from the tools VPS only | eot_main, odoo20, stage dirs, backups /var/backups/odoo | any direct edit; everything goes through `ts` / `eot` |
-| Share folder | VPS /root/share/in ← Mac ~/Claude/eot-share/to-vps; VPS /root/share/out → Mac …/from-vps (sync each minute, subfolders a minute later) | screenshots back to the session (device_stage_files), files from the owner | code transfer (edit on the VPS or apply a small diff instead) |
-| Gateway eot.innerquest.me (MCP, no Mac) | cloud connector `eot_innerquest_me` | eot.ir only: check_site, check_links, placeholders, scss_check, audit, read-only sql_query, odoo_execute (small content edits), theme rehearse/deploy, read_odoo_log, odoo_status | Talent Search ships (no `ts` commands there yet) |
-| Mac-bridged connectors | `mcp__remote-devices__*` | `vps`, `eot-odoo` (OLD database uuid 98b98775… — not live), `odoo` (old sepehrtherapy.ir, source data, read-only), `hesabfa`, `search-console` | writes through `eot-odoo` (check `database.uuid` = 9f658a4b… before any Odoo write) |
-| Sepehr server | `spx` toolkit, skill `vps-odoo-fast-workflow` | Sepehr build | mixing with ts/eot |
+| Gateway eot.innerquest.me (connector `eot_innerquest_me`) | any session, no device | eot.ir tools (check_site, audit, read-only sql_query, odoo_execute, theme rehearse/deploy, logs) **and** the tools-VPS tools: `ts`, `eot_vps`, `vps_read`, `vps_write`, `vps_patch`, `vps_git`, `vps_image`, `vps_inspect` | a blanket shell (none exists: allow-listed ops only) |
+| Tools VPS 95.38.234.86 | through the gateway: prod user eotmcp → ssh key pinned to `command="/usr/local/bin/ts-gw"`, `from=prod` (source `tools/gw/ts_gw.py`, gateway side `tools/gw/mcp_ts.py` → theme repo `tools/prod/mcp_ts.py`) | `ts` (this repo, /root/talentsearch_odoo = source of truth, pushes with its deploy key), `eot` (/root/eot-tools/repo), jobs /root/ts-jobs, /root/eot-jobs, worktrees /root/ts_wt_s1|s2, screenshots /root/share/out | long commands in one call (55 s): use jobs + `wait` |
+| Prod eot-odoo-prod 95.38.235.225 | only through `ts` / `eot` / the gateway's own tools | eot_main, odoo20, stage dirs, backups | direct edits |
+| Cloud session container | local shell | editing, `python3 tools/vps/ts_check.py .` (1 s), research, docs; push to theme_eot_custom works; push to talentsearch_odoo needs the Claude GitHub App to include that repo | — |
+| Mac bridge (`mcp__remote-devices__*`) | only while the Mac is awake | FALLBACK ONLY: `vps` (root shell), old `eot-odoo`/`odoo` databases, `hesabfa`, `search-console`, the share folder | anything the gateway can do |
+
+Code to the VPS without the Mac: `vps_patch` (unified diff, checked first) or `vps_write` for new files, then
+`ts check` and `ts push` (talentsearch) / `vps_git` add+commit and `git push` from the cloud clone (theme).
+Screenshots without the Mac: `ts shots` then `vps_image`.
 
 ## 2. Task → who does it
 
@@ -44,8 +46,8 @@ general-purpose agent and the `model` parameter (the skill `eot-ops` holds the p
 ## 3. The stage loop (one session per bundle of stages)
 
 1. Start: read the plan doc and the last handoff from the Project (not the old chat). `ts slots`, `ts dump check`.
-2. Edit on the VPS (`vps_write_file` for new/small files, a unified diff + `git apply` for edits; never re-send or read
-   back a whole large file). Run `ts check` after every edit batch.
+2. Edit on the VPS through the gateway (`vps_write` for new files, `vps_patch` for edits; never re-send or read back a
+   whole large file; `vps_read` slices). Run `ts {"args":["check"]}` after every edit batch.
 3. Hand tests: `ts-runner` → `TS_SLOT=1 ts keep eot_tsN UPG`, then the new test files. Fix, `ts db reload`, re-run.
    A main-session `ts test` call is fine when it fits in one call.
 4. `ts push`; then, once per bundle (not per stage): `ts-runner` full rehearsal; `ts-risk-reviewer` when the bundle
@@ -57,8 +59,8 @@ general-purpose agent and the `model` parameter (the skill `eot-ops` holds the p
 
 - Never poll from the main session; an agent waits (its context is ~20 k, the main one is hundreds of k).
 - Every VPS call returns a verdict, not a log: `ts status|wait|test|db errors`, `grep`, `tail -n 30`.
-- vps_exec under 50 s: no `sleep` over 15 s, `ts wait NAME 40`, one wait per call. "did not respond" → check the job,
-  never re-run a mutating command.
+- Every gateway call ends within ~55 s: long work is a job (`rehearse`, `keep`, `testjob`, `shots`, `eot audit|rehearse|ship`)
+  followed by `wait` (≤ 40 s), one per call. After an error check the job, never re-run a mutating command.
 - No images in the main session; `ts-shots` looks and reports.
 - Bundle stages: one rehearsal and one ship per bundle. A dead-code removal is not a ship of its own.
 - Run `ts_check.py` before any transfer (a syntax error costs a whole remote round trip).
@@ -66,8 +68,9 @@ general-purpose agent and the `model` parameter (the skill `eot-ops` holds the p
 
 ## 5. Open owner actions
 
-- Install the Claude GitHub App on akazemilab (or reconnect GitHub in claude.ai settings): then the cloud session can
-  push and the VPS `git pull`s — no Mac in the code path.
-- Optional: add `ts` job commands (status / wait / test / rehearse) to the eot.innerquest.me gateway, so Talent Search
-  rehearsals do not depend on the Mac being awake. Ships stay on the Mac-bridged path until the gateway has an audit log.
+- Reconnect the `eot.innerquest.me` connector in claude.ai (Settings → Connectors) once, so sessions see the 8 new
+  tools (the connector caches its tool list; the server already serves 23 tools).
+- Add `talentsearch_odoo` to the Claude GitHub App's repositories (theme_eot_custom already pushes from the cloud).
+- Still Mac-only (rarely used): `hesabfa`, `search-console`, and the two OLD Odoo databases (`eot-odoo`, `odoo`).
+  Moving them needs their credentials placed on the tools VPS by the owner (never through chat).
 - Sepehr: `/root/sp-tools/bin` (spx) is not on the tools VPS as of 2026-10-05; the skill's install step applies.

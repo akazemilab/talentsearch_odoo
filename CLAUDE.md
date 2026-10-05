@@ -23,8 +23,10 @@ Read theme_eot_custom's CLAUDE.md too: its Odoo 20 pitfalls apply here.
 Start with docs/OPS.md: which place, command, agent (.claude/agents: ts-runner, ts-shipper, ts-shots,
 ts-risk-reviewer, ts-scribe, web-researcher) and model does each task, and the token rules (no polling from the main
 session, verdicts not logs, one rehearsal + one ship per bundle of stages).
+No Mac needed (2026-10-05): the eot.innerquest.me connector reaches the tools VPS (`ts`, `eot_vps`, `vps_read`,
+`vps_write`, `vps_patch`, `vps_git`, `vps_image`, `vps_inspect`; tools/gw/). The Mac-bridged `vps_exec` is a fallback.
 Source of truth is /root/talentsearch_odoo on the VPS (pushes with deploy key
-`vps-talentsearch-rw`); the cloud session can read the GitHub repo but cannot push.
+`vps-talentsearch-rw`); the cloud session can read the GitHub repo; it edits through `vps_patch`/`vps_write`.
 `ts sync` rsyncs to the STAGING dir /opt/odoo/talentsearch_stage on prod; every
 rehearsal, clone, test and guard runs from there. Only `ts_ship.sh` copies stage ->
 LIVE /opt/odoo/talentsearch (the dir in odoo20's addons_path), after stopping odoo20,

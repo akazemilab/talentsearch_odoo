@@ -23,7 +23,7 @@ REPOS = ['/root/talentsearch_odoo', '/root/ts_wt_s1', '/root/ts_wt_s2', '/root/e
 ROOTS = REPOS + ['/root/ts-jobs', '/root/eot-jobs', '/root/share']
 WRITE_ROOTS = REPOS + ['/root/share/in']
 IMAGE_ROOTS = ['/root/share/out', '/root/ts-jobs', '/root/eot-jobs']
-TS_OK = {'help', 'check', 'sync', 'slots', 'live', 'status', 'wait', 'job', 'test', 'db', 'dump', 'rehearse', 'keep',
+TS_OK = {'help', 'check', 'sync', 'slots', 'live', 'status', 'wait', 'job', 'test', 'testjob', 'db', 'dump', 'rehearse', 'keep',
          'shots', 'sql', 'get', 'wt', 'clean', 'push', 'ship'}
 TS_DB_OK = {'clone', 'apply', 'install', 'upgrade', 'serve', 'halt', 'reload', 'stop', 'errors', 'modules'}
 EOT_OK = {'help', 'check', 'placeholders', 'links', 'verify', 'text', 'find', 'view', 'sql', 'deploy', 'rehearse-stop',
