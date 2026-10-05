@@ -20,6 +20,13 @@
 #   ts get PORT PATH [HOST] status + title + first text of a page from prod
 #   ts domain ...           see tools/prod/ts_domain.py
 #   ts push [MSG]           commit TRACKED changes (never untracked / pycache) + push the current branch
+# composite commands (one call each; the agents in .claude/agents drive them, docs/OPS.md has the routing):
+#   ts dump [auto|force|check]  fresh pg_dump of eot_main for rehearsal clones; auto = only if odoo20 restarted
+#                           after the newest eot_main_pre_*.dump (a ship or deploy happened); keeps 2 refresh dumps
+#   ts rehearse DB INS [UPG]    detached: ts dump auto + ts_rehearse.sh (job reh_DB); follow with ts wait reh_DB 50
+#   ts keep DB UPG [INS]    kept clone for hand tests on the slot (default slot 1): clone + apply + serve (job keep_DB)
+#   ts shots DB [W,W,...]   detached ui matrix on a served clone of the slot (job shots_DB): fixtures, ts_shot.py at the
+#                           widths (default 375,1280), report + png in /root/share/out/shots_DB; read report.txt first
 # Slots: TS_SLOT=0 (default) -> repo /root/talentsearch_odoo, stage /opt/odoo/talentsearch_stage, port 8071.
 #        TS_SLOT=1|2         -> repo /root/ts_wt_sN, stage /opt/odoo/talentsearch_stage_sN, port 8073|8075.
 #        Ships always use slot 0. Each slot has a lock (/root/ts-jobs/slotN.lock) held by its rehearsal.
@@ -120,5 +127,33 @@ rm -f /tmp/ts_get_$$.html" ;;
          git diff --cached --name-only | grep -q __pycache__ && { echo "!! __pycache__ staged; untrack it (git rm -r --cached) first"; exit 2; }
          git diff --cached --quiet || git commit -qm "${*:-update}"
          b=$(git branch --show-current); git push -q origin "$b" 2>&1 | grep -v '^remote:' | tail -2; git log -1 --oneline ;;
-  *)     sed -n '2,28p' "$0" ;;
+  dump)
+    mode=${1:-auto}; B=/var/backups/odoo
+    newest=$(ssh $P "stat -c %Y \$(ls -t $B/eot_main_pre_*.dump | head -1)")
+    since=$(ssh $P "date -d \"\$(systemctl show odoo20 -p ActiveEnterTimestamp --value)\" +%s")
+    if [ "$newest" -gt "$since" ]; then state=fresh; else state=stale; fi
+    echo "newest dump $(date -d @$newest +%m-%d_%H:%M), odoo20 up since $(date -d @$since +%m-%d_%H:%M): $state"
+    [ "$mode" = check ] && exit 0
+    [ "$mode" = auto ] && [ $state = fresh ] && { echo "dump: reuse"; exit 0; }
+    n=$(ssh $P "ls $B/eot_main_pre_refresh*.dump 2>/dev/null | grep -o 'refresh[0-9]*' | tr -dc '0-9\n' | sort -n | tail -1")
+    n=$(( ${n:-0} + 1 )); f=$B/eot_main_pre_refresh$n.dump
+    ssh $P "sudo -u postgres pg_dump -Fc eot_main > $f.part && mv $f.part $f && ls -t $B/eot_main_pre_refresh*.dump | tail -n +3 | xargs -r rm -f" \
+      && echo "dump: $(basename $f) $(ssh $P "du -h $f | cut -f1")" || { echo "!! pg_dump failed"; exit 2; } ;;
+  rehearse)
+    db=${1:?db}; ins=${2?install list (may be '')}; upg=${3:-}
+    [[ $db == eot_ts* ]] || { echo "!! clone names start with eot_ts"; exit 2; }
+    ts sync >/dev/null || exit 2
+    ts bg reh_$db "ts dump auto && bash $REPO/tools/vps/ts_rehearse.sh $(q "$db" "$ins" "$upg")"
+    echo "follow: TS_SLOT=$SLOT ts wait reh_$db 50" ;;
+  keep)
+    [ "${TS_SLOT:-}" ] || SLOT=1
+    db=${1:?db}; upg=${2?upgrade list}; ins=${3:-}
+    [[ $db == eot_ts* ]] || { echo "!! clone names start with eot_ts"; exit 2; }
+    TS_SLOT=$SLOT ts bg keep_$db "export TS_SLOT=$SLOT; ts db clone $db && ts db apply $(q "$db" "$ins" "$upg") && ts db serve $db $((8071 + 2 * SLOT)) && echo KEPT $db port $((8071 + 2 * SLOT))"
+    echo "follow: TS_SLOT=$SLOT ts wait keep_$db 50; then TS_SLOT=$SLOT ts test $db FILE...; end with ts db stop $db" ;;
+  shots)
+    db=${1:?db}; widths=${2:-375,1280}
+    TS_SLOT=$SLOT ts bg shots_$db "TS_SHOT_WIDTHS=$widths bash $REPO/tools/vps/ts_ui_matrix.sh $db $PORT /root/share/out/shots_$db"
+    echo "follow: TS_SLOT=$SLOT ts wait shots_$db 50; then cat /root/share/out/shots_$db/report.txt" ;;
+  *)     sed -n '2,/^set -uo/p' "$0" | sed '$d' ;;
 esac
