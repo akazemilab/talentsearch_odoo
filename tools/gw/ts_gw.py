@@ -35,6 +35,8 @@ INSPECT_OK = {'ls', 'grep', 'head', 'tail', 'wc', 'df', 'du', 'free', 'uptime', 
               'date', 'systemctl', 'journalctl', 'cat', 'file', 'nginx', 'dig', 'getent', 'curl'}
 FILE_CMDS = {'ls', 'grep', 'head', 'tail', 'wc', 'du', 'find', 'stat', 'md5sum', 'cat', 'file'}
 INSPECT_ROOTS = ROOTS + ['/etc/nginx', '/etc/systemd/system', '/var/log', '/usr/local/bin', '/tmp']
+INV_ROOTS = ['/root/hesabfa-odoo-sync', '/root/sp-tools']   # inventory only: names, sizes, hashes, counts - never contents
+INV_CMDS = {'ls', 'find', 'stat', 'du', 'wc', 'md5sum', 'file', 'grep'}
 MAX_OUT = 24000
 LOG = '/var/log/ts-gw.log'
 
@@ -49,6 +51,17 @@ def out(ok, text='', **extra):
 def under(path, roots):
     real = os.path.realpath(path)
     return real if any(real == r or real.startswith(r + '/') for r in roots) else None
+
+
+def inv_ok(a, argv):
+    """Inventory roots: metadata only. grep must be -l/-c/-L/-q (file names or counts), no long options."""
+    if a not in INV_CMDS:
+        return False
+    if a == 'grep':
+        short = ''.join(x[1:] for x in argv[1:] if x.startswith('-') and not x.startswith('--'))
+        longs = [x for x in argv[1:] if x.startswith('--')]
+        return bool(set(short) & set('lcLq')) and not longs
+    return True
 
 
 def run(argv, timeout=55, env=None, cwd=None, stdin=None):
@@ -207,8 +220,10 @@ def op_inspect(req):
         if a == 'find':
             operands = operands[:1]          # the start dir; tests follow
         for x in operands:
-            if not under(os.path.join('/root/ts-jobs', x), INSPECT_ROOTS):
-                return out(False, '%s: paths must be under %s' % (a, INSPECT_ROOTS))
+            p = os.path.join('/root/ts-jobs', x)
+            if under(p, INSPECT_ROOTS) or (under(p, INV_ROOTS) and inv_ok(a, argv)):
+                continue
+            return out(False, '%s: paths must be under %s (inventory-only roots: %s)' % (a, INSPECT_ROOTS, INV_ROOTS))
     ok, text = run(['/usr/bin/env', '--'] + argv, timeout=40, cwd='/root/ts-jobs')
     return out(ok, text)
 
