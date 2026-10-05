@@ -20,6 +20,9 @@ Read theme_eot_custom's CLAUDE.md too: its Odoo 20 pitfalls apply here.
   theme's own `eot` toolkit and shipped with `eot ship`; never mixed into a ts ship.
 
 ## Workflow
+Start with docs/OPS.md: which place, command, agent (.claude/agents: ts-runner, ts-shipper, ts-shots,
+ts-risk-reviewer, ts-scribe, web-researcher) and model does each task, and the token rules (no polling from the main
+session, verdicts not logs, one rehearsal + one ship per bundle of stages).
 Source of truth is /root/talentsearch_odoo on the VPS (pushes with deploy key
 `vps-talentsearch-rw`); the cloud session can read the GitHub repo but cannot push.
 `ts sync` rsyncs to the STAGING dir /opt/odoo/talentsearch_stage on prod; every
