@@ -19,6 +19,12 @@ Code to the VPS without the Mac: `vps_patch` (unified diff, checked first) or `v
 `ts check` and `ts push` (talentsearch) / `vps_git` add+commit and `git push` from the cloud clone (theme).
 Screenshots without the Mac: `ts shots` then `vps_image`.
 
+Un-versioned server code and configs (nginx, systemd, hesabfa-odoo-sync, sp-tools, sepehr_odoo) are mirrored in the
+private repo `akazemilab/infra` (no secrets, no data; rules in its CLAUDE.md, refresh with `tools/infra_stage.sh`).
+`vps_inspect` can list `/root/hesabfa-odoo-sync` and `/root/sp-tools` as **inventory-only** roots (names, sizes,
+hashes, `grep -l/-c`; never contents). Prod files (`/opt/*`, `/etc/odoo20.conf`) are not reachable read-only yet.
+Repos on GitHub: `talentsearch_odoo` and `theme_eot_custom` are PUBLIC — never put anything private there.
+
 ## 2. Task → who does it
 
 Code first: anything repeated with the same steps is a `ts`/`eot` command (free, fast). An agent only drives commands
