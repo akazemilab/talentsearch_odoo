@@ -19,12 +19,13 @@ Arguments never pass through a shell. Only the op name and the outcome are logge
 """
 import base64, json, os, re, subprocess, sys, time
 
-REPOS = ['/root/talentsearch_odoo', '/root/ts_wt_s1', '/root/ts_wt_s2', '/root/eot-tools/repo']
+REPOS = ['/root/talentsearch_odoo', '/root/ts_wt_s1', '/root/ts_wt_s2', '/root/eot-tools/repo', '/root/infra']
 ROOTS = REPOS + ['/root/ts-jobs', '/root/eot-jobs', '/root/share']
 WRITE_ROOTS = REPOS + ['/root/share/in']
 IMAGE_ROOTS = ['/root/share/out', '/root/ts-jobs', '/root/eot-jobs']
 TS_OK = {'help', 'check', 'sync', 'slots', 'live', 'status', 'wait', 'job', 'test', 'testjob', 'db', 'dump', 'rehearse', 'keep',
-         'shots', 'sql', 'get', 'wt', 'clean', 'push', 'ship'}
+         'shots', 'sql', 'get', 'wt', 'clean', 'push', 'ship', 'gw-install', 'infra-key', 'infra-clone', 'infra-refresh'}
+GW_LOCAL = {'gw-install', 'infra-key', 'infra-clone', 'infra-refresh'}   # implemented in tools/gw/ts_gw_ops.py
 TS_DB_OK = {'clone', 'apply', 'install', 'upgrade', 'serve', 'halt', 'reload', 'stop', 'errors', 'modules'}
 EOT_OK = {'help', 'check', 'placeholders', 'links', 'verify', 'text', 'find', 'view', 'sql', 'deploy', 'rehearse-stop',
           'log', 'status', 'job', 'jobs', 'wait', 'backup', 'rehearse', 'rehearse-log', 'clone-user', 'ship', 'render',
@@ -89,6 +90,10 @@ def op_ts(req):
     sub = args[0]
     if sub not in TS_OK:
         return out(False, 'ts %s is not exposed through the gateway (allowed: %s)' % (sub, ', '.join(sorted(TS_OK))))
+    if sub in GW_LOCAL:
+        sys.path.insert(0, '/root/talentsearch_odoo/tools/gw')
+        import ts_gw_ops
+        return out(*ts_gw_ops.dispatch(sub, args[1:], req))
     if sub == 'db':
         if len(args) < 3 or args[1] not in TS_DB_OK or not args[2].startswith('eot_ts'):
             return out(False, 'ts db SUB DB: SUB in %s, DB must start with eot_ts' % sorted(TS_DB_OK))
