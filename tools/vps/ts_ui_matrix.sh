@@ -14,6 +14,7 @@ head -1 /tmp/ui_matrix_out_$DB.txt
 tail -1 /tmp/ui_matrix_out_$DB.txt > /root/ts-jobs/ui_matrix_$DB.json
 echo "=== $(date +%T) shots"
 rm -rf /root/ts-jobs/shots; mkdir -p /root/ts-jobs/shots
-python3 $REPO/tools/vps/ts_shot.py $DB $PORT --matrix /root/ts-jobs/ui_matrix_$DB.json 2>&1 | tee /root/ts-jobs/ui_shot_report_$DB.txt | tail -3
+PY=/root/eot-browser/venv/bin/python; [ -x "$PY" ] || PY=python3
+$PY $REPO/tools/vps/ts_shot.py $DB $PORT --matrix /root/ts-jobs/ui_matrix_$DB.json 2>&1 | tee /root/ts-jobs/ui_shot_report_$DB.txt | tail -3
 rm -rf "$OUT"; mkdir -p "$OUT"; cp /root/ts-jobs/shots/*.png "$OUT"/ 2>/dev/null; cp /root/ts-jobs/ui_shot_report_$DB.txt "$OUT"/report.txt
 echo "=== $(date +%T) done: $(ls "$OUT" | wc -l) files in $OUT"
