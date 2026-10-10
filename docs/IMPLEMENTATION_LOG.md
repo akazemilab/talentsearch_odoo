@@ -331,3 +331,12 @@ Data step (owner-only, NOT in code): approve workspace 1, set pilot, add the cou
 - `ts_website` 20.0.3.0.0, `ts_org` 20.0.5.0.0, `ts_assessment` 20.0.3.0.0, `ts_panel` 20.0.20.0.0 (ship label `pv3a`): see `docs/portal_v3/02_handoff.md`. Home with one dominant action, four-item navigation, account hub, consent «چه کسی می‌بیند» from the real invitation, submission block, unavailable-result page (no redirect loop), report lead + folded details + same-instrument history, grouped results list, quiet layout for invitations, visible sharing checkbox, site-wide status colours, Latin digits for identifiers.
 - Tests: `ts_http_pv3.py` (24), older suites green; shots at 320/390/430/768/1280. Rehearsal reh68 and ship: see HANDOFF.
 
+
+## redesign1 — Website 4 redesign + product restyle (2026-10-10)
+
+- `ts_website` 20.0.4.0.0, `ts_assessment`, `ts_talent`, `ts_panel` (ship label `redesign1`, commit e882605, branch `redesign` fast-forwarded into main). Spec: Project docs «Talent Search Website.html» / «Talent Search App.html» + IMPLEMENTATION_PROMPT.md.
+- Tokens light/dark (`static/src/scss/tokens.scss`, legacy variables remapped so every module rethemes), theme toggle stored in `localStorage['ts-site-theme']` with an inline pre-paint script, five pages (/, /schools, /assessments, /pricing, /contact) + /privacy, /contact/thanks, new 404, FAQ accordion (button + aria-expanded), contact form takes email OR mobile, grouped panel sidebar, «دفتر ممیزی».
+- 301s (website 4 only, `data/redirects.xml`): /how-it-works, /evidence, /about, /help, /employers, /clinics, /sample-report, /entekhab-reshteh(+/sample), /consent-policy. Old catalog kept at /assessments?all=1.
+- Rehearsal reh_eot_ts72: guard UNCHANGED, portal UNCHANGED, 1 stale check (top menu 6 -> 4 items, fixed in tests_stage1.py). Ship: OK, eot.ir UNCHANGED (1050 pages compared).
+- Deviations: Phosphor could not be downloaded (npm/CDN blocked) -> inline SVG icon template `ts_website.icon` in the same style; product screens restyled through tokens, not rebuilt 1:1; statement spelling fixes NOT applied (owner confirmation needed); /ts_website/static/img/dr-kazemi.webp not supplied yet (slot hides).
+- Known polish left: sign-in primary button contrast, consent radios default style, contact card heights, dashboard member-workload table.
