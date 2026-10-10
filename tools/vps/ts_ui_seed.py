@@ -21,9 +21,8 @@ a1 = attempt(U['owner'], tal, False)
 a2 = attempt(U['owner'], oth, True)
 done = A.search([('user_id', '=', U['owner'].id), ('state', '=', 'done')], limit=1)
 env.cr.commit()
-pub = ['/', '/assessments', '/assessments/%s' % tal.slug, '/panel', '/pricing', '/how-it-works', '/sample-report', '/evidence',
-       '/employers', '/clinics', '/about', '/contact', '/privacy', '/consent-policy', '/help', '/help/panel', '/web/login', '/signup',
-       '/nist-404']
+pub = ['/', '/schools', '/assessments', '/assessments?all=1', '/assessments/%s' % tal.slug, '/panel', '/pricing', '/contact',
+       '/privacy', '/contact/thanks', '/help/panel', '/web/login', '/signup', '/nist-404']
 own = [W, W + '/clients', W + '/clients/new', W + '/invites', W + '/invites/new', W + '/campaigns', W + '/groups', W + '/members',
        W + '/reports', W + '/reports/group', W + '/credits', W + '/notifications', W + '/audit', W + '/settings', W + '/exports',
        W + '/import', '/my/workspaces', '/my', '/my/account', '/my/sharing', '/my/privacy', '/my/sessions', '/my/assessments',

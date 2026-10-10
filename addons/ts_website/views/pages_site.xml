@@ -1,0 +1,715 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Website 4 pages, redesign 2026-10. Copy is final and comes verbatim from "Talent Search Website.html":
+         short, direct, «شما» for adults, «تو» for students. Bound to website 4 like every other ts_website view. -->
+
+    <!-- Decorative product mockup for the home and schools heroes (aria-hidden; invented names only). -->
+    <record id="snippet_mock" model="ir.ui.view">
+        <field name="name">TS: hero product mockup</field>
+        <field name="type">qweb</field>
+        <field name="key">ts_website.hero_mock</field>
+        <field name="website_id" ref="website_ts"/>
+        <field name="arch" type="xml">
+            <t t-name="ts_website.hero_mock">
+                <div class="ts-mock" aria-hidden="true">
+                    <div class="ts-mock__win">
+                        <div class="ts-mock__bar"><i/><i/><i/><b/></div>
+                        <div class="ts-mock__body">
+                            <div class="ts-mock__side">
+                                <strong>پنل مدرسه</strong>
+                                <span class="is-on">داشبورد</span>
+                                <span>دانش‌آموزان</span>
+                                <span>کد کلاس</span>
+                                <span>گزارش کلاس</span>
+                                <span>تنظیمات</span>
+                            </div>
+                            <div class="ts-mock__main">
+                                <div class="ts-mock__top"><strong>دوازدهم ریاضی</strong><span class="ts-chip">کد کلاس <bdi dir="ltr">TS-4K7Q</bdi></span></div>
+                                <div class="ts-mock__stats">
+                                    <div><strong>32</strong><span>دانش‌آموز</span></div>
+                                    <div><strong>21</strong><span>تکمیل‌شده</span></div>
+                                    <div><strong>14</strong><span>نتیجهٔ به‌اشتراک</span></div>
+                                </div>
+                                <div class="ts-mock__rows">
+                                    <div><i>س</i><em>سارا محمدی</em><span class="ts-chip">به اشتراک گذاشت</span></div>
+                                    <div><i>ا</i><em>امیرحسین رضایی</em><span class="ts-chip">تکمیل‌شده</span></div>
+                                    <div><i>ن</i><em>نگار کریمی</em><span class="ts-chip ts-chip--muted">در حال پاسخ</span></div>
+                                    <div><i>م</i><em>محمد جعفری</em><span class="ts-chip ts-chip--muted">دعوت‌شده</span></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="ts-mock__card">
+                        <header><strong>سارا · سه زمینه</strong>تحلیلی</header>
+                        <t t-call="ts_website.mock_bars"/>
+                    </div>
+                </div>
+            </t>
+        </field>
+    </record>
+    <record id="snippet_mock_bars" model="ir.ui.view">
+        <field name="name">TS: mock bars</field>
+        <field name="type">qweb</field>
+        <field name="key">ts_website.mock_bars</field>
+        <field name="website_id" ref="website_ts"/>
+        <field name="arch" type="xml">
+            <t t-name="ts_website.mock_bars">
+                <div class="ts-bars">
+                    <div class="ts-bars__row"><span>برنامه‌نویسی</span><span class="ts-bars__track"><i style="inline-size: 86%"/></span><span>86</span></div>
+                    <div class="ts-bars__row"><span>پزشکی</span><span class="ts-bars__track"><i class="c2" style="inline-size: 66%"/></span><span>66</span></div>
+                    <div class="ts-bars__row"><span>معماری</span><span class="ts-bars__track"><i class="c3" style="inline-size: 60%"/></span><span>60</span></div>
+                </div>
+            </t>
+        </field>
+    </record>
+
+    <!-- Inner-page hero used by product pages (catalog, help): kicker, title, lead. -->
+    <record id="snippet_page_hero" model="ir.ui.view">
+        <field name="name">TS: inner page hero</field>
+        <field name="type">qweb</field>
+        <field name="key">ts_website.page_hero</field>
+        <field name="website_id" ref="website_ts"/>
+        <field name="arch" type="xml">
+            <t t-name="ts_website.page_hero">
+                <section class="ts-hero">
+                    <div class="ts-container ts-hero__grid">
+                        <div class="ts-hero__words">
+                            <span t-if="kicker" class="ts-hero__kicker" t-out="kicker"/>
+                            <h1 t-out="title"/>
+                            <p t-if="lead" class="ts-hero__lead" t-out="lead"/>
+                        </div>
+                    </div>
+                </section>
+            </t>
+        </field>
+    </record>
+
+    <!-- CTA band: «پنل مدرسه‌تان را امروز بسازید.» -->
+    <record id="snippet_cta" model="ir.ui.view">
+        <field name="name">TS: call to action band</field>
+        <field name="type">qweb</field>
+        <field name="key">ts_website.cta</field>
+        <field name="website_id" ref="website_ts"/>
+        <field name="arch" type="xml">
+            <t t-name="ts_website.cta">
+                <section class="ts-section">
+                    <div class="ts-container">
+                        <div class="ts-cta">
+                            <div>
+                                <h2>پنل مدرسه‌تان را امروز بسازید.</h2>
+                                <p>رایگان است و همان لحظه فعال می‌شود.</p>
+                            </div>
+                            <a href="/panel" class="ts-btn">ساخت پنل رایگان</a>
+                        </div>
+                    </div>
+                </section>
+            </t>
+        </field>
+    </record>
+
+    <!-- ============================================================ / -->
+    <record id="page_home_view" model="ir.ui.view">
+        <field name="name">TS: homepage</field>
+        <field name="type">qweb</field>
+        <field name="key">ts_website.home</field>
+        <field name="website_id" ref="website_ts"/>
+        <field name="arch" type="xml">
+            <t t-name="ts_website.home">
+                <t t-call="website.layout" pageName.f="homepage" additional_title.f="مشاورهٔ تحصیلی با داده، نه حدس">
+                    <div id="wrap" class="ts-page">
+                        <section class="ts-hero">
+                            <div class="ts-container ts-hero__grid ts-hero__grid--split">
+                                <div class="ts-hero__words">
+                                    <span class="ts-hero__kicker">برای مدرسه‌ها و مراکز مشاوره</span>
+                                    <h1>مشاورهٔ تحصیلی با داده، نه حدس.</h1>
+                                    <p class="ts-hero__lead">دانش‌آموز زمینه‌هایی را که به آن فکر می‌کند می‌نویسد و هر کدام را می‌سنجد. شما نتیجه را کنار هم می‌بینید و گفت‌وگوی مشاوره از همان‌جا شروع می‌شود.</p>
+                                    <div class="ts-hero__actions">
+                                        <a href="/panel" class="ts-btn ts-btn--primary ts-btn--lg">ساخت پنل رایگان<t t-call="ts_website.icon" ico.f="arrow-left"/></a>
+                                        <a href="/assessments#sample" class="ts-btn ts-btn--quiet ts-btn--lg">نمونهٔ گزارش</a>
+                                    </div>
+                                    <ul class="ts-hero__note">
+                                        <li><t t-call="ts_website.icon" ico.f="check-circle"/>برای مدرسه‌ها رایگان</li>
+                                        <li><t t-call="ts_website.icon" ico.f="check-circle"/>روی موبایل، بدون نصب</li>
+                                        <li><t t-call="ts_website.icon" ico.f="check-circle"/>نتیجه با اجازهٔ دانش‌آموز</li>
+                                    </ul>
+                                </div>
+                                <t t-call="ts_website.hero_mock"/>
+                            </div>
+                        </section>
+
+                        <section class="ts-section">
+                            <div class="ts-container">
+                                <div class="ts-section__head">
+                                    <span class="ts-kick">پنل مدرسه</span>
+                                    <h2>هر آنچه یک مشاور لازم دارد، در یک پنل.</h2>
+                                </div>
+                                <div class="ts-bento">
+                                    <div class="ts-tile">
+                                        <div class="ts-tile__viz">
+                                            <div class="ts-qrviz">
+                                                <span class="ts-qrviz__code"><t t-call="ts_website.icon" ico.f="qr-code"/></span>
+                                                <div><small>کد کلاس</small><bdi dir="ltr">TS-4K7Q</bdi><em>۲۶ نفر پیوستند</em></div>
+                                            </div>
+                                        </div>
+                                        <div><h3>یک کد برای کل کلاس</h3><p>کد یا QR را روی تخته بگذارید. دانش‌آموزان در چند ثانیه وارد می‌شوند.</p></div>
+                                    </div>
+                                    <div class="ts-tile">
+                                        <div class="ts-tile__viz"><t t-call="ts_website.mock_bars"/></div>
+                                        <div><h3>گزارش فردی</h3><p>پنج توانایی در هر زمینه، کنار هم.</p></div>
+                                    </div>
+                                    <div class="ts-tile">
+                                        <div class="ts-tile__viz" aria-hidden="true">
+                                            <div class="ts-heat"><i class="h3"/><i class="h2"/><i/><i class="h2"/><i class="h3"/><i class="h2"/><i class="h3"/><i class="h2"/><i/><i class="h2"/><i/><i class="h2"/><i class="h3"/><i class="h3"/><i/></div>
+                                        </div>
+                                        <div><h3>گزارش کلاس</h3><p>نقاط قوت کلاس را ببینید، بدون نام افراد.</p></div>
+                                    </div>
+                                    <div class="ts-tile">
+                                        <div class="ts-tile__viz" aria-hidden="true"><div class="ts-team"><i>م</i><i>ع</i><i>ز</i><i>ح</i></div></div>
+                                        <div><h3>کار تیمی</h3><p>هر مشاور دانش‌آموزان خودش را دارد. مدیر پنل نقش‌ها را تعیین می‌کند.</p></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </section>
+
+                        <section class="ts-section ts-section--mist">
+                            <div class="ts-container">
+                                <div class="ts-section__head">
+                                    <span class="ts-kick">شروع</span>
+                                    <h2>در سه گام آماده‌اید.</h2>
+                                </div>
+                                <ol class="ts-steps">
+                                    <li><strong>پنل بسازید</strong><span>چند دقیقه طول می‌کشد و همان لحظه فعال است.</span></li>
+                                    <li><strong>کد کلاس را بدهید</strong><span>دانش‌آموز با کد یا QR وارد می‌شود و رضایتش را ثبت می‌کند.</span></li>
+                                    <li><strong>نتیجه را کنار هم بخوانید</strong><span>هر دانش‌آموز چند زمینه را مقایسه می‌کند. شما با اجازهٔ او نتیجه را می‌بینید.</span></li>
+                                </ol>
+                            </div>
+                        </section>
+
+                        <section class="ts-section">
+                            <div class="ts-container">
+                                <div class="ts-show">
+                                    <div class="ts-show__words">
+                                        <span class="ts-kick">برای دانش‌آموز</span>
+                                        <h2>خودت را بسنج. آگاهانه انتخاب کن.</h2>
+                                        <p>زمینه‌هایی را که دوست داری بنویس، برای هر کدام ۱۵ جمله جواب بده و ببین توانایی‌هایت کنار هم چطورند.</p>
+                                        <ul class="ts-ticks">
+                                            <li><t t-call="ts_website.icon" ico.f="check-circle"/>هر زمینه حدود یک دقیقه</li>
+                                            <li><t t-call="ts_website.icon" ico.f="check-circle"/>پاسخ‌ها خودکار ذخیره می‌شوند</li>
+                                            <li><t t-call="ts_website.icon" ico.f="check-circle"/>نتیجه اول فقط برای خودت است</li>
+                                        </ul>
+                                        <a href="/assessments" class="ts-btn ts-btn--primary ts-btn--lg" style="align-self: flex-start">شروع رایگان<t t-call="ts_website.icon" ico.f="arrow-left"/></a>
+                                    </div>
+                                    <div class="ts-phone" aria-hidden="true">
+                                        <div class="ts-phone__frame">
+                                            <div class="ts-phone__screen">
+                                                <div class="ts-phone__top"><span class="ts-phone__dots"><i/><i/><i/></span><span class="ts-phone__field">برنامه‌نویسی</span></div>
+                                                <div class="ts-phone__q">
+                                                    <span>به‌سادگی می‌توانم مباحث «برنامه‌نویسی» را تحلیل و ریشه‌یابی کنم.</span>
+                                                    <div class="ts-phone__opts"><span>بسیار کم</span><span>کم</span><span>متوسط</span><span class="is-on">زیاد</span><span>بسیار زیاد</span></div>
+                                                </div>
+                                                <div class="ts-phone__q">
+                                                    <span>تا چیزی را که در «برنامه‌نویسی» می‌دانم تجربه نکنم، آرام نمی‌شوم.</span>
+                                                    <div class="ts-phone__opts"><span>بسیار کم</span><span>کم</span><span>متوسط</span><span>زیاد</span><span>بسیار زیاد</span></div>
+                                                </div>
+                                                <span class="ts-phone__next">صفحهٔ بعد</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </section>
+
+                        <section class="ts-section ts-section--mist">
+                            <div class="ts-container">
+                                <div class="ts-science">
+                                    <div class="ts-science__words">
+                                        <span class="ts-kick">پایهٔ علمی</span>
+                                        <h2>استعداد همیشه «در یک زمینه» سنجیده می‌شود.</h2>
+                                        <p class="ts-science__text">فهرست تعاملی استعداد بر پایهٔ مدل کتاب «آموزش و پرورش برای استعداد و تیزهوشی» ساخته شده است. سه هوش و دو کنش، برای هر رشته یا کاری که دانش‌آموز خودش می‌نویسد، جداگانه سنجیده و کنار هم گذاشته می‌شود.</p>
+                                        <div class="ts-model" role="img" aria-label="مدل: سه هوش (تحلیلی، تجربی، تحصیلی) و دو کنش (نوسودمندی، وظیفه‌مندی) در هر زمینه؛ ترکیب‌ها: خلّاقیّت، استعداد تحصیلی، خلّاقیّت نظری، خلّاقیّت عملی">
+                                            <div class="ts-model__row"><strong>سه هوش</strong><span class="ts-model__chip">تحلیلی</span><span class="ts-model__chip">تجربی</span><span class="ts-model__chip">تحصیلی</span></div>
+                                            <div class="ts-model__row"><strong>دو کنش</strong><span class="ts-model__chip ts-model__chip--n">نوسودمندی</span><span class="ts-model__chip ts-model__chip--n">وظیفه‌مندی</span></div>
+                                            <div class="ts-model__arrow"><t t-call="ts_website.icon" ico.f="arrow-down"/>در هر زمینه‌ای که دانش‌آموز می‌نویسد</div>
+                                            <div class="ts-model__comp"><span>خلّاقیّت</span><span>استعداد تحصیلی</span><span>خلّاقیّت نظری</span><span>خلّاقیّت عملی</span></div>
+                                        </div>
+                                        <ul class="ts-flasks">
+                                            <li><t t-call="ts_website.icon" ico.f="flask"/>مقایسه درون‌فردی است: زمینه‌های خود دانش‌آموز با هم مقایسه می‌شوند، نه با دیگران.</li>
+                                            <li><t t-call="ts_website.icon" ico.f="flask"/>اختلاف کمتر از ۱۰ نمره «نزدیک» گزارش می‌شود و تفاوت معنادار به حساب نمی‌آید.</li>
+                                            <li><t t-call="ts_website.icon" ico.f="flask"/>پاسخ یکسان یا خیلی سریع علامت می‌خورد تا آن زمینه با احتیاط خوانده شود.</li>
+                                        </ul>
+                                    </div>
+                                    <aside class="ts-person" aria-label="پشتوانهٔ علمی">
+                                        <div class="ts-person__head">
+                                            <img class="ts-person__photo" src="/ts_website/static/img/dr-kazemi.webp" width="96" height="96" alt="دکتر ناصرالدین کاظمی حقیقی" loading="lazy" onerror="this.style.visibility='hidden'"/>
+                                            <div>
+                                                <small>پشتوانهٔ علمی</small>
+                                                <strong>دکتر ناصرالدین کاظمی حقیقی</strong>
+                                                <span>طراح مدل تعاملی استعداد و بنیان‌گذار <bdi dir="ltr">EOT</bdi></span>
+                                            </div>
+                                        </div>
+                                        <ul>
+                                            <li><t t-call="ts_website.icon" ico.f="seal-check"/>دکترای روان‌شناسی و آموزش کودکان استثنایی</li>
+                                            <li><t t-call="ts_website.icon" ico.f="seal-check"/>دارای پروانهٔ اشتغال از سازمان نظام روان‌شناسی و مشاورهٔ ایران</li>
+                                            <li><t t-call="ts_website.icon" ico.f="seal-check"/>مدرس دانشگاه و نویسندهٔ کتاب‌هایی در هوش، استعداد و خلّاقیّت</li>
+                                        </ul>
+                                        <div class="ts-book"><i/><div><small>کتاب مرجع مدل</small><strong>آموزش و پرورش برای استعداد و تیزهوشی</strong></div></div>
+                                        <a class="ts-person__link" href="https://www.eot.ir/%DA%A9%D8%AA%D8%A8/%D8%A7%D9%85%D9%88%D8%B2%D8%B4-%D9%88-%D9%BE%D8%B1%D9%88%D8%B1%D8%B4-%D8%A8%D8%B1%D8%A7%DB%8C-%D8%A7%D8%B3%D8%AA%D8%B9%D8%AF%D8%A7%D8%AF-%D9%88-%D8%AA%DB%8C%D8%B2%D9%87%D9%88%D8%B4%DB%8C" target="_blank" rel="noopener">دربارهٔ کتاب در <bdi dir="ltr">EOT</bdi><t t-call="ts_website.icon" ico.f="arrow-up-left"/></a>
+                                    </aside>
+                                </div>
+                            </div>
+                        </section>
+
+                        <section class="ts-section">
+                            <div class="ts-container">
+                                <div class="ts-quote">
+                                    <t t-call="ts_website.icon" ico.f="quotes"/>
+                                    <p>تصمیم با انسان است، نه با نمره.</p>
+                                    <span>گزارش نقطهٔ شروع گفت‌وگوست. رشته را دانش‌آموز و خانواده‌اش انتخاب می‌کنند، با کمک مشاور.</span>
+                                </div>
+                            </div>
+                        </section>
+
+                        <section class="ts-section ts-section--tight">
+                            <div class="ts-container">
+                                <div class="ts-grid" style="--min: 260px">
+                                    <div class="ts-card">
+                                        <span class="ts-card__icon"><t t-call="ts_website.icon" ico.f="buildings"/></span>
+                                        <h3>سازمان یا کلینیک هستید؟</h3>
+                                        <p class="ts-card__body">پنل سازمان‌ها و مراکز درمانی در حال پایلوت است.</p>
+                                        <a class="ts-card__link" href="/contact?topic=partner">با ما تماس بگیرید<t t-call="ts_website.icon" ico.f="arrow-left"/></a>
+                                    </div>
+                                    <div class="ts-card">
+                                        <span class="ts-card__icon"><t t-call="ts_website.icon" ico.f="question"/></span>
+                                        <h3>پرسشی دارید؟</h3>
+                                        <p class="ts-card__body">هزینه، حریم خصوصی و روند کار؛ پاسخ‌های کوتاه.</p>
+                                        <a class="ts-card__link" href="/pricing#faq">پرسش‌های رایج<t t-call="ts_website.icon" ico.f="arrow-left"/></a>
+                                    </div>
+                                </div>
+                            </div>
+                        </section>
+                        <t t-call="ts_website.cta"/>
+                    </div>
+                </t>
+            </t>
+        </field>
+    </record>
+
+    <!-- ============================================================ /schools -->
+    <record id="page_schools_view" model="ir.ui.view">
+        <field name="name">TS: schools</field>
+        <field name="type">qweb</field>
+        <field name="key">ts_website.page_schools</field>
+        <field name="website_id" ref="website_ts"/>
+        <field name="arch" type="xml">
+            <t t-name="ts_website.page_schools">
+                <t t-call="website.layout" additional_title.f="برای مدارس و مشاوران">
+                    <div id="wrap" class="ts-page">
+                        <section class="ts-hero">
+                            <div class="ts-container ts-hero__grid ts-hero__grid--split">
+                                <div class="ts-hero__words">
+                                    <span class="ts-hero__kicker">برای مدارس و مشاوران</span>
+                                    <h1>برای هر دانش‌آموز، تصویری روشن از توانایی‌هایش.</h1>
+                                    <p class="ts-hero__lead">دعوت گروهی، گزارش فردی و گزارش کلاس، همه در یک پنل.</p>
+                                    <div class="ts-hero__actions">
+                                        <a href="/panel" class="ts-btn ts-btn--primary ts-btn--lg">ساخت پنل رایگان<t t-call="ts_website.icon" ico.f="arrow-left"/></a>
+                                        <a href="/contact?topic=demo" class="ts-btn ts-btn--quiet ts-btn--lg">جلسهٔ معرفی</a>
+                                    </div>
+                                </div>
+                                <t t-call="ts_website.hero_mock"/>
+                            </div>
+                        </section>
+                        <section class="ts-section">
+                            <div class="ts-container">
+                                <div class="ts-section__head">
+                                    <span class="ts-kick">امکانات</span>
+                                    <h2>ساخته‌شده برای کار روزانهٔ مشاور.</h2>
+                                </div>
+                                <div class="ts-grid" style="--min: 230px">
+                                    <div class="ts-card ts-card--hover"><span class="ts-card__icon"><t t-call="ts_website.icon" ico.f="qr-code"/></span><h3>یک کد برای کل کلاس</h3><p>کد یا QR را روی تخته بگذارید. هر کس وارد شود، پیش از شروع می‌بیند نتیجه‌اش را چه کسی می‌بیند.</p></div>
+                                    <div class="ts-card ts-card--hover"><span class="ts-card__icon"><t t-call="ts_website.icon" ico.f="chart-bar"/></span><h3>گزارش فردی</h3><p>پنج توانایی در هر زمینه، کنار هم. «برجسته» و «نزدیک» را یک‌نگاه می‌بینید.</p></div>
+                                    <div class="ts-card ts-card--hover"><span class="ts-card__icon"><t t-call="ts_website.icon" ico.f="users"/></span><h3>گزارش کلاس</h3><p>ببینید کلاس در کدام توانایی‌ها قوی‌تر است، بدون نام افراد.</p></div>
+                                    <div class="ts-card ts-card--hover"><span class="ts-card__icon"><t t-call="ts_website.icon" ico.f="id-card"/></span><h3>کار تیمی</h3><p>هر مشاور دانش‌آموزان خودش را دارد. مدیر پنل اعضا و نقش‌ها را تعیین می‌کند.</p></div>
+                                </div>
+                            </div>
+                        </section>
+                        <section class="ts-section ts-section--mist">
+                            <div class="ts-container">
+                                <div class="ts-cols">
+                                    <div>
+                                        <h3>دانش‌آموز به شما اعتماد می‌کند، چون:</h3>
+                                        <ul class="ts-list-check">
+                                            <li>پیش از شروع می‌بیند چه کسی نتیجه را می‌بیند.</li>
+                                            <li>نتیجه فقط با اجازهٔ خودش به پنل می‌رسد.</li>
+                                            <li>هر وقت بخواهد، اشتراک را قطع می‌کند.</li>
+                                        </ul>
+                                    </div>
+                                    <div>
+                                        <h3>برای زیر ۱۸ سال</h3>
+                                        <ul class="ts-list-check">
+                                            <li>مدرسه تأیید می‌کند که رضایت ولی را دارد.</li>
+                                            <li>نام و زمان تأیید ثبت می‌شود.</li>
+                                            <li>خود دانش‌آموز هم پیش از شروع موافقت می‌کند.</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </section>
+                        <t t-call="ts_website.cta"/>
+                    </div>
+                </t>
+            </t>
+        </field>
+    </record>
+
+    <!-- ============================================================ /assessments (rendered by ts_assessment's catalog route) -->
+    <record id="page_assessments_view" model="ir.ui.view">
+        <field name="name">TS: assessments</field>
+        <field name="type">qweb</field>
+        <field name="key">ts_website.page_assessments</field>
+        <field name="website_id" ref="website_ts"/>
+        <field name="arch" type="xml">
+            <t t-name="ts_website.page_assessments">
+                <t t-set="start_href" t-value="start_url or '/web/login?redirect=/assessments'"/>
+                <t t-set="abil" t-value="['تحلیلی', 'تجربی', 'تحصیلی', 'نوسودمندی', 'وظیفه‌مندی']"/>
+                <t t-set="tops" t-value="[86, 70, 80, 84, 80]"/>
+                <t t-set="sample" t-value="[('برنامه‌نویسی', [86, 60, 73, 46, 80], 69), ('پزشکی', [66, 70, 80, 40, 76], 66), ('معماری', [60, 64, 53, 84, 58], 64), ('روان‌شناسی', [72, 52, 66, 56, 70], 63)]"/>
+                <t t-call="website.layout" additional_title.f="سنجه‌ها">
+                    <div id="wrap" class="ts-page">
+                        <section class="ts-hero">
+                            <div class="ts-container ts-hero__grid">
+                                <div class="ts-hero__words">
+                                    <span class="ts-hero__kicker">سنجه</span>
+                                    <h1>فهرست تعاملی استعداد</h1>
+                                    <p class="ts-hero__lead">پنج توانایی، در زمینه‌هایی که خودت انتخاب می‌کنی.</p>
+                                    <div class="ts-hero__meta"><span>۲ تا ۸ زمینه</span><span>۱۵ جمله برای هر زمینه</span><span>حدود ۱ دقیقه برای هر زمینه</span></div>
+                                    <div class="ts-hero__actions">
+                                        <a t-att-href="start_href" class="ts-btn ts-btn--primary ts-btn--lg">شروع سنجه<t t-call="ts_website.icon" ico.f="arrow-left"/></a>
+                                        <a t-if="request.env.user._is_public()" href="/web/login?redirect=/my/assessments" class="ts-btn ts-btn--quiet ts-btn--lg">ورود</a>
+                                        <a t-else="" href="/my/assessments" class="ts-btn ts-btn--quiet ts-btn--lg">سنجه‌های من</a>
+                                    </div>
+                                </div>
+                            </div>
+                        </section>
+                        <section class="ts-section">
+                            <div class="ts-container">
+                                <div class="ts-section__head"><h2>چطور کار می‌کند</h2></div>
+                                <ol class="ts-steps">
+                                    <li><strong>زمینه‌هایت را بنویس</strong><span>رشته یا کاری که به آن فکر می‌کنی؛ دست‌کم دو تا.</span></li>
+                                    <li><strong>۱۵ جمله جواب بده</strong><span>از «بسیار کم» تا «بسیار زیاد». پاسخ‌ها خودکار ذخیره می‌شوند.</span></li>
+                                    <li><strong>زمینه‌ها را کنار هم ببین</strong><span>گزارش را با مشاورت مرور کن یا چاپ کن.</span></li>
+                                </ol>
+                            </div>
+                        </section>
+                        <section class="ts-section ts-section--tight">
+                            <div class="ts-container">
+                                <div class="ts-section__head"><h2>پنج توانایی</h2></div>
+                                <div class="ts-grid" style="--min: 190px">
+                                    <div class="ts-card ts-card--plain"><h3>تحلیلی</h3><p>تحلیل، ریشه‌یابی و سازمان‌دهی مطالب.</p></div>
+                                    <div class="ts-card ts-card--plain"><h3>تجربی</h3><p>میل به آزمودن آنچه می‌دانی.</p></div>
+                                    <div class="ts-card ts-card--plain"><h3>تحصیلی</h3><p>یادگیری دقیق درس‌های آن زمینه.</p></div>
+                                    <div class="ts-card ts-card--plain"><h3>نوسودمندی</h3><p>راه‌حل و شیوهٔ تازه و کاربردی.</p></div>
+                                    <div class="ts-card ts-card--plain"><h3>وظیفه‌مندی</h3><p>انجام درست و دقیق کار خواسته‌شده.</p></div>
+                                </div>
+                            </div>
+                        </section>
+                        <section class="ts-section ts-section--mist">
+                            <div class="ts-container">
+                                <div class="ts-section__head">
+                                    <span class="ts-kick">گزارش</span>
+                                    <h2>گزارش در هفت سطح، از کلی به جزئی.</h2>
+                                    <p>هر سطح از همان نمره‌ها ساخته می‌شود و یک پرسش مشاوره را جواب می‌دهد.</p>
+                                </div>
+                                <ol class="ts-levels">
+                                    <li><div><strong>کلّی</strong><span>میانگین همهٔ توانایی‌ها در همهٔ زمینه‌ها.</span></div></li>
+                                    <li><div><strong>اجمالی</strong><span>بهترین توانایی در بهترین زمینه.</span></div></li>
+                                    <li><div><strong>ترکیبی</strong><span>زمینهٔ قوی‌تر در هوش، و در کنش.</span></div></li>
+                                    <li><div><strong>کانونی</strong><span>قوی‌ترین ترکیب کنش و هوش.</span></div></li>
+                                    <li><div><strong>تفصیلی</strong><span>برچسب غالب هر زمینه؛ مثل «وظیفه‌مندی تحلیلی».</span></div></li>
+                                    <li><div><strong>نوع استعداد</strong><span>خلّاقیّت، استعداد تحصیلی، خلّاقیّت نظری یا عملی.</span></div></li>
+                                    <li><div><strong>نیازمند حمایت</strong><span>جایی که دانش‌آموز کمک بیشتری لازم دارد.</span></div></li>
+                                </ol>
+                            </div>
+                        </section>
+                        <section class="ts-section">
+                            <div class="ts-container">
+                                <div class="ts-section__head">
+                                    <span class="ts-kick">از گزارش تا برنامه</span>
+                                    <h2>هر نتیجه، یک گام بعدی دارد.</h2>
+                                </div>
+                                <div class="ts-grid" style="--min: 220px">
+                                    <div class="ts-card"><span class="ts-card__icon"><t t-call="ts_website.icon" ico.f="rocket"/></span><h3>تسریع</h3><p>وقتی توانایی تحصیلی یا وظیفه‌مندی برجسته است.</p></div>
+                                    <div class="ts-card"><span class="ts-card__icon"><t t-call="ts_website.icon" ico.f="tree"/></span><h3>غنی‌سازی</h3><p>وقتی توانایی تحلیلی، تجربی یا نوسودمندی برجسته است.</p></div>
+                                    <div class="ts-card"><span class="ts-card__icon"><t t-call="ts_website.icon" ico.f="lifebuoy"/></span><h3>آموزش جبرانی</h3><p>برای ضعیف‌ترین زمینهٔ دانش‌آموز.</p></div>
+                                    <div class="ts-card"><span class="ts-card__icon"><t t-call="ts_website.icon" ico.f="plant"/></span><h3>پرورش تقویّتی</h3><p>برای ضعیف‌ترین توانایی.</p></div>
+                                </div>
+                            </div>
+                        </section>
+                        <section class="ts-section ts-section--mist" id="sample">
+                            <div class="ts-container">
+                                <div class="ts-doc-sample">
+                                    <span class="ts-tagline">نمونهٔ ساختگی؛ فقط شکل گزارش را نشان می‌دهد.</span>
+                                    <h2>نمونهٔ گزارش: زمینه‌ها کنار هم</h2>
+                                    <p>یک دانش‌آموز فرضی این چهار زمینه را نوشته: برنامه‌نویسی، پزشکی، معماری، روان‌شناسی.</p>
+                                    <div class="ts-legend">
+                                        <span t-foreach="sample" t-as="f"><i t-attf-class="ts-f#{f_index + 1}"/><t t-out="f[0]"/></span>
+                                    </div>
+                                    <div class="ts-matrix">
+                                        <div class="ts-matrix__ab" t-foreach="abil" t-as="ab">
+                                            <t t-set="top" t-value="tops[ab_index]"/>
+                                            <strong t-out="ab"/>
+                                            <div class="ts-matrix__row" t-foreach="sample" t-as="f">
+                                                <t t-set="v" t-value="f[1][ab_index]"/>
+                                                <span t-out="f[0]"/>
+                                                <span class="ts-matrix__track"><i t-attf-class="ts-f#{f_index + 1}" t-attf-style="inline-size: #{v}%"/></span>
+                                                <span class="ts-matrix__n" t-out="v"/>
+                                                <span t-if="v == top" class="ts-badge ts-badge--top">برجسته</span>
+                                                <span t-elif="top - v &lt;= 10" class="ts-badge ts-badge--near">نزدیک</span>
+                                                <span t-else="" class="ts-badge"/>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="ts-fieldcards">
+                                        <div t-foreach="sample" t-as="f">
+                                            <t t-set="mx" t-value="max(f[1])"/>
+                                            <t t-set="mn" t-value="min(f[1])"/>
+                                            <strong><i t-attf-class="ts-f#{f_index + 1}"/><t t-out="f[0]"/></strong>
+                                            <span>میانگین <b t-out="f[2]"/></span>
+                                            <span>بیشترین: <t t-out="abil[f[1].index(mx)]"/> (<t t-out="mx"/>)</span>
+                                            <span>کمترین: <t t-out="abil[f[1].index(mn)]"/> (<t t-out="mn"/>)</span>
+                                        </div>
+                                    </div>
+                                    <p class="ts-tagline" style="font-size: 14px">این ترتیب، پیشنهاد رشته نیست. کنار علاقه و نمره‌های درسی، با مشاورت بخوانش.</p>
+                                    <a t-att-href="start_href" class="ts-btn ts-btn--primary ts-btn--lg" style="align-self: flex-start">شروع سنجه</a>
+                                </div>
+                            </div>
+                        </section>
+                        <section class="ts-section ts-section--tight">
+                            <div class="ts-container">
+                                <div class="ts-notice" role="note"><t t-call="ts_website.icon" ico.f="info"/><span>این گزارش رتبه یا قبولی را پیش‌بینی نمی‌کند. فقط زمینه‌های خودت با هم مقایسه می‌شوند، نه با دیگران.</span></div>
+                                <p t-if="catalog_count" class="ts-hint" style="margin: 0">سنجه‌های دیگر را پنل شما می‌تواند برایتان بفرستد. <a href="/assessments?all=1">فهرست همهٔ سنجه‌ها</a></p>
+                            </div>
+                        </section>
+                    </div>
+                </t>
+            </t>
+        </field>
+    </record>
+
+    <!-- ============================================================ /pricing -->
+    <record id="page_pricing_view" model="ir.ui.view">
+        <field name="name">TS: pricing and FAQ</field>
+        <field name="type">qweb</field>
+        <field name="key">ts_website.page_pricing</field>
+        <field name="website_id" ref="website_ts"/>
+        <field name="arch" type="xml">
+            <t t-name="ts_website.page_pricing">
+                <t t-set="faqs" t-value="[
+                    ('f1', 'دانش‌آموز می‌تواند نیمه‌کاره رها کند؟', 'بله. پاسخ‌ها خودکار ذخیره می‌شوند و تا پایان مهلت دعوت از همان‌جا ادامه می‌دهد.'),
+                    ('f2', 'چه کسی نتیجه را می‌بیند؟', 'اول فقط خود دانش‌آموز. بعد خودش تعیین می‌کند چه سطحی را با پنل به اشتراک بگذارد.'),
+                    ('f3', 'تلنت سرچ تشخیص می‌دهد یا رشته پیشنهاد می‌کند؟', 'نه. گزارش برای گفت‌وگوست. تصمیم را دانش‌آموز، خانواده و مشاور می‌گیرند.'),
+                    ('f4', 'پیوند دعوت منقضی شده؛ چه کنم؟', 'از مدرسه بخواهید دعوت تازه بفرستد.'),
+                    ('f5', 'چطور رضایتم را پس بگیرم؟', 'از صفحهٔ «حریم خصوصی» در حساب خودتان، با یک دکمه.'),
+                    ('f6', 'اینترنت قطع شد؛ پاسخ‌ها از بین رفت؟', 'نه. همان پیوند را دوباره باز کنید.'),
+                ]"/>
+                <t t-call="website.layout" additional_title.f="هزینه و پرسش‌ها">
+                    <div id="wrap" class="ts-page">
+                        <section class="ts-hero">
+                            <div class="ts-container ts-hero__grid">
+                                <div class="ts-hero__words">
+                                    <span class="ts-hero__kicker">هزینه</span>
+                                    <h1>پنل مدرسه رایگان است.</h1>
+                                    <p class="ts-hero__lead">بدون محدودیت دانش‌آموز و بدون کسر اعتبار.</p>
+                                </div>
+                            </div>
+                        </section>
+                        <section class="ts-section">
+                            <div class="ts-container">
+                                <div class="ts-plans">
+                                    <div class="ts-plan ts-plan--free">
+                                        <div class="ts-plan__top"><h3>پنل مدرسه</h3></div>
+                                        <span class="ts-plan__price">رایگان</span>
+                                        <span class="ts-plan__for">برای مدرسه‌ها و مراکز مشاوره</span>
+                                        <ul>
+                                            <li>دعوت گروهی با کد و QR</li>
+                                            <li>گزارش فردی و گزارش کلاس</li>
+                                            <li>اعضا و نقش‌ها</li>
+                                            <li>خروجی و دفتر ممیزی</li>
+                                        </ul>
+                                        <div class="ts-plan__foot"><a href="/panel" class="ts-btn ts-btn--primary ts-btn--lg">ساخت پنل رایگان<t t-call="ts_website.icon" ico.f="arrow-left"/></a></div>
+                                    </div>
+                                    <div class="ts-plan ts-plan--pro">
+                                        <div class="ts-plan__top"><h3>همیار تفسیر</h3><span class="ts-soon">به‌زودی</span></div>
+                                        <span class="ts-plan__price">حرفه‌ای</span>
+                                        <span class="ts-plan__for">برای مشاورانی که نتیجه را تفسیر می‌کنند</span>
+                                        <ul>
+                                            <li>پیش‌نویس تفسیر برای مشاور</li>
+                                            <li>نکته‌های جلسهٔ بازخورد</li>
+                                            <li>نسخهٔ چاپی با نام مدرسه</li>
+                                        </ul>
+                                        <div class="ts-plan__warn"><t t-call="ts_website.icon" ico.f="warning"/>هر متن پیش از رسیدن به دانش‌آموز را مشاور بازبینی می‌کند.</div>
+                                        <div class="ts-plan__foot"><a href="/contact?topic=pro" class="ts-btn ts-btn--outline ts-btn--lg">خبرم کنید</a></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </section>
+                        <section class="ts-section ts-section--mist" id="faq">
+                            <div class="ts-container ts-container--narrow">
+                                <div class="ts-faq">
+                                    <h2>پرسش‌های رایج</h2>
+                                    <div class="ts-faq__box">
+                                        <div class="ts-faq__item" t-foreach="faqs" t-as="fq" t-att-id="'faq-' + fq[0]">
+                                            <button type="button" class="ts-faq__q" aria-expanded="false" t-att-aria-controls="'faq-' + fq[0] + '-a'">
+                                                <span t-out="fq[1]"/>
+                                                <span class="ts-faq__plus"><t t-call="ts_website.icon" ico.f="plus"/></span>
+                                                <span class="ts-faq__minus"><t t-call="ts_website.icon" ico.f="minus"/></span>
+                                            </button>
+                                            <div class="ts-faq__a" t-att-id="'faq-' + fq[0] + '-a'" hidden="hidden"><p t-out="fq[2]"/></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </section>
+                    </div>
+                </t>
+            </t>
+        </field>
+    </record>
+
+    <!-- ============================================================ /contact -->
+    <record id="page_contact_view" model="ir.ui.view">
+        <field name="name">TS: contact</field>
+        <field name="type">qweb</field>
+        <field name="key">ts_website.page_contact</field>
+        <field name="website_id" ref="website_ts"/>
+        <field name="arch" type="xml">
+            <t t-name="ts_website.page_contact">
+                <t t-set="q" t-value="request.params"/>
+                <t t-set="topic" t-value="q.get('topic') if q.get('topic') in ('demo', 'pro', 'question', 'support', 'partner') else 'demo'"/>
+                <t t-call="website.layout" additional_title.f="تماس">
+                    <div id="wrap" class="ts-page">
+                        <section class="ts-hero">
+                            <div class="ts-container ts-hero__grid">
+                                <div class="ts-hero__words">
+                                    <span class="ts-hero__kicker">تماس</span>
+                                    <h1>با ما حرف بزنید.</h1>
+                                    <p class="ts-hero__lead">جلسهٔ معرفی، پرسش یا پشتیبانی؛ از همان راهی که می‌نویسید جواب می‌دهیم.</p>
+                                </div>
+                            </div>
+                        </section>
+                        <section class="ts-section" style="padding-block-start: 8px">
+                            <div class="ts-container">
+                                <div class="ts-formsplit">
+                                    <form action="/ts/lead" method="post" class="ts-form ts-formcard" novalidate="novalidate">
+                                        <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                                        <div>
+                                            <label for="ts-topic">موضوع</label>
+                                            <select id="ts-topic" name="topic">
+                                                <option value="demo" t-att-selected="topic == 'demo' or None">جلسهٔ معرفی</option>
+                                                <option value="pro" t-att-selected="topic == 'pro' or None">خبرم کنید: همیار تفسیر</option>
+                                                <option value="question" t-att-selected="topic == 'question' or None">پرسش</option>
+                                                <option value="support" t-att-selected="topic == 'support' or None">پشتیبانی</option>
+                                                <option value="partner" t-att-selected="topic == 'partner' or None">سازمان یا کلینیک هستم</option>
+                                            </select>
+                                        </div>
+                                        <div class="ts-form__row">
+                                            <div><label for="ts-name">نام شما</label><input id="ts-name" type="text" name="name" required="required" maxlength="120" autocomplete="name"/></div>
+                                            <div><label for="ts-contact">ایمیل یا موبایل</label><input id="ts-contact" type="text" name="contact" dir="ltr" required="required" maxlength="160" autocomplete="email" inputmode="email"/></div>
+                                            <div><label for="ts-org">مدرسه یا مرکز (اختیاری)</label><input id="ts-org" type="text" name="company" maxlength="160" autocomplete="organization"/></div>
+                                        </div>
+                                        <div><label for="ts-msg">پیام</label><textarea id="ts-msg" name="message" rows="4" maxlength="3000"/></div>
+                                        <label class="ts-check"><input type="checkbox" name="consent_contact" value="1" required="required"/><span>برای پاسخ به همین پیام با من تماس بگیرید.</span></label>
+                                        <p t-if="q.get('error')" class="ts-form__error" role="alert"><t t-call="ts_website.icon" ico.f="warning-circle"/>نام و راه تماس را بنویسید و گزینهٔ تماس را علامت بزنید.</p>
+                                        <div class="ts-form__foot">
+                                            <button type="submit" class="ts-btn ts-btn--primary ts-btn--lg">ارسال درخواست</button>
+                                            <small>اطلاعات این فرم فقط برای پاسخ به درخواست شما استفاده می‌شود. <a href="/privacy">حریم خصوصی</a></small>
+                                        </div>
+                                    </form>
+                                    <div class="ts-aside">
+                                        <h3>راه‌های دیگر</h3>
+                                        <div class="ts-aside__row"><span>ایمیل</span><a href="mailto:info@eot.ir"><bdi dir="ltr">info@eot.ir</bdi></a></div>
+                                        <div class="ts-aside__row"><span>تلفن</span><a href="tel:+982188174100">۰۲۱-۸۸۱۷۴۱۰۰</a></div>
+                                        <div class="ts-aside__note"><t t-call="ts_website.icon" ico.f="first-aid"/>تلنت سرچ خدمت اورژانسی نیست. در شرایط اضطراری با ۱۱۵ تماس بگیرید.</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </section>
+                    </div>
+                </t>
+            </t>
+        </field>
+    </record>
+
+    <!-- ============================================================ /privacy -->
+    <record id="page_privacy_view" model="ir.ui.view">
+        <field name="name">TS: privacy and consent</field>
+        <field name="type">qweb</field>
+        <field name="key">ts_website.page_privacy</field>
+        <field name="website_id" ref="website_ts"/>
+        <field name="arch" type="xml">
+            <t t-name="ts_website.page_privacy">
+                <t t-call="website.layout" additional_title.f="حریم خصوصی و رضایت">
+                    <div id="wrap" class="ts-page">
+                        <section class="ts-hero">
+                            <div class="ts-container ts-hero__grid">
+                                <div class="ts-hero__words">
+                                    <span class="ts-hero__kicker">حریم خصوصی</span>
+                                    <h1>دادهٔ شما، تصمیم شما.</h1>
+                                    <p class="ts-hero__lead">نسخهٔ ۱ · از ۷ مهر ۱۴۰۵</p>
+                                </div>
+                            </div>
+                        </section>
+                        <section class="ts-section" style="padding-block-start: 8px">
+                            <div class="ts-container ts-container--narrow">
+                                <div class="ts-prose">
+                                    <div>
+                                        <h2>آنچه جمع می‌کنیم</h2>
+                                        <ul><li>فقط آنچه برای همان سنجه لازم است.</li><li>پاسخ‌ها و نتیجه در حساب خود شما می‌ماند.</li></ul>
+                                    </div>
+                                    <div>
+                                        <h2>چه کسی می‌بیند</h2>
+                                        <ul><li>اول فقط خود شما.</li><li>پنل فقط سطحی را می‌بیند که شما اجازه می‌دهید.</li><li>گزارش کلاس فقط شمار افراد را نشان می‌دهد؛ خانه‌های کمتر از ۵ نفر پنهان‌اند.</li><li>هر دسترسی در دفتر ممیزی ثبت می‌شود.</li></ul>
+                                    </div>
+                                    <div>
+                                        <h2>رضایت</h2>
+                                        <ul><li>رضایت سنجه و رضایت پژوهش جدا هستند و هیچ‌کدام از پیش تیک نخورده‌اند.</li><li>هر وقت بخواهید، رضایت را پس می‌گیرید.</li><li>برای زیر ۱۸ سال، مدرسه رضایت ولی را تأیید و ثبت می‌کند.</li></ul>
+                                    </div>
+                                    <div>
+                                        <h2>حذف داده</h2>
+                                        <ul><li>درخواست حذف را از حساب خود بدهید؛ ظرف ۳۰ روز بررسی می‌شود.</li></ul>
+                                        <p>پرسشی دارید؟ به <a href="mailto:info@eot.ir"><bdi dir="ltr">info@eot.ir</bdi></a> بنویسید. شناسهٔ متن رضایت: <bdi dir="ltr">TS-CONSENT-1405-07-07-v1</bdi></p>
+                                    </div>
+                                </div>
+                            </div>
+                        </section>
+                    </div>
+                </t>
+            </t>
+        </field>
+    </record>
+
+    <!-- ============================================================ /contact/thanks -->
+    <record id="page_thanks_view" model="ir.ui.view">
+        <field name="name">TS: contact thanks</field>
+        <field name="type">qweb</field>
+        <field name="key">ts_website.page_thanks</field>
+        <field name="website_id" ref="website_ts"/>
+        <field name="arch" type="xml">
+            <t t-name="ts_website.page_thanks">
+                <t t-call="website.layout" additional_title.f="پیام شما رسید">
+                    <div id="wrap" class="ts-page">
+                        <section class="ts-hero ts-hero--tall">
+                            <div class="ts-container ts-hero__grid">
+                                <div class="ts-hero__words">
+                                    <span class="ts-hero__kicker">دریافت شد</span>
+                                    <h1>پیام شما رسید.</h1>
+                                    <p class="ts-hero__lead">به‌زودی از همان راهی که نوشتید جواب می‌دهیم.</p>
+                                    <div class="ts-hero__actions"><a href="/" class="ts-btn ts-btn--outline">بازگشت به خانه</a></div>
+                                </div>
+                            </div>
+                        </section>
+                    </div>
+                </t>
+            </t>
+        </field>
+    </record>
+</odoo>

@@ -1,0 +1,85 @@
+// Talent Search design tokens (redesign 2026-10, "Talent Search Website.html" / "Talent Search App.html").
+// First file of ts_website.assets_ts, so every later file (site, panel, player, report) reads these.
+// Light is the default; <html data-theme="dark"> switches. The inline head script in layout.xml sets
+// data-theme before first paint from localStorage['ts-site-theme'] or prefers-color-scheme.
+// Ramps are used semantically: 900 = tinted fill, 800 = border, 300/200 = secondary text, accent-300 = text-size accent.
+
+:root {
+    color-scheme: light;
+    --color-bg: #f4f5fb;
+    --color-surface: #fdfdff;
+    --color-text: #1f2130;
+    --color-neutral-100: #1f2130; --color-neutral-200: #2e3039; --color-neutral-300: #3f424d;
+    --color-neutral-400: #595d6c; --color-neutral-500: #75798c; --color-neutral-600: #9a9fb3;
+    --color-neutral-700: #c9cddd; --color-neutral-800: #dfe2ee; --color-neutral-900: #eceef6;
+    --color-accent: #6a5cc4;
+    --color-accent-100: #2f2668; --color-accent-200: #433790; --color-accent-300: #5446a8;
+    --color-accent-400: #6a5cc4; --color-accent-500: #8a7dd6; --color-accent-600: #a99de9;
+    --color-accent-700: #c7bff5; --color-accent-800: #e1ddfb; --color-accent-900: #efedfd;
+    --color-section: #262a60; --color-section-glow: #353b80; --color-section-ghost: #4c5397;
+    --on-section: #eef0ff; --on-section-2: #cfd3f5; --on-section-line: #b5abfc;
+    --shadow-sm: 0 1px 2px rgba(31, 33, 48, .06), 0 0 0 1px #e3e6f0;
+    --shadow-md: 0 0 0 1px #dfe2ee, 0 8px 24px -12px rgba(31, 33, 48, .18);
+    --shadow-lg: 0 0 0 1px #d2d6e6, 0 24px 48px -24px rgba(31, 33, 48, .28);
+    --header-bg: rgba(244, 245, 251, .86);
+    --scrim: rgba(31, 33, 48, .45);
+
+    // status colours (text on soft fill >= 4.5:1 in both themes)
+    --status-ok: #1f6b4e; --status-ok-soft: #e1f2e9;
+    --status-danger: #a12b37; --status-danger-soft: #f9e7e9;
+    --status-warn: #6b4600; --status-warn-soft: #fbf3e2;
+    --status-info: #1f4e79; --status-info-soft: #e4eef7;
+    --status-neutral: #3d4a4f; --status-neutral-soft: #eceef3;
+
+    // type, radius, layout
+    --font-text: 'Vazirmatn FD', Vazirmatn, Tahoma, Arial, sans-serif;
+    --font-display: 'Estedad FD', 'Vazirmatn FD', Vazirmatn, Tahoma, Arial, sans-serif;
+    --r-8: 8px; --r-12: 12px; --r-18: 18px; --r-24: 24px;
+    --control-min: 44px; --content-max: 1120px; --shell-nav: 256px;
+
+    // ---- legacy names (used by ts_org, ts_panel, ts_talent, ts_assessment, ts_sms) mapped onto the new tokens ----
+    --ink: var(--color-text); --ink-2: var(--color-neutral-300); --muted: var(--color-neutral-400);
+    --line: var(--color-neutral-800); --line-strong: var(--color-neutral-700); --field-line: var(--color-neutral-500);
+    --paper: var(--color-bg); --mist: color-mix(in oklab, var(--color-surface) 45%, var(--color-bg)); --white: var(--color-surface);
+    --brand-deep: var(--color-accent-200); --brand: var(--color-accent-300); --brand-bright: var(--color-accent);
+    --brand-soft: var(--color-accent-900); --brand-warm: var(--color-accent-900); --brand-accent: var(--color-accent-500);
+    --signal: var(--status-warn); --signal-soft: var(--status-warn-soft);
+    --success: var(--status-ok); --success-soft: var(--status-ok-soft);
+    --danger: var(--status-danger); --danger-soft: var(--status-danger-soft);
+    --warn: var(--status-warn); --warn-soft: var(--status-warn-soft);
+    --info: var(--status-info); --info-soft: var(--status-info-soft);
+    --neutral: var(--status-neutral); --neutral-soft: var(--status-neutral-soft);
+    --fs-0: .8125rem; --fs-1: .9375rem; --fs-2: 1rem; --fs-3: 1.125rem; --fs-4: 1.25rem; --fs-5: 1.5rem;
+    --fs-6: 1.875rem; --fs-7: 2.375rem; --fs-8: 3rem;
+    --space-1: 4px; --space-2: 8px; --space-3: 12px; --space-4: 16px; --space-5: 20px; --space-6: 24px;
+    --space-8: 32px; --space-10: 40px; --space-12: 48px; --space-16: 64px;
+    --radius-sm: var(--r-8); --radius-md: var(--r-12); --radius-lg: var(--r-18); --radius-xl: var(--r-24);
+    --shadow-1: var(--shadow-sm); --shadow-2: var(--shadow-lg);
+}
+
+:root[data-theme="dark"] {
+    color-scheme: dark;
+    --color-bg: #161826;
+    --color-surface: #232532;
+    --color-text: #e9e9ed;
+    --color-neutral-100: #f3f5fe; --color-neutral-200: #e4e7f5; --color-neutral-300: #cfd3e5;
+    --color-neutral-400: #b2b6ca; --color-neutral-500: #9397ab; --color-neutral-600: #75798c;
+    --color-neutral-700: #595d6c; --color-neutral-800: #3f424d; --color-neutral-900: #292b31;
+    --color-accent: #9184d9;
+    --color-accent-100: #f5f4ff; --color-accent-200: #e7e5fe; --color-accent-300: #d2cefd;
+    --color-accent-400: #b5abfc; --color-accent-500: #968ae0; --color-accent-600: #796cbf;
+    --color-accent-700: #5d5294; --color-accent-800: #423a6a; --color-accent-900: #2b2741;
+    --shadow-sm: 0 0 0 1px #3f424d;
+    --shadow-md: 0 0 0 1px #595d6c, 0 6px 18px rgba(0, 0, 0, .55);
+    --shadow-lg: 0 0 0 1px #75798c, 0 16px 40px rgba(0, 0, 0, .65);
+    --header-bg: rgba(22, 24, 38, .86);
+    --scrim: rgba(5, 6, 12, .6);
+    --status-ok: #8fd6b2; --status-ok-soft: #1c3529;
+    --status-danger: #f3a6ae; --status-danger-soft: #42232a;
+    --status-warn: #edc985; --status-warn-soft: #3a3020;
+    --status-info: #a6c8ec; --status-info-soft: #1e3146;
+    --status-neutral: #cfd3e5; --status-neutral-soft: #2e3039;
+    --field-line: var(--color-neutral-600);
+}
+
+html, body { background: var(--color-bg); }

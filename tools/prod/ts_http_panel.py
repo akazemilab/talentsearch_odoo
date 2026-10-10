@@ -123,8 +123,8 @@ check('suspended panel dashboard is closed', st == 404)
 
 # homepage call-to-action
 st, _, home = anon.req('/')
-check('homepage main button is «پنل بساز» -> /panel', st == 200 and 'href="/panel"' in home and 'پنل بساز' in home)
-check('homepage secondary button is «فقط می‌خواهم آزمون بدهم» -> /assessments', 'فقط می‌خواهم آزمون بدهم' in home)
+check('homepage main button is «ساخت پنل رایگان» -> /panel', st == 200 and 'href="/panel"' in home and 'ساخت پنل رایگان' in home)
+check('homepage secondary button is «نمونهٔ گزارش» -> /assessments', 'نمونهٔ گزارش' in home and 'href="/assessments#sample"' in home)
 
 # participant shares a finished self-taken result with a counselor panel (by code)
 PART = 'ts.panel.http.part@example.invalid'

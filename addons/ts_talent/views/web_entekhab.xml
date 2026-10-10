@@ -2,58 +2,8 @@
 <odoo>
     <!-- Landing for the post-Konkur selection window (website 4 only). Copy follows
          talent-assessment/decision-entekhab-reshteh-1405.md: self-knowledge, no "best major" claims. -->
-    <record id="page_er_view" model="ir.ui.view">
-        <field name="name">TS talent: entekhab-reshteh landing</field>
-        <field name="type">qweb</field>
-        <field name="key">ts_talent.page_er</field>
-        <field name="website_id" ref="ts_website.website_ts"/>
-        <field name="arch" type="xml">
-            <t t-name="ts_talent.page_er">
-                <t t-call="website.layout" additional_title.f="پیش از انتخاب رشته">
-                    <div id="wrap" class="ts-page">
-                        <t t-call="ts_website.page_hero" kicker.f="انتخاب رشتهٔ ۱۴۰۵" title.f="پیش از پر کردن فرم انتخاب رشته، زمینه‌های خودتان را کنار هم ببینید" lead.f="فهرست تعاملی استعداد از شما می‌خواهد چند زمینهٔ مدنظرتان را بنویسید و هر کدام را با همان ۱۵ جمله بسنجید؛ سپس همان زمینه‌ها را کنار هم می‌گذارد. این ابزار رشتهٔ «بهتر» را تعیین نمی‌کند؛ گفتگو با خودتان و مشاورتان را دقیق‌تر می‌کند."/>
-                        <section class="ts-section">
-                            <div class="ts-container ts-prose">
-                                <h2>چطور کار می‌کند</h2>
-                                <ol>
-                                    <li>چهار زمینه یا رشته‌ای را که به آن فکر می‌کنید بنویسید (دست‌کم دو و حداکثر هشت زمینه).</li>
-                                    <li>برای هر زمینه ۱۵ جمله را با مقیاس پنج‌درجه‌ای از «بسیار کم» تا «بسیار زیاد» پاسخ دهید؛ پاسخ‌ها خودکار ذخیره می‌شوند.</li>
-                                    <li>گزارشی می‌گیرید که زمینه‌ها را در پنج توانایی کنار هم می‌گذارد و می‌توانید آن را چاپ یا با مشاورتان مرور کنید.</li>
-                                </ol>
-                                <p><a class="ts-btn ts-btn--primary" href="/assessments/فهرست-تعاملی-استعداد">شروع سنجه</a>
-                                    <a class="ts-btn ts-btn--outline" href="/entekhab-reshteh/sample">نمونهٔ گزارش (ساختگی)</a></p>
-
-                                <h2>چه چیزی می‌بینید</h2>
-                                <ul class="ts-list-check">
-                                    <li>برای هر توانایی، نمرهٔ هر زمینه کنار زمینه‌های دیگر و برچسب «برجسته» یا «نزدیک».</li>
-                                    <li>میانگین هر زمینه، بیشترین و کمترین توانایی‌اش.</li>
-                                    <li>تفسیر هفت‌سطحی کتاب، جدول کامل و برنامه‌های پیشنهادی کتاب.</li>
-                                </ul>
-
-                                <h2>چه چیزی نمی‌بینید</h2>
-                                <p>این گزارش پیش‌بینی نمرهٔ کنکور، رتبه یا موفقیت در یک رشته نیست و جایگزین مشاورهٔ تحصیلی نیست. نمره‌ها برداشت خودِ شما از خودتان‌اند و فقط زمینه‌های خودِ شما با هم مقایسه می‌شوند، نه با دیگران. اختلاف‌های کوچک (حدود ۱۰ نمره) را معنادار نگیرید.</p>
-
-                                <h2>برای مشاوران و مؤسسه‌ها</h2>
-                                <p>مشاور می‌تواند گزارش شرکت‌کنندگانِ مؤسسه را بدون پاسخ‌های خام ببیند و با نام مؤسسه چاپ کند. شرکت‌کننده تا خودش نتیجه را ندیده یا منتشر نکرده، مؤسسه بدون اجازه به آن دسترسی ندارد، مگر نتیجه‌هایی که از پیش برای همان مؤسسه ثبت شده‌اند. برای هماهنگی: <a href="/contact?topic=demo">درخواست جلسهٔ معرفی</a>.</p>
-
-                                <h2>هزینه</h2>
-                                <p>در فصل انتخاب رشتهٔ ۱۴۰۵ سنجه برای شرکت‌کنندگان رایگان است.</p>
-                                <p class="ts-hint">داده‌های شما فقط برای همین سنجش و با رضایت شما نگه‌داری می‌شود؛ جزئیات در <a href="/privacy">حریم خصوصی</a>.</p>
-                            </div>
-                        </section>
-                    </div>
-                </t>
-            </t>
-        </field>
-    </record>
-    <record id="page_er" model="website.page">
-        <field name="url">/entekhab-reshteh</field>
-        <field name="view_id" ref="page_er_view"/>
-        <field name="website_id" ref="ts_website.website_ts"/>
-        <field name="website_published" eval="True"/>
-        <field name="website_indexed" eval="True"/>
-    </record>
-
+    <!-- The /entekhab-reshteh landing was retired in the 2026-10 redesign: /entekhab-reshteh* 301s to /assessments
+         (website.rewrite records in ts_website/data/redirects.xml). -->
     <record id="tpl_er_sample" model="ir.ui.view">
         <field name="name">TS talent: entekhab-reshteh sample report</field>
         <field name="type">qweb</field>

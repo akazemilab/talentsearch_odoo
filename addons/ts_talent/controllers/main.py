@@ -262,10 +262,8 @@ def sample_profile():
 
 class TsEntekhab(http.Controller):
 
-    @http.route('/entekhab-reshteh/sample', type='http', auth='public', website=True, sitemap=True)
+    @http.route('/entekhab-reshteh/sample', type='http', auth='public', website=True, sitemap=False)
     def er_sample(self, **kw):
+        """Retired with the 2026-10 redesign: the sample report now lives on /assessments#sample."""
         _ts_site_or_404()
-        prof = sample_profile()
-        return request.render('ts_talent.er_sample', {
-            'cmp_rows': R.compare_rows(prof, 10), 'cmp_cards': R.field_cards(prof, 10),
-            'fa': fa_digits, 'fmt': R.fmt, 'joinfa': R.joinfa, 'gap': 10, 'names': [f['label'] for f in prof['fields']]})
+        return request.redirect('/assessments#sample', code=301, local=True)

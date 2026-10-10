@@ -26,7 +26,7 @@
                                 <p t-if="not rows" class="ts-hint">اعلانی ندارید.</p>
                                 <ul t-if="rows" class="tsp-list">
                                     <li t-foreach="rows" t-as="r">
-                                        <span t-if="not r.read_at" class="ts-pill" style="background:#e3edf6;color:#1f4e79">تازه</span> <a t-attf-href="/my/notifications/#{r.id}"><t t-out="r.title"/></a>
+                                        <span t-if="not r.read_at" class="ts-pill ts-pill--info">تازه</span> <a t-attf-href="/my/notifications/#{r.id}"><t t-out="r.title"/></a>
                                         <span class="ts-hint"> — <t t-out="jalali(r.create_date)"/></span>
                                     </li>
                                 </ul>

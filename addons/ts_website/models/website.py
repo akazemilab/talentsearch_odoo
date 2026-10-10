@@ -10,12 +10,10 @@ HOMEPAGE_ARCH = '<t name="Homepage" t-name="website.homepage"><t t-call="ts_webs
 
 # (label, url, sequence). Rebuilt on every upgrade; website 2 only.
 TS_MENU = [
-    ('سنجه‌ها', '/assessments', 5),
-    ('پنل مراکز', '/panel', 10),
-    ('روند کار', '/how-it-works', 20),
-    ('شواهد و محدودیت‌ها', '/evidence', 30),
-    ('هزینه', '/pricing', 40),
-    ('تماس', '/contact', 50),
+    ('برای مدارس و مشاوران', '/schools', 10),
+    ('سنجه‌ها', '/assessments', 20),
+    ('هزینه و پرسش‌ها', '/pricing', 30),
+    ('تماس', '/contact', 40),
 ]
 class Website(models.Model):
     _inherit = 'website'

@@ -1,44 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <!-- website.page records bound to website 2; eot.ir never resolves them. -->
-    <record id="page_employers" model="website.page">
-        <field name="url">/employers</field>
-        <field name="view_id" ref="page_employers_view"/>
-        <field name="website_id" ref="website_ts"/>
-        <field name="website_published" eval="True"/>
-        <field name="website_indexed" eval="True"/>
-    </record>
-    <record id="page_clinics" model="website.page">
-        <field name="url">/clinics</field>
-        <field name="view_id" ref="page_clinics_view"/>
-        <field name="website_id" ref="website_ts"/>
-        <field name="website_published" eval="True"/>
-        <field name="website_indexed" eval="True"/>
-    </record>
-    <record id="page_how" model="website.page">
-        <field name="url">/how-it-works</field>
-        <field name="view_id" ref="page_how_view"/>
-        <field name="website_id" ref="website_ts"/>
-        <field name="website_published" eval="True"/>
-        <field name="website_indexed" eval="True"/>
-    </record>
-    <record id="page_evidence" model="website.page">
-        <field name="url">/evidence</field>
-        <field name="view_id" ref="page_evidence_view"/>
-        <field name="website_id" ref="website_ts"/>
-        <field name="website_published" eval="True"/>
-        <field name="website_indexed" eval="True"/>
-    </record>
-    <record id="page_sample" model="website.page">
-        <field name="url">/sample-report</field>
-        <field name="view_id" ref="page_sample_view"/>
-        <field name="website_id" ref="website_ts"/>
-        <field name="website_published" eval="True"/>
-        <field name="website_indexed" eval="True"/>
-    </record>
-    <record id="page_help" model="website.page">
-        <field name="url">/help</field>
-        <field name="view_id" ref="page_help_view"/>
+    <!-- website.page records bound to website 4; eot.ir never resolves them. Redesign 2026-10: five pages + legal.
+         The retired pages (/how-it-works, /evidence, /about, /help, /employers, /clinics, /sample-report,
+         /consent-policy) were removed from this file, so the upgrade deletes them; data/redirects.xml 301s their URLs. -->
+    <record id="page_schools" model="website.page">
+        <field name="url">/schools</field>
+        <field name="view_id" ref="page_schools_view"/>
         <field name="website_id" ref="website_ts"/>
         <field name="website_published" eval="True"/>
         <field name="website_indexed" eval="True"/>
@@ -46,13 +13,6 @@
     <record id="page_privacy" model="website.page">
         <field name="url">/privacy</field>
         <field name="view_id" ref="page_privacy_view"/>
-        <field name="website_id" ref="website_ts"/>
-        <field name="website_published" eval="True"/>
-        <field name="website_indexed" eval="True"/>
-    </record>
-    <record id="page_consent" model="website.page">
-        <field name="url">/consent-policy</field>
-        <field name="view_id" ref="page_consent_view"/>
         <field name="website_id" ref="website_ts"/>
         <field name="website_published" eval="True"/>
         <field name="website_indexed" eval="True"/>
@@ -77,12 +37,5 @@
         <field name="website_id" ref="website_ts"/>
         <field name="website_published" eval="True"/>
         <field name="website_indexed" eval="False"/>
-    </record>
-    <record id="page_about" model="website.page">
-        <field name="url">/about</field>
-        <field name="view_id" ref="page_about_view"/>
-        <field name="website_id" ref="website_ts"/>
-        <field name="website_published" eval="True"/>
-        <field name="website_indexed" eval="True"/>
     </record>
 </odoo>

@@ -143,17 +143,20 @@ for who in ('owner', 'cns'):
 
 # ---- public pages and the sign-in page (UI-1): Persian only, the marketing header, the Persian sign-in form
 pub = Client(TS)
-for r in ('/', '/assessments', '/panel', '/pricing', '/how-it-works', '/evidence', '/help', '/help/panel', '/contact', '/signup', '/web/login'):
+for r in ('/', '/schools', '/assessments', '/panel', '/pricing', '/privacy', '/help/panel', '/contact', '/signup', '/web/login'):
     st, html = get(pub, r)
     bad = scan(r, html) if st == 200 else ['status %s' % st]
     check('public: %s passes the text and accessibility scan' % r, not bad, '; '.join(bad)[:300])
 st, html = get(pub, '/')
 check('the home page uses the marketing header and the full footer', 'ts-header--marketing' in html and 'ts-footer__grid' in html)
-check('the home page shows the free panel and the coming interpretation helper', 'ساخت پنل رایگان' in html and 'همیار تفسیر' in html and 'به‌زودی' in html)
+check('the home page shows the redesign hero, the theme toggle and the free panel', 'مشاورهٔ تحصیلی با داده، نه حدس' in html and 'ts-theme' in html and 'ساخت پنل رایگان' in html and "localStorage.getItem('ts-site-theme')" in html)
 st, html = get(pub, '/web/login')
 check('the sign-in page is the Persian card without the stock English form', 'ورود به تلنت سرچ' in html and 'Enter your' not in html and 'Passkey' not in html)
 st, html = get(pub, '/pricing')
-check('the pricing page presents the free panel and the pro plan', 'id="free"' in html and 'id="pro"' in html and 'خبرم کنید' in html)
+check('the pricing page presents the free panel, the pro plan and the FAQ', 'ts-plan--free' in html and 'ts-plan--pro' in html and 'خبرم کنید' in html and 'id="faq"' in html and 'aria-expanded="false"' in html)
+for old, new in (('/how-it-works', '/schools'), ('/evidence', '/assessments'), ('/about', '/'), ('/help', '/pricing#faq'), ('/employers', '/contact?topic=partner'), ('/clinics', '/contact?topic=partner'), ('/sample-report', '/assessments#sample'), ('/consent-policy', '/privacy'), ('/entekhab-reshteh', '/assessments')):
+    st, loc, _ = pub.req(old)
+    check('redirect %s -> %s (301)' % (old, new), st == 301 and loc.endswith(new), '%s %s' % (st, loc))
 st, html = get(ow, '/my')
 check('participant pages use the app header and the slim footer', 'ts-header--app' in html and 'ts-footer--slim' in html and 'ts-footer__grid' not in html)
 st, html = get(ow, W)

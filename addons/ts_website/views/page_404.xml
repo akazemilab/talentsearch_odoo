@@ -12,20 +12,21 @@
         <field name="arch" type="xml">
             <data>
             <xpath expr="//t[@t-call='web.frontend_layout']" position="before">
-                <t t-set="additional_title">صفحه پیدا نشد</t>
+                <t t-set="additional_title">این صفحه نیست</t>
             </xpath>
             <xpath expr="//div[@id='wrap']" position="replace">
                 <div id="wrap" class="ts-page">
                     <t t-out="0"/>
-                    <section class="ts-hero ts-hero--soft">
-                        <div class="ts-container">
-                            <span class="ts-hero__kicker">خطای ۴۰۴</span>
-                            <h1>این صفحه پیدا نشد</h1>
-                            <p class="ts-hero__lead">ممکن است نشانی اشتباه تایپ شده باشد یا صفحه جابه‌جا شده باشد.</p>
-                            <div class="ts-hero__actions">
-                                <a href="/" class="ts-btn ts-btn--primary">صفحهٔ اصلی</a>
-                                <a href="/help" class="ts-btn ts-btn--outline">پرسش‌های رایج</a>
-                                <a href="/contact" class="ts-btn ts-btn--quiet">تماس با ما</a>
+                    <section class="ts-hero ts-hero--tall">
+                        <div class="ts-container ts-hero__grid">
+                            <div class="ts-hero__words">
+                                <span class="ts-hero__kicker">۴۰۴</span>
+                                <h1>این صفحه پیدا نشد.</h1>
+                                <p class="ts-hero__lead">شاید نشانی اشتباه است یا صفحه جابه‌جا شده.</p>
+                                <div class="ts-hero__actions">
+                                    <a href="/" class="ts-btn ts-btn--primary">خانه</a>
+                                    <a href="/contact" class="ts-btn ts-btn--quiet">تماس</a>
+                                </div>
                             </div>
                         </div>
                     </section>

@@ -6,16 +6,36 @@ from odoo import http
 from odoo.http import request
 
 EMAIL_RE = re.compile(r'^[^@\s]+@[^@\s]+\.[^@\s]+$')
+MOBILE_RE = re.compile(r'^(\+98|0098|98|0)?9\d{9}$')
+PERSIAN_DIGITS = str.maketrans('۰۱۲۳۴۵۶۷۸۹٠١٢٣٤٥٦٧٨٩', '01234567890123456789')
 TOPICS = {
-    'demo': 'درخواست جلسهٔ معرفی',
+    'demo': 'جلسهٔ معرفی',
+    'pro': 'خبرم کنید: همیار تفسیر',
+    'question': 'پرسش',
+    'support': 'پشتیبانی',
+    'partner': 'سازمان یا کلینیک',
+    # older form values, still accepted
     'quote': 'درخواست پیش‌فاکتور',
-    'pro': 'فهرست انتظار همیار تفسیر',
     'evidence': 'پرسش دربارهٔ شواهد',
-    'support': 'پشتیبانی شرکت‌کننده',
     'other': 'موضوع دیگر',
 }
 SEGMENTS = {'employer': 'سازمان / منابع انسانی', 'clinic': 'مرکز مشاوره یا درمان',
             'practitioner': 'متخصص مستقل', 'participant': 'شرکت‌کننده', 'other': 'سایر'}
+
+
+def _split_contact(post):
+    """The 2026-10 form has one «ایمیل یا موبایل» field (`contact`); older posts send `email` / `phone`."""
+    email = (post.get('email') or '').strip()[:160]
+    phone = (post.get('phone') or '').strip()[:40]
+    contact = (post.get('contact') or '').strip()[:160]
+    if contact:
+        if EMAIL_RE.match(contact):
+            email = email or contact
+        else:
+            digits = re.sub(r'[\s\-()]', '', contact.translate(PERSIAN_DIGITS))
+            if MOBILE_RE.match(digits):
+                phone = phone or digits
+    return email, phone
 
 
 class TsWebsite(http.Controller):
@@ -26,15 +46,14 @@ class TsWebsite(http.Controller):
         if not website._ts_is_current():
             raise request.not_found()
         name = (post.get('name') or '').strip()[:120]
-        email = (post.get('email') or '').strip()[:160]
-        topic = post.get('topic') if post.get('topic') in TOPICS else 'other'
-        back = '/pricing' if topic in ('quote', 'pro') else '/contact'
-        if not name or not EMAIL_RE.match(email) or post.get('consent_contact') != '1':
-            return request.redirect('%s?topic=%s&error=1' % (back, topic))
+        email, phone = _split_contact(post)
+        topic = post.get('topic') if post.get('topic') in TOPICS else 'demo'
+        if not name or not (EMAIL_RE.match(email) or phone) or post.get('consent_contact') != '1':
+            return request.redirect('/contact?topic=%s&error=1' % topic)
         segment = SEGMENTS.get(post.get('segment') or '', '')
         lines = [
-            ('موضوع', TOPICS[topic]), ('نوع مجموعه', segment), ('تعداد کارکنان', post.get('size')),
-            ('سنجش سالانهٔ تقریبی', post.get('volume')), ('نقش‌ها یا کاربرد', post.get('roles')),
+            ('موضوع', TOPICS[topic]), ('نوع مجموعه', segment), ('مدرسه یا مرکز', post.get('company')),
+            ('تعداد کارکنان', post.get('size')), ('سنجش سالانهٔ تقریبی', post.get('volume')), ('نقش‌ها یا کاربرد', post.get('roles')),
             ('رضایت تماس', 'بله'), ('دریافت اخبار', 'بله' if post.get('consent_news') == '1' else 'خیر'),
         ]
         desc = ''.join('<p><b>%s:</b> %s</p>' % (k, _esc(v)) for k, v in lines if v)
@@ -44,8 +63,8 @@ class TsWebsite(http.Controller):
         lead = request.env['crm.lead'].sudo().create({
             'name': '%s - %s' % (TOPICS[topic], (post.get('company') or name)[:80]),
             'contact_name': name,
-            'email_from': email,
-            'phone': (post.get('phone') or '').strip()[:40],
+            'email_from': email if EMAIL_RE.match(email) else False,
+            'phone': phone,
             'partner_name': (post.get('company') or '').strip()[:160],
             'description': desc,
             'type': 'lead',

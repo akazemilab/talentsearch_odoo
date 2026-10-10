@@ -86,7 +86,7 @@ else
 fi
 
 echo "=== $(date +%T) talent search pages"
-ssh $P "python3 $STAGE/tools/prod/ts_pages.py $PORT talentsearch.ir / /employers /clinics /how-it-works /evidence /sample-report /help /privacy /consent-policy /contact /pricing /about /contact/thanks /masnavi /sitemap.xml /this-does-not-exist /panel /panel/terms /signup" | grep -E '^(FAIL|SUMMARY)'
+ssh $P "python3 $STAGE/tools/prod/ts_pages.py $PORT talentsearch.ir / /schools /assessments /assessments?all=1 /privacy /contact /pricing /contact/thanks /how-it-works /evidence /help /consent-policy /masnavi /sitemap.xml /this-does-not-exist /panel /panel/terms /signup" | grep -E '^(FAIL|SUMMARY)'
 ssh $P "python3 $STAGE/tools/prod/ts_pages.py $PORT odoo.innerquest.me /" | grep -E 'w1|FAIL' | head -1 | sed 's/^/unknown host -> /'
 
 # ---- suites that commit or depend on each other's committed fixtures: strictly in order

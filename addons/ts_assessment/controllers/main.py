@@ -46,13 +46,23 @@ class TsAssessment(http.Controller):
     # ------------------------------------------------------------- catalog
     @http.route('/assessments', type='http', auth='public', website=True, sitemap=True)
     def catalog(self, **kw):
+        """Redesign 2026-10: /assessments is the talent-inventory page (ts_website.page_assessments);
+        the full catalog stays reachable at /assessments?all=1."""
         _ts_site_or_404()
         insts = request.env['ts.instrument'].sudo().search([('state', '=', 'published')])
-        groups = {}
-        for inst in insts:
-            groups.setdefault(inst.category or 'سایر', []).append(inst)
-        return request.render('ts_assessment.catalog', {
-            'groups': list(groups.items()), 'count': len(insts), 'fa': fa_digits,
+        if kw.get('all'):
+            groups = {}
+            for inst in insts:
+                groups.setdefault(inst.category or 'سایر', []).append(inst)
+            return request.render('ts_assessment.catalog', {
+                'groups': list(groups.items()), 'count': len(insts), 'fa': fa_digits,
+            })
+        talent = insts.filtered(lambda i: i.code == 'TALENT-INV-15')[:1]
+        start_url = '/assessments/%s/start' % quote(talent.slug) if talent else False
+        if start_url and request.env.user._is_public():
+            start_url = '/web/login?redirect=%s' % quote(start_url)
+        return request.render('ts_website.page_assessments', {
+            'start_url': start_url, 'catalog_count': len(insts) - len(talent),
         })
 
     @http.route('/assessments/<string:slug>', type='http', auth='public', website=True, sitemap=False)

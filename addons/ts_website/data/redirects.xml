@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Redesign 2026-10: permanent redirects for retired website-4 URLs. Website-scoped (website 4 only); the
+         ts_website ir_http override serves only website 4's own rewrites there, so eot.ir is unaffected. -->
+    <record id="rw_how" model="website.rewrite">
+        <field name="name">TS: /how-it-works → /schools</field>
+        <field name="redirect_type">301</field>
+        <field name="url_from">/how-it-works</field>
+        <field name="url_to">/schools</field>
+        <field name="website_id" ref="website_ts"/>
+    </record>
+    <record id="rw_evidence" model="website.rewrite">
+        <field name="name">TS: /evidence → /assessments</field>
+        <field name="redirect_type">301</field>
+        <field name="url_from">/evidence</field>
+        <field name="url_to">/assessments</field>
+        <field name="website_id" ref="website_ts"/>
+    </record>
+    <record id="rw_about" model="website.rewrite">
+        <field name="name">TS: /about → /</field>
+        <field name="redirect_type">301</field>
+        <field name="url_from">/about</field>
+        <field name="url_to">/</field>
+        <field name="website_id" ref="website_ts"/>
+    </record>
+    <record id="rw_help" model="website.rewrite">
+        <field name="name">TS: /help → /pricing#faq</field>
+        <field name="redirect_type">301</field>
+        <field name="url_from">/help</field>
+        <field name="url_to">/pricing#faq</field>
+        <field name="website_id" ref="website_ts"/>
+    </record>
+    <record id="rw_employers" model="website.rewrite">
+        <field name="name">TS: /employers → /contact?topic=partner</field>
+        <field name="redirect_type">301</field>
+        <field name="url_from">/employers</field>
+        <field name="url_to">/contact?topic=partner</field>
+        <field name="website_id" ref="website_ts"/>
+    </record>
+    <record id="rw_clinics" model="website.rewrite">
+        <field name="name">TS: /clinics → /contact?topic=partner</field>
+        <field name="redirect_type">301</field>
+        <field name="url_from">/clinics</field>
+        <field name="url_to">/contact?topic=partner</field>
+        <field name="website_id" ref="website_ts"/>
+    </record>
+    <record id="rw_sample" model="website.rewrite">
+        <field name="name">TS: /sample-report → /assessments</field>
+        <field name="redirect_type">301</field>
+        <field name="url_from">/sample-report</field>
+        <field name="url_to">/assessments#sample</field>
+        <field name="website_id" ref="website_ts"/>
+    </record>
+    <record id="rw_entekhab" model="website.rewrite">
+        <field name="name">TS: /entekhab-reshteh → /assessments</field>
+        <field name="redirect_type">301</field>
+        <field name="url_from">/entekhab-reshteh</field>
+        <field name="url_to">/assessments</field>
+        <field name="website_id" ref="website_ts"/>
+    </record>
+    <record id="rw_consent" model="website.rewrite">
+        <field name="name">TS: /consent-policy → /privacy</field>
+        <field name="redirect_type">301</field>
+        <field name="url_from">/consent-policy</field>
+        <field name="url_to">/privacy</field>
+        <field name="website_id" ref="website_ts"/>
+    </record>
+</odoo>
