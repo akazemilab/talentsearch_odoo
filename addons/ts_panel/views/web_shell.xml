@@ -27,6 +27,7 @@
                             <nav class="tsp-nav" aria-label="منوی پنل">
                                 <ul id="tsp-menu" class="tsp-nav__list">
                                     <li t-foreach="menu" t-as="it">
+                                        <span t-if="it.get('group') and (it_index == 0 or menu[it_index - 1].get('group') != it['group'])" class="tsp-nav__group" t-out="it['group']"/>
                                         <a class="tsp-nav__item" t-att-href="it['url']" t-att-aria-current="'page' if it['current'] else None" t-att-data-key="it['key']">
                                             <t t-call="ts_panel.nav_icon" key="it['key']"/>
                                             <span t-out="it['label']"/>

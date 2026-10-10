@@ -16,27 +16,27 @@ from odoo.addons.ts_org.models.panel import ROLE_LABELS
 
 RESULT_PERMS = ('results:summary', 'results:education', 'results:clinical')
 
-# seq, key, label, path suffix below /my/workspaces/<id>, permission, needs_act, absolute url
+# seq, key, group (sidebar heading, redesign 2026-10), label, path suffix below /my/workspaces/<id>, permission, needs_act, absolute url
 MENU = [
-    {'seq': 10, 'key': 'home', 'label': 'داشبورد', 'suffix': '', 'perm': 'panel:view'},
-    {'seq': 20, 'key': 'clients', 'label': 'شرکت‌کنندگان', 'suffix': '/clients', 'perm': 'clients:read_own',
+    {'seq': 10, 'key': 'home', 'group': 'نمای کلی', 'label': 'داشبورد', 'suffix': '', 'perm': 'panel:view'},
+    {'seq': 20, 'key': 'clients', 'group': 'شرکت‌کنندگان', 'label': 'شرکت‌کنندگان', 'suffix': '/clients', 'perm': 'clients:read_own',
      'needs_act': True},
-    {'seq': 25, 'key': 'groups', 'label': 'گروه‌ها', 'suffix': '/groups', 'perm': 'groups:manage',
+    {'seq': 25, 'key': 'groups', 'group': 'شرکت‌کنندگان', 'label': 'گروه‌ها', 'suffix': '/groups', 'perm': 'groups:manage',
      'needs_act': True},
-    {'seq': 30, 'key': 'invites', 'label': 'دعوت‌ها', 'suffix': '/invites', 'perm': 'invites:manage',
+    {'seq': 30, 'key': 'invites', 'group': 'شرکت‌کنندگان', 'label': 'دعوت‌ها', 'suffix': '/invites', 'perm': 'invites:manage',
      'needs_act': True},
-    {'seq': 35, 'key': 'campaigns', 'label': 'دعوت گروهی', 'suffix': '/campaigns', 'perm': 'invites:bulk',
+    {'seq': 35, 'key': 'campaigns', 'group': 'شرکت‌کنندگان', 'label': 'دعوت گروهی', 'suffix': '/campaigns', 'perm': 'invites:bulk',
      'needs_act': True},
-    {'seq': 38, 'key': 'import', 'label': 'ورود از فایل', 'suffix': '/import', 'perm': 'clients:import',
+    {'seq': 38, 'key': 'import', 'group': 'شرکت‌کنندگان', 'label': 'ورود از فایل', 'suffix': '/import', 'perm': 'clients:import',
      'needs_act': True},
-    {'seq': 45, 'key': 'exports', 'label': 'خروجی‌ها', 'suffix': '/exports', 'perm': 'clients:export',
+    {'seq': 45, 'key': 'exports', 'group': 'گزارش و داده', 'label': 'خروجی‌ها', 'suffix': '/exports', 'perm': 'clients:export',
      'needs_act': True},
-    {'seq': 42, 'key': 'reports', 'label': 'گزارش‌ها', 'suffix': '/reports', 'perm_any': RESULT_PERMS, 'needs_act': True},
-    {'seq': 50, 'key': 'credits', 'label': 'اعتبار و مصرف', 'suffix': '/credits', 'perm': 'credits:read'},
-    {'seq': 40, 'key': 'members', 'label': 'اعضا و نقش‌ها', 'suffix': '/members', 'perm': 'members:read'},
-    {'seq': 80, 'key': 'audit', 'label': 'ممیزی', 'suffix': '/audit', 'perm': 'audit:read'},
-    {'seq': 90, 'key': 'settings', 'label': 'تنظیمات', 'suffix': '/settings', 'perm': 'panel:profile'},
-    {'seq': 999, 'key': 'help', 'label': 'راهنما', 'url': '/help/panel', 'perm': None},   # always last, for every state (WCAG 3.2.6)
+    {'seq': 42, 'key': 'reports', 'group': 'گزارش و داده', 'label': 'گزارش‌ها', 'suffix': '/reports', 'perm_any': RESULT_PERMS, 'needs_act': True},
+    {'seq': 50, 'key': 'credits', 'group': 'گزارش و داده', 'label': 'اعتبار و مصرف', 'suffix': '/credits', 'perm': 'credits:read'},
+    {'seq': 85, 'key': 'members', 'group': 'پنل', 'label': 'اعضا و نقش‌ها', 'suffix': '/members', 'perm': 'members:read'},
+    {'seq': 80, 'key': 'audit', 'group': 'گزارش و داده', 'label': 'دفتر ممیزی', 'suffix': '/audit', 'perm': 'audit:read'},
+    {'seq': 90, 'key': 'settings', 'group': 'پنل', 'label': 'تنظیمات', 'suffix': '/settings', 'perm': 'panel:profile'},
+    {'seq': 999, 'key': 'help', 'group': 'پنل', 'label': 'راهنما', 'url': '/help/panel', 'perm': None},   # always last, for every state (WCAG 3.2.6)
 ]
 
 STATE_LABELS = {'invited': 'دعوت‌شده', 'opened': 'بازشده', 'expired': 'منقضی', 'accepted': 'پذیرفته', 'in_progress': 'در حال پاسخ',
@@ -72,7 +72,8 @@ def build_menu(member, active):
         if it.get('needs_act') and not member.can_act():
             continue
         url = it.get('url') or '/my/workspaces/%s%s' % (member.workspace_id.id, it['suffix'])
-        out.append({'key': it['key'], 'label': it['label'], 'url': url, 'current': it['key'] == active})
+        out.append({'key': it['key'], 'label': it['label'], 'url': url, 'current': it['key'] == active,
+                    'group': it.get('group', '')})
     return out
 
 

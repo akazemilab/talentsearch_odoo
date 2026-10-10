@@ -56,7 +56,7 @@ def menu(page):
     return [re.sub(r'\s+', ' ', re.sub(r'<[^>]+>', '', t)).strip() for t in re.findall(r'<a[^>]*class="tsp-nav__item"[^>]*>(.*?)</a>', page, re.S)]
 
 
-LATER = ('دعوت گروهی', 'ورود از فایل', 'خروجی‌ها', 'اعتبار و مصرف', 'گزارش‌ها', 'ممیزی')   # items added by later stages sit between the first-stage items
+LATER = ('دعوت گروهی', 'ورود از فایل', 'خروجی‌ها', 'اعتبار و مصرف', 'گزارش‌ها', 'دفتر ممیزی')   # items added by later stages sit between the first-stage items
 
 
 def core_menu(page):
