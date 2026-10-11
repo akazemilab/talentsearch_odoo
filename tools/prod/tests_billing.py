@@ -110,13 +110,11 @@ usd = env.ref('base.USD')
 verdict, still_usd = None, False
 try:
     with env.cr.savepoint():
-        env.cr.execute('UPDATE res_company SET currency_id = %s WHERE id = 1', [usd.id])
-        env.invalidate_all()
+        company.sudo().write({'currency_id': usd.id})     # allowed: no journal item exists yet
         misc = env['account.journal'].search([('type', '=', 'general'), ('company_id', '=', 1)], limit=1)
         env['account.move'].create({'move_type': 'entry', 'journal_id': misc.id})
         verdict = env['ts.wallet']._ts_switch_company_currency()
-        env.invalidate_all()
-        still_usd = env['res.company'].browse(1).currency_id.name == 'USD'
+        still_usd = company.currency_id.name == 'USD'
         raise UserError('rollback')
 except UserError:
     pass

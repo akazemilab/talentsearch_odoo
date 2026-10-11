@@ -25,7 +25,7 @@ TYPES = [
 TITLES = dict(TYPES)
 
 # Types whose SMS leg is controlled by the staff switch and the person's own opt-in (preferences page).
-SMS_STAFF_TYPES = ('result_ready_staff', 'panel_approved', 'panel_rejected', 'panel_suspended')
+SMS_STAFF_TYPES = ('result_ready_staff', 'panel_approved', 'panel_rejected', 'panel_suspended', 'low_balance')
 
 SMS_BODIES = {
     'result_ready_staff': 'در استعدادیاب نتیجهٔ یکی از شرکت‌کنندگان پنل شما آماده است. برای دیدن آن وارد پنل شوید:\n%(url)s',

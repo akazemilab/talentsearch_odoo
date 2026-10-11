@@ -122,19 +122,20 @@ a2 = A.create({'workspace_id': emp.id, 'instrument_id': plain.id, 'invitee_name'
 at2 = a2.action_accept(puser(), share=True)
 finish(at2)
 d2 = txns(emp, 'debit_usage').filtered(lambda t: t.attempt_id == at2)
-check('in the paid mode a debit takes one credit and is not marked free', d2.amount == -1 and not d2.free and d2.balance_after == -1)
-check('...and the wallet balance follows', w.balance == -1 and w.units_used == 2)
+# ts_billing (clinic phase 4): billing is per panel (billing_mode); the company switch alone changes nothing for a free panel
+check('a free panel stays free under the company paid switch: debit amount 0, marked free', d2.amount == 0 and d2.free and d2.balance_after == 0)
+check('...and the wallet balance follows', w.balance == 0 and w.units_used == 2)
 icp.set_str('ts_panel.credit_mode', 'free')
 
 # ---- grants and adjustments (WAL-6): platform manager only
 check('a panel member cannot grant credits', raises(lambda: w.with_user(ordinary).ts_grant(5, 'promo')))
 wm = w.with_user(mgr)
-g = wm.ts_grant(5, 'promo')
-check('a manager grant adds credits, with a reason code and no free text', g.type == 'grant' and g.amount == 5 and g.reason_code == 'promo' and w.balance == 4)
+g = wm.ts_grant(50, 'promo')
+check('a manager grant adds credits, with a reason code and no free text', g.type == 'grant' and g.amount == 50 and g.reason_code == 'promo' and w.balance == 50)
 check('...and is audited', env['ts.audit.event'].search_count([('event_type', '=', 'wallet.grant'), ('workspace_id', '=', emp.id)]) == 1)
-wm.ts_adjust(-2, 'correction')
-check('an adjustment of either sign is possible', w.balance == 2)
-check('a zero or unknown-reason grant is refused', raises(lambda: wm.ts_grant(0, 'promo')) and raises(lambda: wm.ts_grant(3, 'whatever')))
+wm.ts_adjust(-20, 'correction')
+check('an adjustment of either sign is possible', w.balance == 30)
+check('a zero or unknown-reason grant is refused', raises(lambda: wm.ts_grant(0, 'promo')) and raises(lambda: wm.ts_grant(30, 'whatever')))
 check('a zero adjustment is refused', raises(lambda: wm.ts_adjust(0, 'manual')))
 check('balance_after follows the running sum', txns(emp)[0].balance_after == w.balance)
 
