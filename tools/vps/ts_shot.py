@@ -21,6 +21,7 @@ elif args and args[0] == '--matrix':
     MATRIX, args = json.load(open(args[1])), []
 PATHS = args or ['/']
 WIDTHS = tuple(int(x) for x in os.environ.get('TS_SHOT_WIDTHS', '1280,375').split(','))   # portal v3: 320,390,430,768,1280
+DARK = tuple(int(x) for x in os.environ.get('TS_SHOT_DARK', '').split(',') if x)   # extra dark-theme pass (contrast + png)
 CHROME = '/snap/chromium/current/usr/lib/chromium-browser/chrome'
 LOCAL = 10000 + int(PORT)          # one tunnel per clone port: a stale 18071 tunnel once pointed the shots at another slot's clone
 subprocess.run('ssh -fN -o ExitOnForwardFailure=yes -L %s:127.0.0.1:%s eot-odoo-prod 2>/dev/null || true' % (LOCAL, PORT), shell=True)
@@ -80,7 +81,39 @@ JS = r"""() => {
     if (ratio < (large ? 3 : 4.5)) low.push(el.tagName.toLowerCase() + '.' + [...el.classList].slice(0, 2).join('.') + ' ' + ratio.toFixed(1));
   }
   out.lowcontrast = [...new Set(low)].slice(0, 5);
+  // UX audit additions (2026-10-11): heading order, unnamed controls, landmarks, duplicate ids, lang
+  const hs = [...document.querySelectorAll('#wrapwrap h1, #wrapwrap h2, #wrapwrap h3, #wrapwrap h4, #wrapwrap h5, #wrapwrap h6')].filter(h => h.getBoundingClientRect().height).map(h => +h.tagName[1]);
+  const skips = []; for (let i = 1; i < hs.length; i++) if (hs[i] > hs[i - 1] + 1) skips.push('h' + hs[i - 1] + '>h' + hs[i]);
+  out.hskip = [...new Set(skips)].slice(0, 3);
+  const unnamed = [];
+  for (const el of document.querySelectorAll('#wrapwrap a[href], #wrapwrap button, #wrapwrap [role=button]')) {
+    const r = el.getBoundingClientRect(); if (!r.width || !r.height) continue;
+    const name = (el.innerText || '').trim() || el.getAttribute('aria-label') || el.getAttribute('title') || (el.getAttribute('aria-labelledby') && 'x') || [...el.querySelectorAll('img[alt]')].map(i => i.alt).join('');
+    if (!name) unnamed.push(el.tagName.toLowerCase() + '.' + [...el.classList].slice(0, 2).join('.'));
+  }
+  out.unnamed = [...new Set(unnamed)].slice(0, 4);
+  out.main = document.querySelectorAll('main, [role=main]').length;
+  const ids = {}; for (const el of document.querySelectorAll('[id]')) ids[el.id] = (ids[el.id] || 0) + 1;
+  out.dupid = Object.keys(ids).filter(k => ids[k] > 1).slice(0, 4);
+  out.lang = document.documentElement.lang || '';
   return out;
+}"""
+
+
+FOCUS_JS = r"""() => {
+  // tab through the first focusable controls of the content and report the ones without a visible focus indicator
+  const els = [...document.querySelectorAll('#wrap a[href], #wrap button, #wrap input:not([type=hidden]), #wrap select, #wrap textarea')].filter(e => e.getBoundingClientRect().height).slice(0, 8);
+  const bad = [];
+  for (const el of els) {
+    const before = getComputedStyle(el); const b = [before.outlineStyle, before.outlineWidth, before.boxShadow, before.backgroundColor, before.borderColor].join('|');
+    el.focus({focusVisible: true});
+    if (document.activeElement !== el) continue;
+    const a = getComputedStyle(el); const f = [a.outlineStyle, a.outlineWidth, a.boxShadow, a.backgroundColor, a.borderColor].join('|');
+    const ring = (a.outlineStyle !== 'none' && parseFloat(a.outlineWidth) > 0) || f !== b;
+    if (!ring) bad.push((el.innerText || el.name || el.tagName).trim().slice(0, 20));
+    el.blur();
+  }
+  return bad.slice(0, 3);
 }"""
 
 
@@ -125,11 +158,31 @@ def audit(p, login, paths):
             if m['lowcontrast']: probs.append('contrast ' + '|'.join(m['lowcontrast']))
             if errors: probs.append('console ' + ' | '.join(errors[:2]))
             if m['dir'] != 'rtl': probs.append('dir=' + m['dir'])
+            if m['hskip']: probs.append('heading-skip ' + ','.join(m['hskip']))
+            if m['unnamed']: probs.append('unnamed ' + ','.join(m['unnamed']))
+            if m['main'] != 1: probs.append('main=%d' % m['main'])
+            if m['dupid']: probs.append('dup-id ' + ','.join(m['dupid']))
+            if not m['lang'].startswith('fa'): probs.append('lang=' + (m['lang'] or '-'))
             info = (' [ascii-digits %d]' % m['ascii']) if m.get('ascii') else ''
             bad += 1 if probs else 0
             name = re.sub(r'[^a-z0-9]+', '_', path.lower()).strip('_') or 'home'
-            page.screenshot(path='/root/ts-jobs/shots/%s%s_%d.png' % ((login.split('@')[0] + '_') if MATRIX else '', name, w), full_page=True)
+            stem = '/root/ts-jobs/shots/%s%s_%d' % ((login.split('@')[0] + '_') if MATRIX else '', name, w)
+            if w == max(WIDTHS):
+                open(stem + '.txt', 'w').write('URL %s\nTITLE %s\nFINAL %s\n\n%s' % (path, m['title'], page.url.replace(BASE, ''), body))
+                page.keyboard.press('Tab')   # keyboard modality, so :focus-visible styles apply to programmatic focus
+                nofocus = page.evaluate(FOCUS_JS)
+                if nofocus: probs.append('no-focus-ring ' + '|'.join(nofocus))
+            page.screenshot(path=stem + '.png', full_page=True)
             print('%s %-4s %-40s %s%s' % (r.status if r else '-', w, path[:40], '; '.join(probs) or 'ok', info), flush=True)
+        for w in DARK:
+            page.set_viewport_size({'width': w, 'height': 900})
+            page.evaluate("() => localStorage.setItem('ts-site-theme', 'dark')")
+            page.goto(BASE + path, timeout=90000, wait_until='networkidle')
+            m = page.evaluate(JS); m.pop('text')
+            name = re.sub(r'[^a-z0-9]+', '_', path.lower()).strip('_') or 'home'
+            page.screenshot(path='/root/ts-jobs/shots/%s%s_%d_dark.png' % ((login.split('@')[0] + '_') if MATRIX else '', name, w), full_page=True)
+            print('dark %-4s %-40s %s' % (w, path[:40], ('contrast ' + '|'.join(m['lowcontrast'])) if m['lowcontrast'] else 'ok'), flush=True)
+            page.evaluate("() => localStorage.setItem('ts-site-theme', 'light')")
         if '/my/assessments/' in path or '/a/' in path:
             page.emulate_media(media='print'); page.set_viewport_size({'width': 794, 'height': 1123})
             hidden = page.evaluate("() => [...document.querySelectorAll('.ts-noprint, header#top, footer')].filter(e => getComputedStyle(e).display !== 'none').length")
