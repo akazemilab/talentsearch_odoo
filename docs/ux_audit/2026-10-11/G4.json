@@ -1,0 +1,338 @@
+{
+  "group": "G4",
+  "shots": "/root/share/out/shots_eot_ts73 (login ts.pv2.edu.owner, workspace 5, education panel)",
+  "pages": [
+    {
+      "role": "owner", "path": "/my/workspaces/5/members",
+      "template": "ts_panel/views/web_members.xml:ts_panel.members",
+      "task": "See who has access, invite a colleague with the right role, manage pending invites",
+      "score": 3,
+      "summary": "Clear structure, but in dark mode the member table is unreadable, the invite row overflows at 375 and role choices list the owner role first with no default.",
+      "findings": [
+        {"id": "P1-1", "severity": 4, "effort": "S", "where": "dark", "issue": "Member table rows render on a white background with near-white text: names, roles and the «مشاهده» link are unreadable in dark mode.", "evidence": "ts.pv2.edu.owner_my_workspaces_5_members_375_dark.png; report.txt row 64 'contrast th. 2.0|th. 1.2|td. 1.2'", "standard": "WCAG 2.2 1.4.3, 1.4.11; ISO 9241-125 colour use", "fix": "See pattern PT1 (replace var(--white) in .ts-table / .tsp-table--cards tr with a surface token redefined in dark).", "owner_decision": false},
+        {"id": "P1-2", "severity": 2, "effort": "S", "where": "375", "issue": "Pending-invite row is one inline line: the email + role + date run off the card at 375 and the «ارسال دوباره / لغو دعوت» buttons wrap under the sticky bottom bar.", "evidence": "members_375.png: 'colleague.ux@example.invalid · مشاور · تا' clipped at left edge", "standard": "WCAG 2.2 1.4.10 reflow; 2.4.11 focus not obscured", "fix": "Render each pending invite as a tsp-rows item: <bdi dir=ltr> email on its own line (overflow-wrap:anywhere), meta line «مشاور · مهلت تا ۱۴۰۵/۰۷/۲۶», actions on a third line.", "owner_decision": false},
+        {"id": "P1-3", "severity": 2, "effort": "S", "where": "all", "issue": "«ارسال دوباره» suggests a message is sent, but nothing is sent: it only makes a new link and kills the old one. «لغو دعوت» is a one-tap POST with no confirmation and no undo, and neither button names which invite it acts on.", "evidence": "web_members.xml:50-56; hint 'ارسال دوباره پیوند قبلی را از کار می‌اندازد'", "standard": "ISO 9241-110 conformity with user expectations, use-error robustness; WCAG 2.2 2.4.6", "fix": "Rename to «ساخت پیوند تازه» and show the new link with a copy button after the redirect; add aria-label «لغو دعوت colleague…» on both buttons; for «لغو دعوت» show a flash with «بازگرداندن» or a one-line confirm.", "owner_decision": false},
+        {"id": "P1-4", "severity": 2, "effort": "S", "where": "all", "issue": "Invite role radios list «مالک پنل» first with nothing preselected; the most powerful role is the first target under the thumb. Each label repeats the role name («مالک پنل مالک پنل: ...»).", "evidence": "members_1280.txt lines 57-59; members_375.png", "standard": "ISO 9241-110 use-error robustness; ISO 9241-143 defaults; ISO 9241-112 conciseness", "fix": "Order roles least-privilege first (مشاور, هماهنگ‌کننده, مالک last), preselect مشاور in education panels; see PT15 for the duplicated label.", "owner_decision": false}
+      ]
+    },
+    {
+      "role": "owner", "path": "/my/workspaces/5/members/6",
+      "template": "ts_panel/views/web_member.xml:ts_panel.member",
+      "task": "Change a colleague's role or remove their access",
+      "score": 4,
+      "summary": "Good separation of role change and deactivation with consequence text; minor label repetition and bidi issues.",
+      "findings": [
+        {"id": "P2-1", "severity": 1, "effort": "S", "where": "all", "issue": "Role radio labels duplicate the role name before the blurb.", "evidence": "members_6_1280.txt lines 45-47", "standard": "ISO 9241-112 conciseness", "fix": "PT15.", "owner_decision": false},
+        {"id": "P2-2", "severity": 1, "effort": "S", "where": "375", "issue": "The role hint about the «تخصیص‌نشده» queue does not say how many participants would move; the facts card shows the count but far above.", "evidence": "members_6_375.png; web_member.xml:41", "standard": "ISO 9241-110 self-descriptiveness", "fix": "When clients > 0, interpolate: «اگر نقش تازه نتواند مسئول باشد، ۱۲ شرکت‌کنندهٔ او به صف تخصیص‌نشده می‌روند.»", "owner_decision": false}
+      ]
+    },
+    {
+      "role": "owner", "path": "/my/workspaces/5/members/6/deactivate",
+      "template": "ts_panel/views/web_member.xml:ts_panel.member_deactivate",
+      "task": "Confirm removing a colleague's access",
+      "score": 4,
+      "summary": "A proper confirmation page with danger button and cancel; the name in the heading breaks bidi and there is no back link.",
+      "findings": [
+        {"id": "P3-1", "severity": 1, "effort": "S", "where": "375", "issue": "The member name mixes Persian and Latin inside «» without isolation, so the closing guillemet lands at the start of the second line.", "evidence": "members_6_deactivate_375.png: '«آزمایشی / edu counselor»' broken", "standard": "Persian/RTL conventions; WCAG 2.2 1.3.2", "fix": "Wrap the name: «<bdi t-out=\"m.user_id.name\"/>» (PT10).", "owner_decision": false},
+        {"id": "P3-2", "severity": 1, "effort": "S", "where": "all", "issue": "No «اعضا و نقش‌ها» back link like the member page has; only «انصراف».", "evidence": "web_member.xml:92 vs :14", "standard": "ISO 9241-110 controllability, internal consistency", "fix": "Add the same ts-back link above the heading.", "owner_decision": false}
+      ]
+    },
+    {
+      "role": "owner", "path": "/my/workspaces/5/reports",
+      "template": "ts_panel/views/web_reports.xml:ts_panel.reports",
+      "task": "Find recent results and open the group report",
+      "score": 3,
+      "summary": "Simple list, but unreadable in dark mode, no filter or count, and the «سطح» column says «نتیجهٔ آموزشی», which is not a level.",
+      "findings": [
+        {"id": "P4-1", "severity": 4, "effort": "S", "where": "dark", "issue": "Results table body is white with light text in dark mode.", "evidence": "report.txt row 67 'th. 2.0|a. 1.2|td. 1.2'", "standard": "WCAG 2.2 1.4.3", "fix": "PT1.", "owner_decision": false},
+        {"id": "P4-2", "severity": 2, "effort": "S", "where": "all", "issue": "Column «سطح» shows «نتیجهٔ آموزشی» (the report kind), so the owner cannot tell what level means here.", "evidence": "reports_1280.txt line 42", "standard": "ISO 9241-112 interpretability", "fix": "Rename the column to «نوع گزارش» (or «سطح دسترسی» with values «سطح مشاور»), matching help/roles wording.", "owner_decision": false},
+        {"id": "P4-3", "severity": 1, "effort": "S", "where": "375", "issue": "On phone, an empty bordered box hangs below the card list (the table wrapper keeps its frame).", "evidence": "reports_375.png", "standard": "ISO 9241-125 visual presentation", "fix": "PT9.", "owner_decision": false},
+        {"id": "P4-4", "severity": 1, "effort": "M", "where": "all", "issue": "No count, filter or paging hint; the help text does not say how many recent results are shown.", "evidence": "reports_1280.txt line 36", "standard": "ISO 9241-110 self-descriptiveness", "fix": "Add «۲۰ نتیجهٔ آخر» to the caption and a group/instrument filter reusing the group-report filter partial.", "owner_decision": false}
+      ]
+    },
+    {
+      "role": "owner", "path": "/my/workspaces/5/reports/group",
+      "template": "ts_panel/views/web_reports.xml:ts_panel.group_report",
+      "task": "See the anonymous distribution of results for a group",
+      "score": 3,
+      "summary": "Privacy rule is explained, but the empty state gives no next step and the filters are unstyled inline label+select pairs with uneven widths.",
+      "findings": [
+        {"id": "P5-1", "severity": 2, "effort": "S", "where": "all", "issue": "Below the threshold the page shows «۱ از ۱ نفر» and «دست‌کم ۵ نتیجه لازم است» with no way forward (how to get more shared results).", "evidence": "reports_group_1280.txt lines 54-58", "standard": "NN/g empty states; ISO 9241-110 suitability for the task", "fix": "Empty state with heading «هنوز نتیجهٔ کافی نیست», text «۴ نتیجهٔ دیگر لازم است» and a link «دعوت گروهی» / «دعوت‌ها».", "owner_decision": false},
+        {"id": "P5-2", "severity": 2, "effort": "S", "where": "375", "issue": "Filters render as inline label + native select of different widths, not the label-above form pattern used elsewhere; selects look like small chips and are hard to scan.", "evidence": "reports_group_375.png", "standard": "ISO 9241-143 label placement; ISO 9241-125 alignment", "fix": "Use tsp-field (label above, full-width form-select) as on exports; see PT8.", "owner_decision": false}
+      ]
+    },
+    {
+      "role": "owner", "path": "/my/workspaces/5/credits",
+      "template": "ts_panel/views/web_credits.xml:ts_panel.credits",
+      "task": "Understand usage and cost of the panel",
+      "score": 3,
+      "summary": "Free-mode message exists but its layout breaks at 375, the tiles mix unrelated metrics, and tables are unreadable in dark mode.",
+      "findings": [
+        {"id": "P6-1", "severity": 4, "effort": "S", "where": "dark", "issue": "Monthly and ledger tables are white with light text in dark mode.", "evidence": "report.txt row 73", "standard": "WCAG 2.2 1.4.3", "fix": "PT1.", "owner_decision": false},
+        {"id": "P6-2", "severity": 2, "effort": "S", "where": "375", "issue": "The free-mode notice puts its title «رایگان در این فصل» in a narrow column (wrapped word by word) beside the text, and the text starts with a stray «—».", "evidence": "credits_375.png", "standard": "ISO 9241-125 typography, alignment", "fix": "Stack the notice: <strong> title on its own line, then the sentence without the leading dash.", "owner_decision": false},
+        {"id": "P6-3", "severity": 1, "effort": "S", "where": "all", "issue": "Stat tiles combine usage (this month, total) with «دعوت‌های باز», which is not a credit figure; the third tile sits alone on a row.", "evidence": "credits_1280.txt lines 40-45; credits_375.png", "standard": "ISO 9241-112 discriminability, grouping", "fix": "Keep two usage tiles, or relabel the third «دعوت‌های باز (هنوز مصرفی ندارند)» to explain the link.", "owner_decision": false},
+        {"id": "P6-4", "severity": 1, "effort": "S", "where": "all", "issue": "Ledger row shows participant «—» for a completed attempt, so the owner cannot connect usage to a person.", "evidence": "credits_1280.txt line 53", "standard": "ISO 9241-112 interpretability", "fix": "Show the participant code (TSI-…) when the viewer may see the participant, otherwise «پنهان (دسترسی ندارید)».", "owner_decision": false}
+      ]
+    },
+    {
+      "role": "owner", "path": "/my/workspaces/5/exports",
+      "template": "ts_panel/views/web_exports.xml:ts_panel.exports",
+      "task": "Download a participant list, invitation status or results file",
+      "score": 3,
+      "summary": "Content is accurate, but three primary buttons compete, the intro packs technical details, csv is the default for school staff, and selects show no dropdown affordance.",
+      "findings": [
+        {"id": "P7-1", "severity": 2, "effort": "S", "where": "all", "issue": "Three primary buttons on one view (one per card).", "evidence": "exports_375.png", "standard": "Project rule one primary per view; ISO 9241-112 freedom from distraction", "fix": "Make the three card buttons ts-btn--outline, or present the three exports as a choice (radio) with one primary «ساخت فایل».", "owner_decision": false},
+        {"id": "P7-2", "severity": 2, "effort": "S", "where": "all", "issue": "Format defaults to csv; school staff open files in Excel, where csv often shows broken Persian and Latin digits. The intro sentence mixes Latin digits, two calendars, re-authentication and the 24-hour expiry.", "evidence": "exports_1280.txt line 36; web_exports.xml:27", "standard": "ISO 9241-210 context of use; ISO 9241-112 conciseness", "fix": "Default to «xlsx (اکسل)»; move the reauth/24 h sentence next to the buttons as a hint; keep only «فایل اکسل یا csv» in the intro.", "owner_decision": false},
+        {"id": "P7-3", "severity": 2, "effort": "S", "where": "375", "issue": "form-select fields have no chevron and look like text inputs.", "evidence": "exports_375.png (قالب/وضعیت/گروه)", "standard": "ISO 9241-112 detectability; WCAG 2.2 1.4.11", "fix": "PT8.", "owner_decision": false},
+        {"id": "P7-4", "severity": 1, "effort": "S", "where": "all", "issue": "Term drift: page and nav say «خروجی», recent-files list and job page say «برون‌بری».", "evidence": "exports_1280.txt line 88; jobs_2 heading", "standard": "ISO 9241-112 internal consistency", "fix": "Use «خروجی فهرست شرکت‌کنندگان» in KIND_LABEL.", "owner_decision": false}
+      ]
+    },
+    {
+      "role": "owner", "path": "/my/workspaces/5/jobs/2",
+      "template": "ts_panel/views/web_import.xml:ts_panel.job",
+      "task": "Download a finished export file",
+      "score": 4,
+      "summary": "Clear status, one primary download and expiry date; the running state auto-refreshes with a meta refresh.",
+      "findings": [
+        {"id": "P8-1", "severity": 2, "effort": "S", "where": "all", "issue": "While queued or running the page reloads every 5 s via <meta http-equiv=refresh>; screen-reader users lose their place and cannot stop it.", "evidence": "web_import.xml:164", "standard": "WCAG 2.2 2.2.1 (failure F41), 4.1.3", "fix": "Replace with a small fetch poll that updates the role=status paragraph in place, and offer a «تازه‌سازی» button.", "owner_decision": false},
+        {"id": "P8-2", "severity": 1, "effort": "S", "where": "all", "issue": "Heading «برون‌بری شرکت‌کنندگان» uses a different term from the exports page.", "evidence": "jobs_2_1280.txt line 34", "standard": "ISO 9241-112 consistency", "fix": "P7-4.", "owner_decision": false}
+      ]
+    },
+    {
+      "role": "owner", "path": "/my/workspaces/5/audit",
+      "template": "ts_panel/views/web_audit.xml:ts_panel.audit",
+      "task": "Check who did what in the panel (accountability, incident review)",
+      "score": 2,
+      "summary": "The owner gets a raw event stream: the title differs from the menu, filters use Gregorian mm/dd/yyyy inputs while rows are Solar Hijri, rows are vague and repeated, and the table is unreadable in dark mode.",
+      "findings": [
+        {"id": "P9-1", "severity": 4, "effort": "S", "where": "dark", "issue": "Event table white background with light text in dark mode.", "evidence": "report.txt row 79", "standard": "WCAG 2.2 1.4.3", "fix": "PT1.", "owner_decision": false},
+        {"id": "P9-2", "severity": 3, "effort": "M", "where": "all", "issue": "Date filters are native <input type=date> labelled «(میلادی)», showing «mm/dd/yyyy», while every row is in Solar Hijri. An owner checking «what happened on ۱۹ مهر» has to convert dates.", "evidence": "audit_375.png, audit_1280.png; web_audit.xml:39-40", "standard": "Persian conventions (Solar Hijri); ISO 9241-143 input formats; ISO 9241-110 conformity with expectations", "fix": "Replace with period presets (امروز، ۷ روز، ۳۰ روز، همه), as on the group report, plus an optional Jalali text field «۱۴۰۵/۰۷/۱۹» parsed server-side.", "owner_decision": false},
+        {"id": "P9-3", "severity": 3, "effort": "M", "where": "all", "issue": "Rows are hard to interpret: actor «سامانه» for actions people took (export, member invite), objects missing («عضوی را افزود»: which member?), identical consecutive rows (group report viewed 3 times in one minute), and a «نتیجه» column that always says «انجام شد».", "evidence": "audit_1280.txt lines 60-73", "standard": "ISO 9241-112 interpretability, conciseness; ISO/IEC 25010 self-descriptiveness", "fix": "Name the object in the text (member name, export kind, participant code); collapse identical events within 5 min into one row «… (۳ بار)»; show the outcome only as a warn pill when not ok and drop the column otherwise. Actor attribution for seeded/system rows needs a model check.", "owner_decision": true},
+        {"id": "P9-4", "severity": 2, "effort": "S", "where": "all", "issue": "The log has four names: menu «دفتر ممیزی», heading «ممیزی پنل», transfer page «گزارش ممیزی», help «گزارش رویدادها». «این چیست؟» points to /help/panel#support (support access), not to an explanation of the log.", "evidence": "web_audit.xml:16-17; web_help.xml:59,63", "standard": "ISO 9241-112 internal consistency; project glossary (دفتر ممیزی)", "fix": "PT3; add a help article id=\"audit\" and point the link there.", "owner_decision": false},
+        {"id": "P9-5", "severity": 2, "effort": "M", "where": "375", "issue": "On phone each event becomes a 4-line card repeating «شرح/دسته/نتیجه/انجام شد»; 14 events make a 3,768 px page and the filter block (always open) takes the first screen.", "evidence": "audit_375.png", "standard": "ISO 9241-125 density; ISO 9241-110 efficiency", "fix": "Phone layout: group rows under a date heading, one line per event «۰۶:۲۲ · text» with the category as a small pill; collapse filters behind a «پالایه» toggle button with aria-expanded.", "owner_decision": false},
+        {"id": "P9-6", "severity": 1, "effort": "S", "where": "all", "issue": "Category filter offers «مراجعان» in an education panel; button «خروجی CSV» is the only English-format label; filter inputs use native square controls rather than tokens.", "evidence": "audit_1280.txt lines 41-50; audit_1280.png", "standard": "Project glossary; ISO 9241-125 consistency", "fix": "Purpose-aware label «شرکت‌کنندگان» (PT4); rename button «دریافت فایل (csv)»; apply tsp-field/form-select classes.", "owner_decision": false}
+      ]
+    },
+    {
+      "role": "owner", "path": "/my/workspaces/5/settings",
+      "template": "ts_panel/views/web_settings.xml:ts_panel.settings (+ web_lifecycle.xml:tpl_settings_lifecycle)",
+      "task": "Edit the panel name and logo; reach transfer and close",
+      "score": 3,
+      "summary": "Usable, but the file input is English, the current logo is not shown, the «تماس» card holds no contact data, and the irreversible «بستن پنل» sits next to transfer with the same neutral styling.",
+      "findings": [
+        {"id": "P10-1", "severity": 2, "effort": "S", "where": "all", "issue": "Native file input shows «Choose File / No file chosen» in English and the current logo is not previewed.", "evidence": "settings_375.png", "standard": "Persian/RTL no English UI; ISO 9241-110 self-descriptiveness", "fix": "PT7; show the current logo thumbnail with alt «لوگوی فعلی» and a «حذف لوگو» option.", "owner_decision": false},
+        {"id": "P10-2", "severity": 2, "effort": "S", "where": "all", "issue": "«بستن پنل» (irreversible) and «انتقال مالکیت» are two identical outline buttons in one card titled «مالکیت و پایان پنل».", "evidence": "settings_375.png; web_lifecycle.xml:85-89", "standard": "ISO 9241-110 use-error robustness; ISO 9241-125 grouping", "fix": "PT6: separate danger card at the bottom, «بستن پنل» as ts-btn--danger with one line of consequence text.", "owner_decision": false},
+        {"id": "P10-3", "severity": 1, "effort": "S", "where": "all", "issue": "Card titled «تماس» contains panel type and data steward, not contact details; «مسئول داده: ثبت نشده» gives no way to fix it except contacting support.", "evidence": "settings_1280.txt lines 49-55", "standard": "ISO 9241-112 interpretability", "fix": "Rename to «اطلاعات پنل»; link «تماس با پشتیبانی» with topic prefilled.", "owner_decision": false},
+        {"id": "P10-4", "severity": 1, "effort": "S", "where": "all", "issue": "«برای این پنل هنوز پذیرش شرایط ثبت نشده است» appears with no action, so the owner does not know whether they must do anything.", "evidence": "settings_1280.txt line 63", "standard": "ISO 9241-110 self-descriptiveness", "fix": "Add one sentence: what it means and whether action is needed («نیازی به کاری نیست» or a «پذیرش شرایط» button).", "owner_decision": true}
+      ]
+    },
+    {
+      "role": "owner", "path": "/my/workspaces/5/settings/transfer",
+      "template": "ts_panel/views/web_lifecycle.xml:ts_panel.transfer",
+      "task": "Hand ownership of the panel to a colleague",
+      "score": 2,
+      "summary": "The default «مدیر پنل» is the coordinator role, which sees no results, but it is labelled as if it were a manager role; nothing says what the owner loses, and after re-authentication the choices are lost.",
+      "findings": [
+        {"id": "P11-1", "severity": 3, "effort": "S", "where": "all", "issue": "The preselected option «مدیر پنل» is the 'admin' role, shown everywhere else as «هماهنگ‌کنندهٔ پنل: … هیچ نتیجه‌ای را نمی‌بیند». An owner who keeps the default silently loses access to results and member management under a label that sounds like a manager.", "evidence": "web_lifecycle.xml:29; perm_labels.py:57", "standard": "ISO 9241-110 conformity with expectations, use-error robustness; ISO 9241-112 consistency", "fix": "Label the options with the real role name and blurb from ROLE_LABELS («هماهنگ‌کنندهٔ پنل — هیچ نتیجه‌ای نمی‌بینید»), and remove the preselection so the owner must choose. Which default (if any) is right is an owner decision.", "owner_decision": true},
+        {"id": "P11-2", "severity": 3, "effort": "M", "where": "all", "issue": "POST redirects to /my/reauth without keeping new_owner/stay; after confirming identity the owner lands on an empty form with no message and must choose again and resubmit, and may think the transfer already happened.", "evidence": "controllers/lifecycle.py:30 need_reauth(...) without pending; compare members role 'resumed' flash", "standard": "WCAG 2.2 3.3.7 redundant entry; ISO 9241-110 self-descriptiveness", "fix": "PT2: pass pending={'new_owner','stay'}, re-check them on return and show «هویت شما تأیید شد؛ برای انجام انتقال دکمه را بزنید».", "owner_decision": false},
+        {"id": "P11-3", "severity": 2, "effort": "S", "where": "all", "issue": "No summary of consequences (what you can no longer do, that only the new owner can undo it) and no mention that re-authentication will be asked; the submit is a normal primary button.", "evidence": "settings_transfer_375.png", "standard": "GOV.UK check-answers / confirmation pattern; ISO 9241-110 use-error robustness", "fix": "Add a short list «پس از انتقال: …»; note «هویت شما دوباره پرسیده می‌شود»; make the button label explicit «انتقال مالکیت به [نام]» (via JS on radio change, or a second confirm step).", "owner_decision": false},
+        {"id": "P11-4", "severity": 2, "effort": "S", "where": "375", "issue": "Radio inputs use .ts-check with native ~13 px radios; the hit rows are about 24 px high, under the 44 px project rule. Member names mix scripts without <bdi>.", "evidence": "settings_transfer_375.png", "standard": "WCAG 2.2 2.5.8; project 44 px rule", "fix": "Use the .tsp-radio card style from the member page (full-row 44 px label); wrap names in <bdi>.", "owner_decision": false},
+        {"id": "P11-5", "severity": 1, "effort": "S", "where": "all", "issue": "Says «گزارش ممیزی» instead of «دفتر ممیزی».", "evidence": "web_lifecycle.xml:32", "standard": "ISO 9241-112 consistency", "fix": "PT3.", "owner_decision": false}
+      ]
+    },
+    {
+      "role": "owner", "path": "/my/workspaces/5/settings/close",
+      "template": "ts_panel/views/web_lifecycle.xml:ts_panel.close_panel",
+      "task": "Permanently close the panel",
+      "score": 2,
+      "summary": "Has a confirmation checkbox, but the irreversible action uses the normal primary style, the consequences are incomplete, and the tick is lost after re-authentication.",
+      "findings": [
+        {"id": "P12-1", "severity": 3, "effort": "S", "where": "all", "issue": "«بستن پنل», an irreversible action, uses ts-btn--primary (same as every safe action) while member deactivation uses ts-btn--danger.", "evidence": "web_lifecycle.xml:67 vs web_member.xml:103; settings_close_375_dark.png", "standard": "ISO 9241-110 use-error robustness; ISO 9241-112 discriminability", "fix": "ts-btn--danger and a tsp-confirm danger card as on the deactivate page (PT6).", "owner_decision": false},
+        {"id": "P12-2", "severity": 3, "effort": "M", "where": "all", "issue": "After the box is ticked and the form submitted, the redirect to /my/reauth drops the confirmation; the owner returns to an unticked form with no message.", "evidence": "controllers/lifecycle.py:60", "standard": "WCAG 2.2 3.3.7; ISO 9241-110 self-descriptiveness", "fix": "PT2 (pending={'confirm':'1'} + resumed flash). Also say on the page «هویت شما دوباره پرسیده می‌شود».", "owner_decision": false},
+        {"id": "P12-3", "severity": 2, "effort": "S", "where": "all", "issue": "Consequences omit what happens to members (lose access), open invitations and campaign links (stop working) and in-progress attempts. There is no inline link to take the export first. Uses «مراجعان» in an education panel, «بیرون بکشد» is colloquial, and the heading repeats «پنل «پنل …»».", "evidence": "settings_close_1280.txt lines 36-42", "standard": "ISO 9241-110 self-descriptiveness; project glossary", "fix": "Add bullets for members/invites/in-progress; add link «پیش از بستن، فهرست شرکت‌کنندگان را بگیرید» → /exports; replace «مراجعان» with «شرکت‌کنندگان» and «بیرون بکشد» with «خروجی بگیرد». The exact list of effects needs owner confirmation.", "owner_decision": true},
+        {"id": "P12-4", "severity": 2, "effort": "S", "where": "375", "issue": "The confirmation checkbox is a ~13 px native control.", "evidence": "settings_close_375_dark.png", "standard": "WCAG 2.2 2.5.8; project 44 px rule", "fix": "Use the tsp-check large style (whole label as 44 px target).", "owner_decision": false}
+      ]
+    },
+    {
+      "role": "owner", "path": "/my/workspaces/5/import",
+      "template": "ts_panel/views/web_import.xml:ts_panel.import_start",
+      "task": "Bring a class list into the panel from Excel",
+      "score": 3,
+      "summary": "Good up-front explanation of the four steps and limits; the file input is English and there is no step indicator shared with the next pages.",
+      "findings": [
+        {"id": "P13-1", "severity": 2, "effort": "S", "where": "all", "issue": "Native file input reads «Choose File / No file chosen».", "evidence": "import_375.png", "standard": "Persian/RTL no English UI", "fix": "PT7.", "owner_decision": false},
+        {"id": "P13-2", "severity": 2, "effort": "M", "where": "all", "issue": "The four steps are named here but steps 3 and 4 have no progress indicator, so on later pages the user does not know where they are or how many steps remain.", "evidence": "import_1280.txt line 36 vs import_1_map / review", "standard": "ISO 9241-110 self-descriptiveness; GOV.UK step pattern", "fix": "Add a shared <ol class=\"tsp-steps\" aria-label=\"گام‌های ورود\"> with aria-current=\"step\" to all three templates (۱ الگو ۲ بارگذاری ۳ تطبیق ۴ مرور).", "owner_decision": false},
+        {"id": "P13-3", "severity": 1, "effort": "S", "where": "all", "issue": "Only the csv template is offered although xlsx is accepted and staff work in Excel.", "evidence": "import_1280.txt line 42", "standard": "ISO 9241-210 context of use", "fix": "Offer «دریافت الگو (اکسل)» as the main link and csv second.", "owner_decision": false}
+      ]
+    },
+    {
+      "role": "owner", "path": "/my/workspaces/5/import/1/map",
+      "template": "ts_panel/views/web_import.xml:ts_panel.import_map",
+      "task": "Tell the system which column is which",
+      "score": 3,
+      "summary": "Auto-mapping works, but there are no sample values to verify against and the selects lack a dropdown affordance.",
+      "findings": [
+        {"id": "P14-1", "severity": 2, "effort": "M", "where": "all", "issue": "Each column shows only its header; no sample values from the file, so the user cannot check that «موبایل» really holds phone numbers.", "evidence": "import_1_map_1280.txt lines 38-53", "standard": "ISO 9241-110 use-error robustness; ISO 9241-112 interpretability", "fix": "Under each label show «نمونه: …» with the first two non-empty values (masked phone ****6789), using aria-describedby.", "owner_decision": false},
+        {"id": "P14-2", "severity": 2, "effort": "S", "where": "375", "issue": "form-select shows no chevron and reads as a filled text box («نام», «موبایل»).", "evidence": "import_1_map_375.png", "standard": "ISO 9241-112 detectability; WCAG 2.2 1.4.11", "fix": "PT8.", "owner_decision": false},
+        {"id": "P14-3", "severity": 1, "effort": "S", "where": "all", "issue": "Secondary action «فایل دیگر» is ambiguous (does it discard this upload?), and no step indicator is shown.", "evidence": "import_1_map_375.png", "standard": "ISO 9241-110 controllability", "fix": "Rename to «انتخاب فایل دیگر (این فایل کنار گذاشته می‌شود)»; P13-2.", "owner_decision": false}
+      ]
+    },
+    {
+      "role": "owner", "path": "/my/workspaces/5/import/1/review",
+      "template": "ts_panel/views/web_import.xml:ts_panel.import_review",
+      "task": "Check what will be created or changed, then commit the import",
+      "score": 3,
+      "summary": "Counts are shown and nothing is written before «وارد کن», but updates to existing participants are not previewed and the commit button does not say what it will do.",
+      "findings": [
+        {"id": "P15-1", "severity": 3, "effort": "M", "where": "all", "issue": "«به‌روزرسانی» is only a count. The owner cannot see which existing participants will be overwritten or which fields will change (phone, group), and the import cannot be undone.", "evidence": "import_1_review_1280.txt lines 38-49; web_import.xml:93-99", "standard": "ISO 9241-110 use-error robustness; GOV.UK check answers", "fix": "When update > 0, list up to 20 rows «TSI-000004: موبایل ۰۹۱۲…۶۷۸۹ ← ۰۹۱۲…۱۱۱۱» with a toggle «به‌روزرسانی‌ها را نادیده بگیر». The toggle needs an owner decision on importer behaviour.", "owner_decision": true},
+        {"id": "P15-2", "severity": 2, "effort": "S", "where": "all", "issue": "The commit button «وارد کن» is a bare imperative; it does not say how many records it creates or changes.", "evidence": "import_1_review_375.png", "standard": "ISO 9241-110 self-descriptiveness; labels match outcome", "fix": "Label «وارد کردن ۱ شرکت‌کنندهٔ تازه» (and «و به‌روزرسانی N»), and update the help text quote to match.", "owner_decision": false},
+        {"id": "P15-3", "severity": 1, "effort": "S", "where": "375", "issue": "Five counts are stacked as label/number pairs in one long column with no visual weight on errors.", "evidence": "import_1_review_375.png", "standard": "ISO 9241-125 grouping", "fix": "Two-column tsp-dl grid on phone; give «دارای ایراد» a warn pill when > 0.", "owner_decision": false}
+      ]
+    },
+    {
+      "role": "owner", "path": "/my/workspaces/5/legacy",
+      "template": "ts_org/views/web_org.xml:ts_org.workspace (via ts_panel/controllers/shell.py:55)",
+      "task": "Old one-page panel (no menu entry); owner may reach it from an old bookmark",
+      "score": 2,
+      "summary": "A duplicate of the whole panel in the old design: its table overflows at 375, the title is generic, it says «فضاهای کاری», and it has a typo; it competes with the new pages.",
+      "findings": [
+        {"id": "P16-1", "severity": 3, "effort": "S", "where": "375", "issue": "The participant table does not reflow: columns «کارشناس مسئول» and «اقدام» and the «تخصیص/ثبت» buttons are cut off at the right edge.", "evidence": "legacy_375.png", "standard": "WCAG 2.2 1.4.10", "fix": "Either redirect /legacy to the dashboard (preferred, see P16-2) or add tsp-table--cards to this table.", "owner_decision": false},
+        {"id": "P16-2", "severity": 2, "effort": "S", "where": "all", "issue": "The page duplicates invite, member and settings forms with different defaults and rules (e.g. role select preselects «هماهنگ‌کنندهٔ پنل»), so the same task behaves differently depending on the entry point.", "evidence": "legacy_1280.txt lines 70-103", "standard": "ISO 9241-110 conformity with expectations; ISO 9241-112 consistency", "fix": "Retire the route with a 302 to /my/workspaces/<id> after the announced date; until then strip the forms and keep only the banner and link.", "owner_decision": true},
+        {"id": "P16-3", "severity": 1, "effort": "S", "where": "all", "issue": "Generic <title> «پنل آزمایشی آموزشی | تلنت سرچ»; back link reads «فضاهای کاری» (glossary: پنل); typo «فرم‌افزار» for «نرم‌افزار»; logo target flagged small.", "evidence": "legacy_1280.txt lines 2,14,23; report.txt row 92", "standard": "WCAG 2.2 2.4.2; project glossary", "fix": "Title «صفحهٔ قدیمی پنل»; «پنل‌های من»; fix the typo in ts_org/views/web_org.xml.", "owner_decision": false}
+      ]
+    },
+    {
+      "role": "owner", "path": "/help/roles",
+      "template": "ts_panel/views/web_help_roles.xml:ts_panel.help_roles",
+      "task": "Understand what each role can do before assigning it",
+      "score": 2,
+      "summary": "The permission matrix is unreadable in dark mode, the tab title is English, the cards show a stray «—», and important owner powers (exports, audit, transfer, close) are missing.",
+      "findings": [
+        {"id": "P17-1", "severity": 4, "effort": "S", "where": "dark", "issue": "The matrix body is white with light grey ticks and text: the whole permission table is unreadable in dark mode.", "evidence": "ts.pv2.edu.owner_help_roles_375_dark.png; report.txt row 103", "standard": "WCAG 2.2 1.4.3, 1.4.11", "fix": "PT1.", "owner_decision": false},
+        {"id": "P17-2", "severity": 2, "effort": "S", "where": "all", "issue": "Document title is the view name «TS panel: role help» (English).", "evidence": "help_roles_1280.txt line 2", "standard": "WCAG 2.2 2.4.2, 3.1.1", "fix": "PT5: pass additional_title.f=\"نقش‌ها و دسترسی‌ها\".", "owner_decision": false},
+        {"id": "P17-3", "severity": 2, "effort": "S", "where": "all", "issue": "The matrix omits owner-only powers that the owner most needs to delegate safely: exports, دفتر ممیزی, اعتبار, transfer, closing the panel. It also lists rows nobody has in an education panel (summary bands, full clinical report), which is noise.", "evidence": "help_roles_1280.txt lines 27-174", "standard": "ISO 9241-112 conciseness, interpretability", "fix": "Add rows for خروجی، دفتر ممیزی، اعتبار، انتقال مالکیت، بستن پنل; hide rows where every column is «ندارد» for the current purpose.", "owner_decision": false},
+        {"id": "P17-4", "severity": 1, "effort": "S", "where": "all", "issue": "Role cards show a lone «—» under the title and then repeat the title inside the blurb; there is no back link to the panel and no legend for ✓/—.", "evidence": "help_roles_375.png", "standard": "ISO 9241-112 conciseness; ISO 9241-110 controllability", "fix": "Remove the empty subtitle, strip the «X: » prefix (PT15), add a back link to the referring panel and a caption «✓ دارد · — ندارد».", "owner_decision": false}
+      ]
+    },
+    {
+      "role": "owner", "path": "/my/notifications",
+      "template": "ts_panel/views/web_notifications.xml:ts_panel.notifications",
+      "task": "Read new notifications and go to the item",
+      "score": 3,
+      "summary": "Works, but the filter toggle and the bulk action look identical, the account sub-navigation is missing, and the item text is vague.",
+      "findings": [
+        {"id": "P18-1", "severity": 2, "effort": "S", "where": "375", "issue": "«فقط خوانده‌نشده‌ها» (a filter) and «همه را خوانده‌شده کن» (a state change) are identical outline buttons stacked together; the filter's on/off state is not exposed.", "evidence": "notifications_375.png; web_notifications.xml:16-24", "standard": "ISO 9241-112 discriminability; WCAG 2.2 4.1.2", "fix": "Render the filter as a two-item segmented control «همه / خوانده‌نشده» with aria-current; keep the bulk action as a quiet text button aligned to the list end.", "owner_decision": false},
+        {"id": "P18-2", "severity": 2, "effort": "S", "where": "all", "issue": "No account sub-navigation (unlike /my/sessions, /my/privacy), and no way back to the account.", "evidence": "notifications_1280.txt", "standard": "ISO 9241-110 controllability; consistency", "fix": "PT11: call ts_panel.my_nav active=\"notifications\".", "owner_decision": false},
+        {"id": "P18-3", "severity": 1, "effort": "S", "where": "all", "issue": "Item «نتیجهٔ یک شرکت‌کننده آماده است —» does not name the panel, and the date sits after a dangling dash.", "evidence": "notifications_375.png", "standard": "ISO 9241-112 interpretability", "fix": "Prefix the panel name («پنل آزمایشی آموزشی: نتیجهٔ یک شرکت‌کننده آماده است»); put the date on its own ts-hint line.", "owner_decision": false}
+      ]
+    },
+    {
+      "role": "owner", "path": "/my/notifications/prefs",
+      "template": "ts_panel/views/web_notifications.xml:ts_panel.notification_prefs",
+      "task": "Choose which events reach me by site or SMS",
+      "score": 3,
+      "summary": "Complete, but 17 events in one flat column with no grouping; security events can be switched off, and disabled SMS boxes are not explained in place.",
+      "findings": [
+        {"id": "P19-1", "severity": 2, "effort": "M", "where": "all", "issue": "17 fieldsets in one list mixing personal events, panel administration and security; the page is 2,478 px long on phone.", "evidence": "notifications_prefs_375.png", "standard": "ISO 9241-143 field grouping; ISO 9241-125 grouping", "fix": "Group into «سنجه‌های خودم», «شرکت‌کنندگان پنل», «مدیریت پنل», «امنیت»; use a compact table (event × سایت/پیامک) at ≥768 px.", "owner_decision": false},
+        {"id": "P19-2", "severity": 2, "effort": "S", "where": "all", "issue": "Security-relevant events («باز شدن دسترسی پشتیبانی», «انتقال مالکیت», «بسته‌شدن پنل») can be unticked, so an owner could miss a support access to their panel.", "evidence": "notifications_prefs_1280.txt lines 50-55", "standard": "ISO 9241-110 use-error robustness; user engagement (trust)", "fix": "Show those site notifications as checked + disabled with hint «برای امنیت همیشه فعال است».", "owner_decision": true},
+        {"id": "P19-3", "severity": 1, "effort": "S", "where": "all", "issue": "SMS boxes are disabled (no verified phone) but look like normal unchecked boxes; the reason is only at the top of the page.", "evidence": "web_notifications.xml:61; notifications_prefs_375.png", "standard": "WCAG 2.2 1.4.11; ISO 9241-110 self-descriptiveness", "fix": "Dim disabled labels (opacity token) and add aria-describedby to the top hint.", "owner_decision": false}
+      ]
+    },
+    {
+      "role": "owner", "path": "/my/reauth",
+      "template": "ts_panel/views/web_reauth.xml:ts_panel.reauth",
+      "task": "Confirm identity before a sensitive action, then continue it",
+      "score": 2,
+      "summary": "A dead end: no cancel or back, no forgotten-password route, an English title, and it does not say which action is waiting.",
+      "findings": [
+        {"id": "P20-1", "severity": 3, "effort": "S", "where": "all", "issue": "No «انصراف» or back link to `next`, and no «فراموشی رمز عبور»; a user who does not remember the password is stuck mid-task.", "evidence": "web_reauth.xml:36-46; reauth_375.png", "standard": "ISO 9241-110 controllability (no traps); WCAG 2.2 3.3.8", "fix": "Add <a t-att-href=\"next\" class=\"ts-btn ts-btn--quiet\">انصراف</a> and a link to /web/reset_password; when a phone exists, keep both methods.", "owner_decision": false},
+        {"id": "P20-2", "severity": 2, "effort": "S", "where": "all", "issue": "Title is «TS panel: reauth» (English). The minutes value prints Latin «10». The hint is placed between label and input but not linked to the field.", "evidence": "reauth_1280.txt lines 2,16; report.txt row 110 'ascii-digits 2'", "standard": "WCAG 2.2 2.4.2, 3.1.1, 1.3.1; Persian digits", "fix": "additional_title.f=\"تأیید هویت\" (PT5); t-out=\"fa(minutes)\"; aria-describedby on tsp_pw.", "owner_decision": false},
+        {"id": "P20-3", "severity": 2, "effort": "S", "where": "all", "issue": "When opened directly or with an empty session, the text says «برای این کار», which does not identify the pending action. The page also uses «رمز عبور» while /my/account uses «گذرواژه».", "evidence": "reauth_1280.txt line 16; my_account line 39", "standard": "ISO 9241-110 self-descriptiveness; ISO 9241-112 consistency", "fix": "Show the panel name and action («برای بستن پنل «…»»); pick one term (گذرواژه) across account, help and reauth.", "owner_decision": false}
+      ]
+    },
+    {
+      "role": "owner", "path": "/my/sessions",
+      "template": "ts_panel/views/web_security.xml:ts_panel.my_sessions",
+      "task": "See signed-in devices and sign out of the others",
+      "score": 3,
+      "summary": "Task is clear; the heading hierarchy is inverted, the active tab is off-screen, and the page title does not match the account link.",
+      "findings": [
+        {"id": "P21-1", "severity": 2, "effort": "S", "where": "375", "issue": "Card h2s are visually larger than the page h1, and the active «حساب» tab is scrolled out of view in the sub-nav.", "evidence": "sessions_375.png", "standard": "ISO 9241-125 hierarchy; ISO 9241-110 self-descriptiveness", "fix": "PT12, PT11.", "owner_decision": false},
+        {"id": "P21-2", "severity": 1, "effort": "S", "where": "all", "issue": "Heading «نشست‌های من» vs account link «دستگاه‌های واردشده»; device string «Linux Chrome» is not isolated.", "evidence": "sessions_1280.txt lines 14,20; my_account line 37", "standard": "ISO 9241-112 consistency", "fix": "Use «دستگاه‌های واردشده» as h1; wrap the device in <bdi dir=ltr>.", "owner_decision": false}
+      ]
+    },
+    {
+      "role": "owner", "path": "/my/privacy",
+      "template": "ts_panel/views/web_my.xml:ts_panel.my_privacy",
+      "task": "Download my data or request erasure",
+      "score": 3,
+      "summary": "Clear explanations, but the erasure request goes out in one tap (when re-authentication is still fresh) without confirmation, and an owner is not told what happens to the panel they own.",
+      "findings": [
+        {"id": "P22-1", "severity": 3, "effort": "M", "where": "all", "issue": "«ثبت درخواست حذف» posts immediately: within the 10-minute reauth window it is one tap. There is no confirmation page naming the effects, and no visible way to cancel the request.", "evidence": "web_my.xml:238-241; controllers/portal.py:157-168", "standard": "ISO 9241-110 use-error robustness; GOV.UK confirmation pattern", "fix": "Route the button to a GET confirm page (like member_deactivate) listing effects and a ts-btn--danger «بله، درخواست حذف ثبت شود»; show «لغو درخواست» while state is new. Cancel needs an owner decision.", "owner_decision": true},
+        {"id": "P22-2", "severity": 2, "effort": "S", "where": "all", "issue": "For a panel owner the effects on owned panels are not mentioned (does the panel lose its owner?).", "evidence": "my_privacy_1280.txt line 26", "standard": "ISO 9241-110 self-descriptiveness", "fix": "When the user owns a panel, add «شما مالک پنل … هستید؛ پیش از حذف، مالکیت را منتقل کنید» with a link to transfer. The rule itself is an owner decision.", "owner_decision": true},
+        {"id": "P22-3", "severity": 2, "effort": "S", "where": "all", "issue": "After reauth the user returns to /my/privacy and must press the button again with no message.", "evidence": "portal.py:151,160", "standard": "WCAG 2.2 3.3.7", "fix": "PT2.", "owner_decision": false},
+        {"id": "P22-4", "severity": 1, "effort": "S", "where": "375", "issue": "Card headings are larger than the h1; the active tab is off-screen.", "evidence": "privacy_375.png", "standard": "ISO 9241-125", "fix": "PT12, PT11.", "owner_decision": false}
+      ]
+    },
+    {
+      "role": "owner", "path": "/my/sharing",
+      "template": "ts_panel/views/web_my.xml:ts_panel.my_sharing",
+      "task": "See who can see my own results (owner as participant)",
+      "score": 4,
+      "summary": "Clear empty state with one action; the active tab is clipped and not visibly marked.",
+      "findings": [
+        {"id": "P23-1", "severity": 2, "effort": "S", "where": "375", "issue": "The active tab «چه کسی می‌بیند» is clipped at the screen edge and looks the same as the other tabs.", "evidence": "sharing_375.png", "standard": "ISO 9241-110 self-descriptiveness; WCAG 2.2 1.4.1", "fix": "PT11.", "owner_decision": false}
+      ]
+    },
+    {
+      "role": "owner", "path": "/my",
+      "template": "ts_panel/views/web_my.xml:ts_panel.my_home",
+      "task": "Owner lands after sign-in; most likely wants the panel",
+      "score": 3,
+      "summary": "A participant-centred home for a panel owner: the large «no tasks» card comes first and the panel entry is secondary.",
+      "findings": [
+        {"id": "P24-1", "severity": 2, "effort": "S", "where": "all", "issue": "For a user whose only role is panel owner, the first card is «فعلاً کاری ندارید» with a link to the public catalogue; «رفتن به پنل‌ها» is the second card.", "evidence": "my_375.png", "standard": "ISO 9241-210 user and context; ISO 9241-110 suitability for the task", "fix": "When memberships exist and there is no next_action, show the panel card first with a primary «رفتن به پنل [name]» (direct link if one panel), and shrink the empty state to one line.", "owner_decision": false},
+        {"id": "P24-2", "severity": 1, "effort": "S", "where": "375", "issue": "Card h2 is larger than the h1 «کارهای من»; the «حساب» tab is off-screen.", "evidence": "my_375.png", "standard": "ISO 9241-125", "fix": "PT12, PT11.", "owner_decision": false}
+      ]
+    },
+    {
+      "role": "owner", "path": "/my/account",
+      "template": "ts_panel/views/web_my.xml:ts_panel.my_account",
+      "task": "Edit name, check contact methods, reach security settings",
+      "score": 3,
+      "summary": "Well organised list of settings; its own tab is off-screen at 375, the heading sizes are inverted, and the terms differ from the pages it links to.",
+      "findings": [
+        {"id": "P25-1", "severity": 2, "effort": "S", "where": "375", "issue": "The active «حساب» tab is the 4th item and is scrolled out of view; card h2s («راه‌های ارتباط», «تنظیمات و پشتیبانی») are larger than the h1.", "evidence": "my_account_375.png", "standard": "ISO 9241-125 hierarchy; ISO 9241-110 self-descriptiveness", "fix": "PT11, PT12.", "owner_decision": false},
+        {"id": "P25-2", "severity": 1, "effort": "S", "where": "all", "issue": "Link labels differ from the target page headings («دستگاه‌های واردشده» → «نشست‌های من»; «گذرواژه» vs «رمز عبور» on reauth). The login email is in a span dir=ltr rather than <bdi>.", "evidence": "my_account_1280.txt lines 26,37-40", "standard": "ISO 9241-112 consistency", "fix": "Align headings with link labels; use <bdi dir=ltr>.", "owner_decision": false}
+      ]
+    },
+    {
+      "role": "owner", "path": "/my/phone",
+      "template": "ts_sms/views/web_sms.xml:ts_sms.phone",
+      "task": "Verify a mobile number (enables SMS reauth and notifications)",
+      "score": 3,
+      "summary": "Short and honest about use of the number, but the page layout differs from other account pages: oversized h1, heading skip, no sub-nav, and the example is only a placeholder.",
+      "findings": [
+        {"id": "P26-1", "severity": 2, "effort": "S", "where": "all", "issue": "Heading levels skip h1→h3 and the h1 is styled far larger than on other account pages; no account sub-nav or back link.", "evidence": "report.txt row 128 'heading-skip h1>h3'; my_phone_375.png", "standard": "WCAG 2.2 1.3.1, 2.4.6; ISO 9241-125 consistency", "fix": "Use tsp-head__title for h1, h2 for «تأیید شمارهٔ موبایل»; include ts_panel.my_nav (ts_sms would need a soft check, since it must not hard-depend on ts_panel) or a back link to /my/account.", "owner_decision": false},
+        {"id": "P26-2", "severity": 2, "effort": "S", "where": "all", "issue": "The only format guidance is the placeholder «۰۹۱۲۳۴۵۶۷۸۹», which disappears on typing and is low-contrast.", "evidence": "my_phone_375.png", "standard": "ISO 9241-143 input formats; WCAG 2.2 3.3.2", "fix": "Add a visible hint «مثال: ۰۹۱۲۳۴۵۶۷۸۹؛ رقم فارسی هم پذیرفته می‌شود» linked with aria-describedby; add autocomplete=\"tel\" inputmode=\"tel\" dir=\"ltr\".", "owner_decision": false}
+      ]
+    }
+  ],
+  "patterns": [
+    {"id": "PT1", "severity": 4, "issue": "Every ts-table / card-table uses background var(--white), which is not redefined in dark mode, so table bodies stay white while text switches to light: content unreadable (contrast 1.2).", "pages": ["/my/workspaces/5/members", "/my/workspaces/5/reports", "/my/workspaces/5/credits", "/my/workspaces/5/audit", "/help/roles", "/my/workspaces/5/legacy", "(also dashboard, clients, groups, invites, campaigns per report.txt)"], "fix": "ts_assessment/static/src/scss/assessment.scss:68 (.ts-table) and ts_panel/static/src/scss/panel.scss:145 and :159 (.tsp-table--cards tr): replace var(--white) with the surface token (var(--color-surface)) that the dark :root block redefines; check thead color var(--color-neutral-400) in dark too."},
+    {"id": "PT2", "severity": 3, "issue": "Sensitive POSTs call need_reauth(why, back) without `pending`; after identity confirmation the user returns to an empty form with no message and must redo and resubmit. Members/role already does this correctly with a 'resumed' flash.", "pages": ["/my/workspaces/5/settings/transfer", "/my/workspaces/5/settings/close", "/my/privacy", "/my/sessions", "/my/workspaces/5/exports"], "fix": "Pass pending (non-secret fields) in lifecycle.py:30,60, portal.py:151,160, sessions/exports controllers; on GET read ts_pv2_pending, re-check radios/checkbox and show «هویت شما تأیید شد؛ برای انجام کار دکمه را بزنید» (role=status), as in web_member.xml:31."},
+    {"id": "PT3", "severity": 2, "issue": "Audit log is named four ways: «دفتر ممیزی» (nav, glossary), «ممیزی پنل» (h1 + shell title), «گزارش ممیزی» (transfer), «گزارش رویدادها» (help).", "pages": ["/my/workspaces/5/audit", "/my/workspaces/5/settings/transfer", "/help/panel"], "fix": "Use «دفتر ممیزی» in web_audit.xml:16, controllers/audit.py:33, web_lifecycle.xml:32, web_help.xml:59,63."},
+    {"id": "PT4", "severity": 2, "issue": "«مراجعان/مراجع» (clinical wording) appears in an education panel.", "pages": ["/my/workspaces/5/settings/close", "/my/workspaces/5/audit"], "fix": "Use a purpose-aware label helper (education/employment: شرکت‌کنندگان; clinical: مراجعان) in close_panel, the lifecycle flash (lifecycle.py:68) and the audit family list."},
+    {"id": "PT5", "severity": 2, "issue": "Pages rendered without additional_title leak the English view name into <title>.", "pages": ["/help/roles", "/my/reauth"], "fix": "web_help_roles.xml and web_reauth.xml: t-call website.layout with additional_title.f=\"نقش‌ها و دسترسی‌ها\" / \"تأیید هویت\"; add a ts check that flags view names starting with 'TS panel:' in titles."},
+    {"id": "PT6", "severity": 3, "issue": "Destructive/irreversible actions are styled inconsistently: deactivate uses ts-btn--danger in a tsp-confirm card, while close panel and transfer use ts-btn--primary, and settings shows both as identical outline buttons.", "pages": ["/my/workspaces/5/settings", "/my/workspaces/5/settings/close", "/my/workspaces/5/settings/transfer", "/my/privacy"], "fix": "One confirmation pattern: tsp-confirm card + ts-btn--danger + quiet «انصراف»; a separate «منطقهٔ خطر» card at the end of settings."},
+    {"id": "PT7", "severity": 2, "issue": "Native <input type=file> shows browser-language «Choose File / No file chosen».", "pages": ["/my/workspaces/5/settings", "/my/workspaces/5/import", "/my/workspaces/5/legacy"], "fix": "Visually hide the input and use a styled <label for> button «انتخاب فایل» plus a live <span aria-live=polite> showing the chosen file name («فایلی انتخاب نشده»)."},
+    {"id": "PT8", "severity": 2, "issue": "form-select fields show no chevron (they look like text inputs), while audit and group-report filters use unstyled native selects and date inputs: three different select looks.", "pages": ["/my/workspaces/5/exports", "/my/workspaces/5/import/1/map", "/my/workspaces/5/audit", "/my/workspaces/5/reports/group"], "fix": "panel.scss: give .form-select an RTL chevron background (background-position: left 12px center) in both themes; apply tsp-field + form-select to the audit/group-report filter forms."},
+    {"id": "PT9", "severity": 1, "issue": "On phone the card-table wrapper keeps a frame, leaving an empty bordered box under the last card.", "pages": ["/my/workspaces/5/members", "/my/workspaces/5/reports", "/my/workspaces/5/credits"], "fix": "panel.scss:146: when the wrapper is inside a ts-card on phone, also drop its border/box-shadow/padding (selector covers .ts-card > .ts-table-wrap)."},
+    {"id": "PT10", "severity": 1, "issue": "Mixed-script names and codes are not bidi-isolated (member names in «», TSW-0005 panel code, Linux Chrome, login email).", "pages": ["/my/workspaces/5/members/6/deactivate", "/my/workspaces/5/settings/transfer", "/my/sessions", "/my/account", "all shell pages"], "fix": "Wrap user names in <bdi>, codes/emails/devices in <bdi dir=ltr> (web_shell.xml panel code line, web_member.xml:92, web_lifecycle.xml:24)."},
+    {"id": "PT11", "severity": 2, "issue": "Account sub-nav: at 375 it scrolls horizontally and the 4th tab «حساب» (active on account/privacy/sessions) is off-screen; the active tab is not visually distinct; /my/notifications, /prefs, /my/phone and /my/reauth have no sub-nav at all.", "pages": ["/my", "/my/account", "/my/sessions", "/my/privacy", "/my/sharing", "/my/notifications", "/my/notifications/prefs", "/my/phone"], "fix": "tsp-subnav: scroll the is-on item into view (scroll-margin + tiny JS scrollIntoView({inline:'center'})) or wrap into 2×2 at <420 px; give .is-on accent-900 fill + accent-300 text plus an underline (not colour alone); include my_nav on notifications/prefs/phone."},
+    {"id": "PT12", "severity": 2, "issue": "On /my pages card h2s are rendered larger than the page h1 (inverted hierarchy), and /my/phone uses a much larger h1 than the rest.", "pages": ["/my", "/my/account", "/my/sessions", "/my/privacy", "/my/sharing", "/my/phone"], "fix": "Scope .tsp-section .ts-card h2 to var(--fs-3) (below tsp-head__title) and use tsp-head__title in ts_sms.phone."},
+    {"id": "PT13", "severity": 2, "issue": "Shell nav group labels are 11.5 px at contrast 4.0 (needs 4.5); «تغییر پنل» link target is 28 px; at 375 the hidden drawer links are reported as unnamed (verify they are display:none/inert when closed).", "pages": ["all /my/workspaces/5/* shell pages"], "fix": "panel.scss:36 color → var(--color-neutral-600) (light) and its dark pair, font-size ≥ 12px; :29 min-block-size 44px; ensure the closed drawer has the inert attribute."},
+    {"id": "PT14", "severity": 2, "issue": "The fixed bottom tab bar on phone can cover focused controls and the last lines of content when tabbing or scrolling.", "pages": ["all /my/workspaces/5/* shell pages (members invite row clearly affected)"], "fix": "html { scroll-padding-block-end: calc(var(--tsp-tabbar-h) + 16px) } and matching padding-bottom on .tsp-shell__main at <768 px."},
+    {"id": "PT15", "severity": 1, "issue": "Role blurbs start with the role name («مالک پنل: …») and are rendered after the bold label, so every role reads twice; role lists start with the owner role.", "pages": ["/my/workspaces/5/members", "/my/workspaces/5/members/6", "/help/roles"], "fix": "perm_labels.py: store the blurb without the «X: » prefix (or strip it at render); order role pickers least-privilege first, owner last."}
+  ]
+}
