@@ -203,5 +203,110 @@ else:
     if 'bat_going' in R:
         ra = R['bat_going'].ts_battery_attempts()
         m[BU('uxb3')] = ['/take/%s' % ra[1].access_token, '/take/%s/next' % ra[0].access_token, '/my/assessments', '/my']
+
+# ---------------------------------------------------------------- prepaid billing pages (clinic phase 4, 2026-10-11)
+# On the fixtures of tools/prod/ts_http_billing.py (prepaid counseling-center panel «پنل آزمون شارژ وب», owner / capped
+# counselor c1 / participant p1, prices on two instruments). Adds: a price on BAT-TEST-HTTP, a paid top-up invoice, enough
+# credit, one open invitation (hold), one completed invitation (debit) when the suite left none, and a cap with room for
+# the cheap items only. Matrix entries «POST path body» are form posts ts_shot.py makes (no screenshot) to reach the wizard
+# steps 2/4 and the open-link campaign form. Back office (/odoo) is out of scope.
+from urllib.parse import urlencode
+from odoo import fields
+QL = lambda n: 'ts.bill.%s.http@example.invalid' % n
+qorg = env['res.partner'].search([('name', '=', 'پنل آزمون شارژ وب')], limit=1)
+QWS = env['ts.workspace'].search([('partner_id', '=', qorg.id)], limit=1) if qorg else env['ts.workspace']
+qusr = {n: U.search([('login', '=', QL(n))], limit=1) for n in ('owner', 'c1', 'p1')}
+if not (QWS and QWS.billing_mode == 'prepaid' and all(qusr.values())):
+    print('SEED-SKIP billing: run tools/prod/ts_http_billing.py on this clone first')
+else:
+    QW = '/my/workspaces/%s' % QWS.id
+    for n, fake in (('owner', 'مهسا آزمایشی'), ('c1', 'بهاره آزمایشی'), ('p1', 'آرش آزمایشی')):
+        if qusr[n].name == 'آزمون جریان':
+            qusr[n].name = fake
+    env.cr.commit()
+    qmo = M.search([('workspace_id', '=', QWS.id), ('user_id', '=', qusr['owner'].id)], limit=1)
+    qm1 = M.search([('workspace_id', '=', QWS.id), ('user_id', '=', qusr['c1'].id)], limit=1)
+    qinst = env['ts.instrument'].search([('state', '=', 'published'), ('audience', '=', 'adult'), ('code', '=like', 'inventory_%')]) \
+        .sorted(lambda i: (i.active_item_count, i.id))[:2]
+    qi1, qi2 = qinst[0], qinst[1]
+    wal = env['ts.wallet']._for_workspace(QWS)
+    Txn = env['ts.wallet.txn'].sudo()
+
+    def bill_battery_price():
+        b = env['ts.battery'].sudo().search([('code', '=', 'BAT-TEST-HTTP'), ('state', '=', 'published')], limit=1)
+        if b:
+            b._ts_ensure_product()
+            if not b.ts_list_price:
+                b.ts_list_price = 2500000
+        return b
+    step('bill_bat', bill_battery_price)
+
+    def bill_invoice():
+        Mv = env['account.move'].sudo()
+        inv = Mv.search([('ts_workspace_id', '=', QWS.id), ('ref', '=', 'TS-UX-PAID')], limit=1)
+        if not inv:
+            inv = Mv.create({'move_type': 'out_invoice', 'partner_id': qorg.id, 'ts_workspace_id': QWS.id, 'ref': 'TS-UX-PAID',
+                             'invoice_line_ids': [fields.Command.create({'product_id': env.ref('ts_billing.product_topup').id,
+                                                                         'quantity': 1, 'price_unit': 20000000,
+                                                                         'tax_ids': [fields.Command.clear()]})]})
+            inv.action_post()
+        if inv.payment_state not in ('paid', 'in_payment'):
+            env['account.payment.register'].with_context(active_model='account.move', active_ids=inv.ids).create({}) \
+                .action_create_payments()
+        return inv
+    step('bill_invoice', bill_invoice)
+
+    def bill_credit():
+        avail = wal.ts_available()
+        if avail < 20000000:
+            wal.ts_grant(20000000 - avail, 'manual')
+        return wal
+    step('bill_credit', bill_credit)
+
+    def bill_done():
+        """One completed invitation of c1 this month (the HTTP suite leaves one; recreate it on a clone where it has not run)."""
+        if Txn.search_count([('wallet_id', '=', wal.id), ('type', '=', 'debit_usage'), ('amount', '<', 0)]):
+            return True
+        a = A.create({'workspace_id': QWS.id, 'instrument_id': qi1.id, 'invitee_name': 'آرش آزمایشی',
+                      'invited_by_id': qusr['c1'].id})
+        a.action_accept(qusr['p1'], True)
+        at = a.attempt_id
+        if at.state == 'consent':
+            at.give_consent()
+        for it in at.active_items():
+            at.save_answer(it.id, 1 + it.id % 5)
+        at.action_submit()
+        return a
+    step('bill_done', bill_done)
+
+    def bill_hold():
+        a = A.search([('workspace_id', '=', QWS.id), ('invitee_name', '=', 'پریا آزمایشی'), ('withdrawn', '=', False)],
+                     order='id desc', limit=1)
+        if a and a.price_held and a.state not in ('done', 'withdrawn', 'declined'):
+            return a
+        if qm1.monthly_cap:
+            qm1.sudo().write({'monthly_cap': 0})     # a full cap from the suite would refuse the hold
+        return A.create({'workspace_id': QWS.id, 'instrument_id': qi1.id, 'invitee_name': 'پریا آزمایشی',
+                         'invited_by_id': qusr['c1'].id})
+    step('bill_hold', bill_hold)
+
+    def bill_cap():
+        spent = wal.ts_month_spend(qm1)
+        cap = -(-(spent + 2600000) // 1000000) * 1000000      # room for the instrument and the battery, not for the dear one
+        if int(qm1.monthly_cap) != cap:
+            qm1.sudo().write({'monthly_cap': cap})
+        return cap
+    step('bill_cap', bill_cap)
+
+    post_ = lambda path, **kw: 'POST %s %s' % (path, urlencode(kw))
+    m[QL('owner')] = [QW, QW + '/credits', QW + '/members/%s' % qm1.id,
+                      post_(QW + '/campaigns/new', step='review', kind='open_link', name='پیوند باز پذیرش پاییز',
+                            item_kind='single', instrument_id=qi1.id, open_max=20, open_days=14),
+                      QW + '/campaigns/new?keep=1']
+    m[QL('c1')] = [QW, QW + '/credits', QW + '/invites/new?fresh=1',
+                   post_(QW + '/invites/new', step=1, new_name='نسترن آزمایشی', new_phone='', new_email='', new_age='adult'),
+                   QW + '/invites/new?step=2',
+                   post_(QW + '/invites/new', step=2, item_kind='single', instrument_id=qi1.id),
+                   QW + '/invites/new?step=4']
 json.dump(m, open('/tmp/ux_matrix.json', 'w'))
 print('UXMATRIX', ' '.join('%s=%d' % ((k or 'public').split('@')[0], len(v)) for k, v in m.items()), 'total', sum(len(v) for v in m.values()))

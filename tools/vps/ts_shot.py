@@ -141,6 +141,17 @@ def audit(p, login, paths):
         print(('signed in as %s' % login.split('@')[0]) if ok else '!! sign-in failed for %s' % login.split('@')[0], flush=True)
         bad += 0 if ok else 1
     for path in paths:
+        if path.startswith('POST '):
+            # «POST path urlencoded-body»: a form post that sets up the next page (wizard draft), no screenshot
+            _p, url, data = (path.split(' ', 2) + [''])[:3]
+            st = page.evaluate("""async ([u, d]) => {
+              const b = new URLSearchParams(d), t = document.querySelector('input[name=csrf_token]');
+              b.set('csrf_token', t ? t.value : ((window.odoo && odoo.csrf_token) || ''));
+              const r = await fetch(u, {method: 'POST', body: b, credentials: 'same-origin', redirect: 'manual'});
+              return r.type === 'opaqueredirect' ? 303 : r.status; }""", [url, data])
+            print('post %-4s %-40s %s' % (st, url[:40], 'ok' if st in (200, 303) else 'FAILED'), flush=True)
+            bad += 0 if st in (200, 303) else 1
+            continue
         for w in WIDTHS:
             errors.clear()
             page.set_viewport_size({'width': w, 'height': 900})
