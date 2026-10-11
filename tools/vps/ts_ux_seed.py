@@ -124,7 +124,7 @@ for key, ws in (('clin.clinician', CLIN), ('emp.reviewer', EMP)):
 # On the fixtures of tools/prod/ts_http_battery.py (counseling-center panel in granted mode, battery BAT-TEST-HTTP, owner /
 # counselor c1 / participant p1 with a finished battery). Adds: a battery invitation not accepted (uxb1), accepted but no
 # consent yet (uxb2), instrument 1 submitted + instrument 2 half answered (uxb3), a battery campaign. Upserts; the HTTP
-# suite withdraws open invitations of its panel on every run, so withdrawn ones are replaced here.
+# suite withdraws open invitations of its panel on every run, so the seed reopens its own.
 BL = lambda n: 'ts.bat.%s.http@example.invalid' % n
 BU = lambda n: 'ts.bat.%s@example.invalid' % n
 bat = env['ts.battery'].sudo().search([('code', '=', 'BAT-TEST-HTTP')], limit=1)
@@ -152,10 +152,12 @@ else:
     def bat_inv(k, name, state):
         """state: invited | consent | going (instrument 1 done, instrument 2 half answered)."""
         u = bat_user(k, name)
-        a = A.search([('workspace_id', '=', BWS.id), ('battery_id', '=', bat.id), ('invitee_name', '=', name),
-                      ('withdrawn', '=', False)], limit=1) or A.create(
+        a = A.search([('workspace_id', '=', BWS.id), ('battery_id', '=', bat.id), ('invitee_name', '=', name)],
+                     order='id desc', limit=1) or A.create(
             {'workspace_id': BWS.id, 'instrument_id': bat.ts_first_instrument().id, 'battery_id': bat.id,
              'invited_by_id': busr['c1'].id, 'invitee_name': name})
+        if a.withdrawn:                 # ts_http_battery.py withdraws the open invitations of its panel on every run
+            a.withdrawn = False
         if state == 'invited':
             return a
         if not a.user_id:

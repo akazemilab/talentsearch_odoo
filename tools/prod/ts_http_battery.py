@@ -120,7 +120,8 @@ check('a counselor cannot change a colleague\'s catalog (403)', st == 403, str(s
 get(c1, W + '/invites/new?fresh=1')
 post(c1, W + '/invites/new', {'step': '1', 'new_name': 'مراجع آزمون مجموعه', 'new_phone': '', 'new_email': '', 'new_age': 'adult'})
 st, body = get(c1, W + '/invites/new?step=2')
-check('wizard step 2 offers «یک سنجه» / «یک مجموعه» with the granted battery card', st == 200 and 'یک مجموعه' in body
+check('wizard step 2 offers the granted battery card (a member without single instruments gets no «یک سنجه» choice)',
+      st == 200 and 'name="item_kind" value="battery"' in body and 'value="single"' not in body
       and ('name="battery_id" value="%s"' % BAT) in body and ('name="battery_id" value="%s"' % INTAKE) not in body and 'سنجه ·' in body, str(st))
 st, loc, _ = post(c1, W + '/invites/new', {'step': '2', 'item_kind': 'battery', 'battery_id': INTAKE})
 check('a battery outside the counselor\'s list is refused at step 2', st in (302, 303) and 'step=2' in loc, loc)
