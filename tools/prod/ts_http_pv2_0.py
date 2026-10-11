@@ -65,8 +65,18 @@ check('counselor opens the shared report', st == 200 and 'tt-cobrand' in cpage, 
 check('G30: the institute view never contains the revoke form or the share block',
       'لغو اشتراک' not in cpage and 'ts-who-sees' not in cpage and 'ts-share-counselor' not in cpage)
 
-st, loc, _ = s.req('/my/assessments/%s/unshare' % att_id, {'csrf_token': s.csrf(page)})
-check('student revokes from the report', st in (302, 303), '%s %s' % (st, loc))
+# UX audit G2 P5-2: «لغو اشتراک» on the report opens the confirmation page; its form posts the (unchanged) revoke
+rv = re.search(r'href="(/my/sharing/\d+/revoke\?back=report)"', page)
+st, _, cf = s.req(rv.group(1)) if rv else (0, '', '')
+fm = re.search(r'<form[^>]*action="(/my/sharing/\d+/revoke)"[^>]*>(.*?)</form>', cf, re.S)
+fields = {}
+for tag in re.findall(r'<input[^>]*type="hidden"[^>]*>', fm.group(2) if fm else ''):
+    nm, vl = re.search(r'name="([^"]+)"', tag), re.search(r'value="([^"]*)"', tag)
+    if nm:
+        fields[nm.group(1)] = vl.group(1) if vl else ''
+st, loc, _ = s.req(fm.group(1), fields) if fm else (st, '', '')
+check('student revokes from the report', bool(rv and fm) and st in (302, 303)
+      and loc.endswith('/my/assessments/%s' % att_id), '%s %s' % (st, loc))
 st, _, page2 = s.req('/my/assessments/%s' % att_id)
 check('after revoking the report says it is not shared', st == 200 and 'هیچ پنلی این نتیجه را نمی‌بیند' in page2 and 'لغو اشتراک' not in page2)
 st, _, pg = c.req('/my/workspaces/%s/p/%s' % (ws_id, att_id))

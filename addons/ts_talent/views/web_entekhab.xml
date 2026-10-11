@@ -24,13 +24,13 @@
                                         <p class="tt-mini">هر ردیف یک توانایی است و هر نوار یک زمینه؛ طول نوار از ۲۰ (کمترین ممکن) تا ۱۰۰ (بیشترین ممکن). «برجسته» یعنی بالاترین نمره در آن ردیف و «نزدیک» یعنی حداکثر <t t-out="fa(gap)"/> نمره کمتر از آن.</p>
                                         <div class="tt-cmp">
                                             <div t-foreach="cmp_rows" t-as="r" t-attf-class="tt-cmp__row #{'is-total' if r['total'] else ''}">
-                                                <h3 t-out="r['name']"/>
+                                                <h3><t t-out="r['name']"/><em t-if="r['equal']" class="tt-eq">همه برابر</em></h3>
                                                 <ul>
-                                                    <li t-foreach="r['cells']" t-as="c" t-attf-class="tt-cmp__cell tt-m-#{c['mark'] or 'none'}">
+                                                    <li t-foreach="r['cells']" t-as="c" t-attf-class="tt-cmp__cell tt-m-#{'eq' if r['equal'] else (c['mark'] or 'none')}">
                                                         <span class="tt-cmp__lab" t-out="c['label']"/>
                                                         <span class="tt-cmp__bar" aria-hidden="true"><i t-attf-class="tt-f#{c_index + 1}" t-attf-style="width: #{c['pct']}%"/></span>
                                                         <b t-out="fmt(c['score'])"/>
-                                                        <em t-if="c['mark'] == 'best'">برجسته</em>
+                                                        <em t-if="c['mark'] == 'best' and not r['equal']">برجسته</em>
                                                         <em t-elif="c['mark'] == 'near'">نزدیک</em>
                                                     </li>
                                                 </ul>

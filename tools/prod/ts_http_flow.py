@@ -79,7 +79,7 @@ check('catalog is 404 on eot.ir', eot.req('/assessments')[0] == 404)
 check('/take is 404 on eot.ir', eot.req('/take/x')[0] in (404, 303))
 slug = next(s for s in slugs if urllib.parse.unquote(s).startswith('فهرست-تعهد-فردی'))
 st, _, page = anon.req('/assessments/' + slug)
-check('detail page 200 for anonymous with sign-up option', st == 200 and '/web/signup' in page, str(st))
+check('detail page 200 for anonymous with sign-up option', st == 200 and 'href="/signup?' in page, str(st))
 st, loc, _ = anon.req('/assessments/%s/start' % slug, {'csrf_token': anon.csrf(page)})
 check('anonymous start -> login', st in (302, 303) and '/web/login' in loc, loc)
 

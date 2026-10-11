@@ -71,7 +71,7 @@
                                         <button type="submit" class="ts-btn ts-btn--primary">شروع سنجه</button>
                                     </form>
                                 </div>
-                                <p t-if="request.env.user._is_public()" class="ts-muted">با «شروع سنجه» اول وارد حساب خود می‌شوید یا حساب تازه می‌سازید؛ پاسخ‌ها و نتیجه در همان حساب ذخیره می‌شود.</p>
+                                <p t-if="request.env.user._is_public()" class="ts-muted">با «شروع سنجه» اول وارد حساب خود می‌شوید یا حساب تازه می‌سازید؛ پاسخ‌ها و نتیجه در همان حساب ذخیره می‌شود. <a id="ts-detail-signup" t-att-href="'/signup?' + keep_query(next='/assessments/' + inst.slug)">حساب ندارید؟ ثبت‌نام با موبایل</a></p>
                             </div>
                         </section>
                         <section class="ts-section">

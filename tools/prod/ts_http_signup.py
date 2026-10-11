@@ -124,7 +124,7 @@ check('accepting the invite leads to the test', st in (302, 303) and '/take/' in
 # public visitor on an invite: phone sign-in offered; expired link explains itself
 c3 = Client(TS)
 st, _, page = c3.req('/invite/%s' % tok_old)
-check('expired invite explains itself (200, no accept button)', st == 200 and 'منقضی' in page and '/accept' not in page, str(st))
+check('expired invite explains itself (200, no accept button)', st == 200 and 'مهلت دعوت تمام شده' in page and '/accept' not in page, str(st))
 st, _, page = c3.req('/invite/%s' % tok)
 check('used invite tells a stranger it is used', st == 200 and 'قبلاً استفاده' in page and '/accept' not in page)
 a2 = shell("""

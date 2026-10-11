@@ -364,8 +364,9 @@ COMPARE_CODES = ['ANA', 'EXP', 'ACA', 'NOV', 'DUT', 'TOT']
 def compare_rows(profile, gap=10):
     """For each ability (and the overall mean) one row across the participant's own fields.
 
-    mark: 'best' = exact top (the engine's tie rule), 'near' = within `gap`
-    points of the top, '' otherwise. Comparison is only within the person."""
+    mark: 'best' = exact top (the engine's tie rule: every exactly tied value is best, also when all are
+    equal; then `equal` is set and the template says «همه برابر» once instead of a label per cell),
+    'near' = within `gap` points of the top, '' otherwise. Comparison is only within the person."""
     rows = []
     for code in COMPARE_CODES:
         vals = [f['scales'][code] if code in SCALES else f['composites'][code] for f in profile['fields']]
@@ -373,9 +374,7 @@ def compare_rows(profile, gap=10):
         equal = len(vals) > 1 and all(abs(v - top) < 1e-9 for v in vals)
         cells = []
         for f, v in zip(profile['fields'], vals):
-            if equal:
-                mark = ''
-            elif abs(v - top) < 1e-9:
+            if abs(v - top) < 1e-9:
                 mark = 'best'
             elif top - v <= gap:
                 mark = 'near'

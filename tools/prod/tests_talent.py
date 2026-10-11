@@ -110,8 +110,9 @@ fr = {r['code']: r for r in R.compare_rows(fake, 10)}
 check('compare: exact tie -> both best', [c['mark'] for c in fr['EXP']['cells']] == ['best', 'best'])
 check('compare: 8 below top is near, 1 below is near', fr['ANA']['cells'][1]['mark'] == 'near' and fr['ACA']['cells'][1]['mark'] == 'near')
 check('compare: cards list every field with high/low', len(R.field_cards(prof, gap)) == len(prof['fields']))
-check('compare: two neutral lines, no "best major" wording', len(R.compare_lines(prof['interpretation'])) == 2
-      and not any('بهترین رشته' in x for x in R.compare_lines(prof['interpretation'])))
+cl = R.compare_lines(prof['interpretation'])
+check('compare: neutral lines (one when all fields tie, else two), no "best major" wording',
+      len(cl) == (1 if R.fields_all_tied(prof['interpretation']) else 2) and not any('بهترین رشته' in x for x in cl))
 
 # imported (historical) participant: contact only, no user
 partner = env['res.partner'].create({'name': 'شرکت‌کنندهٔ آزمون ورود'})
