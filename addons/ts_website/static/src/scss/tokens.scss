@@ -58,6 +58,7 @@
 }
 
 :root[data-theme="dark"] {
+    --white: var(--color-surface);   // Odoo frontend CSS (loaded after this bundle) redefines --white on :root
     color-scheme: dark;
     --color-bg: #161826;
     --color-surface: #232532;

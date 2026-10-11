@@ -85,6 +85,16 @@ class TsTalent(TsAssessment):
 
     # ------------------------------------------------------------ player
     @http.route()
+    def review(self, token, **kw):
+        # the generic Likert review page means nothing for a matrix attempt (UX audit 2026-10-11, P16-1):
+        # the matrix player is its own review step
+        _ts_site_or_404()
+        attempt = _my_attempt(token)
+        if attempt.ts_is_matrix():
+            return request.redirect('/take/%s' % token)
+        return super().review(token, **kw)
+
+    @http.route()
     def take(self, token, page=None, **kw):
         _ts_site_or_404()
         attempt = _my_attempt(token)

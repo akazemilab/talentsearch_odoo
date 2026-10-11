@@ -134,13 +134,13 @@
                                                 <th scope="row" data-label="سنجه" t-out="a.instrument_id.name"/>
                                                 <td data-label="وضعیت"><span class="ts-pill" t-out="state_labels.get(a.state, a.state)"/></td>
                                                 <td data-label="تاریخ" t-out="jalali(a.create_date, with_time=False)"/>
-                                                <td><a t-if="a.state == 'done' and level(a) != 'none'" t-attf-href="/my/workspaces/#{ws.id}/clients/#{client.id}/r/#{a.attempt_id.id}">نتیجه</a></td>
+                                                <td><a t-if="a.state == 'done' and level(a) != 'none'" t-attf-href="/my/workspaces/#{ws.id}/clients/#{c.id}/r/#{a.attempt_id.id}">نتیجه</a></td>
                                             </tr>
                                             <tr t-foreach="imports" t-as="t">
                                                 <th scope="row" data-label="سنجه" t-out="t.instrument_id.name"/>
                                                 <td data-label="وضعیت"><span class="ts-pill ts-pill--info">واردشده</span></td>
                                                 <td data-label="تاریخ" t-out="jalali(t.create_date, with_time=False)"/>
-                                                <td><a t-if="level_t(t) != 'none'" t-attf-href="/my/workspaces/#{ws.id}/clients/#{client.id}/r/#{t.id}">نتیجه</a></td>
+                                                <td><a t-if="level_t(t) != 'none'" t-attf-href="/my/workspaces/#{ws.id}/clients/#{c.id}/r/#{t.id}">نتیجه</a></td>
                                             </tr>
                                         </tbody>
                                     </table>
