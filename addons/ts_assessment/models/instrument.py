@@ -19,7 +19,7 @@ SECONDS_PER_ITEM = 8
 
 class TsInstrument(models.Model):
     _name = 'ts.instrument'
-    _description = 'سنجهٔ تلنت سرچ'
+    _description = 'سنجهٔ استعدادیاب'
     _inherit = ['mail.thread']
     _order = 'sequence, code'
 
@@ -223,8 +223,8 @@ class TsInstrumentBand(models.Model):
     content_version = fields.Char('نسخهٔ متن تفسیر')
     source_approved_by = fields.Char('تأییدکنندهٔ منبع', readonly=True)
     source_approved_at = fields.Char('زمان تأیید منبع', readonly=True)
-    approved_by_id = fields.Many2one('res.users', 'تأییدکنندهٔ تلنت سرچ', readonly=True)
-    approved_at = fields.Datetime('زمان تأیید تلنت سرچ', readonly=True)
+    approved_by_id = fields.Many2one('res.users', 'تأییدکنندهٔ استعدادیاب', readonly=True)
+    approved_at = fields.Datetime('زمان تأیید استعدادیاب', readonly=True)
     source_xmlid = fields.Char(readonly=True)
 
 

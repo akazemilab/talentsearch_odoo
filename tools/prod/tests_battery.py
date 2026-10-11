@@ -88,7 +88,7 @@ bad_lines = [s['code'] for s in STARTER if s['code'] in by_code and
 check('B02 starter lines are the handoff instruments in order', not bad_lines, str(bad_lines))
 check('B02 starter audiences (child battery = child)', by_code.get('BAT-CHILD-1') and by_code['BAT-CHILD-1'].audience == 'child'
       and all(by_code[c].audience == 'adult' for c in codes if c != 'BAT-CHILD-1' and c in by_code))
-check('B02 purpose flags', by_code.get('BAT-CHILD-1') and by_code['BAT-CHILD-1'].for_education
+check('B02 purpose flags (no starter battery for schools)', by_code.get('BAT-CHILD-1') and not any(b.for_education for b in starters)
       and by_code['BAT-WORK-1'].for_employment and all(b.for_clinical for b in starters)
       and not by_code['BAT-INTAKE-1'].for_employment and not by_code['BAT-INTAKE-1'].for_education)
 LIMIT = 'این مجموعه برای کمک به گفت‌وگوی مشاوره است، نه تشخیص.'
@@ -216,8 +216,7 @@ pub_for = lambda flag: ids(B.search([('state', '=', 'published'), (flag, '=', Tr
 check('D01 purpose mode, clinical: every published battery flagged clinical', ids(member(ws_p, 'clinic_director').allowed_batteries()) == pub_for('for_clinical')
       and ids(starters) <= pub_for('for_clinical'))
 check('D02 purpose mode, education: only batteries flagged education',
-      by_code['BAT-CHILD-1'].id in ids(co_d.allowed_batteries()) and by_code['BAT-INTAKE-1'].id not in ids(co_d.allowed_batteries())
-      and ids(co_d.allowed_batteries()) == pub_for('for_education'))
+      not (ids(starters) & ids(co_d.allowed_batteries())) and ids(co_d.allowed_batteries()) == pub_for('for_education'))
 check('D03 purpose mode, employment: only batteries flagged employment',
       ids(hr_e.allowed_batteries()) == pub_for('for_employment') and by_code['BAT-WORK-1'].id in ids(hr_e.allowed_batteries())
       and by_code['BAT-INTAKE-1'].id not in ids(hr_e.allowed_batteries()))

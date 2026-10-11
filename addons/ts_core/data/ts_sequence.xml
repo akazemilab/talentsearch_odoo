@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo noupdate="1">
     <record id="seq_ts_workspace" model="ir.sequence">
-        <field name="name">پنل تلنت سرچ</field>
+        <field name="name">پنل استعدادیاب</field>
         <field name="code">ts.workspace</field>
         <field name="prefix">TSW-</field>
         <field name="padding">4</field>

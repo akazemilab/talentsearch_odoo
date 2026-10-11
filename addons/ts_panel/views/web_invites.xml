@@ -246,7 +246,7 @@
                                 دعوت ساخته شد.
                                 <t t-if="a.sms_sent_at">پیامک دعوت ارسال شد.</t>
                                 <t t-elif="a.sms_consent and a.sms_error">پیامک ارسال نشد (<t t-out="a.sms_error"/>)؛ پیوند را خودتان بفرستید.</t>
-                                <t t-else="">تلنت سرچ پیامکی نفرستاده است؛ این پیوند را خودتان برای شرکت‌کننده بفرستید.</t>
+                                <t t-else="">استعدادیاب پیامکی نفرستاده است؛ این پیوند را خودتان برای شرکت‌کننده بفرستید.</t>
                             </section>
                             <section t-if="open_link" class="ts-card" aria-labelledby="tsp-i-link">
                                 <h2 id="tsp-i-link" class="h5">پیوند دعوت</h2>

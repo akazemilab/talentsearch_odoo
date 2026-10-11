@@ -108,7 +108,7 @@ Evidence (`/about`): «مسیر مناسب خودتان را از همین‌ج�
 ### 3.10 Define before you use
 Evidence (article «نکات اساسی پرورش تیزهوش در خانواده»): «هوش، توانایی یادگیری است.» / «هوش با عقل، متفاوت است.»
 Short declarative definitions are the house habit. Use them for every product term the first time a reader meets it.
-- Do: «پنل فضای مدرسهٔ شما در تلنت سرچ است؛ از اینجا شاگردان را دعوت می‌کنید.»
+- Do: «پنل فضای مدرسهٔ شما در استعدادیاب است؛ از اینجا شاگردان را دعوت می‌کنید.»
 - Don't: drop «پنل»، «سنجه» or «دفتر ممیزی» on a newcomer with no gloss.
 
 ### 3.11 Trust through named people and numbers, not slogans

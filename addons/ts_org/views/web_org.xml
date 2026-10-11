@@ -97,7 +97,7 @@
                                 <p t-if="is_new" class="ts-notice" role="status">پنل ساخته شد.</p>
                                 <section t-if="ws.gated" class="ts-notice ts-notice--warn" id="ts-pending" role="status">
                                     <strong>پنل در انتظار تأیید است.</strong>
-                                    <t t-if="ws.state == 'pilot'"> می‌توانید پنل را کامل کنید و همکارانتان را دعوت کنید؛ دعوت شرکت‌کنندهٔ واقعی و دریافت نتیجه پس از تأیید تیم تلنت سرچ باز می‌شود.</t>
+                                    <t t-if="ws.state == 'pilot'"> می‌توانید پنل را کامل کنید و همکارانتان را دعوت کنید؛ دعوت شرکت‌کنندهٔ واقعی و دریافت نتیجه پس از تأیید تیم استعدادیاب باز می‌شود.</t>
                                     <t t-if="ws.rejected_on"><br/>درخواست رد شد<t t-if="ws.rejection_note">: <span t-out="ws.rejection_note"/></t>. می‌توانید اطلاعات پنل را اصلاح کنید و با پشتیبانی تماس بگیرید.</t>
                                 </section>
                                 <section t-if="checklist" class="ts-card ts-card--soft" id="ts-checklist">
@@ -199,7 +199,7 @@
                                             <label for="ts_inv_note">یادداشت برای شرکت‌کننده (اختیاری)</label>
                                             <input id="ts_inv_note" name="note" type="text" maxlength="300"/>
                                             <button type="submit" class="ts-btn ts-btn--primary">ساخت پیوند دعوت</button>
-                                            <p class="ts-hint">تلنت سرچ ایمیل یا پیامک نمی‌فرستد؛ پیوند دعوت را خودتان برای شرکت‌کننده بفرستید.</p>
+                                            <p class="ts-hint">استعدادیاب ایمیل یا پیامک نمی‌فرستد؛ پیوند دعوت را خودتان برای شرکت‌کننده بفرستید.</p>
                                         </form>
                                     </aside>
                                 </div>
@@ -237,7 +237,7 @@
                                         <label for="ts_m_email">یا ایمیل</label>
                                         <input id="ts_m_email" name="email" type="email" dir="ltr" maxlength="200" autocomplete="off"/>
                                         <button type="submit" class="ts-btn ts-btn--primary">ساخت پیوند دعوت</button>
-                                        <p class="ts-hint">تلنت سرچ برای همکاران پیامک یا ایمیل نمی‌فرستد؛ پیوند را خودتان بفرستید.</p>
+                                        <p class="ts-hint">استعدادیاب برای همکاران پیامک یا ایمیل نمی‌فرستد؛ پیوند را خودتان بفرستید.</p>
                                     </form>
                                 </section>
 
@@ -279,7 +279,7 @@
                                     <header class="ts-doc__head">
                                         <div class="ts-doc__brand">
                                             <img src="/ts_website/static/img/talentsearch-logo.webp" width="40" height="40" alt=""/>
-                                            <div><strong>تلنت سرچ</strong><small>از خانوادهٔ <bdi dir="ltr">EOT</bdi></small></div>
+                                            <div><strong>استعدادیاب</strong><small>از خانوادهٔ <bdi dir="ltr">EOT</bdi></small></div>
                                         </div>
                                         <div class="ts-doc__kind" t-out="'گزارش ویژهٔ مشاور' if level == 'clinical' else ('خلاصهٔ نتیجه برای پنل' if level == 'summary' else 'وضعیت دعوت')"/>
                                     </header>

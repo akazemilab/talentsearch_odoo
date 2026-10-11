@@ -102,7 +102,7 @@
                                     <header class="ts-doc__head">
                                         <div class="ts-doc__brand">
                                             <img src="/ts_website/static/img/talentsearch-logo.webp" width="40" height="40" alt=""/>
-                                            <div><strong>تلنت سرچ</strong><small>از خانوادهٔ <bdi dir="ltr">EOT</bdi></small></div>
+                                            <div><strong>استعدادیاب</strong><small>از خانوادهٔ <bdi dir="ltr">EOT</bdi></small></div>
                                         </div>
                                         <div class="ts-doc__kind">گزارش نتیجهٔ سنجه</div>
                                     </header>
@@ -140,7 +140,7 @@
                                     <section class="ts-doc__sec ts-doc__foot">
                                         <h2>محدودیت‌ها و گام بعدی</h2>
                                         <p t-out="inst.limitations"/>
-                                        <p>اگر نتیجه برایتان پرسش ایجاد کرده یا نگران‌تان کرده است، با یک متخصص مشورت کنید. تلنت سرچ خدمت اورژانسی نیست؛ اگر حالتان خوب نیست، منتظر نمانید: اورژانس ۱۱۵.</p>
+                                        <p>اگر نتیجه برایتان پرسش ایجاد کرده یا نگران‌تان کرده است، با یک متخصص مشورت کنید. استعدادیاب خدمت اورژانسی نیست؛ اگر حالتان خوب نیست، منتظر نمانید: اورژانس ۱۱۵.</p>
                                         <p class="ts-hint">این گزارش متعلق به شماست. شناسهٔ گزارش <bdi dir="ltr" t-out="attempt.name"/> · اثر نتیجه <bdi dir="ltr" t-out="(attempt.output_hash or '')[:12]"/></p>
                                     </section>
                                 </article>

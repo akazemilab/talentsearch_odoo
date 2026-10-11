@@ -35,7 +35,7 @@ class TsWorkspace(models.Model):
     """Top tenancy boundary (blueprint §4). One organization can hold several
     workspaces, one per purpose; data never crosses workspaces or purposes."""
     _name = 'ts.workspace'
-    _description = 'پنل تلنت سرچ'
+    _description = 'پنل استعدادیاب'
     _inherit = ['mail.thread']
     _order = 'name'
 
@@ -173,7 +173,7 @@ class TsWorkspace(models.Model):
 
 class TsWorkspaceMember(models.Model):
     _name = 'ts.workspace.member'
-    _description = 'عضو پنل تلنت سرچ'
+    _description = 'عضو پنل استعدادیاب'
     _order = 'workspace_id, role'
 
     workspace_id = fields.Many2one('ts.workspace', required=True, ondelete='cascade', index=True)

@@ -4,7 +4,7 @@
          participants are portal users; their access is granted per
          workspace membership in ir.access.csv and in controllers. -->
     <record model="res.groups.privilege" id="privilege_ts">
-        <field name="name">تلنت سرچ</field>
+        <field name="name">استعدادیاب</field>
         <field name="sequence">60</field>
         <field name="category_id" ref="base.module_category_services"/>
     </record>

@@ -2,13 +2,13 @@
 <odoo>
     <data noupdate="1">
         <record id="crm_team_ts" model="crm.team">
-            <field name="name">تلنت سرچ</field>
+            <field name="name">استعدادیاب</field>
             <field name="use_leads" eval="True"/>
             <field name="use_opportunities" eval="True"/>
             <field name="company_id" ref="base.main_company"/>
         </record>
         <record id="crm_tag_ts" model="crm.tag">
-            <field name="name">تلنت سرچ</field>
+            <field name="name">استعدادیاب</field>
         </record>
     </data>
     <!-- Talent Search pipeline (brief: inquiry -> qualification -> demo ->

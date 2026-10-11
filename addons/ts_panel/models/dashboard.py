@@ -125,7 +125,7 @@ class TsMemberDashboard(models.Model):
                 out.append({'key': key, 'label': label, 'n': n, 'url': url})
 
         # Kept for other callers; the dashboard template skips it because the shell shows the gated notice on every page.
-        add('gated', 'پنل در انتظار تأیید تیم تلنت سرچ است', 1 if ws.gated else 0, '/help/panel')
+        add('gated', 'پنل در انتظار تأیید تیم استعدادیاب است', 1 if ws.gated else 0, '/help/panel')
         add('verify', 'احراز صلاحیت حرفه‌ای شما در حال بررسی است', 1 if self._ts_unverified_pro() else 0, '/help/panel')
         if self.can_act() and self.has_perm('invites:manage'):
             dom = assignment_domain(self)

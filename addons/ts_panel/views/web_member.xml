@@ -50,7 +50,7 @@
                                     <label class="tsp-check"><input type="checkbox" name="practises" value="1" t-att-checked="'checked' if m.owner_practices else None"/> خودم هم مسئول شرکت‌کنندگان هستم</label>
                                     <div t-if="clinical" class="tsp-field">
                                         <label class="tsp-field__label" for="tsp_lic">شمارهٔ پروانه یا نظام روان‌شناسی و مشاوره</label>
-                                        <p class="tsp-field__hint" id="tsp_lic_h">برای دیدن گزارش ویژهٔ مشاور لازم است و پس از بررسی تیم تلنت سرچ فعال می‌شود.</p>
+                                        <p class="tsp-field__hint" id="tsp_lic_h">برای دیدن گزارش ویژهٔ مشاور لازم است و پس از بررسی تیم استعدادیاب فعال می‌شود.</p>
                                         <input id="tsp_lic" name="license_number" type="text" dir="ltr" maxlength="60" t-att-value="m.license_number" aria-describedby="tsp_lic_h"/>
                                     </div>
                                     <p><button type="submit" class="ts-btn ts-btn--outline">ذخیره</button></p>

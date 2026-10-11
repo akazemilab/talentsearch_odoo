@@ -32,7 +32,7 @@
                 <xpath expr="//head/*[1]" position="before">
                     <t t-if="not title and not additional_title and main_object and main_object._name == 'ir.ui.view'">
                         <t t-set="additional_title" t-value="website.ts_fallback_title(request.httprequest.path)"/>
-                        <t t-if="not additional_title"><t t-set="main_object" t-value="None"/></t>
+                        <t t-if="not additional_title"><t t-set="additional_title" t-value="'استعدادیاب'"/></t>
                     </t>
                 </xpath>
                 <xpath expr="//a[hasclass('o_skip_to_content')]" position="replace">
@@ -45,10 +45,10 @@
                     <!-- o_no_autohide_menu + .top_menu: Odoo's frontend menu-autohide script expects header#top .top_menu (null error otherwise) -->
                     <header id="top" t-attf-class="ts-header o_no_autohide_menu ts-header--#{ts_mode} #{'ts-header--app' if ts_mode != 'marketing' else ''}" data-anchor="true" t-att-data-ts-mode="ts_mode">
                         <div class="ts-container ts-header__bar">
-                            <a href="/" class="ts-lockup" aria-label="تلنت سرچ، صفحهٔ اصلی">
+                            <a href="/" class="ts-lockup" aria-label="استعدادیاب، صفحهٔ اصلی">
                                 <img src="/ts_website/static/img/talentsearch-logo.webp" width="40" height="40" alt=""/>
                                 <span class="ts-lockup__text">
-                                    <strong>تلنت سرچ</strong>
+                                    <strong>استعدادیاب</strong>
                                     <small>سنجش روان‌شناختی، از خانوادهٔ هیجان اندیشه</small>
                                 </span>
                             </a>
@@ -118,13 +118,13 @@
                         <div class="ts-container">
                             <div class="ts-footer__grid">
                                 <div class="ts-footer__col">
-                                    <span class="ts-footer__brand">تلنت سرچ، از خانوادهٔ هیجان اندیشه</span>
+                                    <span class="ts-footer__brand">استعدادیاب، از خانوادهٔ هیجان اندیشه</span>
                                     <p>سنجش استعداد برای مدرسه‌ها و مراکز مشاوره. تصمیم با انسان است، نه با نمره.</p>
                                     <!-- same tab: a new tab needs a warning, and the core script adds an English one («(Open in new tab)») -->
                                     <a class="ts-footer__eot" href="https://www.eot.ir/">سایت هیجان اندیشه&#160;(<bdi dir="ltr">EOT</bdi>)</a>
                                 </div>
-                                <nav class="ts-footer__col" aria-label="تلنت سرچ">
-                                    <h2>تلنت سرچ</h2>
+                                <nav class="ts-footer__col" aria-label="استعدادیاب">
+                                    <h2>استعدادیاب</h2>
                                     <ul>
                                         <li><a href="/schools">برای مدارس و مشاوران</a></li>
                                         <li><a href="/assessments">سنجه‌ها</a></li>
@@ -148,7 +148,7 @@
                                 </div>
                             </div>
                             <div class="ts-footer__legal">
-                                <p>تلنت سرچ خدمت اورژانسی نیست. در شرایط اضطراری با ۱۱۵ تماس بگیرید.</p>
+                                <p>استعدادیاب خدمت اورژانسی نیست. در شرایط اضطراری با ۱۱۵ تماس بگیرید.</p>
                                 <p>© مؤسسهٔ تعاملی هیجان اندیشه</p>
                             </div>
                         </div>
@@ -160,7 +160,7 @@
                                 <li><a href="/privacy">حریم خصوصی و رضایت</a></li>
                                 <li><a href="/contact?topic=support">تماس با پشتیبانی</a></li>
                             </ul>
-                            <p>© مؤسسهٔ تعاملی هیجان اندیشه · تلنت سرچ خدمت اورژانسی نیست؛ در شرایط اضطراری با ۱۱۵ تماس بگیرید.</p>
+                            <p>© مؤسسهٔ تعاملی هیجان اندیشه · استعدادیاب خدمت اورژانسی نیست؛ در شرایط اضطراری با ۱۱۵ تماس بگیرید.</p>
                         </div>
                     </footer>
                 </xpath>

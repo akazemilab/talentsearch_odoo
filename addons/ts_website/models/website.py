@@ -72,6 +72,7 @@ class Website(models.Model):
             raise UserError('Talent Search website record is missing.')
         if site.id == 1:
             raise UserError('Refusing to configure website 1 as Talent Search.')
+        self._ts_rename_product(site)
         self._ts_setup_homepage(site)
         self._ts_setup_menu(site)
         if site.auth_signup_uninvited != 'b2c':
@@ -79,6 +80,31 @@ class Website(models.Model):
         self._ts_isolate_crm_stages()
         self._ts_contain_stock_apps(site)
         _logger.info('Talent Search site %s configured (website id %s)', site.name, site.id)
+
+    # Owner decision 2026-10-11: the Persian product name is «استعدادیاب».
+    # These records are noupdate data, so an upgrade does not rewrite them:
+    # rename each one only while it still carries the old name.
+    TS_OLD_NAME = 'تلنت سرچ'
+    TS_RENAMES = [
+        ('ts_website.crm_team_ts', 'استعدادیاب'),
+        ('ts_website.crm_tag_ts', 'استعدادیاب'),
+        ('ts_core.seq_ts_workspace', 'پنل استعدادیاب'),
+        ('ts_org.seq_ts_assignment', 'دعوت سنجش استعدادیاب'),
+        ('ts_assessment.seq_ts_attempt', 'اجرای سنجهٔ استعدادیاب'),
+    ]
+
+    def _ts_rename_product(self, site):
+        new = 'استعدادیاب'
+        if site.name == self.TS_OLD_NAME:
+            site.name = new
+            _logger.info('Talent Search: website %s renamed to %s', site.id, new)
+        for xmlid, name in self.TS_RENAMES:
+            rec = self.env.ref(xmlid, raise_if_not_found=False)
+            if rec and rec.name == name.replace(new, self.TS_OLD_NAME):
+                rec.name = name
+                if rec._fields['name'].translate:  # crm.team / crm.tag: every installed language
+                    langs = [code for code, _label in self.env['res.lang'].get_installed()]
+                    rec.update_field_translations('name', {code: name for code in langs})
 
     def _ts_setup_homepage(self, site):
         View = self.env['ir.ui.view'].with_context(active_test=False)

@@ -19,7 +19,7 @@
                             </header>
 
                             <section t-if="new_inv" class="ts-notice" role="status">
-                                دعوت برای نقش «<t t-out="invite_role_label(new_inv)"/>» ساخته شد. این پیوند را خودتان برای همکار بفرستید؛ تلنت سرچ پیامک یا ایمیلی نمی‌فرستد.
+                                دعوت برای نقش «<t t-out="invite_role_label(new_inv)"/>» ساخته شد. این پیوند را خودتان برای همکار بفرستید؛ استعدادیاب پیامک یا ایمیلی نمی‌فرستد.
                                 <input type="text" readonly="readonly" class="ts-copy" id="tsp-newinv" t-att-value="new_inv.invite_url()" aria-label="پیوند دعوت" dir="ltr"/>
                                 <button type="button" class="ts-btn ts-btn--outline ts-btn--sm" data-tsp-copy="tsp-newinv" hidden="hidden">کپی پیوند</button>
                             </section>

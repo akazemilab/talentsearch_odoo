@@ -19,8 +19,8 @@
                                 <a t-if="can_export" t-attf-href="/my/workspaces/#{ws.id}/audit/export?#{qs}" class="ts-btn ts-btn--outline">دریافت فایل (csv)</a>
                             </header>
                             <section t-if="support" class="ts-card" aria-labelledby="tsp-au-s">
-                                <h2 id="tsp-au-s" class="h5">دسترسی پشتیبانی تلنت سرچ</h2>
-                                <p class="ts-hint">هر بار که پشتیبانی تلنت سرچ به پنل دسترسی بگیرد، شما خبردار می‌شوید و این‌جا فهرست می‌شود.</p>
+                                <h2 id="tsp-au-s" class="h5">دسترسی پشتیبانی استعدادیاب</h2>
+                                <p class="ts-hint">هر بار که پشتیبانی استعدادیاب به پنل دسترسی بگیرد، شما خبردار می‌شوید و این‌جا فهرست می‌شود.</p>
                                 <div class="ts-table-wrap">
                                     <table class="ts-table tsp-table tsp-table--cards">
                                         <caption class="tsp-sr">دسترسی‌های پشتیبانی</caption>

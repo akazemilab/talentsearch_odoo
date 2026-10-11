@@ -47,7 +47,7 @@ class TsAuditEvent(models.Model):
     server-side job that records its own event first.
     """
     _name = 'ts.audit.event'
-    _description = 'رویداد ممیزی تلنت سرچ'
+    _description = 'رویداد ممیزی استعدادیاب'
     _order = 'id desc'
     _log_access = True
 

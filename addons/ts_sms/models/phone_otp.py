@@ -76,7 +76,7 @@ class TsPhoneOtp(models.Model):
                     'kv_status': int(e.get('status') or 1), 'status_text': e.get('statustext'),
                     'cost': float(e.get('cost') or 0)}])
                 return True
-            body = _('کد تأیید تلنت سرچ: %s\nاین کد را به کسی ندهید.', code)
+            body = _('کد تأیید استعدادیاب: %s\nاین کد را به کسی ندهید.', code)
             sms = self.env['sms.sms'].sudo().create({'number': phone, 'body': body, 'sms_type': 'alert', 'kv_secret': True})
             sms.send(unlink_sent=False, raise_exception=False)
             ok = sms.state in ('process', 'pending', 'sent')

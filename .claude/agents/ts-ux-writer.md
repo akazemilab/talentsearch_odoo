@@ -25,6 +25,9 @@ sentences, warmth without flattery, dignity without officialese, rhythm in Persi
 or allude to poems or lines anywhere on the site or in the product (owner decision 2026-10-11).
 
 ## Project copy rules (hard)
+- Product name (owner decision 2026-10-11): the Persian name is «استعدادیاب» in every Persian text (titles, lockup,
+  SMS, help); never «تلنت سرچ»/«تلنت‌سرچ». «Talent Search» only in the logo and English-only places; the domain
+  `talentsearch.ir` stays Latin. Lockup line: «استعدادیاب، از خانوادهٔ هیجان اندیشه».
 - «تو» for students (15–18), «شما» for adults, parents and staff. Pick by the page's audience; one page never mixes them.
 - One term per concept, from the glossary (سنجه, پیوند, پنل, شرکت‌کننده, کارشناس مسئول, دفتر ممیزی ...). If a new
   concept appears, propose a term, do not invent one silently.

@@ -31,7 +31,7 @@ STARTER = [
      'description': 'برای مشاورهٔ پیش از ازدواج یا مشاورهٔ زوج؛ هر یک از دو نفر جداگانه دعوت می‌شود و رضایت زناشویی، '
                     'خردمندی و خودگستری را پاسخ می‌دهد. ' + _LIMIT,
      'instruments': ['inventory_021', 'inventory_017', 'inventory_018']},
-    {'code': 'BAT-CHILD-1', 'name': 'کودک: شخصیت و توانایی', 'audience': 'child', 'flags': ('for_clinical', 'for_education'),
+    {'code': 'BAT-CHILD-1', 'name': 'کودک: شخصیت و توانایی', 'audience': 'child', 'flags': ('for_clinical',),
      'description': 'برای والدی که دربارهٔ کودک خود مشورت می‌خواهد؛ والد یا مراقب دربارهٔ شخصیت و توانایی‌های کودک '
                     'پاسخ می‌دهد. ' + _LIMIT,
      'instruments': ['inventory_025', 'inventory_003']},

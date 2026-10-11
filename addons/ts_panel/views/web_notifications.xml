@@ -59,7 +59,7 @@
                             <p class="tsp-head__help">برای هر رویداد انتخاب کنید که در همین سایت (زنگ اعلان) به شما گفته شود یا پیامک هم بگیرید. عنوان اعلان‌ها نام کسی یا نتیجه‌ای را نشان نمی‌دهد.</p>
                             <p t-if="flash" class="tsp-flash" role="status" t-out="flash"/>
                             <p t-if="any_sms and not has_phone" class="ts-hint" id="tsp-sms-why">پیامک فقط برای کسی ممکن است که شمارهٔ موبایل خود را با کد تأیید کرده باشد؛ برای همین گزینه‌های پیامک خاموش‌اند. <a href="/my/phone">تأیید موبایل</a></p>
-                            <p t-if="any_sms and has_phone and not sms_live" class="ts-hint" id="tsp-sms-why">ارسال پیامک اعلان‌ها هنوز از سوی تلنت سرچ راه نیفتاده است؛ انتخاب شما ذخیره می‌شود و بعداً اعمال می‌شود.</p>
+                            <p t-if="any_sms and has_phone and not sms_live" class="ts-hint" id="tsp-sms-why">ارسال پیامک اعلان‌ها هنوز از سوی استعدادیاب راه نیفتاده است؛ انتخاب شما ذخیره می‌شود و بعداً اعمال می‌شود.</p>
                             <form action="/my/notifications/prefs" method="post" class="tsp-form" data-tsp-once="1">
                                 <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
                                 <section t-foreach="groups" t-as="g" class="ts-card tsp-prefs" t-attf-aria-labelledby="tsp-pg-#{g['key']}">

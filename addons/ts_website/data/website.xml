@@ -4,7 +4,7 @@
          website-2 copy of the homepage and main menu; data/setup.xml then
          points them at Talent Search content. -->
     <record id="website_ts" model="website">
-        <field name="name">تلنت سرچ</field>
+        <field name="name">استعدادیاب</field>
         <field name="domain">https://ts.innerquest.me</field>
         <field name="sequence">20</field>
         <field name="company_id" ref="base.main_company"/>

@@ -16,7 +16,7 @@ B Odoo backend staff, ALL everyone.
 
 | Term | Meaning | Use for | Never use | Audience | Evidence |
 |---|---|---|---|---|---|
-| **تلنت سرچ** (+ «Talent Search» only in logo/`<bdi>`) | the product | running text, titles, SMS sender line | «تلنت‌سرچ» (no ZWNJ form), English name inside Persian sentences | ALL | product: «تلنت سرچ» ۵۵، «Talent Search» ۶۲ (SMS ۱۰، panel ۲۵). eot.ir home names the testing centre «استعدادیاب · قدرت گرفته از هیجان اندیشه» and says «آزمون را در استعدادیاب می‌دهید». Product uses «استعدادیاب» ۴ times. **OWNER DECISION** (see §9-1) |
+| **استعدادیاب** (+ «Talent Search» only in logo/`<bdi>`; domain `talentsearch.ir` stays Latin) | the product | running text, titles, SMS sender line, lockup «استعدادیاب، از خانوادهٔ هیجان اندیشه» | «تلنت سرچ» / «تلنت‌سرچ» (old transliteration, retired 2026-10-11), «استعدادیابی» (that is the activity, not the product), English name inside Persian sentences | ALL | Owner decision 2026-10-11 (§9-1): the Persian name is «استعدادیاب», as on eot.ir («استعدادیاب · قدرت گرفته از هیجان اندیشه»، «آزمون را در استعدادیاب می‌دهید»). Before the rename the product said «تلنت سرچ» ۵۵ times. |
 | **هیجان اندیشه** | the parent institute (EOT) | trust lines, footer: «از خانوادهٔ هیجان اندیشه» | «EOT» alone in Persian text (keep `<bdi dir="ltr">EOT</bdi>` only next to the Persian name) | ALL | eot.ir everywhere; product: «هیجان اندیشه» ۰ (only «EOT»). Add the Persian name. |
 
 ## 2. Spaces and organisations
@@ -116,11 +116,10 @@ B Odoo backend staff, ALL everyone.
 
 ## 9. Owner decisions
 
-1. **Product name in Persian.** Product says «تلنت سرچ» (۵۵) and «Talent Search» (۶۲); eot.ir's own service map calls the
-   testing centre «استعدادیاب» and sends visitors there («شروع در استعدادیاب»). Readers arriving from eot.ir will look for
-   «استعدادیاب». Recommendation: decide whether «استعدادیاب» IS talentsearch.ir. If yes, use «استعدادیاب» as the Persian
-   name in running text and keep «Talent Search» only in the logo and the domain; if no, eot.ir's card must stop
-   sending people to a different name. Either way, «تلنت سرچ» (a transliteration) should not be the Persian name long term.
+1. **Product name in Persian. DECIDED (owner, 2026-10-11): «استعدادیاب».** The product used to say «تلنت سرچ» (a
+   transliteration); eot.ir's service map already calls the testing centre «استعدادیاب» and sends visitors there
+   («شروع در استعدادیاب»). «استعدادیاب» is now the Persian name in running text, titles, SMS, the lockup and the
+   website name (`<title>` suffix); «Talent Search» stays only in the logo, the domain and English-only places.
 2. **«سنجه» vs «آزمون» on public pages.** Product UI: «سنجه» (rule term, ۱۴۱ vs ۴). Iranians search «آزمون استعداد» and
    eot.ir says «آزمون‌ها و ارزیابی‌ها». Recommendation: «سنجه» everywhere in the product and in page body copy; allow
    «آزمون» only in public page `<title>`/meta description and once in the home hero as a gloss

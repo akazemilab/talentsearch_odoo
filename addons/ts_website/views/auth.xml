@@ -21,7 +21,7 @@
                     <t t-set="ts_signup_url" t-value="('/signup?' + keep_query(next=redirect)) if redirect else '/signup'"/>
                     <div class="ts-auth">
                         <div class="ts-auth__card">
-                            <h1>ورود به تلنت سرچ</h1>
+                            <h1>ورود به استعدادیاب</h1>
                             <p class="ts-hint ts-auth__intro">با ایمیل و رمز عبور وارد شوید. اگر با شمارهٔ موبایل ثبت‌نام کرده‌اید، <a t-att-href="ts_signup_url">با شمارهٔ موبایل وارد شوید</a>.</p>
                             <form class="oe_login_form ts-form" role="form" action="/web/login" method="post" onsubmit="this.action = '/web/login' + location.hash" data-captcha="login">
                                 <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
@@ -71,14 +71,14 @@
                                 <h1>پیوند فرستاده شد</h1>
                                 <p class="ts-notice ts-notice--info" role="status" t-out="message"/>
                                 <p class="ts-hint ts-auth__intro">اگر تا چند دقیقهٔ دیگر ایمیلی نرسید، پوشهٔ هرزنامه را ببینید یا دوباره درخواست بدهید.</p>
-                                <a href="/web/login" class="ts-backlink">ورود به تلنت سرچ</a>
+                                <a href="/web/login" class="ts-backlink">ورود به استعدادیاب</a>
                             </t>
                             <t t-elif="token and invalid_token">
                                 <h1>این پیوند دیگر کار نمی‌کند</h1>
                                 <p class="ts-hint ts-auth__intro">پیوند تغییر رمز عبور مهلتش تمام شده یا یک بار استفاده شده است. پیوند تازه بگیرید.</p>
                                 <p class="ts-form__error" t-if="error" role="alert" t-out="error"/>
                                 <a href="/web/reset_password" class="ts-btn ts-btn--primary ts-btn--lg ts-btn--block">گرفتن پیوند تازه</a>
-                                <a href="/web/login" class="ts-backlink">ورود به تلنت سرچ</a>
+                                <a href="/web/login" class="ts-backlink">ورود به استعدادیاب</a>
                             </t>
                             <t t-else="">
                                 <t t-if="token">

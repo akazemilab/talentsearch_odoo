@@ -18,7 +18,7 @@
                         <meta charset="utf-8"/>
                         <meta name="viewport" content="width=device-width, initial-scale=1"/>
                         <meta name="robots" content="noindex"/>
-                        <title>خطایی پیش آمد | تلنت سرچ</title>
+                        <title>خطایی پیش آمد | استعدادیاب</title>
                         <script>(function () { try { var t = localStorage.getItem('ts-site-theme'); if (t !== 'light' &amp;&amp; t !== 'dark') { t = (window.matchMedia &amp;&amp; window.matchMedia('(prefers-color-scheme: dark)').matches) ? 'dark' : 'light'; } document.documentElement.setAttribute('data-theme', t); } catch (e) { /* light */ } })();</script>
                         <link rel="stylesheet" href="/ts_website/static/src/css/ts_error.css"/>
                         <link t-if="editable or debug" rel="stylesheet" href="/web/static/lib/bootstrap/dist/css/bootstrap.css"/>
@@ -26,9 +26,9 @@
                     <body>
                         <a class="tse-skip" href="#tse-main">پرش به محتوا</a>
                         <header class="tse-header">
-                            <a href="/" class="tse-lockup" aria-label="تلنت سرچ، صفحهٔ اصلی">
+                            <a href="/" class="tse-lockup" aria-label="استعدادیاب، صفحهٔ اصلی">
                                 <img src="/ts_website/static/img/talentsearch-logo.webp" width="36" height="36" alt=""/>
-                                <strong>تلنت سرچ</strong>
+                                <strong>استعدادیاب</strong>
                             </a>
                         </header>
                         <main id="tse-main" class="tse-main">
@@ -46,7 +46,7 @@
                             </div>
                         </main>
                         <footer class="tse-footer">
-                            <p>تلنت سرچ خدمت اورژانسی نیست؛ در شرایط اضطراری با ۱۱۵ تماس بگیرید.</p>
+                            <p>استعدادیاب خدمت اورژانسی نیست؛ در شرایط اضطراری با ۱۱۵ تماس بگیرید.</p>
                         </footer>
                         <div t-if="editable or debug" dir="ltr" lang="en" class="container">
                             <t t-call="http_routing.http_error_debug"/>

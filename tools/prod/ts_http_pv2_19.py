@@ -151,7 +151,7 @@ st, html = get(pub, '/')
 check('the home page uses the marketing header and the full footer', 'ts-header--marketing' in html and 'ts-footer__grid' in html)
 check('the home page shows the redesign hero, the theme toggle and the free panel', 'مشاورهٔ تحصیلی با داده، نه حدس' in html and 'ts-theme' in html and 'ساخت پنل رایگان' in html and "localStorage.getItem('ts-site-theme')" in html)
 st, html = get(pub, '/web/login')
-check('the sign-in page is the Persian card without the stock English form', 'ورود به تلنت سرچ' in html and 'Enter your' not in html and 'Passkey' not in html)
+check('the sign-in page is the Persian card without the stock English form', 'ورود به استعدادیاب' in html and 'Enter your' not in html and 'Passkey' not in html)
 st, html = get(pub, '/pricing')
 check('the pricing page presents the free panel, the pro plan and the FAQ', 'ts-plan--free' in html and 'ts-plan--pro' in html and 'خبرم کنید' in html and 'id="faq"' in html and 'aria-expanded="false"' in html)
 for old, new in (('/how-it-works', '/schools'), ('/evidence', '/assessments'), ('/about', '/'), ('/help', '/pricing#faq'), ('/employers', '/contact?topic=partner'), ('/clinics', '/contact?topic=partner'), ('/sample-report', '/assessments#sample'), ('/consent-policy', '/privacy'), ('/entekhab-reshteh', '/assessments')):
