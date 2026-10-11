@@ -151,7 +151,8 @@ class TsBatteryPlayer(TsTalent):
                 row.update(url='/take/%s' % nxt.access_token, fresh=nxt.state == 'consent')
                 qc['batteries_going'].append(row)
             else:
-                row.update(url=battery_url(a), shared=a.share_level != 'none')
+                row.update(url=battery_url(a), shared=a.share_level != 'none', when=jalali(
+                    max([d for d in a.ts_battery_attempts().mapped('submitted_at') if d] or [a.create_date]), with_time=False))
                 qc['batteries_done'].append(row)
         return res
 
@@ -242,7 +243,8 @@ class TsBatteryPortal(TsPanelPortal):
                 if not pct and cur.state == 'in_progress' and cur.answered_count:
                     pct = 1
                 nxt.update(title='مجموعهٔ %s · %s از %s سنجه انجام شده' % (a.battery_id.name, fa_digits(done), fa_digits(total)),
-                           url='/take/%s' % cur.access_token, progress=pct, attempt_id=cur.id)
+                           url='/take/%s' % cur.access_token, progress=pct, attempt_id=cur.id, battery=True,
+                           battery_next=cur.instrument_id.title or cur.instrument_id.name)
                 qc['going'] = qc['going'].filtered(lambda x: x.sudo().assignment_id != a)
         elif nxt and nxt.get('kind') == 'result' and first_done:
             a = first_done.sudo().assignment_id
@@ -335,8 +337,10 @@ def _wants_battery(post):
 def _picker_ctx(me, d):
     bats = me.allowed_batteries()
     bat = bats.filtered(lambda b: b.id == d.get('battery_id'))[:1] if d.get('battery_id') else bats.browse()
+    # a member without single instruments (catalog restricted to batteries) gets the battery choice directly
+    only_bats = bool(bats) and not me.allowed_instruments()
     return {'batteries': bats, 'bat': bat, 'bat_cards': {b.id: b.ts_card() for b in bats},
-            'item_kind': 'battery' if bat else 'single'}
+            'item_kind': 'battery' if (bat or only_bats) else 'single'}
 
 
 class TsBatteryInvites(TsPanelInvites):

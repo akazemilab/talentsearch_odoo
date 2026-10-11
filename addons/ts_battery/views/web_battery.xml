@@ -23,7 +23,7 @@
                                 <p t-if="tu" class="ts-lead">پاسخ‌هایت ذخیره و قفل شد.</p>
                                 <p t-else="" class="ts-lead">پاسخ‌های شما ذخیره و قفل شد.</p>
                                 <section class="ts-card tsb-next" aria-labelledby="tsb-next-h">
-                                    <h2 id="tsb-next-h" class="h6 tsb-next__k">سنجهٔ بعدی</h2>
+                                    <h2 id="tsb-next-h" class="tsb-next__k">سنجهٔ بعدی (<t t-out="fa(nxt.ts_battery_index())"/> از <t t-out="fa(total)"/>)</h2>
                                     <p class="tsb-next__name" t-out="inst.title"/>
                                     <p class="ts-hint">
                                         <t t-if="matrix"><t t-out="inst.ts_effort_label()"/> · <t t-out="inst.ts_duration_label()"/></t>
@@ -31,7 +31,7 @@
                                     </p>
                                 </section>
                                 <div class="tsb-actions">
-                                    <a t-attf-href="/take/#{nxt.access_token}" class="ts-btn ts-btn--primary ts-btn--lg">ادامه</a>
+                                    <a t-attf-href="/take/#{nxt.access_token}" class="ts-btn ts-btn--primary ts-btn--lg">شروع سنجهٔ بعدی</a>
                                     <a href="/my" class="ts-btn ts-btn--quiet">بعداً ادامه می‌دهم</a>
                                 </div>
                                 <p t-if="tu" class="ts-hint">هر وقت برگردی، از همین سنجه ادامه می‌دهی؛ پاسخ‌ها خودکار ذخیره می‌شوند.</p>
@@ -54,7 +54,7 @@
         <field name="arch" type="xml">
             <t t-name="ts_battery.consent_battery_block">
             <section t-if="bat_info" class="ts-card tsb-consent" aria-labelledby="tsb-consent-h">
-                <h2 id="tsb-consent-h" class="h5">این دعوت یک مجموعه است: <t t-out="bat_info['name']"/></h2>
+                <h2 id="tsb-consent-h" class="h5">این دعوت یک مجموعه است</h2>
                 <p>با یک بار موافقت در همین صفحه، به همهٔ سنجه‌های این مجموعه پاسخ می‌دهید. رضایت شما برای هر سنجه جداگانه ثبت و پاسخ هر سنجه جدا ذخیره می‌شود؛ هر جا خواستید دست نگه دارید و بعداً از همان‌جا ادامه دهید. این مجموعه برای کمک به گفت‌وگوی مشاوره است، نه تشخیص.</p>
                 <ol class="tsb-list">
                     <li t-foreach="bat_info['lines']" t-as="ln"><span t-out="ln['name']"/> <span class="ts-hint">· <t t-out="fa(ln['items'])"/> پرسش</span></li>
@@ -75,17 +75,19 @@
         <field name="website_id" ref="ts_website.website_ts"/>
         <field name="arch" type="xml">
             <t t-name="ts_battery.item_picker">
-            <fieldset class="tsp-field">
-                <legend class="tsp-field__label">چه چیزی بفرستید؟</legend>
-                <label class="tsp-radio"><input type="radio" name="item_kind" value="single" t-att-checked="'checked' if item_kind != 'battery' else None"/><span><strong>یک سنجه</strong><span class="tsp-field__hint tsp-radio__blurb">یک پرسشنامه و یک گزارش</span></span></label>
-                <label class="tsp-radio"><input type="radio" name="item_kind" value="battery" t-att-checked="'checked' if item_kind == 'battery' else None"/><span><strong>یک مجموعه</strong><span class="tsp-field__hint tsp-radio__blurb">چند سنجه با یک دعوت، یک بار رضایت و یک گزارش یکجا</span></span></label>
-            </fieldset>
-            <fieldset class="tsp-field" data-ts-show="item_kind=single">
-                <legend class="tsp-field__label">سنجه</legend>
-                <p t-if="not instruments" class="ts-hint">سنجهٔ تکی برای شما فعال نیست؛ یک مجموعه انتخاب کنید.</p>
-                <label t-foreach="instruments" t-as="i" class="tsp-radio"><input type="radio" name="instrument_id" t-att-value="i.id" t-att-checked="'checked' if (i.id == pick_inst_id or (len(instruments) == 1 and item_kind != 'battery')) else None"/><span t-out="i.name"/></label>
-            </fieldset>
-            <fieldset class="tsp-field tsb-cards" data-ts-show="item_kind=battery">
+            <t t-if="instruments">
+                <fieldset class="tsp-field">
+                    <legend class="tsp-field__label">چه چیزی بفرستید؟</legend>
+                    <label class="tsp-radio"><input type="radio" name="item_kind" value="single" t-att-checked="'checked' if item_kind != 'battery' else None"/><span><strong>یک سنجه</strong><span class="tsp-field__hint tsp-radio__blurb">یک دعوت به یک سنجه، با یک گزارش</span></span></label>
+                    <label class="tsp-radio"><input type="radio" name="item_kind" value="battery" t-att-checked="'checked' if item_kind == 'battery' else None"/><span><strong>یک مجموعه</strong><span class="tsp-field__hint tsp-radio__blurb">چند سنجه با یک دعوت، یک بار رضایت و یک گزارش یکجا</span></span></label>
+                </fieldset>
+                <fieldset class="tsp-field" data-ts-show="item_kind=single">
+                    <legend class="tsp-field__label">سنجه</legend>
+                    <label t-foreach="instruments" t-as="i" class="tsp-radio"><input type="radio" name="instrument_id" t-att-value="i.id" t-att-checked="'checked' if (i.id == pick_inst_id or (len(instruments) == 1 and item_kind != 'battery')) else None"/><span t-out="i.name"/></label>
+                </fieldset>
+            </t>
+            <input t-else="" type="hidden" name="item_kind" value="battery"/>
+            <fieldset class="tsp-field tsb-cards" t-att-data-ts-show="'item_kind=battery' if instruments else None">
                 <legend class="tsp-field__label">مجموعه</legend>
                 <label t-foreach="batteries" t-as="b" class="tsb-card">
                     <t t-set="card" t-value="bat_cards[b.id]"/>
@@ -115,7 +117,10 @@
                 <p class="ts-hint">از میان سنجه‌ها و مجموعه‌هایی که برای این پنل فعال است، انتخاب کنید این عضو به کدام‌ها دعوت بفرستد. دعوت‌ها و نتیجه‌های قبلی دست نمی‌خورد.</p>
                 <p class="tsb-now" role="status"><strong>اکنون:</strong>
                     <t t-if="not cat_restricted">همهٔ موارد پنل</t>
-                    <t t-else=""><t t-out="fa(len(cat_bats))"/> مجموعه و <t t-out="fa(len(cat_insts))"/> سنجهٔ انتخاب‌شده</t>
+                    <t t-elif="cat_bats and cat_insts"><t t-out="fa(len(cat_bats))"/> مجموعه و <t t-out="fa(len(cat_insts))"/> سنجهٔ تکی انتخاب‌شده</t>
+                    <t t-elif="cat_bats"><t t-out="fa(len(cat_bats))"/> مجموعه انتخاب‌شده، بدون سنجهٔ تکی</t>
+                    <t t-elif="cat_insts"><t t-out="fa(len(cat_insts))"/> سنجهٔ تکی انتخاب‌شده، بدون مجموعه</t>
+                    <t t-else="">هیچ موردی انتخاب نشده؛ این عضو فعلاً نمی‌تواند دعوت بفرستد</t>
                 </p>
                 <form t-attf-action="/my/workspaces/#{ws.id}/members/#{m.id}/catalog" method="post" class="tsp-form" data-tsp-once="1">
                     <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
@@ -253,19 +258,19 @@
                                 <section class="ts-card">
                                     <p>این مجموعه برای نقش شما فقط با وضعیت انجام نمایش داده می‌شود، یا شرکت‌کننده نتیجه را به اشتراک نگذاشته است.</p>
                                     <ul class="tsb-status">
-                                        <li t-foreach="sections" t-as="bs"><t t-out="bs['inst'].name"/> · <t t-if="bs['at'].state == 'done'">تکمیل‌شده</t><t t-else="">هنوز پاسخ داده نشده</t></li>
+                                        <li t-foreach="sections" t-as="bs"><t t-out="bs['inst'].title or bs['inst'].name"/> · <t t-if="bs['at'].state == 'done'">تکمیل‌شده</t><t t-else="">هنوز پاسخ داده نشده</t></li>
                                     </ul>
                                 </section>
                             </t>
                             <t t-else="">
                                 <nav class="ts-card tsb-jump tt-jump tsp-noprint" aria-label="سنجه‌های این مجموعه">
                                     <ol>
-                                        <li t-foreach="sections" t-as="bs"><a t-att-href="'#' + bs['sec_id']" t-out="bs['inst'].name"/>
+                                        <li t-foreach="sections" t-as="bs"><a t-att-href="'#' + bs['sec_id']" t-out="bs['inst'].title or bs['inst'].name"/>
                                             <span t-if="bs['at'].state != 'done'" class="ts-hint"> · هنوز پاسخ داده نشده</span></li>
                                     </ol>
                                 </nav>
                                 <t t-foreach="sections" t-as="bs">
-                                    <t t-call="ts_talent.sec" sec_id="bs['sec_id']" title="bs['inst'].name" collapse="'phone'" cls="'tsb-sec ts-card'">
+                                    <t t-call="ts_talent.sec" sec_id="bs['sec_id']" title="bs['inst'].title or bs['inst'].name" collapse="'phone'" cls="'tsb-sec ts-card'">
                                         <p t-if="bs['matrix'] and bs['at'].state == 'done'"><a t-att-href="result_url(bs['at'])" class="ts-btn ts-btn--outline ts-btn--sm">دیدن گزارش این سنجه</a></p>
                                         <p t-elif="bs['at'].state != 'done'" class="ts-hint">هنوز به این سنجه پاسخ داده نشده است.</p>
                                         <t t-else=""><t t-call="ts_panel.result_bands_body" level="bs['level']" results="bs['results']" blk_id="bs['sec_id']" blk_sub="True"/></t>

@@ -137,8 +137,11 @@ else:
     BW = '/my/workspaces/%s' % BWS.id
     bmo = M.search([('workspace_id', '=', BWS.id), ('user_id', '=', busr['owner'].id)], limit=1)
     bm1 = M.search([('workspace_id', '=', BWS.id), ('user_id', '=', busr['c1'].id)], limit=1)
-    if busr['p1'].name == 'آزمون جریان':
-        busr['p1'].name = 'سارا آزمایشی'
+    for n, fake in (('p1', 'سارا آزمایشی'), ('owner', 'لیلا آزمایشی'), ('c1', 'سمیرا آزمایشی'), ('c2', 'کاوه آزمایشی')):
+        u = busr.get(n) or U.search([('login', '=', BL(n))], limit=1)
+        if u and u.name == 'آزمون جریان':      # ensure_user's default name; a realistic name for the screenshots
+            u.name = fake
+    env.cr.commit()
     bdone = A.search([('workspace_id', '=', BWS.id), ('battery_id', '=', bat.id), ('user_id', '=', busr['p1'].id),
                       ('state', '=', 'done')], order='id desc', limit=1)
 
@@ -185,6 +188,7 @@ else:
     bo = ([BW + '/members/%s' % bm1.id] if bm1 else []) + [BW + '/campaigns/new']
     if 'bat_camp' in R: bo.append(BW + '/campaigns/%s' % R['bat_camp'].id)
     m[BL('owner')] = bo
+    if 'bat_camp' in R and R['bat_camp'].open_token: pub.append('/c/%s' % R['bat_camp'].open_token)
     b1 = [BW + '/invites/new?fresh=1']
     if bdone and bdone.client_id:
         b1 += [BW + '/invites/new?fresh=1&client=%s' % bdone.client_id.id, BW + '/clients/%s' % bdone.client_id.id,

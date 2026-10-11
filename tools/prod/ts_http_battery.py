@@ -104,7 +104,7 @@ check('owner sees the catalog section on the counselor\'s page', st == 200 and '
 st, loc, _ = post(own, W + '/members/%s/catalog' % M1, [('catalog_mode', 'list'), ('battery_ids', BAT)])
 check('saving the checklist redirects back to the member page', st in (302, 303) and ('/members/%s' % M1) in loc, loc)
 st, body = get(own, W + '/members/%s' % M1)
-check('the page now says one battery and no single instrument', st == 200 and '۱ مجموعه و ۰ سنجهٔ انتخاب‌شده' in body)
+check('the page now says one battery and no single instrument', st == 200 and '۱ مجموعه انتخاب‌شده، بدون سنجهٔ تکی' in body)
 out = shell("m = env['ts.workspace.member'].browse(%s); print('CAT', int(m.catalog_restricted), sorted(m.allowed_batteries().ids), len(m.allowed_instruments()),"
             " env['ts.audit.event'].search_count([('event_type', '=', 'catalog.change'), ('res_model', '=', 'ts.workspace.member'), ('res_id', '=', m.id)]))" % M1)
 cat = re.search(r'CAT (\d) \[([\d, ]*)\] (\d+) (\d+)', out)

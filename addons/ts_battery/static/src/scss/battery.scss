@@ -11,8 +11,10 @@
     .tsb-dots__i { inline-size: 28px; block-size: 6px; border-radius: 999px; background: var(--color-neutral-800); }
     .tsb-dots__i.is-done { background: var(--color-accent-400); }
     .tsb-next { margin-block: 18px; }
-    .tsb-next__k { margin: 0 0 4px; color: var(--muted); font-weight: 500; }
-    .tsb-next__name { font-size: 1.15rem; font-weight: 600; margin: 0 0 6px; }
+    // the label is small and muted, the instrument name carries the card (it read the other way round)
+    .tsb-next h2.tsb-next__k { margin: 0; font-size: .9rem; font-weight: 500; line-height: 1.6; color: var(--muted); font-family: var(--font-text); }
+    .tsb-next__name { font-size: 1.3rem; font-weight: 700; margin: 0; color: var(--color-text); }
+    .tsb-next .ts-hint { margin: 0; }
     .tsb-actions { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-block: 8px 14px; }
     .tsb-actions .ts-btn { min-block-size: 44px; }
 
@@ -44,7 +46,10 @@
         box-shadow: var(--shadow-sm); text-decoration: none; }
     .tsb-jump a::before { content: counter(tsb, persian) '. '; margin-inline-end: 4px; color: var(--muted); }
     .tsb-sec { scroll-margin-block-start: 80px; margin-block: 14px; }
-    .tsb-sec .tt-sec__h { margin: 0 0 8px; font-size: 1.2rem; }
+    // instrument headings: clearly above the report's own h3s, one rule between instruments, no gap under a closed one
+    .tsb-sec .tt-sec__h { margin: 0; font-size: 1.3rem; }
+    .tsb-sec .tt-sec__body { margin-block-start: 8px; }
+    .tsb-doc .tsb-sec + .tsb-sec { padding-block-start: 14px; border-block-start: 1px solid var(--line); }
     .tsb-sec .tt-sec__btn { display: flex; inline-size: 100%; justify-content: space-between; align-items: center; gap: 10px; min-block-size: 44px;
         padding: 4px 0; border: 0; background: none; color: var(--color-text); font: inherit; font-weight: 600; font-family: var(--font-text); text-align: start; cursor: pointer; }
     .tsb-sec .tt-sec__btn::after { content: '−'; flex: none; inline-size: 28px; block-size: 28px; display: grid; place-items: center; border-radius: 50%;

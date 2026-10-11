@@ -82,7 +82,7 @@
     .ts-age .ts-guardian .ts-check input { margin-block-start: 3px; }
 
     // account list
-    .ts-list-card + .ts-list-card { margin-block-start: var(--space-4); }
+    .ts-list-card + .ts-list-card, .ts-list-card + p { margin-block-start: var(--space-4); }
     .ts-list-group + .ts-list-group { margin-block-start: var(--space-5); padding-block-start: var(--space-4); border-block-start: 1px solid var(--line); }
     .ts-list-group h3 { font-size: var(--fs-3, 1.125rem); margin-block-end: 6px; }
     .ts-list-share a { text-decoration: underline; text-underline-offset: 3px; }
