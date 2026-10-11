@@ -119,5 +119,83 @@ for k in ('ux.p1', 'ux.p2', 'ux.p3', 'ux.p4'):
         m[L(k)] = ['/take/%s' % tok(k)] + (['/take/%s/review' % tok(k)] if k == 'ux.p4' else [])
 for key, ws in (('clin.clinician', CLIN), ('emp.reviewer', EMP)):
     if ws: m[L(key)] = ['/my/workspaces/%s' % ws.id, '/my/workspaces/%s/clients' % ws.id, '/my/workspaces/%s/reports' % ws.id]
+
+# ---------------------------------------------------------------- battery pages (clinic phase 3, 2026-10-11)
+# On the fixtures of tools/prod/ts_http_battery.py (counseling-center panel in granted mode, battery BAT-TEST-HTTP, owner /
+# counselor c1 / participant p1 with a finished battery). Adds: a battery invitation not accepted (uxb1), accepted but no
+# consent yet (uxb2), instrument 1 submitted + instrument 2 half answered (uxb3), a battery campaign. Upserts; the HTTP
+# suite withdraws open invitations of its panel on every run, so withdrawn ones are replaced here.
+BL = lambda n: 'ts.bat.%s.http@example.invalid' % n
+BU = lambda n: 'ts.bat.%s@example.invalid' % n
+bat = env['ts.battery'].sudo().search([('code', '=', 'BAT-TEST-HTTP')], limit=1)
+borg = env['res.partner'].search([('name', '=', 'پنل آزمون مجموعه وب')], limit=1)
+BWS = env['ts.workspace'].search([('partner_id', '=', borg.id)], limit=1) if borg else env['ts.workspace']
+busr = {n: U.search([('login', '=', BL(n))], limit=1) for n in ('owner', 'c1', 'p1')}
+if not (bat and BWS and all(busr.values())):
+    print('SEED-SKIP battery: run tools/prod/ts_http_battery.py on this clone first')
+else:
+    BW = '/my/workspaces/%s' % BWS.id
+    bmo = M.search([('workspace_id', '=', BWS.id), ('user_id', '=', busr['owner'].id)], limit=1)
+    bm1 = M.search([('workspace_id', '=', BWS.id), ('user_id', '=', busr['c1'].id)], limit=1)
+    if busr['p1'].name == 'آزمون جریان':
+        busr['p1'].name = 'سارا آزمایشی'
+    bdone = A.search([('workspace_id', '=', BWS.id), ('battery_id', '=', bat.id), ('user_id', '=', busr['p1'].id),
+                      ('state', '=', 'done')], order='id desc', limit=1)
+
+    def bat_user(k, name):
+        return U.search([('login', '=', BU(k))], limit=1) or U.create(
+            {'name': name, 'login': BU(k), 'email': BU(k), 'group_ids': [(6, 0, [portal.id])]})
+
+    def bat_inv(k, name, state):
+        """state: invited | consent | going (instrument 1 done, instrument 2 half answered)."""
+        u = bat_user(k, name)
+        a = A.search([('workspace_id', '=', BWS.id), ('battery_id', '=', bat.id), ('invitee_name', '=', name),
+                      ('withdrawn', '=', False)], limit=1) or A.create(
+            {'workspace_id': BWS.id, 'instrument_id': bat.ts_first_instrument().id, 'battery_id': bat.id,
+             'invited_by_id': busr['c1'].id, 'invitee_name': name})
+        if state == 'invited':
+            return a
+        if not a.user_id:
+            a.action_accept(u, True)
+        rows = a.ts_battery_attempts()
+        if state == 'going':
+            first, second = rows[0], rows[1]
+            if first.state == 'consent':
+                first.give_consent()
+            if first.state == 'in_progress':
+                for it in first.active_items():
+                    first.save_answer(it.id, 1 + it.id % 5)
+                first.action_submit()
+            if second.state == 'in_progress' and not second.answer_ids:
+                items = second.active_items()
+                for it in items[:max(1, len(items) // 2)]:
+                    second.save_answer(it.id, 1 + it.id % 5)
+        return a
+    step('bat_inv', lambda: bat_inv('uxb1', 'مریم آزمایشی', 'invited'))
+    step('bat_consent', lambda: bat_inv('uxb2', 'رضا آزمایشی', 'consent'))
+    step('bat_going', lambda: bat_inv('uxb3', 'نیما آزمایشی', 'going'))
+
+    def bat_camp():
+        C = env['ts.campaign'].sudo()
+        return C.search([('workspace_id', '=', BWS.id), ('name', '=', 'ارزیابی آغاز مشاوره پاییز')], limit=1) or C.create(
+            {'workspace_id': BWS.id, 'name': 'ارزیابی آغاز مشاوره پاییز', 'battery_id': bat.id, 'kind': 'open_link',
+             'created_by_id': bmo.id})
+    step('bat_camp', bat_camp)
+
+    bo = ([BW + '/members/%s' % bm1.id] if bm1 else []) + [BW + '/campaigns/new']
+    if 'bat_camp' in R: bo.append(BW + '/campaigns/%s' % R['bat_camp'].id)
+    m[BL('owner')] = bo
+    b1 = [BW + '/invites/new?fresh=1']
+    if bdone and bdone.client_id:
+        b1 += [BW + '/invites/new?fresh=1&client=%s' % bdone.client_id.id, BW + '/clients/%s' % bdone.client_id.id,
+               BW + '/clients/%s/b/%s' % (bdone.client_id.id, bdone.id)]
+    if 'bat_going' in R: b1.append(BW + '/invites/%s' % R['bat_going'].id)
+    m[BL('c1')] = b1
+    if bdone: m[BL('p1')] = ['/my/assessments/battery/%s' % bdone.id, '/my/assessments']
+    if 'bat_inv' in R: m[BU('uxb1')] = ['/invite/%s' % R['bat_inv'].token]
+    if 'bat_consent' in R: m[BU('uxb2')] = ['/take/%s' % R['bat_consent'].ts_battery_attempts()[0].access_token]
+    if 'bat_going' in R:
+        ra = R['bat_going'].ts_battery_attempts()
+        m[BU('uxb3')] = ['/take/%s' % ra[1].access_token, '/take/%s/next' % ra[0].access_token, '/my/assessments', '/my']
 json.dump(m, open('/tmp/ux_matrix.json', 'w'))
 print('UXMATRIX', ' '.join('%s=%d' % ((k or 'public').split('@')[0], len(v)) for k, v in m.items()), 'total', sum(len(v) for v in m.values()))
