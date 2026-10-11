@@ -113,6 +113,13 @@ for p in glob.glob(f'{ADDONS}/**/*.xml', recursive=True):
             continue
         if 't-elif' in el.attrib or 't-else' in el.attrib:
             pr = prev_element(el)
+            par = el.getparent()
+            # inherited snippet: the first node of an <xpath> placed before a t-elif, or after a t-if/t-elif, lands
+            # right behind a conditional sibling once merged
+            if pr is None and par is not None and par.tag == 'xpath':
+                expr, pos = par.get('expr', ''), par.get('position', 'inside')
+                if (pos == 'before' and '@t-elif' in expr) or (pos == 'after' and ('@t-if' in expr or '@t-elif' in expr)):
+                    continue
             if pr is None or not any(a in pr.attrib for a in COND):
                 errors.append(f'qweb {rel(p)}:{el.sourceline} <{el.tag} {"t-elif" if "t-elif" in el.attrib else "t-else"}> '
                               f'does not follow a t-if/t-elif sibling (got <{pr.tag if pr is not None else "nothing"}>)')
