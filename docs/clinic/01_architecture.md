@@ -103,6 +103,14 @@ Back office: on the workspace form a «کاتالوگ» tab (mode, two M2M lists
   through `result_level()` per attempt (same level for all, since share_level is on the assignment). Release is
   immediate (owner decision); no new release flow.
 - Expiry: the battery link expires as one (30 days / deadline); an accepted battery is never expired mid-way.
+- Phase 3 as built (2026-10-11): consent copy also copies the minor's assent / guardian ledger rows; optional lines and
+  `skipped` are not built (every starter line is required); the battery page of a participant is
+  `/my/assessments/battery/<a>`, of the panel `W/clients/<c>/b/<a>` (+ `/print`, audited `result.print`); the transition
+  page is `/take/<token>/next`. Usage events and the free debit stay one per instrument until Phase 4 (`usage:bat:<a>`).
+- Per-member catalog from the panel (owner decision 2026-10-11, "the institute manages its own institute"): permission
+  `catalog:assign` (owner, admin, clinic_director, hr_admin) on the member page; `ts.workspace.member.catalog_restricted`
+  = the two restriction lists are exact (an empty list then means none of that kind, so a counselor can be limited to
+  batteries only); unticked keeps the Phase 2 rule (empty list = whole panel catalog). Audit `catalog.change`.
 
 ## 4. Prepaid billing
 ### 4.1 Workspace billing mode

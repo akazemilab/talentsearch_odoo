@@ -8,7 +8,9 @@ from .engine import ScoringError, contract_from_version, score as engine_score
 from .instrument import BANDS
 
 # v2 (1405-07-19, UX audit 2026-10-11): consent pages explain autosave, stop/continue, locking, withdrawal and who sees
-CONSENT_VERSION = 'TS-CONSENT-1405-07-19-v2'
+# v3 (1405-07-19, clinic phase 3): a battery invitation is agreed to once, on the first instrument's page, which names the
+# battery and lists its instruments (ts_battery adds that block); the same consent is recorded on every instrument of it
+CONSENT_VERSION = 'TS-CONSENT-1405-07-19-v3'
 BAND_FA = dict(BANDS)
 BAND_WORDS = {'Low': 'کم', 'Medium': 'متوسط', 'High': 'زیاد'}
 PERSIAN_DIGITS = str.maketrans('0123456789', '۰۱۲۳۴۵۶۷۸۹')

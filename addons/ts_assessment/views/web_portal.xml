@@ -121,43 +121,7 @@
                                     </dl>
                                     </div>
 
-                                    <section class="ts-doc__sec" id="ts-summary">
-                                        <h2>خلاصهٔ نتایج</h2>
-                                        <p class="ts-hint">نمرهٔ هر بُعد میانگین پاسخ‌های شما روی مقیاس ۱ تا ۵ است (عبارت‌های معکوس پیش از میانگین‌گیری برگردانده می‌شوند). بازه‌ها: کم، متوسط و زیاد.</p>
-                                        <table class="ts-table ts-summary">
-                                            <thead><tr><th scope="col">بُعد</th><th scope="col">نمره (۱ تا ۵)</th><th scope="col">بازه</th><th scope="col" class="ts-summary__bar">جایگاه روی مقیاس</th></tr></thead>
-                                            <tbody>
-                                                <t t-foreach="results" t-as="r">
-                                                    <tr>
-                                                        <td><a t-attf-href="#f-#{r.factor_id.id}" t-out="r.factor_id.name"/></td>
-                                                        <td class="ts-num" t-out="r.score_fa()"/>
-                                                        <td><span t-attf-class="ts-band ts-band--#{r.band}" t-out="r.band_fa()"/></td>
-                                                        <td class="ts-summary__bar">
-                                                            <div class="ts-meter" role="img" t-att-aria-label="'نمره ' + r.score_fa() + ' از ۵، بازهٔ ' + r.band_fa()">
-                                                                <t t-foreach="r.factor_id.band_ids" t-as="b">
-                                                                    <span t-attf-class="ts-meter__seg ts-meter__seg--#{b.band}" t-attf-style="width: #{round(100.0 * (min(b.max_score, 5) - max(b.min_score, 1) + (0.01 if b.band != 'high' else 0)) / 4, 2)}%"/>
-                                                                </t>
-                                                                <span class="ts-meter__mark" t-attf-style="inset-inline-start: #{r.position_pct()}%"/>
-                                                            </div>
-                                                        </td>
-                                                    </tr>
-                                                </t>
-                                            </tbody>
-                                        </table>
-                                    </section>
-
-                                    <t t-foreach="results" t-as="r">
-                                        <section class="ts-doc__sec ts-factor" t-attf-id="f-#{r.factor_id.id}">
-                                            <div class="ts-factor__head">
-                                                <h2 t-out="r.factor_id.name"/>
-                                                <div class="ts-factor__score"><span class="ts-num" t-out="r.score_fa()"/> <span t-attf-class="ts-band ts-band--#{r.band}" t-out="r.band_fa()"/></div>
-                                            </div>
-                                            <t t-foreach="r.client_sections()" t-as="sec">
-                                                <h3 t-if="sec[0]" t-out="sec[0]"/>
-                                                <div class="ts-doc__text" t-out="sec[1]"/>
-                                            </t>
-                                        </section>
-                                    </t>
+                                    <t t-call="ts_assessment.report_blocks"/>
 
                                     <section t-if="history" class="ts-doc__sec ts-noprint" id="ts-history">
                                         <h2>نتیجه‌های قبلی همین سنجه</h2>
@@ -184,6 +148,62 @@
                         </section>
                     </div>
                 </t>
+            </t>
+        </field>
+    </record>
+
+    <!-- The per-attempt result blocks (summary table + one section per factor with the participant texts). Called by the
+         report page and by ts_battery's battery page (one call per instrument). Optional params: blk_sum_id (id of the
+         summary section, default ts-summary), blk_sub (True: headings one level lower, inside a battery section). -->
+    <record id="tpl_report_blocks" model="ir.ui.view">
+        <field name="name">TS: result report blocks</field>
+        <field name="type">qweb</field>
+        <field name="key">ts_assessment.report_blocks</field>
+        <field name="website_id" ref="ts_website.website_ts"/>
+        <field name="arch" type="xml">
+            <t t-name="ts_assessment.report_blocks">
+                                    <section class="ts-doc__sec" t-att-id="blk_sum_id or 'ts-summary'">
+                                        <h3 t-if="blk_sub">خلاصهٔ نتایج</h3>
+                                        <h2 t-else="">خلاصهٔ نتایج</h2>
+                                        <p class="ts-hint">نمرهٔ هر بُعد میانگین پاسخ‌های شما روی مقیاس ۱ تا ۵ است (عبارت‌های معکوس پیش از میانگین‌گیری برگردانده می‌شوند). بازه‌ها: کم، متوسط و زیاد.</p>
+                                        <table class="ts-table ts-summary">
+                                            <thead><tr><th scope="col">بُعد</th><th scope="col">نمره (۱ تا ۵)</th><th scope="col">بازه</th><th scope="col" class="ts-summary__bar">جایگاه روی مقیاس</th></tr></thead>
+                                            <tbody>
+                                                <t t-foreach="results" t-as="r">
+                                                    <tr>
+                                                        <td><a t-attf-href="#f-#{r.factor_id.id}" t-out="r.factor_id.name"/></td>
+                                                        <td class="ts-num" t-out="r.score_fa()"/>
+                                                        <td><span t-attf-class="ts-band ts-band--#{r.band}" t-out="r.band_fa()"/></td>
+                                                        <td class="ts-summary__bar">
+                                                            <div class="ts-meter" role="img" t-att-aria-label="'نمره ' + r.score_fa() + ' از ۵، بازهٔ ' + r.band_fa()">
+                                                                <t t-foreach="r.factor_id.band_ids" t-as="b">
+                                                                    <span t-attf-class="ts-meter__seg ts-meter__seg--#{b.band}" t-attf-style="width: #{round(100.0 * (min(b.max_score, 5) - max(b.min_score, 1) + (0.01 if b.band != 'high' else 0)) / 4, 2)}%"/>
+                                                                </t>
+                                                                <span class="ts-meter__mark" t-attf-style="inset-inline-start: #{r.position_pct()}%"/>
+                                                            </div>
+                                                        </td>
+                                                    </tr>
+                                                </t>
+                                            </tbody>
+                                        </table>
+                                    </section>
+
+                                    <t t-foreach="results" t-as="r">
+                                        <section class="ts-doc__sec ts-factor" t-attf-id="f-#{r.factor_id.id}">
+                                            <div class="ts-factor__head">
+                                                <h3 t-if="blk_sub" t-out="r.factor_id.name"/>
+                                                <h2 t-else="" t-out="r.factor_id.name"/>
+                                                <div class="ts-factor__score"><span class="ts-num" t-out="r.score_fa()"/> <span t-attf-class="ts-band ts-band--#{r.band}" t-out="r.band_fa()"/></div>
+                                            </div>
+                                            <t t-foreach="r.client_sections()" t-as="sec">
+                                                <t t-if="sec[0]">
+                                                    <h4 t-if="blk_sub" t-out="sec[0]"/>
+                                                    <h3 t-else="" t-out="sec[0]"/>
+                                                </t>
+                                                <div class="ts-doc__text" t-out="sec[1]"/>
+                                            </t>
+                                        </section>
+                                    </t>
             </t>
         </field>
     </record>

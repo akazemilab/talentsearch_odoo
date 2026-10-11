@@ -129,6 +129,22 @@ class TsPanelCampaigns(http.Controller):
                                groups=self._groups(me).filtered(lambda g: g.id in d.get('group_ids', [])),
                                kind_labels=KIND_LABELS, **extra)
 
+    # What is invited. ts_battery overrides these three to offer a battery next to single instruments.
+    def _read_item(self, me, post, d):
+        """Read the chosen item into the draft; returns an error text or None."""
+        iid = post.get('instrument_id') or ''
+        d['instrument_id'] = int(iid) if iid.isdigit() else 0
+        if not iid.isdigit() or int(iid) not in me.allowed_instruments().ids:
+            return 'سنجهٔ انتخاب‌شده برای این پنل مجاز نیست.'
+        return None
+
+    def _item_allowed(self, me, d):
+        return bool(d.get('instrument_id')) and d['instrument_id'] in me.allowed_instruments().ids
+
+    def _item_vals(self, me, d):
+        """Extra ts.campaign values for the chosen item."""
+        return {}
+
     def _clients_of(self, me, group_ids):
         C = request.env['ts.panel.client'].sudo()
         return C.search(visible_domain(me) + [('group_ids', 'in', group_ids)], order='name_norm, id')   # ts-scope-ok: visible_domain() starts with the panel
@@ -139,10 +155,8 @@ class TsPanelCampaigns(http.Controller):
         err = None
         if not 2 <= len(d['name']) <= 80:
             err = 'عنوان را بین ۲ تا ۸۰ نویسه بنویسید.'
-        iid = post.get('instrument_id') or ''
-        if not iid.isdigit() or int(iid) not in me.allowed_instruments().ids:
-            err = err or 'سنجهٔ انتخاب‌شده برای این پنل مجاز نیست.'
-        d['instrument_id'] = int(iid) if iid.isdigit() else 0
+        item_err = self._read_item(me, post, d)
+        err = err or item_err
         typed = (post.get('deadline') or '').strip() or (post.get('deadline_jalali') or '').strip()
         if typed:
             dd = parse_jdate(post.get('deadline'), post.get('deadline_jalali'))
@@ -176,12 +190,13 @@ class TsPanelCampaigns(http.Controller):
     def _create(self, me, ws_id, post=None):
         back = '/my/workspaces/%s/campaigns/new' % ws_id
         d = request.session.get(DRAFT % ws_id)
-        if not d or not d.get('instrument_id') or d['instrument_id'] not in me.allowed_instruments().ids:
+        if not d or not self._item_allowed(me, d):
             flash_error('فرم را دوباره پر کنید.')
             return request.redirect(back)
         Campaign = request.env['ts.campaign'].sudo()
         vals = {'workspace_id': ws_id, 'name': d['name'], 'instrument_id': d['instrument_id'], 'kind': d['kind'],
                 'deadline': d.get('deadline') or False, 'note': d.get('note') or False, 'created_by_id': me.id}
+        vals.update(self._item_vals(me, d))
         A = request.env['ts.assignment'].sudo()
         limit = request.env['ir.config_parameter'].sudo().get_int('ts_panel.invites_per_hour', 200) or 200
         try:

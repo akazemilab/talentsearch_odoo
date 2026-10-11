@@ -36,6 +36,7 @@ PERM_LABELS = {
     'results:export': 'خروجی نتیجه‌ها',
     'reports:group': 'گزارش گروهی',
     'credits:read': 'دیدن اعتبار و مصرف',
+    'catalog:assign': 'تعیین سنجه‌ها و مجموعه‌های مجاز هر عضو',
     'audit:read': 'دیدن دفتر ممیزی',
     'audit:export': 'خروجی از دفتر ممیزی',
     'support:view': 'دیدن دسترسی‌های پشتیبانی به پنل',
@@ -53,6 +54,8 @@ LIVE = {
     # UX audit 2026-10-11 (G4 P17-3): owner powers that exist today and that an owner needs to see before delegating.
     'panel:transfer', 'panel:close', 'clients:import', 'clients:export', 'results:export', 'reports:group',
     'credits:read', 'audit:read', 'audit:export',
+    # clinic phase 3: the panel itself decides which of its instruments and batteries each member may use
+    'catalog:assign',
 }
 
 # One line per role, WITHOUT the role name: pages print the bold role label first (UX audit G4 PT15).

@@ -1,14 +1,20 @@
-# Clinic phase 2: Sepehr workspace setup (docs/clinic/01_architecture.md section 10). Run inside `odoo shell`:
+# Clinic phase 2/3: Sepehr workspace setup (docs/clinic/01_architecture.md section 10). Run inside `odoo shell`:
 #   ... odoo-bin shell -d eot_tsNN < tools/prod/clinic_seed_sepehr.py
 # Needs ts_battery installed. Idempotent: a second run creates nothing and prints the same counts.
+# Owner decision 2026-10-11 ("the institute manages its own institute", "don't send anything from here"): by default this
+# creates ONLY the institution partner, the panel (granted catalog, approved) and the owner member. The owner then invites
+# the counselors from the panel and chooses each counselor's instruments and batteries on the member page. Colleague
+# invitations are prepared here only with TS_SEPEHR_INVITES=1 (and even then nothing is sent: the links are shareable).
 # Env (pass through `sudo -u odoo env VAR=... odoo-bin shell`):
 #   TS_ALLOW_LIVE=1          allow a database whose name does not start with eot_ts (live: only when the owner says so)
 #   TS_SEPEHR_OWNER_LOGIN    login of the panel owner (a portal user); required on live. On clones, when absent,
 #                            a fictional portal user ts.clinic.owner@example.invalid is created.
-#   TS_SEPEHR_PHONES         path of a JSON file [{"name": ..., "phone": ...}] for the 9 counselors; required on live.
-#                            On clones, when absent, fictional numbers 09129991001..009 are used.
+#   TS_SEPEHR_INVITES=1      also prepare the 9 colleague invitations (phone-bound); off by default.
+#   TS_SEPEHR_PHONES         with TS_SEPEHR_INVITES=1: path of a JSON file [{"name": ..., "phone": ...}] for the 9
+#                            counselors; required on live. On clones, when absent, fictional numbers 09129991001..009.
 #   TS_DRY=1                 roll back at the end instead of committing.
-# Prints counts only: never phone numbers or names.
+# Prints counts only: never phone numbers or names. A caller that execs this file inside its own transaction (the ORM
+# test) sets TS_SEED_NO_FINISH = True in the globals: then the script neither commits nor rolls back.
 import json
 import os
 import re
@@ -97,7 +103,7 @@ else:
     login = 'ts.clinic.owner@example.invalid'
     owner_user = U.search([('login', '=', login)], limit=1)
     if not owner_user:
-        owner_user = U.create({'name': 'مالک آزمایشی کلینیک', 'login': login, 'email': login,
+        owner_user = U.create({'name': 'مالک آزمایشی مرکز مشاوره', 'login': login, 'email': login,
                                'group_ids': [fields.Command.set([env.ref('base.group_portal').id])]})
         created['owner_user'] = 1
 assert owner_user.share, 'the panel owner must be a portal user'
@@ -109,9 +115,12 @@ if not owner:
 assert owner.role == 'owner', 'that user already holds another role in this panel'
 assert owner.has_perm('members:invite'), 'owner cannot invite colleagues (panel state?)'
 
-# ------------------------------------------------------------------ 5. colleague invites (prepared, never sent)
-path = os.environ.get('TS_SEPEHR_PHONES')
-if path:
+# ------------------------------------------------------------------ 5. colleague invites (only with TS_SEPEHR_INVITES=1)
+WANT_INVITES = os.environ.get('TS_SEPEHR_INVITES') == '1'
+path = os.environ.get('TS_SEPEHR_PHONES') if WANT_INVITES else None
+if not WANT_INVITES:
+    phones = []
+elif path:
     rows = json.load(open(path, encoding='utf-8'))
     by_name = {norm_name(r.get('name')): r.get('phone') for r in rows}
     phones = [by_name.get(norm_name(n)) for n, _r in COUNSELORS]
@@ -142,12 +151,16 @@ for (cname, role), raw in zip(COUNSELORS, phones):
 
 # ------------------------------------------------------------------ report (counts only)
 pending = I.search_count([('workspace_id', '=', ws.id), ('state', '=', 'pending')])
-print('SEPEHR created=%s existing_invites=%d renewed_invites=%d' % (created, skipped, renewed))
+print('SEPEHR invites=%s created=%s existing_invites=%d renewed_invites=%d' % (
+    'prepared' if WANT_INVITES else 'off (TS_SEPEHR_INVITES=1 to prepare)', created, skipped, renewed))
 print('SEPEHR workspace mode=%s gated=%s state=%s batteries=%d instruments=%d members=%d pending_invites=%d' % (
     ws.catalog_mode, ws.gated, ws.state, len(ws.catalog_battery_ids), len(ws.catalog_instrument_ids),
     len(ws.member_ids.filtered('active')), pending))
 print('SEPEHR owner allowed: instruments=%d batteries=%d' % (len(owner.allowed_instruments()), len(owner.allowed_batteries())))
-if os.environ.get('TS_DRY') == '1':
+SEPEHR_RESULT = {'workspace': ws, 'owner': owner, 'created': created, 'invites_on': WANT_INVITES}
+if globals().get('TS_SEED_NO_FINISH'):
+    print('SEPEHR left to the caller (no commit, no rollback)')
+elif os.environ.get('TS_DRY') == '1':
     env.cr.rollback()
     print('SEPEHR dry run: rolled back')
 else:

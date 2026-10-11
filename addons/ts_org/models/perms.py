@@ -43,6 +43,7 @@ _TABLE = {
     'results:export': 'owner:edu owner:emp hr_admin',
     'reports:group': 'owner:edu owner:emp counselor hr_admin reviewer',
     'credits:read': 'owner admin clinic_director hr_admin',
+    'catalog:assign': 'owner admin clinic_director hr_admin',
     'audit:read': 'owner',
     'audit:export': 'owner',
     'support:view': 'owner',

@@ -59,6 +59,7 @@ TABLE = r'''
 | `results:export` (identifiable results file) | ✓ edu, emp | — | — | — | — | ✓ | — | — |
 | `reports:group` | ✓ edu, emp | — | ✓ | — | — | ✓ | — | ✓ |
 | `credits:read` | ✓ | ✓ | — | ✓ | — | ✓ | — | — |
+| `catalog:assign` (which panel instruments and batteries a member may use) | ✓ | ✓ | — | ✓ | — | ✓ | — | — |
 | `audit:read` | ✓ | — | — | — | — | — | — | — |
 | `audit:export` | ✓ | — | — | — | — | — | — | — |
 | `support:view` (see platform access to this panel) | ✓ | — | — | — | — | — | — | — |
@@ -78,7 +79,7 @@ for line in TABLE.strip().splitlines():
         DOC[perm][role] = only or set(PCODE)
 
 # ---------------------------------------------------------------- P01 / P02
-check('P01 registry has exactly the 33 permissions of the table', set(DOC) == set(ALL_PERMS) and len(DOC) == 33, str(len(DOC)))
+check('P01 registry has exactly the 34 permissions of the table', set(DOC) == set(ALL_PERMS) and len(DOC) == 34, str(len(DOC)))
 bad = []
 for purpose in PCODE:
     for role in COLS:

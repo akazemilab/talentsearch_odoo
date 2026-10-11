@@ -177,6 +177,22 @@ class TsPanelInvites(http.Controller):
         vals.update(extra)
         return vals
 
+    # What is invited (step 2). ts_battery overrides these three to offer a battery next to single instruments.
+    def _read_item(self, me, post, d):
+        """Read the step-2 choice into the draft; returns an error text or None."""
+        iid = post.get('instrument_id') or ''
+        if not iid.isdigit() or int(iid) not in me.allowed_instruments().ids:
+            return 'سنجهٔ انتخاب‌شده برای این پنل مجاز نیست.'
+        d['instrument_id'] = int(iid)
+        return None
+
+    def _item_allowed(self, me, d):
+        return bool(d.get('instrument_id')) and d['instrument_id'] in me.allowed_instruments().ids
+
+    def _item_vals(self, me, d):
+        """Extra ts.assignment values for the chosen item."""
+        return {}
+
     @http.route('/my/workspaces/<int:ws_id>/invites/new', type='http', auth='user', website=True,
                 methods=['GET', 'POST'], sitemap=False)
     def wizard(self, ws_id, **post):
@@ -259,11 +275,10 @@ class TsPanelInvites(http.Controller):
         if not (d.get('client_id') or d.get('new_name')):
             return request.redirect(back)
         if step == '2':
-            iid = post.get('instrument_id') or ''
-            if not iid.isdigit() or int(iid) not in me.allowed_instruments().ids:
-                flash_error('سنجهٔ انتخاب‌شده برای این پنل مجاز نیست.')
+            err = self._read_item(me, post, d)
+            if err:
+                flash_error(err)
                 return request.redirect(back + '?step=2')
-            d['instrument_id'] = int(iid)
             self._save_draft(ws_id, d)
             return request.redirect(back + '?step=3')
         if step == '3':
@@ -293,7 +308,7 @@ class TsPanelInvites(http.Controller):
     def _create(self, me, ws_id, d, post=None):
         back = '/my/workspaces/%s/invites/new' % ws_id
         A = request.env['ts.assignment'].sudo()
-        if not d.get('instrument_id') or d['instrument_id'] not in me.allowed_instruments().ids:
+        if not self._item_allowed(me, d):
             flash_error('سنجهٔ انتخاب‌شده برای این پنل مجاز نیست.')
             return request.redirect(back + '?step=2')
         limit = request.env['ir.config_parameter'].sudo().get_int('ts_panel.invites_per_hour', 200) or 200
@@ -304,6 +319,7 @@ class TsPanelInvites(http.Controller):
         C = request.env['ts.panel.client'].sudo()
         vals = {'workspace_id': ws_id, 'instrument_id': d['instrument_id'], 'invited_by_id': request.env.user.id,
                 'note': d.get('note') or False, 'deadline': d.get('deadline') or False}
+        vals.update(self._item_vals(me, d))
         if d.get('client_id'):
             c = C.search(visible_domain(me) + [('id', '=', d['client_id']), ('state', '=', 'active')])
             if not c or c.contact_locked:

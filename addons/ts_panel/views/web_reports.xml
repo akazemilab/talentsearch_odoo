@@ -21,12 +21,43 @@
                                     <button type="submit" class="ts-btn ts-btn--outline">چاپ یا ذخیره به‌صورت PDF</button>
                                 </form>
                             </header>
+                            <t t-call="ts_panel.result_bands_body"/>
+                            <t t-if="level != 'status'">
+                                <section t-if="viewers is not None" class="ts-card tsp-noprint" aria-labelledby="tsp-r-v">
+                                    <h2 id="tsp-r-v" class="h5">چه کسانی این نتیجه را دیده‌اند</h2>
+                                    <p t-if="not viewers" class="ts-hint">هنوز کسی این نتیجه را باز نکرده است.</p>
+                                    <ul t-if="viewers"><li t-foreach="viewers" t-as="v"><t t-out="v[1]"/> · <t t-out="v[0]"/></li></ul>
+                                </section>
+                                <section class="ts-card">
+                                    <h2 class="h5">محدودیت‌ها</h2>
+                                    <p t-out="inst.limitations"/>
+                                    <p class="ts-hint">مشاهدهٔ این صفحه ثبت می‌شود. شناسهٔ گزارش <bdi dir="ltr" t-out="attempt.name"/></p>
+                                </section>
+                            </t>
+                        </t>
+                    </div>
+                </t>
+            </t>
+        </field>
+    </record>
+
+    <!-- The level-dependent part of one result (status note, band table, counselor guide at level clinical). Called by
+         ts_panel.result_bands and by ts_battery's panel battery page (one call per instrument, same level for all).
+         Params: level, results; optional blk_id (heading id prefix), blk_sub (headings one level lower). -->
+    <record id="tpl_result_bands_body" model="ir.ui.view">
+        <field name="name">TS panel: result body by level</field>
+        <field name="type">qweb</field>
+        <field name="key">ts_panel.result_bands_body</field>
+        <field name="website_id" ref="ts_website.website_ts"/>
+        <field name="arch" type="xml">
+            <t t-name="ts_panel.result_bands_body">
                             <section t-if="level == 'status'" class="ts-card">
                                 <p>این سنجه تکمیل شده، اما نتیجه‌اش برای نقش شما قابل نمایش نیست یا شرکت‌کننده آن را به اشتراک نگذاشته است. فقط وضعیت دعوت در دسترس است.</p>
                             </section>
                             <t t-if="level != 'status'">
-                                <section class="ts-card" aria-labelledby="tsp-r-1">
-                                    <h2 id="tsp-r-1" class="h5">خلاصهٔ نتایج</h2>
+                                <section class="ts-card" t-att-aria-labelledby="(blk_id or 'tsp-r') + '-1'">
+                                    <h3 t-if="blk_sub" t-att-id="(blk_id or 'tsp-r') + '-1'" class="h6">خلاصهٔ نتایج</h3>
+                                    <h2 t-else="" t-att-id="(blk_id or 'tsp-r') + '-1'" class="h5">خلاصهٔ نتایج</h2>
                                     <p t-if="level in ('summary', 'education')" class="ts-hint">فقط بازهٔ هر بُعد نمایش داده می‌شود. نمره‌ها، پاسخ‌ها و متن‌های تفسیری شخصی نزد شرکت‌کننده می‌ماند. این نتیجه به‌تنهایی مبنای تصمیم نیست.</p>
                                     <p t-else="" class="ts-hint">نمرهٔ هر بُعد میانگین پاسخ‌ها روی مقیاس ۱ تا ۵ است.</p>
                                     <table class="ts-table tsp-table">
@@ -42,26 +73,17 @@
                                     </table>
                                 </section>
                                 <section t-if="level == 'clinical'" t-foreach="results" t-as="r" class="ts-card">
-                                    <h2 class="h5" t-out="r.factor_id.name"/>
+                                    <h3 t-if="blk_sub" class="h6" t-out="r.factor_id.name"/>
+                                    <h2 t-else="" class="h5" t-out="r.factor_id.name"/>
                                     <t t-foreach="r.therapist_sections()" t-as="sec">
-                                        <h3 t-if="sec[0]" class="h6" t-out="sec[0]"/>
+                                        <t t-if="sec[0]">
+                                            <h4 t-if="blk_sub" class="h6" t-out="sec[0]"/>
+                                            <h3 t-else="" class="h6" t-out="sec[0]"/>
+                                        </t>
                                         <div t-out="sec[1]"/>
                                     </t>
                                 </section>
-                                <section t-if="viewers is not None" class="ts-card tsp-noprint" aria-labelledby="tsp-r-v">
-                                    <h2 id="tsp-r-v" class="h5">چه کسانی این نتیجه را دیده‌اند</h2>
-                                    <p t-if="not viewers" class="ts-hint">هنوز کسی این نتیجه را باز نکرده است.</p>
-                                    <ul t-if="viewers"><li t-foreach="viewers" t-as="v"><t t-out="v[1]"/> · <t t-out="v[0]"/></li></ul>
-                                </section>
-                                <section class="ts-card">
-                                    <h2 class="h5">محدودیت‌ها</h2>
-                                    <p t-out="inst.limitations"/>
-                                    <p class="ts-hint">مشاهدهٔ این صفحه ثبت می‌شود. شناسهٔ گزارش <bdi dir="ltr" t-out="attempt.name"/></p>
-                                </section>
                             </t>
-                        </t>
-                    </div>
-                </t>
             </t>
         </field>
     </record>

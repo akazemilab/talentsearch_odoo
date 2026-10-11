@@ -48,6 +48,7 @@ EVENTS = {
     'member.invite_revoke': ('members', '{who} دعوت یک همکار را لغو کرد'),
     'member.practice': ('members', '{who} نوع فعالیت {obj} را ثبت کرد'),
     'member.verify': ('members', '{who} صلاحیت حرفه‌ای {obj} را بررسی کرد'),
+    'catalog.change': ('members', '{who} سنجه‌ها و مجموعه‌های مجاز را تغییر داد'),
     'client.create': ('clients', '{who} شرکت‌کننده‌ای را افزود'),
     'client.edit': ('clients', '{who} اطلاعات {obj} را ویرایش کرد'),
     'client.archive': ('clients', '{who} {obj} را بایگانی کرد'),

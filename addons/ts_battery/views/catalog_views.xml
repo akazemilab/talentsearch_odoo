@@ -69,7 +69,8 @@
                         </group>
                     </group>
                     <group string="محدودیت کاتالوگ برای این عضو" groups="ts_core.group_ts_curator">
-                        <div class="text-muted" colspan="2">خالی یعنی همهٔ موارد کاتالوگ پنل. اگر چیزی انتخاب کنید، این عضو فقط به همان‌ها دعوت می‌کند.</div>
+                        <div class="text-muted" colspan="2">خالی یعنی همهٔ موارد کاتالوگ پنل. اگر چیزی انتخاب کنید، این عضو فقط به همان‌ها دعوت می‌کند. با «فهرست مجاز دقیق» (همان انتخاب مدیر پنل در صفحهٔ عضو) فهرست خالی یعنی هیچ.</div>
+                        <field name="catalog_restricted"/>
                         <field name="restrict_battery_ids" widget="many2many_tags" domain="[('state', '=', 'published')]" options="{'no_create': True}"/>
                         <field name="restrict_instrument_ids" widget="many2many_tags" domain="[('state', '=', 'published')]" options="{'no_create': True}"/>
                     </group>
