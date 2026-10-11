@@ -219,7 +219,10 @@ st, body = get(p1, path_of(loc) if loc else '/my/assessments')
 check('participant: result / transition page has no money words', st == 200 and not no_money(body), '%s %s %s' % (st, (loc or '')[:80], no_money(body)))
 for path in ('/my', '/my/assessments'):
     st, body = get(p1, path)
-    check('participant: %s has no money words' % path, st == 200 and not no_money(body), '%s %s' % (st, no_money(body)))
+    hits = no_money(body)
+    if hits:
+        i = body.find(hits[0]); print('    context:', body[max(0, i - 120):i + 60].replace('\n', ' '))
+    check('participant: %s has no money words' % path, st == 200 and not hits, '%s %s' % (st, hits))
 out = shell("a = env['ts.assignment'].browse(%s); at = a.attempt_id; t = env['ts.wallet.txn']; "
             "print('CONV', at.state, int(t.search([('idem_key', '=', 'release:%%d' %% a.id)]).amount), int(t.search([('idem_key', '=', 'usage:%%d' %% at.id)]).amount))" % AID)
 check('server: completion converted the hold (release + debit)', ('CONV done %d %d' % (P1, -P1)) in out, out[-200:])
