@@ -27,11 +27,13 @@ def _rial_from_toman(text):
 
 
 def _price_rows(me):
-    """[(kind label, name, rial)] of the items this panel (and this member) may invite."""
+    """{'prices': [(kind label, name, rial)] of the PRICED items this panel (and this member) may invite, dearest first,
+    'free_n': how many other items cost nothing}. A panel offers dozens of items; listing every free one buried the prices."""
     ws = me.workspace_id.sudo()
     rows = [('مجموعه', b.name, ws.ts_item_price(battery=b)) for b in me.allowed_batteries()]
     rows += [('سنجه', i.title or i.name, ws.ts_item_price(instrument=i)) for i in me.allowed_instruments()]
-    return rows
+    priced = sorted((r for r in rows if r[2]), key=lambda r: (-r[2], r[1]))
+    return {'prices': priced, 'free_n': len(rows) - len(priced)}
 
 
 class TsBillingCredits(TsPanelCredits):
@@ -61,13 +63,13 @@ class TsBillingCredits(TsPanelCredits):
         return render_in_shell(
             'ts_billing.credits_prepaid', me, 'credits', 'اعتبار و مصرف', wallet=wallet, st=st,
             by_member=wallet.ts_month_by_member(), capped=capped, can_manage=me.has_perm('credits:manage'),
-            prices=_price_rows(me), invoices=inv_rows, rows=rows,
+            invoices=inv_rows, rows=rows, **_price_rows(me),
             type_labels=dict(Txn._fields['type'].selection), reason_labels=dict(Txn._fields['reason_code'].selection),
             toman=ws.ts_toman, threshold=rial_int(wallet.low_threshold))
 
     def _own_page(self, me):
         return render_in_shell('ts_billing.credits_own', me, 'credits', 'اعتبار و مصرف', st=me.ts_bill_state(),
-                               prices=_price_rows(me), toman=me.workspace_id.ts_toman)
+                               toman=me.workspace_id.ts_toman, **_price_rows(me))
 
     @http.route('/my/workspaces/<int:ws_id>/credits/cap', type='http', auth='user', website=True, methods=['POST'], sitemap=False)
     def set_cap(self, ws_id, **post):

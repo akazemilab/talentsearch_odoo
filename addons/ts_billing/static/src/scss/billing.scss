@@ -1,24 +1,76 @@
 // Talent Search prepaid billing (clinic phase 4): credits page, cap bar, item prices in the invitation forms, dashboard line.
 // Part of ts_website.assets_ts (website 2 only). Logical properties only (RTL-first), 44 px touch targets, site tokens.
 #wrapwrap {
-    .tsb-stats strong { font-size: 1.25rem; }
-    .tsb-dash { margin-block: 8px 14px; }
-    .tsb-dash a { display: inline-flex; align-items: center; min-block-size: 44px; font-weight: 600; }
+    // money amounts: the text face (its Persian digits and «٬» set tight; the display face spaced them like «۲ ٬ ۰ ۶ ۰»)
+    .tsb-amt { font-family: var(--font-text); font-variant-numeric: normal; letter-spacing: 0; }
+    .tsb-sign { unicode-bidi: isolate; white-space: nowrap; }
 
-    // item prices (wizard, group invitations, battery cards)
-    .tsb-price { display: block; margin-block-start: 4px; font-size: .9rem; color: var(--muted); }
+    // the three numbers of the credits page (available first; on phones it takes the whole row)
+    .tsb-stats { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .tsb-stats > li { display: flex; }
+    .tsb-stats .tsp-stat { flex: 1; min-inline-size: 0; }
+    .tsb-stats strong { font-family: var(--font-text); font-size: var(--fs-4); font-weight: 700; line-height: 1.35; }
+    .tsb-stats .tsp-stat span { font-size: var(--fs-0); font-weight: 600; color: var(--color-text); }
+    .tsb-stats .tsp-stat small { font-size: 12px; line-height: 1.6; color: var(--ink-2); }
+    .tsb-stats__main .tsp-stat { box-shadow: var(--shadow-sm), inset 0 0 0 1.5px var(--color-accent-400); }
+    @media (max-width: 575.98px) {
+        .tsb-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        .tsb-stats > li:first-child:nth-last-child(3) { grid-column: 1 / -1; }
+    }
+
+    // dashboard line «اعتبار: … · رزروشده: …»: one link, amounts never split from «تومان»
+    .tsb-dash { margin-block: 8px 14px; }
+    .tsb-dash > a { display: inline-block; padding-block: 10px; line-height: 1.5; font-weight: 600; }
+    .tsb-dash__part, .tsb-dash .tsb-amt { white-space: nowrap; }
+
+    // item prices (wizard, group invitations, battery cards): their own line under the item name
+    .tsb-price { display: block; margin-block-start: 2px; font-size: var(--fs-0); color: var(--ink-2); }
+    .tsb-price .ts-num { font-family: var(--font-text); font-variant-numeric: normal; font-weight: 600; }
+    .tsp-radio:has(> .tsb-price) { flex-wrap: wrap; row-gap: 0; }
+    .tsp-radio > .tsb-price { flex-basis: 100%; padding-inline-start: calc(20px + var(--space-2)); }
     .tsb-price--short { color: var(--status-warn); font-weight: 600; }
-    .tsp-radio:has(input:disabled), .tsb-card:has(input:disabled) { opacity: .65; cursor: not-allowed; }
+    .tsp-radio:has(input:disabled), .tsb-card:has(input:disabled) { opacity: .7; cursor: not-allowed; }
+    .tsb-review-cap { display: block; margin-block-start: 4px; color: var(--ink-2); }
 
     // money inputs are typed in Latin or Persian digits, left to right
-    .tsb-money { max-inline-size: 16rem; font-family: Vazirmatn, var(--font-text); }
-    .tsb-inline { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
-    .tsb-inline .ts-btn { min-block-size: 44px; }
+    .tsb-money { max-inline-size: 16rem; font-family: var(--font-text); }
+    .tsb-inline { display: flex; flex-wrap: nowrap; gap: 8px; align-items: center; }
+    .tsb-inline .tsb-money { flex: 1 1 6rem; min-inline-size: 0; min-block-size: 44px; }
+    .tsb-inline .ts-btn { flex: none; min-block-size: 44px; }
 
-    // monthly cap bar
+    // monthly cap bar (dashboard, own credits page, member page)
     .tsb-cap { margin-block: 10px 16px; }
     .tsb-cap__text { margin: 0 0 6px; }
+    .tsb-cap__text .tsb-amt, .tsb-cap__left .tsb-amt { white-space: nowrap; font-weight: 600; }
+    .tsb-cap__left { margin: 6px 0 0; font-size: var(--fs-0); color: var(--ink-2); }
     .tsb-cap__bar { block-size: 10px; border-radius: 999px; background: var(--color-neutral-800); overflow: hidden; }
     .tsb-cap__fill { display: block; block-size: 100%; border-radius: 999px; background: var(--color-accent-400); }
     .tsb-cap__fill--full { background: var(--status-warn); }
+
+    // price list: two columns at every width (name + kind, price)
+    .tsb-prices th[scope=row] { font-weight: 600; }
+    .tsb-prices__kind { display: block; font-weight: 400; font-size: var(--fs-0); color: var(--muted); }
+    .tsb-prices td { white-space: nowrap; text-align: end; }
+    .tsb-prices thead th:last-child { text-align: end; }
+    .tsb-prices__free { margin-block: 10px 0; }
+
+    // ledger: type with its reason underneath; on phones one compact two-line row per entry instead of a tall card
+    .tsb-ledger__why { display: block; font-size: var(--fs-0); color: var(--muted); }
+    .tsb-ledger__k { display: none; }
+    .tsb-ledger__amt { white-space: nowrap; }
+    @media (max-width: 767.98px) {
+        .tsp-table--cards.tsb-ledger tr { display: grid; grid-template-columns: minmax(0, 1fr) auto; column-gap: 12px; row-gap: 2px;
+                                           padding: 10px 14px; margin-block-end: 8px; }
+        .tsp-table--cards.tsb-ledger th[scope=row] { grid-column: 1; grid-row: 2; inline-size: auto; padding: 0; border: 0;
+                                                     font-size: var(--fs-0); font-weight: 400; color: var(--muted); }
+        .tsp-table--cards.tsb-ledger td { display: block; inline-size: auto; padding: 0; }
+        .tsp-table--cards.tsb-ledger td[data-label]::before { content: none; }
+        .tsp-table--cards.tsb-ledger .tsb-ledger__type { grid-column: 1; grid-row: 1; font-weight: 600; }
+        .tsp-table--cards.tsb-ledger .tsb-ledger__why { display: inline; font-weight: 400; }
+        .tsp-table--cards.tsb-ledger .tsb-ledger__why::before { content: ' · '; }
+        .tsp-table--cards.tsb-ledger .tsb-ledger__amt { grid-column: 2; grid-row: 1; text-align: end; font-weight: 600; }
+        .tsp-table--cards.tsb-ledger .tsb-ledger__bal { grid-column: 2; grid-row: 2; text-align: end; font-size: var(--fs-0);
+                                                         color: var(--muted); white-space: nowrap; }
+        .tsp-table--cards.tsb-ledger .tsb-ledger__k { display: inline; }
+    }
 }

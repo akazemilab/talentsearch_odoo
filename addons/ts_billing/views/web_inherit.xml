@@ -13,12 +13,10 @@
             <xpath expr="//p[hasclass('tsp-role-note')]" position="after">
                 <t t-set="bill_st" t-value="member.ts_bill_state() if member.can_act() else None"/>
                 <p t-if="bill_st and bill_st['can_read']" class="tsb-dash" id="tsb-dash-credit">
-                    <a t-attf-href="/my/workspaces/#{ws.id}/credits">اعتبار: <span class="ts-num" t-out="ws.ts_toman(bill_st['available'])"/> · رزروشده: <span class="ts-num" t-out="ws.ts_toman(bill_st['held'])"/></a>
+                    <a t-attf-href="/my/workspaces/#{ws.id}/credits"><span class="tsb-dash__part">اعتبار: <span class="tsb-amt" t-out="ws.ts_toman(bill_st['available'])"/></span> <span aria-hidden="true">·</span> <span class="tsb-dash__part">رزروشده: <span class="tsb-amt" t-out="ws.ts_toman(bill_st['held'])"/></span></a>
                 </p>
                 <div t-if="bill_st and bill_st['capped'] and not bill_st['can_read']" class="tsb-dash" id="tsb-dash-cap">
-                    <t t-set="st" t-value="bill_st"/>
-                    <t t-set="toman" t-value="ws.ts_toman"/>
-                    <t t-call="ts_billing.cap_bar"/>
+                    <t t-call="ts_billing.cap_bar" st="bill_st" toman="ws.ts_toman"/>
                     <a t-attf-href="/my/workspaces/#{ws.id}/credits">هزینهٔ دعوت‌ها و فهرست قیمت</a>
                 </div>
             </xpath>
@@ -44,7 +42,7 @@
                 <t t-if="bill">
                     <t t-set="bill_price" t-value="bill['bat'].get(bat.id, 0) if bat else bill['inst'].get(inst.id, 0)"/>
                     <dt>هزینه</dt>
-                    <dd id="tsb-review-price"><t t-if="bill_price"><span class="ts-num" t-out="ws.ts_toman(bill_price)"/>؛ با فرستادن دعوت از اعتبار پنل رزرو و با تکمیل کسر می‌شود.</t><t t-else="">بدون هزینه</t></dd>
+                    <dd id="tsb-review-price"><t t-if="bill_price"><span class="tsb-amt" t-out="ws.ts_toman(bill_price)"/>؛ با فرستادن دعوت از اعتبار پنل رزرو و با تکمیل کسر می‌شود.<span t-if="bill['state']['capped']" class="tsb-review-cap">از سقف ماهانهٔ شما پس از این دعوت <span class="tsb-amt" t-out="ws.ts_toman(max((bill['state']['cap_left'] or 0) - bill_price, 0))"/> باقی می‌ماند.</span></t><t t-else="">بدون هزینه</t></dd>
                 </t>
             </xpath>
         </field>
@@ -97,7 +95,7 @@
                 <t t-call="ts_billing.item_price" price="bill['inst'].get(i.id, 0) if bill else 0" ok="bill['ok_inst'].get(i.id, True) if bill else True"/>
             </xpath>
             <xpath expr="//fieldset[@data-ts-show='kind=open_link']" position="inside">
-                <p t-if="bill" class="ts-hint" id="tsb-open-floor">در پنل پیش‌پرداخت، ساخت پیوند باز دست‌کم به اندازهٔ هزینهٔ ۱۰ دعوت (یا سقف پیوستن، اگر کمتر است) اعتبار لازم دارد. هزینهٔ هر پیوستن هنگام پیوستن رزرو می‌شود.</p>
+                <p t-if="bill" class="ts-hint" id="tsb-open-floor">برای ساخت پیوند باز، اعتبار پنل باید دست‌کم به اندازهٔ هزینهٔ ۱۰ دعوت باشد (اگر سقف پیوستن کمتر از ۱۰ نفر است، به اندازهٔ همان سقف). هزینهٔ هر نفر هنگام پیوستن او رزرو و با تکمیل کسر می‌شود.</p>
             </xpath>
         </field>
     </record>
@@ -130,14 +128,16 @@
                 <t t-set="cap_st" t-value="m.ts_bill_state() if (m.active and m.ts_is_capped_role() and member.has_perm('credits:manage') and member.can_act()) else None"/>
                 <section t-if="cap_st" class="ts-card" id="tsb-cap" aria-labelledby="tsb-cap-h">
                     <h2 id="tsb-cap-h" class="h5">سقف ماهانهٔ هزینهٔ دعوت‌ها</h2>
-                    <p class="ts-hint">مصرف این ماه: <span class="ts-num" t-out="ws.ts_toman(cap_st['spent'])"/>. ۰ یعنی بدون سقف. اگر دعوتی سقف را رد کند، فرستاده نمی‌شود و به این عضو گفته می‌شود با مدیر پنل صحبت کند.</p>
+                    <t t-if="cap_st['capped']" t-call="ts_billing.cap_bar" st="cap_st" toman="ws.ts_toman" cap_label="'سقف ماهانهٔ این عضو'"/>
+                    <p t-else="" class="ts-hint">مصرف این ماه: <span class="tsb-amt" t-out="ws.ts_toman(cap_st['spent'])"/>. برای این عضو سقفی تعیین نشده است.</p>
                     <form t-attf-action="/my/workspaces/#{ws.id}/credits/cap" method="post" class="tsp-form" data-tsp-once="1">
                         <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
                         <input type="hidden" name="member_id" t-att-value="m.id"/>
                         <input type="hidden" name="back" value="member"/>
                         <div class="tsp-field">
                             <label class="tsp-field__label" for="tsb_member_cap">سقف ماهانه (تومان)</label>
-                            <input id="tsb_member_cap" type="text" name="cap" inputmode="numeric" maxlength="16" dir="ltr" class="form-control tsb-money" t-att-value="ws.ts_fa_num(cap_st['cap'] // 10)"/>
+                            <p class="tsp-field__hint" id="tsb_member_cap_h">هزینهٔ دعوت‌هایی که این عضو در یک ماه شمسی می‌فرستد. ۰ یعنی بدون سقف. دعوتی که از سقف بگذرد فرستاده نمی‌شود و از این عضو خواسته می‌شود با مدیر پنل صحبت کند.</p>
+                            <input id="tsb_member_cap" type="text" name="cap" inputmode="numeric" maxlength="16" dir="ltr" class="form-control tsb-money" aria-describedby="tsb_member_cap_h" t-att-value="ws.ts_fa_num(cap_st['cap'] // 10)"/>
                         </div>
                         <p><button type="submit" class="ts-btn ts-btn--primary">ذخیرهٔ سقف</button></p>
                     </form>

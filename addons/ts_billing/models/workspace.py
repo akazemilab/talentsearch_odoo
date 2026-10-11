@@ -1,4 +1,6 @@
 """Workspace and member fields of prepaid billing (docs/clinic/04_billing_brief.md sections 2, 3, 5.4, 6)."""
+from markupsafe import Markup
+
 from odoo import api, fields, models
 from odoo.exceptions import AccessError, UserError, ValidationError
 
@@ -59,6 +61,13 @@ class TsWorkspaceBilling(models.Model):
 
     def ts_fa_num(self, n):
         return fa_num(n)
+
+    def ts_toman_signed(self, rial):
+        """Ledger amount with an explicit sign: «−۱۲۰٬۰۰۰ تومان» / «+۱۲۰٬۰۰۰ تومان». The signed number is an LTR isolate, so the
+        minus stays at the left of the digits inside RTL text (a bare «-» would drift to the reading start)."""
+        t = rial_int(rial_int(rial) / 10.0)
+        sign = '\u2212' if t < 0 else ('+' if t > 0 else '')
+        return Markup('<bdi dir="ltr" class="tsb-sign">%s%s</bdi> تومان') % (sign, fa_num(abs(t)))
 
     # ------------------------------------------------------------------ mode change (super admin, audited)
     def write(self, vals):
