@@ -86,11 +86,11 @@
                             <form t-if="groups or instruments" method="get" class="ts-card tsp-form tsp-filters tsp-filters--grid" aria-label="پالایه‌های نتیجه‌ها">
                                 <label t-if="groups" class="tsp-field"><span class="tsp-field__label">گروه</span>
                                     <select name="group_id" class="form-select"><option value="">همهٔ گروه‌ها</option>
-                                        <option t-foreach="groups" t-as="g" t-att-value="g.id" t-att-selected="'selected' if params.get('group_id') == str(g.id) else None" t-out="g.name"/>
+                                        <option t-foreach="groups" t-as="g" t-att-value="g.id" t-att-selected="'selected' if params.get('group_id') == str(g.id) else None" t-out="fa(g.name)"/>
                                     </select></label>
                                 <label class="tsp-field"><span class="tsp-field__label">سنجه</span>
                                     <select name="instrument_id" class="form-select"><option value="">همهٔ سنجه‌ها</option>
-                                        <option t-foreach="instruments" t-as="i" t-att-value="i.id" t-att-selected="'selected' if params.get('instrument_id') == str(i.id) else None" t-out="i.name"/>
+                                        <option t-foreach="instruments" t-as="i" t-att-value="i.id" t-att-selected="'selected' if params.get('instrument_id') == str(i.id) else None" t-out="fa(i.name)"/>
                                     </select></label>
                                 <p class="tsp-field--wide"><button type="submit" class="ts-btn ts-btn--outline">نمایش</button>
                                     <a t-if="params" t-attf-href="/my/workspaces/#{ws.id}/reports" class="ts-btn ts-btn--quiet">حذف پالایه‌ها</a></p>
@@ -153,15 +153,15 @@
                             <form method="get" class="ts-card tsp-form tsp-filters tsp-filters--grid" aria-label="پالایه‌ها">
                                 <label class="tsp-field"><span class="tsp-field__label">گروه</span>
                                     <select name="group_id" class="form-select"><option value="">همه</option>
-                                        <option t-foreach="groups" t-as="g" t-att-value="g.id" t-att-selected="'selected' if params.get('group_id') == str(g.id) else None" t-out="g.name"/>
+                                        <option t-foreach="groups" t-as="g" t-att-value="g.id" t-att-selected="'selected' if params.get('group_id') == str(g.id) else None" t-out="fa(g.name)"/>
                                     </select></label>
                                 <label class="tsp-field"><span class="tsp-field__label">دعوت گروهی</span>
                                     <select name="campaign_id" class="form-select"><option value="">همه</option>
-                                        <option t-foreach="campaigns" t-as="c" t-att-value="c.id" t-att-selected="'selected' if params.get('campaign_id') == str(c.id) else None" t-out="c.name"/>
+                                        <option t-foreach="campaigns" t-as="c" t-att-value="c.id" t-att-selected="'selected' if params.get('campaign_id') == str(c.id) else None" t-out="fa(c.name)"/>
                                     </select></label>
                                 <label class="tsp-field"><span class="tsp-field__label">سنجه</span>
                                     <select name="instrument_id" class="form-select"><option value="">همه</option>
-                                        <option t-foreach="instruments" t-as="i" t-att-value="i.id" t-att-selected="'selected' if params.get('instrument_id') == str(i.id) else None" t-out="i.name"/>
+                                        <option t-foreach="instruments" t-as="i" t-att-value="i.id" t-att-selected="'selected' if params.get('instrument_id') == str(i.id) else None" t-out="fa(i.name)"/>
                                     </select></label>
                                 <label class="tsp-field"><span class="tsp-field__label">بازهٔ زمانی</span>
                                     <select name="period" class="form-select">

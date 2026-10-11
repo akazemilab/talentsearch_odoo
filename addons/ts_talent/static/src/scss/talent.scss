@@ -85,7 +85,7 @@
     .tt-q.is-answered legend::after { content: '✓'; margin-inline-start: 8px; color: var(--status-ok); font-weight: 700; }
     .tt-stem { font-size: 1rem; font-weight: 500; color: var(--color-text); margin: 6px 0 12px; }
     .tt-keyhint { margin-block-start: 6px; }
-    @media (pointer: coarse) { .tt-keyhint { display: none; } }
+    @media (pointer: coarse), (hover: none), (max-width: 767.98px) { .tt-keyhint { display: none; } }
     .tt-qnum { color: var(--tt-hero2); font-weight: 600; margin-inline-end: 6px; font-feature-settings: "tnum"; }
     .tt-fn { color: var(--tt-hero2); font-weight: 600; }
     .tt-q.is-missing { background: var(--status-warn-soft); box-shadow: 0 0 0 1px var(--status-warn); }
@@ -115,10 +115,11 @@
     .tt-inline-form { display: inline; margin: 0; }
     .tt-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-block-end: 12px; }
     // in-page index (sticky on phones) and collapsible sections
-    .tt-jump { display: flex; gap: 6px 14px; align-items: center; overflow-x: auto; white-space: nowrap; padding: 10px 2px; margin-block: 14px 0; border-block: 1px solid var(--tt-line); font-size: .9rem; background: var(--color-surface); }
+    .tt-jump { display: flex; flex-wrap: wrap; gap: 0 14px; align-items: center; padding: 6px 2px; margin-block: 14px 0; border-block: 1px solid var(--tt-line); font-size: .9rem; background: var(--color-surface); }
     .tt-jump a { display: inline-flex; align-items: center; min-height: 44px; padding-inline: 4px; color: var(--tt-hero2); }
     .tt-jump__k { color: var(--tt-muted); }
-    @media (max-width: 640px) { .tt-jump { position: sticky; inset-block-start: 0; z-index: 4; } }
+    .tt-jump__k { flex-basis: 100%; }
+    @media (min-width: 641px) { .tt-jump__k { flex-basis: auto; } }
     .tt-sec { scroll-margin-block-start: 72px; }
     .tt-sec__h { margin: 0 0 10px; font-size: 1.25rem; }
     .tt-sec__btn { display: flex; width: 100%; justify-content: space-between; align-items: center; gap: 10px; min-height: 44px; padding: 4px 0; border: 0; background: none; color: var(--color-text); font-size: inherit; font-weight: 600; text-align: start; cursor: pointer; }
@@ -150,9 +151,9 @@
     .tt-panel { background: var(--tt-sheet); box-shadow: var(--shadow-sm); border-radius: var(--r-18); padding: 16px; }
     .tt-panel h3 { display: flex; justify-content: space-between; align-items: baseline; font-size: 1.05rem; font-weight: 500; margin: 0 0 6px; color: var(--color-text); }
     .tt-panel h3 span { font-size: .82rem; color: var(--tt-muted); font-weight: 500; }
-    .tt-panel svg { width: 100%; height: auto; display: block; }
+    .tt-panel svg { width: 100%; height: auto; display: block; direction: ltr; }   // text-anchor follows CSS direction
     svg .tt-grid { stroke: var(--color-neutral-800); stroke-width: 1; }
-    svg .tt-tick, svg .tt-val, svg .tt-name { fill: var(--tt-muted); font-size: 10px; font-family: inherit; }
+    svg .tt-tick, svg .tt-val, svg .tt-name { fill: var(--tt-muted); font-size: 10px; font-family: inherit; direction: ltr; }
     svg .tt-name { fill: var(--tt-ink); font-size: 11px; }
     svg .tt-band { fill: var(--color-accent-900); }
     svg .tt-stem { stroke-width: 2; opacity: .55; }

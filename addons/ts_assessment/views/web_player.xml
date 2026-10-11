@@ -45,7 +45,7 @@
                                             <input id="subject_label" type="text" name="subject_label" dir="auto" maxlength="80"/>
                                         </div>
                                     </t>
-                                    <p class="ts-hint">نسخهٔ متن رضایت: <bdi dir="ltr" t-out="consent_version"/> · <a href="/privacy">سیاست حریم خصوصی</a></p>
+                                    <p class="ts-hint">نسخهٔ متن رضایت: <bdi dir="ltr" class="ts-bdi" t-out="consent_version"/> · <a href="/privacy">سیاست حریم خصوصی</a></p>
                                     <div><button type="submit" class="ts-btn ts-btn--primary">شروع پاسخ‌دهی</button></div>
                                 </form>
                             </div>

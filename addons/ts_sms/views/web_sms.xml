@@ -92,7 +92,7 @@
                                             <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
                                             <label for="ts_phone_no">شمارهٔ موبایل</label>
                                             <input id="ts_phone_no" name="phone" type="tel" dir="ltr" inputmode="tel" required="required" maxlength="20" autocomplete="tel" aria-describedby="ts_phone_no_hint"/>
-                                            <p id="ts_phone_no_hint" class="ts-hint">۱۱ رقم، مثل <bdi dir="ltr" class="ts-bdi">09123456789</bdi>؛ رقم فارسی هم پذیرفته می‌شود.</p>
+                                            <p id="ts_phone_no_hint" class="ts-hint">۱۱ رقم، مثل ۰۹۱۲۳۴۵۶۷۸۹؛ رقم فارسی هم پذیرفته می‌شود.</p>
                                             <div><button type="submit" class="ts-btn ts-btn--primary">ارسال کد تأیید</button></div>
                                         </form>
                                         <form t-if="pending" action="/my/phone/verify" method="post" class="ts-form">
@@ -169,7 +169,7 @@
                                         <input type="hidden" name="next" t-att-value="next"/>
                                         <label for="ts_su_phone">شمارهٔ موبایل</label>
                                         <input id="ts_su_phone" name="phone" type="tel" dir="ltr" inputmode="tel" required="required" maxlength="20" autocomplete="tel" aria-describedby="ts_su_phone_hint"/>
-                                        <p id="ts_su_phone_hint" class="ts-hint">۱۱ رقم، مثل <bdi dir="ltr" class="ts-bdi">09123456789</bdi>. یک کد ۶ رقمی برایتان پیامک می‌شود.</p>
+                                        <p id="ts_su_phone_hint" class="ts-hint">۱۱ رقم، مثل ۰۹۱۲۳۴۵۶۷۸۹. یک کد ۶ رقمی برایتان پیامک می‌شود.</p>
                                         <div><button type="submit" class="ts-btn ts-btn--primary">ارسال کد</button></div>
                                     </form>
                                     <p class="ts-hint">شمارهٔ شما فقط برای ورود و تأیید حساب به کار می‌رود. پیامک اعلان نتیجه فقط با اجازهٔ خودتان در صفحهٔ «شمارهٔ موبایل و پیامک» فعال می‌شود.</p>

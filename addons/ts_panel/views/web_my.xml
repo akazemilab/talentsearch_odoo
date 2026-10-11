@@ -40,18 +40,18 @@
                             <section t-if="next_action" class="tsp-next" id="ts-home-next" aria-labelledby="ts-next-h">
                                 <p class="tsp-next__kicker" id="ts-next-h">
                                     <t t-if="next_action['kind'] == 'invite'">یک دعوت منتظر <t t-if="tu">توست</t><t t-else="">شماست</t></t>
-                                    <t t-elif="next_action['kind'] == 'resume'">یک سنجهٔ نیمه‌تمام <t t-if="tu">داری</t><t t-else="">دارید</t></t>
+                                    <t t-elif="next_action['kind'] == 'resume' and next_action['progress']">یک سنجهٔ نیمه‌تمام <t t-if="tu">داری</t><t t-else="">دارید</t></t>
+                                    <t t-elif="next_action['kind'] == 'resume'">یک سنجه منتظر <t t-if="tu">توست</t><t t-else="">شماست</t></t>
                                     <t t-else="">نتیجهٔ تازه‌ای آماده است</t>
                                 </p>
                                 <h2 class="tsp-next__title" t-out="next_action['title']"/>
                                 <p class="tsp-next__meta">
                                     <t t-if="next_action.get('org')">از طرف <strong t-out="next_action['org']"/> · </t>
-                                    <t t-elif="next_action['kind'] != 'invite'"><t t-if="tu">خودت شروع کردی</t><t t-else="">خودتان شروع کردید</t> · </t>
+                                    <t t-elif="next_action['kind'] == 'result'"><t t-if="tu">خودت انجامش دادی</t><t t-else="">خودتان انجامش دادید</t> · </t>
                                     <t t-if="next_action['kind'] == 'invite'">دعوت در <t t-out="next_action['when']"/><t t-if="next_action.get('deadline')"> · مهلت تا <t t-out="next_action['deadline']"/></t></t>
-                                    <t t-elif="next_action['kind'] == 'resume'">
-                                        <t t-if="next_action['progress']"><t t-out="fa(next_action['progress'])"/>٪ پاسخ <t t-if="tu">داده‌ای</t><t t-else="">داده‌اید</t></t>
-                                        <t t-else="">هنوز شروع <t t-if="tu">نکرده‌ای</t><t t-else="">نکرده‌اید</t></t>
-                                        · آخرین ذخیره <t t-out="next_action['when']"/></t>
+                                    <!-- one state only: answered part of it, or not started yet (it read «half-finished» and «not started» together) -->
+                                    <t t-elif="next_action['kind'] == 'resume' and next_action['progress']"><t t-out="fa(next_action['progress'])"/>٪ پاسخ <t t-if="tu">داده‌ای</t><t t-else="">داده‌اید</t> · آخرین ذخیره <t t-out="next_action['when']"/></t>
+                                    <t t-elif="next_action['kind'] == 'resume'">هنوز به هیچ جمله‌ای پاسخ <t t-if="tu">نداده‌ای</t><t t-else="">نداده‌اید</t>؛ هر وقت <t t-if="tu">شروع کنی</t><t t-else="">شروع کنید</t>، پاسخ‌ها خودکار ذخیره می‌شوند.</t>
                                     <t t-else="">تکمیل در <t t-out="next_action['when']"/></t>
                                 </p>
                                 <a t-att-href="next_action['url']" class="ts-btn ts-btn--primary ts-btn--lg" t-out="next_action['label']"/>

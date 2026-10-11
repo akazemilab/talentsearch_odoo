@@ -41,6 +41,19 @@
     .tsp-row--new th a { font-weight: 700; }
     .tsp-row-link { display: inline-flex; align-items: center; min-block-size: var(--control-min); margin-inline-start: var(--space-2); font-size: var(--fs-0); }
     .tsp-table--cards td[data-label=""] { grid-template-columns: 1fr; }
+    // clients list as cards on a phone: the select box sits in the card's corner next to the name (it stood alone above
+    // a blank gap), and the row actions are full-size buttons side by side
+    @media (max-width: 767.98px) {
+        .tsp-table--cards tr { position: relative; }
+        .tsp-table--cards th[scope=row] { display: block; inline-size: 100%; border: 0; padding: 6px 0 8px; font-size: var(--fs-2); }
+        .tsp-table--cards tr:has(> td.tsp-col-sel) > th[scope=row] { padding-inline-end: 48px; min-block-size: var(--control-min); }
+        .tsp-table--cards td.tsp-col-sel { position: absolute; inset-block-start: 4px; inset-inline-end: 4px; inline-size: auto; padding: 0; display: block; }
+        .tsp-table--cards td.tsp-col-sel .tsp-check { min-block-size: var(--control-min); min-inline-size: var(--control-min); padding: 0; justify-content: center; align-items: center; }
+        .tsp-table--cards td.tsp-col-sel .tsp-check input { margin: 0; inline-size: 22px; block-size: 22px; }
+        .tsp-table--cards td.tsp-row-actions { display: flex; flex-wrap: wrap; gap: var(--space-2); padding-block-start: var(--space-2); }
+        .tsp-table--cards td.tsp-row-actions:empty { display: none; }
+        .tsp-table--cards td.tsp-row-actions .ts-btn { flex: 1 1 8rem; min-block-size: var(--control-min); }
+    }
     .tsp-progress { display: block; block-size: 6px; margin-block-start: 4px; border-radius: 3px; background: var(--color-neutral-900); overflow: hidden; max-inline-size: 160px; }
     .tsp-progress > span { display: block; block-size: 100%; background: var(--color-accent-500); }
 

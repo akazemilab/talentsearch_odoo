@@ -50,7 +50,7 @@
                             <section t-if="can_terms" class="ts-card" id="tsp-terms" aria-labelledby="tsp-terms-h">
                                 <h2 id="tsp-terms-h" class="h5">شرایط استفاده</h2>
                                 <p t-if="terms_version">
-                                    نسخهٔ پذیرفته‌شده: <bdi dir="ltr" t-out="terms_version"/>
+                                    نسخهٔ پذیرفته‌شده: <bdi dir="ltr" class="ts-bdi" t-out="terms_version"/>
                                     <t t-if="terms_on"> · <t t-out="jalali(terms_on, with_time=False)"/></t>
                                 </p>
                                 <p t-else="">برای این پنل پذیرش آنلاین شرایط ثبت نشده است؛ یعنی پنل پیش از فرم پذیرش آنلاین یا به دست تیم تلنت سرچ ساخته شده است. از شما کاری لازم نیست. اگر پرسشی دارید، <a t-attf-href="/contact?topic=support&amp;panel=#{ws.code}">به پشتیبانی پیام بدهید</a>.</p>

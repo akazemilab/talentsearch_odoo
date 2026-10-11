@@ -97,7 +97,7 @@
                                                 <td t-if="'activity' in cols" data-label="آخرین فعالیت" t-out="jalali(c.last_activity_at, with_time=False)"/>
                                                 <td data-label="" class="tsp-row-actions">
                                                     <a t-if="results.get(c.id)" t-att-href="results[c.id]" class="ts-btn ts-btn--outline ts-btn--sm">نتیجه<span class="tsp-sr"> <t t-out="c.name"/></span></a>
-                                                    <a t-if="can_invite and c.state == 'active' and not c.contact_locked" t-attf-href="/my/workspaces/#{ws.id}/invites/new?fresh=1&amp;client=#{c.id}" class="ts-btn ts-btn--quiet ts-btn--sm">دعوت<span class="tsp-sr"> <t t-out="c.name"/> به سنجه</span></a>
+                                                    <a t-if="can_invite and c.state == 'active' and not c.contact_locked" t-attf-href="/my/workspaces/#{ws.id}/invites/new?fresh=1&amp;client=#{c.id}" class="ts-btn ts-btn--outline ts-btn--sm">دعوت<span class="tsp-sr"> <t t-out="c.name"/> به سنجه</span></a>
                                                 </td>
                                             </tr>
                                         </tbody>

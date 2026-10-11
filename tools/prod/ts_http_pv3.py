@@ -106,7 +106,10 @@ check('home of an invited person leads with the invitation', st == 200 and 'id="
 check('…names the school and the deadline', 'مدرسهٔ نمونهٔ پرتال' in page and 'مهلت تا' in page)
 check('…and the open invitations list is dated and attributed', 'ts-home-invites' in page and 'از طرف' in page)
 st, page = get(login('going'), '/my')
-check('home of an unfinished attempt leads with resume', st == 200 and ('یک سنجهٔ نیمه‌تمام دارید' in page or 'یک سنجهٔ نیمه‌تمام داری' in page) and ('ادامهٔ پاسخ‌دهی' in page or '>شروع<' in page) and 'آخرین ذخیره' in page, st)
+check('home of an unfinished attempt leads with resume', st == 200 and (('یک سنجهٔ نیمه‌تمام دارید' in page or 'یک سنجهٔ نیمه‌تمام داری' in page) and 'ادامهٔ پاسخ‌دهی' in page and 'آخرین ذخیره' in page
+                                                                     or ('یک سنجه منتظر شماست' in page or 'یک سنجه منتظر توست' in page) and '>شروع<' in page and 'هنوز به هیچ جمله‌ای پاسخ' in page), st)
+nxt_box = (page.split('id="ts-home-next"') + [''])[1].split('</section>')[0]
+check('…and shows one state, never «half-finished» next to «not started»', bool(nxt_box) and not ('نیمه‌تمام' in nxt_box and 'هنوز' in nxt_box))
 st, page = get(login('done'), '/my')
 check('home of a fresh result leads with the result', st == 200 and 'نتیجهٔ تازه‌ای آماده است' in page and 'دیدن نتیجه' in page, st)
 st, page = get(login('empty'), '/my')

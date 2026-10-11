@@ -61,10 +61,13 @@
                 <div class="ts-file" data-ts-file="1">
                     <label t-att-for="ff_id" class="ts-file__label" t-out="ff_label"/>
                     <span class="ts-file__row">
-                        <input type="file" class="ts-file__input" t-att-id="ff_id" t-att-name="ff_name" t-att-accept="ff_accept or None"
-                               t-att-required="'required' if ff_required else None"
-                               t-att-aria-describedby="('%s_name' % ff_id) + ((' %s_hint' % ff_id) if ff_hint else '')"/>
-                        <span class="ts-btn ts-btn--outline ts-file__btn" aria-hidden="true">انتخاب فایل</span>
+                        <!-- the real input lies over the visible button: the tap target is the button's 44 px, no script needed to open it -->
+                        <span class="ts-file__pick">
+                            <input type="file" class="ts-file__input" t-att-id="ff_id" t-att-name="ff_name" t-att-accept="ff_accept or None"
+                                   t-att-required="'required' if ff_required else None"
+                                   t-att-aria-describedby="('%s_name' % ff_id) + ((' %s_hint' % ff_id) if ff_hint else '')"/>
+                            <span class="ts-btn ts-btn--outline ts-file__btn" aria-hidden="true">انتخاب فایل</span>
+                        </span>
                         <span class="ts-file__name" t-att-id="'%s_name' % ff_id" aria-live="polite">فایلی انتخاب نشده</span>
                     </span>
                     <p t-if="ff_hint" class="ts-hint ts-file__hint" t-att-id="'%s_hint' % ff_id" t-out="ff_hint"/>

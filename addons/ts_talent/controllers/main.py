@@ -63,7 +63,7 @@ def report_ctx(attempt, org_view=False, ws=None, submitted=None, panel_actions=N
     fields = profile['fields']
     t = texts()
     voice = 'org' if org_view else ('tu' if attempt.ts_informal() else 'shoma')
-    digits = 1 if org_view else 0
+    digits = 0   # whole numbers in every view (the panel showed ۶۰٫۰ next to the participant's ۶۰)
     raw = []
     if not org_view:
         items = attempt.active_items()
@@ -93,7 +93,7 @@ def report_ctx(attempt, org_view=False, ws=None, submitted=None, panel_actions=N
         'cmp_rows': R.compare_rows(profile, gap) if multi else [],
         'cmp_cards': R.field_cards(profile, gap) if multi else [],
         'cmp_lines': R.compare_lines(interp, voice, digits) if multi else [],
-        'summary': R.summary(interp, profile, voice, 0 if not org_view else 1),
+        'summary': R.summary(interp, profile, voice, digits),
         'flagged': flagged, 'all_flagged': bool(fields) and len(flagged) >= len(fields),
         'fields_tied': R.fields_all_tied(interp),
         'gap': int(gap), 'org_view': org_view, 'ws': ws, 'who': attempt.person_id.name or attempt.partner_id.name or '',

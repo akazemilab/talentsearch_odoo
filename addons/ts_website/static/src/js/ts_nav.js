@@ -118,7 +118,10 @@
                 box = document.createElement('span');
                 box.className = 'ts-file ts-file--inline';
                 input.parentNode.insertBefore(box, input);
-                box.appendChild(input);
+                var pick = document.createElement('span');      // the input lies over the button (44 px tap target)
+                pick.className = 'ts-file__pick';
+                box.appendChild(pick);
+                pick.appendChild(input);
                 input.classList.add('ts-file__input');
                 btn = document.createElement('span');
                 btn.className = 'ts-btn ts-btn--outline ts-file__btn';
@@ -128,13 +131,15 @@
                 out.className = 'ts-file__name';
                 out.setAttribute('aria-live', 'polite');
                 out.id = (input.id || input.name || 'ts-file') + '_tsname';
-                box.appendChild(btn);
+                pick.appendChild(btn);
                 box.appendChild(out);
                 var d = input.getAttribute('aria-describedby');
                 input.setAttribute('aria-describedby', (d ? d + ' ' : '') + out.id);
             }
             out.textContent = fileName(input);
-            btn.addEventListener('click', function () { if (!input.disabled) { input.click(); } });
+            if (!btn.parentNode.classList.contains('ts-file__pick')) {   // old markup without .ts-file__pick: the button opens the input
+                btn.addEventListener('click', function () { if (!input.disabled) { input.click(); } });
+            }
             input.addEventListener('change', function () { out.textContent = fileName(input); });
             box.classList.add('is-ready');
         });

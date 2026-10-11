@@ -115,8 +115,8 @@
                                         <t t-if="attempt.subject_label"><dt>دربارهٔ</dt><dd t-out="attempt.subject_label"/></t>
                                         <dt>پاسخ‌دهنده</dt><dd t-out="dict(attempt._fields['respondent_role'].selection).get(attempt.respondent_role)"/>
                                         <dt>تاریخ تکمیل</dt><dd t-out="attempt.jalali(attempt.submitted_at)"/>
-                                        <dt>شناسهٔ گزارش</dt><dd><bdi dir="ltr" t-out="attempt.name"/></dd>
-                                        <dt>نسخه</dt><dd><bdi dir="ltr"><t t-out="version.contract_version"/> · <t t-out="attempt.engine_version"/></bdi></dd>
+                                        <dt>شناسهٔ گزارش</dt><dd><bdi dir="ltr" class="ts-bdi" t-out="attempt.name"/></dd>
+                                        <dt>نسخه</dt><dd><bdi dir="ltr" class="ts-bdi"><t t-out="version.contract_version"/> · <t t-out="attempt.engine_version"/></bdi></dd>
                                         <dt>وضعیت</dt><dd>منتشرشده برای شرکت‌کننده؛ محتوای تفسیر تأییدشده</dd>
                                     </dl>
                                     </div>
@@ -161,12 +161,12 @@
 
                                     <section t-if="history" class="ts-doc__sec ts-noprint" id="ts-history">
                                         <h2>نتیجه‌های قبلی همین سنجه</h2>
-                                        <p class="ts-hint">هر نتیجه توصیف همان روز است. فقط نتیجه‌های همین نسخهٔ نمره‌گذاری (<bdi dir="ltr" t-out="version.contract_version"/>) کنار هم خوانده می‌شوند؛ تغییر عدد به‌تنهایی به معنای بهتر یا بدتر شدن نیست.</p>
+                                        <p class="ts-hint">هر نتیجه توصیف همان روز است. فقط نتیجه‌های همین نسخهٔ نمره‌گذاری (<bdi dir="ltr" class="ts-bdi" t-out="version.contract_version"/>) کنار هم خوانده می‌شوند؛ تغییر عدد به‌تنهایی به معنای بهتر یا بدتر شدن نیست.</p>
                                         <ul class="tsp-list tsp-rows">
                                             <li t-foreach="history" t-as="h">
                                                 <div class="tsp-rows__text">
                                                     <strong t-out="h.jalali(h.submitted_at, False)"/>
-                                                    <span class="ts-hint"><t t-if="h.version_id == version">همین نسخهٔ نمره‌گذاری</t><t t-else="">نسخهٔ دیگر (<bdi dir="ltr" t-out="h.version_id.contract_version"/>)؛ مقایسهٔ مستقیم معتبر نیست</t></span>
+                                                    <span class="ts-hint"><t t-if="h.version_id == version">همین نسخهٔ نمره‌گذاری</t><t t-else="">نسخهٔ دیگر (<bdi dir="ltr" class="ts-bdi" t-out="h.version_id.contract_version"/>)؛ مقایسهٔ مستقیم معتبر نیست</t></span>
                                                 </div>
                                                 <a t-attf-href="/my/assessments/#{h.id}" class="ts-btn ts-btn--outline ts-btn--sm">گزارش</a>
                                             </li>

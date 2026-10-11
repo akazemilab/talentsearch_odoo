@@ -114,10 +114,11 @@
     // ---------- header ----------
     .ts-header { background: var(--header-bg); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border-block-end: 1px solid var(--color-neutral-900); position: sticky; inset-block-start: 0; z-index: 30; }
     .ts-header__bar { display: flex; align-items: center; gap: 20px; min-block-size: 68px; min-inline-size: 0; }
-    .ts-lockup { display: flex; align-items: center; gap: 10px; text-decoration: none; color: var(--color-text); flex: none; }
+    .ts-lockup { display: flex; align-items: center; gap: 10px; text-decoration: none; color: var(--color-text); flex: 0 1 auto; min-inline-size: 0; }
     .ts-lockup:hover { text-decoration: none; color: var(--color-text); }
     .ts-lockup img { border-radius: 50%; inline-size: 40px; block-size: 40px; object-fit: cover; }
-    .ts-lockup__text { display: flex; flex-direction: column; gap: 1px; line-height: 1.2; }
+    .ts-lockup__text { display: flex; flex-direction: column; gap: 1px; line-height: 1.2; min-inline-size: 0; }
+    .ts-lockup img { flex: none; }
     .ts-lockup__text strong { font-family: var(--font-display); font-size: 16px; font-weight: 600; }
     .ts-lockup__text small { font-size: 11px; color: var(--color-neutral-400); line-height: 1.4; }
     .ts-dnav { display: none; }
@@ -126,7 +127,9 @@
     .ts-dnav__list a:hover { background: var(--color-neutral-900); color: var(--color-text); }
     .ts-dnav__list a[aria-current='page'] { color: var(--color-text); }
     .ts-dnav__list a[aria-current='page']::after { content: ''; position: absolute; inset-inline: 10px; inset-block-end: 6px; block-size: 2px; border-radius: 1px; background: var(--color-accent); }
-    .ts-header__end { display: flex; align-items: center; gap: 6px; margin-inline-start: auto; }
+    .ts-header__end { display: flex; align-items: center; gap: 6px; margin-inline-start: auto; flex: none; }
+    // a phone: the tagline wraps under the name instead of pushing the menu button off the screen
+    @media (max-width: 479.98px) { .ts-header--marketing .ts-header__bar { gap: 12px; } .ts-nav__toggle { padding: 0 10px; } }
     .ts-iconbtn { inline-size: 44px; block-size: 44px; border-radius: var(--r-8); border: 0; background: transparent; color: var(--color-text); display: inline-grid; place-items: center; cursor: pointer; }
     .ts-iconbtn:hover { background: var(--color-neutral-900); }
     .ts-iconbtn svg { inline-size: 20px; block-size: 20px; }
@@ -160,6 +163,8 @@
     .ts-appnav svg { inline-size: 20px; block-size: 20px; flex: none; }
     .ts-appnav a[href^='/my/workspaces'], .ts-appnav a[href='/my/notifications'] { order: 1; }
     .ts-appnav__badge { position: absolute; inset-block-start: 2px; inset-inline-end: 2px; min-inline-size: 18px; block-size: 18px; padding: 0 5px; border-radius: 999px; background: var(--color-accent); color: var(--color-surface); font-size: .68rem; font-weight: 700; display: grid; place-items: center; line-height: 1; }
+    // with the label shown, the count follows the word instead of sitting on top of it
+    @media (min-width: 640px) { .ts-appnav__badge { position: static; margin-inline-start: 2px; } }
     .ts-header--app .ts-iconbtn { order: 3; }
     .ts-theme--end { margin-inline-start: auto; }
     @media (max-width: 639.98px) {
@@ -567,20 +572,22 @@
         appearance: none; -webkit-appearance: none;
         background-image: linear-gradient(45deg, transparent 50%, currentColor 50%), linear-gradient(135deg, currentColor 50%, transparent 50%);
         background-size: 6px 6px, 6px 6px; background-repeat: no-repeat;
-        background-position: left 18px center, left 12px center;
+        background-position: right 18px center, right 12px center;   // RTL bundle (rtlcss) turns this into left = inline-end
         padding-inline-end: 38px; padding-inline-start: 12px;
         border: 1px solid var(--field-line); border-radius: var(--r-8); background-color: var(--color-bg); color: var(--color-text);
         font-family: var(--font-text); font-size: 1rem; cursor: pointer;
     }
-    &[dir=ltr] select:not([multiple]):not([size]), [dir=ltr] & select:not([multiple]):not([size]), [dir=ltr] & .form-select { background-position: right 12px center, right 18px center; }
+    &[dir=ltr] select:not([multiple]):not([size]), [dir=ltr] & select:not([multiple]):not([size]), [dir=ltr] & .form-select { background-position: left 12px center, left 18px center; }   // flipped by rtlcss to the right side
 
     // file picker (ts_website.filefield and every <input type=file> upgraded by ts_nav.js)
     .ts-file { display: grid; gap: 6px; }
     .ts-file__label { font-weight: 500; font-size: 13.5px; color: var(--color-neutral-200); margin: 0; }
     .ts-file__row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; min-inline-size: 0; }
     .ts-file__btn, .ts-file__name { display: none; }
-    .ts-file.is-ready .ts-file__input, .ts-file__input.is-ready { position: absolute; inline-size: 1px; block-size: 1px; opacity: 0; overflow: hidden; clip-path: inset(50%); }
-    .ts-file.is-ready .ts-file__btn { display: inline-flex; cursor: pointer; }
+    .ts-file__pick { position: relative; display: inline-flex; }
+    .ts-file.is-ready .ts-file__input, .ts-file__input.is-ready { position: absolute; inset: 0; inline-size: 100%; block-size: 100%; min-block-size: var(--control-min); margin: 0; padding: 0; opacity: 0; cursor: pointer; z-index: 1; font-size: 0; }
+    .ts-file.is-ready .ts-file__input::file-selector-button { cursor: pointer; }
+    .ts-file.is-ready .ts-file__btn { display: inline-flex; cursor: pointer; min-block-size: var(--control-min); }
     .ts-file.is-ready .ts-file__name { display: inline; color: var(--color-neutral-300); font-size: var(--fs-1); overflow-wrap: anywhere; min-inline-size: 0; }
     .ts-file.is-ready .ts-file__input:focus-visible + .ts-file__btn { outline: 2px solid var(--color-accent); outline-offset: 2px; }
     .ts-file.is-ready .ts-file__input:disabled + .ts-file__btn { opacity: .5; cursor: not-allowed; }

@@ -35,8 +35,8 @@
     .tsp-shell .form-select, .tsp-section .form-select {
         appearance: none; -webkit-appearance: none; min-block-size: var(--control-min);
         background-image: linear-gradient(45deg, transparent 50%, var(--color-neutral-400) 50%), linear-gradient(135deg, var(--color-neutral-400) 50%, transparent 50%);
-        background-position: left 18px center, left 12px center; background-size: 6px 6px, 6px 6px; background-repeat: no-repeat;
-        padding-inline-end: 36px;
+        background-position: right 18px center, right 12px center; background-size: 6px 6px, 6px 6px; background-repeat: no-repeat;   // rtlcss flips this to left (= inline-end) in the RTL bundle
+        padding-inline-end: 38px; padding-inline-start: 12px;
     }
     // a card table on a phone: no empty framed box under the last card (G4 PT9)
     @media (max-width: 767.98px) {

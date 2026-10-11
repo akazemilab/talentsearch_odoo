@@ -64,7 +64,7 @@
                         <label class="tt-check"><input type="checkbox" name="consent_service" value="1" required="required"/>
                             <span>این توضیح‌ها را خواندم و با انجام این سنجه و ساختن گزارش خودم موافقم.</span></label>
                         <button type="submit" class="tt-btn tt-btn--primary">شروع</button>
-                        <p class="tt-mini tt-fine">نسخهٔ متن موافقت: <bdi dir="ltr" t-out="consent_version"/> · <a href="/privacy">سیاست حریم خصوصی</a> ·
+                        <p class="tt-mini tt-fine">نسخهٔ متن موافقت: <bdi dir="ltr" class="ts-bdi" t-out="consent_version"/> · <a href="/privacy">سیاست حریم خصوصی</a> ·
                             <t t-if="tu">اگر حالت خوب نیست، منتظر نمان: اورژانس ۱۱۵.</t><t t-else="">اگر حالتان خوب نیست، منتظر نمانید: اورژانس ۱۱۵.</t></p>
                     </form>
                 </t>
@@ -300,10 +300,10 @@
                                         <dt>شرکت‌کننده</dt><dd t-out="who"/>
                                         <dt>تاریخ تکمیل</dt><dd t-out="attempt.jalali(attempt.submitted_at)"/>
                                         <dt>زمینه‌ها</dt><dd><t t-out="joinfa([f['label'] for f in fields], True)"/></dd>
-                                        <dt>شناسهٔ گزارش</dt><dd><bdi dir="ltr" t-out="attempt.name"/></dd>
+                                        <dt>شناسهٔ گزارش</dt><dd><bdi dir="ltr" class="ts-bdi" t-out="attempt.name"/></dd>
                                     </dl>
 
-                                    <nav class="tt-jump ts-scroller ts-noprint" aria-label="در این گزارش">
+                                    <nav class="tt-jump ts-noprint" aria-label="در این گزارش">
                                         <span class="tt-jump__k">در این گزارش:</span>
                                         <a href="#tt-sec-summary">خلاصه</a>
                                         <a t-if="cmp_rows" href="#tt-sec-compare">زمینه‌ها</a>
@@ -477,8 +477,8 @@
                                     </t>
 
                                     <section class="ts-doc__sec tt-foot">
-                                        <p class="ts-hint" t-if="org_view">این گزارش را بدون پاسخ‌های خام می‌بینید. باز کردن و چاپ آن در دفتر ممیزی پنل ثبت می‌شود. شناسهٔ گزارش <bdi dir="ltr" t-out="attempt.name"/></p>
-                                        <p class="ts-hint" t-else=""><t t-if="tu">این گزارش متعلق به توست.</t><t t-else="">این گزارش متعلق به شماست.</t> شناسهٔ گزارش <bdi dir="ltr" t-out="attempt.name"/> · نسخه <bdi dir="ltr"><t t-out="version.contract_version"/> · <t t-out="attempt.engine_version"/></bdi></p>
+                                        <p class="ts-hint" t-if="org_view">این گزارش را بدون پاسخ‌های خام می‌بینید. باز کردن و چاپ آن در دفتر ممیزی پنل ثبت می‌شود. شناسهٔ گزارش <bdi dir="ltr" class="ts-bdi" t-out="attempt.name"/></p>
+                                        <p class="ts-hint" t-else=""><t t-if="tu">این گزارش متعلق به توست.</t><t t-else="">این گزارش متعلق به شماست.</t> شناسهٔ گزارش <bdi dir="ltr" class="ts-bdi" t-out="attempt.name"/></p>
                                     </section>
                                 </article>
                             </div>

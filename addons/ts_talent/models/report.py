@@ -33,12 +33,14 @@ def ab_names(codes):
 # ------------------------------------------------------------------ charts
 def field_chart(field, digits=1):
     """One field: five abilities as dots on a true 20-100 axis with a +-8 band."""
-    W, H, L, R, T, B = 320, 152, 10, 96, 8, 24
+    # direction="ltr" on the svg: the page is RTL and SVG text inherits CSS direction (not the HTML dir attribute),
+    # which flips text-anchor; names were clipped at the right edge and values drawn over the dots.
+    W, H, L, R, T, B = 320, 152, 10, 100, 8, 24
     pw = W - L - R
 
     def x(v):
         return L + (v - 20) / 80.0 * pw
-    out = ['<svg viewBox="0 0 %d %d" dir="ltr" role="img" aria-label="%s">' % (
+    out = ['<svg viewBox="0 0 %d %d" dir="ltr" direction="ltr" style="direction:ltr" role="img" aria-label="%s">' % (
         W, H, escape('نیمرخ توانایی‌ها در زمینهٔ %s' % field['label']))]
     for t in (20, 40, 60, 80, 100):
         out.append('<line class="tt-grid" x1="%.1f" y1="%d" x2="%.1f" y2="%d"/>' % (x(t), T, x(t), H - B))
@@ -50,7 +52,7 @@ def field_chart(field, digits=1):
         out.append('<rect class="tt-band" x="%.1f" y="%d" width="%.1f" height="14" rx="7"/>' % (x(lo), y - 7, x(hi) - x(lo)))
         out.append('<line class="tt-stem tt-s%d" x1="%.1f" y1="%d" x2="%.1f" y2="%d"/>' % (i + 1, x(20), y, x(v), y))
         out.append('<circle class="tt-dot tt-s%d" cx="%.1f" cy="%d" r="5.5"/>' % (i + 1, x(v), y))
-        out.append('<text class="tt-val" x="%.1f" y="%d">%s</text>' % (x(v) + 10, y + 4, fmt(v, digits)))
+        out.append('<text class="tt-val" x="%.1f" y="%d" text-anchor="start">%s</text>' % (x(v) + 9, y + 4, fmt(v, digits)))
         out.append('<text class="tt-name" x="%d" y="%d" text-anchor="end">%s</text>' % (W - 2, y + 4, escape(SHORT[code])))
     out.append('</svg>')
     return Markup(''.join(out))
