@@ -210,7 +210,8 @@ check('D06 a member restriction outside the catalog leaves nothing', not cl_g.al
 ws_ge = panel('employment', mode='granted')
 ws_ge.write({'catalog_battery_ids': [Command.set([by_code['BAT-INTAKE-1'].id, by_code['BAT-WORK-1'].id])]})
 check('D07 granted mode still requires the purpose flag', ids(member(ws_ge, 'owner').allowed_batteries()) == {by_code['BAT-WORK-1'].id})
-b.write({'line_ids': [Command.create({'instrument_id': f0.id})]})   # b: published, clinical, adult
+if f0 not in b.line_ids.mapped('instrument_id'):
+    b.write({'line_ids': [Command.create({'instrument_id': f0.id})]})   # b: published, clinical, adult
 check('D08 a published test battery is offered in clinical purpose mode', b.id in ids(cl_p.allowed_batteries()))
 f0.write({'state': 'retired'})
 check('D08 a battery with a retired instrument is no longer offered', b.has_retired and b.id not in ids(cl_p.allowed_batteries()))
