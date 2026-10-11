@@ -41,6 +41,13 @@ ws = env['ts.workspace'].search([('partner_id', '=', org.id)], limit=1) or env['
     {'name': name, 'purpose': 'clinical', 'partner_id': org.id, 'escalation_contact_id': org.id})
 ws.write({'approved_on': '2026-01-01 00:00:00', 'billing_mode': 'prepaid', 'catalog_mode': 'purpose'})
 ws.state = 'pilot'
+# an earlier run of this suite on the same clone may have left names carrying the forbidden word
+for old in env['res.partner'].search([('name', 'like', 'آزمون اعتبار'), ('is_company', '=', True)]):
+    old.name = old.name.replace('اعتبار', 'شارژ')
+for ws_old in env['ts.workspace'].search([('name', 'like', 'آزمون اعتبار')]):
+    ws_old.name = ws_old.name.replace('اعتبار', 'شارژ')
+for asg in env['ts.assignment'].sudo().search([('invitee_name', 'like', 'آزمون اعتبار')]):
+    asg.invitee_name = asg.invitee_name.replace('اعتبار', 'شارژ')
 def member(n, role):
     u = user(n)
     m = env['ts.workspace.member'].with_context(active_test=False).search([('workspace_id', '=', ws.id), ('user_id', '=', u.id)]) \
