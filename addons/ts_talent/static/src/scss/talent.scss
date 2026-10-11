@@ -151,9 +151,10 @@
     .tt-panel { background: var(--tt-sheet); box-shadow: var(--shadow-sm); border-radius: var(--r-18); padding: 16px; }
     .tt-panel h3 { display: flex; justify-content: space-between; align-items: baseline; font-size: 1.05rem; font-weight: 500; margin: 0 0 6px; color: var(--color-text); }
     .tt-panel h3 span { font-size: .82rem; color: var(--tt-muted); font-weight: 500; }
-    .tt-panel svg { width: 100%; height: auto; display: block; direction: ltr; }   // text-anchor follows CSS direction
+    // no CSS `direction` here: rtlcss flips it to rtl in the RTL bundle; the svg carries style="direction:ltr" (report.py)
+    .tt-panel svg { width: 100%; height: auto; display: block; }
     svg .tt-grid { stroke: var(--color-neutral-800); stroke-width: 1; }
-    svg .tt-tick, svg .tt-val, svg .tt-name { fill: var(--tt-muted); font-size: 10px; font-family: inherit; direction: ltr; }
+    svg .tt-tick, svg .tt-val, svg .tt-name { fill: var(--tt-muted); font-size: 10px; font-family: inherit; }
     svg .tt-name { fill: var(--tt-ink); font-size: 11px; }
     svg .tt-band { fill: var(--color-accent-900); }
     svg .tt-stem { stroke-width: 2; opacity: .55; }
