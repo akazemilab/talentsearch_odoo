@@ -132,7 +132,11 @@ def audit(p, login, paths):
     if login:
         page.goto(BASE + '/web/login', timeout=90000)
         page.fill('input[name=login]', login); page.fill('input[name=password]', password)
-        page.click('form[action="/web/login"] button[type=submit]'); page.wait_for_load_state('networkidle', timeout=90000)
+        # wait for the POST navigation itself: networkidle alone could return before it started, and the next goto then
+        # aborted the sign-in (flaky «sign-in failed» for a random login, 2026-10-11)
+        with page.expect_navigation(timeout=90000):
+            page.click('form[action="/web/login"] button[type=submit]')
+        page.wait_for_load_state('networkidle', timeout=90000)
         ok = '/web/login' not in page.url
         print(('signed in as %s' % login.split('@')[0]) if ok else '!! sign-in failed for %s' % login.split('@')[0], flush=True)
         bad += 0 if ok else 1
