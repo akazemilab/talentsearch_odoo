@@ -65,6 +65,7 @@ table. `member.has_perm(p)`; `member.perms()` returns the effective set after se
 | `results:export` (identifiable results file) | ✓ edu, emp | — | — | — | — | ✓ | — | — |
 | `reports:group` | ✓ edu, emp | — | ✓ | — | — | ✓ | — | ✓ |
 | `credits:read` | ✓ | ✓ | — | ✓ | — | ✓ | — | — |
+| `credits:manage` (monthly caps of counselors, low-balance threshold; prepaid panels, clinic phase 4) | ✓ | ✓ | — | ✓ | — | ✓ | — | — |
 | `catalog:assign` (which panel instruments and batteries a member may use; clinic phase 3) | ✓ | ✓ | — | ✓ | — | ✓ | — | — |
 | `audit:read` | ✓ | — | — | — | — | — | — | — |
 | `audit:export` | ✓ | — | — | — | — | — | — | — |

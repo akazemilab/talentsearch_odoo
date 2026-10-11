@@ -15,7 +15,8 @@ PAGE = 50
 PREF_GROUPS = [
     ('mine', 'سنجه‌های خودم', ('invite', 'reminder', 'result_ready_participant', 'data_request_update')),
     ('people', 'شرکت‌کنندگان پنل', ('result_ready_staff', 'shared_with_panel', 'share_revoked', 'client_handover_request')),
-    ('admin', 'مدیریت پنل', ('panel_approved', 'panel_rejected', 'panel_suspended', 'member_joined', 'export_ready', 'import_done')),
+    ('admin', 'مدیریت پنل', ('panel_approved', 'panel_rejected', 'panel_suspended', 'member_joined', 'export_ready', 'import_done',
+                                 'low_balance')),
     ('security', 'امنیت', ('support_access_opened', 'panel_transferred', 'panel_closed')),
 ]
 ALWAYS_ON = ('support_access_opened', 'panel_transferred', 'panel_closed')

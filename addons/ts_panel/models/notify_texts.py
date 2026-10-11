@@ -20,6 +20,7 @@ TYPES = [
     ('panel_transferred', 'مالکیت پنل منتقل شد'),
     ('panel_closed', 'پنل بسته شد'),
     ('data_request_update', 'وضعیت درخواست داده‌های شما تغییر کرد'),
+    ('low_balance', 'اعتبار پنل کم شده است'),      # clinic phase 4 (ts_billing); the row title names the panel and the amount
 ]
 TITLES = dict(TYPES)
 
@@ -32,6 +33,8 @@ SMS_BODIES = {
     'panel_rejected': 'درخواست پنل شما در استعدادیاب تأیید نشد. جزئیات را در پنل ببینید:\n%(url)s',
     'panel_suspended': 'پنل شما در استعدادیاب تعلیق شد. جزئیات را در پنل ببینید:\n%(url)s',
     'reminder': 'یادآوری: دعوت شما به یک سنجش در استعدادیاب هنوز باز است. پذیرش کاملاً اختیاری است:\n%(url)s',
+    # clinic phase 4: not in SMS_STAFF_TYPES yet (Phase 5 may reword and switch it on); keys: panel, amount, url
+    'low_balance': 'اعتبار پنل «%(panel)s» در استعدادیاب به %(amount)s رسید. برای ادامهٔ دعوت‌ها اعتبار را شارژ کنید:\n%(url)s',
 }
 
 PREF_LABELS = {
@@ -52,4 +55,5 @@ PREF_LABELS = {
     'panel_transferred': 'انتقال مالکیت',
     'panel_closed': 'بسته‌شدن پنل',
     'data_request_update': 'درخواست داده‌های من',
+    'low_balance': 'کم شدن اعتبار پنل',
 }

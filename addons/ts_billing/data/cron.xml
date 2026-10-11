@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="1">
+    <record id="cron_release_expired_holds" model="ir.cron">
+        <field name="name">Billing: release holds of expired invitations</field>
+        <field name="model_id" ref="ts_org.model_ts_assignment"/>
+        <field name="state">code</field>
+        <field name="code">model._cron_release_expired_holds()</field>
+        <field name="interval_number">1</field>
+        <field name="interval_type">days</field>
+    </record>
+    <record id="cron_sync_topups" model="ir.cron">
+        <field name="name">Billing: credit paid top-up invoices (safety net)</field>
+        <field name="model_id" ref="account.model_account_move"/>
+        <field name="state">code</field>
+        <field name="code">model._cron_sync_topups()</field>
+        <field name="interval_number">1</field>
+        <field name="interval_type">days</field>
+    </record>
+</odoo>

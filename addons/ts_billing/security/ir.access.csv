@@ -1,0 +1,3 @@
+id,name,model_id,group_id/id,operation,domain
+access_ts_attempt_void_wizard_manager,attempt void wizard manager,ts.attempt.void.wizard,ts_core.group_ts_manager,crud,
+access_ts_wallet_grant_wizard_manager,wallet grant wizard manager,ts.wallet.grant.wizard,ts_core.group_ts_manager,crud,

@@ -1,0 +1,24 @@
+// Talent Search prepaid billing (clinic phase 4): credits page, cap bar, item prices in the invitation forms, dashboard line.
+// Part of ts_website.assets_ts (website 2 only). Logical properties only (RTL-first), 44 px touch targets, site tokens.
+#wrapwrap {
+    .tsb-stats strong { font-size: 1.25rem; }
+    .tsb-dash { margin-block: 8px 14px; }
+    .tsb-dash a { display: inline-flex; align-items: center; min-block-size: 44px; font-weight: 600; }
+
+    // item prices (wizard, group invitations, battery cards)
+    .tsb-price { display: block; margin-block-start: 4px; font-size: .9rem; color: var(--muted); }
+    .tsb-price--short { color: var(--status-warn); font-weight: 600; }
+    .tsp-radio:has(input:disabled), .tsb-card:has(input:disabled) { opacity: .65; cursor: not-allowed; }
+
+    // money inputs are typed in Latin or Persian digits, left to right
+    .tsb-money { max-inline-size: 16rem; font-family: Vazirmatn, var(--font-text); }
+    .tsb-inline { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+    .tsb-inline .ts-btn { min-block-size: 44px; }
+
+    // monthly cap bar
+    .tsb-cap { margin-block: 10px 16px; }
+    .tsb-cap__text { margin: 0 0 6px; }
+    .tsb-cap__bar { block-size: 10px; border-radius: 999px; background: var(--color-neutral-800); overflow: hidden; }
+    .tsb-cap__fill { display: block; block-size: 100%; border-radius: 999px; background: var(--color-accent-400); }
+    .tsb-cap__fill--full { background: var(--status-warn); }
+}

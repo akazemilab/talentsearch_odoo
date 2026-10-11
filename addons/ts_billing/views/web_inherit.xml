@@ -1,0 +1,148 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Clinic phase 4: prices in the pages of other modules (website 2 only; prepaid panels only, `bill` is None otherwise).
+         `bill` = member.ts_bill_prices(): {'inst': {id: rial}, 'bat': {id: rial}, 'ok_inst', 'ok_bat', 'available', 'state'}.
+         Participant pages are never touched: money words appear only on panel pages. Each xpath names an anchor of its parent. -->
+
+    <!-- ===================================================== dashboard: one credit line / the counselor's cap bar -->
+    <record id="dashboard_credit_line" model="ir.ui.view">
+        <field name="name">ts_billing.dashboard.credit</field>
+        <field name="inherit_id" ref="ts_panel.tpl_dashboard"/>
+        <field name="website_id" ref="ts_website.website_ts"/>
+        <field name="arch" type="xml">
+            <xpath expr="//p[hasclass('tsp-role-note')]" position="after">
+                <t t-set="bill_st" t-value="member.ts_bill_state() if member.can_act() else None"/>
+                <p t-if="bill_st and bill_st['can_read']" class="tsb-dash" id="tsb-dash-credit">
+                    <a t-attf-href="/my/workspaces/#{ws.id}/credits">اعتبار: <span class="ts-num" t-out="ws.ts_toman(bill_st['available'])"/> · رزروشده: <span class="ts-num" t-out="ws.ts_toman(bill_st['held'])"/></a>
+                </p>
+                <div t-if="bill_st and bill_st['capped'] and not bill_st['can_read']" class="tsb-dash" id="tsb-dash-cap">
+                    <t t-set="st" t-value="bill_st"/>
+                    <t t-set="toman" t-value="ws.ts_toman"/>
+                    <t t-call="ts_billing.cap_bar"/>
+                    <a t-attf-href="/my/workspaces/#{ws.id}/credits">هزینهٔ دعوت‌ها و فهرست قیمت</a>
+                </div>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- ===================================================== invitation wizard: price per item, disabled when unaffordable -->
+    <record id="invite_wizard_prices" model="ir.ui.view">
+        <field name="name">ts_billing.invite_wizard</field>
+        <field name="inherit_id" ref="ts_panel.tpl_invite_wizard"/>
+        <field name="website_id" ref="ts_website.website_ts"/>
+        <field name="arch" type="xml">
+            <xpath expr="//form[@t-if=&quot;step == '2'&quot;]" position="before">
+                <t t-set="bill" t-value="member.ts_bill_prices() if step in ('2', '4') else None"/>
+            </xpath>
+            <xpath expr="//form[@t-if=&quot;step == '2'&quot;]/fieldset/label[@t-foreach='instruments']/input" position="attributes">
+                <attribute name="t-att-disabled">'disabled' if (bill and not bill['ok_inst'].get(i.id, True)) else None</attribute>
+            </xpath>
+            <xpath expr="//form[@t-if=&quot;step == '2'&quot;]/fieldset/label[@t-foreach='instruments']/span" position="after">
+                <t t-call="ts_billing.item_price" price="bill['inst'].get(i.id, 0) if bill else 0" ok="bill['ok_inst'].get(i.id, True) if bill else True"/>
+            </xpath>
+            <xpath expr="//form[@t-if=&quot;step == '4'&quot;]/dl" position="inside">
+                <t t-if="bill">
+                    <t t-set="bill_price" t-value="bill['bat'].get(bat.id, 0) if bat else bill['inst'].get(inst.id, 0)"/>
+                    <dt>هزینه</dt>
+                    <dd id="tsb-review-price"><t t-if="bill_price"><span class="ts-num" t-out="ws.ts_toman(bill_price)"/>؛ با فرستادن دعوت از اعتبار پنل رزرو و با تکمیل کسر می‌شود.</t><t t-else="">بدون هزینه</t></dd>
+                </t>
+            </xpath>
+        </field>
+    </record>
+    <record id="item_picker_prices" model="ir.ui.view">
+        <field name="name">ts_billing.item_picker</field>
+        <field name="inherit_id" ref="ts_battery.item_picker"/>
+        <field name="website_id" ref="ts_website.website_ts"/>
+        <field name="arch" type="xml">
+            <xpath expr="//label[@t-foreach='instruments']/input" position="attributes">
+                <attribute name="t-att-disabled">'disabled' if (bill and not bill['ok_inst'].get(i.id, True)) else None</attribute>
+            </xpath>
+            <xpath expr="//label[@t-foreach='instruments']/span" position="after">
+                <t t-call="ts_billing.item_price" price="bill['inst'].get(i.id, 0) if bill else 0" ok="bill['ok_inst'].get(i.id, True) if bill else True"/>
+            </xpath>
+            <xpath expr="//label[@t-foreach='batteries']/input" position="attributes">
+                <attribute name="t-att-disabled">'disabled' if (bill and not bill['ok_bat'].get(b.id, True)) else None</attribute>
+            </xpath>
+            <xpath expr="//span[hasclass('tsb-card__facts')]" position="after">
+                <t t-call="ts_billing.item_price" price="bill['bat'].get(b.id, 0) if bill else 0" ok="bill['ok_bat'].get(b.id, True) if bill else True"/>
+            </xpath>
+        </field>
+    </record>
+    <!-- params: price (rial), ok (bool); prints nothing when the price is 0 (free panel or unpriced item) -->
+    <record id="tpl_item_price" model="ir.ui.view">
+        <field name="name">TS billing: item price</field>
+        <field name="type">qweb</field>
+        <field name="key">ts_billing.item_price</field>
+        <field name="website_id" ref="ts_website.website_ts"/>
+        <field name="arch" type="xml">
+            <t t-name="ts_billing.item_price">
+                <span t-if="price" t-attf-class="tsb-price #{'tsb-price--short' if not ok else ''}">هزینه: <span class="ts-num" t-out="ws.ts_toman(price)"/><t t-if="not ok"> · اعتبار کافی نیست</t></span>
+            </t>
+        </field>
+    </record>
+
+    <!-- ===================================================== group invitations: prices, open-link floor, review total -->
+    <record id="campaign_form_prices" model="ir.ui.view">
+        <field name="name">ts_billing.campaign_form</field>
+        <field name="inherit_id" ref="ts_panel.tpl_campaign_form"/>
+        <field name="website_id" ref="ts_website.website_ts"/>
+        <field name="arch" type="xml">
+            <xpath expr="//form" position="before">
+                <t t-set="bill" t-value="member.ts_bill_prices()"/>
+            </xpath>
+            <xpath expr="//fieldset[legend[text()='سنجه']]/label[@t-foreach='instruments']/input" position="attributes">
+                <attribute name="t-att-disabled">'disabled' if (bill and not bill['ok_inst'].get(i.id, True)) else None</attribute>
+            </xpath>
+            <xpath expr="//fieldset[legend[text()='سنجه']]/label[@t-foreach='instruments']/span" position="after">
+                <t t-call="ts_billing.item_price" price="bill['inst'].get(i.id, 0) if bill else 0" ok="bill['ok_inst'].get(i.id, True) if bill else True"/>
+            </xpath>
+            <xpath expr="//fieldset[@data-ts-show='kind=open_link']" position="inside">
+                <p t-if="bill" class="ts-hint" id="tsb-open-floor">در پنل پیش‌پرداخت، ساخت پیوند باز دست‌کم به اندازهٔ هزینهٔ ۱۰ دعوت (یا سقف پیوستن، اگر کمتر است) اعتبار لازم دارد. هزینهٔ هر پیوستن هنگام پیوستن رزرو می‌شود.</p>
+            </xpath>
+        </field>
+    </record>
+    <record id="campaign_review_prices" model="ir.ui.view">
+        <field name="name">ts_billing.campaign_review</field>
+        <field name="inherit_id" ref="ts_panel.tpl_campaign_review"/>
+        <field name="website_id" ref="ts_website.website_ts"/>
+        <field name="arch" type="xml">
+            <xpath expr="//form" position="before">
+                <t t-set="bill" t-value="member.ts_bill_prices()"/>
+                <t t-set="bill_price" t-value="(bill['bat'].get(bat.id, 0) if bat else bill['inst'].get(inst.id, 0)) if bill else 0"/>
+            </xpath>
+            <xpath expr="//dl[hasclass('tsp-dl')]" position="inside">
+                <t t-if="bill_price">
+                    <dt>هزینهٔ هر دعوت</dt><dd class="ts-num" t-out="ws.ts_toman(bill_price)"/>
+                    <t t-if="draft['kind'] == 'list'"><dt>جمع رزرو</dt><dd id="tsb-review-total"><span class="ts-num" t-out="ws.ts_toman(bill_price * len(to_invite))"/>؛ موجودی قابل استفاده: <span class="ts-num" t-out="ws.ts_toman(bill['available'])"/></dd></t>
+                    <t t-else=""><dt>اعتبار لازم برای ساخت</dt><dd id="tsb-review-total"><span class="ts-num" t-out="ws.ts_toman(bill_price * min(draft.get('open_max') or 10, 10))"/>؛ موجودی قابل استفاده: <span class="ts-num" t-out="ws.ts_toman(bill['available'])"/></dd></t>
+                </t>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- ===================================================== member page: the monthly cap of a capped role -->
+    <record id="member_cap_section" model="ir.ui.view">
+        <field name="name">ts_billing.member.cap</field>
+        <field name="inherit_id" ref="ts_panel.tpl_member"/>
+        <field name="website_id" ref="ts_website.website_ts"/>
+        <field name="arch" type="xml">
+            <xpath expr="//section[@id='tsp-role']" position="after">
+                <t t-set="cap_st" t-value="m.ts_bill_state() if (m.active and m.ts_is_capped_role() and member.has_perm('credits:manage') and member.can_act()) else None"/>
+                <section t-if="cap_st" class="ts-card" id="tsb-cap" aria-labelledby="tsb-cap-h">
+                    <h2 id="tsb-cap-h" class="h5">سقف ماهانهٔ هزینهٔ دعوت‌ها</h2>
+                    <p class="ts-hint">مصرف این ماه: <span class="ts-num" t-out="ws.ts_toman(cap_st['spent'])"/>. ۰ یعنی بدون سقف. اگر دعوتی سقف را رد کند، فرستاده نمی‌شود و به این عضو گفته می‌شود با مدیر پنل صحبت کند.</p>
+                    <form t-attf-action="/my/workspaces/#{ws.id}/credits/cap" method="post" class="tsp-form" data-tsp-once="1">
+                        <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                        <input type="hidden" name="member_id" t-att-value="m.id"/>
+                        <input type="hidden" name="back" value="member"/>
+                        <div class="tsp-field">
+                            <label class="tsp-field__label" for="tsb_member_cap">سقف ماهانه (تومان)</label>
+                            <input id="tsb_member_cap" type="text" name="cap" inputmode="numeric" maxlength="16" dir="ltr" class="form-control tsb-money" t-att-value="ws.ts_fa_num(cap_st['cap'] // 10)"/>
+                        </div>
+                        <p><button type="submit" class="ts-btn ts-btn--primary">ذخیرهٔ سقف</button></p>
+                    </form>
+                </section>
+            </xpath>
+        </field>
+    </record>
+</odoo>

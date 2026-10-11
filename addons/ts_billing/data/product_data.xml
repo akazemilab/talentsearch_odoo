@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="1">
+    <!-- Clinic phase 4: the product category of the catalog products and the top-up product (docs/clinic/04_billing_brief.md 2) -->
+    <record id="product_category_root" model="product.category">
+        <field name="name">استعدادیاب</field>
+    </record>
+    <record id="product_category_instruments" model="product.category">
+        <field name="name">سنجه‌ها</field>
+        <field name="parent_id" ref="product_category_root"/>
+    </record>
+    <record id="product_topup" model="product.product">
+        <field name="name">اعتبار پیش‌پرداخت استعدادیاب</field>
+        <field name="type">service</field>
+        <field name="sale_ok" eval="True"/>
+        <field name="purchase_ok" eval="False"/>
+        <field name="list_price">0</field>
+        <field name="default_code">TS-CREDIT</field>
+        <field name="categ_id" ref="product_category_root"/>
+        <field name="taxes_id" eval="[(5, 0, 0)]"/>
+        <field name="supplier_taxes_id" eval="[(5, 0, 0)]"/>
+        <field name="ts_topup" eval="True"/>
+    </record>
+</odoo>

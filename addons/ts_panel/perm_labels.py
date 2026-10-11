@@ -36,6 +36,7 @@ PERM_LABELS = {
     'results:export': 'خروجی نتیجه‌ها',
     'reports:group': 'گزارش گروهی',
     'credits:read': 'دیدن اعتبار و مصرف',
+    'credits:manage': 'تعیین سقف ماهانهٔ مشاوران و آستانهٔ هشدار اعتبار',
     'catalog:assign': 'تعیین سنجه‌ها و مجموعه‌های مجاز هر عضو',
     'audit:read': 'دیدن دفتر ممیزی',
     'audit:export': 'خروجی از دفتر ممیزی',
@@ -56,6 +57,8 @@ LIVE = {
     'credits:read', 'audit:read', 'audit:export',
     # clinic phase 3: the panel itself decides which of its instruments and batteries each member may use
     'catalog:assign',
+    # clinic phase 4 (ts_billing): prepaid panels
+    'credits:manage',
 }
 
 # One line per role, WITHOUT the role name: pages print the bold role label first (UX audit G4 PT15).

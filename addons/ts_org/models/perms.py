@@ -43,6 +43,7 @@ _TABLE = {
     'results:export': 'owner:edu owner:emp hr_admin',
     'reports:group': 'owner:edu owner:emp counselor hr_admin reviewer',
     'credits:read': 'owner admin clinic_director hr_admin',
+    'credits:manage': 'owner admin clinic_director hr_admin',     # clinic phase 4: monthly caps, low-balance threshold
     'catalog:assign': 'owner admin clinic_director hr_admin',
     'audit:read': 'owner',
     'audit:export': 'owner',

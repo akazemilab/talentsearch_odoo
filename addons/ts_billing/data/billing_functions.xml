@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Run on install and on every upgrade; each one is idempotent (docs/clinic/04_billing_brief.md 2 and 7).
+         The currency switch runs first: it refuses when any product carries a price or any journal entry exists. -->
+    <function model="ts.wallet" name="_ts_switch_company_currency"/>
+    <function model="ts.instrument" name="_ts_sync_all_products"/>
+    <function model="ts.battery" name="_ts_sync_all_products"/>
+</odoo>
