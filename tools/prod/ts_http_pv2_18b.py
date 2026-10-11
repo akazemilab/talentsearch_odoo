@@ -27,6 +27,8 @@ u = user('staff')
 env['ts.workspace.member'].search([('workspace_id', '=', ws.id), ('user_id', '=', u.id)]) or env['ts.workspace.member'].create(
     {'workspace_id': ws.id, 'user_id': u.id, 'role': 'owner'})
 env['ir.config_parameter'].sudo().set_float('ts_panel.staff_idle_hours', 8.0)
+# sessions left by an earlier run would hide a missing one: start every run from none
+env['res.session'].sudo().search([('user_id', '=', u.id), ('revoked', '=', False)])._revoke()
 env.cr.commit()
 print('OK seeded')
 """ % L
@@ -57,8 +59,12 @@ def post(c, path, data=None):
 
 
 a, b = login('staff'), login('staff')
+get(b, '/my')   # the second device makes one request, so its session is recorded like a real one
 st, page = get(a, '/my/sessions')
-check('the sessions page opens and lists at least two sessions', st == 200 and page.count('name="sid"') >= 1, st)
+# since the UX audit the «others» form shows only with 2+ sessions and the current row has no form: every name="sid"
+# is another device (or the «others» form), so >= 2 means the other session row and the «others» form are both there
+check('the sessions page opens and lists at least two sessions', st == 200 and page.count('name="sid"') >= 2
+      and 'id="ses-others"' in page, st)
 check('the current session is marked and not revocable', 'ts-sess-current' in page, st)
 
 st, loc, _ = post(a, '/my/sessions/revoke', {'sid': 'others'})
