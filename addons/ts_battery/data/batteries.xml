@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="1">
+    <!-- The six starter batteries (docs/clinic/01_architecture.md 2.1). Instruments come from the ts_assessment
+         loader (no xmlids), so the batteries are created by code, idempotent by battery code; runs on install only. -->
+    <function model="ts.battery" name="_ts_load_starter"/>
+</odoo>

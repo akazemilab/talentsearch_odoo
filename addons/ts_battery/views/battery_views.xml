@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="ts_battery_view_list" model="ir.ui.view">
+        <field name="name">ts.battery.list</field>
+        <field name="model">ts.battery</field>
+        <field name="arch" type="xml">
+            <list decoration-muted="state == 'retired'" decoration-warning="has_retired">
+                <field name="sequence" widget="handle"/>
+                <field name="code"/>
+                <field name="name"/>
+                <field name="audience"/>
+                <field name="for_clinical" optional="show"/>
+                <field name="for_education" optional="show"/>
+                <field name="for_employment" optional="show"/>
+                <field name="item_count"/>
+                <field name="est_minutes"/>
+                <field name="has_retired" optional="show"/>
+                <field name="state" widget="badge" decoration-success="state == 'published'" decoration-muted="state == 'retired'"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="ts_battery_view_form" model="ir.ui.view">
+        <field name="name">ts.battery.form</field>
+        <field name="model">ts.battery</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                    <button name="action_publish" type="object" string="انتشار" class="btn-primary" invisible="state == 'published'" groups="ts_core.group_ts_manager"/>
+                    <button name="action_draft" type="object" string="برگرداندن به پیش‌نویس" invisible="state == 'draft'" groups="ts_core.group_ts_manager"/>
+                    <button name="action_retire" type="object" string="بازنشسته کردن" invisible="state == 'retired'" groups="ts_core.group_ts_manager" confirm="این باتری دیگر برای دعوت تازه پیشنهاد نمی‌شود. ادامه می‌دهید؟"/>
+                    <field name="state" widget="statusbar" statusbar_visible="draft,published,retired"/>
+                </header>
+                <sheet>
+                    <div class="alert alert-warning" role="alert" invisible="not has_retired">
+                        یکی از سنجه‌های این باتری بازنشسته شده است. آن سنجه را بردارید یا جایگزین کنید؛ تا آن زمان باتری منتشر نمی‌شود و در فهرست دعوت پنل‌ها نمی‌آید.
+                    </div>
+                    <div class="oe_title">
+                        <label for="name"/>
+                        <h1><field name="name" placeholder="مثلاً: ارزیابی آغاز درمان"/></h1>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="code" placeholder="BAT-INTAKE-1"/>
+                            <field name="audience"/>
+                            <field name="has_retired" invisible="1"/>
+                        </group>
+                        <group string="پنل‌هایی که می‌توانند از آن استفاده کنند">
+                            <field name="for_clinical"/>
+                            <field name="for_education"/>
+                            <field name="for_employment"/>
+                        </group>
+                        <group>
+                            <field name="item_count"/>
+                            <field name="est_minutes"/>
+                        </group>
+                        <group>
+                            <field name="product_id"/>
+                        </group>
+                    </group>
+                    <field name="description" placeholder="برای چه کسی و چه زمانی؛ با «این مجموعه برای کمک به گفت‌وگوی مشاوره است، نه تشخیص.» تمام شود."/>
+                    <notebook>
+                        <page string="سنجه‌ها" name="lines">
+                            <field name="line_ids">
+                                <list editable="bottom" decoration-danger="instrument_state == 'retired'">
+                                    <field name="sequence" widget="handle"/>
+                                    <field name="instrument_id" domain="[('state', '=', 'published'), ('audience', '=', parent.audience)]" options="{'no_create': True}"/>
+                                    <field name="instrument_audience" optional="show"/>
+                                    <field name="item_count"/>
+                                    <field name="required"/>
+                                    <field name="instrument_state" widget="badge" decoration-success="instrument_state == 'published'" decoration-danger="instrument_state == 'retired'"/>
+                                </list>
+                            </field>
+                        </page>
+                    </notebook>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <record id="ts_battery_view_search" model="ir.ui.view">
+        <field name="name">ts.battery.search</field>
+        <field name="model">ts.battery</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="name"/>
+                <field name="code"/>
+                <field name="line_ids" string="سنجه" filter_domain="[('line_ids.instrument_id', 'ilike', self)]"/>
+                <filter name="published" string="منتشرشده" domain="[('state', '=', 'published')]"/>
+                <filter name="draft" string="پیش‌نویس" domain="[('state', '=', 'draft')]"/>
+                <filter name="retired_inst" string="دارای سنجهٔ بازنشسته" domain="[('has_retired', '=', True)]"/>
+                <separator/>
+                <filter name="clinical" string="بالینی" domain="[('for_clinical', '=', True)]"/>
+                <filter name="education" string="آموزشی" domain="[('for_education', '=', True)]"/>
+                <filter name="employment" string="استخدامی" domain="[('for_employment', '=', True)]"/>
+                <group>
+                    <filter name="by_state" string="وضعیت" context="{'group_by': 'state'}"/>
+                    <filter name="by_audience" string="مخاطب" context="{'group_by': 'audience'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="ts_battery_action" model="ir.actions.act_window">
+        <field name="name">باتری‌ها</field>
+        <field name="res_model">ts.battery</field>
+        <field name="view_mode">list,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">هنوز باتری‌ای ساخته نشده است</p>
+            <p>باتری چند سنجهٔ منتشرشده با یک مخاطب است که با یک دعوت به مراجع داده می‌شود.</p>
+        </field>
+    </record>
+
+    <menuitem id="menu_ts_batteries" name="باتری‌ها" parent="ts_assessment.menu_ts_assessments"
+              action="ts_battery_action" sequence="15" groups="ts_core.group_ts_curator"/>
+</odoo>

@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Panel catalog (docs/clinic/01_architecture.md 2.2). Back-office views of ts.* models only. -->
+    <record id="ts_workspace_view_form_catalog" model="ir.ui.view">
+        <field name="name">ts.workspace.form.catalog</field>
+        <field name="model">ts.workspace</field>
+        <field name="inherit_id" ref="ts_core.ts_workspace_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='member_ids']/list/field[@name='license_number']" position="after">
+                <field name="restrict_instrument_ids" widget="many2many_tags" optional="show" groups="ts_core.group_ts_curator"
+                       domain="[('state', '=', 'published')]" options="{'no_create': True}"/>
+                <field name="restrict_battery_ids" widget="many2many_tags" optional="show" groups="ts_core.group_ts_curator"
+                       domain="[('state', '=', 'published')]" options="{'no_create': True}"/>
+            </xpath>
+            <xpath expr="//page[@name='members']" position="after">
+                <page string="کاتالوگ" name="catalog" groups="ts_core.group_ts_curator">
+                    <group>
+                        <field name="catalog_mode" widget="radio"/>
+                    </group>
+                    <div class="text-muted mb-3" invisible="catalog_mode != 'purpose'">
+                        این پنل همهٔ سنجه‌هایی را می‌بیند که هدف پنل اجازه می‌دهد و همهٔ باتری‌های منتشرشده‌ای که برای این هدف علامت خورده‌اند. فهرست‌های زیر فقط در حالت «فقط موارد مجاز» به کار می‌روند.
+                    </div>
+                    <div class="text-muted mb-3" invisible="catalog_mode != 'granted'">
+                        اعضای این پنل فقط به سنجه‌ها و باتری‌های زیر دعوت می‌کنند. سنجه‌های هر باتری را هم در فهرست سنجه‌ها بگذارید.
+                    </div>
+                    <group string="باتری‌های مجاز">
+                        <field name="catalog_battery_ids" nolabel="1" colspan="2" widget="many2many_tags"
+                               domain="[('state', '=', 'published')]" options="{'no_create': True}"/>
+                    </group>
+                    <group string="سنجه‌های مجاز">
+                        <field name="catalog_instrument_ids" nolabel="1" colspan="2" domain="[('state', '=', 'published')]">
+                            <list>
+                                <field name="code"/>
+                                <field name="title"/>
+                                <field name="audience"/>
+                                <field name="active_item_count"/>
+                                <field name="state" widget="badge" decoration-success="state == 'published'" decoration-muted="state == 'retired'"/>
+                            </list>
+                        </field>
+                    </group>
+                </page>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="ts_member_view_form_catalog" model="ir.ui.view">
+        <field name="name">ts.workspace.member.form.catalog</field>
+        <field name="model">ts.workspace.member</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                    <button name="action_verify" type="object" string="تأیید صلاحیت" class="btn-primary" invisible="verification_state != 'pending'" groups="ts_core.group_ts_manager"/>
+                    <field name="verification_state" widget="statusbar" statusbar_visible="pending,verified"/>
+                </header>
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="workspace_id"/>
+                            <field name="user_id" domain="[('share', '=', True)]"/>
+                            <field name="role"/>
+                            <field name="active" widget="boolean_toggle"/>
+                            <field name="owner_practices" invisible="role != 'owner'"/>
+                        </group>
+                        <group>
+                            <field name="license_number"/>
+                            <field name="verified_by_id"/>
+                            <field name="verified_on"/>
+                            <field name="deactivated_on" invisible="active"/>
+                        </group>
+                    </group>
+                    <group string="محدودیت کاتالوگ برای این عضو" groups="ts_core.group_ts_curator">
+                        <div class="text-muted" colspan="2">خالی یعنی همهٔ موارد کاتالوگ پنل. اگر چیزی انتخاب کنید، این عضو فقط به همان‌ها دعوت می‌کند.</div>
+                        <field name="restrict_battery_ids" widget="many2many_tags" domain="[('state', '=', 'published')]" options="{'no_create': True}"/>
+                        <field name="restrict_instrument_ids" widget="many2many_tags" domain="[('state', '=', 'published')]" options="{'no_create': True}"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="ts_member_view_list_verify_catalog" model="ir.ui.view">
+        <field name="name">ts.workspace.member.list.verify.catalog</field>
+        <field name="model">ts.workspace.member</field>
+        <field name="inherit_id" ref="ts_org.ts_member_view_list_verify"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='license_number']" position="after">
+                <field name="restrict_battery_ids" widget="many2many_tags" optional="hide" groups="ts_core.group_ts_curator"/>
+                <field name="restrict_instrument_ids" widget="many2many_tags" optional="hide" groups="ts_core.group_ts_curator"/>
+            </xpath>
+        </field>
+    </record>
+</odoo>

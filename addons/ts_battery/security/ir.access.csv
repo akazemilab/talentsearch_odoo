@@ -1,0 +1,5 @@
+id,name,model_id,group_id/id,operation,domain
+access_ts_battery_curator,battery curator read,ts.battery,ts_core.group_ts_curator,r,
+access_ts_battery_manager,battery manager,ts.battery,ts_core.group_ts_manager,crud,
+access_ts_battery_line_curator,battery line curator read,ts.battery.line,ts_core.group_ts_curator,r,
+access_ts_battery_line_manager,battery line manager,ts.battery.line,ts_core.group_ts_manager,crud,

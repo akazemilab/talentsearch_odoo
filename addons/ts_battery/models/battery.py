@@ -1,0 +1,240 @@
+import logging
+import math
+
+from odoo import api, fields, models
+from odoo.exceptions import UserError, ValidationError
+
+from odoo.addons.ts_assessment.models.instrument import AUDIENCES, SECONDS_PER_ITEM
+
+_logger = logging.getLogger(__name__)
+
+# workspace purpose -> battery flag (benefits panels have no batteries)
+PURPOSE_FLAG = {'clinical': 'for_clinical', 'education': 'for_education', 'employment': 'for_employment'}
+
+_LIMIT = 'این مجموعه برای کمک به گفت‌وگوی مشاوره است، نه تشخیص.'
+# Starter batteries (docs/clinic/01_architecture.md 2.1). Instruments are created by the loader, not by xmlids,
+# so they are resolved by code in _ts_load_starter. Audiences checked against workbook_meta.json (all match).
+STARTER = [
+    {'code': 'BAT-INTAKE-1', 'name': 'ارزیابی آغاز درمان', 'audience': 'adult', 'flags': ('for_clinical',),
+     'description': 'برای جلسه‌های نخست با مراجع بزرگسال؛ تصویری کلی از آرامش روانی، بی‌تابی، رضایت از زندگی، '
+                    'نیازها و تعهد فردی می‌دهد و کمک می‌کند مسیر گفت‌وگو را انتخاب کنید. ' + _LIMIT,
+     'instruments': ['inventory_001', 'inventory_027', 'inventory_020', 'inventory_031', 'inventory_014']},
+    {'code': 'BAT-DISTRESS-1', 'name': 'آشفتگی هیجانی و تعادل روانی', 'audience': 'adult', 'flags': ('for_clinical',),
+     'description': 'برای مراجع بزرگسالی که از فشار، نگرانی یا بی‌قراری می‌گوید؛ بی‌تابی، پایایی، تعادل و سرزندگی '
+                    'را کنار هم نشان می‌دهد. ' + _LIMIT,
+     'instruments': ['inventory_027', 'inventory_008', 'inventory_010', 'inventory_023']},
+    {'code': 'BAT-LIFE-1', 'name': 'رضایت از زندگی و معنا', 'audience': 'adult', 'flags': ('for_clinical',),
+     'description': 'برای مراجع بزرگسالی که از نارضایتی یا کم‌رنگ شدن معنا در زندگی می‌گوید؛ رضایت از زندگی، '
+                    'هدفمندی، ارجمندی و حمایت معنوی را می‌سنجد. ' + _LIMIT,
+     'instruments': ['inventory_020', 'inventory_033', 'inventory_002', 'inventory_016']},
+    {'code': 'BAT-COUPLE-1', 'name': 'زوج و ازدواج', 'audience': 'adult', 'flags': ('for_clinical',),
+     'description': 'برای مشاورهٔ پیش از ازدواج یا زوج‌درمانی؛ هر یک از دو نفر جداگانه دعوت می‌شود و رضایت زناشویی، '
+                    'خردمندی و خودگستری را پاسخ می‌دهد. ' + _LIMIT,
+     'instruments': ['inventory_021', 'inventory_017', 'inventory_018']},
+    {'code': 'BAT-CHILD-1', 'name': 'کودک: شخصیت و توانایی', 'audience': 'child', 'flags': ('for_clinical', 'for_education'),
+     'description': 'برای والدی که دربارهٔ کودک خود مشورت می‌خواهد؛ والد یا مراقب دربارهٔ شخصیت و توانایی‌های کودک '
+                    'پاسخ می‌دهد. ' + _LIMIT,
+     'instruments': ['inventory_025', 'inventory_003']},
+    {'code': 'BAT-WORK-1', 'name': 'کار و مسیر شغلی', 'audience': 'adult', 'flags': ('for_clinical', 'for_employment'),
+     'description': 'برای مشاورهٔ شغلی و انتخاب مسیر کاری بزرگسالان؛ رضایت شغلی، هوش موفق، تعهد فردی و وظیفه‌مندی '
+                    'را کنار هم می‌گذارد و در پنل استخدامی فقط یکی از ورودی‌های گفت‌وگوی شغلی است. ' + _LIMIT,
+     'instruments': ['inventory_022', 'inventory_034', 'inventory_014', 'inventory_032']},
+]
+
+
+def est_minutes(items):
+    """8 s per item, rounded up to the next 5 minutes (0 items -> 0)."""
+    return int(math.ceil(items * SECONDS_PER_ITEM / 60 / 5) * 5) if items else 0
+
+
+class TsBattery(models.Model):
+    """An ordered set of published instruments offered as one invitation (run in Phase 3)."""
+    _name = 'ts.battery'
+    _description = 'باتری سنجه'
+    _inherit = ['mail.thread']
+    _order = 'sequence, code'
+
+    name = fields.Char('نام', required=True, tracking=True)
+    code = fields.Char('کد', required=True, copy=False, index=True, tracking=True)
+    sequence = fields.Integer(default=10)
+    description = fields.Text('شرح', help='برای چه کسی و چه زمانی؛ با «… برای کمک به گفت‌وگوی مشاوره است، نه تشخیص.» تمام شود.')
+    audience = fields.Selection(AUDIENCES, 'مخاطب', required=True, default='adult', tracking=True)
+    for_clinical = fields.Boolean('پنل بالینی', default=True)
+    for_education = fields.Boolean('پنل آموزشی')
+    for_employment = fields.Boolean('پنل استخدامی')
+    line_ids = fields.One2many('ts.battery.line', 'battery_id', 'سنجه‌ها', copy=True)
+    state = fields.Selection([('draft', 'پیش‌نویس'), ('published', 'منتشرشده'), ('retired', 'بازنشسته')],
+                             'وضعیت', default='draft', required=True, tracking=True, copy=False)
+    item_count = fields.Integer('تعداد پرسش', compute='_compute_counts', store=True)
+    est_minutes = fields.Integer('زمان تقریبی (دقیقه)', compute='_compute_counts', store=True)
+    has_retired = fields.Boolean('سنجهٔ بازنشسته دارد', compute='_compute_has_retired', store=True,
+                                 help='یکی از سنجه‌های این باتری بازنشسته شده است؛ تا آن را برندارید، باتری منتشر نمی‌شود.')
+    # Filled in Phase 4 (ts_billing: one product per published battery).
+    product_id = fields.Many2one('product.product', 'محصول', copy=False, readonly=True, ondelete='set null')
+
+    _code_unique = models.Constraint('unique(code)', 'کد باتری باید یکتا باشد.')
+
+    @api.depends('line_ids.instrument_id.current_version_id.active_item_count')
+    def _compute_counts(self):
+        for b in self:
+            n = sum(b.line_ids.mapped('instrument_id.current_version_id.active_item_count'))
+            b.item_count = n
+            b.est_minutes = est_minutes(n)
+
+    @api.depends('line_ids.instrument_id.state')
+    def _compute_has_retired(self):
+        for b in self:
+            b.has_retired = any(s == 'retired' for s in b.line_ids.mapped('instrument_id.state'))
+
+    def unlink(self):
+        return super(TsBattery, self.with_context(ts_battery_unlink=True)).unlink()
+
+    def copy_data(self, default=None):
+        vals_list = super().copy_data(default=default)
+        for b, vals in zip(self, vals_list):
+            vals.setdefault('code', '%s-COPY' % b.code)
+            vals.setdefault('name', '%s (رونوشت)' % b.name)
+        return vals_list
+
+    # ------------------------------------------------------------ rules
+    def _ts_publish_problems(self):
+        """Persian reasons why this battery cannot be (or stay) published; empty list = publishable."""
+        self.ensure_one()
+        problems = []
+        lines = self.line_ids
+        if len(lines) < 2:
+            problems.append('باتری دست‌کم دو سنجه لازم دارد.')
+        insts = lines.mapped('instrument_id')
+        if len(insts) != len(lines):
+            problems.append('هر سنجه فقط یک بار در یک باتری می‌آید.')
+        if not (self.for_clinical or self.for_education or self.for_employment):
+            problems.append('دست‌کم یکی از کاربردها (بالینی، آموزشی یا استخدامی) را انتخاب کنید.')
+        for i in insts:
+            if i.state == 'retired':
+                problems.append('سنجهٔ «%s» بازنشسته شده است؛ پیش از انتشار آن را از باتری بردارید.' % i.name)
+            elif i.state != 'published':
+                problems.append('سنجهٔ «%s» منتشر نشده است.' % i.name)
+            if i.audience != self.audience:
+                problems.append('مخاطب سنجهٔ «%s» با مخاطب باتری یکی نیست.' % i.name)
+            if self.for_employment and i.purpose != 'employment':
+                problems.append('سنجهٔ «%s» برای پنل استخدامی مجاز نیست.' % i.name)
+        return problems
+
+    @api.constrains('state', 'line_ids', 'audience', 'for_clinical', 'for_education', 'for_employment')
+    def _check_published(self):
+        for b in self:
+            if b.state == 'published':
+                problems = b._ts_publish_problems()
+                if problems:
+                    raise ValidationError('\n'.join(problems))
+
+    @api.constrains('audience')
+    def _check_audience(self):
+        for b in self:
+            bad = b.line_ids.filtered(lambda l: l.instrument_id.audience != b.audience)
+            if bad:
+                raise ValidationError('مخاطب سنجهٔ «%s» با مخاطب باتری یکی نیست.' % bad[0].instrument_id.name)
+
+    # ------------------------------------------------------------ lifecycle
+    def action_publish(self):
+        for b in self:
+            problems = b._ts_publish_problems()
+            if problems:
+                raise UserError('باتری «%s» منتشر نشد:\n%s' % (b.name, '\n'.join(problems)))
+            b.state = 'published'
+            self.env['ts.audit.event'].log('battery.publish', b, lines=len(b.line_ids))
+
+    def action_retire(self):
+        for b in self.filtered(lambda r: r.state != 'retired'):
+            b.state = 'retired'
+            self.env['ts.audit.event'].log('battery.retire', b)
+
+    def action_draft(self):
+        for b in self.filtered(lambda r: r.state != 'draft'):
+            b.state = 'draft'
+            self.env['ts.audit.event'].log('battery.draft', b)
+
+    # ------------------------------------------------------------ starter data
+    @api.model
+    def _ts_load_starter(self):
+        """Create the six starter batteries once (by code). A battery whose instruments are missing or not
+        published is skipped; one that fails a publish rule stays draft. Running it again changes nothing."""
+        Inst = self.env['ts.instrument'].sudo().with_context(active_test=False)
+        B = self.sudo()
+        stats = {'created': 0, 'published': 0, 'existing': 0, 'skipped': 0}
+        for spec in STARTER:
+            if B.search_count([('code', '=', spec['code'])]):
+                stats['existing'] += 1
+                continue
+            insts = [Inst.search([('code', '=', c)], limit=1) for c in spec['instruments']]
+            missing = [c for c, i in zip(spec['instruments'], insts) if not i or i.state != 'published']
+            if missing:
+                _logger.warning('ts_battery: starter %s skipped, instruments missing or not published: %s',
+                                spec['code'], missing)
+                stats['skipped'] += 1
+                continue
+            vals = {'code': spec['code'], 'name': spec['name'], 'description': spec['description'],
+                    'audience': spec['audience'], 'sequence': 10 * (STARTER.index(spec) + 1),
+                    'for_clinical': 'for_clinical' in spec['flags'], 'for_education': 'for_education' in spec['flags'],
+                    'for_employment': 'for_employment' in spec['flags'],
+                    'line_ids': [fields.Command.create({'sequence': 10 * (n + 1), 'instrument_id': i.id})
+                                 for n, i in enumerate(insts)]}
+            try:
+                with self.env.cr.savepoint():
+                    bat = B.create(vals)
+            except (UserError, ValidationError) as e:
+                _logger.warning('ts_battery: starter %s not created: %s', spec['code'], e)
+                stats['skipped'] += 1
+                continue
+            stats['created'] += 1
+            try:
+                with self.env.cr.savepoint():
+                    bat.action_publish()
+                stats['published'] += 1
+            except (UserError, ValidationError) as e:
+                _logger.warning('ts_battery: starter %s left as draft: %s', spec['code'], e)
+        _logger.info('ts_battery starter batteries: %s', stats)
+        return stats
+
+
+class TsBatteryLine(models.Model):
+    _name = 'ts.battery.line'
+    _description = 'سنجهٔ باتری'
+    _order = 'battery_id, sequence, id'
+
+    battery_id = fields.Many2one('ts.battery', 'باتری', required=True, ondelete='cascade', index=True)
+    sequence = fields.Integer('ترتیب', default=10)
+    instrument_id = fields.Many2one('ts.instrument', 'سنجه', required=True, ondelete='restrict', index=True,
+                                    domain=[('state', '=', 'published')])
+    required = fields.Boolean('الزامی', default=True)
+    instrument_audience = fields.Selection(related='instrument_id.audience', string='مخاطب سنجه')
+    instrument_state = fields.Selection(related='instrument_id.state', string='وضعیت سنجه')
+    item_count = fields.Integer(related='instrument_id.active_item_count', string='تعداد پرسش')
+
+    _battery_instrument_unique = models.Constraint('unique(battery_id, instrument_id)',
+                                                   'هر سنجه فقط یک بار در یک باتری می‌آید.')
+
+    @api.constrains('instrument_id', 'battery_id')
+    def _check_instrument(self):
+        for l in self:
+            b = l.battery_id
+            if len(b.line_ids.filtered(lambda x: x.instrument_id == l.instrument_id)) > 1:
+                raise ValidationError('سنجهٔ «%s» دو بار در این باتری آمده است.' % l.instrument_id.name)
+            if l.instrument_id.state != 'published':
+                raise ValidationError('فقط سنجهٔ منتشرشده به باتری اضافه می‌شود («%s»).' % l.instrument_id.name)
+            if l.instrument_id.audience != b.audience:
+                raise ValidationError('مخاطب سنجهٔ «%s» با مخاطب باتری یکی نیست.' % l.instrument_id.name)
+            if b.state == 'published':
+                problems = b._ts_publish_problems()
+                if problems:
+                    raise ValidationError('\n'.join(problems))
+
+    def unlink(self):
+        published = self.mapped('battery_id').filtered(lambda b: b.state == 'published')
+        if self.env.context.get('ts_battery_unlink'):     # the whole battery goes
+            published = published.browse()
+        res = super().unlink()
+        for b in published.exists():
+            if len(b.line_ids) < 2:
+                raise ValidationError('باتری منتشرشده دست‌کم دو سنجه لازم دارد؛ ابتدا آن را به پیش‌نویس برگردانید.')
+        return res
