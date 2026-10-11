@@ -35,7 +35,7 @@ small = env['ts.instrument'].search([('state', '=', 'published'), ('audience', '
 i1, i2 = small[0], small[1]
 (i1 | i2)._ts_ensure_product()
 i1.write({'ts_list_price': P1}); i2.write({'ts_list_price': P2})
-name = 'پنل آزمون اعتبار وب'
+name = 'پنل آزمون شارژ وب'
 org = env['res.partner'].search([('name', '=', name)], limit=1) or env['res.partner'].create({'name': name, 'is_company': True})
 ws = env['ts.workspace'].search([('partner_id', '=', org.id)], limit=1) or env['ts.workspace'].create(
     {'name': name, 'purpose': 'clinical', 'partner_id': org.id, 'escalation_contact_id': org.id})
@@ -147,7 +147,7 @@ check('owner dashboard: «اعتبار: … · رزروشده: …»', st == 200
 
 # ---------------------------------------------------------------- 3. the wizard: prices, disabled item, review
 get(c1, W + '/invites/new?fresh=1')
-post(c1, W + '/invites/new', {'step': '1', 'new_name': 'مراجع آزمون اعتبار', 'new_phone': '', 'new_email': '', 'new_age': 'adult'})
+post(c1, W + '/invites/new', {'step': '1', 'new_name': 'مراجع آزمون شارژ', 'new_phone': '', 'new_email': '', 'new_age': 'adult'})
 st, body = get(c1, W + '/invites/new?step=2')
 t1, t2 = input_tag(body, I1), input_tag(body, I2)
 check('wizard step 2: each item card shows «هزینه: … تومان»', st == 200 and 'هزینه: ' in body and toman(P1) in body and toman(P2) in body, str(st))
@@ -166,7 +166,7 @@ check('server: the price is held', ('HOLD %d %d' % (P1, -P1)) in out, out[-200:]
 
 # cap refusal shown as the page error
 get(c1, W + '/invites/new?fresh=1')
-post(c1, W + '/invites/new', {'step': '1', 'new_name': 'مراجع دوم اعتبار', 'new_phone': '', 'new_email': '', 'new_age': 'adult'})
+post(c1, W + '/invites/new', {'step': '1', 'new_name': 'مراجع دوم شارژ', 'new_phone': '', 'new_email': '', 'new_age': 'adult'})
 post(c1, W + '/invites/new', {'step': '2', 'instrument_id': I1})
 post(c1, W + '/invites/new', {'step': '3', 'deadline': '', 'note': ''})
 st, loc, _ = post(c1, W + '/invites/new', {'step': '4'})
