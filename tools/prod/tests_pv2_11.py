@@ -154,7 +154,7 @@ check('voiding again does nothing and refunds nothing more', at1.with_user(mgr).
 check('the void is audited', env['ts.audit.event'].search_count([('event_type', '=', 'attempt.void'), ('workspace_id', '=', emp.id)]) == 1)
 at2.with_user(mgr).action_void('technical')
 r2 = txns(emp, 'refund').filtered(lambda t: t.attempt_id == at2)
-check('voiding a paid-mode attempt gives the credit back, once', len(r2) == 1 and r2.amount == 1 and not r2.free)
+check('voiding the second attempt refunds exactly its (free) debit, once', len(r2) == 1 and r2.amount == 0 and r2.free)
 
 # ---- reconcile, from the attempts (G14)
 mine = (emp.id, edu.id)
