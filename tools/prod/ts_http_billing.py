@@ -42,7 +42,7 @@ ws = env['ts.workspace'].search([('partner_id', '=', org.id)], limit=1) or env['
 ws.write({'approved_on': '2026-01-01 00:00:00', 'billing_mode': 'prepaid', 'catalog_mode': 'purpose'})
 ws.state = 'pilot'
 # an earlier run of this suite on the same clone may have left names carrying the forbidden word
-for old in env['res.partner'].search([('name', 'like', 'آزمون اعتبار'), ('is_company', '=', True)]):
+for old in env['res.partner'].sudo().search([('name', 'like', 'آزمون اعتبار')]):
     old.name = old.name.replace('اعتبار', 'شارژ')
 for ws_old in env['ts.workspace'].search([('name', 'like', 'آزمون اعتبار')]):
     ws_old.name = ws_old.name.replace('اعتبار', 'شارژ')
