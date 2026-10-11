@@ -13,7 +13,7 @@
     .tsb-next { margin-block: 18px; }
     // the label is small and muted, the instrument name carries the card (it read the other way round)
     .tsb-next h2.tsb-next__k { margin: 0; font-size: .9rem; font-weight: 500; line-height: 1.6; color: var(--muted); font-family: var(--font-text); }
-    .tsb-next__name { font-size: 1.3rem; font-weight: 700; margin: 0; color: var(--color-text); }
+    .tsb-next p.tsb-next__name { font-size: 1.3rem; font-weight: 700; line-height: 1.6; margin: 0; color: var(--color-text); }
     .tsb-next .ts-hint { margin: 0; }
     .tsb-actions { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-block: 8px 14px; }
     .tsb-actions .ts-btn { min-block-size: 44px; }
@@ -29,6 +29,7 @@
     .tsb-card { display: flex; gap: 12px; align-items: flex-start; min-block-size: 44px; padding: 14px 16px; border-radius: var(--r-12);
         background: var(--color-surface); box-shadow: var(--shadow-sm); border: 1px solid transparent; cursor: pointer; }
     .tsb-card input:checked + .tsb-card__body .tsb-card__name { color: var(--color-accent-300); }
+    .tsb-card:has(input:checked) { border-color: var(--color-accent-400); }
     .tsb-card input { margin-block-start: 4px; inline-size: 20px; block-size: 20px; flex: none; }
     .tsb-card__body { display: grid; gap: 4px; }
     .tsb-card__name { font-weight: 600; }
@@ -47,7 +48,8 @@
     .tsb-jump a::before { content: counter(tsb, persian) '. '; margin-inline-end: 4px; color: var(--muted); }
     .tsb-sec { scroll-margin-block-start: 80px; margin-block: 14px; }
     // instrument headings: clearly above the report's own h3s, one rule between instruments, no gap under a closed one
-    .tsb-sec .tt-sec__h { margin: 0; font-size: 1.3rem; }
+    // beats the panel shell's `.tsp-shell__main .ts-card h2` (15.5px + bottom margin, which left a gap under a closed section)
+    .tsb-page .tsb-sec h2.tt-sec__h { margin: 0; font-size: 1.3rem; font-weight: 600; }
     .tsb-sec .tt-sec__body { margin-block-start: 8px; }
     .tsb-doc .tsb-sec + .tsb-sec { padding-block-start: 14px; border-block-start: 1px solid var(--line); }
     .tsb-sec .tt-sec__btn { display: flex; inline-size: 100%; justify-content: space-between; align-items: center; gap: 10px; min-block-size: 44px;

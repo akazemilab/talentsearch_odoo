@@ -328,8 +328,19 @@
                 <h1 t-if="c.battery_id">مجموعهٔ <t t-out="c.battery_id.name"/></h1>
                 <h1 t-else="" t-out="inst.title"/>
             </xpath>
+            <xpath expr="//div[hasclass('ts-section__head')]/p[hasclass('ts-tag')]" position="replace">
+                <p class="ts-tag"><t t-if="c.battery_id">دعوت به مجموعهٔ سنجه‌ها</t><t t-else="">دعوت به سنجه</t></p>
+            </xpath>
+            <xpath expr="//div[hasclass('ts-section__head')]/p[@t-if='student']" position="replace">
+                <p t-if="c.battery_id and student"><strong t-out="ws.partner_id.name"/> تو را به پاسخ‌دادن به سنجه‌های این مجموعه دعوت کرده است.</p>
+                <p t-elif="c.battery_id"><strong t-out="ws.partner_id.name"/> شما را به پاسخ‌دادن به سنجه‌های این مجموعه دعوت کرده است.</p>
+                <p t-elif="student"><strong t-out="ws.partner_id.name"/> تو را به پاسخ‌دادن به این سنجه دعوت کرده است.</p>
+            </xpath>
+            <xpath expr="//dt[@t-out=&quot;'اندازهٔ کار' if matrix else 'تعداد پرسش'&quot;]" position="attributes">
+                <attribute name="t-out">'اندازهٔ کار' if (matrix or c.battery_id) else 'تعداد پرسش'</attribute>
+            </xpath>
             <xpath expr="//dd[@t-out='inst.ts_effort_label()']" position="replace">
-                <dd t-if="c.battery_id"><t t-out="fa(len(c.battery_id.line_ids))"/> سنجه، <t t-out="fa(c.battery_id.item_count)"/> پرسش</dd>
+                <dd t-if="c.battery_id"><t t-out="fa(len(c.battery_id.line_ids))"/> سنجه، روی هم <t t-out="fa(c.battery_id.item_count)"/> پرسش: <t t-out="'، '.join(ln['name'] for ln in c.battery_id.ts_card()['lines'])"/></dd>
                 <dd t-else="" t-out="inst.ts_effort_label()"/>
             </xpath>
             <xpath expr="//dd[@t-out='inst.ts_duration_label()']" position="replace">
