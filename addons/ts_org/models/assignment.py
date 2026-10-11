@@ -21,7 +21,7 @@ from odoo.addons.ts_assessment.models.loader import EMPLOYMENT_CATEGORIES  # noq
 SHARE_LEVELS = [
     ('none', 'بدون اشتراک نتیجه'),
     ('summary', 'خلاصهٔ بازه‌ها (بدون پاسخ‌ها و متن تفسیر)'),
-    ('clinical', 'گزارش کامل برای متخصص بالینی تأییدشده'),
+    ('clinical', 'گزارش کامل برای مشاور تأییدشده'),
 ]
 
 

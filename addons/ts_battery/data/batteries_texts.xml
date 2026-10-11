@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Not noupdate: runs on every install/upgrade. Renames starter batteries that still carry a legacy text
+         (owner decision 2026-10-11, counseling wording; STARTER_LEGACY in models/battery.py). Idempotent. -->
+    <function model="ts.battery" name="_ts_refresh_starter_texts"/>
+</odoo>

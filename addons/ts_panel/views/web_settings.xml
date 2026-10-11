@@ -42,7 +42,7 @@
                                 <dl class="ts-meta">
                                     <dt>نوع پنل</dt><dd t-out="purpose_label"/>
                                     <dt>مسئول داده</dt><dd t-out="contact or 'ثبت نشده'"/>
-                                    <t t-if="escalation"><dt>مسئول پاسخ فوری بالینی</dt><dd t-out="escalation"/></t>
+                                    <t t-if="escalation"><dt>مسئول پیگیری فوری</dt><dd t-out="escalation"/></t>
                                 </dl>
                                 <p class="ts-hint">این اطلاعات را تیم تلنت سرچ ثبت می‌کند. برای ثبت یا تغییر آن <a t-attf-href="/contact?topic=support&amp;panel=#{ws.code}">به پشتیبانی پیام بدهید</a>.</p>
                             </section>

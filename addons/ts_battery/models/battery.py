@@ -15,7 +15,7 @@ _LIMIT = 'این مجموعه برای کمک به گفت‌وگوی مشاور�
 # Starter batteries (docs/clinic/01_architecture.md 2.1). Instruments are created by the loader, not by xmlids,
 # so they are resolved by code in _ts_load_starter. Audiences checked against workbook_meta.json (all match).
 STARTER = [
-    {'code': 'BAT-INTAKE-1', 'name': 'ارزیابی آغاز درمان', 'audience': 'adult', 'flags': ('for_clinical',),
+    {'code': 'BAT-INTAKE-1', 'name': 'ارزیابی آغاز مشاوره', 'audience': 'adult', 'flags': ('for_clinical',),
      'description': 'برای جلسه‌های نخست با مراجع بزرگسال؛ تصویری کلی از آرامش روانی، بی‌تابی، رضایت از زندگی، '
                     'نیازها و تعهد فردی می‌دهد و کمک می‌کند مسیر گفت‌وگو را انتخاب کنید. ' + _LIMIT,
      'instruments': ['inventory_001', 'inventory_027', 'inventory_020', 'inventory_031', 'inventory_014']},
@@ -28,7 +28,7 @@ STARTER = [
                     'هدفمندی، ارجمندی و حمایت معنوی را می‌سنجد. ' + _LIMIT,
      'instruments': ['inventory_020', 'inventory_033', 'inventory_002', 'inventory_016']},
     {'code': 'BAT-COUPLE-1', 'name': 'زوج و ازدواج', 'audience': 'adult', 'flags': ('for_clinical',),
-     'description': 'برای مشاورهٔ پیش از ازدواج یا زوج‌درمانی؛ هر یک از دو نفر جداگانه دعوت می‌شود و رضایت زناشویی، '
+     'description': 'برای مشاورهٔ پیش از ازدواج یا مشاورهٔ زوج؛ هر یک از دو نفر جداگانه دعوت می‌شود و رضایت زناشویی، '
                     'خردمندی و خودگستری را پاسخ می‌دهد. ' + _LIMIT,
      'instruments': ['inventory_021', 'inventory_017', 'inventory_018']},
     {'code': 'BAT-CHILD-1', 'name': 'کودک: شخصیت و توانایی', 'audience': 'child', 'flags': ('for_clinical', 'for_education'),
@@ -40,6 +40,16 @@ STARTER = [
                     'را کنار هم می‌گذارد و در پنل استخدامی فقط یکی از ورودی‌های گفت‌وگوی شغلی است. ' + _LIMIT,
      'instruments': ['inventory_022', 'inventory_034', 'inventory_014', 'inventory_032']},
 ]
+
+
+# Owner decision 2026-10-11 (counseling wording): texts the starter batteries were created with before the rename.
+# `_ts_refresh_starter_texts` replaces a stored name/description only while it still equals one of these, so a text the
+# owner edited by hand is never overwritten and a second run changes nothing.
+STARTER_LEGACY = {
+    'BAT-INTAKE-1': {'name': ['ارزیابی آغاز درمان']},
+    'BAT-COUPLE-1': {'description': ['برای مشاورهٔ پیش از ازدواج یا زوج‌درمانی؛ هر یک از دو نفر جداگانه دعوت می‌شود و رضایت زناشویی، '
+                                     'خردمندی و خودگستری را پاسخ می‌دهد. ' + _LIMIT]},
+}
 
 
 def est_minutes(items):
@@ -59,7 +69,7 @@ class TsBattery(models.Model):
     sequence = fields.Integer(default=10)
     description = fields.Text('شرح', help='برای چه کسی و چه زمانی؛ با «… برای کمک به گفت‌وگوی مشاوره است، نه تشخیص.» تمام شود.')
     audience = fields.Selection(AUDIENCES, 'مخاطب', required=True, default='adult', tracking=True)
-    for_clinical = fields.Boolean('پنل بالینی', default=True)
+    for_clinical = fields.Boolean('پنل مرکز مشاوره', default=True)
     for_education = fields.Boolean('پنل آموزشی')
     for_employment = fields.Boolean('پنل استخدامی')
     line_ids = fields.One2many('ts.battery.line', 'battery_id', 'سنجه‌ها', copy=True)
@@ -108,7 +118,7 @@ class TsBattery(models.Model):
         if len(insts) != len(lines):
             problems.append('هر سنجه فقط یک بار در یک باتری می‌آید.')
         if not (self.for_clinical or self.for_education or self.for_employment):
-            problems.append('دست‌کم یکی از کاربردها (بالینی، آموزشی یا استخدامی) را انتخاب کنید.')
+            problems.append('دست‌کم یکی از کاربردها (مرکز مشاوره، آموزشی یا استخدامی) را انتخاب کنید.')
         for i in insts:
             if i.state == 'retired':
                 problems.append('سنجهٔ «%s» بازنشسته شده است؛ پیش از انتشار آن را از باتری بردارید.' % i.name)
@@ -158,10 +168,12 @@ class TsBattery(models.Model):
     @api.model
     def _ts_load_starter(self):
         """Create the six starter batteries once (by code). A battery whose instruments are missing or not
-        published is skipped; one that fails a publish rule stays draft. Running it again changes nothing."""
+        published is skipped; one that fails a publish rule stays draft. An existing starter that still carries a
+        legacy text (STARTER_LEGACY) gets the current name/description. Running it again changes nothing."""
         Inst = self.env['ts.instrument'].sudo().with_context(active_test=False)
         B = self.sudo()
         stats = {'created': 0, 'published': 0, 'existing': 0, 'skipped': 0}
+        stats['renamed'] = self._ts_refresh_starter_texts()
         for spec in STARTER:
             if B.search_count([('code', '=', spec['code'])]):
                 stats['existing'] += 1
@@ -195,6 +207,26 @@ class TsBattery(models.Model):
                 _logger.warning('ts_battery: starter %s left as draft: %s', spec['code'], e)
         _logger.info('ts_battery starter batteries: %s', stats)
         return stats
+
+    @api.model
+    def _ts_refresh_starter_texts(self):
+        """Bring existing starter batteries (matched by code) to the current STARTER name/description when the stored
+        value is still a legacy one. Runs from the loader (install) and from data/batteries_texts.xml (every upgrade,
+        because batteries.xml is noupdate). Returns the number of batteries written; 0 on a second run."""
+        B = self.sudo().with_context(active_test=False)
+        spec_by_code = {s['code']: s for s in STARTER}
+        n = 0
+        for code, legacy in STARTER_LEGACY.items():
+            bat = B.search([('code', '=', code)], limit=1)
+            if not bat:
+                continue
+            vals = {f: spec_by_code[code][f] for f, olds in legacy.items() if bat[f] in olds}
+            if vals:
+                bat.write(vals)
+                n += 1
+        if n:
+            _logger.info('ts_battery: %d starter battery text(s) updated to the counseling wording', n)
+        return n
 
 
 class TsBatteryLine(models.Model):

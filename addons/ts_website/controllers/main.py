@@ -13,13 +13,13 @@ TOPICS = {
     'pro': 'خبرم کنید: همیار تفسیر',
     'question': 'پرسش',
     'support': 'پشتیبانی',
-    'partner': 'سازمان یا کلینیک',
+    'partner': 'سازمان یا مرکز مشاوره',
     # older form values, still accepted
     'quote': 'درخواست پیش‌فاکتور',
     'evidence': 'پرسش دربارهٔ شواهد',
     'other': 'موضوع دیگر',
 }
-SEGMENTS = {'employer': 'سازمان / منابع انسانی', 'clinic': 'مرکز مشاوره یا درمان',
+SEGMENTS = {'employer': 'سازمان / منابع انسانی', 'clinic': 'مرکز مشاوره',
             'practitioner': 'متخصص مستقل', 'participant': 'شرکت‌کننده', 'other': 'سایر'}
 
 

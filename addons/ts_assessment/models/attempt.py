@@ -50,13 +50,45 @@ def jalali(dt, env=None, with_time=True):
     return fa_digits(s)
 
 
+# Owner decision 2026-10-11: the product speaks the language of counseling. The book's band texts are stored verbatim
+# (never edited); these explicit phrases are mapped only when a text is shown. Each pattern needs a non-letter on both
+# sides, so درماندگی / درمانده / درمانی / بیماری / بیمارستان are never touched. Order matters (longest first).
+# Persian/Arabic letters, diacritics, ZWNJ/ZWJ; NOT punctuation (، ؛ ؟) or digits, which count as boundaries.
+_FA_LETTER = '\u0620-\u065F\u066E-\u06D3\u06D5\u06EE\u06EF\u06FA-\u06FC\u0750-\u077F\uFB50-\uFDFF\uFE70-\uFEFF\u200c\u200d'
+_COUNSELING_TERMS = [
+    (r'روان[\u200c ]?درمانگران', 'مشاوران'),
+    (r'روان[\u200c ]?درمانگر', 'مشاور'),
+    (r'روان[\u200c ]?درمانی', 'مشاوره'),
+    (r'درمانگران', 'مشاوران'),
+    (r'درمانگر', 'مشاور'),
+    (r'جلسات درمان', 'جلسات مشاوره'),
+    (r'جلسه(?:ٔ|\u200cی| ی)? درمان', 'جلسهٔ مشاوره'),
+    (r'(فرا?یند|فرآیند) درمان', r'\1 مشاوره'),
+    (r'درمان[\u200c]?جویان', 'مراجعان'),
+    (r'درمان[\u200c]?جو', 'مراجع'),
+    (r'بیماران', 'مراجعان'),
+    (r'بیمار', 'مراجع'),
+]
+_COUNSELING_RE = [(re.compile(r'(?<![%s])%s(?![%s])' % (_FA_LETTER, pat, _FA_LETTER)), rep)
+                  for pat, rep in _COUNSELING_TERMS]
+
+
+def counseling_terms(text):
+    """Display-time wording map for book texts (headings and bodies); the stored text is unchanged."""
+    if not text:
+        return text
+    for rx, rep in _COUNSELING_RE:
+        text = rx.sub(rep, text)
+    return text
+
+
 def split_interpretation(text):
     """The approved source texts follow a fixed shape:
         تفسیر نتیجه برای مراجع | راهنمای تخصصی درمانگر   (title line)
         عامل: <name>                                       (optional)
         تعریف عامل:  <definition>
         تفسیر سطح Low: / تحلیل و تفسیر سطح Low:  <body>
-    Returns [(heading, body)], headings in Persian, bodies verbatim."""
+    Returns [(heading, body)], headings in Persian, bodies verbatim except the counseling word map (counseling_terms)."""
     if not text:
         return []
     sections, head, buf = [], None, []
@@ -84,7 +116,7 @@ def split_interpretation(text):
                 h = 'این بُعد چه چیزی را توصیف می‌کند'
             elif h.startswith('تفسیر سطح'):
                 h = 'تفسیر نتیجهٔ شما'
-        out.append((h, body))
+        out.append((counseling_terms(h), counseling_terms(body)))
     return out
 
 

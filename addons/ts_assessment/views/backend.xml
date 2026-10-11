@@ -151,7 +151,7 @@
                                                 <field name="approved_at"/>
                                             </group>
                                             <group string="تفسیر برای شرکت‌کننده"><field name="client_text" nolabel="1"/></group>
-                                            <group string="راهنمای متخصص"><field name="therapist_text" nolabel="1"/></group>
+                                            <group string="راهنمای مشاور"><field name="therapist_text" nolabel="1"/></group>
                                         </form>
                                     </field>
                                 </form>
@@ -250,7 +250,7 @@
                                 <field name="band"/>
                                 <field name="content_version"/>
                             </group>
-                            <group string="راهنمای متخصص"><field name="therapist_text" nolabel="1"/></group>
+                            <group string="راهنمای مشاور"><field name="therapist_text" nolabel="1"/></group>
                         </form>
                     </field>
                 </sheet>

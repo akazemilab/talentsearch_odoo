@@ -1,4 +1,11 @@
-# استعدادیاب for clinics: architecture and data model (Phase 1, 2026-10-11)
+# استعدادیاب for counseling centers: architecture and data model (Phase 1, 2026-10-11)
+
+Wording (owner decision 2026-10-11): the product speaks the language of COUNSELING. Nothing a user sees says therapy,
+treatment, patient, clinic or clinical (Persian: no «درمان»، «درمانگر»، «بیمار»، «بالینی»، «کلینیک»). Panel type
+«مرکز مشاوره» (purpose label «مشاوره»), roles «مدیر مرکز مشاوره» / «مشاور مرکز», full report «گزارش ویژهٔ مشاور»,
+escalation contact «مسئول پیگیری فوری». Technical identifiers stay: purpose `clinical`, roles `clinician` /
+`clinic_director`, `therapist_text`, xmlids, routes, this folder name. Book band texts are mapped at display time
+(`counseling_terms()`); what is left is listed in `03_terms_in_book_texts.md`.
 
 Status: approved design for implementation phases 2-6. Written against repo commit cf02357 (branch `redesign` = main).
 Owner decisions this spec implements: one institution wallet with per-counselor monthly caps; top-up by native invoice
@@ -26,7 +33,7 @@ company in Rial; six starter batteries; Persian name «استعدادیاب».
 | Institution admin | member role `owner` (or `clinic_director`) | exists | sees credit, caps, all results (`owner:clin`) |
 | Counselor | member role `clinician`, verified, `license_number` | exists | + title, photo, signature, monthly cap, own usage |
 | Client | portal user (mobile OTP) + `ts.panel.client` | exists | takes a battery as one invitation |
-| Accountant (later) | native account groups | - | sees invoices and payments only; never clinical data (Phase 3b hides participant partners) |
+| Accountant (later) | native account groups | - | sees invoices and payments only; never counseling data (Phase 3b hides participant partners) |
 
 Counselors sign in with the existing mobile-OTP flow (`/signup`), join the panel through the existing colleague invite
 (`ts.member.invite`, phone-bound), and are verified by the super admin as today. Sepehr's 9 counselors are created this
@@ -37,7 +44,7 @@ way, never by copying users from the Sepehr database (different system, differen
 ### 2.1 `ts.battery` (new module `ts_battery`, depends `ts_panel`)
 | field | type | notes |
 |---|---|---|
-| name | Char, required | Persian name, e.g. «ارزیابی آغاز درمان» |
+| name | Char, required | Persian name, e.g. «ارزیابی آغاز مشاوره» |
 | code | Char, unique | `BAT-INTAKE-1` … |
 | description | Text | what it is for, one paragraph, ends with «برای مشاوره است، نه تشخیص» |
 | audience | Selection adult/adolescent/child | must match every line's instrument audience (constraint) |
@@ -158,7 +165,7 @@ Caps are advisory for the institution admin and owner (no cap applies to them).
 - `ts.workspace`: `brand_color` (Char hex, validated, used only for the report header rule and the panel accent tile),
   `public_name` (Char, defaults to name), `contact_line` (Char: phone/site shown on reports), logo = partner image
   (exists). `res.partner` of the institution keeps address for the invoice.
-- `ts.workspace.member`: `title` (Char, e.g. «روان‌شناس بالینی»), `license_number` (exists), `photo` = user image
+- `ts.workspace.member`: `title` (Char, e.g. «روان‌شناس و مشاور»), `license_number` (exists), `photo` = user image
   (exists), `signature` (Binary image, optional), `show_on_report` (Boolean, default True), `report_bio` (Char 160).
 - Report header (participant and panel views, single and battery, screen and PDF): institution logo + public name +
   contact line on the inline-start, counselor block (photo, name, title, licence «پروانهٔ …») on the inline-end;
@@ -212,7 +219,7 @@ sent by the super admin.
 1. Battery price is charged when the client completes the FIRST instrument of the battery (not at the end).
 2. Prices are shown in تومان in the panel; invoices and the ledger are in Rial.
 3. Open-link campaigns in prepaid panels need a credit floor of 10 uses before launch.
-4. Counselor caps apply to clinicians only; owner/admin/clinic_director are uncapped.
+4. Counselor caps apply to `clinician` members only; owner/admin/clinic_director are uncapped.
 5. Consent is given once per battery (one screen listing all instruments); the record is still kept per instrument.
 6. Reports are not stored as PDF files; each download is generated on demand and audited.
 7. Sepehr's counselors join through phone-bound colleague invites; nothing is copied from the Sepehr app.

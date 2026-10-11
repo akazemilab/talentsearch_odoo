@@ -37,7 +37,7 @@
                     </div>
                     <div class="oe_title">
                         <label for="name"/>
-                        <h1><field name="name" placeholder="مثلاً: ارزیابی آغاز درمان"/></h1>
+                        <h1><field name="name" placeholder="مثلاً: ارزیابی آغاز مشاوره"/></h1>
                     </div>
                     <group>
                         <group>
@@ -91,7 +91,7 @@
                 <filter name="draft" string="پیش‌نویس" domain="[('state', '=', 'draft')]"/>
                 <filter name="retired_inst" string="دارای سنجهٔ بازنشسته" domain="[('has_retired', '=', True)]"/>
                 <separator/>
-                <filter name="clinical" string="بالینی" domain="[('for_clinical', '=', True)]"/>
+                <filter name="clinical" string="مرکز مشاوره" domain="[('for_clinical', '=', True)]"/>
                 <filter name="education" string="آموزشی" domain="[('for_education', '=', True)]"/>
                 <filter name="employment" string="استخدامی" domain="[('for_employment', '=', True)]"/>
                 <group>

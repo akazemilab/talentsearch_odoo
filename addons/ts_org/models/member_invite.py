@@ -103,7 +103,7 @@ class TsMemberInvite(models.Model):
         if not self.matches(user):
             raise UserError('این دعوت برای شمارهٔ موبایل یا ایمیل دیگری صادر شده است.')
         if self.role in ('clinician', 'clinic_director') and not (license_number or '').strip():
-            raise UserError('شمارهٔ پروانه یا نظام حرفه‌ای لازم است.')
+            raise UserError('شمارهٔ پروانه یا نظام روان‌شناسی و مشاوره لازم است.')
         M = self.env['ts.workspace.member'].sudo()
         if M.search_count([('workspace_id', '=', self.workspace_id.id), ('user_id', '=', user.id), ('active', '=', True)]):
             raise UserError('شما هم‌اکنون عضو فعال این پنل هستید؛ نقش را مالک پنل تغییر می‌دهد.')

@@ -170,6 +170,13 @@ check('historical re-score reproduces the same output hash', a.rescore_matches()
 check('results snapshot approved client + therapist texts', all(r.client_text and r.therapist_text and r.content_version for r in a.result_ids))
 check('report sections parsed into Persian headings (no English band word)',
       all(all(('Low' not in (h or '') and 'High' not in (h or '') and 'Medium' not in (h or '')) for h, b in r.client_sections()) for r in a.result_ids))
+from odoo.addons.ts_assessment.models.attempt import counseling_terms
+check('counseling map: therapy phrases mapped, درماندگی/درمانده/بیماری untouched',
+      counseling_terms('روان‌درمانی، درمانگر، جلسات درمان، درمان‌جو، بیمار.') == 'مشاوره، مشاور، جلسات مشاوره، مراجع، مراجع.'
+      and counseling_terms('درماندگی، درمانده، بیماری، بیمارستان، روش درمانی') == 'درماندگی، درمانده، بیماری، بیمارستان، روش درمانی')
+check('rendered band sections never say درمانگر/روان‌درمانی',
+      not [1 for r in a.result_ids for h, b in r.client_sections() + r.therapist_sections()
+           if any(w in (h or '') + (b or '') for w in ('درمانگر', 'روان‌درمانی'))])
 child = pub.filtered(lambda i: i.audience == 'child')[:1]
 c = Attempt.create({'user_id': u1.id, 'instrument_id': child.id, 'version_id': child.current_version_id.id})
 check('child instrument requires guardian respondent', raises(lambda: c.give_consent(role='self'), UserError))

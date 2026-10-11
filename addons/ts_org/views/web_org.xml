@@ -83,7 +83,7 @@
                                     <h1 t-out="ws.name"/>
                                     <p t-if="ws.purpose == 'employment'">این پنل فقط وضعیت دعوت و، در صورت رضایت شرکت‌کننده، سطح هر عامل را می‌بیند. پاسخ‌ها و متن‌های تفسیری هرگز نمایش داده نمی‌شوند.</p>
                                     <p t-elif="ws.purpose == 'education'">مشاور مدرسه گزارش شرکت‌کنندگان را می‌بیند؛ پاسخ‌های خام هرگز نمایش داده نمی‌شوند. نتیجه‌های واردشده از نرم‌افزار قبلی فقط برای اعضای همین پنل دیده می‌شوند و برای خود شرکت‌کننده منتشر نشده‌اند.</p>
-                                    <p t-elif="ws.purpose == 'clinical'">گزارش کامل، از جمله متن متخصص، فقط به متخصص بالینی تأییدشدهٔ همین پنل و فقط با رضایت شرکت‌کننده نمایش داده می‌شود.</p>
+                                    <p t-elif="ws.purpose == 'clinical'">گزارش کامل، از جمله راهنمای مشاور، فقط به مشاور تأییدشدهٔ همین پنل و فقط با رضایت شرکت‌کننده نمایش داده می‌شود.</p>
                                 </div>
 
                                 <p t-if="created" class="ts-notice" role="status">
@@ -281,7 +281,7 @@
                                             <img src="/ts_website/static/img/talentsearch-logo.webp" width="40" height="40" alt=""/>
                                             <div><strong>تلنت سرچ</strong><small>از خانوادهٔ <bdi dir="ltr">EOT</bdi></small></div>
                                         </div>
-                                        <div class="ts-doc__kind" t-out="'گزارش برای متخصص بالینی' if level == 'clinical' else ('خلاصهٔ نتیجه برای پنل' if level == 'summary' else 'وضعیت دعوت')"/>
+                                        <div class="ts-doc__kind" t-out="'گزارش ویژهٔ مشاور' if level == 'clinical' else ('خلاصهٔ نتیجه برای پنل' if level == 'summary' else 'وضعیت دعوت')"/>
                                     </header>
                                     <h1 class="ts-doc__title" t-out="inst.title"/>
                                     <dl class="ts-meta ts-doc__meta">
@@ -308,7 +308,7 @@
                                     <section t-if="a.state == 'done' and level == 'none'" class="ts-doc__sec">
                                         <h2>نتیجه</h2>
                                         <p t-if="a.share_level == 'none'">شرکت‌کننده سنجه را کامل کرده اما نتیجه را با این پنل به اشتراک نگذاشته است.</p>
-                                        <p t-elif="ws.purpose == 'clinical'">گزارش بالینی فقط برای متخصص بالینی تأییدشدهٔ این پنل نمایش داده می‌شود.</p>
+                                        <p t-elif="ws.purpose == 'clinical'">گزارش ویژهٔ مشاور فقط برای مشاور تأییدشدهٔ این پنل نمایش داده می‌شود.</p>
                                         <p t-else="">نقش شما امکان مشاهدهٔ نتیجه را ندارد.</p>
                                     </section>
 
@@ -334,7 +334,7 @@
                                                     <h2 t-out="r.factor_id.name"/>
                                                     <div class="ts-factor__score"><span class="ts-num" t-out="r.score_fa()"/> <span t-attf-class="ts-band ts-band--#{r.band}" t-out="r.band_fa()"/></div>
                                                 </div>
-                                                <h3>راهنمای متخصص</h3>
+                                                <h3>راهنمای مشاور</h3>
                                                 <t t-foreach="r.therapist_sections()" t-as="sec">
                                                     <h4 t-if="sec[0]" t-out="sec[0]"/>
                                                     <div class="ts-doc__text" t-out="sec[1]"/>
@@ -424,7 +424,7 @@
                                                 <input type="checkbox" name="share" value="1" checked="checked" aria-describedby="ts_share_note"/>
                                                 <span t-if="ws.purpose == 'education'">اجازه می‌دهم مدرسه و مشاورم گزارش نتیجه‌ام را در پنل «<bdi t-out="ws.name"/>» ببینند.</span>
                                                 <span t-elif="ws.purpose == 'employment'">اجازه می‌دهم سطح هر عامل با پنل «<bdi t-out="ws.name"/>» به اشتراک گذاشته شود.</span>
-                                                <span t-else="">اجازه می‌دهم گزارش کامل با متخصص بالینی تأییدشدهٔ پنل «<bdi t-out="ws.name"/>» به اشتراک گذاشته شود.</span>
+                                                <span t-else="">اجازه می‌دهم گزارش کامل با مشاور تأییدشدهٔ پنل «<bdi t-out="ws.name"/>» به اشتراک گذاشته شود.</span>
                                             </label>
                                             <p id="ts_share_note" class="ts-hint"><t t-if="student">اگر تیک را برداری هم می‌توانی سنجه را انجام بدهی؛ آن وقت نتیجه فقط برای خودت می‌ماند.</t><t t-else="">اگر تیک را بردارید هم می‌توانید سنجه را انجام دهید؛ آن وقت نتیجه فقط برای خودتان می‌ماند.</t></p>
                                             <button type="submit" class="ts-btn ts-btn--primary">پذیرش و ادامه</button>
@@ -478,8 +478,8 @@
                         <li>هر زمان بخواهید می‌توانید اشتراک را از صفحهٔ گزارش لغو کنید.</li>
                     </ul>
                     <ul class="ts-list-check" t-else="">
-                        <li>کلینیک وضعیت دعوت را می‌بیند.</li>
-                        <li>اگر اجازه دهید، گزارش کامل همراه با متن متخصص فقط به متخصص بالینی تأییدشدهٔ این کلینیک نمایش داده می‌شود.</li>
+                        <li>مرکز مشاوره وضعیت دعوت را می‌بیند.</li>
+                        <li>اگر اجازه دهید، گزارش کامل همراه با راهنمای مشاور فقط به مشاور تأییدشدهٔ این مرکز مشاوره نمایش داده می‌شود.</li>
                         <li>هر زمان بخواهید می‌توانید اشتراک را از صفحهٔ گزارش لغو کنید.</li>
                     </ul>
                 </div>
@@ -521,7 +521,7 @@
                     <p t-else="">این سنجه به دعوت <strong t-out="ts_share.workspace_id.partner_id.name"/> انجام شد.</p>
                     <p>
                         <t t-if="ts_share.share_level == 'summary'">پنل فقط سطح هر زمینه یا عامل را می‌بیند.</t>
-                        <t t-elif="ts_share.share_level == 'clinical'">گزارش کامل برای متخصص بالینی تأییدشدهٔ این کلینیک قابل مشاهده است.</t>
+                        <t t-elif="ts_share.share_level == 'clinical'">گزارش کامل برای مشاور تأییدشدهٔ این مرکز مشاوره قابل مشاهده است.</t>
                         <t t-else="">نتیجه با پنل به اشتراک گذاشته نشده است.</t>
                     </p>
                     <form t-if="ts_share.share_level != 'none'" t-attf-action="/my/assessments/#{attempt.id}/unshare" method="post" class="ts-confirm">

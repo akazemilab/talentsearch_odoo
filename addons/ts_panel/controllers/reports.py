@@ -14,7 +14,7 @@ from odoo.addons.ts_talent.models import engine_matrix as EM
 from .base import RESULT_PERMS, deny, forbidden, member_or_404, render_in_shell, require
 from .clients import _client_or_404, visible_domain
 
-LEVEL_KIND = {'status': 'فقط وضعیت', 'summary': 'خلاصهٔ نتیجه', 'education': 'گزارش در سطح مشاور', 'clinical': 'گزارش بالینی'}
+LEVEL_KIND = {'status': 'فقط وضعیت', 'summary': 'خلاصهٔ نتیجه', 'education': 'گزارش در سطح مشاور', 'clinical': 'گزارش ویژهٔ مشاور'}
 
 
 def result_url(ws_id, client_id, attempt_id):

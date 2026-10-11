@@ -7,6 +7,12 @@ Talent Search speaks as part of the EOT family: the same institute, the same res
 practical register. eot.ir is the elder sibling: scholarly, careful about limits, warm without selling.
 We keep its honesty and its "know the limit" habit, and drop its academic officialese.
 
+**Counseling, never therapy (owner decision 2026-10-11).** Talent Search speaks the language of counseling, never of
+therapy or medicine. Nothing a user sees (site, product, back office, SMS) says «درمان»، «درمانگر»، «روان‌درمانی»،
+«بیمار»/«مریض»، «بالینی»، «کلینیک»/«درمانگاه» (English: therapy, treatment, patient, clinic, clinical). Write «مشاوره»،
+«جلسهٔ مشاوره»، «مشاور»، «مرکز مشاوره»، «مراجع» (counseling-center panels only). «درماندگی» and «درمانده» (helplessness)
+are ordinary psychological words and stay. Terms: glossary §2-§4.
+
 ## 1. Sources read on eot.ir (2026-10-11)
 
 | Page | Path | What it taught |
@@ -35,7 +41,7 @@ Not readable: `/blog/46/1959` (404 by numeric URL), `/slides` (404, eLearning no
 | Adult participant | job applicant, client, self-tester | «شما» | plain, respectful, calm | effort, privacy, what the result is and is not |
 | Parent / ولی | consents for a minor, reads a child's result | «شما» | reassuring, exact, no jargon | what the child will do, who sees what, how to withdraw |
 | School principal / counselor | runs an education panel | «شما» | collegial, practical | invite a class, see who finished, what they may see |
-| Clinic director / clinician | runs a clinical panel | «شما» | professional, precise, no hype | verification, access limits, therapist texts |
+| Counseling-center director / counselor («مدیر مرکز مشاوره» / «مشاور مرکز») | runs a counseling-center panel | «شما» | professional, precise, no hype | verification, access limits, the counselor guide («راهنمای مشاور») |
 | HR / hiring manager / reviewer | runs an employment panel | «شما» | business-plain, legally careful | what is shown (bands only), fairness, consent |
 | Platform staff (Odoo backend) | EOT team | «شما» | terse, technical allowed | exact state names |
 
@@ -44,7 +50,9 @@ picks the person holding the device.
 
 ## 3. Tone principles
 
-Each principle has a real eot.ir sentence as evidence, then a do/don't pair for our product.
+Each principle has a real eot.ir sentence as evidence, then a do/don't pair for our product. A few evidence quotes
+contain eot.ir's own words «ارزیابی بالینی»، «درمانگر»، «مرکز درمانی»; they are quoted verbatim as evidence of tone only.
+Our copy uses the counseling words above.
 
 ### 3.1 Start from the reader's need, not from our menu
 Evidence (`/خدمات`): «به‌جای شناخت نام خدمات، از نیاز خودتان شروع کنید.»
@@ -171,4 +179,5 @@ What we take from Saadi's Golestan and Hafez is only how sentences behave:
 4. Officialese list clean? نیم‌فاصله correct? Persian digits?
 5. Buttons verb-first, naming the outcome? Errors: what happened, why, what now?
 6. Consent/privacy readable by a 15-year-old? Any change there is `owner_decision`.
-7. Assessment statements, scoring labels, clinical texts untouched?
+7. Assessment statements, scoring labels, the book's interpretation texts untouched?
+8. No therapy or medical word (درمان، درمانگر، بیمار، بالینی، کلینیک)? Counseling words instead.

@@ -35,7 +35,7 @@
                         <button name="action_view_audit" type="object" class="oe_stat_button" icon="fa-list" string="ممیزی" groups="ts_core.group_ts_user"/>
                     </div>
                     <div class="alert alert-warning" role="alert" invisible="not gated">
-                        این پنل (سازمان، کلینیک یا رفاه کارکنان) در انتظار تأیید مالک پلتفرم است؛ تا آن زمان مالک می‌تواند پنل را تنظیم و همکار دعوت کند ولی شرکت‌کنندهٔ واقعی دعوت نمی‌شود.
+                        این پنل (سازمان، مرکز مشاوره یا رفاه کارکنان) در انتظار تأیید مالک پلتفرم است؛ تا آن زمان مالک می‌تواند پنل را تنظیم و همکار دعوت کند ولی شرکت‌کنندهٔ واقعی دعوت نمی‌شود.
                     </div>
                     <div class="oe_title">
                         <label for="name"/>
@@ -90,7 +90,7 @@
                 <field name="name"/>
                 <field name="partner_id"/>
                 <filter name="employment" string="استخدام" domain="[('purpose', '=', 'employment')]"/>
-                <filter name="clinical" string="بالینی" domain="[('purpose', '=', 'clinical')]"/>
+                <filter name="clinical" string="مشاوره" domain="[('purpose', '=', 'clinical')]"/>
                 <separator/>
                 <filter name="live" string="پایلوت یا فعال" domain="[('state', 'in', ('pilot', 'active'))]"/>
                 <group>
@@ -106,7 +106,7 @@
         <field name="view_mode">list,form</field>
         <field name="help" type="html">
             <p class="o_view_nocontent_smiling_face">هنوز پنلی ساخته نشده است</p>
-            <p>برای هر سازمان مشتری و هر هدف (استخدام یا بالینی) یک پنل جدا بسازید.</p>
+            <p>برای هر سازمان مشتری و هر هدف (استخدام یا مشاوره) یک پنل جدا بسازید.</p>
         </field>
     </record>
     <record id="ts_workspace_pending_action" model="ir.actions.act_window">

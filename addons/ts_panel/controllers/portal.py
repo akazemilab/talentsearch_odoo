@@ -45,7 +45,7 @@ def _my_pending(kind):
 
 
 # The participant-facing word for the responsible member, by panel purpose (glossary §9-4).
-RESP_WORD = {'education': 'مشاور', 'clinical': 'روان‌شناس', 'employment': 'کارشناس سازمان'}
+RESP_WORD = {'education': 'مشاور', 'clinical': 'مشاور', 'employment': 'کارشناس سازمان'}
 
 
 class TsPanelPortal(CustomerPortal):

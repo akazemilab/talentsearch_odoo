@@ -28,7 +28,7 @@ class TsEmergencyAccess(models.Model):
         """Which panels this access may be opened on (hook: S14 widens it to every purpose)."""
         ws = self.env['ts.workspace'].browse(vals.get('workspace_id'))
         if ws.purpose != 'clinical':
-            raise UserError('دسترسی اضطراری فقط برای پنل بالینی است.')
+            raise UserError('دسترسی اضطراری فقط برای پنل مرکز مشاوره است.')
 
     @api.model
     def _hours(self, vals):

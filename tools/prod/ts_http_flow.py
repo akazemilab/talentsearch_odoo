@@ -118,7 +118,7 @@ st, loc2, _ = u.req('/take/%s/submit' % token, {'csrf_token': u.csrf(page), 'sub
 check('second submit redirects to the same report', path_of(loc2).split('?')[0] == report.split('?')[0], loc2)
 st, _, page = u.req(report.split('?')[0])
 check('report 200 with summary, bands and interpretation', st == 200 and 'خلاصهٔ نتایج' in page and 'ts-band' in page and 'تفسیر نتیجهٔ شما' in page)
-check('report hides therapist guidance', 'راهنمای تخصصی درمانگر' not in page and 'تحلیل و تفسیر' not in page)
+check('report hides therapist guidance', 'راهنمای تخصصی درمانگر' not in page and 'راهنمای تخصصی مشاور' not in page and 'تحلیل و تفسیر' not in page)
 check('report has no English band words', not re.search(r'\b(Low|Medium|High)\b', html.unescape(re.sub(r'<[^>]+>', ' ', page))))
 st, _, page = u.req('/my/assessments')
 check('my assessments lists the report', st == 200 and report.split('?')[0] in page)

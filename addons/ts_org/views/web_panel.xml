@@ -18,7 +18,7 @@
                                 </div>
                                 <div class="ts-grid ts-panel-kinds">
                                     <article class="ts-card ts-panel-kind">
-                                        <h2 class="h4">مدرسه یا مرکز مشاوره</h2>
+                                        <h2 class="h4">مدرسه یا دانشگاه</h2>
                                         <p>بلافاصله فعال می‌شود. مشاورها را دعوت کنید و برای هر دانش‌آموز یک مشاور مسئول تعیین کنید.</p>
                                         <a t-attf-href="#{cta_url}?kind=school" class="ts-btn ts-btn--primary">ساخت پنل مدرسه</a>
                                     </article>
@@ -28,9 +28,9 @@
                                         <a t-attf-href="#{cta_url}?kind=org" class="ts-btn ts-btn--outline">ساخت پنل سازمان</a>
                                     </article>
                                     <article class="ts-card ts-panel-kind">
-                                        <h2 class="h4">کلینیک روان‌شناسی و مشاوره</h2>
-                                        <p>پنل را بسازید و متخصص‌ها را دعوت کنید. دعوت شرکت‌کنندهٔ واقعی پس از بررسی و تأیید تیم تلنت سرچ باز می‌شود.</p>
-                                        <a t-attf-href="#{cta_url}?kind=clinic" class="ts-btn ts-btn--outline">ساخت پنل کلینیک</a>
+                                        <h2 class="h4">مرکز مشاوره</h2>
+                                        <p>پنل را بسازید و مشاوران را دعوت کنید. دعوت شرکت‌کنندهٔ واقعی پس از بررسی و تأیید تیم تلنت سرچ باز می‌شود.</p>
+                                        <a t-attf-href="#{cta_url}?kind=clinic" class="ts-btn ts-btn--outline">ساخت پنل مرکز مشاوره</a>
                                     </article>
                                     <article class="ts-card ts-panel-kind">
                                         <h2 class="h4">کار مستقل</h2>
@@ -38,7 +38,7 @@
                                         <a t-attf-href="#{cta_url}?kind=solo" class="ts-btn ts-btn--outline">ساخت پنل یک‌نفره</a>
                                     </article>
                                 </div>
-                                <p class="ts-hint ts-panel-steps">اول با شمارهٔ موبایل وارد می‌شوید، بعد نام و نوع پنل را می‌نویسید. پنل مدرسه بلافاصله فعال است؛ پنل سازمان و کلینیک تا بررسی تیم تلنت سرچ «در انتظار تأیید» می‌ماند و در این مدت می‌توانید پنل را کامل کنید و همکارانتان را دعوت کنید.</p>
+                                <p class="ts-hint ts-panel-steps">اول با شمارهٔ موبایل وارد می‌شوید، بعد نام و نوع پنل را می‌نویسید. پنل مدرسه بلافاصله فعال است؛ پنل سازمان و مرکز مشاوره تا بررسی تیم تلنت سرچ «در انتظار تأیید» می‌ماند و در این مدت می‌توانید پنل را کامل کنید و همکارانتان را دعوت کنید.</p>
                                 <p><a href="/panel/terms">شرایط استفاده از پنل</a></p>
                             </div>
                         </section>
@@ -64,19 +64,19 @@
                                 <p class="ts-hint"><t t-out="version_label"/> (<bdi dir="ltr" t-out="version"/>)</p>
                                 <h2 class="h4">قیمت</h2>
                                 <p>ساخت و استفاده از پنل در این فصل رایگان است. تعداد سنجه‌های تکمیل‌شده ثبت می‌شود، اما چیزی کسر یا مسدود نمی‌شود. اگر بعداً تعرفه‌ای تعیین شود، پیش از اعمال به شما اطلاع داده می‌شود.</p>
-                                <h2 class="h4">پنل سازمان و کلینیک</h2>
+                                <h2 class="h4">پنل سازمان و مرکز مشاوره</h2>
                                 <p>این پنل‌ها ابتدا «در انتظار تأیید» ساخته می‌شوند: می‌توانید پنل را بسازید و همکاران را دعوت کنید، اما دعوت شرکت‌کنندهٔ واقعی و دریافت نتیجه پس از بررسی و تأیید تیم تلنت سرچ امکان‌پذیر می‌شود. تیم تلنت سرچ می‌تواند درخواست را رد کند یا پنلی را تعلیق کند.</p>
                                 <h2 class="h4">حریم خصوصی شرکت‌کننده</h2>
                                 <p>شرکت‌کننده تصمیم می‌گیرد چه چیزی با پنل به اشتراک گذاشته شود. پاسخ‌های خام هرگز نمایش داده نمی‌شوند. شما متعهد می‌شوید از نتایج فقط برای هدفی که پنل برای آن ساخته شده استفاده کنید.</p>
                                 <h2 class="h4">مسئولیت شما</h2>
                                 <p>هر دعوتی که از پنل فرستاده می‌شود به نام شما و پنل شما ثبت می‌شود. اعضای پنل فقط آنچه را که به آن‌ها سپرده‌اید می‌بینند. نتایج ابزار سنجش، تشخیص یا تصمیم نهایی نیستند.</p>
-                                <h2 class="h4">پنل بالینی</h2>
-                                <p>مالک پنل بالینی می‌پذیرد که اگر شرکت‌کننده‌ای نشانهٔ خطر یا نیاز به پاسخ فوری بالینی نشان دهد، پاسخ‌گویی فوری با متخصص همان پنل است و تلنت سرچ خدمات اورژانسی ارائه نمی‌کند.</p>
+                                <h2 class="h4">پنل مرکز مشاوره</h2>
+                                <p>مالک پنل مرکز مشاوره می‌پذیرد که اگر شرکت‌کننده‌ای نشانهٔ خطر یا نیاز به پیگیری فوری نشان دهد، پیگیری فوری با مشاوران همان پنل است و تلنت سرچ خدمات اورژانسی ارائه نمی‌کند.</p>
                                 <h2 class="h4" id="transfer">وقتی عضوی از پنل می‌رود، و انتقال شرکت‌کنندگان</h2>
                                 <p>اگر عضوی از پنل جدا شود یا نقشش تغییر کند، شرکت‌کنندگان و نتیجه‌هایی که به او سپرده شده بود به صف «بدون کارشناس» برمی‌گردند: دسترسی او تمام می‌شود، هیچ نتیجه‌ای ناپدید نمی‌شود، و مالک پنل هر کدام را به عضو دیگری می‌سپارد. هر تغییر در دفتر ممیزی ثبت می‌شود.</p>
                                 <p>اگر عضوی که پنل یک‌نفرهٔ خودش را دارد کار را رها کند، انتقال خودکار شرکت‌کنندگان به پنل دیگر فعلاً وجود ندارد. داده‌ها بین پنل‌ها جابه‌جا نمی‌شوند. شرکت‌کنندگان فقط وقتی نتیجه‌شان در پنل تازه دیده می‌شود که خودشان آن را دوباره برای آن پنل بفرستند یا دعوت آن پنل را بپذیرند.</p>
-                                <h2 class="h4">دسترسی اضطراری (پنل بالینی)</h2>
-                                <p>اگر برای رساندن کمک به شرکت‌کننده‌ای در خطر لازم باشد، مدیر پلتفرم می‌تواند با ثبت دلیل، برای ۲۴ ساعت به نتایج یک پنل بالینی دسترسی اضطراری بگیرد. مالک پنل از بازشدن آن مطلع می‌شود و هر مشاهده در دفتر ممیزی ثبت می‌شود.</p>
+                                <h2 class="h4">دسترسی اضطراری (پنل مرکز مشاوره)</h2>
+                                <p>اگر برای رساندن کمک به شرکت‌کننده‌ای در خطر لازم باشد، مدیر پلتفرم می‌تواند با ثبت دلیل، برای ۲۴ ساعت به نتایج یک پنل مرکز مشاوره دسترسی اضطراری بگیرد. مالک پنل از بازشدن آن مطلع می‌شود و هر مشاهده در دفتر ممیزی ثبت می‌شود.</p>
                                 <p><a href="/panel" class="ts-backlink">ساخت پنل رایگان</a></p>
                             </div>
                         </section>
@@ -107,10 +107,10 @@
                                     <input id="ts_p_name" name="name" type="text" required="required" minlength="2" maxlength="100" t-att-value="vals.get('name')"/>
                                     <fieldset class="ts-fieldset" aria-describedby="ts_p_kind_h">
                                         <legend>نوع پنل</legend>
-                                        <p id="ts_p_kind_h" class="ts-hint">پنل مدرسه بلافاصله فعال می‌شود. پنل سازمان و کلینیک تا بررسی تیم تلنت سرچ «در انتظار تأیید» است؛ در این مدت می‌توانید پنل را کامل کنید و همکاران را دعوت کنید.</p>
-                                        <label class="ts-check"><input type="radio" name="kind" value="school" required="required" t-att-checked="'checked' if vals.get('kind') == 'school' else None"/><span>مدرسه یا مرکز مشاوره</span></label>
+                                        <p id="ts_p_kind_h" class="ts-hint">پنل مدرسه بلافاصله فعال می‌شود. پنل سازمان و مرکز مشاوره تا بررسی تیم تلنت سرچ «در انتظار تأیید» است؛ در این مدت می‌توانید پنل را کامل کنید و همکاران را دعوت کنید.</p>
+                                        <label class="ts-check"><input type="radio" name="kind" value="school" required="required" t-att-checked="'checked' if vals.get('kind') == 'school' else None"/><span>مدرسه یا دانشگاه</span></label>
                                         <label class="ts-check"><input type="radio" name="kind" value="org" t-att-checked="'checked' if vals.get('kind') == 'org' else None"/><span>سازمان <span class="ts-hint">(نیاز به تأیید)</span></span></label>
-                                        <label class="ts-check"><input type="radio" name="kind" value="clinic" t-att-checked="'checked' if vals.get('kind') == 'clinic' else None"/><span>کلینیک روان‌شناسی و مشاوره <span class="ts-hint">(نیاز به تأیید)</span></span></label>
+                                        <label class="ts-check"><input type="radio" name="kind" value="clinic" t-att-checked="'checked' if vals.get('kind') == 'clinic' else None"/><span>مرکز مشاوره <span class="ts-hint">(نیاز به تأیید)</span></span></label>
                                         <label class="ts-check"><input type="radio" name="kind" value="solo" t-att-checked="'checked' if vals.get('kind') == 'solo' else None"/><span>کار مستقل (پنل یک‌نفره)</span></label>
                                     </fieldset>
                                     <div class="ts-reveal" data-ts-show="kind=solo">
@@ -118,16 +118,16 @@
                                         <select id="ts_p_solo" name="solo_as">
                                             <option value="">—</option>
                                             <option value="counselor" t-att-selected="'selected' if vals.get('solo_as') == 'counselor' else None">مشاور تحصیلی یا شغلی</option>
-                                            <option value="psychologist" t-att-selected="'selected' if vals.get('solo_as') == 'psychologist' else None">روان‌شناس یا متخصص بالینی (نیاز به تأیید)</option>
+                                            <option value="psychologist" t-att-selected="'selected' if vals.get('solo_as') == 'psychologist' else None">روان‌شناس یا مشاور (نیاز به تأیید)</option>
                                             <option value="hr" t-att-selected="'selected' if vals.get('solo_as') == 'hr' else None">منابع انسانی (نیاز به تأیید)</option>
                                         </select>
                                     </div>
                                     <div class="ts-reveal" data-ts-show="kind=solo;solo_as=psychologist">
-                                        <label for="ts_p_lic">شمارهٔ پروانه یا نظام حرفه‌ای (برای روان‌شناس یا متخصص بالینی)</label>
+                                        <label for="ts_p_lic">شمارهٔ پروانه یا نظام روان‌شناسی و مشاوره (برای روان‌شناس یا مشاور)</label>
                                         <input id="ts_p_lic" name="license_number" type="text" maxlength="60" dir="ltr"/>
                                     </div>
                                     <div class="ts-reveal" data-ts-show="kind=clinic|solo">
-                                        <label class="ts-check"><input type="checkbox" name="escalation_ok" value="1"/><span>می‌پذیرم که پاسخ‌گویی فوری به نشانهٔ خطر بالینی با من است (برای پنل بالینی).</span></label>
+                                        <label class="ts-check"><input type="checkbox" name="escalation_ok" value="1"/><span>می‌پذیرم که پیگیری فوری نشانه‌های خطر با من است (برای پنل مرکز مشاوره).</span></label>
                                     </div>
                                     <label class="ts-check"><input type="checkbox" name="terms" value="1" required="required"/><span><a href="/panel/terms">شرایط استفاده</a> را خوانده‌ام و می‌پذیرم.</span></label>
                                     <button type="submit" class="ts-btn ts-btn--primary">ساخت پنل</button>
@@ -225,7 +225,7 @@
                                     <form t-else="" t-attf-action="/join/#{inv.token}/accept" method="post" class="ts-form">
                                         <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
                                         <t t-if="inv.role in ('clinician', 'clinic_director')">
-                                            <label for="ts_j_lic">شمارهٔ پروانه یا نظام حرفه‌ای</label>
+                                            <label for="ts_j_lic">شمارهٔ پروانه یا نظام روان‌شناسی و مشاوره</label>
                                             <input id="ts_j_lic" name="license_number" type="text" required="required" maxlength="60" dir="ltr"/>
                                             <p class="ts-hint">شمارهٔ پروانه توسط تیم تلنت سرچ بررسی می‌شود.</p>
                                         </t>

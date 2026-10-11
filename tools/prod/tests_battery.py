@@ -4,7 +4,7 @@ import math
 
 from odoo import fields
 from odoo.exceptions import AccessError, UserError, ValidationError
-from odoo.addons.ts_battery.models.battery import STARTER, est_minutes
+from odoo.addons.ts_battery.models.battery import STARTER, STARTER_LEGACY, est_minutes
 from odoo.addons.ts_battery.models.catalog import NOT_IN_CATALOG
 
 assert env.cr.dbname.startswith('eot_ts'), 'refusing to run tests outside a clone'
@@ -95,7 +95,25 @@ check('B03 descriptions end with the limit sentence and follow the voice rules',
           for b in starters))
 stats = B._ts_load_starter()
 check('B04 starter loader is idempotent', stats.get('created') == 0 and stats.get('existing') == 6
-      and B.search_count([('code', 'in', codes)]) == 6, str(stats))
+      and B.search_count([('code', 'in', codes)]) == 6 and stats.get('renamed') == 0, str(stats))
+# Owner decision 2026-10-11: counseling wording. Battery 1 is «ارزیابی آغاز مشاوره»; no starter text speaks of therapy.
+THERAPY = ('درمان', 'بالینی', 'کلینیک', 'بیمار')
+check('B04b starter names/descriptions use counseling wording',
+      by_code.get('BAT-INTAKE-1') and by_code['BAT-INTAKE-1'].name == 'ارزیابی آغاز مشاوره'
+      and all(b.name == s['name'] for s in STARTER for b in starters if b.code == s['code'])
+      and not [b.code for b in starters if any(w in (b.name or '') + (b.description or '') for w in THERAPY)],
+      str([(b.code, b.name) for b in starters]))
+intake, couple = by_code['BAT-INTAKE-1'], by_code['BAT-COUPLE-1']
+cur = {'n': intake.name, 'd': couple.description}
+intake.write({'name': STARTER_LEGACY['BAT-INTAKE-1']['name'][0]})
+couple.write({'description': STARTER_LEGACY['BAT-COUPLE-1']['description'][0]})
+n1 = B._ts_refresh_starter_texts()
+n2 = B._ts_refresh_starter_texts()
+check('B04c legacy starter texts are renamed on upgrade, once', n1 == 2 and n2 == 0 and intake.name == cur['n']
+      and couple.description == cur['d'], str((n1, n2, intake.name)))
+intake.write({'name': 'نام دستی مالک'})
+check('B04c a hand-edited starter name is never overwritten', B._ts_refresh_starter_texts() == 0 and intake.name == 'نام دستی مالک')
+intake.write({'name': cur['n']})
 
 # ---------------------------------------------------------------- computed counts
 check('B05 est_minutes: 8 s per item rounded up to 5 minutes',

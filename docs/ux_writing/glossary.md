@@ -1,13 +1,15 @@
 # Talent Search glossary (Persian product terms)
 
-Version 1, 2026-10-11. One term per concept. Counts are occurrences in `addons/ts_*/{views,controllers,models,data}`
+Version 1.1, 2026-10-11 (owner decision the same day: counseling wording, see the box below). One term per concept. Counts are occurrences in `addons/ts_*/{views,controllers,models,data}`
 (raw regex counts on 2026-10-11, including labels, help texts and comments; good enough to show drift, not exact).
 eot.ir evidence is from the pages listed in `voice.md` §1. Audit references: `docs/ux_audit/2026-10-11/G*.json` patterns.
 
 Legend: **OWNER DECISION** = a real trade-off; the owner picks, the recommendation is given. Rows without that mark
 are decided here under the project rules and can be applied by copy passes.
 
-Audience codes: S student, A adult participant, P parent, E education staff, C clinical staff, H HR/employment staff,
+> **Counseling, never therapy (owner decision 2026-10-11).** Nothing a user sees says «درمان»، «درمانگر»، «روان‌درمانی»، «بیمار»/«مریض»، «بالینی»، «کلینیک»/«درمانگاه» (English: therapy, treatment, patient, clinic, clinical). Counseling terms only: «مشاوره»، «مشاور»، «مرکز مشاوره»، «مراجع». «درماندگی»/«درمانده» (helplessness) stay. Code identifiers stay (`clinical`, `clinician`, `clinic_director`, `therapist_text`). Book band texts are mapped at display time (`counseling_terms()` in ts_assessment/models/attempt.py); leftovers: `docs/clinic/03_terms_in_book_texts.md`.
+
+Audience codes: S student, A adult participant, P parent, E education staff, C counseling-center staff (purpose `clinical`), H HR/employment staff,
 B Odoo backend staff, ALL everyone.
 
 ## 1. Brand and family
@@ -21,10 +23,10 @@ B Odoo backend staff, ALL everyone.
 
 | Term | Meaning | Use for | Never use | Audience | Evidence |
 |---|---|---|---|---|---|
-| **پنل** | an organisation's space in Talent Search (`ts.workspace`) | every UI mention of the space: «پنل مدرسهٔ …»، «کد پنل»، «تنظیمات پنل» | «فضای کاری» (UI), «سازمان»/«مؤسسه»/«مرکز» as a name for the space | ALL | product: «پنل» ۲۹۵؛ «فضای کاری» ۳۳ (۲۱ in ts_core backend, ۹ ts_org web e.g. «این فضای کاری (سازمان، کلینیک یا …)»). Audit G1 PT-6, G2 X4. Project rule term. Backend may keep the model name, but labels should say «پنل» too. |
-| مدرسه / سازمان / کلینیک | the real-world entity that owns a panel | describing who runs the panel, by purpose: education → «مدرسه» (or «مرکز مشاوره»), employment → «سازمان»، clinical → «کلینیک» | «مؤسسه» for a customer (it is EOT's own word: «مؤسسه تعاملی هیجان اندیشه»), «درمانگاه» | ALL | product: «سازمان» ۳۵، «مؤسسه» ۱۲ (invite: «با مؤسسه و مشاور مسئول به اشتراک»), «مدرسه» ۲۳. eot.ir uses «مؤسسه» only for itself. |
-| **کلینیک** | a clinical customer | «پنل کلینیک»، role «مدیر کلینیک» | «درمانگاه» (Iranian usage: general medical clinic), «مراکز درمانی» in marketing | C | product: «کلینیک» ۶، «درمانگاه» in ROLE_LABELS `clinic_director: 'مدیر درمانگاه'` + ۳ more. eot.ir: «کلینیک روان‌شناسی و مشاوره ایران‌اندیش». |
-| حوزهٔ پنل (آموزشی / استخدامی / بالینی / رفاه کارکنان) | panel purpose | labels and filters | «نوع کاربری»، «purpose» | E C H | PURPOSES in ts_core/models/workspace.py: «دانشگاه و مدرسه»، «استخدام و منابع انسانی»، «بالینی و مشاوره»، «رفاه کارکنان». Keep; adjective forms for short labels. |
+| **پنل** | an organisation's space in Talent Search (`ts.workspace`) | every UI mention of the space: «پنل مدرسهٔ …»، «کد پنل»، «تنظیمات پنل» | «فضای کاری» (UI), «سازمان»/«مؤسسه»/«مرکز» as a name for the space | ALL | product: «پنل» ۲۹۵؛ «فضای کاری» ۳۳ (۲۱ in ts_core backend, ۹ ts_org web e.g. «این فضای کاری (سازمان، مرکز مشاوره یا …)»). Audit G1 PT-6, G2 X4. Project rule term. Backend may keep the model name, but labels should say «پنل» too. |
+| مدرسه / سازمان / مرکز مشاوره | the real-world entity that owns a panel | describing who runs the panel, by purpose: education → «مدرسه» (or «دانشگاه»), employment → «سازمان»، counseling (`clinical`) → «مرکز مشاوره» | «مؤسسه» for a customer (it is EOT's own word: «مؤسسه تعاملی هیجان اندیشه»), «کلینیک»، «درمانگاه»، «مرکز درمانی» | ALL | product: «سازمان» ۳۵، «مؤسسه» ۱۲ (invite: «با مؤسسه و مشاور مسئول به اشتراک»), «مدرسه» ۲۳. eot.ir uses «مؤسسه» only for itself. Owner decision 2026-10-11: counseling wording; the education label became «مدرسه یا دانشگاه» so it never collides with «مرکز مشاوره». |
+| **مرکز مشاوره** | a counseling-center customer (purpose `clinical`) | «پنل مرکز مشاوره»، role «مدیر مرکز مشاوره»، create form and landing card «مرکز مشاوره» | «کلینیک»، «درمانگاه»، «مرکز بالینی»، «مراکز درمانی» (also in marketing) | C | Owner decision 2026-10-11 (counseling, never therapy). Was «کلینیک روان‌شناسی و مشاوره» / «مدیر درمانگاه» / «مدیر مرکز بالینی» before. |
+| حوزهٔ پنل (آموزشی / استخدامی / مشاوره / رفاه کارکنان) | panel purpose | labels and filters | «نوع کاربری»، «purpose»، «بالینی» | E C H | PURPOSES in ts_core/models/workspace.py: «دانشگاه و مدرسه»، «استخدام و منابع انسانی»، «مشاوره»، «رفاه کارکنان». Battery flag label «پنل مرکز مشاوره». |
 | **در انتظار تأیید** | gated panel (`pilot` + `gated`): set up, cannot invite participants yet | state pill and notice on every page of a gated panel | «فعال» for a pilot panel, «پایلوت» in UI | E C H | base.py `PANEL_STATE_LABELS['pilot'] = 'فعال'` hides the state (audit G5 PT-3, which proposes «آزمایشی»). «پایلوت» ۵ (one in public marketing: «در حال پایلوت است»). **OWNER DECISION** (§9-6) |
 
 ## 3. People and roles
@@ -32,14 +34,14 @@ B Odoo backend staff, ALL everyone.
 | Term | Meaning | Use for | Never use | Audience | Evidence |
 |---|---|---|---|---|---|
 | **شرکت‌کننده** (جمع: شرکت‌کنندگان) | a person who answers an instrument inside a panel | panel UI in all purposes, consent, invites | «کاربر» for this person, «آزمودنی»، «داوطلب» | ALL | product: ۱۳۱ (ts_panel ۷۱، ts_org ۳۵). Project rule term. |
-| مراجع (جمع: مراجعان) | clinical client | only if the owner approves a clinical-only label (see §9-3) | «مراجعین»; in education/employment panels at all | C | product: «مراجع» ۱۹ + «مراجعان» ۱۰، incl. ANON_NAME «مراجع ناشناس» and filter «مراجعان من» shown in education panels. Audit G4 PT4, G1 PT-6. eot.ir does not use «مراجع» for people (only «مراجعه حضوری»). **OWNER DECISION** (§9-3) |
+| مراجع (جمع: مراجعان) | a counseling-center client | only in counseling-center panels (purpose `clinical`), through the purpose-aware helpers (`ts_panel/models/text.py`, `audit_view.py`) | «مراجعین»؛ «بیمار»/«مریض» anywhere; «مراجع» in education/employment panels | C | product: «مراجع» ۱۹ + «مراجعان» ۱۰. Owner decision 2026-10-11: «مراجع» is the counseling word for the person a counseling center serves; shared screens keep «شرکت‌کننده» (§9-3). |
 | دانش‌آموز / شاگرد | a student as described by school staff | marketing and help aimed at schools («شاگردانتان را دعوت کنید») | as a data label (the record is still «شرکت‌کننده») | E | product: «دانش‌آموز» ۲۸ (ts_website ۲۵). Pick «دانش‌آموز» (official school word, eot.ir articles use it); «شاگرد» ۰ in product, used once in an audit proposal; avoid. |
 | **کارشناس مسئول** | the panel member responsible for a participant (`responsible_id`), any role | panel UI: column, filter, assignment action, help | «مشاور مسئول»، «مسئول» alone, «متخصص مسئول» | E C H | product: ۳۲ (panel ۲۱، org ۱۱); «مشاور مسئول» ۴ (invite and sharing). Project rule term. Participant-facing word is §9-4. |
-| مشاور | the education role `counselor`; on eot.ir also a service provider | role label; participant-facing name for the responsible person in education panels if §9-4 is accepted | for clinicians or HR | S A P E | product: «مشاور» ۶۶ (website ۲۴: «ارسال نتیجه برای مشاورم»). eot.ir: «روان‌شناس یا مشاور»، «انتخاب مشاور». |
-| متخصص بالینی | role `clinician` | role label, verification texts | «درمانگر» in UI (one occurrence: «راهنمای تخصصی درمانگر» title), «بالینگر» | C | product: «متخصص» ۲۷، «درمانگر» ۱. eot.ir: «روان‌شناس»، «درمانگر» (booking), «متخصص» (generic). Keep «متخصص بالینی» for the role; «روان‌شناس» acceptable in participant copy of clinical panels (§9-4). |
+| مشاور | the education role `counselor`; the participant-facing word for the responsible person in education and counseling-center panels | role label (education); «راهنمای مشاور»، «گزارش ویژهٔ مشاور» | for HR | S A P E C | product: «مشاور» ۶۶ (website ۲۴: «ارسال نتیجه برای مشاورم»). eot.ir: «روان‌شناس یا مشاور»، «انتخاب مشاور». The counseling-center role is «مشاور مرکز» (next row) because both labels share one role list. |
+| مشاور مرکز | role `clinician` (verified counselor of a counseling-center panel; backend label «مشاور مرکز دارای پروانه») | role label, verification texts | «متخصص بالینی»، «درمانگر»، «روان‌درمانگر»، «بالینگر» | C | Owner decision 2026-10-11. «مشاور» alone is taken by the education role in the same lists (ROLE_LABELS, ROLES). |
 | مالک پنل | role `owner` | role label, transfer, close | «مسئول پنل» (collides with کارشناس مسئول), «مدیر پنل» | E C H | product: «مالک پنل» ۱۴، «مسئول پنل» ۲ (help: «مسئول پنل از این دسترسی خبردار می‌شود»), «مدیر پنل» ۴. |
 | هماهنگ‌کنندهٔ پنل | role `admin` | role label | «ادمین»، «مدیر» | E C H | ROLE_LABELS. Keep. |
-| مدیر کلینیک | role `clinic_director` | role label | «مدیر درمانگاه» | C | ROLE_LABELS today: «مدیر درمانگاه». Change with §2 «کلینیک». |
+| مدیر مرکز مشاوره | role `clinic_director` | role label | «مدیر کلینیک»، «مدیر درمانگاه»، «مدیر مرکز بالینی» | C | Owner decision 2026-10-11 (ROLE_LABELS and ROLES). |
 | مدیر منابع انسانی / مدیر استخدام / بازبین | employment roles | role labels | «HR»، «ریویوئر» | H | ROLE_LABELS. Keep. |
 | همکار | another member of the same panel, especially when invited | «دعوت همکار»، «همکاران پنل» | «عضو جدید» for an invitee | E C H | «همکار» ۳۰، «عضو» ۳۴، «اعضا» ۲۱. Rule: «همکار» for the person in invites, «اعضای پنل» for the list page. |
 | **ولی** (first mention: «ولی (پدر، مادر یا سرپرست قانونی)») | legal guardian of a minor | consent, minors help, guardian answering for a child | «والد یا مراقب»، «مراقب» (caregiver ≠ legal guardian), «سرپرست» alone | S P E | product: «ولی» ۳۵ (mostly «رضایت ولی» ۱۴), «ولی یا سرپرست قانونی» several, «سرپرست» ۱۸ (fields «نام سرپرست»، «موبایل سرپرست»), «والد یا مراقب» ۶ (ts_assessment guardian mode). eot.ir privacy: «رضایت والد یا سرپرست». **OWNER DECISION** (§9-5; consent text needs a new version) |
@@ -56,7 +58,10 @@ B Odoo backend staff, ALL everyone.
 | نمره | numeric score | report for roles allowed to see scores | «امتیاز» (eot.ir uses it; product ۰) | A C | «نمره» ۵۵. Keep. |
 | **نتیجه** (جمع: **نتیجه‌ها**) | the outcome of a completed attempt | participant and panel UI | «نتایج» in UI labels (formal), «کارنامه» | ALL | «نتیجه» ۱۸۸؛ plural «نتیجه‌ها» ۲۷ vs «نتایج» ۲۵ (e.g. «برون‌بری نتایج»). Audit G2 X2 (header «سنجه‌های من» vs subnav «سنجه‌ها و نتیجه‌ها»). |
 | گزارش | the rendered page/document of a result («گزارش کامل»، «گزارش خلاصه»); panel section «گزارش‌ها» = analytics | as defined | «گزارش» for the audit log («گزارش رویدادها»، «گزارش ممیزی») | ALL | «گزارش» ۱۱۸. Disambiguate from the audit log (§6). |
-| متن متخصص | clinician-only interpretive text (`therapist_text`) | clinical report labels | «راهنمای تخصصی درمانگر» | C | backend «راهنمای متخصص»، one «درمانگر». Clinical texts themselves never edited. |
+| راهنمای مشاور | counselor-only interpretive text (`therapist_text`) | report heading, consent, panel help, backend label | «متن متخصص»، «راهنمای متخصص»، «راهنمای تخصصی درمانگر» | C | Owner decision 2026-10-11. Book texts are stored verbatim; therapy words in them are mapped at display time (`counseling_terms()`). |
+| گزارش ویژهٔ مشاور | the full report level `clinical` (scores + counselor guide), seen only by a verified counselor with the participant's consent | level labels, consent, panel help, permission label «دیدن گزارش کامل ویژهٔ مشاور» | «گزارش بالینی»، «گزارش برای متخصص بالینی» | C | Owner decision 2026-10-11. The education level stays «گزارش در سطح مشاور». |
+| مسئول پیگیری فوری | the panel's escalation contact (`escalation_contact_id`), required before a counseling-center panel is active | backend field, panel settings, create form tick («می‌پذیرم که پیگیری فوری نشانه‌های خطر با من است») | «مسئول پاسخ فوری بالینی»، «پاسخ فوری بالینی» | C B | Owner decision 2026-10-11. |
+| شمارهٔ پروانه یا نظام روان‌شناسی و مشاوره | licence number a counselor enters for verification | every licence label and error | «شمارهٔ پروانه یا نظام حرفه‌ای»، «شماره پروانه/نظام» | E C | Owner decision 2026-10-11. |
 | کوشش / پاسخ‌دهی | an attempt (`ts.attempt`) | rarely shown; «در حال پاسخ» state | «تلاش» (reads as "effort"), «اتمپت» | A E | STATE_LABELS «در حال پاسخ». «تلاش» ۱۱ mostly OTP retries («تلاش دوباره») — fine there. |
 
 ## 5. Invitations and links
@@ -121,13 +126,14 @@ B Odoo backend staff, ALL everyone.
    «آزمون» only in public page `<title>`/meta description and once in the home hero as a gloss
    («سنجهٔ استعداد (آزمون استعدادیابی)»), so search still works. Replace the 4 in-product «آزمون» (incl. consent
    «این آزمون» → needs a consent version).
-3. **«مراجع» in clinical panels.** «شرکت‌کننده» is the rule term, but clinicians naturally say «مراجع». Today «مراجع/مراجعان»
+3. **«مراجع» in counseling-center panels.** (Owner, 2026-10-11: «مراجع» is the counseling word for the person a counseling
+   center serves; «بیمار»/«مریض» never.) «شرکت‌کننده» is the rule term, but counselors naturally say «مراجع». Today «مراجع/مراجعان»
    leaks into education panels (filters «مراجعان من»، close-panel text, audit list). Recommendation: «شرکت‌کننده» in all
-   shared screens; one purpose-aware label helper may show «مراجع» only in clinical panels (as audit G4 PT4 proposes).
+   shared screens; one purpose-aware label helper may show «مراجع» only in counseling-center panels (as audit G4 PT4 proposes).
    If the owner prefers the strict rule, drop «مراجع» everywhere, including ANON_NAME «مراجع ناشناس» → «شرکت‌کنندهٔ ناشناس».
 4. **What the participant calls the responsible person.** Panel side: «کارشناس مسئول» (rule term). For a student,
    «کارشناس مسئول» is cold and unclear; audit G2 X4 proposes «مشاور». Recommendation: participant-facing label by panel
-   purpose: education «مشاور»، clinical «روان‌شناس» (eot.ir's word), employment «کارشناس سازمان». Panel screens keep
+   purpose: education «مشاور»، counseling center «مشاور» (owner 2026-10-11; was «روان‌شناس»)، employment «کارشناس سازمان». Panel screens keep
    «کارشناس مسئول». Remove «مشاور مسئول» and «مؤسسه و مشاور مسئول» (invite) in either case.
 5. **Guardian word in consent.** Three forms today: «ولی» / «ولی یا سرپرست قانونی» / «والد یا مراقب» (guardian mode of the
    player). «مراقب» is not a legal guardian. Recommendation: «ولی» as the term, glossed at first mention in each consent
@@ -154,5 +160,7 @@ B Odoo backend staff, ALL everyone.
 | G5 PT-4 | «دعوت جدید» stale note | §5 «دعوت تازه» |
 
 Suggested `ts check` grep rule (from G1 PT-6), for ts_* views and controllers, warn on: «آزمون»، «لاگ»، «مراجعین»،
-«تخصیص‌نشده»، «گزارش رویدادها»، «برون‌بری»، «کمپین»، «لینک»، «درمانگاه»، «می‌باشد»، «گردید»، «متأسفانه»، «جهت » .
+«تخصیص‌نشده»، «گزارش رویدادها»، «برون‌بری»، «کمپین»، «لینک»، «درمانگاه»، «می‌باشد»، «گردید»، «متأسفانه»، «جهت » ;
+and (owner decision 2026-10-11, counseling wording) on «کلینیک»، «بالینی»، «درمانگر»، «روان‌درمانی»، «درمان» as a whole word,
+«بیمار» as a whole word, and English «clinic»/«therap»/«patient» inside user-facing strings (not identifiers).
 («مراجع» only after §9-3 is decided.)

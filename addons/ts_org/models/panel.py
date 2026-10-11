@@ -14,12 +14,12 @@ KINDS = {'school': 'education', 'org': 'employment', 'clinic': 'clinical'}
 SOLO_AS = {'counselor': 'education', 'psychologist': 'clinical', 'hr': 'employment'}
 ROLE_LABELS = {
     'owner': 'مالک پنل', 'admin': 'هماهنگ‌کنندهٔ پنل', 'hr_admin': 'مدیر منابع انسانی', 'hiring_manager': 'مدیر استخدام',
-    'clinic_director': 'مدیر کلینیک', 'clinician': 'متخصص بالینی', 'counselor': 'مشاور',
+    'clinic_director': 'مدیر مرکز مشاوره', 'clinician': 'مشاور مرکز', 'counselor': 'مشاور',
     'reviewer': 'بازبین', 'school_admin': 'مدیر مدرسه',
 }
 # One label per panel purpose for the panel list, the landing page and the create form (UX audit G3-P20-2).
-PURPOSE_LABELS = {'education': 'مدرسه یا مرکز مشاوره', 'employment': 'سازمان (استخدام و منابع انسانی)',
-                  'clinical': 'کلینیک روان‌شناسی و مشاوره', 'benefits': 'رفاه کارکنان'}
+PURPOSE_LABELS = {'education': 'مدرسه یا دانشگاه', 'employment': 'سازمان (استخدام و منابع انسانی)',
+                  'clinical': 'مرکز مشاوره', 'benefits': 'رفاه کارکنان'}
 
 
 _DIGITS = str.maketrans('۰۱۲۳۴۵۶۷۸۹٠١٢٣٤٥٦٧٨٩', '01234567890123456789')
@@ -68,7 +68,7 @@ class TsWorkspace(models.Model):
         if not terms:
             raise UserError('برای ساخت پنل باید شرایط استفاده را بپذیرید.')
         if purpose == 'clinical' and not escalation_ok:
-            raise UserError('برای پنل بالینی باید مسئولیت پاسخ فوری بالینی را بپذیرید.')
+            raise UserError('برای پنل مرکز مشاوره باید مسئولیت پیگیری فوری را بپذیرید.')
         if not user.share or user._is_public():
             raise UserError('برای ساخت پنل وارد حساب خود شوید.')
         S = self.sudo()

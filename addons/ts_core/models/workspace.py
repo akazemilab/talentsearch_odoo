@@ -3,7 +3,7 @@ from odoo.exceptions import UserError, ValidationError
 
 PURPOSES = [
     ('employment', 'استخدام و منابع انسانی'),
-    ('clinical', 'بالینی و مشاوره'),
+    ('clinical', 'مشاوره'),
     ('education', 'دانشگاه و مدرسه'),
     ('benefits', 'رفاه کارکنان'),
 ]
@@ -24,8 +24,8 @@ ROLES = [
     ('hr_admin', 'مدیر منابع انسانی'),
     ('hiring_manager', 'مدیر استخدام'),
     ('reviewer', 'ارزیاب'),
-    ('clinic_director', 'مدیر مرکز بالینی'),
-    ('clinician', 'متخصص بالینی دارای مجوز'),
+    ('clinic_director', 'مدیر مرکز مشاوره'),
+    ('clinician', 'مشاور مرکز دارای پروانه'),
     ('counselor', 'مشاور'),
     ('benefit_admin', 'مدیر طرح رفاهی'),
 ]
@@ -66,8 +66,8 @@ class TsWorkspace(models.Model):
     member_ids = fields.One2many('ts.workspace.member', 'workspace_id', 'اعضا')
     member_count = fields.Integer(compute='_compute_member_count')
     data_contact_id = fields.Many2one('res.partner', 'مسئول داده', tracking=True)
-    escalation_contact_id = fields.Many2one('res.partner', 'مسئول پاسخ فوری بالینی', tracking=True,
-                                            help='برای فضای بالینی الزامی است پیش از فعال‌سازی.')
+    escalation_contact_id = fields.Many2one('res.partner', 'مسئول پیگیری فوری', tracking=True,
+                                            help='برای پنل مرکز مشاوره، پیش از فعال‌سازی الزامی است.')
     note = fields.Html('یادداشت داخلی')
     company_id = fields.Many2one('res.company', required=True, default=lambda s: s.env.company)
 
@@ -161,7 +161,7 @@ class TsWorkspace(models.Model):
                 if ws.gated and ws.state == 'active':
                     raise ValidationError('این نوع پنل هنوز تأیید نشده و قابل فعال‌سازی نیست.')
                 if ws.purpose == 'clinical' and not ws.escalation_contact_id:
-                    raise ValidationError('فضای بالینی بدون مسئول پاسخ فوری فعال نمی‌شود.')
+                    raise ValidationError('پنل مرکز مشاوره بدون مسئول پیگیری فوری فعال نمی‌شود.')
 
     def action_view_audit(self):
         self.ensure_one()
@@ -183,7 +183,7 @@ class TsWorkspaceMember(models.Model):
     active = fields.Boolean(default=True)
     # Professional verification (blueprint journey B1): clinicians unlock
     # clinical instruments only once an operator records the verification.
-    license_number = fields.Char('شماره پروانه/نظام')
+    license_number = fields.Char('شمارهٔ پروانه یا نظام روان‌شناسی و مشاوره')
     verification_state = fields.Selection([
         ('not_required', 'لازم نیست'),
         ('pending', 'در انتظار بررسی'),
@@ -194,7 +194,7 @@ class TsWorkspaceMember(models.Model):
     verified_on = fields.Datetime('تاریخ تأیید', readonly=True)
     owner_practices = fields.Boolean(
         'مالک خودش هم کارشناس است', help='مالکی که خودش شرکت‌کنندگان را می‌بیند (مشاور یا روان‌شناس مستقل). '
-        'در پنل بالینی، دیدن نتیجهٔ بالینی منوط به تأیید صلاحیت است.')
+        'در پنل مرکز مشاوره، دیدن گزارش ویژهٔ مشاور منوط به تأیید صلاحیت است.')
     deactivated_on = fields.Datetime('تاریخ غیرفعال‌سازی', readonly=True)
     deactivated_by_id = fields.Many2one('res.users', 'غیرفعال‌کننده', readonly=True)
 

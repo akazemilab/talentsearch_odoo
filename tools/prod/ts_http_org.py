@@ -85,7 +85,7 @@ check('dashboard lists the completed assignment', bool(aid))
 st, _, page = hr.req('/my/workspaces/%s/a/%s' % (ws_id, aid.group(1)))
 text = html.unescape(re.sub(r'<[^>]+>', ' ', page))
 check('HR sees band summary', st == 200 and 'ts-band' in page and 'خلاصهٔ نتایج' in page)
-check('HR sees no scores and no interpretation texts', 'نمره (۱ تا ۵)' not in text and 'راهنمای متخصص' not in text and 'تفسیر نتیجهٔ شما' not in text)
+check('HR sees no scores and no interpretation texts', 'نمره (۱ تا ۵)' not in text and 'راهنمای مشاور' not in text and 'راهنمای متخصص' not in text and 'تفسیر نتیجهٔ شما' not in text)
 check('HR cannot open the participant attempt or report', hr.req('/take/' + token)[0] == 404 and hr.req(report)[0] == 404)
 
 st, _, page = p.req(report)

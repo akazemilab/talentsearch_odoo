@@ -274,8 +274,8 @@
                                 <div class="ts-grid" style="--min: 260px">
                                     <div class="ts-card">
                                         <span class="ts-card__icon"><t t-call="ts_website.icon" ico.f="buildings"/></span>
-                                        <h3>سازمان یا کلینیک هستید؟</h3>
-                                        <p class="ts-card__body">پنل سازمان‌ها و مراکز درمانی در حال پایلوت است.</p>
+                                        <h3>سازمان یا مرکز مشاوره هستید؟</h3>
+                                        <p class="ts-card__body">پنل سازمان‌ها و مراکز مشاوره در حال پایلوت است.</p>
                                         <a class="ts-card__link" href="/contact?topic=partner">با ما تماس بگیرید<t t-call="ts_website.icon" ico.f="arrow-left"/></a>
                                     </div>
                                     <div class="ts-card">
@@ -608,7 +608,7 @@
                                                 <option value="pro" t-att-selected="topic == 'pro' or None">خبرم کنید: همیار تفسیر</option>
                                                 <option value="question" t-att-selected="topic == 'question' or None">پرسش</option>
                                                 <option value="support" t-att-selected="topic == 'support' or None">پشتیبانی</option>
-                                                <option value="partner" t-att-selected="topic == 'partner' or None">سازمان یا کلینیک هستم</option>
+                                                <option value="partner" t-att-selected="topic == 'partner' or None">سازمان یا مرکز مشاوره هستم</option>
                                             </select>
                                         </div>
                                         <div class="ts-form__row">

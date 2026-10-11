@@ -94,7 +94,7 @@ class TsWorkspaceMember(models.Model):
         if flag and self.workspace_id.purpose == 'clinical':
             lic = (license_number or self.license_number or '').strip()[:60]
             if not lic:
-                raise UserError('برای دیدن گزارش بالینی، شمارهٔ پروانه یا نظام حرفه‌ای لازم است.')
+                raise UserError('برای دیدن گزارش ویژهٔ مشاور، شمارهٔ پروانه یا نظام روان‌شناسی و مشاوره لازم است.')
             vals['license_number'] = lic
         self.sudo().write(vals)
         self.env['ts.audit.event'].sudo().log('member.practice', self, workspace=self.workspace_id,
