@@ -221,7 +221,7 @@ for path in ('/my', '/my/assessments'):
     st, body = get(p1, path)
     hits = no_money(body)
     if hits:
-        i = body.find(hits[0]); print('    context:', body[max(0, i - 120):i + 60].replace('\n', ' '))
+        i = body.find(hits[0]); print('FAIL ctx ' + body[max(0, i - 160):i + 60].replace('\n', ' '))
     check('participant: %s has no money words' % path, st == 200 and not hits, '%s %s' % (st, hits))
 out = shell("a = env['ts.assignment'].browse(%s); at = a.attempt_id; t = env['ts.wallet.txn']; "
             "print('CONV', at.state, int(t.search([('idem_key', '=', 'release:%%d' %% a.id)]).amount), int(t.search([('idem_key', '=', 'usage:%%d' %% at.id)]).amount))" % AID)
