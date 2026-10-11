@@ -13,56 +13,70 @@
                         <t t-call="ts_panel.shell_frame">
                             <header class="tsp-head">
                                 <div>
-                                    <h1 class="tsp-head__title">ممیزی پنل</h1>
-                                    <p class="tsp-head__help">هر کار مهم در این پنل اینجا ثبت می‌شود. فقط مالک پنل این صفحه را می‌بیند و رویدادها هرگز تغییر یا حذف نمی‌شوند. <a class="tsp-what" href="/help/panel#support">این چیست؟</a></p>
+                                    <h1 class="tsp-head__title">دفتر ممیزی</h1>
+                                    <p class="tsp-head__help">دفتر ممیزی فهرست کارهای مهمی است که در این پنل انجام شده: چه کسی، چه کاری، چه وقت. فقط مالک پنل آن را می‌بیند و رویدادها هرگز تغییر یا حذف نمی‌شوند. <a class="tsp-what" href="/help/panel#audit">دفتر ممیزی چیست؟</a></p>
                                 </div>
-                                <a t-if="can_export" t-attf-href="/my/workspaces/#{ws.id}/audit/export?#{qs}" class="ts-btn ts-btn--outline">خروجی CSV</a>
+                                <a t-if="can_export" t-attf-href="/my/workspaces/#{ws.id}/audit/export?#{qs}" class="ts-btn ts-btn--outline">دریافت فایل (csv)</a>
                             </header>
                             <section t-if="support" class="ts-card" aria-labelledby="tsp-au-s">
-                                <h2 id="tsp-au-s" class="h5">دسترسی پشتیبانی پلتفرم</h2>
-                                <p class="ts-hint">هر بار که پشتیبانی پلتفرم دسترسی باز کند، شما آگاه می‌شوید و این‌جا فهرست می‌شود.</p>
-                                <table class="ts-table tsp-table tsp-table--cards">
-                                    <caption class="tsp-sr">دسترسی‌های پشتیبانی</caption>
-                                    <thead><tr><th scope="col">نوع</th><th scope="col">شروع</th><th scope="col">پایان</th><th scope="col">وضعیت</th><th scope="col">تیکت</th></tr></thead>
-                                    <tbody>
-                                        <tr t-foreach="support" t-as="s">
-                                            <th scope="row" data-label="نوع" t-out="s['kind']"/>
-                                            <td data-label="شروع" t-out="s['opened']"/>
-                                            <td data-label="پایان" t-out="s['expires']"/>
-                                            <td data-label="وضعیت" t-out="s['state']"/>
-                                            <td data-label="تیکت"><bdi dir="ltr" t-out="s['ticket'] or '—'"/></td>
-                                        </tr>
-                                    </tbody>
-                                </table>
+                                <h2 id="tsp-au-s" class="h5">دسترسی پشتیبانی تلنت سرچ</h2>
+                                <p class="ts-hint">هر بار که پشتیبانی تلنت سرچ به پنل دسترسی بگیرد، شما خبردار می‌شوید و این‌جا فهرست می‌شود.</p>
+                                <div class="ts-table-wrap">
+                                    <table class="ts-table tsp-table tsp-table--cards">
+                                        <caption class="tsp-sr">دسترسی‌های پشتیبانی</caption>
+                                        <thead><tr><th scope="col">نوع</th><th scope="col">شروع</th><th scope="col">پایان</th><th scope="col">وضعیت</th><th scope="col">تیکت</th></tr></thead>
+                                        <tbody>
+                                            <tr t-foreach="support" t-as="s">
+                                                <th scope="row" data-label="نوع" t-out="s['kind']"/>
+                                                <td data-label="شروع" t-out="s['opened']"/>
+                                                <td data-label="پایان" t-out="s['expires']"/>
+                                                <td data-label="وضعیت" t-out="s['state']"/>
+                                                <td data-label="تیکت"><bdi dir="ltr" t-out="s['ticket'] or '—'"/></td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
                             </section>
-                            <form method="get" class="ts-card tsp-filters" aria-label="پالایه‌های ممیزی">
-                                <label>از تاریخ (میلادی)<input type="date" name="from" t-att-value="f.get('from')"/></label>
-                                <label>تا تاریخ (میلادی)<input type="date" name="to" t-att-value="f.get('to')"/></label>
-                                <label>دسته
-                                    <select name="family"><option value="">همه</option>
+                            <div class="tsp-filterbar">
+                                <button type="button" class="ts-btn ts-btn--outline ts-btn--sm" aria-controls="tsp-au-filters" aria-expanded="true" data-tsp-toggle="tsp-au-filters" t-att-data-tsp-start-open="'1' if filtered else None" hidden="hidden">پالایه<t t-if="filtered"> (فعال)</t></button>
+                                <a t-if="filtered" t-attf-href="/my/workspaces/#{ws.id}/audit" class="ts-btn ts-btn--quiet ts-btn--sm">حذف پالایه‌ها</a>
+                            </div>
+                            <form method="get" class="ts-card tsp-form tsp-filters tsp-filters--grid" id="tsp-au-filters" aria-label="پالایه‌های دفتر ممیزی">
+                                <fieldset class="tsp-field tsp-field--wide">
+                                    <legend class="tsp-field__label">بازهٔ زمانی</legend>
+                                    <div class="tsp-seg tsp-seg--radio">
+                                        <label t-foreach="periods" t-as="p" class="tsp-seg__item">
+                                            <input type="radio" name="period" t-att-value="p[0]" t-att-checked="'checked' if (f.get('period') or '') == p[0] and not (f.get('from') or f.get('to')) else None"/>
+                                            <span t-out="p[1]"/>
+                                        </label>
+                                    </div>
+                                </fieldset>
+                                <div class="tsp-field"><t t-call="ts_website.jdate" jd_name.f="from" jd_id.f="tsp_au_from" jd_label.f="از تاریخ" jd_value="f.get('from') or False" jd_hint.f="اختیاری؛ به‌جای بازهٔ آماده"/></div>
+                                <div class="tsp-field"><t t-call="ts_website.jdate" jd_name.f="to" jd_id.f="tsp_au_to" jd_label.f="تا تاریخ" jd_value="f.get('to') or False" jd_hint.f="اختیاری"/></div>
+                                <label class="tsp-field"><span class="tsp-field__label">دسته</span>
+                                    <select name="family" class="form-select"><option value="">همه</option>
                                         <option t-foreach="families" t-as="fa_" t-att-value="fa_[0]" t-att-selected="'selected' if f.get('family') == fa_[0] else None" t-out="fa_[1]"/>
                                     </select></label>
-                                <label>عضو
-                                    <select name="member"><option value="">همه</option>
+                                <label class="tsp-field"><span class="tsp-field__label">عضو</span>
+                                    <select name="member" class="form-select"><option value="">همه</option>
                                         <option t-foreach="members" t-as="m" t-att-value="m.id" t-att-selected="'selected' if f.get('member') == str(m.id) else None" t-out="m.user_id.name"/>
                                     </select></label>
-                                <button type="submit" class="ts-btn ts-btn--outline">اعمال</button>
+                                <p class="tsp-field--wide"><button type="submit" class="ts-btn ts-btn--outline">نمایش رویدادها</button></p>
                             </form>
                             <section class="ts-card" aria-labelledby="tsp-au-1">
                                 <h2 id="tsp-au-1" class="h5">رویدادها <small class="ts-hint">(<t t-out="fa(total)"/> مورد)</small></h2>
                                 <p t-if="not rows" class="ts-hint">رویدادی با این پالایه ثبت نشده است.</p>
-                                <table t-if="rows" class="ts-table tsp-table tsp-table--cards">
-                                    <caption class="tsp-sr">رویدادهای ممیزی</caption>
-                                    <thead><tr><th scope="col">زمان</th><th scope="col">شرح</th><th scope="col">دسته</th><th scope="col">نتیجه</th></tr></thead>
-                                    <tbody>
-                                        <tr t-foreach="rows" t-as="r">
-                                            <th scope="row" data-label="زمان" t-out="r['when']"/>
-                                            <td data-label="شرح"><t t-out="r['text']"/><small t-if="r['role']" class="ts-hint"> · <t t-out="r['role']"/></small></td>
-                                            <td data-label="دسته" t-out="r['family']"/>
-                                            <td data-label="نتیجه"><span t-if="r['outcome'] != 'ok'" class="ts-pill ts-pill--warn">ردشد یا ناموفق</span><t t-else="">انجام شد</t></td>
-                                        </tr>
-                                    </tbody>
-                                </table>
+                                <t t-foreach="days" t-as="d">
+                                    <h3 class="h6 tsp-audit__day" t-out="d['day']"/>
+                                    <ul class="tsp-list tsp-audit">
+                                        <li t-foreach="d['rows']" t-as="r" class="tsp-audit__row">
+                                            <span class="tsp-audit__time ts-num" t-out="r['time']"/>
+                                            <span class="tsp-audit__text"><t t-out="r['text']"/><t t-if="r['count'] &gt; 1"> (<t t-out="fa(r['count'])"/> بار)</t><small t-if="r['role']" class="ts-hint"> · <t t-out="r['role']"/></small></span>
+                                            <span class="ts-pill ts-pill--neutral tsp-audit__fam" t-out="r['family']"/>
+                                            <span t-if="r['outcome'] != 'ok'" class="ts-pill ts-pill--warn">رد شد یا ناموفق ماند</span>
+                                        </li>
+                                    </ul>
+                                </t>
                                 <nav t-if="pages &gt; 1" class="tsp-pager" aria-label="صفحه‌بندی">
                                     <a t-if="page &gt; 0" t-attf-href="/my/workspaces/#{ws.id}/audit?#{qs}&amp;page=#{page - 1}">قبلی</a>
                                     <span>صفحهٔ <t t-out="fa(page + 1)"/> از <t t-out="fa(pages)"/></span>

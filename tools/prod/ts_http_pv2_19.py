@@ -121,7 +121,7 @@ check('the menu help link points to the help center', 'href="/help/panel"' in pa
 st, page = get(ow, W + '/exports')
 check('the export page has a "what is this" link', 'href="/help/panel#export"' in page, st)
 st, page = get(ow, W + '/audit')
-check('the audit page has a "what is this" link', 'href="/help/panel#support"' in page, st)
+check('the audit page has a "what is this" link', 'href="/help/panel#audit"' in page, st)
 st, page = get(ow, '/my/sharing')
 check('the sharing page has a "what is this" link', 'href="/help/panel#sharing"' in page, st)
 

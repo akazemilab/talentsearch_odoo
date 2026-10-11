@@ -385,7 +385,7 @@
                                     <div class="ts-hero__actions">
                                         <a t-att-href="start_href" class="ts-btn ts-btn--primary ts-btn--lg">شروع سنجه<t t-call="ts_website.icon" ico.f="arrow-left"/></a>
                                         <a t-if="request.env.user._is_public()" href="/web/login?redirect=/my/assessments" class="ts-btn ts-btn--quiet ts-btn--lg">ورود</a>
-                                        <a t-else="" href="/my/assessments" class="ts-btn ts-btn--quiet ts-btn--lg">سنجه‌های من</a>
+                                        <a t-else="" href="/my/assessments" class="ts-btn ts-btn--quiet ts-btn--lg">سنجه‌ها و نتیجه‌ها</a>
                                     </div>
                                 </div>
                             </div>

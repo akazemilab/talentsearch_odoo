@@ -13,8 +13,8 @@ from odoo.exceptions import UserError
 
 from . import exporter, importer
 
-KINDS = [('export_clients', 'برون‌بری شرکت‌کنندگان'), ('export_status', 'برون‌بری وضعیت دعوت‌ها'),
-         ('export_results', 'برون‌بری نتایج'), ('export_audit', 'برون‌بری رویدادها'),
+KINDS = [('export_clients', 'خروجی فهرست شرکت‌کنندگان'), ('export_status', 'خروجی وضعیت دعوت‌ها'),
+         ('export_results', 'خروجی نتیجه‌ها'), ('export_audit', 'خروجی دفتر ممیزی'),
          ('import_clients', 'ورود شرکت‌کنندگان از فایل'), ('group_report', 'گزارش گروهی'), ('data_export', 'نسخهٔ داده‌های من')]
 KIND_PERM = {'import_clients': 'clients:import', 'export_clients': 'clients:export', 'export_status': 'clients:export',
              'export_results': 'results:export', 'export_audit': 'audit:export', 'group_report': 'reports:group'}
@@ -128,6 +128,58 @@ class TsJob(models.Model):
         items = importer.plan(self.env, self.workspace_id.id, rows, self.ts_mapping())
         errs = [{'n': it['n'], 'err': it['err']} for it in items if it['action'] == 'error'][:20]
         return importer.summarize(items), errs
+
+    def ts_samples(self, per_column=2):
+        """{column index: [first non-empty values]} for the mapping step (UX audit G4 P14-1). Read only; phone-like values
+        are masked and long values cut, so the page shows what a column holds without repeating the file."""
+        self.ensure_one()
+        from .text import mask_phone
+        headers, rows = self._parsed_table()
+        out = {i: [] for i in range(len(headers))}
+        for raw in rows:
+            for i in range(len(headers)):
+                if len(out[i]) >= per_column or i >= len(raw):
+                    continue
+                v = ' '.join(str(raw[i] or '').split())
+                if not v:
+                    continue
+                digits = sum(ch.isdigit() for ch in v)
+                if digits >= 7 and digits >= len(v) - 3:
+                    v = mask_phone(v)
+                out[i].append(v if len(v) <= 40 else v[:39] + '…')
+            if all(len(x) >= per_column for x in out.values()):
+                break
+        return out
+
+    def ts_preview_details(self, limit=20):
+        """Who the import would create and which existing participants it would change, field by field (UX audit G4 P15-1).
+        Read only; phones are masked."""
+        self.ensure_one()
+        from .text import mask_phone
+        _h, rows = self._parsed_table()
+        items = importer.plan(self.env, self.workspace_id.id, rows, self.ts_mapping())
+        labels = dict(importer.FIELDS)
+        labels.update(groups='گروه', age_group='گروه سنی')
+        ages = dict(self.env['ts.panel.client']._fields['age_group'].selection)
+        C = self.env['ts.panel.client'].sudo().with_context(active_test=False)
+        creates, updates = [], []
+        for it in items:
+            if it['action'] == 'create' and len(creates) < limit:
+                creates.append({'n': it['n'], 'name': it['vals']['name'], 'code': it['vals']['code']})
+            elif it['action'] == 'update' and len(updates) < limit:
+                c = C.browse(it['client_id'])
+                ch = []
+                for k, new in it.get('changes', {}).items():
+                    old = c[k] if k in ('name', 'code', 'phone', 'email', 'age_group') else ''
+                    if k == 'phone':
+                        old, new = mask_phone(old), mask_phone(new)
+                    elif k == 'age_group':
+                        old, new = ages.get(old, old), ages.get(new, new)
+                    elif k == 'groups':
+                        old, new = '', '، '.join(new)
+                    ch.append({'field': labels.get(k, k), 'old': old or '—', 'new': new or '—'})
+                updates.append({'n': it['n'], 'name': c.name, 'code': c.code or '', 'changes': ch})
+        return {'creates': creates, 'updates': updates}
 
     def ts_start(self):
         """Queue the import; a small file runs at once, a large one waits for the cron runner."""

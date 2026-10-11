@@ -8,38 +8,43 @@
         <field name="website_id" ref="ts_website.website_ts"/>
         <field name="arch" type="xml">
             <t t-name="ts_panel.my_sessions">
-                <t t-call="website.layout" additional_title.f="نشست‌های من">
+                <t t-call="website.layout" additional_title.f="دستگاه‌های واردشده">
                     <div id="wrap" class="ts-page">
                         <section class="tsp-section container" style="max-width:760px">
-                            <h1 class="tsp-head__title">نشست‌های من</h1>
-                            <t t-call="ts_panel.my_nav" active="sessions"/>
+                            <h1 class="tsp-head__title">دستگاه‌های واردشده</h1>
+                            <t t-call="ts_panel.my_nav" active.f="sessions"/>
+                            <p class="ts-hint">هر دستگاه یا مرورگری که با آن وارد حساب شده‌اید (یک «نشست») این‌جا دیده می‌شود.</p>
                             <p t-if="ok" class="tsp-flash" role="status" t-out="ok"/>
                             <p t-if="error" class="tsp-flash tsp-flash--err" role="alert" t-out="error"/>
+                            <p t-if="resumed" class="tsp-flash tsp-flash--ok" role="status">هویت شما تأیید شد. برای خروج، دوباره دکمهٔ «خروج» را بزنید؛ تا آن را نزنید دستگاهی خارج نمی‌شود.</p>
                             <div class="ts-card" id="ses-list">
                                 <h2>دستگاه‌هایی که با حساب شما وارد شده‌اند</h2>
-                                <ul class="tsp-list">
+                                <ul class="tsp-list tsp-rows">
                                     <li t-foreach="sessions" t-as="s">
-                                        <span><t t-out="(s.platform or '').capitalize()"/> <t t-out="(s.browser or '').capitalize()"/></span>
-                                        <span class="ts-hint"> آخرین فعالیت: <t t-out="jalali(s.last_activity)"/></span>
-                                        <strong t-if="s.is_current" class="ts-sess-current"> (همین دستگاه)</strong>
-                                        <form t-else="" action="/my/sessions/revoke" method="post" style="display:inline" data-tsp-once="1">
+                                        <div class="tsp-rows__text">
+                                            <strong><t t-if="s.browser"><bdi dir="ltr" class="ts-bdi" t-out="(s.browser or '').capitalize()"/></t><t t-else="">مرورگر نامشخص</t><t t-if="s.platform"> روی <bdi dir="ltr" class="ts-bdi" t-out="(s.platform or '').capitalize()"/></t>
+                                                <span t-if="s.is_current" class="ts-pill ts-pill--ok ts-sess-current">همین دستگاه</span></strong>
+                                            <span class="ts-hint">آخرین فعالیت: <t t-out="jalali(s.last_activity)"/></span>
+                                        </div>
+                                        <form t-if="not s.is_current" action="/my/sessions/revoke" method="post" class="tsp-inline" data-tsp-once="1">
                                             <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
                                             <input type="hidden" name="sid" t-att-value="s.id"/>
-                                            <button type="submit" class="ts-btn ts-btn--outline ts-btn--sm">خروج از این دستگاه</button>
+                                            <button type="submit" t-attf-class="ts-btn #{'ts-btn--primary' if resumed_sid == str(s.id) else 'ts-btn--outline'} ts-btn--sm">خروج از این دستگاه</button>
                                         </form>
                                     </li>
                                 </ul>
-                                <p t-if="not sessions" class="ts-hint">نشستی ثبت نشده است.</p>
+                                <p t-if="not sessions" class="ts-hint">دستگاهی ثبت نشده است.</p>
                             </div>
-                            <div class="ts-card" id="ses-others">
+                            <div t-if="len(sessions) &gt; 1" class="ts-card" id="ses-others">
                                 <h2>خروج از همهٔ دستگاه‌های دیگر</h2>
-                                <p>اگر دستگاهی را گم کرده‌اید یا به آن اطمینان ندارید، از همهٔ دستگاه‌های دیگر خارج شوید. این دستگاه وارد می‌ماند. برای این کار باید دوباره هویت خود را تأیید کنید.</p>
+                                <p>اگر دستگاهی را گم کرده‌اید یا به آن اطمینان ندارید، از همهٔ دستگاه‌های دیگر خارج شوید. این دستگاه وارد می‌ماند. برای این کار هویت شما دوباره پرسیده می‌شود.</p>
                                 <form action="/my/sessions/revoke" method="post" data-tsp-once="1">
                                     <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
                                     <input type="hidden" name="sid" value="others"/>
                                     <button type="submit" class="ts-btn ts-btn--primary">خروج از دستگاه‌های دیگر</button>
                                 </form>
                             </div>
+                            <p t-else="" class="ts-hint" id="ses-only">فقط همین دستگاه وارد حساب شماست.</p>
                         </section>
                     </div>
                 </t>
@@ -47,16 +52,6 @@
         </field>
     </record>
 
-
-    <record id="tpl_signup_risk" model="ir.ui.view">
-        <field name="name">TS panel: signup, SMS sign-in risk notice</field>
-        <field name="inherit_id" ref="ts_sms.tpl_signup"/>
-        <field name="mode">extension</field>
-        <field name="website_id" ref="ts_website.website_ts"/>
-        <field name="arch" type="xml">
-            <xpath expr="//p[@t-if='msg']" position="after">
-                <p id="ts-sms-risk" class="ts-hint">ورود با کد پیامکی روش ضعیف‌تری از ورود با ایمیل و گذرواژه است. اگر ایمیل دارید، <a href="/web/login">با ایمیل وارد شوید</a>.</p>
-            </xpath>
-        </field>
-    </record>
+    <!-- The former tpl_signup_risk extension (a «weaker method» warning above the sign-up form) is gone: ts_sms.tpl_signup
+         carries a neutral hint with the same id under the form (UX audit G1-P3-1). -->
 </odoo>

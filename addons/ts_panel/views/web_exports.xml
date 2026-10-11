@@ -14,63 +14,86 @@
                             <header class="tsp-head">
                                 <div>
                                     <h1 class="tsp-head__title">خروجی‌ها</h1>
-                                    <p class="tsp-head__help">فایل‌ها در قالب csv یا xlsx ساخته می‌شوند، رقم‌ها لاتین‌اند و هر تاریخ هم شمسی و هم میلادی می‌آید. برای گرفتن خروجی باید دوباره هویت خود را تأیید کنید و فایل <t t-out="fa(ttl)"/> ساعت در دسترس می‌ماند. <a class="tsp-what" href="/help/panel#export">این چیست؟</a></p>
+                                    <p class="tsp-head__help">از فهرست‌های پنل فایل اکسل یا csv بسازید. <a class="tsp-what" href="/help/panel#export">خروجی چطور کار می‌کند؟</a></p>
                                 </div>
                             </header>
-                            <section class="ts-card" aria-labelledby="tsp-ex-1">
+                            <section class="ts-card" aria-labelledby="tsp-ex-1" id="tsp-ex-clients">
                                 <h2 id="tsp-ex-1" class="h5">فهرست شرکت‌کنندگان</h2>
-                                <p class="ts-hint">نام، کد، گروه‌ها، مسئول، وضعیت و شمار دعوت‌ها. فقط شرکت‌کنندگانی که شما می‌بینید.</p>
+                                <p class="ts-hint">نام، کد، گروه‌ها، کارشناس مسئول، وضعیت و شمار دعوت‌ها؛ فقط شرکت‌کنندگانی که شما می‌بینید.</p>
+                                <p t-if="pend.get('what') == 'clients'" class="tsp-flash tsp-flash--ok" role="status">هویت شما تأیید شد. انتخاب‌هایتان را نگه داشتیم؛ برای ساخت فایل دکمهٔ زیر را بزنید.</p>
                                 <form t-attf-action="/my/workspaces/#{ws.id}/exports/create" method="post" class="tsp-form" data-tsp-once="1">
                                     <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
                                     <input type="hidden" name="what" value="clients"/>
-                                    <label class="tsp-field"><span class="tsp-field__label">قالب</span>
-                                        <select name="format" class="form-select"><option value="csv">csv</option><option value="xlsx">xlsx (اکسل)</option></select></label>
+                                    <label class="tsp-field"><span class="tsp-field__label">قالب فایل</span>
+                                        <select name="format" class="form-select">
+                                            <option value="xlsx" t-att-selected="'selected' if pend.get('what') != 'clients' or pend.get('format') != 'csv' else None">اکسل (xlsx)</option>
+                                            <option value="csv" t-att-selected="'selected' if pend.get('what') == 'clients' and pend.get('format') == 'csv' else None">csv</option>
+                                        </select></label>
                                     <label class="tsp-field"><span class="tsp-field__label">وضعیت</span>
-                                        <select name="state" class="form-select"><option value="active">فعال</option><option value="archived">بایگانی‌شده</option><option value="all">همه</option></select></label>
+                                        <select name="state" class="form-select">
+                                            <option value="active" t-att-selected="'selected' if pend.get('what') == 'clients' and pend.get('state') == 'active' else None">فعال</option>
+                                            <option value="archived" t-att-selected="'selected' if pend.get('what') == 'clients' and pend.get('state') == 'archived' else None">بایگانی‌شده</option>
+                                            <option value="all" t-att-selected="'selected' if pend.get('what') == 'clients' and pend.get('state') == 'all' else None">همه</option>
+                                        </select></label>
                                     <label t-if="groups" class="tsp-field"><span class="tsp-field__label">گروه</span>
-                                        <select name="group_id" class="form-select"><option value="">همهٔ گروه‌ها</option><option t-foreach="groups" t-as="g" t-att-value="g.id" t-out="g.name"/></select></label>
-                                    <p><button type="submit" class="ts-btn ts-btn--primary">ساخت فایل شرکت‌کنندگان</button></p>
+                                        <select name="group_id" class="form-select"><option value="">همهٔ گروه‌ها</option><option t-foreach="groups" t-as="g" t-att-value="g.id" t-att-selected="'selected' if pend.get('what') == 'clients' and pend.get('group_id') == str(g.id) else None" t-out="g.name"/></select></label>
+                                    <p class="ts-hint">با زدن دکمه، اگر در چند دقیقهٔ اخیر هویتتان را تأیید نکرده باشید دوباره پرسیده می‌شود. فایل <t t-out="fa(ttl)"/> ساعت در دسترس می‌ماند.</p>
+                                    <p><button type="submit" class="ts-btn ts-btn--outline">ساخت فایل شرکت‌کنندگان</button></p>
                                 </form>
                             </section>
-                            <section class="ts-card" aria-labelledby="tsp-ex-2">
+                            <section class="ts-card" aria-labelledby="tsp-ex-2" id="tsp-ex-status">
                                 <h2 id="tsp-ex-2" class="h5">وضعیت دعوت‌ها</h2>
                                 <p class="ts-hint">یک ردیف برای هر دعوت: شرکت‌کننده، سنجه، وضعیت و تاریخ‌ها. نتیجه‌ای در آن نیست.</p>
+                                <p t-if="pend.get('what') == 'status'" class="tsp-flash tsp-flash--ok" role="status">هویت شما تأیید شد. انتخاب‌هایتان را نگه داشتیم؛ برای ساخت فایل دکمهٔ زیر را بزنید.</p>
                                 <form t-attf-action="/my/workspaces/#{ws.id}/exports/create" method="post" class="tsp-form" data-tsp-once="1">
                                     <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
                                     <input type="hidden" name="what" value="status"/>
-                                    <label class="tsp-field"><span class="tsp-field__label">قالب</span>
-                                        <select name="format" class="form-select"><option value="csv">csv</option><option value="xlsx">xlsx (اکسل)</option></select></label>
+                                    <label class="tsp-field"><span class="tsp-field__label">قالب فایل</span>
+                                        <select name="format" class="form-select">
+                                            <option value="xlsx" t-att-selected="'selected' if pend.get('what') != 'status' or pend.get('format') != 'csv' else None">اکسل (xlsx)</option>
+                                            <option value="csv" t-att-selected="'selected' if pend.get('what') == 'status' and pend.get('format') == 'csv' else None">csv</option>
+                                        </select></label>
                                     <label class="tsp-field"><span class="tsp-field__label">سنجه</span>
-                                        <select name="instrument_id" class="form-select"><option value="">همهٔ سنجه‌ها</option><option t-foreach="instruments" t-as="i" t-att-value="i.id" t-out="i.name"/></select></label>
+                                        <select name="instrument_id" class="form-select"><option value="">همهٔ سنجه‌ها</option><option t-foreach="instruments" t-as="i" t-att-value="i.id" t-att-selected="'selected' if pend.get('what') == 'status' and pend.get('instrument_id') == str(i.id) else None" t-out="i.name"/></select></label>
                                     <label t-if="groups" class="tsp-field"><span class="tsp-field__label">گروه</span>
-                                        <select name="group_id" class="form-select"><option value="">همهٔ گروه‌ها</option><option t-foreach="groups" t-as="g" t-att-value="g.id" t-out="g.name"/></select></label>
-                                    <p><button type="submit" class="ts-btn ts-btn--primary">ساخت فایل وضعیت</button></p>
+                                        <select name="group_id" class="form-select"><option value="">همهٔ گروه‌ها</option><option t-foreach="groups" t-as="g" t-att-value="g.id" t-att-selected="'selected' if pend.get('what') == 'status' and pend.get('group_id') == str(g.id) else None" t-out="g.name"/></select></label>
+                                    <p class="ts-hint">با زدن دکمه، اگر در چند دقیقهٔ اخیر هویتتان را تأیید نکرده باشید دوباره پرسیده می‌شود. فایل <t t-out="fa(ttl)"/> ساعت در دسترس می‌ماند.</p>
+                                    <p><button type="submit" class="ts-btn ts-btn--outline">ساخت فایل وضعیت دعوت‌ها</button></p>
                                 </form>
                             </section>
-                            <section t-if="can_results" class="ts-card" aria-labelledby="tsp-ex-3">
-                                <h2 id="tsp-ex-3" class="h5">نتایج</h2>
-                                <p class="ts-hint">فقط نتیجه‌هایی که شرکت‌کننده با پنل به اشتراک گذاشته و شما در همان سطح می‌بینید: سطح هر عامل (کم، متوسط، زیاد). پاسخ‌ها هرگز در فایل نیستند.</p>
+                            <section t-if="can_results" class="ts-card" aria-labelledby="tsp-ex-3" id="tsp-ex-results">
+                                <h2 id="tsp-ex-3" class="h5">نتیجه‌ها</h2>
+                                <p class="ts-hint">فقط نتیجه‌هایی که شرکت‌کننده با پنل به اشتراک گذاشته و شما در همان سطح می‌بینید: سطح هر عامل (کم، متوسط، زیاد). پاسخ‌ها در فایل نیستند.</p>
+                                <p t-if="pend.get('what') == 'results'" class="tsp-flash tsp-flash--ok" role="status">هویت شما تأیید شد. انتخاب‌هایتان را نگه داشتیم؛ برای ساخت فایل دکمهٔ زیر را بزنید.</p>
                                 <form t-attf-action="/my/workspaces/#{ws.id}/exports/create" method="post" class="tsp-form" data-tsp-once="1">
                                     <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
                                     <input type="hidden" name="what" value="results"/>
-                                    <label class="tsp-field"><span class="tsp-field__label">قالب</span>
-                                        <select name="format" class="form-select"><option value="csv">csv</option><option value="xlsx">xlsx (اکسل)</option></select></label>
+                                    <label class="tsp-field"><span class="tsp-field__label">قالب فایل</span>
+                                        <select name="format" class="form-select">
+                                            <option value="xlsx" t-att-selected="'selected' if pend.get('what') != 'results' or pend.get('format') != 'csv' else None">اکسل (xlsx)</option>
+                                            <option value="csv" t-att-selected="'selected' if pend.get('what') == 'results' and pend.get('format') == 'csv' else None">csv</option>
+                                        </select></label>
                                     <label class="tsp-field"><span class="tsp-field__label">سنجه</span>
-                                        <select name="instrument_id" class="form-select"><option value="">همهٔ سنجه‌ها</option><option t-foreach="instruments" t-as="i" t-att-value="i.id" t-out="i.name"/></select></label>
+                                        <select name="instrument_id" class="form-select"><option value="">همهٔ سنجه‌ها</option><option t-foreach="instruments" t-as="i" t-att-value="i.id" t-att-selected="'selected' if pend.get('what') == 'results' and pend.get('instrument_id') == str(i.id) else None" t-out="i.name"/></select></label>
                                     <label t-if="groups" class="tsp-field"><span class="tsp-field__label">گروه</span>
-                                        <select name="group_id" class="form-select"><option value="">همهٔ گروه‌ها</option><option t-foreach="groups" t-as="g" t-att-value="g.id" t-out="g.name"/></select></label>
-                                    <p><button type="submit" class="ts-btn ts-btn--primary">ساخت فایل نتایج</button></p>
+                                        <select name="group_id" class="form-select"><option value="">همهٔ گروه‌ها</option><option t-foreach="groups" t-as="g" t-att-value="g.id" t-att-selected="'selected' if pend.get('what') == 'results' and pend.get('group_id') == str(g.id) else None" t-out="g.name"/></select></label>
+                                    <p class="ts-hint">با زدن دکمه، اگر در چند دقیقهٔ اخیر هویتتان را تأیید نکرده باشید دوباره پرسیده می‌شود. فایل <t t-out="fa(ttl)"/> ساعت در دسترس می‌ماند.</p>
+                                    <p><button type="submit" class="ts-btn ts-btn--outline">ساخت فایل نتیجه‌ها</button></p>
                                 </form>
                             </section>
                             <section class="ts-card" aria-labelledby="tsp-ex-4">
                                 <h2 id="tsp-ex-4" class="h5">فایل‌های اخیر شما</h2>
                                 <p t-if="not jobs" class="ts-hint">هنوز خروجی نگرفته‌اید.</p>
-                                <ul t-if="jobs" class="tsp-list">
+                                <ul t-if="jobs" class="tsp-list tsp-rows">
                                     <li t-foreach="jobs" t-as="j">
-                                        <a t-attf-href="/my/workspaces/#{ws.id}/jobs/#{j.id}"><t t-out="dict(j._fields['kind'].selection).get(j.kind, '')"/> — <t t-out="jalali(j.create_date)"/></a>
-                                        <span class="ts-pill ts-pill--neutral" t-out="dict(j._fields['state'].selection).get(j.state, j.state)"/>
+                                        <div class="tsp-rows__text">
+                                            <a t-attf-href="/my/workspaces/#{ws.id}/jobs/#{j.id}" t-out="kind_label.get(j.kind, '')"/>
+                                            <span class="ts-hint"><t t-out="jalali(j.create_date)"/></span>
+                                        </div>
+                                        <span class="ts-pill ts-pill--neutral" t-out="state_label.get(j.state, j.state)"/>
                                     </li>
                                 </ul>
+                                <p class="ts-hint">در فایل‌ها رقم‌ها لاتین‌اند تا اکسل آن‌ها را عدد بشناسد، و هر تاریخ هم شمسی و هم میلادی می‌آید.</p>
                             </section>
                         </t>
                     </div>

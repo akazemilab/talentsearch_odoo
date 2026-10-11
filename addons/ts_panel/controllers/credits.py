@@ -25,4 +25,16 @@ class TsPanelCredits(http.Controller):
         return render_in_shell(
             'ts_panel.credits', me, 'credits', 'اعتبار و مصرف', wallet=wallet, free=wallet._free_mode(), rows=rows,
             month_units=wallet.current_month_units(), committed=wallet.committed(), months=months, names=names,
-            type_labels=dict(Txn._fields['type'].selection), reason_labels=dict(Txn._fields['reason_code'].selection))
+            type_labels=dict(Txn._fields['type'].selection), reason_labels=dict(Txn._fields['reason_code'].selection),
+            participant=lambda r: _participant(me, r))
+
+
+def _participant(me, txn):
+    """(shown, text) for the ledger: the participant code (or name) when the viewer may see that participant, else a plain
+    reason (UX audit G4 P6-4)."""
+    client = txn.assignment_id.client_id or txn.attempt_id.client_id
+    if not client:
+        return False, '—'
+    if not me.can_see(client):
+        return False, 'پنهان (دسترسی ندارید)'
+    return True, client.code or client.name or '—'

@@ -35,14 +35,14 @@ class TsWorkspace(models.Model):
     """Top tenancy boundary (blueprint §4). One organization can hold several
     workspaces, one per purpose; data never crosses workspaces or purposes."""
     _name = 'ts.workspace'
-    _description = 'فضای کاری تلنت سرچ'
+    _description = 'پنل تلنت سرچ'
     _inherit = ['mail.thread']
     _order = 'name'
 
-    name = fields.Char('نام فضای کاری', required=True, tracking=True)
+    name = fields.Char('نام پنل', required=True, tracking=True)
     code = fields.Char('کد', readonly=True, copy=False, index=True, default='/')
     purpose = fields.Selection(PURPOSES, 'هدف', required=True, tracking=True,
-                               help='هدف فضای کاری پس از فعال‌سازی قابل تغییر نیست.')
+                               help='هدف پنل پس از فعال‌سازی قابل تغییر نیست.')
     partner_id = fields.Many2one('res.partner', 'سازمان', required=True, tracking=True, index=True,
                                  domain=[('is_company', '=', True)])
     state = fields.Selection([
@@ -71,7 +71,7 @@ class TsWorkspace(models.Model):
     note = fields.Html('یادداشت داخلی')
     company_id = fields.Many2one('res.company', required=True, default=lambda s: s.env.company)
 
-    _code_unique = models.Constraint('unique(code)', 'کد فضای کاری باید یکتا باشد.')
+    _code_unique = models.Constraint('unique(code)', 'کد پنل باید یکتا باشد.')
 
     @api.depends('member_ids.role', 'member_ids.active', 'member_ids.user_id')
     def _compute_owner_user(self):
@@ -87,10 +87,10 @@ class TsWorkspace(models.Model):
         """Platform-owner approval that lifts the gate on one education/benefits
         workspace (rights, consent and operations reviewed for that customer)."""
         if not self.env.user.has_group('ts_core.group_ts_manager'):
-            raise UserError('فقط مدیر پلتفرم می‌تواند فضای کاری را تأیید کند.')
+            raise UserError('فقط مدیر پلتفرم می‌تواند پنل را تأیید کند.')
         for ws in self:
             if ws.purpose not in GATED_PURPOSES:
-                raise UserError('این فضای کاری نیاز به تأیید ندارد.')
+                raise UserError('این پنل نیاز به تأیید ندارد.')
             if ws.approved_on:
                 continue
             ws.write({'approved_by_id': self.env.uid, 'approved_on': fields.Datetime.now(),
@@ -106,7 +106,7 @@ class TsWorkspace(models.Model):
         self._check_manager()
         for ws in self:
             if not ws.gated:
-                raise UserError('این فضای کاری در انتظار تأیید نیست.')
+                raise UserError('این پنل در انتظار تأیید نیست.')
             if not ws.rejection_note:
                 raise UserError('دلیل رد را در فیلد «دلیل رد» بنویسید.')
             ws.rejected_on = fields.Datetime.now()
@@ -125,7 +125,7 @@ class TsWorkspace(models.Model):
         self._check_manager()
         for ws in self:
             if ws.state != 'suspended':
-                raise UserError('این فضای کاری معلق نیست.')
+                raise UserError('این پنل معلق نیست.')
             ws.write({'state': 'pilot'})
             self.env['ts.audit.event'].log('workspace.resume', ws, workspace=ws)
 
@@ -147,7 +147,7 @@ class TsWorkspace(models.Model):
         if 'purpose' in vals:
             locked = self.filtered(lambda w: w.state != 'draft' and w.purpose != vals['purpose'])
             if locked:
-                raise UserError('هدف فضای کاری پس از خروج از پیش‌نویس قابل تغییر نیست.')
+                raise UserError('هدف پنل پس از خروج از پیش‌نویس قابل تغییر نیست.')
         res = super().write(vals)
         if 'state' in vals:
             for ws in self:
@@ -159,7 +159,7 @@ class TsWorkspace(models.Model):
         for ws in self:
             if ws.state in ('pilot', 'active'):
                 if ws.gated and ws.state == 'active':
-                    raise ValidationError('این نوع فضای کاری هنوز تأیید نشده و قابل فعال‌سازی نیست.')
+                    raise ValidationError('این نوع پنل هنوز تأیید نشده و قابل فعال‌سازی نیست.')
                 if ws.purpose == 'clinical' and not ws.escalation_contact_id:
                     raise ValidationError('فضای بالینی بدون مسئول پاسخ فوری فعال نمی‌شود.')
 
@@ -173,7 +173,7 @@ class TsWorkspace(models.Model):
 
 class TsWorkspaceMember(models.Model):
     _name = 'ts.workspace.member'
-    _description = 'عضو فضای کاری تلنت سرچ'
+    _description = 'عضو پنل تلنت سرچ'
     _order = 'workspace_id, role'
 
     workspace_id = fields.Many2one('ts.workspace', required=True, ondelete='cascade', index=True)
@@ -193,7 +193,7 @@ class TsWorkspaceMember(models.Model):
     verified_by_id = fields.Many2one('res.users', 'تأییدکننده', readonly=True)
     verified_on = fields.Datetime('تاریخ تأیید', readonly=True)
     owner_practices = fields.Boolean(
-        'مالک خودش هم کارشناس است', help='مالکی که خودش مراجعان را می‌بیند (مشاور یا روان‌شناس مستقل). '
+        'مالک خودش هم کارشناس است', help='مالکی که خودش شرکت‌کنندگان را می‌بیند (مشاور یا روان‌شناس مستقل). '
         'در پنل بالینی، دیدن نتیجهٔ بالینی منوط به تأیید صلاحیت است.')
     deactivated_on = fields.Datetime('تاریخ غیرفعال‌سازی', readonly=True)
     deactivated_by_id = fields.Many2one('res.users', 'غیرفعال‌کننده', readonly=True)
@@ -213,7 +213,7 @@ class TsWorkspaceMember(models.Model):
     def _check_role_matches_purpose(self):
         for m in self:
             if m.role not in ROLES_BY_PURPOSE.get(m.purpose, set()):
-                raise ValidationError('نقش «%s» با هدف این فضای کاری سازگار نیست.' % dict(ROLES)[m.role])
+                raise ValidationError('نقش «%s» با هدف این پنل سازگار نیست.' % dict(ROLES)[m.role])
 
     @api.constrains('user_id')
     def _check_portal_user(self):
@@ -243,7 +243,7 @@ class TsWorkspaceMember(models.Model):
         for m in self.filtered(lambda m: m.active and m.role == 'owner'):
             others = m.workspace_id.member_ids.filtered(lambda x: x.active and x.role == 'owner' and x not in self)
             if not others:
-                raise UserError('هر فضای کاری باید دست‌کم یک مالک فعال داشته باشد؛ ابتدا مالک دیگری اضافه کنید.')
+                raise UserError('هر پنل باید دست‌کم یک مالک فعال داشته باشد؛ ابتدا مالک دیگری اضافه کنید.')
         return super().unlink()
 
     def write(self, vals):
@@ -255,7 +255,7 @@ class TsWorkspaceMember(models.Model):
             for m in self.filtered(lambda m: m.active and m.role == 'owner'):
                 others = m.workspace_id.member_ids.filtered(lambda x: x.active and x.role == 'owner' and x not in self)
                 if not others:
-                    raise UserError('هر فضای کاری باید دست‌کم یک مالک فعال داشته باشد؛ ابتدا مالک دیگری اضافه کنید.')
+                    raise UserError('هر پنل باید دست‌کم یک مالک فعال داشته باشد؛ ابتدا مالک دیگری اضافه کنید.')
         res = super().write(vals)
         if {'role', 'active', 'user_id'} & set(vals):
             for m in self:

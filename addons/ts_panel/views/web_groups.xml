@@ -14,24 +14,27 @@
                             <header class="tsp-head">
                                 <div>
                                     <h1 class="tsp-head__title">گروه‌ها</h1>
-                                    <p class="tsp-head__help">کلاس، تیم یا برچسب برای دسته‌بندی شرکت‌کنندگان. گروه‌ها چیزی را به کسی نشان نمی‌دهند؛ هر کس فقط ردیف‌های خودش را می‌بیند.</p>
+                                    <p class="tsp-head__help">کلاس، تیم یا برچسب برای دسته‌بندی شرکت‌کنندگان. برای افزودن افراد، در <a t-attf-href="/my/workspaces/#{ws.id}/clients">فهرست شرکت‌کنندگان</a> آن‌ها را انتخاب و «افزودن به گروه» را بزنید. گروه‌ها دسترسی کسی را بیشتر نمی‌کنند؛ هر کس فقط شرکت‌کنندگانی را که می‌تواند ببیند در گروه می‌بیند.</p>
+                                </div>
+                                <div class="tsp-head__actions">
+                                    <a href="#new-group" class="ts-btn ts-btn--primary">گروه تازه</a>
                                 </div>
                             </header>
-                            <p t-if="not groups" class="tsp-empty">هنوز گروهی نساخته‌اید.</p>
-                            <div t-if="groups" class="ts-table-wrap">
+                            <p t-if="not groups" class="tsp-empty">هنوز گروهی نساخته‌اید. با فرم «گروه تازه» یک کلاس یا تیم بسازید.</p>
+                            <div t-if="groups" class="ts-table-wrap tsp-groups-wrap">
                                 <table class="ts-table tsp-table tsp-table--cards">
                                     <caption class="tsp-sr">گروه‌های پنل</caption>
-                                    <thead><tr><th scope="col">نام</th><th scope="col">نوع</th><th scope="col">تعداد</th></tr></thead>
+                                    <thead><tr><th scope="col">نام</th><th scope="col">نوع</th><th scope="col"><t t-if="see_all">تعداد افراد</t><t t-else="">افراد قابل‌دیدن برای شما</t></th></tr></thead>
                                     <tbody>
                                         <tr t-foreach="groups" t-as="g">
-                                            <th scope="row" data-label="نام"><a t-attf-href="/my/workspaces/#{ws.id}/groups/#{g.id}" t-out="g.name"/></th>
+                                            <th scope="row" data-label="نام"><a t-attf-href="/my/workspaces/#{ws.id}/groups/#{g.id}"><bdi t-out="g.name"/></a></th>
                                             <td data-label="نوع" t-out="kind_label[g.kind]"/>
-                                            <td data-label="تعداد" class="ts-num" t-out="fa(g.client_count)"/>
+                                            <td t-att-data-label="'تعداد افراد' if see_all else 'افراد قابل‌دیدن برای شما'" class="ts-num" t-out="fa(sizes.get(g.id, 0))"/>
                                         </tr>
                                     </tbody>
                                 </table>
                             </div>
-                            <form t-attf-action="/my/workspaces/#{ws.id}/groups/new" method="post" class="tsp-form ts-card" data-tsp-once="1">
+                            <form id="new-group" t-attf-action="/my/workspaces/#{ws.id}/groups/new" method="post" class="tsp-form ts-card" data-tsp-once="1" tabindex="-1">
                                 <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
                                 <h2 class="h5">گروه تازه</h2>
                                 <label class="tsp-field"><span class="tsp-field__label">نام</span>
@@ -59,24 +62,28 @@
                 <t t-call="website.layout" additional_title="title">
                     <div id="wrap" class="ts-page">
                         <t t-call="ts_panel.shell_frame">
+                            <a t-attf-href="/my/workspaces/#{ws.id}/groups" class="ts-backlink">گروه‌ها</a>
                             <header class="tsp-head">
                                 <div>
-                                    <h1 class="tsp-head__title" t-out="g.name"/>
+                                    <h1 class="tsp-head__title"><bdi t-out="g.name"/></h1>
                                     <p class="tsp-head__help"><t t-out="kind_label[g.kind]"/> · <t t-out="fa(len(people))"/> نفر<t t-if="hidden"> (<t t-out="fa(hidden)"/> نفر دیگر را شما نمی‌بینید)</t></p>
                                 </div>
                                 <div class="tsp-head__actions">
-                                    <a t-if="can_campaign" t-attf-href="/my/workspaces/#{ws.id}/campaigns/new?group=#{g.id}" class="ts-btn ts-btn--primary">دعوت گروه</a>
-                                    <a t-attf-href="/my/workspaces/#{ws.id}/groups" class="ts-btn ts-btn--quiet">همهٔ گروه‌ها</a>
+                                    <a t-if="can_campaign and people" t-attf-href="/my/workspaces/#{ws.id}/campaigns/new?group=#{g.id}" class="ts-btn ts-btn--primary">دعوت گروهی این گروه</a>
+                                    <a t-elif="not people" t-attf-href="/my/workspaces/#{ws.id}/clients" class="ts-btn ts-btn--primary">افزودن شرکت‌کننده از فهرست</a>
                                 </div>
                             </header>
-                            <p t-if="not people" class="tsp-empty">این گروه هنوز عضوی ندارد. از فهرست شرکت‌کنندگان، چند نفر را انتخاب و به گروه اضافه کنید.</p>
+                            <div t-if="not people" class="tsp-empty">
+                                <p>این گروه هنوز عضوی ندارد<t t-if="hidden"> که شما بتوانید ببینید</t>. در <a t-attf-href="/my/workspaces/#{ws.id}/clients">فهرست شرکت‌کنندگان</a> چند نفر را انتخاب کنید و «افزودن به گروه» را بزنید.</p>
+                                <p t-if="can_campaign" class="ts-hint">دعوت گروهی برای این گروه وقتی ممکن می‌شود که عضو داشته باشد.</p>
+                            </div>
                             <div t-if="people" class="ts-table-wrap">
                                 <table class="ts-table tsp-table tsp-table--cards">
                                     <caption class="tsp-sr">اعضای گروه</caption>
                                     <thead><tr><th scope="col">نام</th><th scope="col"><span class="tsp-sr">عملیات</span></th></tr></thead>
                                     <tbody>
                                         <tr t-foreach="people" t-as="c">
-                                            <th scope="row" data-label="نام"><a t-attf-href="/my/workspaces/#{ws.id}/clients/#{c.id}" t-out="c.name"/></th>
+                                            <th scope="row" data-label="نام"><a t-attf-href="/my/workspaces/#{ws.id}/clients/#{c.id}"><bdi t-out="c.name"/></a></th>
                                             <td class="tsp-row-actions">
                                                 <form t-attf-action="/my/workspaces/#{ws.id}/groups/#{g.id}/remove" method="post" class="tsp-inline">
                                                     <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
@@ -92,13 +99,18 @@
                                 <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
                                 <label class="tsp-field"><span class="tsp-field__label">نام گروه</span>
                                     <input type="text" name="name" t-att-value="g.name" required="required" maxlength="60" class="form-control"/></label>
-                                <p><button type="submit" class="ts-btn ts-btn--primary">ذخیره</button></p>
+                                <p><button type="submit" class="ts-btn ts-btn--outline">ذخیرهٔ نام</button></p>
                             </form>
-                            <form t-attf-action="/my/workspaces/#{ws.id}/groups/#{g.id}/archive" method="post" class="tsp-form" data-tsp-once="1">
-                                <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
-                                <p class="ts-hint">بایگانیِ گروه، ردیف‌ها را حذف نمی‌کند.</p>
-                                <button type="submit" class="ts-btn ts-btn--quiet">بایگانی گروه</button>
-                            </form>
+                            <section class="ts-card" aria-labelledby="tsp-g-arch">
+                                <h2 id="tsp-g-arch" class="h5">بایگانی گروه</h2>
+                                <form t-attf-action="/my/workspaces/#{ws.id}/groups/#{g.id}/archive" method="post" class="ts-confirm" data-tsp-once="1" role="group" aria-labelledby="tsp-g-arch-t">
+                                    <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                                    <p class="ts-confirm__title" id="tsp-g-arch-t">بایگانی «<bdi t-out="g.name"/>»</p>
+                                    <p class="ts-confirm__consequence">گروه از فهرست گروه‌ها و از فرم دعوت گروهی بیرون می‌رود. بایگانی گروه، شرکت‌کنندگانش را حذف نمی‌کند و دعوت‌های ساخته‌شده سر جایشان می‌مانند.</p>
+                                    <label class="ts-check"><input type="checkbox" name="confirm" value="1" required="required"/><span>مطمئنم، این گروه بایگانی شود</span></label>
+                                    <div class="ts-confirm__actions"><button type="submit" class="ts-btn ts-btn--danger-outline">بایگانی گروه</button></div>
+                                </form>
+                            </section>
                         </t>
                     </div>
                 </t>

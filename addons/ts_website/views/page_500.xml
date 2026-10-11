@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Persian 500 page for website 4 only (core http_routing.500 is English, dir=ltr, no lang, no way back;
+         audit G3 PAT-4 / G5-P8-2). The core rule applies: the error page may run on a broken cursor, so it uses no
+         request, no asset bundle and no record; only static files (fonts, ts_error.css) and status_code.
+         A short inline script fills the way back (same-site referrer) and the time of the error for support. -->
+    <record id="page_500_ts" model="ir.ui.view">
+        <field name="name">TS: 500 page</field>
+        <field name="type">qweb</field>
+        <field name="key">ts_website.page_500</field>
+        <field name="inherit_id" ref="http_routing.500"/>
+        <field name="website_id" ref="website_ts"/>
+        <field name="priority">90</field>
+        <field name="arch" type="xml">
+            <xpath expr="//html" position="replace">
+                <html lang="fa-IR" dir="rtl" data-theme="light">
+                    <head>
+                        <meta charset="utf-8"/>
+                        <meta name="viewport" content="width=device-width, initial-scale=1"/>
+                        <meta name="robots" content="noindex"/>
+                        <title>خطایی پیش آمد | تلنت سرچ</title>
+                        <script>(function () { try { var t = localStorage.getItem('ts-site-theme'); if (t !== 'light' &amp;&amp; t !== 'dark') { t = (window.matchMedia &amp;&amp; window.matchMedia('(prefers-color-scheme: dark)').matches) ? 'dark' : 'light'; } document.documentElement.setAttribute('data-theme', t); } catch (e) { /* light */ } })();</script>
+                        <link rel="stylesheet" href="/ts_website/static/src/css/ts_error.css"/>
+                        <link t-if="editable or debug" rel="stylesheet" href="/web/static/lib/bootstrap/dist/css/bootstrap.css"/>
+                    </head>
+                    <body>
+                        <a class="tse-skip" href="#tse-main">پرش به محتوا</a>
+                        <header class="tse-header">
+                            <a href="/" class="tse-lockup" aria-label="تلنت سرچ، صفحهٔ اصلی">
+                                <img src="/ts_website/static/img/talentsearch-logo.webp" width="36" height="36" alt=""/>
+                                <strong>تلنت سرچ</strong>
+                            </a>
+                        </header>
+                        <main id="tse-main" class="tse-main">
+                            <div class="tse-card">
+                                <span class="tse-kicker">خطای سرور</span>
+                                <h1>خطایی پیش آمد.</h1>
+                                <p>این صفحه این بار باز نشد. کاری که انجام می‌دادید شاید ذخیره نشده باشد؛ چند لحظهٔ دیگر دوباره تلاش کنید.</p>
+                                <p>اگر باز هم همین صفحه را دیدید، به پشتیبانی بگویید چه کاری می‌کردید و زمان خطا را هم بنویسید.</p>
+                                <p class="tse-ref" id="tse-ref" hidden="hidden"/>
+                                <nav class="tse-actions" aria-label="راه بازگشت">
+                                    <a href="/my/workspaces" class="tse-btn tse-btn--primary" id="tse-back">بازگشت به پنل</a>
+                                    <a href="/" class="tse-btn">صفحهٔ اصلی</a>
+                                    <a href="/contact?topic=support" class="tse-btn tse-btn--quiet">تماس با پشتیبانی</a>
+                                </nav>
+                            </div>
+                        </main>
+                        <footer class="tse-footer">
+                            <p>تلنت سرچ خدمت اورژانسی نیست؛ در شرایط اضطراری با ۱۱۵ تماس بگیرید.</p>
+                        </footer>
+                        <div t-if="editable or debug" dir="ltr" lang="en" class="container">
+                            <t t-call="http_routing.http_error_debug"/>
+                        </div>
+                        <script>(function () {
+                            try {
+                                var r = document.referrer, back = document.getElementById('tse-back');
+                                if (r &amp;&amp; r.indexOf(location.origin + '/') === 0 &amp;&amp; r !== location.href) {
+                                    back.href = r;
+                                    back.textContent = 'بازگشت به صفحهٔ قبل';
+                                }
+                                var ref = document.getElementById('tse-ref');
+                                var when = new Intl.DateTimeFormat('fa-IR-u-ca-persian', {dateStyle: 'medium', timeStyle: 'short'}).format(new Date());
+                                ref.textContent = 'زمان خطا: ' + when;
+                                ref.hidden = false;
+                            } catch (e) { /* the links keep their defaults */ }
+                        })();</script>
+                    </body>
+                </html>
+            </xpath>
+        </field>
+    </record>
+</odoo>

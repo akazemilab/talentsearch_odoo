@@ -5,7 +5,7 @@ from odoo.http import request
 from odoo.addons.ts_core.models.workspace import ROLES_BY_PURPOSE
 from odoo.addons.ts_org.models.panel import ROLE_LABELS
 
-from ..perm_labels import LIVE, PERM_LABELS, ROLE_BLURBS, ROLE_ORDER
+from ..perm_labels import DEFAULT_PICK, LIVE, PERM_LABELS, PICK_ORDER, ROLE_BLURBS, ROLE_ORDER
 from .base import (flash_error, flash_ok, forbidden, member_or_404, need_reauth, render_in_shell, require)
 
 MEMBER_STATE = {
@@ -16,10 +16,10 @@ MEMBER_STATE = {
 
 
 def _roles_for(ws, me):
-    """Roles that can be handed out in this panel, in a fixed order, with their one-line description."""
+    """Roles that can be handed out in this panel, least privilege first (owner last), with their one-line description."""
     allowed = ROLES_BY_PURPOSE.get(ws.purpose, set())
     out = []
-    for r in ROLE_ORDER:
+    for r in PICK_ORDER:
         if r in allowed and (r != 'owner' or me.has_perm('members:add_owner')):
             out.append({'key': r, 'label': ROLE_LABELS.get(r, r), 'blurb': ROLE_BLURBS.get(r, '')})
     return out
@@ -64,10 +64,13 @@ class TsPanelMembers(http.Controller):
             [('id', '=', int(kw['minv'])), ('workspace_id', '=', ws.id)], limit=1) \
             if can_invite and (kw.get('minv') or '').isdigit() else None
         pend = _pending(ws_id, 'invite') if can_invite else {}
+        roles = _roles_for(ws, me)
+        default_role = pend.get('role') or (DEFAULT_PICK.get(ws.purpose) if DEFAULT_PICK.get(ws.purpose) in [r['key'] for r in roles] else None)
+        confirm_revoke = invites.filtered(lambda i: str(i.id) == (kw.get('revoke') or '')) if can_invite else invites
         return render_in_shell(
             'ts_panel.members', me, 'members', 'اعضا و نقش‌ها', rows=rows, can_invite=can_invite,
-            can_manage=me.has_perm('members:manage'), invites=invites, new_inv=new_inv, roles=_roles_for(ws, me),
-            vals=pend, resumed=bool(pend), solo=len([r for r in rows if r['m'].active]) == 1 and not invites,
+            can_manage=me.has_perm('members:manage'), invites=invites, new_inv=new_inv, roles=roles,
+            vals=pend, resumed=bool(pend), default_role=default_role, confirm_revoke=confirm_revoke[:1], solo=len([r for r in rows if r['m'].active]) == 1 and not invites,
             role_label=ROLE_LABELS.get(me.role, me.role), expires=lambda i: jalali_or_dash(i.expires_at),
             invite_role_label=lambda i: ROLE_LABELS.get(i.role, i.role))
 
@@ -83,7 +86,7 @@ class TsPanelMembers(http.Controller):
             denied = require(me, 'members:add_owner', 'members')
             if denied:
                 return denied
-            back = need_reauth('اضافه‌کردن مالک', '/my/workspaces/%s/members' % ws_id,
+            back = need_reauth('دعوت یک مالک دیگر به پنل «%s»' % me.workspace_id.name, '/my/workspaces/%s/members' % ws_id,
                                {'ws': ws_id, 'kind': 'invite', 'role': role, 'phone': post.get('phone', '')[:40],
                                 'email': post.get('email', '')[:200]})
             if back:
@@ -108,7 +111,7 @@ class TsPanelMembers(http.Controller):
         try:
             if action == 'revoke':
                 inv.action_revoke()
-                flash_ok('دعوت لغو شد؛ پیوند آن دیگر کار نمی‌کند.')
+                flash_ok('دعوت %s لغو شد؛ پیوند آن دیگر باز نمی‌شود. اگر لازم شد، دعوت تازه بسازید.' % (inv.phone or inv.email or ''))
             else:
                 new = inv.ts_resend(me)
                 return request.redirect('/my/workspaces/%s/members?minv=%s' % (ws_id, new.id))
@@ -145,7 +148,7 @@ class TsPanelMembers(http.Controller):
         back = '/my/workspaces/%s/members/%s' % (ws_id, mid)
         role = post.get('role')
         if role == 'owner' and m.role != 'owner':
-            back_reauth = need_reauth('اضافه‌کردن مالک', back, {'ws': ws_id, 'kind': 'role', 'role': role})
+            back_reauth = need_reauth('مالک‌کردن «%s» در پنل «%s»' % (m.user_id.name, me.workspace_id.name), back, {'ws': ws_id, 'kind': 'role', 'role': role})
             if back_reauth:
                 return back_reauth
         try:
@@ -170,7 +173,7 @@ class TsPanelMembers(http.Controller):
             except (UserError, ValidationError) as e:
                 flash_error(str(e.args[0] if e.args else e))
                 return request.redirect('/my/workspaces/%s/members/%s' % (ws_id, mid))
-            flash_ok('«%s» غیرفعال شد.%s' % (m.user_id.name, (' %s شرکت‌کننده به صف «تخصیص‌نشده» رفت.' % _fa(n)) if n else ''))
+            flash_ok('«%s» غیرفعال شد.%s' % (m.user_id.name, (' %s شرکت‌کننده به فهرست «بدون کارشناس» رفت.' % _fa(n)) if n else ''))
             return request.redirect('/my/workspaces/%s/members' % ws_id)
         if not m.active:
             return request.redirect('/my/workspaces/%s/members/%s' % (ws_id, mid))
@@ -220,10 +223,11 @@ class TsPanelMembers(http.Controller):
         perms = [p for p in PERM_LABELS if p in LIVE]
         table = [{'perm': p, 'label': PERM_LABELS[p],
                   'cells': [p in ROLE_PERMS[(r, purpose)] for r in roles]} for p in perms]
+        table = [row for row in table if any(row['cells'])]      # a row nobody has in this purpose is noise (UX audit G4 P17-3)
         return request.render('ts_panel.help_roles', {
             'roles': [{'key': r, 'label': ROLE_LABELS.get(r, r), 'blurb': ROLE_BLURBS.get(r, '')} for r in roles],
             'table': table, 'purpose_label': dict(request.env['ts.workspace']._fields['purpose'].selection).get(purpose),
-            'page_name': 'ts_panel_help'})
+            'title': 'نقش‌ها و دسترسی‌ها', 'page_name': 'ts_panel_help'})
 
 
 def jalali_or_dash(dt):

@@ -129,7 +129,7 @@ for u, t in fun:
     if st != 200 or got != num(t):
         badf.append((u, num(t), got))
 check('the funnel has five rows and each count equals its list', len(fun) == 5 and not badf, str(badf))
-check('the funnel data table has a caption', 'مسیر دعوت‌ها' in body and '<caption' in body)
+check('the funnel data table has a caption', 'وضعیت فعلی دعوت‌ها' in body and '<caption' in body)
 
 # ---- filtered list: the notice and the way out
 st, body2 = get(own, W + '/invites?overdue=1')

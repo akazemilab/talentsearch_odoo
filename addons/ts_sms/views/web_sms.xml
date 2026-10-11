@@ -38,7 +38,8 @@
         </field>
     </record>
 
-    <!-- /my/phone -->
+    <!-- /my/phone. UX audit 2026-10-11: heading order (G2-P9-1), visible format hint (P9-2, G4-P26-2), way back to the
+         account (P9-3), a confirmation step before removing the number (X6; the POST contract is unchanged). -->
     <record id="tpl_phone" model="ir.ui.view">
         <field name="name">TS: my phone</field>
         <field name="type">qweb</field>
@@ -46,48 +47,59 @@
         <field name="website_id" ref="ts_website.website_ts"/>
         <field name="arch" type="xml">
             <t t-name="ts_sms.phone">
-                <t t-call="website.layout" additional_title.f="شمارهٔ موبایل">
+                <t t-call="website.layout" additional_title.f="شمارهٔ موبایل و پیامک">
                     <div id="wrap" class="ts-page">
                         <section class="ts-section">
-                            <div class="ts-container">
-                                <div class="ts-section__head">
-                                    <h1>شمارهٔ موبایل و پیامک</h1>
-                                    <p>شمارهٔ شما فقط برای تأیید هویت حساب و اعلان «نتیجه آماده است» به کار می‌رود. متن نتیجه هرگز پیامک نمی‌شود و هر زمان بخواهید می‌توانید شماره را حذف کنید.</p>
+                            <div class="ts-container ts-narrow">
+                                <a href="/my/account" class="ts-back ts-backlink">حساب</a>
+                                <div class="ts-section__head" id="ts-phone-head">
+                                    <h1 class="tsp-head__title">شمارهٔ موبایل و پیامک</h1>
+                                    <p>شماره فقط برای تأیید حساب و پیامک «نتیجه آماده است» به کار می‌رود. متن نتیجه هرگز پیامک نمی‌شود و هر وقت بخواهید می‌توانید شماره را حذف کنید.</p>
                                 </div>
                                 <p t-if="msg" t-attf-class="ts-notice #{'ts-notice--warn' if msg[0] == 'warn' else ''}" role="status" t-out="msg[1]"/>
                                 <div t-if="not enabled" class="ts-card ts-card--soft">
-                                    <h3>هنوز فعال نشده است</h3>
+                                    <h2 class="h5">هنوز فعال نشده است</h2>
                                     <p>تأیید شمارهٔ موبایل پس از راه‌اندازی سرویس پیامک در دسترس خواهد بود.</p>
                                 </div>
                                 <t t-elif="verified">
-                                    <div class="ts-card">
-                                        <h3>شمارهٔ تأییدشده</h3>
-                                        <p><bdi dir="ltr" t-out="masked"/></p>
+                                    <div t-if="confirm_remove" class="ts-card ts-confirm" role="alertdialog" aria-labelledby="ts-phone-rm-h" aria-describedby="ts-phone-rm-d">
+                                        <h2 id="ts-phone-rm-h" class="h5">شمارهٔ <bdi dir="ltr" class="ts-bdi" t-out="masked"/> حذف شود؟</h2>
+                                        <ul id="ts-phone-rm-d">
+                                            <li>پیامک «نتیجه آماده است» دیگر فرستاده نمی‌شود.</li>
+                                            <li>با این شماره دیگر نمی‌شود با کد پیامکی وارد این حساب شد، تا وقتی دوباره آن را تأیید کنید.</li>
+                                        </ul>
+                                        <form action="/my/phone/remove" method="post" class="ts-confirm__actions">
+                                            <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                                            <button type="submit" class="ts-btn ts-btn--danger">بله، شماره را حذف کن</button>
+                                            <a href="/my/phone" class="ts-btn ts-btn--outline">انصراف</a>
+                                        </form>
+                                    </div>
+                                    <div t-else="" class="ts-card">
+                                        <h2 class="h5">شمارهٔ تأییدشده</h2>
+                                        <p><bdi dir="ltr" class="ts-bdi" t-out="masked"/></p>
                                         <form action="/my/phone/prefs" method="post" class="ts-form">
                                             <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
-                                            <label class="ts-check"><input type="checkbox" name="results" value="1" t-att-checked="'checked' if opt_results else None"/> وقتی نتیجهٔ سنجه آماده شد پیامک بگیرم</label>
-                                            <button type="submit" class="ts-btn ts-btn--primary ts-btn--sm">ذخیره</button>
+                                            <label class="ts-check"><input type="checkbox" name="results" value="1" t-att-checked="'checked' if opt_results else None"/> <span>وقتی نتیجهٔ سنجه آماده شد پیامک بگیرم</span></label>
+                                            <div><button type="submit" class="ts-btn ts-btn--primary ts-btn--sm">ذخیره</button></div>
                                         </form>
-                                        <form action="/my/phone/remove" method="post">
-                                            <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
-                                            <button type="submit" class="ts-btn ts-btn--ghost ts-btn--sm">حذف شماره</button>
-                                        </form>
+                                        <p><a href="/my/phone?confirm=remove" class="ts-btn ts-btn--outline ts-btn--sm">حذف شماره…</a></p>
                                     </div>
                                 </t>
                                 <t t-else="">
                                     <div class="ts-card">
-                                        <h3>تأیید شمارهٔ موبایل</h3>
+                                        <h2 class="h5">تأیید شمارهٔ موبایل</h2>
                                         <form action="/my/phone/send" method="post" class="ts-form">
                                             <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
                                             <label for="ts_phone_no">شمارهٔ موبایل</label>
-                                            <input id="ts_phone_no" name="phone" type="tel" dir="ltr" inputmode="numeric" required="required" maxlength="20" autocomplete="tel" placeholder="09123456789"/>
-                                            <button type="submit" class="ts-btn ts-btn--primary">ارسال کد تأیید</button>
+                                            <input id="ts_phone_no" name="phone" type="tel" dir="ltr" inputmode="tel" required="required" maxlength="20" autocomplete="tel" aria-describedby="ts_phone_no_hint"/>
+                                            <p id="ts_phone_no_hint" class="ts-hint">۱۱ رقم، مثل <bdi dir="ltr" class="ts-bdi">09123456789</bdi>؛ رقم فارسی هم پذیرفته می‌شود.</p>
+                                            <div><button type="submit" class="ts-btn ts-btn--primary">ارسال کد تأیید</button></div>
                                         </form>
                                         <form t-if="pending" action="/my/phone/verify" method="post" class="ts-form">
                                             <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
-                                            <label for="ts_phone_code">کد شش‌رقمی پیامک‌شده</label>
+                                            <label for="ts_phone_code">کد ۶ رقمی پیامک‌شده</label>
                                             <input id="ts_phone_code" name="code" type="text" dir="ltr" inputmode="numeric" required="required" maxlength="6" pattern="[0-9۰-۹]{6}" autocomplete="one-time-code"/>
-                                            <button type="submit" class="ts-btn ts-btn--primary">تأیید</button>
+                                            <div><button type="submit" class="ts-btn ts-btn--primary">تأیید</button></div>
                                         </form>
                                     </div>
                                 </t>
@@ -99,7 +111,9 @@
         </field>
     </record>
 
-    <!-- /signup: sign in or sign up by mobile (one-time code) -->
+    <!-- /signup: sign in or sign up by mobile (one-time code). UX audit 2026-10-11: why sign-in is needed and where the
+         person returns (G1-P8-1, PT-4), step captions and h2 headings (G1-P3-2/3), neutral email hint under the form
+         instead of a «weaker method» warning above it (G1-P3-1). Return path `next` is kept on every link. -->
     <record id="tpl_signup" model="ir.ui.view">
         <field name="name">TS: signup by mobile</field>
         <field name="type">qweb</field>
@@ -113,46 +127,53 @@
                             <div class="ts-container ts-narrow">
                                 <div class="ts-section__head">
                                     <h1>ورود یا ثبت‌نام با موبایل</h1>
-                                    <p>با یک کد پیامکی وارد می‌شوید؛ رمز عبور لازم نیست. اگر حسابی با این شماره دارید وارد همان می‌شوید، وگرنه حساب تازه ساخته می‌شود.</p>
+                                    <p>با یک کد پیامکی وارد می‌شوید؛ رمز عبور لازم نیست. اگر با این شماره حساب دارید وارد همان می‌شوید، وگرنه حساب تازه ساخته می‌شود.</p>
+                                </div>
+                                <div t-if="why" class="ts-notice ts-notice--info" role="note" id="ts-signup-why">
+                                    <p><strong>چرا ورود لازم است؟</strong> <t t-out="why"/></p>
                                 </div>
                                 <p t-if="msg" t-attf-class="ts-notice #{'ts-notice--warn' if msg[0] == 'warn' else ''}" role="status" t-out="msg[1]"/>
                                 <div t-if="not enabled" class="ts-card ts-card--soft">
-                                    <h3>ورود با موبایل هنوز فعال نشده است</h3>
-                                    <p>فعلاً می‌توانید با ایمیل <a href="/web/login">وارد شوید</a> یا <a href="/web/signup">حساب بسازید</a>.</p>
+                                    <h2 class="h5">ورود با موبایل هنوز فعال نشده است</h2>
+                                    <p>فعلاً می‌توانید با ایمیل <a t-att-href="'/web/login?redirect=' + next_q">وارد شوید</a> یا <a t-att-href="'/web/signup?redirect=' + next_q">حساب بسازید</a>.</p>
                                 </div>
                                 <div t-elif="step == 'code'" class="ts-card">
-                                    <h3>کد تأیید را وارد کنید</h3>
-                                    <p>کد شش‌رقمی به <bdi dir="ltr" t-out="masked"/> پیامک شد.</p>
+                                    <p class="ts-step">گام ۲ از ۲</p>
+                                    <h2 class="h5">کد تأیید را وارد کنید</h2>
+                                    <p>کد ۶ رقمی به <bdi dir="ltr" class="ts-bdi" t-out="masked"/> پیامک شد.</p>
                                     <form action="/signup/verify" method="post" class="ts-form">
                                         <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
                                         <input type="hidden" name="next" t-att-value="next"/>
-                                        <label for="ts_su_code">کد شش‌رقمی</label>
+                                        <label for="ts_su_code">کد ۶ رقمی</label>
                                         <input id="ts_su_code" name="code" type="text" dir="ltr" inputmode="numeric" required="required" maxlength="6" pattern="[0-9۰-۹]{6}" autocomplete="one-time-code"/>
-                                        <button type="submit" class="ts-btn ts-btn--primary">تأیید و ورود</button>
+                                        <div><button type="submit" class="ts-btn ts-btn--primary">تأیید و ورود</button></div>
                                     </form>
-                                    <p><a t-attf-href="/signup?next=#{next}">شمارهٔ دیگر یا کد تازه</a></p>
+                                    <p><a t-att-href="'/signup?next=' + next_q">شمارهٔ دیگر یا کد تازه</a></p>
                                 </div>
                                 <div t-elif="step == 'name'" class="ts-card">
-                                    <h3>نام شما</h3>
-                                    <p>شمارهٔ شما تأیید شد. برای ساخت حساب، نام خود را وارد کنید.</p>
+                                    <p class="ts-step">گام آخر</p>
+                                    <h2 class="h5">نام شما</h2>
+                                    <p>شمارهٔ شما تأیید شد. برای ساخت حساب، نام خود را بنویسید.</p>
                                     <form action="/signup/name" method="post" class="ts-form">
                                         <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
                                         <input type="hidden" name="next" t-att-value="next"/>
                                         <label for="ts_su_name">نام و نام خانوادگی</label>
                                         <input id="ts_su_name" name="name" type="text" required="required" maxlength="100" autocomplete="name"/>
-                                        <button type="submit" class="ts-btn ts-btn--primary">ساخت حساب و ادامه</button>
+                                        <div><button type="submit" class="ts-btn ts-btn--primary">ساخت حساب و ادامه</button></div>
                                     </form>
                                 </div>
                                 <div t-else="" class="ts-card">
-                                    <h3>شمارهٔ موبایل</h3>
+                                    <p class="ts-step">گام ۱ از ۲</p>
                                     <form action="/signup/send" method="post" class="ts-form">
                                         <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
                                         <input type="hidden" name="next" t-att-value="next"/>
                                         <label for="ts_su_phone">شمارهٔ موبایل</label>
-                                        <input id="ts_su_phone" name="phone" type="tel" dir="ltr" inputmode="numeric" required="required" maxlength="20" autocomplete="tel" placeholder="09123456789"/>
-                                        <button type="submit" class="ts-btn ts-btn--primary">ارسال کد</button>
+                                        <input id="ts_su_phone" name="phone" type="tel" dir="ltr" inputmode="tel" required="required" maxlength="20" autocomplete="tel" aria-describedby="ts_su_phone_hint"/>
+                                        <p id="ts_su_phone_hint" class="ts-hint">۱۱ رقم، مثل <bdi dir="ltr" class="ts-bdi">09123456789</bdi>. یک کد ۶ رقمی برایتان پیامک می‌شود.</p>
+                                        <div><button type="submit" class="ts-btn ts-btn--primary">ارسال کد</button></div>
                                     </form>
-                                    <p class="ts-hint">شمارهٔ شما فقط برای ورود و تأیید حساب به کار می‌رود. پیامکِ اعلان نتیجه فقط با اجازهٔ خودتان در صفحهٔ «شمارهٔ موبایل و پیامک» فعال می‌شود. <a href="/web/login">ورود با ایمیل</a></p>
+                                    <p class="ts-hint">شمارهٔ شما فقط برای ورود و تأیید حساب به کار می‌رود. پیامک اعلان نتیجه فقط با اجازهٔ خودتان در صفحهٔ «شمارهٔ موبایل و پیامک» فعال می‌شود.</p>
+                                    <p id="ts-sms-risk" class="ts-hint">اگر حساب ایمیلی دارید، می‌توانید با ایمیل و رمز عبور هم <a t-att-href="'/web/login?redirect=' + next_q">وارد شوید</a>.</p>
                                 </div>
                             </div>
                         </section>

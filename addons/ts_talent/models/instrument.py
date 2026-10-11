@@ -3,6 +3,7 @@ import math
 from odoo import api, fields, models
 from odoo.exceptions import UserError
 
+from odoo.addons.ts_assessment.models.attempt import fa_digits
 from odoo.addons.ts_assessment.models.instrument import SECONDS_PER_ITEM
 from .engine_matrix import ITEM_COUNT, SCALES
 
@@ -18,6 +19,36 @@ class TsInstrument(models.Model):
             if n and v.mode == 'matrix':
                 n *= v.field_default or 1
             rec.duration_minutes = max(1, math.ceil(n * SECONDS_PER_ITEM / 60)) if n else 0
+
+
+    # Effort wording of the matrix inventory (UX audit PT-1): fields x statements, time per field.
+    MATRIX_SECONDS_PER_FIELD = 120
+
+    def ts_is_matrix_inst(self):
+        self.ensure_one()
+        return self.current_version_id.mode == 'matrix'
+
+    def ts_effort_label(self):
+        """«۲ تا ۸ زمینه، ۱۵ جمله برای هر زمینه» for the matrix inventory, «۲۴ پرسش» otherwise."""
+        self.ensure_one()
+        v = self.current_version_id
+        if v.mode == 'matrix':
+            return '%s تا %s زمینه، %s جمله برای هر زمینه' % (
+                fa_digits(v.field_min), fa_digits(v.field_max), fa_digits(v.active_item_count))
+        return '%s پرسش' % fa_digits(self.active_item_count)
+
+    def ts_duration_label(self):
+        """«حدود ۲ دقیقه برای هر زمینه» for the matrix inventory, «حدود ۸ دقیقه» otherwise."""
+        self.ensure_one()
+        if self.current_version_id.mode == 'matrix':
+            return 'حدود %s دقیقه برای هر زمینه' % fa_digits(self.MATRIX_SECONDS_PER_FIELD // 60)
+        return 'حدود %s دقیقه' % fa_digits(self.duration_minutes)
+
+    def ts_audience_label(self):
+        self.ensure_one()
+        if self.current_version_id.mode == 'matrix':
+            return 'نوجوان ۱۵+ و بزرگسال'
+        return dict(self._fields['audience'].selection).get(self.audience)
 
 
 class TsInstrumentVersion(models.Model):

@@ -7,7 +7,7 @@ from odoo.http import request
 from odoo.addons.ts_assessment.controllers.main import _ts_site_or_404
 from odoo.addons.ts_assessment.models.attempt import fa_digits
 from odoo.addons.ts_org.models.assignment import RESPONSIBLE_ROLES
-from odoo.addons.ts_org.models.panel import role_choices
+from odoo.addons.ts_org.models.panel import PURPOSE_LABELS, role_choices
 
 
 def _memberships():
@@ -48,12 +48,37 @@ def _assignable(member):
 
 
 def _counts(assignments):
-    keys = ('invited', 'accepted', 'in_progress', 'done', 'declined', 'withdrawn')
+    # every state, so the panel list, the dashboard and the invitation list count the same set (G3-P20-3, G5-P6-2)
+    keys = ('invited', 'opened', 'accepted', 'in_progress', 'done', 'expired', 'declined', 'withdrawn')
     return {k: len(assignments.filtered(lambda a, k=k: a.state == k)) for k in keys}
 
 
+# State pill of a panel card (glossary §2: «در انتظار تأیید» while gated, «فعال» after approval).
+PANEL_PILL = {'active': ('فعال', 'ts-pill--ok'), 'pilot': ('فعال', 'ts-pill--ok'), 'draft': ('پیش‌نویس', 'ts-pill--neutral'),
+              'suspended': ('معلق', 'ts-pill--warn'), 'closed': ('بسته', 'ts-pill--neutral')}
+
+
+def _panel_pill(ws):
+    if ws.gated and ws.state == 'pilot':
+        return ('در انتظار تأیید', 'ts-pill--warn')
+    return PANEL_PILL.get(ws.state, (ws.state, 'ts-pill--neutral'))
+
+
+def _unseen(member):
+    """Finished results this member may open and has not opened yet (same rule as the dashboard)."""
+    if not (member.can_act() and member.has_perm('invites:manage')):
+        return 0
+    try:
+        from odoo.addons.ts_panel.models.dashboard import unseen_ids
+    except ImportError:
+        return 0
+    base = [('workspace_id', '=', member.workspace_id.id)]
+    return len([i for i in unseen_ids(request.env, member, base)
+                if member.can_see(request.env['ts.assignment'].sudo().browse(i))])
+
+
 INVITE_MSG = {
-    'expired': ('این دعوت منقضی شده است', 'مهلت دعوت تمام شده است. از سازمان یا مؤسسهٔ دعوت‌کننده بخواهید دعوت تازه بفرستد.'),
+    'expired': ('مهلت دعوت تمام شده است', 'از کسی که پیوند را فرستاده بخواهید دعوت تازه بفرستد.'),
     'used': ('این دعوت قبلاً استفاده شده است', 'این پیوند با یک حساب دیگر پذیرفته شده است. اگر اشتباهی رخ داده، از دعوت‌کننده بخواهید دعوت تازه بفرستد.'),
     'declined': ('این دعوت رد شده است', 'برای شرکت در سنجه از دعوت‌کننده بخواهید دعوت تازه بفرستد.'),
     'withdrawn': ('این دعوت دیگر فعال نیست', 'دعوت‌کننده آن را لغو کرده است. برای اطلاعات بیشتر با او تماس بگیرید.'),
@@ -69,8 +94,10 @@ class TsOrg(http.Controller):
         rows = []
         for m in _memberships():
             ws = m.workspace_id
-            rows.append({'member': m, 'ws': ws, 'usable': m.can_act(),
-                         'counts': _counts(_scope(m, request.env['ts.assignment'].sudo().search([('workspace_id', '=', ws.id)])))})
+            counts = _counts(_scope(m, request.env['ts.assignment'].sudo().search([('workspace_id', '=', ws.id)])))
+            rows.append({'member': m, 'ws': ws, 'usable': m.can_act(), 'counts': counts, 'total': sum(counts.values()),
+                         'pill': _panel_pill(ws), 'purpose': PURPOSE_LABELS.get(ws.purpose, ws.purpose),
+                         'unseen': _unseen(m) if m.can_act() else 0})
         return request.render('ts_org.workspaces', {'rows': rows, 'fa': fa_digits, 'page_name': 'ts_workspaces'})
 
     @http.route('/my/workspaces/<int:ws_id>', type='http', auth='user', website=True, sitemap=False)
@@ -171,6 +198,9 @@ class TsOrg(http.Controller):
         level, results = a.visible_results(member)
         if level == 'education' and a.attempt_id:
             return request.redirect('/my/workspaces/%s/p/%s' % (ws_id, a.attempt_id.id))
+        if a.client_id and member.has_perm('invites:manage'):
+            # one page per invitation: invite managers land on the panel's invitation page (link, QR, actions; G3-P14-1)
+            return request.redirect('/my/workspaces/%s/invites/%s' % (ws_id, a.id))
         if level != 'none':
             request.env['ts.audit.event'].sudo().log('assignment.result_view', a, workspace=a.workspace_id,
                                                      level=level, viewer=request.env.user.id)
@@ -256,11 +286,21 @@ class TsOrg(http.Controller):
         if a.state == 'done' and a.user_id == user:
             return request.redirect('/my/assessments/%s' % a.attempt_id.id)
         inv_state = a.invite_state()
+        public = user._is_public()
+        mismatch = False
+        if not public and not a.user_id:
+            # signed in with an account whose name differs from the invitee: say so before accepting (G2-P12-1)
+            def norm(x):
+                return ' '.join((x or '').replace('ي', 'ی').replace('ك', 'ک').replace('\u200c', ' ').split()).lower()
+            mismatch = norm(a.invitee_name) != norm(user.name)
         return request.render('ts_org.invite', {
-            'a': a, 'inst': a.instrument_id, 'ws': a.workspace_id, 'public': user._is_public(),
+            'a': a, 'inst': a.instrument_id, 'ws': a.workspace_id, 'public': public,
             'fa': fa_digits, **self._auth_urls('/invite/%s' % token),
             'inv_state': inv_state if not (inv_state == 'used' and a.user_id == user) else 'ok',
-            'inv_msg': INVITE_MSG,
+            'inv_msg': INVITE_MSG, 'user_name': '' if public else user.name, 'mismatch': mismatch,
+            'logout_url': '/web/session/logout?redirect=%s' % quote('/invite/%s' % token),
+            'ask_decline': kw.get('decline') == '1' and not public,
+            'student': a.workspace_id.purpose == 'education',
         })
 
     @http.route('/invite/<string:token>/accept', type='http', auth='user', website=True,

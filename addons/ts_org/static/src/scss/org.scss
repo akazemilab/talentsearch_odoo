@@ -29,4 +29,30 @@
     }
     .ts-doc details { margin-block-start: var(--space-3); }
     .ts-doc details summary { cursor: pointer; color: var(--brand-deep); min-height: var(--control-min); display: flex; align-items: center; }
+
+    // ---- UX audit 2026-10-11 (G1, G3-P20, G5-P6)
+    [data-ts-show][hidden] { display: none !important; }
+    .ts-reveal { display: grid; gap: var(--space-2); }
+    .ts-form .ts-check { min-block-size: var(--control-min); align-items: center; }
+    .ts-fieldset { border: 0; padding: 0; margin: 0; display: grid; gap: var(--space-1); }
+    .ts-fieldset > legend { float: none; inline-size: auto; padding: 0; margin: 0; font-size: var(--fs-1); font-weight: 500; color: var(--color-text); font-family: var(--font-text); }
+    .ts-org-card { position: relative; display: flex; flex-direction: column; gap: var(--space-3); }
+    .ts-org-card__top { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-2); margin: 0; }
+    .ts-org-card__new { margin: 0; color: var(--color-accent-300); font-size: var(--fs-1); }
+    .ts-org-card .ts-org-card__go { align-self: stretch; justify-content: center; }
+    .ts-org-card__go::after { content: ''; position: absolute; inset: 0; border-radius: inherit; }   // the whole card opens the panel
+    .ts-org-card:has(.ts-org-card__go):hover { box-shadow: var(--shadow-md); }
+    .ts-org-card:has(.ts-org-card__go:focus-visible) { outline: 2px solid var(--color-accent); outline-offset: 2px; }
+    .ts-org-new { margin-block-start: var(--space-6); }
+    .ts-panel-kind { display: flex; flex-direction: column; gap: var(--space-3); }
+    .ts-panel-kind .ts-btn { margin-block-start: auto; align-self: flex-start; }
+    .ts-panel-steps { margin-block: var(--space-4) var(--space-2); max-inline-size: 70ch; }
+    .ts-auth-choices { display: grid; gap: var(--space-2); justify-items: start; margin-block: var(--space-4); }
+    @media (max-width: 575.98px) { .ts-auth-choices .ts-btn { inline-size: 100%; justify-content: center; } }
+    .ts-auth-choices .ts-hint a, .ts-share-box + .ts-hint a { display: inline-flex; align-items: center; min-block-size: var(--control-min); }
+    // check marks of the «what the panel sees» list (G2-P12-5): a real tick drawn with logical borders, not a chevron
+    // (a tick is not a directional glyph, so its two strokes use physical sides on purpose)
+    .ts-share-box .ts-list-check li::before { inline-size: 6px; block-size: 11px; border: 0; border-right: 2px solid var(--color-accent-300); border-bottom: 2px solid var(--color-accent-300); transform: rotate(45deg); inset-block-start: .45em; inset-inline-start: 6px; }
+    .ts-confirm .ts-check { display: flex; gap: var(--space-2); align-items: center; min-block-size: var(--control-min); }
+    .ts-confirm .ts-check input { inline-size: 20px; block-size: 20px; flex: none; }
 }

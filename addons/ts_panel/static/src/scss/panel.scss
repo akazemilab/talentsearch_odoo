@@ -25,17 +25,24 @@
     .tsp-shell__nav { display: grid; gap: 14px; padding: 16px 12px; border-radius: var(--r-18); background: color-mix(in oklab, var(--color-surface) 55%, var(--color-bg)); box-shadow: var(--shadow-sm); }
     .tsp-switch { display: grid; gap: 1px; padding: 8px 10px; background: var(--color-bg); border: 1px solid var(--color-neutral-800); border-radius: var(--r-8); }
     .tsp-switch__name { color: var(--color-text); font-size: 13.5px; font-weight: 500; overflow-wrap: anywhere; }
-    .tsp-switch__meta { color: var(--muted); font-size: var(--fs-0); }
-    .tsp-switch__link { font-size: var(--fs-0); min-block-size: 28px; display: inline-flex; align-items: center; }
+    .tsp-switch__meta { color: var(--color-neutral-400); font-size: var(--fs-0); display: flex; flex-wrap: wrap; align-items: center; gap: 2px 6px; }
+    .tsp-switch__link { font-size: var(--fs-0); min-block-size: var(--control-min); display: inline-flex; align-items: center; }
+    // the caller's role links to what it may see (/help/roles#role-<key>), audit G5 PT-2
+    .tsp-role { display: inline-flex; align-items: center; min-block-size: 32px; color: var(--color-accent-300); font-weight: 500; text-decoration: underline; text-underline-offset: 3px; }
+    .tsp-switch__scope { margin: 4px 0 0; font-size: var(--fs-0); line-height: 1.7; color: var(--color-neutral-300); }
+    .tsp-switch .ts-pill { justify-self: start; margin-block-start: 4px; }
+    .tsp-topbar__ws .tsp-role { min-block-size: 24px; }
     .tsp-nav__list { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; }
     .tsp-nav__item { position: relative; display: flex; align-items: center; gap: 10px; min-block-size: var(--control-min); padding: 0 10px; border-radius: var(--r-8); color: var(--color-neutral-300); text-decoration: none; font-weight: 500; font-size: 14px; }
     .tsp-nav__item:hover { background: var(--color-neutral-900); color: var(--color-text); text-decoration: none; }
     .tsp-nav__item[aria-current="page"] { background: var(--color-accent-900); color: var(--color-accent-300); }
     .tsp-nav__item[aria-current="page"]::before { content: ''; position: absolute; inset-block: 9px; inset-inline-start: 0; inline-size: 2px; border-radius: 2px; background: var(--color-accent); }
     .tsp-ico { inline-size: 18px; block-size: 18px; flex: none; }
-    .tsp-nav__group { display: block; padding: 12px 10px 4px; font-size: 11.5px; font-weight: 500; color: var(--color-neutral-500); }
+    // group headings >= 4.5:1 in both themes (neutral-400 on the rail: 6.2:1 light, 7.6:1 dark), audit PAT-8 / PT13
+    .tsp-nav__group { display: block; padding: 12px 10px 4px; font-size: 12.5px; font-weight: 600; color: var(--color-neutral-400); }
     .tsp-nav__list > li:first-child .tsp-nav__group { padding-block-start: 0; }
-    .tsp-nav__item[data-key="help"] { color: var(--color-neutral-400); }
+    .tsp-nav__item[data-key="help"] { color: var(--color-neutral-300); }
+    .tsp-nav__list > li.tsp-nav__solo { margin-block-start: 8px; padding-block-start: 8px; border-block-start: 1px solid var(--color-neutral-800); }
     .tsp-nav__toggle { display: none; align-items: center; gap: 8px; min-block-size: var(--control-min); padding: 0 var(--space-4); background: transparent; color: var(--color-text); border: 1px solid var(--color-neutral-700); border-radius: var(--r-8); font-weight: 500; font-family: var(--font-text); }
     .tsp-nav__toggle svg { inline-size: 20px; block-size: 20px; }
     .tsp-topbar, .tsp-tabbar, .tsp-drawer__head, .tsp-scrim { display: none; }
@@ -66,11 +73,16 @@
     @media (max-width: 1023.98px) and (prefers-reduced-motion: reduce) { .tsp-shell[data-js] .tsp-shell__nav { transition: none; } }
 
     // ---------- participant sub-navigation ----------
-    .tsp-subnav { display: flex; gap: var(--space-2); flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; margin-block: var(--space-2) var(--space-5); padding-block-end: 4px; }
-    .tsp-subnav::-webkit-scrollbar { display: none; }
-    .tsp-subnav__item { flex: none; display: inline-flex; align-items: center; min-block-size: 40px; padding: 0 var(--space-4); border-radius: 999px; border: 1px solid var(--color-neutral-800); background: transparent; color: var(--color-neutral-300); text-decoration: none; font-weight: 400; font-size: 13.5px; }
+    // scrolls with a fade and the active tab in view (ts_nav.js); on phones a 2-column grid, so every tab is visible
+    // and the active one is never off-screen (audit G2 X1 / G4 PT11)
+    .tsp-subnav { display: flex; gap: var(--space-2); flex-wrap: nowrap; overflow-x: auto; margin-block: var(--space-2) var(--space-5); padding-block-end: 6px; }
+    .tsp-subnav__item { flex: none; display: inline-flex; align-items: center; justify-content: center; min-block-size: var(--control-min); padding: 0 var(--space-4); border-radius: 999px; border: 1px solid var(--color-neutral-800); background: transparent; color: var(--color-neutral-300); text-decoration: none; font-weight: 400; font-size: 13.5px; text-align: center; line-height: 1.4; }
     .tsp-subnav__item:hover { background: var(--color-neutral-900); color: var(--color-text); text-decoration: none; }
-    .tsp-subnav__item.is-on { background: var(--color-accent-900); border-color: var(--color-accent); color: var(--color-accent-300); }
+    .tsp-subnav__item.is-on, .tsp-subnav__item[aria-current="page"] { background: var(--color-accent-900); border-color: var(--color-accent); color: var(--color-accent-300); font-weight: 600; text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: 6px; }
+    @media (max-width: 480px) {
+        .tsp-subnav { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); overflow: visible; padding-block-end: 0; }
+        .tsp-subnav__item { padding: 4px var(--space-3); border-radius: var(--r-12); white-space: normal; }
+    }
 
     // portal v3 (P1): the one next action, dated rows, the account hub list
     .tsp-next { background: radial-gradient(ellipse at 85% 0%, var(--color-section-glow), var(--color-section) 70%); box-shadow: 0 0 0 1px var(--color-section-ghost); color: var(--on-section); border-radius: var(--r-24); padding: clamp(20px, 4vw, 32px); display: grid; gap: var(--space-2); justify-items: start; margin-block-end: var(--space-2); }
@@ -131,6 +143,10 @@
     .tsp-shell__main .ts-card { padding: 18px 20px; border-radius: var(--r-18); }
     @media (max-width: 575.98px) { .tsp-shell__main .ts-card { padding: var(--space-4); } }
     .tsp-shell__main .ts-card h2 { margin-block-end: var(--space-3); font-size: 15.5px; font-weight: 500; }
+    // card headings stay below the page title on /my and help pages too (they were larger than the h1, audit G4 PT12)
+    .tsp-section .ts-card h2, .tsp-section .ts-card .h2 { font-size: var(--fs-3); font-weight: 500; line-height: 1.5; }
+    .tsp-section .ts-card h3 { font-size: var(--fs-2); }
+    .tsp-section h1.h2, .tsp-section h1.h3, .tsp-section h1.h4 { font-size: clamp(1.4rem, 2.6vw, 1.75rem); }
 
     // ---------- S3: members, lists, tables ----------
     .tsp-sr { position: absolute; inline-size: 1px; block-size: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
@@ -143,7 +159,13 @@
     .tsp-confirm { padding: var(--space-4); border: 1px solid var(--danger); border-radius: var(--r-12); background: var(--danger-soft); color: var(--color-text); }
     .tsp-table { inline-size: 100%; border-collapse: collapse; background: var(--color-surface); font-size: 13.5px; }
     .tsp-shell__main > form > .ts-table-wrap, .tsp-shell__main > .ts-table-wrap { background: var(--color-surface); border: 0; box-shadow: var(--shadow-sm); border-radius: var(--r-18); overflow: hidden; }
-    @media (max-width: 767.98px) { .tsp-shell__main > form > .ts-table-wrap, .tsp-shell__main > .ts-table-wrap { background: none; border: 0; border-radius: 0; overflow: visible; } }
+    // on phones a card-table drops its frame wherever it sits, so no empty bordered box is left (audit G4 PT9, G5-P5-2)
+    @media (max-width: 767.98px) {
+        .tsp-shell__main > form > .ts-table-wrap, .tsp-shell__main > .ts-table-wrap,
+        .ts-table-wrap:has(> .tsp-table--cards), .ts-card > .ts-table-wrap:has(.tsp-table--cards) { background: none; border: 0; border-radius: 0; box-shadow: none; padding: 0; overflow: visible; }
+        .ts-card:has(> .ts-table-wrap > .tsp-table--cards:only-child) { padding-block-end: var(--space-2); }
+        .tsp-table--cards tr:last-child { margin-block-end: 0; }
+    }
     .tsp-collapse[data-js] > :not(h2):not(.tsp-collapse__btn) { display: none; }
     .tsp-collapse[data-js][data-open] > * { display: revert; }
     .tsp-collapse__btn { display: flex; justify-content: space-between; align-items: center; inline-size: 100%; background: none; border: 0; padding: 0; font: inherit; color: var(--ink); text-align: start; cursor: pointer; min-block-size: var(--control-min); }
@@ -167,15 +189,22 @@
     .tsp-search__go svg { inline-size: 20px; block-size: 20px; }
     @media (max-width: 575.98px) { .tsp-search__go span { position: absolute; inline-size: 1px; block-size: 1px; overflow: hidden; clip-path: inset(50%); } .tsp-search__go { padding-inline: 12px; } }
     .tsp-search input[type=search] { flex: 1 1 160px; min-inline-size: 0; min-height: var(--control-min); padding: 8px 12px; border: 0; box-shadow: var(--shadow-sm); border-radius: var(--r-8); background: var(--color-surface); color: var(--color-text); font-family: var(--font-text); font-size: 1rem; }
+    // chip rows: up to 6 chips wrap; longer rows scroll on phones with an edge fade (ts_nav.js), audit PAT-5 / PT-7
     .tsp-chips { display: flex; flex-wrap: wrap; gap: var(--space-2); }
-    @media (max-width: 767.98px) { .tsp-chips { flex-wrap: nowrap; overflow-x: auto; padding-block-end: 4px; scrollbar-width: none; max-inline-size: 100%; } .tsp-chips::-webkit-scrollbar { display: none; } .tsp-chip { flex: none; } }
-    .tsp-chip { display: inline-flex; align-items: center; min-height: 38px; padding: 0 12px; border: 1px solid var(--color-neutral-800); border-radius: 999px; background: transparent; color: var(--color-neutral-300); font-size: 13px; text-decoration: none; }
+    @media (max-width: 767.98px) {
+        .tsp-chips:has(> :nth-child(7)) { flex-wrap: nowrap; overflow-x: auto; padding-block-end: 6px; max-inline-size: 100%; scroll-padding-inline: 24px; }
+        .tsp-chips:has(> :nth-child(7)) > * { flex: none; }
+    }
+    .tsp-chip { display: inline-flex; align-items: center; gap: 6px; min-height: var(--control-min); padding: 0 14px; border: 1px solid var(--color-neutral-800); border-radius: 999px; background: transparent; color: var(--color-neutral-300); font-size: 13px; text-decoration: none; white-space: nowrap; }
+    .tsp-chip .ts-num, .tsp-chip b, .tsp-chip small { display: inline-grid; place-items: center; min-inline-size: 22px; padding: 0 6px; border-radius: 999px; background: var(--color-neutral-900); color: var(--color-neutral-200); font-size: 12px; font-weight: 600; line-height: 1.6; }
+    .tsp-chip.is-on .ts-num, .tsp-chip.is-on b, .tsp-chip.is-on small { background: var(--color-surface); color: var(--color-accent-300); }
     .tsp-chip:hover { background: var(--color-neutral-900); text-decoration: none; }
     .tsp-chip.is-on { background: var(--color-accent-900); color: var(--color-accent-300); border-color: var(--color-accent); }
     .tsp-steps { list-style: none; display: flex; flex-wrap: wrap; gap: var(--space-2); margin: 0 0 var(--space-4); padding: 0; }
-    @media (max-width: 767.98px) { .tsp-steps { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; padding-block-end: 4px; max-inline-size: 100%; } .tsp-steps::-webkit-scrollbar { display: none; } .tsp-steps__item { flex: none; white-space: nowrap; } .tsp-form .ts-btn--primary:not(.ts-btn--sm) { inline-size: 100%; } }
+    // wizard steps wrap on phones: the whole length of the task stays visible (audit G3-P12-3)
+    @media (max-width: 767.98px) { .tsp-steps { flex-wrap: wrap; } .tsp-steps__item { white-space: nowrap; } .tsp-form .ts-btn--primary:not(.ts-btn--sm) { inline-size: 100%; } }
     .tsp-steps__item { padding: 5px 12px; border: 0; border-radius: 999px; background: var(--color-neutral-900); color: var(--color-neutral-400); font-size: 12.5px; font-weight: 500; }
-    .tsp-steps__item.is-on { background: var(--color-accent-900); color: var(--color-accent-300); }
+    .tsp-steps__item.is-on, .tsp-steps__item[aria-current] { background: var(--color-accent-900); color: var(--color-accent-300); box-shadow: inset 0 0 0 1px var(--color-accent); }
     .tsp-qr { display: block; margin-block-start: var(--space-4); background: #fff; padding: var(--space-2); border: 0; box-shadow: var(--shadow-sm); border-radius: var(--r-12); }
     p.ts-copy { overflow-wrap: anywhere; word-break: break-all; margin: var(--space-2) 0 0; }
     .tsp-batch { border: 1px solid var(--line-strong); border-radius: var(--r-12); padding: var(--space-3); margin-block-start: var(--space-4); display: flex; flex-wrap: wrap; gap: var(--space-3); align-items: end; }
@@ -186,9 +215,21 @@
     .tsp-dl { display: grid; grid-template-columns: max-content 1fr; gap: var(--space-2) var(--space-6); margin: 0; }
     .tsp-dl dt { color: var(--color-neutral-400); font-weight: 400; font-size: 13px; }
     .tsp-dl dd { margin: 0; }
+    // /help/roles: the visible legend and the caller's own role (reached by #role-<key>)
+    .tsp-roles__cap { caption-side: top; padding: 12px 16px; text-align: start; color: var(--color-neutral-300); font-size: var(--fs-0); }
+    .tsp-roles > li:target { box-shadow: 0 0 0 2px var(--color-accent); }
+    .tsp-roles h2 { margin: 0; }
+    .tsp-roles p { margin: 0; }
     .tsp-table th a { color: inherit; text-decoration: underline; }
     @media (max-width: 575.98px) { .tsp-dl { grid-template-columns: 1fr; gap: 0; } .tsp-dl dd { margin-block-end: var(--space-3); } }
 
+}
+
+// Phones: the fixed bottom tab bar never covers the footer (copyright, emergency line, links) or a focused field
+// (audit G4 PT14, G5 PT-6; WCAG 2.4.11). 64px = tab bar height.
+@media (max-width: 1023.98px) {
+    html:has(.tsp-tabbar) { scroll-padding-block-end: calc(64px + 24px + env(safe-area-inset-bottom)); }
+    body:has(.tsp-tabbar) #wrapwrap .ts-footer, body:has(.tsp-tabbar) #wrapwrap .ts-footer--slim { padding-block-end: calc(20px + 64px + env(safe-area-inset-bottom)); }
 }
 
 // Print (S13): the result page prints as a clean sheet without the panel navigation; page numbers in the margin.

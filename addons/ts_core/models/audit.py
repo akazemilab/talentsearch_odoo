@@ -54,7 +54,7 @@ class TsAuditEvent(models.Model):
     event_type = fields.Char('نوع رویداد', required=True, index=True, readonly=True)
     actor_id = fields.Many2one('res.users', 'کاربر', readonly=True, index=True, ondelete='restrict')
     member_id = fields.Many2one('ts.workspace.member', 'عضویت', readonly=True, ondelete='set null')
-    workspace_id = fields.Many2one('ts.workspace', 'فضای کاری', readonly=True, index=True, ondelete='restrict')
+    workspace_id = fields.Many2one('ts.workspace', 'پنل', readonly=True, index=True, ondelete='restrict')
     purpose = fields.Selection(related='workspace_id.purpose', store=True, readonly=True)
     res_model = fields.Char('مدل', readonly=True, index=True)
     res_id = fields.Integer('شناسه رکورد', readonly=True)

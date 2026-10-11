@@ -3,11 +3,23 @@ from odoo.exceptions import UserError, ValidationError
 from odoo.http import request
 
 from odoo.addons.ts_assessment.controllers.main import _ts_site_or_404
-from odoo.addons.ts_assessment.models.attempt import fa_digits
+from odoo.addons.ts_assessment.models.attempt import fa_digits, jalali
 from urllib.parse import quote
 
 from odoo.addons.ts_org.controllers.main import _membership
-from odoo.addons.ts_org.models.panel import ROLE_LABELS, TERMS_VERSION
+from odoo.addons.ts_org.models.panel import ROLE_LABELS, TERMS_LABEL, TERMS_VERSION
+
+PANEL_KINDS = ('school', 'org', 'clinic', 'solo')
+
+
+def mask_identity(phone, email):
+    """Masked contact a colleague invite is bound to, e.g. ۰۹۱۲…۸۹ or a…@example.com (UX audit G1-P10-1)."""
+    if phone:
+        return fa_digits(phone[:4] + '…' + phone[-2:])
+    if email and '@' in email:
+        user, dom = email.split('@', 1)
+        return user[:1] + '…@' + dom
+    return ''
 
 def _flash(msg=None):
     if msg:
@@ -38,16 +50,18 @@ class TsPanel(http.Controller):
     @http.route('/panel/terms', type='http', auth='public', website=True, sitemap=False)
     def terms(self, **kw):
         _ts_site_or_404()
-        return request.render('ts_org.panel_terms', {'version': TERMS_VERSION, 'page_name': 'ts_panel'})
+        return request.render('ts_org.panel_terms', {'version': TERMS_VERSION, 'version_label': TERMS_LABEL,
+                                                       'page_name': 'ts_panel'})
 
     # --------------------------------------------------------------- create
     @http.route('/my/workspaces/new', type='http', auth='public', website=True, sitemap=False)
     def create_form(self, **kw):
         _ts_site_or_404()
+        kind = kw.get('kind') if kw.get('kind') in PANEL_KINDS else ''
         if request.env.user._is_public():
-            return request.redirect(self._login_url('/my/workspaces/new'))
+            return request.redirect(self._login_url('/my/workspaces/new' + ('?kind=' + kind if kind else '')))
         return request.render('ts_org.panel_new', {
-            'error': _flash(), 'vals': {}, 'page_name': 'ts_panel'})
+            'error': _flash(), 'vals': {'kind': kind}, 'page_name': 'ts_panel'})
 
     @http.route('/my/workspaces/new/create', type='http', auth='user', website=True, methods=['POST'],
                 sitemap=False)
@@ -121,7 +135,10 @@ class TsPanel(http.Controller):
         return request.render('ts_org.panel_join', {
             'inv': inv, 'state': inv.usable_state(), 'signed': signed,
             'fits': signed and inv.matches(user), 'role_label': ROLE_LABELS.get(inv.role, inv.role),
-            'urls': self._auth_urls('/join/' + token), 'error': _flash(), 'page_name': 'ts_panel'})
+            'urls': self._auth_urls('/join/' + token), 'error': _flash(), 'page_name': 'ts_panel',
+            'bound_to': mask_identity(inv.phone, inv.email), 'by_phone': bool(inv.phone),
+            'inviter': inv.invited_by_id.sudo().name or '', 'expires_fa': jalali(inv.expires_at, with_time=False),
+            'user_name': user.name if signed else ''})
 
     @http.route('/join/<string:token>/accept', type='http', auth='user', website=True, methods=['POST'],
                 sitemap=False)
@@ -148,14 +165,22 @@ class TsPanel(http.Controller):
         _ts_site_or_404()
         at = self._own_attempt(attempt_id)
         ws, error = None, _flash()
+        if at.workspace_id or at.source == 'import':
+            # invited or imported results already belong to their panel; ts_share_attempt() would refuse (G2-P4-1)
+            return request.render('ts_org.share_form', {
+                'attempt': at, 'ws': None, 'code': '', 'error': error, 'page_name': 'ts_assessments',
+                'owned_by': at.workspace_id.sudo(), 'shares': None})
         if code:
             code = code.strip().upper()[:30]
             ws = request.env['ts.workspace'].sudo().search([
                 ('code', '=', code), ('purpose', '=', 'education'), ('state', 'in', ('pilot', 'active'))], limit=1)
             if not ws or ws.gated:
                 ws, error = None, 'پنلی با این کد پیدا نشد. کد را از مشاور خود بپرسید.'
+        shares = request.env['ts.assignment'].sudo().search(
+            [('attempt_id', '=', at.id), ('user_id', '=', request.env.user.id), ('share_level', '!=', 'none')])
         return request.render('ts_org.share_form', {
-            'attempt': at, 'ws': ws, 'code': code or '', 'error': error, 'page_name': 'ts_assessments'})
+            'attempt': at, 'ws': ws, 'code': code or '', 'error': error, 'page_name': 'ts_assessments',
+            'owned_by': None, 'shares': shares})
 
     @http.route('/my/assessments/<int:attempt_id>/share/confirm', type='http', auth='user', website=True,
                 methods=['POST'], sitemap=False)

@@ -28,8 +28,12 @@ class TsPanelGroups(http.Controller):
         if denied:
             return denied
         gs = request.env['ts.panel.group'].sudo().search([('workspace_id', '=', ws_id), ('active', '=', True)])
+        see_all = me.has_perm('clients:read_all')
+        C = request.env['ts.panel.client'].sudo()
+        # members who see only their own people get the count of the people they can see, and the column says so (G5-P5-1)
+        sizes = {g.id: (g.client_count if see_all else C.search_count(visible_domain(me) + [('group_ids', 'in', g.id)])) for g in gs}
         return render_in_shell('ts_panel.groups', me, 'groups', 'گروه‌ها', groups=gs, kinds=KINDS,
-                               kind_label=dict(KINDS))
+                               kind_label=dict(KINDS), sizes=sizes, see_all=see_all)
 
     @http.route('/my/workspaces/<int:ws_id>/groups/new', type='http', auth='user', website=True,
                 methods=['POST'], sitemap=False)
@@ -86,8 +90,10 @@ class TsPanelGroups(http.Controller):
                     g.write({'name': name})
                     flash_ok('نام گروه ذخیره شد.')
             elif action == 'archive':
+                if not post.get('confirm'):
+                    raise UserError('برای بایگانی گروه، تأیید را تیک بزنید.')
                 g.write({'active': False})
-                flash_ok('گروه بایگانی شد؛ ردیف‌ها دست‌نخورده ماندند.')
+                flash_ok('گروه بایگانی شد؛ شرکت‌کنندگانش دست‌نخورده ماندند.')
                 return request.redirect('/my/workspaces/%s/groups' % ws_id)
             elif action == 'remove':
                 cid = post.get('client') or ''

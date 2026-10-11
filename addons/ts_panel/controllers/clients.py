@@ -12,8 +12,34 @@ from .base import STATE_LABELS, flash_error, flash_ok, forbidden, member_or_404,
 
 PAGE = 25
 SORTS = {'name': 'name_norm', 'activity': 'last_activity_at', 'open': 'open_count', 'done': 'done_count'}
-FILTERS = [('all', 'همه'), ('mine', 'مراجعان من'), ('unassigned', 'بدون کارشناس'), ('imported', 'واردشده'),
-           ('archived', 'بایگانی‌شده'), ('handover', 'درخواست واگذاری'), ('mine_open', 'مراجعان باز من')]
+FILTERS = [('all', 'همه'), ('mine', 'شرکت‌کنندگان من'), ('unassigned', 'بدون کارشناس'), ('imported', 'واردشده'),
+           ('archived', 'بایگانی‌شده'), ('handover', 'درخواست واگذاری'), ('mine_open', 'شرکت‌کنندگان من با دعوت باز'),
+           ('done', 'تکمیل‌شده')]
+
+
+def role_filters(me):
+    """The chips this member can use (G5-P2-3, G5-P14-2): responsibility chips only for roles that hold participants,
+    the handover chip only for those who decide on it, «من» first for members who see only their own."""
+    labels = dict(FILTERS)
+    resp = me.has_perm('clients:be_responsible')
+    if not resp and me.has_perm('clients:read_all') and not me.has_perm('clients:assign'):
+        keys = ['all', 'done', 'archived']                       # e.g. an employment reviewer: sees everyone, holds no one
+    elif resp and not me.has_perm('clients:read_all'):
+        keys = ['mine', 'mine_open', 'all', 'done', 'imported', 'archived']
+        if me.has_perm('clients:read_unassigned'):
+            keys.insert(2, 'unassigned')
+    else:
+        keys = ['all', 'mine', 'unassigned', 'done', 'imported', 'archived', 'handover', 'mine_open']
+        if not resp:
+            keys = [k for k in keys if k not in ('mine', 'mine_open')]
+    if not me.has_perm('clients:assign'):
+        keys = [k for k in keys if k != 'handover']
+    return [(k, labels[k]) for k in keys]
+
+
+def default_filter(me):
+    """Members who see only their own participants start on «شرکت‌کنندگان من»."""
+    return 'mine' if me.has_perm('clients:be_responsible') and not me.has_perm('clients:read_all') else 'all'
 SOURCE_LABELS = {'manual': 'ثبت دستی', 'csv': 'فایل', 'invite': 'دعوت', 'open_link': 'پیوند عمومی',
                  'self_share': 'ارسال با کد پنل', 'import': 'واردشده'}
 Q_KEY = 'ts_clients_q'
@@ -95,7 +121,8 @@ class TsPanelClients(http.Controller):
         params.update(_clean_query(urlencode({k: kw[k] for k in ('filter', 'group', 'sort', 'dir') if kw.get(k)})))
         cols = _cols(kw['cols'] if 'cols' in kw else (view.columns if view else ''))
         q = request.session.get(key) or ''
-        flt = params.get('filter', 'all')
+        dflt = default_filter(me)
+        flt = params.get('filter', dflt)
         sort = params.get('sort', 'activity')
         direction = params.get('dir') or ('asc' if sort == 'name' else 'desc')
         desc = direction == 'desc'
@@ -111,6 +138,8 @@ class TsPanelClients(http.Controller):
             dom.append(('handover_to_id', '!=', False))
         elif flt == 'mine_open':
             dom += [('responsible_id', '=', me.id), ('open_count', '>', 0)]
+        elif flt == 'done':
+            dom.append(('done_count', '>', 0))
         G = request.env['ts.panel.group'].sudo()
         groups = G.search([('workspace_id', '=', ws_id)])
         group = groups.filtered(lambda g: str(g.id) == params.get('group'))[:1]
@@ -127,7 +156,7 @@ class TsPanelClients(http.Controller):
         rows = C.search(dom, order='%s %s, id desc' % (SORTS[sort], 'desc' if desc else 'asc'),
                         limit=PAGE, offset=(page - 1) * PAGE)
         base = {'sort': sort, 'dir': direction}
-        if flt != 'all':
+        if flt != dflt:
             base['filter'] = flt
         if group:
             base['group'] = group.id
@@ -140,17 +169,28 @@ class TsPanelClients(http.Controller):
 
         def filter_url(f):
             d = {k: v for k, v in base.items() if k != 'filter'}
-            if f != 'all':
+            if f != dflt:
                 d['filter'] = f
             return '/my/workspaces/%s/clients%s' % (ws_id, '?' + urlencode(d) if d else '')
 
         can_bulk = {a: me.has_perm(p) for a, p in BULK.items()}
+        # the counselor's loop in one row: latest result to open, and «دعوت به سنجه» (G3-P3-3)
+        results = {}
+        for c in rows.filtered(lambda r: r.done_count):
+            done = c.assignment_ids.filtered(lambda a: a.state == 'done' and a.attempt_id).sorted(
+                lambda a: (a.attempt_id.submitted_at or a.create_date, a.id), reverse=True)
+            for a in done:
+                if a.result_level(me) != 'none':
+                    results[c.id] = '/my/workspaces/%s/clients/%s/r/%s' % (ws_id, c.id, a.attempt_id.id)
+                    break
+        can_invite = me.can_invite() and me.has_perm('invites:create') and me.can_invite_participants()
         assignable = request.env['ts.workspace.member'].sudo().search(
             [('workspace_id', '=', ws_id), ('active', '=', True), ('role', 'in', list(RESPONSIBLE_ROLES))]
         ).filtered(lambda m: m.can_act()) if can_bulk['assign'] else []
         return render_in_shell(
             'ts_panel.clients', me, 'clients', 'شرکت‌کنندگان', rows=rows, total=total, page=page, pages=pages,
-            filters=FILTERS, flt=flt, q=q, sort=sort, desc=desc, direction=direction, url=url, filter_url=filter_url,
+            filters=role_filters(me), flt=flt, dflt=dflt, q=q, sort=sort, desc=desc, direction=direction, url=url, filter_url=filter_url,
+            results=results, can_invite=can_invite, purpose=me.workspace_id.purpose,
             source_labels=SOURCE_LABELS, cols=cols, all_cols=COLUMNS, groups=groups.filtered('active'), group=group,
             views=views, view=view, can_bulk=can_bulk, any_bulk=any(can_bulk.values()), assignable=assignable,
             can_write=me.has_perm('clients:write'), role_labels=ROLE_LABELS,
@@ -209,7 +249,7 @@ class TsPanelClients(http.Controller):
         action = post.get('bulk')
         back = '/my/workspaces/%s/clients' % ws_id
         if action not in BULK:
-            flash_error('یک کار را برای گروه انتخاب‌شده برگزینید.')
+            flash_error('یک کار را برای افراد انتخاب‌شده برگزینید.')
             return request.redirect(back)
         denied = require(me, BULK[action], 'clients')
         if denied:
@@ -251,11 +291,11 @@ class TsPanelClients(http.Controller):
                 ok = len(todo)
             elif action == 'merge':
                 if len(chosen) != 2:
-                    flash_error('برای ادغام دقیقاً دو ردیف را انتخاب کنید.')
+                    flash_error('برای ادغام دقیقاً دو شرکت‌کننده را انتخاب کنید.')
                     return request.redirect(back)
                 a, b = chosen.sorted('id')
                 a.ts_merge_check(b, me)
-                return render_in_shell('ts_panel.client_merge', me, 'clients', 'ادغام دو ردیف', a=a, b=b,
+                return render_in_shell('ts_panel.client_merge', me, 'clients', 'ادغام دو شرکت‌کننده', a=a, b=b,
                                        prev_a=a.ts_merge_preview(b), prev_b=b.ts_merge_preview(a))
         except (UserError, ValidationError) as e:
             flash_error(str(e.args[0] if e.args else e))
@@ -284,7 +324,7 @@ class TsPanelClients(http.Controller):
         except (UserError, ValidationError) as e:
             flash_error(str(e.args[0] if e.args else e))
             return request.redirect('/my/workspaces/%s/clients' % ws_id)
-        flash_ok('دو ردیف ادغام شد.')
+        flash_ok('دو شرکت‌کننده ادغام شد.')
         return request.redirect('/my/workspaces/%s/clients/%s' % (ws_id, keep.id))
 
     # ------------------------------------------------------------------ create / edit
@@ -294,10 +334,13 @@ class TsPanelClients(http.Controller):
         cands = request.env['ts.workspace.member'].sudo().search(
             [('workspace_id', '=', ws.id), ('active', '=', True), ('role', 'in', list(RESPONSIBLE_ROLES))]
         ).filtered(lambda m: m.can_act()) if can_assign and not c else []
-        return render_in_shell('ts_panel.client_form', me, 'clients', 'ویرایش شرکت‌کننده' if c else 'شرکت‌کنندهٔ جدید',
+        # the creating member holds participants: preselect them instead of «بدون کارشناس» (G3-P4-5)
+        default_resp = vals.get('responsible_id') or (me.id if me in cands else '')
+        return render_in_shell('ts_panel.client_form', me, 'clients', ('ویرایش «%s»' % c.name) if c else 'شرکت‌کنندهٔ جدید',
                                status=status, c=c, vals=vals, errors=errors or {}, dups=dups or [], age=AGE,
                                relations=RELATIONS, can_assign=can_assign, cands=cands, role_labels=ROLE_LABELS,
-                               locked=bool(c and c.contact_locked))
+                               locked=bool(c and c.contact_locked), default_resp=str(default_resp),
+                               can_invite=me.can_invite() and me.has_perm('invites:create') and me.can_invite_participants())
 
     @staticmethod
     def _post_vals(post, locked=False):
@@ -320,7 +363,7 @@ class TsPanelClients(http.Controller):
         if vals.get('email') and not norm_email(vals['email']):
             err['email'] = 'ایمیل معتبر نیست.'
         if vals.get('guardian_phone') and not norm_phone(vals['guardian_phone']):
-            err['guardian_phone'] = 'شمارهٔ موبایل سرپرست معتبر نیست.'
+            err['guardian_phone'] = 'شمارهٔ موبایل ولی معتبر نیست.'
         if vals['code']:
             if len(vals['code']) > 40:
                 err['code'] = 'شناسه حداکثر ۴۰ نویسه است.'
@@ -349,7 +392,8 @@ class TsPanelClients(http.Controller):
         errors = self._errors(me, vals)
         dups = self._dups(me, vals) if not errors else []
         if errors or (dups and not post.get('confirm_dup')):
-            return self._form(me, None, vals, errors, dups, status=400 if errors else None)
+            return self._form(me, None, dict(vals, responsible_id=post.get('responsible_id') or ''), errors, dups,
+                              status=400 if errors else None)
         C = request.env['ts.panel.client'].sudo()
         create = {k: (v or False) for k, v in vals.items()}
         create.update(workspace_id=ws_id, source='manual')
@@ -367,6 +411,8 @@ class TsPanelClients(http.Controller):
             return self._form(me, None, vals, {'name': str(e.args[0] if e.args else e)}, status=400)
         request.env['ts.audit.event'].log('client.create', c, workspace=c.workspace_id, via='form')
         flash_ok('شرکت‌کننده ثبت شد.')
+        if post.get('then') == 'invite':        # «ثبت و دعوت به سنجه»: straight to step 2 of the wizard (G3-P4-4)
+            return request.redirect('/my/workspaces/%s/invites/new?fresh=1&client=%s' % (ws_id, c.id))
         return request.redirect('/my/workspaces/%s/clients/%s' % (ws_id, c.id))
 
     @http.route('/my/workspaces/<int:ws_id>/clients/<int:cid>/edit', type='http', auth='user', website=True,
@@ -418,12 +464,15 @@ class TsPanelClients(http.Controller):
         can_groups = me.has_perm('groups:manage')
         all_groups = request.env['ts.panel.group'].sudo().search(
             [('workspace_id', '=', me.workspace_id.id), ('active', '=', True)]) if can_groups else []
+        can_invite = (me.can_invite() and me.has_perm('invites:create') and me.can_invite_participants()
+                      and c.state == 'active' and not c.contact_locked)
         return render_in_shell(
             'ts_panel.client', me, 'clients', c.name, c=c, assignments=assignments, imports=imports,
             can_assign=can_assign, cands=cands, colleagues=colleagues, state_labels=STATE_LABELS,
             source_label=SOURCE_LABELS.get(c.source, c.source), role_labels=ROLE_LABELS,
             can_write=me.has_perm('clients:write'), can_archive=me.has_perm('clients:archive'),
-            can_groups=can_groups, all_groups=all_groups, is_resp=c.responsible_id == me,
+            can_groups=can_groups, all_groups=all_groups, is_resp=c.responsible_id == me, can_invite=can_invite,
+            can_manage_inv=me.has_perm('invites:manage'),
             age_labels=dict(AGE), level=lambda a: a.result_level(me), level_t=lambda t: t.ts_result_level(me))
 
     @http.route('/my/workspaces/<int:ws_id>/clients/<int:cid>/responsible', type='http', auth='user', website=True,
@@ -470,8 +519,10 @@ class TsPanelClients(http.Controller):
             return forbidden(me, perm, 'clients')
         try:
             if action == 'archive':
+                if not post.get('confirm'):
+                    raise UserError('برای بایگانی، تأیید را تیک بزنید.')
                 c.ts_archive(me)
-                flash_ok('شرکت‌کننده بایگانی شد؛ از فهرست پیش‌فرض خارج می‌شود و دعوت نمی‌گیرد.')
+                flash_ok('شرکت‌کننده بایگانی شد؛ از فهرست پیش‌فرض بیرون رفت و دعوت تازه نمی‌گیرد. از پالایش «بایگانی‌شده» برمی‌گردد.')
             elif action == 'restore':
                 c.ts_restore(me)
                 flash_ok('شرکت‌کننده بازیابی شد.')

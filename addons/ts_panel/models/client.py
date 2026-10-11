@@ -92,7 +92,7 @@ class TsPanelClient(models.Model):
             if not r:
                 continue
             if r.workspace_id != c.workspace_id or not r.active or r.role not in RESPONSIBLE_ROLES:
-                raise ValidationError('کارشناس مسئول باید عضو فعال همین فضای کاری با نقش کارشناس باشد.')
+                raise ValidationError('کارشناس مسئول باید عضو فعال همین پنل با نقش کارشناس باشد.')
             if c.user_id and r.user_id == c.user_id:
                 raise ValidationError('شرکت‌کننده نمی‌تواند کارشناس مسئولِ خودش باشد.')
 

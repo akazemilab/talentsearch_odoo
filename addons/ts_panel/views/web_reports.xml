@@ -13,7 +13,6 @@
                         <t t-call="ts_panel.shell_frame">
                             <header class="tsp-head">
                                 <div>
-                                    <p class="tsp-noprint"><a t-att-href="back_url">بازگشت به شرکت‌کننده</a></p>
                                     <h1 class="tsp-head__title"><t t-out="inst.name"/> — <t t-out="client.name"/></h1>
                                     <p class="tsp-head__help"><span class="ts-pill" t-out="kind"/> <t t-if="when">· <t t-out="jalali(when, with_time=False)"/></t></p>
                                 </div>
@@ -80,29 +79,57 @@
                             <header class="tsp-head">
                                 <div>
                                     <h1 class="tsp-head__title">گزارش‌ها</h1>
-                                    <p class="tsp-head__help">تازه‌ترین نتیجه‌هایی که می‌توانید ببینید. نتیجهٔ هر نفر از صفحهٔ خود او هم باز می‌شود.</p>
+                                    <p class="tsp-head__help"><t t-out="fa(max_rows)"/> نتیجهٔ آخری که می‌توانید ببینید. نتیجهٔ هر نفر از صفحهٔ خود او هم باز می‌شود.</p>
                                 </div>
                                 <a t-if="can_group" t-attf-href="/my/workspaces/#{ws.id}/reports/group" class="ts-btn ts-btn--outline">گزارش گروهی</a>
                             </header>
+                            <form t-if="groups or instruments" method="get" class="ts-card tsp-form tsp-filters tsp-filters--grid" aria-label="پالایه‌های نتیجه‌ها">
+                                <label t-if="groups" class="tsp-field"><span class="tsp-field__label">گروه</span>
+                                    <select name="group_id" class="form-select"><option value="">همهٔ گروه‌ها</option>
+                                        <option t-foreach="groups" t-as="g" t-att-value="g.id" t-att-selected="'selected' if params.get('group_id') == str(g.id) else None" t-out="g.name"/>
+                                    </select></label>
+                                <label class="tsp-field"><span class="tsp-field__label">سنجه</span>
+                                    <select name="instrument_id" class="form-select"><option value="">همهٔ سنجه‌ها</option>
+                                        <option t-foreach="instruments" t-as="i" t-att-value="i.id" t-att-selected="'selected' if params.get('instrument_id') == str(i.id) else None" t-out="i.name"/>
+                                    </select></label>
+                                <p class="tsp-field--wide"><button type="submit" class="ts-btn ts-btn--outline">نمایش</button>
+                                    <a t-if="params" t-attf-href="/my/workspaces/#{ws.id}/reports" class="ts-btn ts-btn--quiet">حذف پالایه‌ها</a></p>
+                            </form>
                             <section class="ts-card" aria-labelledby="tsp-rp-1">
-                                <h2 id="tsp-rp-1" class="h5">نتیجه‌های اخیر</h2>
-                                <p t-if="not rows" class="ts-hint">هنوز نتیجه‌ای که بتوانید ببینید وجود ندارد.</p>
-                                <table t-if="rows" class="ts-table tsp-table tsp-table--cards">
-                                    <caption class="tsp-sr">نتیجه‌های اخیر</caption>
-                                    <thead><tr><th scope="col">شرکت‌کننده</th><th scope="col">سنجه</th><th scope="col">سطح</th><th scope="col">تاریخ</th></tr></thead>
+                                <h2 id="tsp-rp-1" class="h5">نتیجه‌های اخیر <small class="ts-hint">(<t t-out="fa(len(rows))"/> مورد، حداکثر <t t-out="fa(max_rows)"/>)</small></h2>
+                                <p t-if="not rows" class="ts-hint"><t t-if="params">با این پالایه نتیجه‌ای پیدا نشد.</t><t t-else="">هنوز نتیجه‌ای که بتوانید ببینید وجود ندارد.</t></p>
+                                <div t-if="rows" class="ts-table-wrap">
+                                <table class="ts-table tsp-table tsp-table--cards">
+                                    <caption class="tsp-sr"><t t-out="fa(max_rows)"/> نتیجهٔ آخر</caption>
+                                    <thead><tr><th scope="col">شرکت‌کننده</th><th scope="col">سنجه</th><th scope="col">نوع گزارش</th><th scope="col">تاریخ</th></tr></thead>
                                     <tbody>
                                         <tr t-foreach="rows" t-as="row">
                                             <th scope="row" data-label="شرکت‌کننده"><a t-attf-href="#{url(ws.id, row[0].client_id.id, row[0].id)}" t-out="row[0].client_id.name"/></th>
                                             <td data-label="سنجه" t-out="row[0].instrument_id.name"/>
-                                            <td data-label="سطح" t-out="kinds.get(row[1], row[1])"/>
+                                            <td data-label="نوع گزارش" t-out="kinds.get(row[1], row[1])"/>
                                             <td data-label="تاریخ" t-out="jalali(row[0].submitted_at, with_time=False)"/>
                                         </tr>
                                     </tbody>
                                 </table>
+                                </div>
                             </section>
                         </t>
                     </div>
                 </t>
+            </t>
+        </field>
+    </record>
+
+    <record id="tpl_group_report_next" model="ir.ui.view">
+        <field name="name">TS panel: group report, how to get more results</field>
+        <field name="type">qweb</field>
+        <field name="key">ts_panel.group_report_next</field>
+        <field name="website_id" ref="ts_website.website_ts"/>
+        <field name="arch" type="xml">
+            <t t-name="ts_panel.group_report_next">
+                <t t-if="can_invite"><a t-attf-href="/my/workspaces/#{ws.id}/campaigns/new" class="ts-btn ts-btn--outline ts-btn--sm">دعوت گروهی</a> </t>
+                <a t-if="can_invite1" t-attf-href="/my/workspaces/#{ws.id}/invites" class="ts-btn ts-btn--quiet ts-btn--sm">دعوت‌ها</a>
+                <span class="ts-hint">هر نتیجه‌ای که شرکت‌کننده با پنل به اشتراک بگذارد این‌جا شمرده می‌شود.</span>
             </t>
         </field>
     </record>
@@ -123,31 +150,38 @@
                                     <p class="tsp-head__help">فقط تعداد افراد در هر بازه؛ نتیجهٔ هیچ فردی دیده نمی‌شود. خانه‌های کمتر از <t t-out="fa(rep['k'])"/> نفر پنهان می‌شوند.</p>
                                 </div>
                             </header>
-                            <form method="get" class="ts-card tsp-filters" aria-label="پالایه‌ها">
-                                <label>گروه
-                                    <select name="group_id"><option value="">همه</option>
+                            <form method="get" class="ts-card tsp-form tsp-filters tsp-filters--grid" aria-label="پالایه‌ها">
+                                <label class="tsp-field"><span class="tsp-field__label">گروه</span>
+                                    <select name="group_id" class="form-select"><option value="">همه</option>
                                         <option t-foreach="groups" t-as="g" t-att-value="g.id" t-att-selected="'selected' if params.get('group_id') == str(g.id) else None" t-out="g.name"/>
                                     </select></label>
-                                <label>دعوت گروهی
-                                    <select name="campaign_id"><option value="">همه</option>
+                                <label class="tsp-field"><span class="tsp-field__label">دعوت گروهی</span>
+                                    <select name="campaign_id" class="form-select"><option value="">همه</option>
                                         <option t-foreach="campaigns" t-as="c" t-att-value="c.id" t-att-selected="'selected' if params.get('campaign_id') == str(c.id) else None" t-out="c.name"/>
                                     </select></label>
-                                <label>سنجه
-                                    <select name="instrument_id"><option value="">همه</option>
+                                <label class="tsp-field"><span class="tsp-field__label">سنجه</span>
+                                    <select name="instrument_id" class="form-select"><option value="">همه</option>
                                         <option t-foreach="instruments" t-as="i" t-att-value="i.id" t-att-selected="'selected' if params.get('instrument_id') == str(i.id) else None" t-out="i.name"/>
                                     </select></label>
-                                <label>بازهٔ زمانی
-                                    <select name="period">
+                                <label class="tsp-field"><span class="tsp-field__label">بازهٔ زمانی</span>
+                                    <select name="period" class="form-select">
                                         <option t-foreach="periods" t-as="p" t-att-value="p[0]" t-att-selected="'selected' if params.get('period', '0') == str(p[0]) else None" t-out="p[1]"/>
                                     </select></label>
-                                <button type="submit" class="ts-btn ts-btn--outline">اعمال</button>
+                                <p class="tsp-field--wide"><button type="submit" class="ts-btn ts-btn--outline">نمایش</button></p>
                             </form>
-                            <p t-if="rep['imported']" class="ts-hint">شامل نتایج واردشده</p>
-                            <p t-if="not rep['instruments']" class="ts-card ts-hint" t-out="rep['text']"/>
+                            <p t-if="rep['imported']" class="ts-hint">شامل نتیجه‌های واردشده از فایل</p>
+                            <section t-if="not rep['instruments']" class="ts-card ts-card--soft tsp-empty-state">
+                                <h2 class="h5">هنوز نتیجهٔ کافی نیست</h2>
+                                <p t-out="rep['text']"/>
+                                <p><t t-call="ts_panel.group_report_next"/></p>
+                            </section>
                             <section t-foreach="rep['instruments']" t-as="ins" class="ts-card">
                                 <h2 class="h5" t-out="ins['name']"/>
-                                <p class="ts-hint"><t t-out="fa(ins['n'])"/> از <t t-out="fa(ins['m'])"/> نفر</p>
-                                <p t-if="not ins['ok']" t-out="rep['text']"/>
+                                <p class="ts-hint"><t t-out="fa(ins['n'])"/> از <t t-out="fa(ins['m'])"/> نفر نتیجه را با پنل به اشتراک گذاشته‌اند.</p>
+                                <div t-if="not ins['ok']" class="tsp-empty-state">
+                                    <p><strong>هنوز نتیجهٔ کافی نیست.</strong> <t t-out="rep['text']"/> <t t-out="fa(rep['k'] - ins['n'])"/> نتیجهٔ دیگر لازم است.</p>
+                                    <p><t t-call="ts_panel.group_report_next"/></p>
+                                </div>
                                 <table t-if="ins['factors']" class="ts-table tsp-table">
                                     <caption class="tsp-sr">تعداد افراد در هر بازه</caption>
                                     <thead><tr><th scope="col">بُعد</th><th scope="col">کم</th><th scope="col">متوسط</th><th scope="col">زیاد</th></tr></thead>

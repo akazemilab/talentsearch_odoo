@@ -61,7 +61,7 @@
                                     <span><t t-out="fa(inst.active_item_count)"/> پرسش</span>
                                     <span>حدود <t t-out="fa(inst.duration_minutes)"/> دقیقه</span>
                                     <span><t t-out="fa(inst.factor_count)"/> بُعد</span>
-                                    <span t-out="dict(inst._fields['audience'].selection).get(inst.audience)"/>
+                                    <span id="ts-inst-audience" t-out="dict(inst._fields['audience'].selection).get(inst.audience)"/>
                                 </p>
                                 <div class="ts-hero__actions">
                                     <t t-set="open_attempt" t-value="mine.filtered(lambda a: a.state in ('consent', 'in_progress'))[:1]"/>
@@ -70,9 +70,8 @@
                                         <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
                                         <button type="submit" class="ts-btn ts-btn--primary">شروع سنجه</button>
                                     </form>
-                                    <a t-if="request.env.user._is_public()" href="/web/signup" class="ts-btn ts-btn--outline">ساخت حساب کاربری</a>
                                 </div>
-                                <p t-if="request.env.user._is_public()" class="ts-muted">برای ذخیرهٔ پاسخ‌ها و دیدن نتیجه در حساب کاربری، ابتدا وارد شوید یا حساب بسازید.</p>
+                                <p t-if="request.env.user._is_public()" class="ts-muted">با «شروع سنجه» اول وارد حساب خود می‌شوید یا حساب تازه می‌سازید؛ پاسخ‌ها و نتیجه در همان حساب ذخیره می‌شود.</p>
                             </div>
                         </section>
                         <section class="ts-section">

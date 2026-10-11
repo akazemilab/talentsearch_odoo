@@ -7,7 +7,8 @@ from odoo.exceptions import AccessError, UserError
 from .engine import ScoringError, contract_from_version, score as engine_score
 from .instrument import BANDS
 
-CONSENT_VERSION = 'TS-CONSENT-1405-07-07-v1'
+# v2 (1405-07-19, UX audit 2026-10-11): consent pages explain autosave, stop/continue, locking, withdrawal and who sees
+CONSENT_VERSION = 'TS-CONSENT-1405-07-19-v2'
 BAND_FA = dict(BANDS)
 BAND_WORDS = {'Low': 'کم', 'Medium': 'متوسط', 'High': 'زیاد'}
 PERSIAN_DIGITS = str.maketrans('0123456789', '۰۱۲۳۴۵۶۷۸۹')
@@ -97,7 +98,7 @@ class TsAttempt(models.Model):
     partner_id = fields.Many2one(related='user_id.partner_id', store=True)
     instrument_id = fields.Many2one('ts.instrument', required=True, index=True, ondelete='restrict')
     version_id = fields.Many2one('ts.instrument.version', required=True, ondelete='restrict')
-    workspace_id = fields.Many2one('ts.workspace', 'فضای کاری', index=True)
+    workspace_id = fields.Many2one('ts.workspace', 'پنل', index=True)
     access_token = fields.Char(required=True, copy=False, index=True, default=lambda s: uuid.uuid4().hex)
     state = fields.Selection([
         ('consent', 'در انتظار رضایت'),
@@ -161,13 +162,33 @@ class TsAttempt(models.Model):
     def jalali(self, dt, with_time=True):
         return jalali(dt, self.env, with_time)
 
+    def ts_informal(self):
+        """Copy register only (voice.md §2): True -> «تو» (students), False -> «شما» (adults, parents).
+        Students: a minor client, an education panel, an adolescent instrument, or a self-declared minor (guardian
+        consent row). A parent answering about a child is addressed with «شما». Never used for access decisions."""
+        self.ensure_one()
+        if self.instrument_id.audience == 'child':
+            return False
+        client = self['client_id'] if 'client_id' in self._fields else False
+        if client and client.age_group in ('minor', 'adult'):
+            return client.age_group == 'minor'
+        ws = self['workspace_id'] if 'workspace_id' in self._fields else False
+        if ws:
+            return ws.purpose == 'education'
+        if self.instrument_id.audience == 'adolescent':
+            return True
+        if 'ts.consent.record' in self.env:
+            return bool(self.env['ts.consent.record'].sudo().search_count(
+                [('attempt_id', '=', self.id), ('kind', '=', 'guardian')], limit=1))
+        return False
+
     # ---------------------------------------------------------------- actions
     def give_consent(self, research=False, role='self', subject=None):
         self.ensure_one()
         if self.state != 'consent':
             return
         if self.instrument_id.audience == 'child' and role != 'guardian':
-            raise UserError('این پرسشنامه را باید والد یا مراقب دربارهٔ کودک تکمیل کند.')
+            raise UserError('این سنجه را باید ولی کودک (پدر، مادر یا سرپرست قانونی) دربارهٔ او تکمیل کند.')
         now = fields.Datetime.now()
         self.write({'consent_service': True, 'consent_research': bool(research), 'consent_at': now,
                     'consent_version': CONSENT_VERSION, 'state': 'in_progress', 'started_at': now,

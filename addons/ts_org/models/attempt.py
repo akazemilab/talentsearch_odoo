@@ -16,7 +16,7 @@ class TsAttempt(models.Model):
         for at in self:
             r = at.responsible_id
             if r and (r.workspace_id != at.workspace_id or not r.active or r.role not in RESPONSIBLE_ROLES):
-                raise ValidationError('کارشناس مسئول باید عضو فعال همین فضای کاری با نقش کارشناس باشد.')
+                raise ValidationError('کارشناس مسئول باید عضو فعال همین پنل با نقشی باشد که می‌تواند مسئول شرکت‌کننده شود.')
 
     def write(self, vals):
         old = {a.id: a.responsible_id.id for a in self} if 'responsible_id' in vals else {}

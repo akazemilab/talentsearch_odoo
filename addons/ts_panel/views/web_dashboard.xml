@@ -12,38 +12,64 @@
                 <t t-call="website.layout" additional_title="title">
                     <div id="wrap" class="ts-page">
                         <t t-call="ts_panel.shell_frame">
+                            <t t-set="role_notes" t-value="{
+                                'counselor': 'شما در این پنل دانش‌آموزانی را که مسئول آن‌ها هستید و صف «بدون کارشناس» را می‌بینید؛ گزارش‌ها در سطح مشاور نمایش داده می‌شوند و پاسخ‌های خام دیده نمی‌شوند.',
+                                'clinician': 'شما فقط شرکت‌کنندگانی را که مسئول آن‌ها هستید می‌بینید؛ گزارش کامل بالینی، همراه با متن متخصص، پس از تأیید صلاحیت حرفه‌ای شما نمایش داده می‌شود.',
+                                'clinic_director': 'شما همهٔ شرکت‌کنندگان این پنل را می‌بینید؛ گزارش کامل بالینی پس از تأیید صلاحیت حرفه‌ای شما نمایش داده می‌شود.',
+                                'reviewer': 'شما در این پنل فقط سطح (بازهٔ) هر عامل را می‌بینید؛ نمره، پاسخ و متن تفسیری نمایش داده نمی‌شود.',
+                                'hiring_manager': 'شما شرکت‌کنندگانی را که مسئول آن‌ها هستید می‌بینید و از نتیجه فقط سطح هر عامل نمایش داده می‌شود؛ نمره و پاسخ دیده نمی‌شود.',
+                                'hr_admin': 'شما همهٔ شرکت‌کنندگان این پنل را می‌بینید و از نتیجه فقط سطح هر عامل نمایش داده می‌شود؛ نمره و پاسخ دیده نمی‌شود.',
+                                'school_admin': 'شما وضعیت دعوت‌ها و شرکت‌کنندگان مدرسه را می‌بینید؛ پاسخ‌های خام دیده نمی‌شوند.'}"/>
+                            <t t-set="can_assign" t-value="member.has_perm('clients:assign')"/>
+                            <!-- 'gated' is skipped: the shell shows the gated notice on every panel page -->
+                            <t t-set="att" t-value="[x for x in (attention or []) if x['key'] != 'gated' and (x['key'] != 'unassigned' or can_assign)]"/>
+                            <t t-set="manages" t-value="member.can_act() and member.has_perm('invites:manage')"/>
+                            <t t-set="empty" t-value="manages and not total"/>
                             <header class="tsp-head">
                                 <div>
                                     <h1 class="tsp-head__title">داشبورد</h1>
-                                    <p class="tsp-head__help">اول کارهای منتظر شما، بعد خلاصهٔ دوره. هر عدد شما را به فهرستی می‌برد که همان تعداد را نشان می‌دهد.</p>
+                                    <p t-if="att or (tiles and not empty)" class="tsp-head__help">اول کارهای منتظر شما، بعد خلاصهٔ دوره. هر عدد شما را به فهرستی می‌برد که همان تعداد را نشان می‌دهد.</p>
                                 </div>
                                 <div class="tsp-head__actions">
                                     <a t-if="can_invite" t-attf-href="/my/workspaces/#{ws.id}/invites/new?fresh=1" class="ts-btn ts-btn--primary">دعوت تازه</a>
                                     <span t-attf-class="ts-pill #{'ts-pill--ok' if ws.state in ('pilot', 'active') and not gated else 'ts-pill--warn'}"><t t-out="'در انتظار تأیید' if gated else panel_state"/></span>
                                 </div>
                             </header>
-                            <section t-if="gated" class="ts-notice ts-notice--warn" role="status">
-                                <strong>پنل در انتظار تأیید است.</strong>
-                                می‌توانید پنل را کامل کنید و همکارانتان را دعوت کنید؛ دعوت شرکت‌کنندهٔ واقعی و دریافت نتیجه پس از تأیید تیم تلنت سرچ باز می‌شود.
-                                <t t-if="rejected"><br/>درخواست رد شد<t t-if="rejection_note">: <span t-out="rejection_note"/></t>. می‌توانید اطلاعات پنل را اصلاح کنید و با پشتیبانی تماس بگیرید.</t>
-                            </section>
+                            <p t-if="role_notes.get(member.role)" class="tsp-role-note" role="note">
+                                <t t-out="role_notes[member.role]"/>
+                                <a t-att-href="role_help_url or '/help/roles'">دسترسی نقش‌ها</a>
+                            </p>
+                            <p t-if="gated and rejected" class="ts-notice ts-notice--warn" role="status">درخواست تأیید رد شد<t t-if="rejection_note">: <span t-out="rejection_note"/></t>. می‌توانید اطلاعات پنل را اصلاح کنید و با پشتیبانی تماس بگیرید.</p>
                             <p t-if="is_new" class="ts-notice" role="status">پنل ساخته شد.</p>
 
-                            <section t-if="attention" class="ts-card" aria-labelledby="tsp-d-att">
+                            <section t-if="att" class="ts-card" aria-labelledby="tsp-d-att">
                                 <h2 id="tsp-d-att" class="h5">نیازمند توجه</h2>
                                 <ul class="tsp-list">
-                                    <li t-foreach="attention" t-as="a">
+                                    <li t-foreach="att" t-as="a">
                                         <a t-att-href="a['url']"><strong class="ts-num" t-out="fa(a['n'])"/> <span t-out="a['label']"/></a>
                                     </li>
                                 </ul>
                             </section>
 
+                            <div t-if="empty and not gated" class="tsp-empty tsp-dash-empty">
+                                <h2 class="h5">این پنل هنوز دعوتی ندارد</h2>
+                                <p t-if="can_invite">از اینجا شرکت‌کنندگان را به سنجه دعوت می‌کنید و نتیجه‌هایی را که با پنل به اشتراک می‌گذارند می‌بینید. با «دعوت تازه» اولین دعوت را بفرستید.</p>
+                                <p t-else="">وقتی مالک یا هماهنگ‌کنندهٔ پنل دعوت بفرستد و شرکت‌کننده‌ای سنجه را تمام کند، اینجا و در «شرکت‌کنندگان» دیده می‌شود.</p>
+                                <p class="tsp-row-actions">
+                                    <a t-if="can_invite" t-attf-href="/my/workspaces/#{ws.id}/invites/new?fresh=1" class="ts-btn ts-btn--primary">دعوت تازه</a>
+                                    <a href="/help/roles" class="ts-btn ts-btn--quiet">نقش من چه چیزهایی را می‌بیند</a>
+                                </p>
+                            </div>
+
                             <section t-if="checklist" class="ts-card ts-card--soft" id="ts-checklist" aria-labelledby="tsp-d-chk">
                                 <h2 id="tsp-d-chk" class="h5">گام‌های راه‌اندازی</h2>
-                                <ol class="ts-checklist">
-                                    <li t-foreach="checklist" t-as="c" t-attf-class="#{'is-done' if c[1] else ''}">
-                                        <a t-if="c[2] and not c[1]" t-att-href="c[2]" t-out="c[0]"/><span t-else="" t-out="c[0]"/><span t-if="c[1]" class="tsp-sr"> (انجام شد)</span>
-                                    </li>
+                                <ol class="ts-checklist tsp-checklist">
+                                    <t t-foreach="checklist" t-as="c">
+                                        <li t-if="not c[1]" class="is-open"><span class="tsp-open-ico" aria-hidden="true"></span><a t-if="c[2]" t-att-href="c[2]" t-out="c[0]"/><span t-else="" t-out="c[0]"/></li>
+                                    </t>
+                                    <t t-foreach="checklist" t-as="c">
+                                        <li t-if="c[1]" class="is-done"><span class="tsp-check-ico" aria-hidden="true"></span><span t-out="c[0]"/> <span class="tsp-done-label">انجام شد</span></li>
+                                    </t>
                                 </ol>
                                 <form t-if="can_dismiss" t-attf-action="/my/workspaces/#{ws.id}/dashboard/dismiss" method="post" data-tsp-once="1">
                                     <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
@@ -51,14 +77,15 @@
                                 </form>
                             </section>
 
-                            <section t-if="tiles or funnel" class="ts-card" aria-labelledby="tsp-d-kpi">
-                                <h2 id="tsp-d-kpi" class="h5">خلاصهٔ دوره</h2>
+                            <section t-if="tiles and not empty" class="ts-card" aria-labelledby="tsp-d-kpi">
+                                <h2 id="tsp-d-kpi" class="h5">رخدادهای این دوره</h2>
+                                <p class="ts-hint">شمار کارهایی که در این بازه رخ داده است (تجمعی)، حتی اگر وضعیت دعوت بعداً عوض شده باشد.</p>
                                 <nav class="tsp-chips" aria-label="دورهٔ گزارش">
                                     <a t-foreach="periods" t-as="p" t-attf-href="/my/workspaces/#{ws.id}?period=#{p}"
                                        t-attf-class="tsp-chip #{'is-on' if p == days else ''}" t-att-aria-current="'true' if p == days else None">
                                         <t t-out="fa(p)"/> روز گذشته</a>
                                 </nav>
-                                <ul t-if="tiles" class="tsp-stats" aria-label="شاخص‌های دوره">
+                                <ul class="tsp-stats tsp-stats--daily" aria-label="شاخص‌های دوره">
                                     <li t-foreach="tiles" t-as="t">
                                         <a t-if="t['url']" class="tsp-stat" t-att-href="t['url']">
                                             <strong class="ts-num"><t t-if="t['key'] == 'rate'"><t t-out="fa(t['text'][0])"/> از <t t-out="fa(t['text'][1])"/></t><t t-else="" t-out="fa(t['n'])"/></strong>
@@ -71,20 +98,20 @@
                                         </div>
                                     </li>
                                 </ul>
-                                <p t-if="not tiles" class="ts-hint">برای نقش شما شاخصی در این بخش نیست.</p>
                             </section>
 
-                            <section t-if="funnel" class="ts-card" aria-labelledby="tsp-d-fun">
-                                <h2 id="tsp-d-fun" class="h5">مسیر دعوت‌ها در این دوره</h2>
-                                <table class="ts-table tsp-table">
-                                    <caption class="tsp-sr">شمار دعوت‌های ساخته‌شده در دوره به تفکیک وضعیت</caption>
+                            <section t-if="funnel and not empty" class="ts-card" aria-labelledby="tsp-d-fun">
+                                <h2 id="tsp-d-fun" class="h5">وضعیت فعلی دعوت‌های این دوره</h2>
+                                <p class="ts-hint">دعوت‌هایی که در این بازه ساخته شده‌اند، بر اساس وضعیتی که الان دارند.</p>
+                                <table class="ts-table tsp-table tsp-funnel">
+                                    <caption class="tsp-sr">وضعیت فعلی دعوت‌های ساخته‌شده در این دوره</caption>
                                     <thead><tr><th scope="col">وضعیت</th><th scope="col">تعداد</th><th scope="col"><span class="tsp-sr">نمودار</span></th></tr></thead>
                                     <tbody>
                                         <t t-set="top" t-value="max([f[2] for f in funnel] + [1])"/>
                                         <tr t-foreach="funnel" t-as="f">
                                             <th scope="row"><a t-att-href="f[3]" t-out="f[1]"/></th>
                                             <td class="ts-num" t-out="fa(f[2])"/>
-                                            <td aria-hidden="true"><span class="tsp-bar" t-attf-style="width: #{round(100.0 * f[2] / top)}%"></span></td>
+                                            <td aria-hidden="true"><span t-if="f[2]" class="tsp-bar" t-attf-style="inline-size: #{round(100.0 * f[2] / top)}%"></span></td>
                                         </tr>
                                     </tbody>
                                 </table>
@@ -97,7 +124,7 @@
                                     <thead><tr><th scope="col">عضو</th><th scope="col">شرکت‌کنندگان</th><th scope="col">دعوت‌های باز</th></tr></thead>
                                     <tbody>
                                         <tr t-foreach="workload" t-as="w">
-                                            <th scope="row" data-label="عضو" t-out="w[0].user_id.name"/>
+                                            <th scope="row" data-label="عضو"><bdi t-out="w[0].user_id.name"/></th>
                                             <td data-label="شرکت‌کنندگان" class="ts-num" t-out="fa(w[1])"/>
                                             <td data-label="دعوت‌های باز" class="ts-num" t-out="fa(w[2])"/>
                                         </tr>
@@ -105,7 +132,10 @@
                                 </table>
                             </section>
 
-                            <p t-if="not total and not attention and not checklist" class="tsp-empty">هنوز دعوتی نفرستاده‌اید. با «دعوت تازه» اولین دعوت را بسازید.</p>
+                            <div t-if="not manages and not att" class="tsp-empty">
+                                <p>وقتی شرکت‌کننده‌ای سنجه را تمام کند و نتیجه را با پنل به اشتراک بگذارد، خلاصهٔ او در «شرکت‌کنندگان» دیده می‌شود.</p>
+                                <a t-attf-href="/my/workspaces/#{ws.id}/clients" class="ts-btn ts-btn--outline">شرکت‌کنندگان</a>
+                            </div>
                         </t>
                     </div>
                 </t>

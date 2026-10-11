@@ -4,7 +4,7 @@ from odoo import api, fields, models
 class TsAttempt(models.Model):
     _inherit = 'ts.attempt'
 
-    client_id = fields.Many2one('ts.panel.client', 'مراجع', index=True, ondelete='restrict')
+    client_id = fields.Many2one('ts.panel.client', 'شرکت‌کننده', index=True, ondelete='restrict')
     responsible_id = fields.Many2one(related='client_id.responsible_id', readonly=False, string='کارشناس مسئول')
 
     @api.model_create_multi

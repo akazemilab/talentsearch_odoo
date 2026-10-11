@@ -102,11 +102,11 @@ def plain(html):
 
 # ---- home: the one next action follows the real state
 st, page = get(login('inv'), '/my')
-check('home of an invited person leads with the invitation', st == 200 and 'id="ts-home-next"' in page and 'یک دعوت منتظر شماست' in page, st)
+check('home of an invited person leads with the invitation', st == 200 and 'id="ts-home-next"' in page and ('یک دعوت منتظر شماست' in page or 'یک دعوت منتظر توست' in page), st)
 check('…names the school and the deadline', 'مدرسهٔ نمونهٔ پرتال' in page and 'مهلت تا' in page)
 check('…and the open invitations list is dated and attributed', 'ts-home-invites' in page and 'از طرف' in page)
 st, page = get(login('going'), '/my')
-check('home of an unfinished attempt leads with resume', st == 200 and 'یک سنجهٔ نیمه‌تمام دارید' in page and 'ادامهٔ پاسخ‌دهی' in page and 'آخرین ذخیره' in page, st)
+check('home of an unfinished attempt leads with resume', st == 200 and ('یک سنجهٔ نیمه‌تمام دارید' in page or 'یک سنجهٔ نیمه‌تمام داری' in page) and ('ادامهٔ پاسخ‌دهی' in page or '>شروع<' in page) and 'آخرین ذخیره' in page, st)
 st, page = get(login('done'), '/my')
 check('home of a fresh result leads with the result', st == 200 and 'نتیجهٔ تازه‌ای آماده است' in page and 'دیدن نتیجه' in page, st)
 st, page = get(login('empty'), '/my')
@@ -120,16 +120,16 @@ st, page = get(login('going'), '/take/%s' % GTOK)
 check('an unfinished attempt opens the player (not the consent page)', st == 200 and 'ts-qform' in page, st)
 emp = login('emp')
 st, page = get(emp, '/take/%s' % ETOK)
-check('consent of a company invitation says the company sees only the band per dimension', st == 200 and 'id="ts-who-sees-line"' in page and 'فقط بازهٔ هر بُعد' in page and 'شرکت نمونهٔ پرتال' in page, st)
+check('consent of a company invitation says the company sees only the band per dimension', st == 200 and 'id="ts-who-sees-line"' in page and 'فقط سطح هر بُعد' in page and 'شرکت نمونهٔ پرتال' in page, st)
 check('…and not the old "only you" sentence', 'با هیچ کارفرما یا مرکزی' not in page)
 st, page = get(login('edu'), '/take/%s' % XTOK)
-check('consent of a school invitation names the responsible counselor', st == 200 and 'مشاور مسئول' in page and 'مدرسهٔ نمونهٔ پرتال' in page, st)
+check('consent of a school invitation names the counselor (glossary 9-4: «مشاور»)', st == 200 and 'مشاورت' in page and 'مشاور مسئول' not in page and 'مدرسهٔ نمونهٔ پرتال' in page, st)
 # a self-started attempt still says "only you"
 o = shell("u = env['res.users'].search([('login', '=', %r)]); i = env['ts.instrument'].search([('state', '=', 'published'), ('code', '!=', 'TALENT-INV-15')], limit=1); "
           "a = env['ts.attempt'].search([('user_id', '=', u.id), ('state', '=', 'consent')], limit=1) or env['ts.attempt'].create({'user_id': u.id, 'instrument_id': i.id, 'version_id': i.current_version_id.id}); env.cr.commit(); print('TOK', a.access_token)" % L['self'])
 stok = re.search(r'TOK (\S+)', o).group(1)
 st, page = get(login('self'), '/take/%s' % stok)
-check('consent of a self-started attempt says only you', st == 200 and 'فقط شما، در حساب کاربری‌تان' in page, st)
+check('consent of a self-started attempt says only you', st == 200 and ('فقط شما، در حساب کاربری‌تان' in page or 'فقط تو، در حساب کاربری‌ات' in page), st)
 
 # ---- unavailable result: no redirect loop
 h = login('hold')
@@ -142,9 +142,9 @@ check('the list still opens for that person', st == 200, st)
 d = login('done')
 st, page = get(d, '/my/assessments/%s?submitted=1' % DA)
 check('after submission the report opens with what was received, who sees it and a next step',
-      st == 200 and 'پاسخ‌های شما دریافت و ثبت شد' in page and 'id="ts-who-sees-line"' in page and 'href="/my"' in page and 'id="ts-summary"' in page, st)
+      st == 200 and ('پاسخ‌های شما ثبت شد' in page or 'پاسخ‌هایت ثبت شد' in page) and 'id="ts-who-sees-line"' in page and 'href="/my"' in page and 'id="ts-summary"' in page, st)
 st, page = get(d, '/my/assessments/%s' % DA)
-check('without the flag the block is absent', 'پاسخ‌های شما دریافت و ثبت شد' not in page)
+check('without the flag the block is absent', 'id="ts-received-h"' not in page)
 
 # ---- results: grouped list, summary first, folded details, history of the same instrument
 st, page = get(d, '/my/assessments')

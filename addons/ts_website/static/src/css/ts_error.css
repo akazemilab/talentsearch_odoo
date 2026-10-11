@@ -1,0 +1,43 @@
+/* Talent Search error page (website 4, ts_website.page_500). Plain CSS: the error page cannot use the asset bundle.
+   The colour values repeat tokens.scss on purpose (same names, same light/dark pairs). */
+@font-face { font-family: 'Vazirmatn FD'; src: url('/ts_website/static/fonts/Vazirmatn-FD-Var.woff2') format('woff2'); font-weight: 100 900; font-display: swap; }
+@font-face { font-family: 'Estedad FD'; src: url('/ts_website/static/fonts/Estedad-FD-Var.woff2') format('woff2'); font-weight: 100 900; font-display: swap; }
+:root {
+    color-scheme: light;
+    --color-bg: #f4f5fb; --color-surface: #fdfdff; --color-text: #1f2130;
+    --color-neutral-300: #3f424d; --color-neutral-400: #595d6c; --color-neutral-600: #9a9fb3; --color-neutral-900: #eceef6;
+    --color-accent: #6a5cc4; --color-accent-300: #5446a8; --color-accent-800: #e1ddfb; --color-accent-900: #efedfd;
+    --shadow-md: 0 0 0 1px #dfe2ee, 0 8px 24px -12px rgba(31, 33, 48, .18);
+}
+:root[data-theme="dark"] {
+    color-scheme: dark;
+    --color-bg: #161826; --color-surface: #232532; --color-text: #e9e9ed;
+    --color-neutral-300: #cfd3e5; --color-neutral-400: #b2b6ca; --color-neutral-600: #75798c; --color-neutral-900: #292b31;
+    --color-accent: #9184d9; --color-accent-300: #d2cefd; --color-accent-800: #423a6a; --color-accent-900: #2b2741;
+    --shadow-md: 0 0 0 1px #595d6c, 0 6px 18px rgba(0, 0, 0, .55);
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; background: var(--color-bg); color: var(--color-text); }
+body { font-family: 'Vazirmatn FD', Vazirmatn, Tahoma, Arial, sans-serif; font-size: 16px; line-height: 1.9; min-block-size: 100dvh; display: flex; flex-direction: column; }
+a { color: var(--color-accent-300); }
+:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 2px; border-radius: 4px; }
+.tse-skip { position: absolute; inset-block-start: -100px; inset-inline-start: 8px; padding: 8px 12px; background: var(--color-surface); border-radius: 8px; }
+.tse-skip:focus { inset-block-start: 8px; }
+.tse-header { padding: 12px 16px; border-block-end: 1px solid var(--color-neutral-900); }
+.tse-lockup { display: inline-flex; align-items: center; gap: 10px; min-block-size: 44px; color: var(--color-text); text-decoration: none; font-family: 'Estedad FD', 'Vazirmatn FD', Tahoma, sans-serif; }
+.tse-lockup img { border-radius: 50%; }
+.tse-main { flex: 1; display: grid; place-items: start center; padding: clamp(24px, 8vw, 88px) 16px; }
+.tse-card { inline-size: 100%; max-inline-size: 560px; padding: clamp(22px, 4vw, 36px); border-radius: 18px; background: var(--color-surface); box-shadow: var(--shadow-md); }
+.tse-kicker { display: inline-block; padding: 4px 12px; border-radius: 999px; background: var(--color-accent-900); color: var(--color-accent-300); font-size: 13px; font-weight: 500; }
+.tse-card h1 { margin: 12px 0 8px; font: 600 clamp(1.5rem, 4vw, 2rem)/1.4 'Estedad FD', 'Vazirmatn FD', Tahoma, sans-serif; }
+.tse-card p { margin: 0 0 12px; color: var(--color-neutral-300); }
+.tse-ref { font-size: 14px; color: var(--color-neutral-400); }
+.tse-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-block-start: 20px; }
+.tse-btn { display: inline-flex; align-items: center; justify-content: center; min-block-size: 44px; padding: 0 18px; border-radius: 10px; border: 1px solid var(--color-neutral-600); color: var(--color-text); text-decoration: none; font-weight: 500; font-size: 15px; }
+.tse-btn--primary { border-color: var(--color-accent); background: var(--color-accent-900); color: var(--color-accent-300); }
+.tse-btn--quiet { border-color: transparent; }
+.tse-btn:hover { background: var(--color-neutral-900); }
+.tse-btn--primary:hover { background: var(--color-accent-800); }
+.tse-footer { padding: 16px; border-block-start: 1px solid var(--color-neutral-900); font-size: 13px; color: var(--color-neutral-400); }
+.tse-footer p { margin: 0; max-inline-size: 1120px; margin-inline: auto; }
+@media (max-width: 479.98px) { .tse-btn { flex: 1 1 100%; } }

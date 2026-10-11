@@ -88,7 +88,7 @@ te = login('teen')
 st, loc, _ = post(te, '/take/%s/consent' % T_TEEN, {'consent_service': '1', 'age18': 'no'})
 check('under 18 without a guardian tick: refused', 'error=guardian_ok' in (loc or ''), loc)
 st, page = get(te, '/take/%s?error=guardian_ok' % T_TEEN)
-check('the refusal is explained on the page', 'ولی یا سرپرست' in page)
+check('the refusal is explained on the page', 'ولی (پدر، مادر یا سرپرست قانونی)' in page)
 st, loc, _ = post(te, '/take/%s/consent' % T_TEEN, {'consent_service': '1', 'age18': 'no', 'guardian_ok': '1'})
 check('under 18 with a guardian tick goes on', st in (302, 303) and 'error=age' not in (loc or '') and 'error=guardian_ok' not in (loc or ''), loc)
 check('a guardian ledger row exists for the teen',

@@ -15,7 +15,7 @@ from odoo.addons.ts_assessment.controllers.main import _ts_site_or_404
 from odoo.addons.ts_assessment.models.attempt import fa_digits, jalali
 from odoo.addons.ts_org.models.panel import ROLE_LABELS
 
-from .base import flash_error, flash_ok, need_reauth, pop_flash
+from .base import flash_error, flash_ok, need_reauth, pop_flash, reauth_fresh
 
 OPEN_INVITE_STATES = ('invited', 'opened')
 REQUEST_WORDS = {'new': 'ثبت شد', 'in_review': 'در حال بررسی', 'done': 'انجام شد', 'rejected': 'رد شد'}
@@ -24,6 +24,28 @@ REQUEST_WORDS = {'new': 'ثبت شد', 'in_review': 'در حال بررسی', 'd
 def _ts_site():
     website = request.env.website
     return bool(website and website._ts_is_current())
+
+
+def _is_student(env, user):
+    """Audience flag of the participant pages (UX audit G2 X3, voice §2): «تو» for a student, «شما» for everyone else.
+    A student = no active panel membership and a participant record in an education panel or marked under 18."""
+    if env['ts.workspace.member'].sudo().search_count([('user_id', '=', user.id), ('active', '=', True)]):  # ts-scope-ok: own memberships
+        return False
+    return bool(env['ts.panel.client'].sudo().search_count([                                              # ts-scope-ok: own records
+        ('user_id', '=', user.id), '|', ('age_group', '=', 'minor'), ('workspace_id.purpose', '=', 'education')]))
+
+
+def _my_pending(kind):
+    """Non-secret form values kept across /my/reauth (UX audit G4 PT2); only when the re-authentication just happened."""
+    p = request.session.get('ts_pv2_pending') or {}
+    if p.get('kind') != kind:
+        return {}
+    request.session.pop('ts_pv2_pending', None)
+    return p if reauth_fresh() else {}
+
+
+# The participant-facing word for the responsible member, by panel purpose (glossary §9-4).
+RESP_WORD = {'education': 'مشاور', 'clinical': 'روان‌شناس', 'employment': 'کارشناس سازمان'}
 
 
 class TsPanelPortal(CustomerPortal):
@@ -54,15 +76,18 @@ class TsPanelPortal(CustomerPortal):
                    'url': '/invite/%s' % inv.token, 'label': 'مشاهدهٔ دعوت'}
         elif going:
             a = going[0]
+            prog = a.progress if a.state == 'in_progress' else 0
             nxt = {'kind': 'resume', 'title': a.instrument_id.title, 'org': a.workspace_id.partner_id.name if a.workspace_id else None,
-                   'progress': a.progress if a.state == 'in_progress' else 0, 'when': jalali(a.write_date, with_time=False),
-                   'url': '/take/%s' % a.access_token, 'label': 'ادامهٔ پاسخ‌دهی' if a.state == 'in_progress' else 'شروع'}
+                   'progress': prog, 'when': jalali(a.write_date, with_time=False), 'attempt_id': a.id,
+                   'url': '/take/%s' % a.access_token, 'label': 'ادامهٔ پاسخ‌دهی' if prog else 'شروع'}
         elif done and done[0].submitted_at and (datetime.utcnow() - done[0].submitted_at).days <= 14:
             a = done[0]
             nxt = {'kind': 'result', 'title': a.instrument_id.title, 'org': a.workspace_id.partner_id.name if a.workspace_id else None,
                    'when': jalali(a.submitted_at, with_time=False), 'url': '/my/assessments/%s' % a.id, 'label': 'دیدن نتیجه'}
+        if nxt and nxt['kind'] == 'resume':
+            going = going.filtered(lambda a: a.id != nxt['attempt_id'])     # one task, one button (UX audit G2 P1-1)
         return request.render('ts_panel.my_home', {
-            'invites': invites, 'going': going, 'done': done, 'shared_n': shared_n, 'memberships': memberships, 'unread': unread,
+            'tu': _is_student(env, user), 'invites': invites, 'going': going, 'done': done, 'shared_n': shared_n, 'memberships': memberships, 'unread': unread,
             'next_action': nxt, 'deadlines': {i.id: jalali(datetime.combine(i.deadline, time()), with_time=False) for i in invites if i.deadline},
             'fa': fa_digits, 'jalali': jalali, 'page_name': 'ts_my_home'})
 
@@ -75,7 +100,8 @@ class TsPanelPortal(CustomerPortal):
         phone = user.sudo().partner_id.ts_phone if 'ts_phone' in user.sudo().partner_id._fields else False
         ok, err = pop_flash()
         return request.render('ts_panel.my_account', {
-            'user': user, 'phone_verified': bool(phone), 'ok': ok, 'error': err, 'page_name': 'ts_my_account'})
+            'user': user, 'phone_verified': bool(phone), 'ok': ok, 'error': err, 'tu': _is_student(request.env, user),
+            'page_name': 'ts_my_account'})
 
     @http.route('/my/account/name', type='http', auth='user', website=True, methods=['POST'], sitemap=False)
     def account_name(self, **post):
@@ -91,11 +117,19 @@ class TsPanelPortal(CustomerPortal):
 
     # ------------------------------------------------------------------ PRV-2, AUD-4 who can see my results
     def _views(self, assignment):
-        """(role label, day) of each opening of the result by that panel; never a name."""
+        """Who opened the result in that panel, grouped by role: [(role label, times, last opening)]; never a name.
+        The audit query is unchanged (the last 20 openings); only its presentation is grouped (UX audit G2 P5-1)."""
         Ev = request.env['ts.audit.event'].sudo()
         rows = Ev.search([('event_type', '=', 'result.view'), ('res_model', '=', 'ts.attempt'), ('res_id', '=', assignment.attempt_id.id),
                           ('workspace_id', '=', assignment.workspace_id.id), ('outcome', '=', 'ok')], order='id desc', limit=20)
-        return [(ROLE_LABELS.get(r.member_id.role, 'عضو پنل') if r.member_id else 'عضو پنل', jalali(r.create_date, with_time=False)) for r in rows]
+        out, index = [], {}
+        for r in rows:          # newest first, so the first row of a role is its last opening
+            role = ROLE_LABELS.get(r.member_id.role, 'عضو پنل') if r.member_id else 'عضو پنل'
+            if role not in index:
+                index[role] = len(out)
+                out.append([role, 0, jalali(r.create_date)])
+            out[index[role]][1] += 1
+        return [tuple(v) for v in out]
 
     @http.route('/my/sharing', type='http', auth='user', website=True, methods=['GET'], sitemap=False)
     def sharing(self, **kw):
@@ -111,28 +145,38 @@ class TsPanelPortal(CustomerPortal):
                 since = Consent.search([('assignment_id', '=', a.id), ('kind', '=', 'share')], order='id desc', limit=1)  # ts-scope-ok: own ledger
                 resp = a.client_id.responsible_id.user_id.name if a.client_id.responsible_id else False
                 shares.append({'a': a, 'aid': a.id, 'panel': a.workspace_id.name, 'resp': resp, 'level': a.ts_level_word(),
+                               'purpose': a.workspace_id.purpose, 'resp_word': RESP_WORD.get(a.workspace_id.purpose, 'کارشناس مسئول'),
                                'since': jalali(since.at or a.create_date, with_time=False), 'active': a.share_level != 'none',
                                'views': self._views(a) if a.share_level != 'none' else []})
             can_share = (not at.workspace_id and at.source != 'import')
-            blocks.append({'at': at, 'shares': shares, 'can_share': can_share})
+            blocks.append({'at': at, 'shares': shares, 'can_share': can_share, 'act': [x for x in shares if x['active']]})
         ok, err = pop_flash()
         limit = request.env['ir.config_parameter'].sudo().get_int('ts_panel.share_max_panels', 3) or 3
         return request.render('ts_panel.my_sharing', {'blocks': blocks, 'fa': fa_digits, 'ok': ok, 'error': err, 'limit': limit,
-                                                      'page_name': 'ts_my_sharing'})
+                                                      'tu': _is_student(request.env, user), 'page_name': 'ts_my_sharing'})
 
-    @http.route('/my/sharing/<int:aid>/revoke', type='http', auth='user', website=True, methods=['POST'], sitemap=False)
+    @http.route('/my/sharing/<int:aid>/revoke', type='http', auth='user', website=True, methods=['GET', 'POST'], sitemap=False)
     def sharing_revoke(self, aid, **post):
         _ts_site_or_404()
         user = request.env.user
         a = request.env['ts.assignment'].sudo().search([('id', '=', aid), ('user_id', '=', user.id), ('attempt_id', '!=', False)], limit=1)  # ts-scope-ok: own
         if not a:
             raise request.not_found()
+        if request.httprequest.method == 'GET':
+            # The confirmation step (UX audit G2 P5-2, X6): names the panel and what the revocation means. The POST below
+            # (the server logic) is unchanged.
+            if a.share_level == 'none':
+                return request.redirect('/my/sharing')
+            return request.render('ts_panel.my_sharing_revoke', {
+                'a': a, 'panel': a.workspace_id.name, 'invited': a.invited_by_id != user, 'tu': _is_student(request.env, user),
+                'title_text': a.attempt_id.instrument_id.title, 'back': post.get('back') if post.get('back') in ('report',) else '',
+                'page_name': 'ts_my_sharing'})
         try:
             a.action_revoke_share(user)
-            flash_ok('اشتراک لغو شد؛ پنل دیگر این نتیجه را نمی‌بیند.')
+            flash_ok('اشتراک با «%s» لغو شد؛ این پنل دیگر نتیجه را نمی‌بیند.' % a.workspace_id.name)
         except UserError as e:
             flash_error(str(e.args[0] if e.args else e))
-        return request.redirect('/my/sharing')
+        return request.redirect('/my/assessments/%s' % a.attempt_id.id if post.get('back') == 'report' else '/my/sharing')
 
     # ------------------------------------------------------------------ ACC-5, ACC-6 my data
     @http.route('/my/privacy', type='http', auth='user', website=True, methods=['GET'], sitemap=False)
@@ -141,23 +185,41 @@ class TsPanelPortal(CustomerPortal):
         user = request.env.user
         reqs = request.env['ts.data.request'].sudo().search([('user_id', '=', user.id)], limit=20)          # ts-scope-ok: own requests
         ok, err = pop_flash()
+        pend = _my_pending('my_export')
         return request.render('ts_panel.my_privacy', {'reqs': reqs, 'words': REQUEST_WORDS, 'jalali': jalali,
+                                                       'resumed_export': bool(pend), 'tu': _is_student(request.env, user),
                                                        'jd': lambda d: jalali(datetime.combine(d, time(12)), with_time=False), 'ok': ok, 'error': err,
                                                        'page_name': 'ts_my_privacy'})
 
     @http.route('/my/privacy/export', type='http', auth='user', website=True, methods=['POST'], sitemap=False)
     def privacy_export(self, **post):
         _ts_site_or_404()
-        denied = need_reauth('دریافت نسخهٔ داده‌هایتان', '/my/privacy')
+        denied = need_reauth('دریافت نسخه‌ای از داده‌هایتان', '/my/privacy', {'kind': 'my_export'})
         if denied:
             return denied
         req = request.env['ts.data.request'].ts_open(request.env.user, 'export')
         return request.redirect('/my/privacy/jobs/%s' % req.job_id.id)
 
+    @http.route('/my/privacy/erase', type='http', auth='user', website=True, methods=['GET'], sitemap=False)
+    def privacy_erase_confirm(self, **kw):
+        """The confirmation step before an erase request (UX audit G2 P6-1, G4 P22-1/2): what goes, what stays, and the
+        panels the person owns. Re-authentication is asked only when the request is really sent."""
+        _ts_site_or_404()
+        user = request.env.user
+        owned = request.env['ts.workspace.member'].sudo().search([('user_id', '=', user.id), ('active', '=', True),  # ts-scope-ok: own memberships
+                                                                  ('role', '=', 'owner')]).mapped('workspace_id')
+        shared = request.env['ts.assignment'].sudo().search_count([('user_id', '=', user.id), ('share_level', '!=', 'none'),  # ts-scope-ok: own
+                                                                   ('attempt_id', '!=', False)])
+        pend = _my_pending('my_erase')
+        ok, err = pop_flash()
+        return request.render('ts_panel.my_privacy_erase', {
+            'owned': owned, 'shared': shared, 'resumed': bool(pend), 'checked': pend.get('confirm') == '1', 'fa': fa_digits,
+            'tu': _is_student(request.env, user), 'ok': ok, 'error': err, 'page_name': 'ts_my_privacy'})
+
     @http.route('/my/privacy/erase', type='http', auth='user', website=True, methods=['POST'], sitemap=False)
     def privacy_erase(self, **post):
         _ts_site_or_404()
-        denied = need_reauth('درخواست حذف داده‌هایتان', '/my/privacy')
+        denied = need_reauth('ثبت درخواست حذف داده‌هایتان', '/my/privacy/erase', {'kind': 'my_erase', 'confirm': '1'})
         if denied:
             return denied
         try:

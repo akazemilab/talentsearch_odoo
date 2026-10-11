@@ -137,7 +137,8 @@ class TsPanelShell(http.Controller):
         logo = request.httprequest.files.get('logo')
         try:
             member.workspace_id.ts_update_profile(
-                name=post.get('name'), logo_bytes=logo.read(600 * 1024) if logo and logo.filename else None)
+                name=post.get('name'), logo_bytes=logo.read(600 * 1024) if logo and logo.filename else None,
+                remove_logo=bool(post.get('remove_logo')))
         except (UserError, ValidationError) as e:
             flash_error(str(e.args[0] if e.args else e))
         else:

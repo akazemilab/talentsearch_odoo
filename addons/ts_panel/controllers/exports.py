@@ -7,7 +7,7 @@ from odoo.exceptions import UserError
 from odoo.http import request
 
 from ..models.job import KIND_PERM
-from .base import flash_error, forbidden, member_or_404, need_reauth, render_in_shell, require
+from .base import flash_error, forbidden, member_or_404, need_reauth, reauth_fresh, render_in_shell, require
 
 KINDS = {'clients': 'export_clients', 'status': 'export_status', 'results': 'export_results'}
 
@@ -33,8 +33,15 @@ class TsPanelExports(http.Controller):
         jobs = env['ts.job'].sudo().search([('workspace_id', '=', ws.id), ('member_id', '=', me.id),
                                              ('kind', 'in', list(KINDS.values()))], limit=8)
         can_results = me.has_perm('results:export') and ws.purpose in ('education', 'employment')
+        p = request.session.get('ts_pv2_pending') or {}
+        pend = {}
+        if p.get('ws') == ws_id and p.get('kind') == 'export':
+            request.session.pop('ts_pv2_pending', None)
+            pend = p if reauth_fresh() else {}
         return render_in_shell(
-            'ts_panel.exports', me, 'exports', 'خروجی‌ها', jobs=jobs, can_results=can_results,
+            'ts_panel.exports', me, 'exports', 'خروجی‌ها', jobs=jobs, can_results=can_results, pend=pend,
+            kind_label=dict(request.env['ts.job']._fields['kind'].selection),
+            state_label=dict(request.env['ts.job']._fields['state'].selection),
             groups=env['ts.panel.group'].sudo().search([('workspace_id', '=', ws.id), ('active', '=', True)]),
             instruments=me.allowed_instruments(), ttl=env['ts.job']._ttl_hours())
 
@@ -47,7 +54,9 @@ class TsPanelExports(http.Controller):
         back = '/my/workspaces/%s/exports' % ws_id
         if not kind or not me.has_perm(KIND_PERM[kind]):
             return forbidden(me, KIND_PERM.get(kind, 'clients:export'), 'exports')
-        redo = need_reauth('خروجی گرفتن از اطلاعات', back)
+        keep = {k: (post.get(k) or '')[:20] for k in ('what', 'format', 'state', 'group_id', 'instrument_id')}
+        keep.update(ws=ws_id, kind='export')
+        redo = need_reauth('ساخت فایل خروجی در پنل «%s»' % me.workspace_id.name, back, keep)
         if redo:
             return redo
         try:

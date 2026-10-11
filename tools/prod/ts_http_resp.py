@@ -32,7 +32,7 @@ n0 = int(re.search(r'EV (\d+)', shell("print('EV', env['ts.audit.event'].search_
 
 o = Client(TS); assert o.login(OWN, pw[OWN])
 st, _, page = o.req('/my/workspaces/%s/legacy' % ws_id)
-check('owner sees the responsible dropdown on imported rows', st == 200 and 'name="responsible_id"' in page and 'تخصیص‌نشده' in page)
+check('owner sees the responsible dropdown on imported rows', st == 200 and 'name="responsible_id"' in page and 'بدون کارشناس' in page)
 check('owner sees the unassigned filter tab', '?resp=none' in page)
 st, _, page = o.req('/my/workspaces/%s/legacy?resp=none' % ws_id)
 check('unassigned filter lists the import', st == 200 and NAME in page)

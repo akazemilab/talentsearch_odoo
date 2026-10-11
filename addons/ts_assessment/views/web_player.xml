@@ -21,12 +21,14 @@
                                     <dt>چه کسی نتیجه را می‌بیند</dt><dd>فقط شما، در حساب کاربری‌تان. نتیجه با هیچ کارفرما یا مرکزی به اشتراک گذاشته نمی‌شود.</dd>
                                     <dt>ذخیره و ادامه</dt><dd>پاسخ‌ها خودکار ذخیره می‌شوند؛ هر وقت خواستید می‌توانید از همان‌جا ادامه دهید.</dd>
                                     <dt>محدودیت</dt><dd t-out="inst.limitations"/>
-                                    <dt>پشتیبانی</dt><dd><a href="/contact?topic=support">تماس با پشتیبانی</a> · در شرایط اضطراری با اورژانس <bdi dir="ltr">115</bdi> تماس بگیرید.</dd>
+                                    <dt>پیش از ارسال</dt><dd>پیش از ارسال، پاسخ‌ها را مرور می‌کنید. پس از ارسال، پاسخ‌ها قفل می‌شوند.</dd>
+                                    <dt>انصراف</dt><dd>هر وقت بخواهید می‌توانید دست نگه دارید. برای پس گرفتن رضایت یا پاک کردن داده‌ها به صفحهٔ <a href="/my/privacy">حریم خصوصی</a> بروید.</dd>
+                                    <dt>پشتیبانی</dt><dd><a href="/contact?topic=support">تماس با پشتیبانی</a> · اگر حالتان خوب نیست، منتظر نمانید: اورژانس ۱۱۵.</dd>
                                 </dl>
                                 <form t-attf-action="/take/#{attempt.access_token}/consent" method="post" class="ts-form">
                                     <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
                                     <p t-if="error" class="ts-form__error" role="alert">
-                                        <t t-if="error == 'guardian'">برای این پرسشنامه تأیید والد یا مراقب لازم است.</t>
+                                        <t t-if="error == 'guardian'">برای این سنجه تأیید ولی (پدر، مادر یا سرپرست قانونی) لازم است.</t>
                                         <t t-else="">برای شروع، رضایت برای انجام سنجه لازم است.</t>
                                     </p>
                                     <label class="ts-check"><input type="checkbox" name="consent_service" value="1" required="required"/>
@@ -35,7 +37,7 @@
                                         <span>اجازه می‌دهم پاسخ‌هایم بدون نام و به‌صورت تجمیعی برای بهبود سنجه‌ها استفاده شود. <span class="ts-hint">(اختیاری)</span></span></label>
                                     <t t-if="inst.audience in ('child', 'adolescent')">
                                         <label class="ts-check"><input type="checkbox" name="guardian_confirm" value="1" required="required"/>
-                                            <span t-if="inst.audience == 'child'">تأیید می‌کنم والد یا مراقب قانونی کودک هستم و این پرسشنامه را دربارهٔ او تکمیل می‌کنم. <span class="ts-hint">(الزامی)</span></span>
+                                            <span t-if="inst.audience == 'child'">تأیید می‌کنم ولی (پدر، مادر یا سرپرست قانونی) کودک هستم و این سنجه را دربارهٔ او تکمیل می‌کنم. <span class="ts-hint">(الزامی)</span></span>
                                             <span t-else="">تأیید می‌کنم ولی قانونی نوجوان هستم و پاسخ‌دهی با اطلاع و رضایت من انجام می‌شود. <span class="ts-hint">(الزامی)</span></span>
                                         </label>
                                         <div>
@@ -43,7 +45,7 @@
                                             <input id="subject_label" type="text" name="subject_label" dir="auto" maxlength="80"/>
                                         </div>
                                     </t>
-                                    <p class="ts-hint">نسخهٔ متن رضایت: <bdi dir="ltr" t-out="consent_version"/> · می‌توانید هر زمان از طریق <a href="/contact?topic=support">پشتیبانی</a> رضایت خود را پس بگیرید.</p>
+                                    <p class="ts-hint">نسخهٔ متن رضایت: <bdi dir="ltr" t-out="consent_version"/> · <a href="/privacy">سیاست حریم خصوصی</a></p>
                                     <div><button type="submit" class="ts-btn ts-btn--primary">شروع پاسخ‌دهی</button></div>
                                 </form>
                             </div>
@@ -61,6 +63,8 @@
         <field name="website_id" ref="ts_website.website_ts"/>
         <field name="arch" type="xml">
             <t t-name="ts_assessment.player">
+                <!-- the header «ذخیره و خروج» submits this page's form, so unsaved choices are posted too (UX audit G2-P11-3) -->
+                <t t-set="ts_exit_form" t-value="'ts-qform'"/>
                 <t t-call="website.layout" additional_title="inst.title">
                     <div id="wrap" class="ts-page">
                         <section class="ts-section ts-player" t-att-data-token="attempt.access_token" t-att-data-total="total">
@@ -73,8 +77,10 @@
                                     <p class="ts-progress__text"><span class="ts-js-answered" t-out="fa(answered)"/> از <t t-out="fa(total)"/> پرسش پاسخ داده شده · صفحهٔ <t t-out="fa(page)"/> از <t t-out="fa(n_pages)"/>
                                         <span class="ts-save-state" aria-live="polite"/></p>
                                 </div>
-                                <p class="ts-scale-help">هر عبارت را بخوانید و مشخص کنید چه اندازه دربارهٔ <t t-if="inst.audience == 'child'">کودک</t><t t-else="">شما</t> صدق می‌کند.</p>
-                                <form t-attf-action="/take/#{attempt.access_token}/page" method="post" class="ts-qform">
+                                <p class="ts-scale-help" t-if="inst.audience == 'child'">هر جمله را بخوانید و بگویید چقدر دربارهٔ کودک درست است.</p>
+                                <p class="ts-scale-help" t-elif="tu">هر جمله را بخوان و بگو چقدر دربارهٔ تو درست است.</p>
+                                <p class="ts-scale-help" t-else="">هر جمله را بخوانید و بگویید چقدر دربارهٔ شما درست است.</p>
+                                <form t-attf-action="/take/#{attempt.access_token}/page" method="post" class="ts-qform" id="ts-qform">
                                     <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
                                     <input type="hidden" name="page" t-att-value="page"/>
                                     <ol class="ts-qlist" t-att-start="first_index + 1">
@@ -100,7 +106,7 @@
                                         <button t-if="page &gt; 1" type="submit" name="go" value="prev" class="ts-btn ts-btn--outline">صفحهٔ قبل</button>
                                         <button t-if="page &lt; n_pages" type="submit" name="go" value="next" class="ts-btn ts-btn--primary">صفحهٔ بعد</button>
                                         <button t-else="" type="submit" name="go" value="review" class="ts-btn ts-btn--primary">مرور و ارسال</button>
-                                        <a href="/my/assessments" class="ts-btn ts-btn--quiet">ذخیره و ادامه در زمانی دیگر</a>
+                                        <button type="submit" name="go" value="exit" class="ts-btn ts-btn--quiet" formnovalidate="formnovalidate">ذخیره و خروج</button>
                                     </div>
                                 </form>
                             </div>
@@ -122,7 +128,8 @@
                     <div id="wrap" class="ts-page">
                         <section class="ts-section">
                             <div class="ts-container ts-narrow">
-                                <h1 t-out="inst.title"/>
+                                <span class="ts-hero__kicker" t-out="inst.title"/>
+                                <h1 class="ts-review__title">مرور پاسخ‌ها پیش از ارسال</h1>
                                 <p class="ts-lead"><t t-out="fa(answered)"/> از <t t-out="fa(total)"/> پرسش پاسخ داده شده است.</p>
                                 <t t-if="missing">
                                     <div class="ts-notice ts-notice--warn" role="alert">
@@ -136,7 +143,10 @@
                                     <p><a t-attf-href="/take/#{attempt.access_token}?page=#{missing[0][2]}" class="ts-btn ts-btn--primary">رفتن به اولین پرسش بی‌پاسخ</a></p>
                                 </t>
                                 <t t-else="">
-                                    <p>پس از ارسال، پاسخ‌ها قابل تغییر نیستند و نتیجه بلافاصله در حساب کاربری شما نمایش داده می‌شود.</p>
+                                    <div class="ts-notice ts-notice--info" role="note" id="ts-review-lock">
+                                        <p><strong>پس از ارسال، پاسخ‌ها قفل می‌شوند</strong> و نتیجه بلافاصله در حساب شما نمایش داده می‌شود.</p>
+                                        <p id="ts-review-who">نتیجه را فقط خودتان می‌بینید.</p>
+                                    </div>
                                     <form t-attf-action="/take/#{attempt.access_token}/submit" method="post" class="ts-submit-form">
                                         <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
                                         <input type="hidden" name="submission_key" t-att-value="attempt.access_token"/>

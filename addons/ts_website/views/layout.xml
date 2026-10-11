@@ -27,6 +27,14 @@
                     <t t-call-assets="ts_website.assets_ts" t-js="false"/>
                     <t t-call-assets="ts_website.assets_ts_js" t-css="false"/>
                 </xpath>
+                <!-- A page rendered without additional_title would show its English view name («TS panel: ...») in
+                     <title> (website.layout falls back to main_object.name). Website 4 uses a Persian name by path. -->
+                <xpath expr="//head/*[1]" position="before">
+                    <t t-if="not title and not additional_title and main_object and main_object._name == 'ir.ui.view'">
+                        <t t-set="additional_title" t-value="website.ts_fallback_title(request.httprequest.path)"/>
+                        <t t-if="not additional_title"><t t-set="main_object" t-value="None"/></t>
+                    </t>
+                </xpath>
                 <xpath expr="//a[hasclass('o_skip_to_content')]" position="replace">
                     <a class="o_skip_to_content ts-skip" href="#wrap" groups="!base.group_user">پرش به محتوا</a>
                 </xpath>
@@ -41,7 +49,7 @@
                                 <img src="/ts_website/static/img/talentsearch-logo.webp" width="40" height="40" alt=""/>
                                 <span class="ts-lockup__text">
                                     <strong>تلنت سرچ</strong>
-                                    <small>سنجش روان‌شناختی، از خانوادهٔ <bdi dir="ltr">EOT</bdi></small>
+                                    <small>سنجش روان‌شناختی، از خانوادهٔ هیجان اندیشه</small>
                                 </span>
                             </a>
                             <t t-if="ts_mode == 'marketing'">
@@ -80,15 +88,16 @@
                             </t>
                             <ul t-if="ts_mode != 'marketing'" class="top_menu" hidden="hidden"/>
                             <nav t-if="ts_mode == 'app'" class="ts-appnav" id="ts-appnav" aria-label="حساب">
-                                <a href="/my/assessments" t-att-aria-current="'page' if ts_path.startswith('/my/assessments') else None">
+                                <!-- one name per destination, the same as the participant sub-navigation (audit G2 X2) -->
+                                <a href="/my/assessments" title="سنجه‌ها و نتیجه‌ها" t-att-aria-current="'page' if ts_path.startswith('/my/assessments') else None">
                                     <t t-call="ts_website.icon" ico.f="clipboard"/>
-                                    <span>سنجه‌های من</span>
+                                    <span>سنجه‌ها و نتیجه‌ها</span>
                                 </a>
-                                <a href="/my" t-att-aria-current="'page' if ts_path in ('/my', '/my/account') else None">
+                                <a href="/my" title="حساب" t-att-aria-current="'page' if ts_path in ('/my', '/my/account') else None">
                                     <t t-call="ts_website.icon" ico.f="user"/>
-                                    <span>حساب من</span>
+                                    <span>حساب</span>
                                 </a>
-                                <a href="/web/session/logout?redirect=/" rel="nofollow">
+                                <a href="/web/session/logout?redirect=/" rel="nofollow" title="خروج">
                                     <t t-call="ts_website.icon" ico.f="sign-out"/>
                                     <span>خروج</span>
                                 </a>
@@ -97,7 +106,8 @@
                                 <span class="ts-theme__moon"><t t-call="ts_website.icon" ico.f="moon"/></span>
                                 <span class="ts-theme__sun"><t t-call="ts_website.icon" ico.f="sun"/></span>
                             </button>
-                            <a t-if="ts_mode == 'focus' and not ts_public" href="/my/assessments" class="ts-btn ts-btn--quiet ts-btn--sm">ذخیره و خروج</a>
+                            <button t-if="ts_mode == 'focus' and not ts_public and ts_exit_form" type="submit" t-att-form="ts_exit_form" name="go" value="exit" formnovalidate="formnovalidate" class="ts-btn ts-btn--quiet ts-btn--sm">ذخیره و خروج</button>
+                            <a t-elif="ts_mode == 'focus' and not ts_public" href="/my/assessments" class="ts-btn ts-btn--quiet ts-btn--sm">ذخیره و خروج</a>
                         </div>
                     </header>
                 </xpath>
@@ -108,9 +118,10 @@
                         <div class="ts-container">
                             <div class="ts-footer__grid">
                                 <div class="ts-footer__col">
-                                    <span class="ts-footer__brand">تلنت سرچ، از خانوادهٔ <bdi dir="ltr">EOT</bdi></span>
+                                    <span class="ts-footer__brand">تلنت سرچ، از خانوادهٔ هیجان اندیشه</span>
                                     <p>سنجش استعداد برای مدرسه‌ها و مراکز مشاوره. تصمیم با انسان است، نه با نمره.</p>
-                                    <a class="ts-footer__eot" href="https://www.eot.ir/" target="_blank" rel="noopener">بازگشت به <bdi dir="ltr">EOT</bdi></a>
+                                    <!-- same tab: a new tab needs a warning, and the core script adds an English one («(Open in new tab)») -->
+                                    <a class="ts-footer__eot" href="https://www.eot.ir/">سایت هیجان اندیشه&#160;(<bdi dir="ltr">EOT</bdi>)</a>
                                 </div>
                                 <nav class="ts-footer__col" aria-label="تلنت سرچ">
                                     <h2>تلنت سرچ</h2>
@@ -138,7 +149,7 @@
                             </div>
                             <div class="ts-footer__legal">
                                 <p>تلنت سرچ خدمت اورژانسی نیست. در شرایط اضطراری با ۱۱۵ تماس بگیرید.</p>
-                                <p>© مؤسسهٔ <bdi dir="ltr">EOT</bdi></p>
+                                <p>© مؤسسهٔ تعاملی هیجان اندیشه</p>
                             </div>
                         </div>
                     </footer>
@@ -149,7 +160,7 @@
                                 <li><a href="/privacy">حریم خصوصی و رضایت</a></li>
                                 <li><a href="/contact?topic=support">تماس با پشتیبانی</a></li>
                             </ul>
-                            <p>© مؤسسهٔ <bdi dir="ltr">EOT</bdi> · تلنت سرچ خدمت اورژانسی نیست؛ در شرایط اضطراری با ۱۱۵ تماس بگیرید.</p>
+                            <p>© مؤسسهٔ تعاملی هیجان اندیشه · تلنت سرچ خدمت اورژانسی نیست؛ در شرایط اضطراری با ۱۱۵ تماس بگیرید.</p>
                         </div>
                     </footer>
                 </xpath>

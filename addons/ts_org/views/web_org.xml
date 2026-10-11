@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
     <record id="portal_entry_workspaces" model="portal.entry">
-        <field name="name">فضای کاری سازمان</field>
+        <field name="name">پنل‌های من</field>
         <field name="description">دعوت شرکت‌کنندگان، پیگیری وضعیت و مشاهدهٔ نتایجی که با شما به اشتراک گذاشته شده است</field>
         <field name="url">/my/workspaces</field>
         <field name="sequence">2</field>
@@ -17,36 +17,41 @@
         <field name="website_id" ref="ts_website.website_ts"/>
         <field name="arch" type="xml">
             <t t-name="ts_org.workspaces">
-                <t t-call="website.layout" additional_title.f="فضاهای کاری">
+                <t t-call="website.layout" additional_title.f="پنل‌های من">
                     <div id="wrap" class="ts-page">
                         <section class="ts-section">
                             <div class="ts-container">
                                 <div class="ts-section__head">
-                                    <h1>فضاهای کاری</h1>
-                                    <p>فضاهایی که عضو آن‌ها هستید. هر فضا فقط یک هدف دارد و داده‌ها هرگز بین فضاها جابه‌جا نمی‌شوند.</p>
+                                    <h1>پنل‌های من</h1>
+                                    <p>پنل‌هایی که عضو آن‌ها هستید. هر پنل فقط یک هدف دارد و داده‌ها هرگز بین پنل‌ها جابه‌جا نمی‌شوند.</p>
                                 </div>
-                                <p><a href="/my/workspaces/new" class="ts-btn ts-btn--primary">ساخت پنل تازه</a></p>
                                 <div t-if="not rows" class="ts-card ts-card--soft">
-                                    <h3>عضو هیچ فضای کاری نیستید</h3>
+                                    <h2 class="h4">عضو هیچ پنلی نیستید</h2>
                                     <p>اگر همکاری شما را دعوت کرده، پیوند دعوت را باز کنید. یا پنل خودتان را بسازید.</p>
+                                    <p><a href="/my/workspaces/new" class="ts-btn ts-btn--primary">ساخت پنل تازه</a></p>
                                 </div>
                                 <div t-else="" class="ts-grid ts-org-grid">
                                     <t t-foreach="rows" t-as="r">
                                         <article class="ts-card ts-org-card">
-                                            <p class="ts-tag" t-out="dict(r['ws']._fields['purpose'].selection).get(r['ws'].purpose)"/>
-                                            <h2 class="h4" t-out="r['ws'].name"/>
+                                            <p class="ts-org-card__top">
+                                                <span class="ts-tag" t-out="r['purpose']"/>
+                                                <span t-attf-class="ts-pill #{r['pill'][1]}" t-out="r['pill'][0]"/>
+                                            </p>
+                                            <h2 class="h4"><bdi t-out="r['ws'].name"/></h2>
                                             <dl class="ts-meta ts-meta--card">
                                                 <dt>نقش شما</dt><dd t-out="dict(r['member']._fields['role'].selection).get(r['member'].role)"/>
-                                                <dt>کد</dt><dd><bdi dir="ltr" t-out="r['ws'].code"/></dd>
-                                                <dt>دعوت‌ها</dt><dd><t t-out="fa(sum(r['counts'].values()))"/> · تکمیل‌شده <t t-out="fa(r['counts']['done'])"/></dd>
+                                                <dt>کد پنل</dt><dd><bdi dir="ltr" t-out="r['ws'].code"/></dd>
+                                                <dt>دعوت‌ها</dt><dd><t t-out="fa(r['total'])"/> دعوت · <t t-out="fa(r['counts']['done'])"/> تکمیل‌شده</dd>
                                             </dl>
-                                            <a t-if="r['usable']" t-attf-href="/my/workspaces/#{r['ws'].id}" class="ts-btn ts-btn--primary ts-btn--sm">ورود به فضا</a>
+                                            <p t-if="r['unseen']" class="ts-org-card__new"><strong t-out="fa(r['unseen'])"/> نتیجهٔ تازه که هنوز باز نکرده‌اید</p>
+                                            <a t-if="r['usable']" t-attf-href="/my/workspaces/#{r['ws'].id}" class="ts-btn ts-btn--primary ts-org-card__go">ورود به پنل <span class="visually-hidden" t-out="r['ws'].name"/></a>
                                             <p t-elif="r['ws'].state == 'suspended'" class="ts-notice ts-notice--warn">این پنل تعلیق شده است.</p>
                                             <p t-elif="r['member'].verification_state == 'pending'" class="ts-notice ts-notice--warn">احراز صلاحیت حرفه‌ای شما در حال بررسی است.</p>
-                                            <p t-else="" class="ts-notice ts-notice--warn">این فضا هنوز فعال نشده است.</p>
+                                            <p t-else="" class="ts-notice ts-notice--warn">این پنل هنوز فعال نشده است.</p>
                                         </article>
                                     </t>
                                 </div>
+                                <p t-if="rows" class="ts-org-new"><a href="/my/workspaces/new" class="ts-btn ts-btn--outline">ساخت پنل تازه</a></p>
                             </div>
                         </section>
                     </div>
@@ -63,22 +68,22 @@
         <field name="website_id" ref="ts_website.website_ts"/>
         <field name="arch" type="xml">
             <t t-name="ts_org.workspace">
-                <t t-call="website.layout" additional_title="ws.name">
+                <t t-call="website.layout" additional_title.f="صفحهٔ قدیمی پنل">
                     <div id="wrap" class="ts-page">
                         <section class="ts-section">
                             <div class="ts-container">
-                                <a href="/my/workspaces" class="ts-back">فضاهای کاری</a>
+                                <a href="/my/workspaces" class="ts-back">پنل‌های من</a>
                                 <nav t-if="others" class="ts-stats" aria-label="پنل‌های من">
                                     <span class="ts-hint">تغییر پنل:</span>
                                     <a t-foreach="others" t-as="o" t-attf-href="/my/workspaces/#{o.workspace_id.id}" class="ts-stat"><strong t-out="o.workspace_id.name"/><span t-out="dict(o._fields['role'].selection).get(o.role)"/></a>
                                 </nav>
-                                <p t-if="others" class="ts-hint">داده‌های هر پنل کاملاً جداست؛ کارشناس مستقل که عضو سازمان هم هست، مراجع خصوصی‌اش را هرگز در پنل سازمان نمی‌بیند.</p>
+                                <p t-if="others" class="ts-hint">داده‌های هر پنل کاملاً جداست؛ کارشناسی که پنل یک‌نفرهٔ خودش را هم دارد، شرکت‌کنندگان آن پنل را هرگز در این پنل نمی‌بیند.</p>
                                 <div class="ts-section__head">
                                     <p class="ts-tag" t-out="dict(ws._fields['purpose'].selection).get(ws.purpose)"/>
                                     <h1 t-out="ws.name"/>
-                                    <p t-if="ws.purpose == 'employment'">سازمان فقط وضعیت دعوت و، در صورت رضایت شرکت‌کننده، بازهٔ هر بُعد را می‌بیند. پاسخ‌ها و متن‌های تفسیری هرگز به سازمان نمایش داده نمی‌شوند.</p>
-                                    <p t-elif="ws.purpose == 'education'">مشاور مؤسسه گزارش شرکت‌کنندگان را می‌بیند؛ پاسخ‌های خام هرگز نمایش داده نمی‌شوند. نتیجه‌های واردشده از فرم‌افزار قبلی فقط برای اعضای همین مؤسسه قابل مشاهده‌اند و برای خود شرکت‌کننده منتشر نشده‌اند.</p>
-                                    <p t-elif="ws.purpose == 'clinical'">گزارش کامل، از جمله راهنمای متخصص، فقط به متخصص بالینی تأییدشدهٔ همین فضا و فقط با رضایت شرکت‌کننده نمایش داده می‌شود.</p>
+                                    <p t-if="ws.purpose == 'employment'">این پنل فقط وضعیت دعوت و، در صورت رضایت شرکت‌کننده، سطح هر عامل را می‌بیند. پاسخ‌ها و متن‌های تفسیری هرگز نمایش داده نمی‌شوند.</p>
+                                    <p t-elif="ws.purpose == 'education'">مشاور مدرسه گزارش شرکت‌کنندگان را می‌بیند؛ پاسخ‌های خام هرگز نمایش داده نمی‌شوند. نتیجه‌های واردشده از نرم‌افزار قبلی فقط برای اعضای همین پنل دیده می‌شوند و برای خود شرکت‌کننده منتشر نشده‌اند.</p>
+                                    <p t-elif="ws.purpose == 'clinical'">گزارش کامل، از جمله متن متخصص، فقط به متخصص بالینی تأییدشدهٔ همین پنل و فقط با رضایت شرکت‌کننده نمایش داده می‌شود.</p>
                                 </div>
 
                                 <p t-if="created" class="ts-notice" role="status">
@@ -86,7 +91,7 @@
                                     <input type="text" readonly="readonly" class="ts-copy" t-att-value="created.invite_url()" aria-label="پیوند دعوت" dir="ltr"/>
                                 </p>
                                 <p t-if="error == 'form'" class="ts-notice ts-notice--warn" role="alert">نام شرکت‌کننده و سنجه را انتخاب کنید.</p>
-                                <p t-if="error == 'rule'" class="ts-notice ts-notice--warn" role="alert">این دعوت با قواعد این فضای کاری سازگار نیست.</p>
+                                <p t-if="error == 'rule'" class="ts-notice ts-notice--warn" role="alert">این دعوت با قواعد این پنل سازگار نیست.</p>
                                 <p t-if="error == 'pending'" class="ts-notice ts-notice--warn" role="alert">تا تأیید پنل، دعوت شرکت‌کنندهٔ واقعی ممکن نیست.</p>
                                 <p t-if="flash" class="ts-notice ts-notice--warn" role="alert" t-out="flash"/>
                                 <p t-if="is_new" class="ts-notice" role="status">پنل ساخته شد.</p>
@@ -110,7 +115,7 @@
                                     <a t-attf-class="ts-stat #{'is-active' if state_filter == 'in_progress' else ''}" href="?state=in_progress"><strong t-out="fa(counts['in_progress'] + counts['accepted'])"/><span>در حال پاسخ</span></a>
                                     <a t-attf-class="ts-stat #{'is-active' if state_filter == 'done' else ''}" href="?state=done"><strong t-out="fa(counts['done'])"/><span>تکمیل‌شده</span></a>
                                     <a t-attf-class="ts-stat #{'is-active' if state_filter == 'declined' else ''}" href="?state=declined"><strong t-out="fa(counts['declined'] + counts['withdrawn'])"/><span>رد یا لغو</span></a>
-                                    <a t-if="show_unassigned" t-attf-class="ts-stat #{'is-active' if resp_filter == 'none' else ''}" href="?resp=none"><strong t-out="fa(unassigned_count)"/><span>تخصیص‌نشده</span></a>
+                                    <a t-if="show_unassigned" t-attf-class="ts-stat #{'is-active' if resp_filter == 'none' else ''}" href="?resp=none"><strong t-out="fa(unassigned_count)"/><span>بدون کارشناس</span></a>
                                     <a t-attf-class="ts-stat #{'is-active' if resp_filter == 'mine' else ''}" href="?resp=mine"><strong t-out="fa(mine_count)"/><span>مسئولیت من</span></a>
                                 </nav>
 
@@ -118,31 +123,31 @@
                                     <h2 class="h5">نتیجه‌های واردشده <span class="ts-hint">(<t t-out="fa(len(imports))"/>)</span></h2>
                                     <nav class="ts-stats" aria-label="منبع">
                                         <a t-attf-class="ts-stat #{'is-active' if not src_filter else ''}" href="?">همه</a>
-                                        <a t-attf-class="ts-stat #{'is-active' if src_filter == 'import' else ''}" href="?src=import">واردشده از فرم‌افزار</a>
+                                        <a t-attf-class="ts-stat #{'is-active' if src_filter == 'import' else ''}" href="?src=import">واردشده از نرم‌افزار قبلی</a>
                                         <a t-attf-class="ts-stat #{'is-active' if src_filter == 'invite' else ''}" href="?src=invite">دعوت‌های وب</a>
                                     </nav>
                                     <p t-if="not imports" class="ts-muted">نتیجهٔ واردشده‌ای در این فهرست نیست.</p>
                                     <div t-else="" class="ts-table-wrap">
-                                        <table class="ts-table">
+                                        <table class="ts-table tsp-table--cards">
                                             <thead><tr><th scope="col">شرکت‌کننده</th><th scope="col">منبع</th><th scope="col">زمینه‌ها</th><th scope="col">تاریخ</th><th scope="col">کارشناس مسئول</th><th scope="col">دسترسی شرکت‌کننده</th><th scope="col"><span class="visually-hidden">اقدام</span></th></tr></thead>
                                             <tbody>
                                                 <tr t-foreach="imports" t-as="p">
-                                                    <td><strong t-out="p.person_id.name"/></td>
-                                                    <td>واردشده</td>
-                                                    <td t-out="fa(len(p.field_ids))"/>
-                                                    <td t-out="p.jalali(p.submitted_at, False)"/>
-                                                    <td>
+                                                    <td data-label="شرکت‌کننده"><strong t-out="p.person_id.name"/></td>
+                                                    <td data-label="منبع">واردشده</td>
+                                                    <td data-label="زمینه‌ها" t-out="fa(len(p.field_ids))"/>
+                                                    <td data-label="تاریخ" t-out="p.jalali(p.submitted_at, False)"/>
+                                                    <td data-label="کارشناس مسئول">
                                                         <form t-if="can_assign" t-attf-action="/my/workspaces/#{ws.id}/p/#{p.id}/responsible" method="post" class="ts-inline-form">
                                                             <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
                                                             <select name="responsible_id" aria-label="کارشناس مسئول">
-                                                                <option value="">تخصیص‌نشده</option>
+                                                                <option value="">بدون کارشناس</option>
                                                                 <t t-foreach="assignable" t-as="rm"><option t-att-value="rm.id" t-att-selected="'selected' if p.responsible_id == rm else None" t-out="rm.user_id.name"/></t>
                                                             </select>
                                                             <button type="submit" class="ts-btn ts-btn--outline ts-btn--sm">ثبت</button>
                                                         </form>
-                                                        <t t-else=""><t t-out="p.responsible_id.user_id.name or 'تخصیص‌نشده'"/></t>
+                                                        <t t-else=""><t t-out="p.responsible_id.user_id.name or 'بدون کارشناس'"/></t>
                                                     </td>
-                                                    <td><span class="ts-pill" t-out="'منتشرشده' if p.released else 'منتشر نشده'"/></td>
+                                                    <td data-label="دسترسی شرکت‌کننده"><span class="ts-pill" t-out="'منتشرشده' if p.released else 'منتشر نشده'"/></td>
                                                     <td><a t-attf-href="/my/workspaces/#{ws.id}/p/#{p.id}" class="ts-btn ts-btn--outline ts-btn--sm">پرونده</a></td>
                                                 </tr>
                                             </tbody>
@@ -153,25 +158,25 @@
                                 <div class="ts-org-layout">
                                     <div class="ts-table-wrap">
                                         <p t-if="not assignments" class="ts-muted">دعوتی در این فهرست نیست.</p>
-                                        <table t-else="" class="ts-table">
+                                        <table t-else="" class="ts-table tsp-table--cards">
                                             <thead><tr><th scope="col">شرکت‌کننده</th><th scope="col">سنجه</th><th scope="col">وضعیت</th><th scope="col">کارشناس مسئول</th><th scope="col">اشتراک</th><th scope="col"><span class="visually-hidden">اقدام</span></th></tr></thead>
                                             <tbody>
                                                 <tr t-foreach="assignments" t-as="a">
-                                                    <td><strong t-out="a.invitee_name"/><div class="ts-hint"><bdi dir="ltr" t-out="a.name"/></div></td>
-                                                    <td t-out="a.instrument_id.title"/>
-                                                    <td><span t-attf-class="ts-pill #{'ts-pill--ok' if a.state == 'done' else ('ts-pill--warn' if a.state in ('declined', 'withdrawn') else '')}" t-out="dict(a._fields['state'].selection).get(a.state)"/></td>
-                                                    <td>
+                                                    <td data-label="شرکت‌کننده"><strong t-out="a.invitee_name"/><div class="ts-hint"><bdi dir="ltr" t-out="a.name"/></div></td>
+                                                    <td data-label="سنجه" t-out="a.instrument_id.title"/>
+                                                    <td data-label="وضعیت"><span t-attf-class="ts-pill #{'ts-pill--ok' if a.state == 'done' else ('ts-pill--warn' if a.state in ('declined', 'withdrawn') else '')}" t-out="dict(a._fields['state'].selection).get(a.state)"/></td>
+                                                    <td data-label="کارشناس مسئول">
                                                         <form t-if="can_assign" t-attf-action="/my/workspaces/#{ws.id}/a/#{a.id}/responsible" method="post" class="ts-inline-form">
                                                             <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
                                                             <select name="responsible_id" aria-label="کارشناس مسئول">
-                                                                <option value="">تخصیص‌نشده</option>
+                                                                <option value="">بدون کارشناس</option>
                                                                 <t t-foreach="assignable" t-as="rm"><option t-att-value="rm.id" t-att-selected="'selected' if a.responsible_id == rm else None" t-out="rm.user_id.name"/></t>
                                                             </select>
                                                             <button type="submit" class="ts-btn ts-btn--outline ts-btn--sm">ثبت</button>
                                                         </form>
-                                                        <t t-else=""><t t-out="a.responsible_id.user_id.name or 'تخصیص‌نشده'"/></t>
+                                                        <t t-else=""><t t-out="a.responsible_id.user_id.name or 'بدون کارشناس'"/></t>
                                                     </td>
-                                                    <td t-out="'دارد' if a.share_level != 'none' else ('—' if a.state == 'invited' else 'ندارد')"/>
+                                                    <td data-label="اشتراک" t-out="'دارد' if a.share_level != 'none' else ('—' if a.state == 'invited' else 'ندارد')"/>
                                                     <td><a t-attf-href="/my/workspaces/#{ws.id}/a/#{a.id}" class="ts-btn ts-btn--outline ts-btn--sm">جزئیات</a></td>
                                                 </tr>
                                             </tbody>
@@ -242,8 +247,7 @@
                                         <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
                                         <label for="ts_s_name">نام پنل</label>
                                         <input id="ts_s_name" name="name" type="text" maxlength="100" t-att-value="ws.name"/>
-                                        <label for="ts_s_logo">لوگو (PNG، JPG یا WEBP تا ۵۰۰ کیلوبایت)</label>
-                                        <input id="ts_s_logo" name="logo" type="file" accept="image/png,image/jpeg,image/webp"/>
+                                        <t t-call="ts_website.filefield" ff_name.f="logo" ff_id.f="ts_s_logo" ff_label.f="لوگو" ff_accept.f="image/png,image/jpeg,image/webp" ff_hint.f="PNG، JPG یا WEBP، کمتر از ۵۰۰ کیلوبایت."/>
                                         <button type="submit" class="ts-btn ts-btn--outline">ذخیره</button>
                                     </form>
                                 </section>
@@ -277,7 +281,7 @@
                                             <img src="/ts_website/static/img/talentsearch-logo.webp" width="40" height="40" alt=""/>
                                             <div><strong>تلنت سرچ</strong><small>از خانوادهٔ <bdi dir="ltr">EOT</bdi></small></div>
                                         </div>
-                                        <div class="ts-doc__kind" t-out="'گزارش برای متخصص بالینی' if level == 'clinical' else ('خلاصهٔ نتیجه برای سازمان' if level == 'summary' else 'وضعیت دعوت')"/>
+                                        <div class="ts-doc__kind" t-out="'گزارش برای متخصص بالینی' if level == 'clinical' else ('خلاصهٔ نتیجه برای پنل' if level == 'summary' else 'وضعیت دعوت')"/>
                                     </header>
                                     <h1 class="ts-doc__title" t-out="inst.title"/>
                                     <dl class="ts-meta ts-doc__meta">
@@ -285,7 +289,7 @@
                                         <dt>وضعیت</dt><dd t-out="dict(a._fields['state'].selection).get(a.state)"/>
                                         <dt>شناسهٔ دعوت</dt><dd><bdi dir="ltr" t-out="a.name"/></dd>
                                         <dt>دعوت‌کننده</dt><dd t-out="a.invited_by_id.name"/>
-                                        <dt>کارشناس مسئول</dt><dd t-out="a.responsible_id.user_id.name or 'تخصیص‌نشده'"/>
+                                        <dt>کارشناس مسئول</dt><dd t-out="a.responsible_id.user_id.name or 'بدون کارشناس'"/>
                                         <t t-if="attempt and attempt.submitted_at"><dt>تاریخ تکمیل</dt><dd t-out="attempt.jalali(attempt.submitted_at)"/></t>
                                         <dt>اشتراک نتیجه</dt><dd t-out="dict(a._fields['share_level'].selection).get(a.share_level)"/>
                                     </dl>
@@ -293,16 +297,18 @@
                                     <section t-if="a.state in ('invited', 'accepted', 'in_progress')" class="ts-doc__sec ts-noprint">
                                         <h2>پیوند دعوت</h2>
                                         <input type="text" readonly="readonly" class="ts-copy" t-att-value="a.invite_url()" aria-label="پیوند دعوت" dir="ltr"/>
-                                        <form t-if="member.can_invite()" t-attf-action="/my/workspaces/#{ws.id}/a/#{a.id}/withdraw" method="post">
+                                        <form t-if="member.can_invite()" t-attf-action="/my/workspaces/#{ws.id}/a/#{a.id}/withdraw" method="post" class="ts-confirm">
                                             <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
-                                            <button type="submit" class="ts-btn ts-btn--quiet ts-btn--sm">لغو این دعوت</button>
+                                            <p class="ts-hint">پیوند از کار می‌افتد. اگر شرکت‌کننده شروع کرده باشد، پاسخ‌هایش دست‌نخورده می‌ماند.</p>
+                                            <label class="ts-check"><input type="checkbox" name="confirm" value="1" required="required"/><span>مطمئنم، این دعوت لغو شود</span></label>
+                                            <button type="submit" class="ts-btn ts-btn--danger ts-btn--sm">لغو این دعوت</button>
                                         </form>
                                     </section>
 
                                     <section t-if="a.state == 'done' and level == 'none'" class="ts-doc__sec">
                                         <h2>نتیجه</h2>
-                                        <p t-if="a.share_level == 'none'">شرکت‌کننده سنجه را کامل کرده اما نتیجه را با این فضای کاری به اشتراک نگذاشته است.</p>
-                                        <p t-elif="ws.purpose == 'clinical'">گزارش بالینی فقط برای متخصص بالینی تأییدشدهٔ این فضا نمایش داده می‌شود.</p>
+                                        <p t-if="a.share_level == 'none'">شرکت‌کننده سنجه را کامل کرده اما نتیجه را با این پنل به اشتراک نگذاشته است.</p>
+                                        <p t-elif="ws.purpose == 'clinical'">گزارش بالینی فقط برای متخصص بالینی تأییدشدهٔ این پنل نمایش داده می‌شود.</p>
                                         <p t-else="">نقش شما امکان مشاهدهٔ نتیجه را ندارد.</p>
                                     </section>
 
@@ -365,74 +371,132 @@
         <field name="website_id" ref="ts_website.website_ts"/>
         <field name="arch" type="xml">
             <t t-name="ts_org.invite">
-                <t t-call="website.layout" additional_title.f="دعوت به سنجش">
+                <t t-call="website.layout" additional_title.f="دعوت به سنجه">
                     <div id="wrap" class="ts-page">
                         <section class="ts-section">
                             <div class="ts-container ts-narrow">
+                                <t t-set="matrix" t-value="inst.code == 'TALENT-INV-15'"/>
                                 <div class="ts-section__head">
-                                    <p class="ts-tag">دعوت به سنجش</p>
+                                    <p class="ts-tag">دعوت به سنجه</p>
                                     <h1 t-out="inst.title"/>
-                                    <p><strong t-out="ws.partner_id.name"/> شما را به پاسخ‌دادن به این سنجه دعوت کرده است.</p>
+                                    <p t-if="student"><strong t-out="ws.partner_id.name"/> تو را به پاسخ‌دادن به این سنجه دعوت کرده است.</p>
+                                    <p t-else=""><strong t-out="ws.partner_id.name"/> شما را به پاسخ‌دادن به این سنجه دعوت کرده است.</p>
+                                    <p t-if="matrix and student">زمینه‌هایی را که دوست داری می‌نویسی و می‌بینی در کدام‌ها توانایی بیشتری حس می‌کنی.</p>
+                                    <p t-elif="matrix">زمینه‌هایی را که دوست دارید می‌نویسید و می‌بینید در کدام‌ها توانایی بیشتری حس می‌کنید.</p>
                                 </div>
                                 <div t-if="inv_state != 'ok'" class="ts-card ts-card--soft" role="status">
                                     <h2 class="h5" t-out="inv_msg[inv_state][0]"/>
                                     <p t-out="inv_msg[inv_state][1]"/>
                                 </div>
                                 <t t-else="">
-                                    <dl class="ts-meta">
-                                        <dt>دعوت برای</dt><dd t-out="a.invitee_name"/>
-                                        <dt>تعداد پرسش</dt><dd t-out="fa(inst.active_item_count)"/>
-                                        <dt>زمان تقریبی</dt><dd><t t-out="fa(inst.duration_minutes)"/> دقیقه</dd>
-                                        <t t-if="a.note"><dt>یادداشت سازمان</dt><dd t-out="a.note"/></t>
-                                    </dl>
-                                    <div class="ts-card ts-card--soft">
-                                        <h2 class="h5">چه چیزی با سازمان به اشتراک گذاشته می‌شود؟</h2>
-                                        <ul class="ts-list-check" t-if="ws.purpose == 'education'">
-                                            <li>مؤسسه و مشاور مسئول گزارش نتیجهٔ شما را می‌بینند.</li>
-                                            <li>پاسخ‌های خام شما را هرگز نمی‌بینند.</li>
-                                            <li>هر زمان بخواهید می‌توانید اشتراک را از صفحهٔ گزارش لغو کنید.</li>
-                                        </ul>
-                                        <ul class="ts-list-check" t-elif="ws.purpose == 'employment'">
-                                            <li>سازمان وضعیت دعوت (شروع‌شده یا تکمیل‌شده) را می‌بیند.</li>
-                                            <li>اگر اجازه دهید، فقط بازهٔ هر بُعد (کم، متوسط یا زیاد) را می‌بیند.</li>
-                                            <li>پاسخ‌های شما، نمره‌ها و متن‌های تفسیری فقط برای شما نمایش داده می‌شود.</li>
-                                            <li>هر زمان بخواهید می‌توانید اشتراک را از صفحهٔ گزارش لغو کنید.</li>
-                                        </ul>
-                                        <ul class="ts-list-check" t-else="">
-                                            <li>مرکز وضعیت دعوت را می‌بیند.</li>
-                                            <li>اگر اجازه دهید، گزارش کامل همراه با راهنمای متخصص فقط به متخصص بالینی تأییدشدهٔ این مرکز نمایش داده می‌شود.</li>
-                                            <li>هر زمان بخواهید می‌توانید اشتراک را از صفحهٔ گزارش لغو کنید.</li>
-                                        </ul>
+                                    <div t-if="user_name" t-attf-class="ts-notice #{'ts-notice--warn' if mismatch else ''}" t-att-role="'alert' if mismatch else 'status'" id="ts-invite-account">
+                                        <t t-if="student">با حساب «<bdi t-out="user_name"/>» وارد شده‌ای.</t>
+                                        <t t-else="">با حساب «<bdi t-out="user_name"/>» وارد شده‌اید.</t>
+                                        <t t-if="mismatch">
+                                            این دعوت برای «<bdi t-out="a.invitee_name"/>» است.
+                                            <t t-if="student">اگر این دعوت مال تو نیست، از حساب خارج شو و با حساب درست وارد شو.</t>
+                                            <t t-else="">اگر این دعوت برای شما نیست، از حساب خارج شوید و با حساب درست وارد شوید.</t>
+                                            <a t-att-href="logout_url">خروج از این حساب</a>
+                                        </t>
                                     </div>
+                                    <dl class="ts-meta">
+                                        <dt>دعوت برای</dt><dd><bdi t-out="a.invitee_name"/></dd>
+                                        <t t-if="matrix">
+                                            <dt>اندازهٔ کار</dt><dd><t t-if="student">۱۵ جمله برای هر زمینه؛ ۲ تا ۸ زمینه را خودت می‌نویسی</t><t t-else="">۱۵ جمله برای هر زمینه؛ ۲ تا ۸ زمینه را خودتان می‌نویسید</t></dd>
+                                            <dt>زمان تقریبی</dt><dd>حدود ۲ دقیقه برای هر زمینه</dd>
+                                        </t>
+                                        <t t-else="">
+                                            <dt>تعداد پرسش</dt><dd t-out="fa(inst.active_item_count)"/>
+                                            <dt>زمان تقریبی</dt><dd><t t-out="fa(inst.duration_minutes)"/> دقیقه</dd>
+                                        </t>
+                                        <t t-if="a.note"><dt>یادداشت پنل</dt><dd t-out="a.note"/></t>
+                                    </dl>
+                                    <t t-call="ts_org.share_box" share_ws="ws" share_student="student"/>
                                     <t t-if="public">
-                                        <p>برای شروع وارد حساب خود شوید یا حساب تازه بسازید. گزارش نتیجه در حساب شما نگه داشته می‌شود.</p>
-                                        <div class="ts-hero__actions">
-                                            <a t-if="phone_url" t-att-href="phone_url" class="ts-btn ts-btn--primary">ورود یا ثبت‌نام با موبایل</a>
-                                            <a t-att-href="signup_url" t-attf-class="ts-btn #{'ts-btn--outline' if phone_url else 'ts-btn--primary'}">ساخت حساب<t t-if="phone_url"> با ایمیل</t></a>
-                                            <a t-att-href="login_url" class="ts-btn ts-btn--outline">ورود<t t-if="phone_url"> با ایمیل</t></a>
-                                        </div>
+                                        <p t-if="student">برای شروع وارد حسابت شو یا حساب تازه بساز. گزارش نتیجه در حسابت می‌ماند.</p>
+                                        <p t-else="">برای شروع وارد حساب خود شوید یا حساب تازه بسازید. گزارش نتیجه در حساب شما نگه داشته می‌شود.</p>
+                                        <t t-call="ts_website.auth_choices" phone_url="phone_url" login_url="login_url" signup_url="signup_url"/>
                                     </t>
                                     <t t-else="">
                                         <form t-attf-action="/invite/#{a.token}/accept" method="post" class="ts-form">
                                             <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
                                             <label class="ts-check">
-                                                <input type="checkbox" name="share" value="1" checked="checked"/>
-                                                <span t-if="ws.purpose == 'education'">اجازه می‌دهم گزارش نتیجه‌ام با مؤسسه و مشاور مسئول به اشتراک گذاشته شود.</span>
-                                                <span t-elif="ws.purpose == 'employment'">اجازه می‌دهم بازهٔ هر بُعد با این سازمان به اشتراک گذاشته شود.</span>
-                                                <span t-else="">اجازه می‌دهم گزارش کامل با متخصص بالینی تأییدشدهٔ این مرکز به اشتراک گذاشته شود.</span>
+                                                <input type="checkbox" name="share" value="1" checked="checked" aria-describedby="ts_share_note"/>
+                                                <span t-if="ws.purpose == 'education'">اجازه می‌دهم مدرسه و مشاورم گزارش نتیجه‌ام را در پنل «<bdi t-out="ws.name"/>» ببینند.</span>
+                                                <span t-elif="ws.purpose == 'employment'">اجازه می‌دهم سطح هر عامل با پنل «<bdi t-out="ws.name"/>» به اشتراک گذاشته شود.</span>
+                                                <span t-else="">اجازه می‌دهم گزارش کامل با متخصص بالینی تأییدشدهٔ پنل «<bdi t-out="ws.name"/>» به اشتراک گذاشته شود.</span>
                                             </label>
+                                            <p id="ts_share_note" class="ts-hint"><t t-if="student">اگر تیک را برداری هم می‌توانی سنجه را انجام بدهی؛ آن وقت نتیجه فقط برای خودت می‌ماند.</t><t t-else="">اگر تیک را بردارید هم می‌توانید سنجه را انجام دهید؛ آن وقت نتیجه فقط برای خودتان می‌ماند.</t></p>
                                             <button type="submit" class="ts-btn ts-btn--primary">پذیرش و ادامه</button>
                                         </form>
-                                        <form t-attf-action="/invite/#{a.token}/decline" method="post">
-                                            <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
-                                            <button type="submit" class="ts-btn ts-btn--quiet ts-btn--sm">نمی‌خواهم شرکت کنم</button>
-                                        </form>
+                                        <section t-if="ask_decline" class="ts-confirm" id="ts-decline" aria-labelledby="ts-decline-h">
+                                            <h2 class="h6" id="ts-decline-h"><t t-if="student">دعوت را نمی‌پذیری؟</t><t t-else="">دعوت را نمی‌پذیرید؟</t></h2>
+                                            <p t-if="student">پنل می‌بیند که دعوت را نپذیرفتی. اگر نظرت عوض شد، از مشاورت دعوت تازه بخواه.</p>
+                                            <p t-else="">پنل می‌بیند که دعوت را نپذیرفتید. اگر نظرتان عوض شد، از دعوت‌کننده دعوت تازه بخواهید.</p>
+                                            <form t-attf-action="/invite/#{a.token}/decline" method="post" class="ts-inline-form">
+                                                <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                                                <button type="submit" class="ts-btn ts-btn--danger ts-btn--sm">بله، دعوت را نمی‌پذیرم</button>
+                                                <a t-attf-href="/invite/#{a.token}" class="ts-btn ts-btn--quiet ts-btn--sm">انصراف</a>
+                                            </form>
+                                        </section>
+                                        <p t-else=""><a t-attf-href="/invite/#{a.token}?decline=1#ts-decline" class="ts-btn ts-btn--quiet ts-btn--sm">نمی‌خواهم شرکت کنم</a></p>
                                     </t>
                                 </t>
                             </div>
                         </section>
                     </div>
                 </t>
+            </t>
+        </field>
+    </record>
+
+    <!-- What the panel will see: shown on /invite and on the open link /c (presentation only; consent stays the legal step).
+         Params: share_ws (ts.workspace), share_student (True: «تو» register). -->
+    <record id="tpl_share_box" model="ir.ui.view">
+        <field name="name">TS: what the panel sees</field>
+        <field name="type">qweb</field>
+        <field name="key">ts_org.share_box</field>
+        <field name="website_id" ref="ts_website.website_ts"/>
+        <field name="arch" type="xml">
+            <t t-name="ts_org.share_box">
+                <div class="ts-card ts-card--soft ts-share-box">
+                    <h2 class="h5">چه چیزی با پنل «<bdi t-out="share_ws.name"/>» دیده می‌شود؟</h2>
+                    <ul class="ts-list-check" t-if="share_ws.purpose == 'education' and share_student">
+                        <li>مدرسه و مشاور مسئولت گزارش نتیجه‌ات را می‌بینند.</li>
+                        <li>پاسخ‌های خامت را هرگز نمی‌بینند.</li>
+                        <li>هر وقت بخواهی می‌توانی اشتراک را از صفحهٔ گزارش لغو کنی.</li>
+                    </ul>
+                    <ul class="ts-list-check" t-elif="share_ws.purpose == 'education'">
+                        <li>مدرسه و مشاور مسئول شما گزارش نتیجه را می‌بینند.</li>
+                        <li>پاسخ‌های خام شما را هرگز نمی‌بینند.</li>
+                        <li>هر زمان بخواهید می‌توانید اشتراک را از صفحهٔ گزارش لغو کنید.</li>
+                    </ul>
+                    <ul class="ts-list-check" t-elif="share_ws.purpose == 'employment'">
+                        <li>پنل وضعیت دعوت (شروع‌شده یا تکمیل‌شده) را می‌بیند.</li>
+                        <li>اگر اجازه دهید، فقط سطح هر عامل (کم، متوسط یا زیاد) را می‌بیند.</li>
+                        <li>پاسخ‌های شما، نمره‌ها و متن‌های تفسیری فقط برای شما نمایش داده می‌شود.</li>
+                        <li>هر زمان بخواهید می‌توانید اشتراک را از صفحهٔ گزارش لغو کنید.</li>
+                    </ul>
+                    <ul class="ts-list-check" t-else="">
+                        <li>کلینیک وضعیت دعوت را می‌بیند.</li>
+                        <li>اگر اجازه دهید، گزارش کامل همراه با متن متخصص فقط به متخصص بالینی تأییدشدهٔ این کلینیک نمایش داده می‌شود.</li>
+                        <li>هر زمان بخواهید می‌توانید اشتراک را از صفحهٔ گزارش لغو کنید.</li>
+                    </ul>
+                </div>
+            </t>
+        </field>
+    </record>
+
+    <!-- Former sign-in choice of ts_org: now a thin alias of the one shared template, ts_website.auth_choices
+         (views/components.xml). Kept only so an old caller does not break; call ts_website.auth_choices directly. -->
+    <record id="tpl_auth_choices" model="ir.ui.view">
+        <field name="name">TS: sign-in choices (alias)</field>
+        <field name="type">qweb</field>
+        <field name="key">ts_org.auth_choices</field>
+        <field name="website_id" ref="ts_website.website_ts"/>
+        <field name="arch" type="xml">
+            <t t-name="ts_org.auth_choices">
+                <t t-call="ts_website.auth_choices" phone_url="phone_url" login_url="login_url" signup_url="signup_url" only="only"/>
             </t>
         </field>
     </record>
@@ -452,17 +516,19 @@
                     <a t-attf-href="/my/assessments/#{attempt.id}/share" class="ts-btn ts-btn--outline ts-btn--sm">ارسال برای مشاورم</a>
                 </section>
                 <section t-if="ts_share" class="ts-doc__sec ts-noprint">
-                    <h2>اشتراک با سازمان</h2>
+                    <h2>اشتراک با پنل</h2>
                     <p t-if="ts_share.invited_by_id == attempt.user_id">این نتیجه را شما برای <strong t-out="ts_share.workspace_id.name"/> فرستاده‌اید.</p>
                     <p t-else="">این سنجه به دعوت <strong t-out="ts_share.workspace_id.partner_id.name"/> انجام شد.</p>
                     <p>
-                        <t t-if="ts_share.share_level == 'summary'">سازمان فقط بازهٔ هر بُعد را می‌بیند.</t>
-                        <t t-elif="ts_share.share_level == 'clinical'">گزارش کامل برای متخصص بالینی تأییدشدهٔ این مرکز قابل مشاهده است.</t>
-                        <t t-else="">نتیجه با سازمان به اشتراک گذاشته نشده است.</t>
+                        <t t-if="ts_share.share_level == 'summary'">پنل فقط سطح هر زمینه یا عامل را می‌بیند.</t>
+                        <t t-elif="ts_share.share_level == 'clinical'">گزارش کامل برای متخصص بالینی تأییدشدهٔ این کلینیک قابل مشاهده است.</t>
+                        <t t-else="">نتیجه با پنل به اشتراک گذاشته نشده است.</t>
                     </p>
-                    <form t-if="ts_share.share_level != 'none'" t-attf-action="/my/assessments/#{attempt.id}/unshare" method="post">
+                    <form t-if="ts_share.share_level != 'none'" t-attf-action="/my/assessments/#{attempt.id}/unshare" method="post" class="ts-confirm">
                         <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
-                        <button type="submit" class="ts-btn ts-btn--outline ts-btn--sm">لغو اشتراک</button>
+                        <p class="ts-hint">پس از لغو، پنل دیگر این نتیجه را نمی‌بیند. برای اشتراک دوباره باید دعوت تازه یا کد پنل داشته باشید.</p>
+                        <label class="ts-check"><input type="checkbox" name="confirm" value="1" required="required"/><span>مطمئنم، اشتراک لغو شود</span></label>
+                        <button type="submit" class="ts-btn ts-btn--danger ts-btn--sm">لغو اشتراک</button>
                     </form>
                 </section>
             </xpath>

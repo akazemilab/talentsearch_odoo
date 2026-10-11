@@ -43,8 +43,9 @@
         'views/layout_inherit.xml',
     ],
     'assets': {
-        'ts_website.assets_ts': ['ts_panel/static/src/scss/panel.scss'],
-        'ts_website.assets_ts_js': ['ts_panel/static/src/js/panel.js'],
+        'ts_website.assets_ts': ['ts_panel/static/src/scss/panel.scss', 'ts_panel/static/src/scss/panel_daily.scss',
+                                  'ts_panel/static/src/scss/panel_admin.scss'],
+        'ts_website.assets_ts_js': ['ts_panel/static/src/js/panel.js', 'ts_panel/static/src/js/panel_ux.js'],
     },
     'installable': True,
 }

@@ -15,7 +15,7 @@
                     <div id="wrap" class="ts-page tt-page">
                         <section class="ts-section ts-report-page">
                             <div class="ts-container ts-report-wrap">
-                                <div class="ts-report-actions ts-noprint"><a href="/entekhab-reshteh" class="ts-back">بازگشت</a></div>
+                                <div class="ts-report-actions ts-noprint"><a href="/assessments" class="ts-back">سنجه‌ها</a></div>
                                 <article class="ts-doc tt-report">
                                     <p class="tt-cobrand"><strong>نمونهٔ ساختگی</strong> — نام، زمینه‌ها و نمره‌ها واقعی نیستند و فقط شکل گزارش را نشان می‌دهند.</p>
                                     <h1 class="ts-doc__title">زمینه‌ها کنار هم</h1>

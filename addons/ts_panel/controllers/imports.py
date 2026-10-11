@@ -61,6 +61,17 @@ class TsPanelImports(http.Controller):
             ('Content-Type', 'text/csv; charset=utf-8'), ('Content-Disposition', 'attachment; filename="clients-template.csv"'),
             ('Cache-Control', 'private, no-store')])
 
+    @http.route('/my/workspaces/<int:ws_id>/import/template.xlsx', type='http', auth='user', website=True, methods=['GET'], sitemap=False)
+    def template_xlsx(self, ws_id, **kw):
+        """The same template as an Excel file (UX audit G4 P13-3): school staff work in Excel."""
+        me, denied = self._guard(ws_id)
+        if denied:
+            return denied
+        from ..models.exporter import to_xlsx
+        return request.make_response(to_xlsx(importer.TEMPLATE_HEADERS, []), headers=[
+            ('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'),
+            ('Content-Disposition', 'attachment; filename="clients-template.xlsx"'), ('Cache-Control', 'private, no-store')])
+
     @http.route('/my/workspaces/<int:ws_id>/import/upload', type='http', auth='user', website=True, methods=['POST'], sitemap=False)
     def upload(self, ws_id, **post):
         me, denied = self._guard(ws_id)
@@ -97,8 +108,12 @@ class TsPanelImports(http.Controller):
                 flash_error(importer.FILE_ERRORS.get(e.code, 'تطبیق ستون‌ها درست نیست.'))
                 return request.redirect('/my/workspaces/%s/import/%s/map' % (ws_id, job.id))
             return request.redirect('/my/workspaces/%s/import/%s/review' % (ws_id, job.id))
+        try:
+            samples = job.ts_samples()
+        except (UserError, importer.FileProblem):
+            samples = {}
         return render_in_shell('ts_panel.import_map', me, 'import', 'تطبیق ستون‌ها', job=job, headers=headers, mapping=job.ts_mapping(),
-                               fields=importer.FIELDS)
+                               fields=importer.FIELDS, samples=samples)
 
     # ------------------------------------------------------------------ step 3: review
     @http.route('/my/workspaces/<int:ws_id>/import/<int:jid>/review', type='http', auth='user', website=True, methods=['GET'], sitemap=False)
@@ -113,11 +128,12 @@ class TsPanelImports(http.Controller):
             return request.redirect('/my/workspaces/%s/import/%s/map' % (ws_id, jid))
         try:
             counts, errs = job.ts_preview()
+            details = job.ts_preview_details()
         except importer.FileProblem as e:
             flash_error(importer.FILE_ERRORS.get(e.code, 'فایل خوانده نشد.'))
             return request.redirect('/my/workspaces/%s/import' % ws_id)
         return render_in_shell('ts_panel.import_review', me, 'import', 'مرور پیش از ورود', job=job, counts=counts, errs=errs,
-                               errors_text=importer.ERRORS, total=job.total)
+                               errors_text=importer.ERRORS, total=job.total, details=details)
 
     @http.route('/my/workspaces/<int:ws_id>/import/<int:jid>/start', type='http', auth='user', website=True, methods=['POST'], sitemap=False)
     def run(self, ws_id, jid, **post):
@@ -154,7 +170,7 @@ class TsPanelImports(http.Controller):
             raise request.not_found()
         exported = job.kind.startswith('export_')
         if exported:
-            redo = need_reauth('دریافت فایل خروجی', '/my/workspaces/%s/jobs/%s/download' % (ws_id, jid))
+            redo = need_reauth('دریافت فایل «%s»' % KIND_LABEL.get(job.kind, ''), '/my/workspaces/%s/jobs/%s/download' % (ws_id, jid))
             if redo:
                 return redo
         att = job.result_attachment_id

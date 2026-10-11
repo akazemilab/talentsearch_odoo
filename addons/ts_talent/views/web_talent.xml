@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <!-- Shell of the taking flow: gradient bar + white sheet (mockup approved 2026-09-29). -->
+    <!-- Shell of the taking flow: quiet sheet + top bar with the field, the position and the save state.
+         UX audit 2026-10-11: progress names the field and the page (G1-P14-2), save feedback sits at the top (P14-4). -->
     <record id="tpl_shell" model="ir.ui.view">
         <field name="name">TS talent: shell</field>
         <field name="type">qweb</field>
@@ -14,7 +15,8 @@
                             <div class="tt-screen">
                                 <div class="tt-bar">
                                     <b t-if="pill" t-out="pill"/>
-                                    <span t-if="counter" t-out="counter"/>
+                                    <span t-if="counter" class="tt-counter" t-out="counter"/>
+                                    <span t-if="save" class="tt-save" role="status" aria-live="polite">پاسخ‌ها خودکار ذخیره می‌شوند</span>
                                 </div>
                                 <div class="tt-stage">
                                     <t t-out="0"/>
@@ -27,6 +29,7 @@
         </field>
     </record>
 
+    <!-- Consent (CONSENT_VERSION v2): what you do, autosave, locking at the end, who sees, how to stop/withdraw (G1-P12-1) -->
     <record id="tpl_consent" model="ir.ui.view">
         <field name="name">TS talent: consent</field>
         <field name="type">qweb</field>
@@ -35,22 +38,41 @@
         <field name="arch" type="xml">
             <t t-name="ts_talent.consent">
                 <t t-call="ts_talent.shell" pill.f="فهرست تعاملی استعداد">
-                    <div class="tt-badge" aria-hidden="true">✓</div>
-                    <h1 class="tt-title">خودتان را در چند زمینه بسنجید</h1>
-                    <p class="tt-mini">زمینه‌ها را خودتان می‌نویسید و برای هر کدام ۱۵ جمله را پاسخ می‌دهید. هر زمینه حدود یک دقیقه است. نتیجه فقط برای خود شما نمایش داده می‌شود.</p>
+                    <h1 class="tt-title" t-if="tu">خودت را در چند زمینه بسنج</h1>
+                    <h1 class="tt-title" t-else="">خودتان را در چند زمینه بسنجید</h1>
+                    <p class="tt-mini" t-if="tu">پیش از شروع، این چند خط را بخوان.</p>
+                    <p class="tt-mini" t-else="">پیش از شروع، این چند خط را بخوانید.</p>
+                    <dl class="tt-dl">
+                        <dt>چه کار می‌کنی؟</dt>
+                        <dd t-if="tu"><t t-out="fa(v.field_min)"/> تا <t t-out="fa(v.field_max)"/> زمینه (مثل یک درس، هنر، ورزش یا مهارت) را خودت می‌نویسی و برای هر کدام ۱۵ جمله را پاسخ می‌دهی. هر زمینه حدود ۲ دقیقه طول می‌کشد.</dd>
+                        <dd t-else=""><t t-out="fa(v.field_min)"/> تا <t t-out="fa(v.field_max)"/> زمینه (مثل یک درس، هنر، ورزش، مهارت یا شغل) را خودتان می‌نویسید و برای هر کدام ۱۵ جمله را پاسخ می‌دهید. هر زمینه حدود ۲ دقیقه طول می‌کشد.</dd>
+                        <dt>ذخیره و ادامه</dt>
+                        <dd t-if="tu">هر پاسخ خودکار ذخیره می‌شود. هر وقت خواستی بیرون برو و بعد از همان‌جا ادامه بده.</dd>
+                        <dd t-else="">هر پاسخ خودکار ذخیره می‌شود. هر وقت خواستید بیرون بروید و بعد از همان‌جا ادامه دهید.</dd>
+                        <dt>پیش از پایان</dt>
+                        <dd t-if="tu">پاسخ‌هایت را مرور می‌کنی و می‌توانی هر زمینه را دوباره باز کنی. پس از پایان، پاسخ‌ها قفل می‌شوند.</dd>
+                        <dd t-else="">پاسخ‌هایتان را مرور می‌کنید و می‌توانید هر زمینه را دوباره باز کنید. پس از پایان، پاسخ‌ها قفل می‌شوند.</dd>
+                        <dt>چه کسی نتیجه را می‌بیند؟</dt>
+                        <dd id="tt-who-sees"><t t-if="tu">فقط خودت، در حساب کاربری‌ات.</t><t t-else="">فقط خودتان، در حساب کاربری‌تان.</t></dd>
+                        <dt>دست نگه داشتن و انصراف</dt>
+                        <dd t-if="tu">هر وقت بخواهی می‌توانی دست نگه داری. این موافقت فقط برای ساختن گزارش خودت است، نه برای پژوهش. برای پس گرفتن موافقت یا پاک کردن داده‌ها به صفحهٔ <a href="/my/privacy">حریم خصوصی</a> برو.</dd>
+                        <dd t-else="">هر وقت بخواهید می‌توانید دست نگه دارید. این موافقت فقط برای ساختن گزارش خودتان است، نه برای پژوهش. برای پس گرفتن موافقت یا پاک کردن داده‌ها به صفحهٔ <a href="/my/privacy">حریم خصوصی</a> بروید.</dd>
+                    </dl>
                     <form t-attf-action="/take/#{attempt.access_token}/consent" method="post" class="tt-form">
                         <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
-                        <p t-if="error" class="tt-error" role="alert">برای شروع، رضایت برای انجام سنجه لازم است.</p>
+                        <p t-if="error == 'consent'" class="tt-error" role="alert">برای شروع، تیک موافقت لازم است.</p>
                         <label class="tt-check"><input type="checkbox" name="consent_service" value="1" required="required"/>
-                            <span>با اجرای این سنجه برای دریافت گزارش فردی موافقم.</span></label>
-                        <p class="tt-mini">نسخهٔ متن رضایت: <bdi dir="ltr" t-out="consent_version"/> · <a href="/privacy">حریم خصوصی</a> · در شرایط اضطراری با اورژانس <bdi dir="ltr">115</bdi> تماس بگیرید.</p>
-                        <button type="submit" class="tt-btn">شروع</button>
+                            <span>این توضیح‌ها را خواندم و با انجام این سنجه و ساختن گزارش خودم موافقم.</span></label>
+                        <button type="submit" class="tt-btn tt-btn--primary">شروع</button>
+                        <p class="tt-mini tt-fine">نسخهٔ متن موافقت: <bdi dir="ltr" t-out="consent_version"/> · <a href="/privacy">سیاست حریم خصوصی</a> ·
+                            <t t-if="tu">اگر حالت خوب نیست، منتظر نمان: اورژانس ۱۱۵.</t><t t-else="">اگر حالتان خوب نیست، منتظر نمانید: اورژانس ۱۱۵.</t></p>
                     </form>
                 </t>
             </t>
         </field>
     </record>
 
+    <!-- Naming a field: visible label, the whole journey up front (G1-P13-1/2), optional suggestions (P13-3) -->
     <record id="tpl_name" model="ir.ui.view">
         <field name="name">TS talent: name a field</field>
         <field name="type">qweb</field>
@@ -58,29 +80,43 @@
         <field name="website_id" ref="ts_website.website_ts"/>
         <field name="arch" type="xml">
             <t t-name="ts_talent.name">
-                <t t-call="ts_talent.shell" pill.f="فهرست تعاملی استعداد" counter="'زمینهٔ ' + fa(n)">
-                    <h1 class="tt-title" t-if="not rename">زمینهٔ <t t-out="ordinal"/> را بنویسید</h1>
-                    <h1 class="tt-title" t-else="">تغییر نام زمینه</h1>
-                    <p class="tt-mini" t-out="guidance"/>
+                <t t-call="ts_talent.shell" pill.f="فهرست تعاملی استعداد" counter="'زمینهٔ ' + fa(n) + ' (' + fa(field_min) + ' تا ' + fa(field_max) + ')'">
+                    <t t-if="rename">
+                        <h1 class="tt-title">تغییر نام زمینه</h1>
+                    </t>
+                    <t t-else="">
+                        <h1 class="tt-title" t-if="tu">زمینهٔ <t t-out="ordinal"/> را بنویس</h1>
+                        <h1 class="tt-title" t-else="">زمینهٔ <t t-out="ordinal"/> را بنویسید</h1>
+                    </t>
+                    <p class="tt-mini" t-if="guidance" t-out="guidance"/>
+                    <p class="tt-mini tt-journey" t-if="not rename">دست‌کم <t t-out="fa(field_min)"/> زمینه لازم است تا با هم مقایسه شوند و حداکثر <t t-out="fa(field_max)"/>. برای هر زمینه ۱۵ جمله، حدود ۲ دقیقه. معمولاً ۳ تا ۵ زمینه کافی است.<t t-if="n_done"> تا حالا <t t-out="fa(n_done)"/> زمینه کامل شده است.</t></p>
                     <form t-attf-action="/take/#{attempt.access_token}/field" method="post" class="tt-form">
                         <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
                         <input t-if="rename" type="hidden" name="field_id" t-att-value="rename.id"/>
                         <p t-if="error" class="tt-error" role="alert" t-out="error"/>
-                        <label for="tt-label" class="visually-hidden">نام زمینه</label>
-                        <input id="tt-label" class="tt-input" type="text" name="label" maxlength="80" required="required"
-                               autocomplete="off" autocapitalize="off" spellcheck="false" dir="auto"
-                               placeholder="مثلاً: ریاضی" t-att-value="label or (rename and rename.label) or ''"/>
-                        <button type="submit" class="tt-btn" t-if="not rename">ادامه به جمله‌ها</button>
-                        <button type="submit" class="tt-btn" t-else="">ذخیره</button>
-                        <p class="tt-mini" t-if="not rename">دست‌کم <t t-out="fa(field_min)"/> زمینه لازم است تا با هم مقایسه شوند؛ حداکثر <t t-out="fa(field_max)"/> زمینه.</p>
+                        <div class="tt-field">
+                            <label for="tt-label" class="tt-label">نام زمینه</label>
+                            <input id="tt-label" class="tt-input" type="text" name="label" maxlength="80" required="required"
+                                   autocomplete="off" autocapitalize="off" spellcheck="false" dir="auto" aria-describedby="tt-label-hint"
+                                   t-att-value="label or (rename and rename.label) or ''"/>
+                            <p id="tt-label-hint" class="tt-mini tt-hint">مثلاً: ریاضی، فوتبال، طراحی لباس</p>
+                            <div t-if="suggestions" class="tt-chips" role="group" aria-label="پیشنهاد برای نام زمینه" hidden="hidden" data-tt-chips="1">
+                                <span class="tt-chips__k">پیشنهاد:</span>
+                                <button t-foreach="suggestions" t-as="sg" type="button" class="tt-chip" t-att-data-fill="sg" t-out="sg"/>
+                            </div>
+                        </div>
+                        <button type="submit" class="tt-btn tt-btn--primary" t-if="not rename">ادامه به جمله‌ها</button>
+                        <button type="submit" class="tt-btn tt-btn--primary" t-else="">ذخیرهٔ نام</button>
                         <a t-if="rename" t-attf-href="/take/#{attempt.access_token}" class="tt-btn tt-btn--ghost">انصراف</a>
-                        <a t-elif="done" t-attf-href="/take/#{attempt.access_token}" class="tt-btn tt-btn--ghost">بازگشت</a>
+                        <a t-elif="done" t-attf-href="/take/#{attempt.access_token}" class="tt-btn tt-btn--ghost">بازگشت به زمینه‌های کامل‌شده</a>
                     </form>
                 </t>
             </t>
         </field>
     </record>
 
+    <!-- Statements of one field: question stem (G1-P14-1), field + page position (P14-2), save state at the top (P14-4),
+         digit keys only inside a statement (P14-6, WCAG 2.1.4) -->
     <record id="tpl_statements" model="ir.ui.view">
         <field name="name">TS talent: statements</field>
         <field name="type">qweb</field>
@@ -88,18 +124,21 @@
         <field name="website_id" ref="ts_website.website_ts"/>
         <field name="arch" type="xml">
             <t t-name="ts_talent.statements">
-                <t t-call="ts_talent.shell" pill="field.label" counter="fa(page) + ' از ' + fa(n_pages)">
+                <t t-call="ts_talent.shell" pill="field.label" save="True" counter="'زمینهٔ ' + fa(field_no) + ' · صفحهٔ ' + fa(page) + ' از ' + fa(n_pages)">
                     <form t-attf-action="/take/#{attempt.access_token}/mpage" method="post" class="tt-form tt-qform"
                           t-att-data-token="attempt.access_token" t-att-data-field="field.id">
                         <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
                         <input type="hidden" name="p" t-att-value="page"/>
-                        <h1 class="visually-hidden">جمله‌های زمینهٔ <t t-out="field.label"/></h1>
+                        <h1 class="visually-hidden">جمله‌های زمینهٔ <t t-out="field.label"/>، صفحهٔ <t t-out="fa(page)"/> از <t t-out="fa(n_pages)"/></h1>
                         <div class="tt-steps" aria-hidden="true">
                             <i t-foreach="range(1, n_pages + 1)" t-as="s" t-attf-class="#{'done' if s &lt;= page else ''}"/>
                         </div>
-                        <p t-if="error == 'missing'" class="tt-error" role="alert">به همهٔ جمله‌ها پاسخ دهید؛ جمله‌های بی‌پاسخ علامت خورده‌اند.</p>
+                        <p class="tt-stem" t-if="tu">هر جمله چقدر دربارهٔ تو در «<b class="tt-fn" t-out="field.label"/>» درست است؟</p>
+                        <p class="tt-stem" t-else="">هر جمله چقدر دربارهٔ شما در «<b class="tt-fn" t-out="field.label"/>» درست است؟</p>
+                        <p t-if="error == 'missing'" class="tt-error" role="alert"><t t-if="tu">به همهٔ جمله‌ها پاسخ بده؛ جمله‌های بی‌پاسخ علامت خورده‌اند.</t><t t-else="">به همهٔ جمله‌ها پاسخ دهید؛ جمله‌های بی‌پاسخ علامت خورده‌اند.</t></p>
+                        <p t-if="error == 'reopen'" class="tt-error" role="alert"><t t-if="tu">اول همین زمینه را کامل کن؛ بعد می‌توانی زمینهٔ دیگری را دوباره باز کنی.</t><t t-else="">اول همین زمینه را کامل کنید؛ بعد می‌توانید زمینهٔ دیگری را دوباره باز کنید.</t></p>
                         <t t-foreach="items" t-as="it">
-                            <fieldset t-attf-class="tt-q #{'is-missing' if it.id in missing else ''}" t-att-data-item="it.id">
+                            <fieldset t-attf-class="tt-q #{'is-missing' if it.id in missing else ''} #{'is-answered' if cells.get(it.id) else ''}" t-att-data-item="it.id">
                                 <legend>
                                     <span class="tt-qnum" t-out="fa(first + it_index + 1) + '.'"/>
                                     <t t-foreach="segments(it.text, field.label)" t-as="seg"><b t-if="seg[1]" class="tt-fn" t-out="seg[0]"/><t t-else="" t-out="seg[0]"/></t>
@@ -109,19 +148,19 @@
                                         <label class="tt-opt">
                                             <input type="radio" t-attf-name="c_#{it.id}" t-att-value="opt[0]"
                                                    t-att-checked="cells.get(it.id) == opt[0] and 'checked' or None"/>
-                                            <span t-out="opt[1]"/>
+                                            <span class="tt-opt__box"><span class="tt-opt__n" aria-hidden="true" t-out="fa(opt[0])"/><span class="tt-opt__l" t-out="opt[1]"/></span>
                                         </label>
                                     </t>
                                 </div>
                             </fieldset>
                         </t>
                         <div class="tt-nav">
-                            <button t-if="page &lt; n_pages" type="submit" name="go" value="next" class="tt-btn">صفحهٔ بعد</button>
-                            <button t-else="" type="submit" name="go" value="done" class="tt-btn">پایان این زمینه</button>
+                            <button t-if="page &lt; n_pages" type="submit" name="go" value="next" class="tt-btn tt-btn--primary">صفحهٔ بعد</button>
+                            <button t-else="" type="submit" name="go" value="done" class="tt-btn tt-btn--primary">پایان این زمینه</button>
                             <button t-if="page &gt; 1" type="submit" name="go" value="prev" class="tt-btn tt-btn--ghost">صفحهٔ قبل</button>
                         </div>
-                        <p class="tt-mini"><span class="tt-save" aria-live="polite"/>
-                            <a t-if="page == 1 and not cells" t-attf-href="/take/#{attempt.access_token}?v=rename">تغییر نام زمینه</a></p>
+                        <p class="tt-mini tt-keyhint"><t t-if="tu">با صفحه‌کلید: روی یک جمله که هستی، عدد ۱ تا ۵ را بزن.</t><t t-else="">با صفحه‌کلید: روی هر جمله، عدد ۱ تا ۵ را بزنید.</t></p>
+                        <p class="tt-mini" t-if="page == 1 and not cells"><a t-attf-href="/take/#{attempt.access_token}?v=rename">تغییر نام زمینه</a></p>
                     </form>
                 </t>
             </t>
@@ -137,12 +176,13 @@
             <t t-name="ts_talent.straight">
                 <t t-call="ts_talent.shell" pill="field.label" counter.f="یک لحظه">
                     <h1 class="tt-title">همهٔ پاسخ‌ها یکسان است</h1>
-                    <p class="tt-mini">هر ۱۵ جمله را یک‌جور پاسخ داده‌اید. اگر همین درست است ادامه دهید؛ اگر نه، پاسخ‌ها را مرور کنید.</p>
+                    <p class="tt-mini" t-if="tu">به هر ۱۵ جمله یک‌جور پاسخ داده‌ای. اگر همین درست است ادامه بده؛ اگر نه، پاسخ‌ها را مرور کن.</p>
+                    <p class="tt-mini" t-else="">به هر ۱۵ جمله یک‌جور پاسخ داده‌اید. اگر همین درست است ادامه دهید؛ اگر نه، پاسخ‌ها را مرور کنید.</p>
                     <form t-attf-action="/take/#{attempt.access_token}/mpage" method="post" class="tt-form">
                         <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
                         <input type="hidden" name="p" value="3"/>
                         <input type="hidden" name="confirm" value="1"/>
-                        <button type="submit" name="go" value="done" class="tt-btn">ادامه می‌دهم</button>
+                        <button type="submit" name="go" value="done" class="tt-btn tt-btn--primary">همین درست است، ادامه</button>
                         <a t-attf-href="/take/#{attempt.access_token}?p=1" class="tt-btn tt-btn--ghost">مرور پاسخ‌ها</a>
                     </form>
                 </t>
@@ -150,6 +190,7 @@
         </field>
     </record>
 
+    <!-- Between fields = check your answers: reopen a field, locking and who sees before the final submit (G1-P15-1/2/3) -->
     <record id="tpl_between" model="ir.ui.view">
         <field name="name">TS talent: field done</field>
         <field name="type">qweb</field>
@@ -157,26 +198,61 @@
         <field name="website_id" ref="ts_website.website_ts"/>
         <field name="arch" type="xml">
             <t t-name="ts_talent.between">
-                <t t-call="ts_talent.shell" pill.f="فهرست تعاملی استعداد" counter="fa(len(done)) + ' زمینه'">
+                <t t-call="ts_talent.shell" pill.f="فهرست تعاملی استعداد" counter="fa(len(done)) + ' زمینه کامل'">
+                    <t t-set="can_finish" t-value="len(done) &gt;= field_min"/>
+                    <t t-set="can_add" t-value="len(done) &lt; field_max"/>
                     <div class="tt-badge" aria-hidden="true">✓</div>
                     <h1 class="tt-title">زمینهٔ «<t t-out="last.label"/>» کامل شد</h1>
-                    <ul class="tt-pills" aria-label="زمینه‌های کامل‌شده">
-                        <li t-foreach="done" t-as="f" t-out="f.label"/>
+                    <p class="tt-mini" t-if="error" role="alert" t-out="error"/>
+                    <h2 class="tt-h2"><t t-if="tu">پاسخ‌هایت را مرور کن</t><t t-else="">پاسخ‌هایتان را مرور کنید</t></h2>
+                    <ul class="tt-review" aria-label="زمینه‌های کامل‌شده">
+                        <li t-foreach="done" t-as="f">
+                            <span class="tt-review__name" t-out="f.label"/>
+                            <span class="tt-review__count"><t t-out="fa(len(f.cell_ids))"/> از <t t-out="fa(n_items)"/> جمله</span>
+                            <form t-attf-action="/take/#{attempt.access_token}/reopen" method="post" class="tt-review__act">
+                                <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                                <input type="hidden" name="field_id" t-att-value="f.id"/>
+                                <button type="submit" class="tt-btn tt-btn--ghost tt-btn--sm">مرور یا ویرایش<span class="visually-hidden"> «<t t-out="f.label"/>»</span></button>
+                            </form>
+                        </li>
                     </ul>
-                    <form t-attf-action="/take/#{attempt.access_token}/finish" method="post" class="tt-form">
+                    <p class="tt-mini" t-if="not can_finish">پایان از زمینهٔ <t t-out="ordinal_min"/> فعال می‌شود؛ برای مقایسه دست‌کم <t t-out="fa(field_min)"/> زمینه لازم است.</p>
+                    <p class="tt-mini" t-elif="can_add"><t t-out="fa(len(done))"/> زمینه کامل؛ <t t-if="tu">تا <t t-out="fa(field_max - len(done))"/> زمینهٔ دیگر می‌توانی اضافه کنی.</t><t t-else="">تا <t t-out="fa(field_max - len(done))"/> زمینهٔ دیگر می‌توانید اضافه کنید.</t></p>
+                    <p class="tt-mini" t-elif="tu">به بیشترین تعداد زمینه رسیده‌ای؛ حالا می‌توانی پایان را بزنی.</p>
+                    <p class="tt-mini" t-else="">به بیشترین تعداد زمینه رسیده‌اید؛ حالا می‌توانید پایان را بزنید.</p>
+                    <a t-if="can_add" t-attf-href="/take/#{attempt.access_token}?v=name" t-attf-class="tt-btn #{'tt-btn--primary' if not can_finish else 'tt-btn--ghost'} tt-btn--block">نوشتن زمینهٔ بعدی</a>
+                    <form t-attf-action="/take/#{attempt.access_token}/finish" method="post" class="tt-form tt-finish">
                         <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
-                        <a t-if="len(done) &lt; field_max" t-attf-href="/take/#{attempt.access_token}?v=name" class="tt-btn">نوشتن زمینهٔ بعدی</a>
-                        <button type="submit" t-attf-class="tt-btn #{'tt-btn--ghost' if len(done) &lt; field_max else ''}"
-                                t-att-disabled="'disabled' if len(done) &lt; field_min else None">پایان و دیدن نتیجه</button>
-                        <p class="tt-mini" t-if="len(done) &lt; field_min">پایان از زمینهٔ <t t-out="ordinal_min"/> فعال می‌شود؛ برای مقایسه دست‌کم <t t-out="fa(field_min)"/> زمینه لازم است.</p>
-                        <p class="tt-mini" t-if="error" role="alert" t-out="error"/>
+                        <div class="tt-lock" role="note">
+                            <p><strong>پس از پایان، پاسخ‌ها قفل می‌شوند</strong> و دیگر نمی‌شود آن‌ها را تغییر داد.</p>
+                            <p id="tt-who-sees-finish"><t t-if="tu">نتیجه را فقط خودت می‌بینی.</t><t t-else="">نتیجه را فقط خودتان می‌بینید.</t></p>
+                        </div>
+                        <button type="submit" t-attf-class="tt-btn #{'tt-btn--primary' if can_finish else 'tt-btn--ghost'}"
+                                t-att-disabled="None if can_finish else 'disabled'">پایان و دیدن نتیجه</button>
                     </form>
                 </t>
             </t>
         </field>
     </record>
 
-    <!-- Individual report -->
+    <!-- One collapsible report section: button + aria-expanded + hidden (never <details>); open without JS -->
+    <record id="tpl_sec" model="ir.ui.view">
+        <field name="name">TS talent: report section</field>
+        <field name="type">qweb</field>
+        <field name="key">ts_talent.sec</field>
+        <field name="website_id" ref="ts_website.website_ts"/>
+        <field name="arch" type="xml">
+            <t t-name="ts_talent.sec">
+                <section t-attf-class="ts-doc__sec tt-sec #{cls or ''}" t-att-id="sec_id" t-att-data-collapse="collapse or None">
+                    <h2 class="tt-sec__h"><button type="button" class="tt-sec__btn" aria-expanded="true" t-att-aria-controls="sec_id + '-b'" t-out="title"/></h2>
+                    <div class="tt-sec__body" t-att-id="sec_id + '-b'"><t t-out="0"/></div>
+                </section>
+            </t>
+        </field>
+    </record>
+    <!-- Individual report. UX audit 2026-10-11: plain summary first, caution once, jump links, collapsible detail
+         sections, ties stated explicitly, «تو»/«شما» in the participant's own view and third person in the panel view.
+         Anchors used by other modules: p.ts-notice[@t-if='submitted'], article.tt-report. -->
     <record id="tpl_report" model="ir.ui.view">
         <field name="name">TS talent: report</field>
         <field name="type">qweb</field>
@@ -186,37 +262,64 @@
             <t t-name="ts_talent.report">
                 <t t-call="website.layout" additional_title="'گزارش ' + inst.title">
                     <div id="wrap" class="ts-page tt-page" t-att-data-tsp-autoprint="1 if autoprint else None">
-                        <section class="ts-section ts-report-page">
-                            <div class="ts-container ts-report-wrap">
+                        <!-- report_frame: the panel passes 'ts_panel.shell_frame' (with the shell context) so the institute view
+                             sits inside the panel shell (UX audit G3 P7-3); everyone else gets the plain page frame. -->
+                        <t t-call="#{report_frame or 'ts_talent.report_frame'}">
+                            <div t-att-class="'ts-report-wrap' if report_frame else 'ts-container ts-report-wrap'">
                                 <div class="ts-report-actions ts-noprint">
-                                    <a t-if="not org_view" href="/my/assessments" class="ts-back">سنجه‌های من</a>
-                                    <a t-elif="back_url" t-att-href="back_url" class="ts-back">بازگشت به شرکت‌کننده</a>
-                                    <a t-else="" t-attf-href="/my/workspaces/#{ws.id}" class="ts-back">بازگشت به فهرست شرکت‌کنندگان</a>
-                                    <form t-if="print_url" method="post" t-att-action="print_url" style="display:inline;margin:0">
+                                    <a t-if="not org_view" href="/my/assessments" class="ts-backlink">سنجه‌ها و نتیجه‌ها</a>
+                                    <a t-elif="not report_frame" t-att-href="back_url or '/my/workspaces/%s/clients' % ws.id" class="ts-backlink">شرکت‌کنندگان</a>
+                                    <form t-if="print_url" method="post" t-att-action="print_url" class="tt-inline-form">
                                         <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
                                         <button type="submit" class="ts-btn ts-btn--outline">چاپ یا ذخیره به‌صورت PDF</button>
                                     </form>
                                     <button t-else="" type="button" class="ts-btn ts-btn--outline ts-js-print">چاپ یا ذخیره به‌صورت PDF</button>
                                 </div>
-                                <p t-if="submitted" class="ts-notice ts-noprint" role="status">پاسخ‌های شما ثبت شد و گزارش آماده است.</p>
+                                <div t-if="org_view and panel_actions" class="tt-actions ts-noprint" role="group" aria-label="کارهای این گزارش">
+                                    <a t-foreach="panel_actions" t-as="pa" t-att-href="pa[1]" class="ts-btn ts-btn--outline ts-btn--sm" t-out="pa[0]"/>
+                                </div>
+                                <p t-if="org_view and viewers" class="ts-hint tt-viewers ts-noprint">این گزارش را دیده‌اند: <t t-foreach="viewers" t-as="v"><t t-if="v_index"> · </t><bdi t-out="v[1]"/> (<t t-out="v[0]"/>)</t></p>
+                                <p t-if="submitted" class="ts-notice ts-noprint" role="status">پاسخ‌ها ثبت شد و گزارش آماده است.</p>
                                 <article class="ts-doc tt-report">
                                     <header class="ts-doc__head">
                                         <div class="ts-doc__brand">
                                             <img src="/ts_website/static/img/talentsearch-logo.webp" width="40" height="40" alt=""/>
-                                            <div><strong>تلنت سرچ</strong><small>از خانوادهٔ <bdi dir="ltr">EOT</bdi></small></div>
+                                            <div><strong>تلنت سرچ</strong><small>از خانوادهٔ هیجان اندیشه (<bdi dir="ltr">EOT</bdi>)</small></div>
                                         </div>
                                         <div class="ts-doc__kind">گزارش فهرست تعاملی استعداد</div>
                                     </header>
                                     <p t-if="org_view" class="tt-cobrand">تهیه‌شده برای جلسهٔ مشاوره — <strong t-out="ws.name"/></p>
-                                    <h1 class="ts-doc__title" t-out="('نیمرخ ' + who) if org_view else 'نیمرخ شما در یک نگاه'"/>
-                                    <p class="tt-lead" t-if="not org_view">این نمره‌ها برداشت شما از خودتان در هر زمینه‌اند و فقط زمینه‌ها و توانایی‌های خودِ شما با هم مقایسه می‌شوند؛ با دیگران مقایسه نمی‌شوند. نمره‌ها از ۲۰ تا ۱۰۰ هستند.</p>
-                                    <p class="tt-lead" t-else="">این نمره‌ها برداشت خودِ شرکت‌کننده از خودش در هر زمینه‌اند و فقط زمینه‌ها و توانایی‌های خودِ او با هم مقایسه می‌شوند؛ با دیگران مقایسه نمی‌شوند. نمره‌ها از ۲۰ تا ۱۰۰ هستند. این گزارش برای گفتگوی مشاوره است، نه برای تعیین رشته.</p>
+                                    <p t-if="org_view" class="ts-hint tt-access">این گزارش را بدون پاسخ‌های خام می‌بینید. باز کردن و چاپ آن در دفتر ممیزی پنل ثبت می‌شود.</p>
+                                    <h1 class="ts-doc__title" t-if="org_view">نیمرخ <t t-out="who"/></h1>
+                                    <h1 class="ts-doc__title" t-elif="tu">نیمرخ تو در یک نگاه</h1>
+                                    <h1 class="ts-doc__title" t-else="">نیمرخ شما در یک نگاه</h1>
+                                    <p class="tt-lead" t-if="org_view">این نمره‌ها برداشت خودِ شرکت‌کننده از خودش در هر زمینه است و فقط زمینه‌ها و توانایی‌های خودِ او با هم مقایسه می‌شوند، نه با دیگران. نمره‌ها از ۲۰ تا ۱۰۰ است. این گزارش برای گفتگوی مشاوره است، نه برای تعیین رشته.</p>
+                                    <p class="tt-lead" t-elif="tu">این نمره‌ها نشان می‌دهد در هر زمینه خودت را چطور دیده‌ای. فقط زمینه‌ها و توانایی‌های خودت با هم مقایسه می‌شوند، نه با دیگران. نمره‌ها از ۲۰ تا ۱۰۰ است.</p>
+                                    <p class="tt-lead" t-else="">این نمره‌ها نشان می‌دهد در هر زمینه خودتان را چطور دیده‌اید. فقط زمینه‌ها و توانایی‌های خودتان با هم مقایسه می‌شوند، نه با دیگران. نمره‌ها از ۲۰ تا ۱۰۰ است.</p>
                                     <dl class="ts-meta ts-doc__meta">
                                         <dt>شرکت‌کننده</dt><dd t-out="who"/>
                                         <dt>تاریخ تکمیل</dt><dd t-out="attempt.jalali(attempt.submitted_at)"/>
                                         <dt>زمینه‌ها</dt><dd><t t-out="joinfa([f['label'] for f in fields], True)"/></dd>
                                         <dt>شناسهٔ گزارش</dt><dd><bdi dir="ltr" t-out="attempt.name"/></dd>
                                     </dl>
+
+                                    <nav class="tt-jump ts-scroller ts-noprint" aria-label="در این گزارش">
+                                        <span class="tt-jump__k">در این گزارش:</span>
+                                        <a href="#tt-sec-summary">خلاصه</a>
+                                        <a t-if="cmp_rows" href="#tt-sec-compare">زمینه‌ها</a>
+                                        <a href="#tt-sec-fields">توانایی‌ها</a>
+                                        <a href="#tt-sec-levels">تفسیر</a>
+                                        <a href="#tt-sec-next">قدم بعدی</a>
+                                        <a href="#tt-sec-table">جدول کامل</a>
+                                        <a href="#tt-sec-about">دربارهٔ سنجه</a>
+                                    </nav>
+
+                                    <div t-if="flagged" class="ts-notice ts-notice--warn tt-caution" role="note">
+                                        <p t-if="org_view and all_flagged">پاسخ‌های همهٔ زمینه‌ها یکسان یا بسیار سریع بود؛ کل گزارش را با احتیاط بخوانید.</p>
+                                        <p t-elif="org_view">پاسخ‌های این زمینه‌ها یکسان یا بسیار سریع بود؛ آن‌ها را با احتیاط بخوانید: <t t-out="joinfa(flagged, True)"/>.</p>
+                                        <p t-elif="tu">بخش‌هایی از این سنجه خیلی سریع یا با پاسخ‌های یکسان پر شده است (<t t-out="joinfa(flagged, True)"/>)؛ نتیجهٔ آن‌ها ممکن است دقیق نباشد. دربارهٔ آن با مشاورت حرف بزن.</p>
+                                        <p t-else="">بخش‌هایی از این سنجه خیلی سریع یا با پاسخ‌های یکسان پر شده است (<t t-out="joinfa(flagged, True)"/>)؛ نتیجهٔ آن‌ها ممکن است دقیق نباشد.</p>
+                                    </div>
 
                                     <div class="tt-tiles">
                                         <div t-foreach="tiles" t-as="t" class="tt-tile">
@@ -226,12 +329,18 @@
                                         </div>
                                     </div>
 
-                                    <section class="ts-doc__sec tt-compare" t-if="cmp_rows">
-                                        <h2>زمینه‌ها کنار هم</h2>
-                                        <p class="tt-mini">هر ردیف یک توانایی است و هر نوار یک زمینه؛ طول نوار از ۲۰ (کمترین ممکن) تا ۱۰۰ (بیشترین ممکن). «برجسته» یعنی بالاترین نمره در آن ردیف و «نزدیک» یعنی حداکثر <t t-out="fa(gap)"/> نمره کمتر از آن (اختلاف کوچک را معنادار نگیرید).</p>
+                                    <section class="ts-doc__sec tt-summary" id="tt-sec-summary">
+                                        <h2 t-if="org_view">خلاصه</h2>
+                                        <h2 t-elif="tu">خلاصه برای تو</h2>
+                                        <h2 t-else="">خلاصه برای شما</h2>
+                                        <p t-foreach="summary" t-as="sm" t-out="sm"/>
+                                    </section>
+
+                                    <t t-if="cmp_rows" t-call="ts_talent.sec" sec_id="'tt-sec-compare'" cls="'tt-compare'" title.f="زمینه‌ها کنار هم">
+                                        <p class="tt-mini">هر ردیف یک توانایی است و هر نوار یک زمینه؛ طول نوار از ۲۰ (کمترین ممکن) تا ۱۰۰ (بیشترین ممکن). «برجسته» یعنی بالاترین نمره در آن ردیف و «نزدیک» یعنی حداکثر <t t-out="fa(gap)"/> نمره کمتر از آن؛ اختلاف کوچک معنادار نیست.</p>
                                         <div class="tt-cmp">
                                             <div t-foreach="cmp_rows" t-as="r" t-attf-class="tt-cmp__row #{'is-total' if r['total'] else ''}">
-                                                <h3 t-out="r['name']"/>
+                                                <h3><t t-out="r['name']"/><em t-if="r['equal']" class="tt-eq">همه برابر</em></h3>
                                                 <ul>
                                                     <li t-foreach="r['cells']" t-as="c" t-attf-class="tt-cmp__cell tt-m-#{c['mark'] or 'none'}">
                                                         <span class="tt-cmp__lab" t-out="c['label']"/>
@@ -245,56 +354,83 @@
                                         </div>
                                         <div class="tt-cards">
                                             <div t-foreach="cmp_cards" t-as="k" class="tt-card">
-                                                <h3><i t-attf-class="tt-f#{k['idx']}"/><t t-out="k['label']"/><span>میانگین <t t-out="fmt(k['tot'])"/></span></h3>
-                                                <p>بیشترین: <t t-out="joinfa(k['high'])"/> (<t t-out="fmt(k['high_score'])"/>)</p>
-                                                <p>کمترین: <t t-out="joinfa(k['low'])"/> (<t t-out="fmt(k['low_score'])"/>)</p>
-                                                <p t-if="k['caution']" class="tt-flag">این زمینه با احتیاط خوانده شود (پاسخ یکسان یا بسیار سریع).</p>
+                                                <h3><i t-attf-class="tt-f#{k['idx']}"/><t t-out="k['label']"/><small t-if="k['caution']" class="tt-flag-mini">با احتیاط</small><span>میانگین <t t-out="fmt(k['tot'])"/></span></h3>
+                                                <p t-if="k['flat']">هر پنج توانایی برابر (<t t-out="fmt(k['high_score'])"/>)</p>
+                                                <t t-else="">
+                                                    <p>بیشترین: <t t-out="joinfa(k['high'])"/> (<t t-out="fmt(k['high_score'])"/>)</p>
+                                                    <p>کمترین: <t t-out="joinfa(k['low'])"/> (<t t-out="fmt(k['low_score'])"/>)</p>
+                                                </t>
                                             </div>
                                         </div>
                                         <p t-foreach="cmp_lines" t-as="ln" t-out="ln"/>
-                                    </section>
+                                    </t>
 
-                                    <section class="ts-doc__sec">
-                                        <h2>توانایی‌های شما در هر زمینه</h2>
+                                    <t t-call="ts_talent.sec" sec_id="'tt-sec-fields'" title="'توانایی‌های او در هر زمینه' if org_view else ('توانایی‌هایت در هر زمینه' if tu else 'توانایی‌های شما در هر زمینه')">
                                         <ul class="tt-legend" aria-hidden="true">
                                             <li t-foreach="legend" t-as="l"><i t-attf-class="tt-s#{l_index + 1}"/><t t-out="l"/></li>
                                         </ul>
                                         <div class="tt-panels">
                                             <div t-foreach="fields" t-as="f" class="tt-panel">
-                                                <h3><t t-out="f['label']"/><span>کل <t t-out="fmt(f['composites']['TOT'])"/></span></h3>
+                                                <h3><t t-out="f['label']"/><small t-if="f['flags'].get('straight') or f['flags'].get('fast')" class="tt-flag-mini">با احتیاط</small><span>کل <t t-out="fmt(f['composites']['TOT'])"/></span></h3>
                                                 <t t-out="charts[f['label']]"/>
-                                                <p t-if="f['flags']['straight']" class="tt-flag">همهٔ پاسخ‌های این زمینه یکسان بود؛ با احتیاط بخوانید.</p>
-                                                <p t-elif="f['flags']['fast']" class="tt-flag">این زمینه با سرعت بسیار بالا پاسخ داده شد؛ با احتیاط بخوانید.</p>
                                             </div>
                                         </div>
-                                        <p class="tt-mini">نوار روشن دور هر نقطه، بازهٔ حدود ±۸ نمره است: اختلاف‌های کوچک‌تر از آن را معنادار نگیرید.</p>
-                                    </section>
+                                        <p class="tt-mini">نوار روشن دور هر نقطه، بازهٔ حدود ±۸ نمره است: اختلاف‌های کوچک‌تر از آن معنادار نیست.</p>
+                                    </t>
 
-                                    <section class="ts-doc__sec">
-                                        <h2>تفسیر در هفت سطح</h2>
+                                    <p t-if="not org_view" class="tt-divider">جزئیات برای گفتگو با مشاور</p>
+                                    <t t-call="ts_talent.sec" sec_id="'tt-sec-levels'" collapse="'phone'" title.f="تفسیر در هفت سطح">
                                         <t t-if="single">
                                             <p t-foreach="single" t-as="ln" t-out="ln"/>
                                         </t>
                                         <ol t-else="" class="tt-levels">
                                             <li t-foreach="lv" t-as="l">
                                                 <h3 t-out="l['title']"/>
+                                                <p class="tt-gloss" t-if="l['gloss']" t-out="l['gloss']"/>
                                                 <p t-foreach="l['lines']" t-as="ln" t-out="ln"/>
                                                 <p t-foreach="l['near']" t-as="nr" class="tt-near" t-out="nr"/>
                                             </li>
                                         </ol>
-                                    </section>
+                                    </t>
 
-                                    <section class="ts-doc__sec" t-if="programs">
-                                        <h2>گام بعدی: برنامه‌های پیشنهادی کتاب</h2>
-                                        <ul class="tt-programs">
-                                            <li t-foreach="programs" t-as="p"><span t-out="p[0]"/><strong t-out="p[1]"/></li>
-                                        </ul>
-                                        <p class="tt-mini">نام برنامه‌ها از کتاب است. این گزارش خودشناسی است و جایگزین ارزیابی مدرسه یا مشاور نیست.</p>
-                                    </section>
+                                    <t t-call="ts_talent.sec" sec_id="'tt-sec-next'" cls="'tt-next'" title="'برای جلسهٔ مشاوره' if org_view else ('قدم بعدی تو' if tu else 'قدم بعدی شما')">
+                                        <t t-if="org_view">
+                                            <p>اگر شرکت‌کننده نگران است، او را به متخصص ارجاع دهید. این گزارش خودشناسی است و جایگزین ارزیابی مدرسه یا مشاور نیست.</p>
+                                            <t t-if="programs">
+                                                <h3>برنامه‌های پیشنهادی کتاب</h3>
+                                                <ul class="tt-programs">
+                                                    <li t-foreach="programs" t-as="p"><span t-out="p[0]"/><strong t-out="p[1]"/></li>
+                                                </ul>
+                                            </t>
+                                        </t>
+                                        <t t-else="">
+                                            <p t-if="shared_edu and tu" class="tt-next__lead">این گزارش را مشاورت در «<t t-out="shared_name"/>» هم می‌بیند. یک وقت گفتگو بگیر و این سه پرسش را با خودت ببر:</p>
+                                            <p t-elif="shared_edu" class="tt-next__lead">این گزارش را مشاورتان در «<t t-out="shared_name"/>» هم می‌بیند. یک وقت گفتگو بگیرید و این سه پرسش را با خودتان ببرید:</p>
+                                            <p t-elif="tu" class="tt-next__lead">با مشاور مدرسه یا کسی که به او اعتماد داری دربارهٔ این گزارش حرف بزن. این سه پرسش کمکت می‌کند:</p>
+                                            <p t-else="" class="tt-next__lead">دربارهٔ این گزارش با یک مشاور حرف بزنید. این سه پرسش کمک می‌کند:</p>
+                                            <ol class="tt-questions">
+                                                <li>کدام زمینه برایم بیشتر معنا دارد و چرا؟</li>
+                                                <li>این نمره‌ها با نمره‌های درسی و علاقه‌ام جور درمی‌آید یا نه؟</li>
+                                                <li>برای قدم بعدی در زمینه‌ای که انتخاب می‌کنم، چه کار کوچکی می‌توانم بکنم؟</li>
+                                            </ol>
+                                            <p t-if="can_share" class="tt-next__cta"><a t-attf-href="/my/assessments/#{attempt.id}/share" class="ts-btn ts-btn--primary">ارسال برای مشاورم</a>
+                                                <span class="ts-hint" t-if="tu"> مشاورت پاسخ‌های خامت را نمی‌بیند و هر وقت بخواهی می‌توانی اشتراک را قطع کنی.</span>
+                                                <span class="ts-hint" t-else=""> مشاور پاسخ‌های خام شما را نمی‌بیند و هر وقت بخواهید می‌توانید اشتراک را قطع کنید.</span></p>
+                                            <t t-if="programs">
+                                                <h3 t-if="tu">فعالیت‌هایی که می‌توانی با مشاورت بررسی کنی</h3>
+                                                <h3 t-else="">فعالیت‌هایی که می‌توانید با یک مشاور بررسی کنید</h3>
+                                                <ul class="tt-programs">
+                                                    <li t-foreach="programs" t-as="p"><span t-out="p[0]"/><strong t-out="p[1]"/></li>
+                                                </ul>
+                                                <p class="tt-mini">نام فعالیت‌ها از کتاب است. این گزارش خودشناسی است و جایگزین ارزیابی مدرسه یا مشاور نیست.</p>
+                                            </t>
+                                            <p t-if="tu">اگر نگران شدی، با مشاور مدرسه یا یک متخصص حرف بزن. <a href="/contact?topic=support">تماس با پشتیبانی</a></p>
+                                            <p t-else="">اگر نگران شدید، با یک مشاور یا متخصص حرف بزنید. <a href="/contact?topic=support">تماس با پشتیبانی</a></p>
+                                        </t>
+                                    </t>
 
-                                    <section class="ts-doc__sec">
-                                        <h2>جدول کامل</h2>
-                                        <div class="tt-scroll ts-table-wrap">
+                                    <t t-call="ts_talent.sec" sec_id="'tt-sec-table'" collapse="'phone'" title.f="جدول کامل">
+                                        <div class="tt-scroll ts-table-wrap ts-scroller" tabindex="0" role="region" aria-label="جدول کامل نمره‌ها">
                                             <table class="tt-table">
                                                 <thead><tr>
                                                     <th scope="col">توانایی</th>
@@ -307,7 +443,7 @@
                                                         <th scope="row" t-out="r['name']"/>
                                                         <td t-foreach="r['vals']" t-as="v" t-attf-class="#{'hi' if r['is_best'][v_index] and len(fields) &gt; 1 else ''}" t-out="fmt(v)"/>
                                                         <td t-out="fmt(r['mean'])"/>
-                                                        <td t-out="joinfa(r['best']) if len(fields) &gt; 1 else '—'"/>
+                                                        <td t-out="('همه برابر' if r['equal'] else joinfa(r['best'])) if len(fields) &gt; 1 else '—'"/>
                                                     </tr>
                                                     <tr class="sep">
                                                         <th scope="row">ترکیب آموزشی</th>
@@ -317,9 +453,9 @@
                                                 </tbody>
                                             </table>
                                         </div>
-                                    </section>
+                                    </t>
 
-                                    <section class="ts-doc__sec ts-noprint" t-if="not org_view">
+                                    <section class="ts-doc__sec ts-noprint" t-if="not org_view" id="tt-sec-raw">
                                         <h2>پاسخ‌های من</h2>
                                         <button type="button" class="tt-toggle" aria-expanded="false" aria-controls="tt-raw">نمایش پاسخ‌های من</button>
                                         <div id="tt-raw" hidden="hidden">
@@ -332,27 +468,40 @@
                                         </div>
                                     </section>
 
-                                    <section class="ts-doc__sec">
-                                        <h2>دربارهٔ این سنجه و محدودیت‌ها</h2>
-                                        <p class="tt-quote" t-out="texts['quotes']['purpose']['text']"/>
+                                    <t t-call="ts_talent.sec" sec_id="'tt-sec-about'" collapse="'phone'" title.f="دربارهٔ این سنجه و محدودیت‌ها">
+                                        <p class="tt-quote"><span class="tt-quote__k">به گفتهٔ کتاب:</span> <t t-out="quote"/></p>
                                         <dl class="tt-defs">
                                             <t t-foreach="defs" t-as="d"><dt t-out="d[0]"/><dd t-out="d[1]"/></t>
                                         </dl>
                                         <p t-out="inst.limitations"/>
-                                        <p>اگر نتیجه برایتان پرسش ایجاد کرده یا نگران‌تان کرده است، با یک متخصص مشورت کنید. <a href="/contact?topic=support">تماس با پشتیبانی</a></p>
-                                        <p class="ts-hint" t-if="org_view">این گزارش را شرکت‌کننده برای مؤسسه‌ای که در آن مشاوره می‌گیرد در دسترس گذاشته یا مؤسسه پیشتر دریافت کرده است؛ پاسخ‌های خام در آن نیست. شناسهٔ گزارش <bdi dir="ltr" t-out="attempt.name"/></p>
-                                        <p class="ts-hint" t-else="">این گزارش فقط برای شرکت‌کننده است. شناسهٔ گزارش <bdi dir="ltr" t-out="attempt.name"/> · نسخه <bdi dir="ltr"><t t-out="version.contract_version"/> · <t t-out="attempt.engine_version"/></bdi></p>
+                                    </t>
+
+                                    <section class="ts-doc__sec tt-foot">
+                                        <p class="ts-hint" t-if="org_view">این گزارش را بدون پاسخ‌های خام می‌بینید. باز کردن و چاپ آن در دفتر ممیزی پنل ثبت می‌شود. شناسهٔ گزارش <bdi dir="ltr" t-out="attempt.name"/></p>
+                                        <p class="ts-hint" t-else=""><t t-if="tu">این گزارش متعلق به توست.</t><t t-else="">این گزارش متعلق به شماست.</t> شناسهٔ گزارش <bdi dir="ltr" t-out="attempt.name"/> · نسخه <bdi dir="ltr"><t t-out="version.contract_version"/> · <t t-out="attempt.engine_version"/></bdi></p>
                                     </section>
                                 </article>
                             </div>
-                        </section>
+                        </t>
                     </div>
                 </t>
             </t>
         </field>
     </record>
 
-    <!-- Catalog and detail: a matrix instrument says "15 statements per field", not "15 questions" -->
+    <record id="tpl_report_frame" model="ir.ui.view">
+        <field name="name">TS talent: report page frame</field>
+        <field name="type">qweb</field>
+        <field name="key">ts_talent.report_frame</field>
+        <field name="website_id" ref="ts_website.website_ts"/>
+        <field name="arch" type="xml">
+            <t t-name="ts_talent.report_frame">
+                <section class="ts-section ts-report-page"><t t-out="0"/></section>
+            </t>
+        </field>
+    </record>
+
+    <!-- Catalog, detail and invite: a matrix instrument says fields x statements and time per field (UX audit PT-1) -->
     <record id="tpl_catalog_ext" model="ir.ui.view">
         <field name="name">TS talent: catalog meta</field>
         <field name="type">qweb</field>
@@ -363,6 +512,10 @@
             <xpath expr="//span[t[@t-out='fa(inst.active_item_count)']]" position="replace">
                 <span t-if="inst.current_version_id.mode == 'matrix'"><t t-out="fa(inst.active_item_count)"/> جمله برای هر زمینه</span>
                 <span t-else=""><t t-out="fa(inst.active_item_count)"/> پرسش</span>
+            </xpath>
+            <xpath expr="//span[t[@t-out='fa(inst.duration_minutes)']]" position="replace">
+                <span t-if="inst.current_version_id.mode == 'matrix'" t-out="inst.ts_duration_label()"/>
+                <span t-else="">حدود <t t-out="fa(inst.duration_minutes)"/> دقیقه</span>
             </xpath>
             <xpath expr="//span[t[@t-out='fa(inst.factor_count)']]" position="replace">
                 <span t-if="inst.current_version_id.mode == 'matrix'">۵ توانایی</span>
@@ -379,12 +532,19 @@
         <field name="website_id" ref="ts_website.website_ts"/>
         <field name="arch" type="xml">
             <xpath expr="//span[t[@t-out='fa(inst.active_item_count)']]" position="replace">
-                <span t-if="version.mode == 'matrix'"><t t-out="fa(inst.active_item_count)"/> جمله برای هر زمینه</span>
+                <span t-if="version.mode == 'matrix'" t-out="inst.ts_effort_label()"/>
                 <span t-else=""><t t-out="fa(inst.active_item_count)"/> پرسش</span>
+            </xpath>
+            <xpath expr="//span[t[@t-out='fa(inst.duration_minutes)']]" position="replace">
+                <span t-if="version.mode == 'matrix'" t-out="inst.ts_duration_label()"/>
+                <span t-else="">حدود <t t-out="fa(inst.duration_minutes)"/> دقیقه</span>
             </xpath>
             <xpath expr="//span[t[@t-out='fa(inst.factor_count)']]" position="replace">
                 <span t-if="version.mode == 'matrix'">۵ توانایی</span>
                 <span t-else=""><t t-out="fa(inst.factor_count)"/> بُعد</span>
+            </xpath>
+            <xpath expr="//span[@id='ts-inst-audience']" position="attributes">
+                <attribute name="t-out">inst.ts_audience_label()</attribute>
             </xpath>
             <xpath expr="//t[@t-foreach=&quot;version.factor_ids.filtered('scored')&quot;]" position="attributes">
                 <attribute name="t-foreach">version.factor_ids.filtered(lambda f: f.scored or (version.mode == 'matrix' and f.kind == 'scale'))</attribute>
@@ -393,8 +553,9 @@
                 <attribute name="t-if">version.mode != 'matrix'</attribute>
             </xpath>
             <xpath expr="//h3[normalize-space()='چگونه پاسخ می‌دهید']/following-sibling::p[1]" position="after">
-                <p t-if="version.mode == 'matrix'">خودتان دست‌کم دو زمینه (درس، هنر، ورزش، مهارت یا شغل) را می‌نویسید و برای هر کدام ۱۵ جمله را روی مقیاس پنج‌درجه‌ای از «بسیار کم» تا «بسیار زیاد» پاسخ می‌دهید. پاسخ‌ها خودکار ذخیره می‌شوند.</p>
+                <p t-if="version.mode == 'matrix'">خودتان <t t-out="fa(version.field_min)"/> تا <t t-out="fa(version.field_max)"/> زمینه (درس، هنر، ورزش، مهارت یا شغل) را می‌نویسید و برای هر کدام ۱۵ جمله را روی مقیاس پنج‌درجه‌ای از «بسیار کم» تا «بسیار زیاد» پاسخ می‌دهید؛ حدود ۲ دقیقه برای هر زمینه. پاسخ‌ها خودکار ذخیره می‌شوند و پیش از پایان می‌توانید آن‌ها را مرور کنید.</p>
             </xpath>
         </field>
     </record>
+
 </odoo>

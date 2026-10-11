@@ -130,7 +130,7 @@ class TsInstrumentLoader(models.Model):
             employment = aud == 'adult' and inst.category in EMPLOYMENT_CATEGORIES
             upd['purpose'] = 'employment' if employment else 'personal'
             if inst.category and scored and employment:
-                upd['intended_use'] = ('کاربرد: خودشناسی و گفت‌وگوی مشاوره‌ای در حوزهٔ «%s»؛ در فضای کاری استخدامی، فقط با رضایت داوطلب '
+                upd['intended_use'] = ('کاربرد: خودشناسی و گفت‌وگوی مشاوره‌ای در حوزهٔ «%s»؛ در پنل استخدامی، فقط با رضایت داوطلب '
                                        'و به‌صورت خلاصهٔ بازه‌ها، به‌عنوان یکی از ورودی‌های گفت‌وگوی شغلی. این سنجه %s بُعد را توصیف می‌کند: %s. %s '
                                        'این سنجه برای تشخیص بالینی به کار نمی‌رود و به‌تنهایی مبنای تصمیم استخدامی نیست.'
                                        % (inst.category, len(scored), names, who))

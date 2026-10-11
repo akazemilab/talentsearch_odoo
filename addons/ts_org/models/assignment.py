@@ -38,7 +38,7 @@ class TsAssignment(models.Model):
     _order = 'create_date desc, id desc'
 
     name = fields.Char('شناسه', readonly=True, copy=False, default='/')
-    workspace_id = fields.Many2one('ts.workspace', 'فضای کاری', required=True, index=True, ondelete='restrict')
+    workspace_id = fields.Many2one('ts.workspace', 'پنل', required=True, index=True, ondelete='restrict')
     purpose = fields.Selection(related='workspace_id.purpose', store=True)
     instrument_id = fields.Many2one('ts.instrument', 'سنجه', required=True, ondelete='restrict',
                                     domain=[('state', '=', 'published')])
@@ -94,7 +94,7 @@ class TsAssignment(models.Model):
             if a.purpose == 'employment' and a.instrument_id.purpose != 'employment':
                 raise ValidationError('این سنجه برای فرایند استخدام مجاز نیست.')
             if a.workspace_id.state not in ('pilot', 'active'):
-                raise ValidationError('فضای کاری فعال نیست.')
+                raise ValidationError('پنل فعال نیست.')
             if a.workspace_id.gated:
                 raise ValidationError('این پنل در انتظار تأیید مالک پلتفرم است؛ دعوت شرکت‌کنندهٔ واقعی پس از تأیید ممکن می‌شود.')
 
@@ -105,7 +105,7 @@ class TsAssignment(models.Model):
             if not r:
                 continue
             if r.workspace_id != a.workspace_id or not r.active or r.role not in RESPONSIBLE_ROLES:
-                raise ValidationError('کارشناس مسئول باید عضو فعال همین فضای کاری با نقش کارشناس باشد.')
+                raise ValidationError('کارشناس مسئول باید عضو فعال همین پنل با نقشی باشد که می‌تواند مسئول شرکت‌کننده شود.')
             if a.user_id and r.user_id == a.user_id:
                 raise ValidationError('شرکت‌کننده نمی‌تواند کارشناس مسئولِ خودش باشد.')
 

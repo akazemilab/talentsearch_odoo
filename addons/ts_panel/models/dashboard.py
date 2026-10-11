@@ -10,6 +10,8 @@ from zoneinfo import ZoneInfo
 
 from odoo import fields, models
 
+from .text import people_word
+
 TEHRAN, UTC = ZoneInfo('Asia/Tehran'), ZoneInfo('UTC')
 OPEN_STATES = ('invited', 'opened', 'accepted', 'in_progress')
 PERIODS = (7, 30, 90)
@@ -122,23 +124,24 @@ class TsMemberDashboard(models.Model):
             if n:
                 out.append({'key': key, 'label': label, 'n': n, 'url': url})
 
+        # Kept for other callers; the dashboard template skips it because the shell shows the gated notice on every page.
         add('gated', 'پنل در انتظار تأیید تیم تلنت سرچ است', 1 if ws.gated else 0, '/help/panel')
         add('verify', 'احراز صلاحیت حرفه‌ای شما در حال بررسی است', 1 if self._ts_unverified_pro() else 0, '/help/panel')
         if self.can_act() and self.has_perm('invites:manage'):
             dom = assignment_domain(self)
-            add('unseen', 'نتیجهٔ آماده که هنوز باز نکرده‌اید', len(unseen_ids(env, self, dom)), base + '/invites?unseen=1')
-            add('overdue', 'دعوت‌های گذشته از مهلت', A.search_count(dom + overdue_domain()), base + '/invites?overdue=1')
-            add('expiring', 'دعوت‌هایی که تا ۳ روز دیگر منقضی می‌شوند', A.search_count(dom + expiring_domain()), base + '/invites?expiring=1')
+            add('unseen', 'نتیجهٔ آماده‌ای که هنوز باز نکرده‌اید', len(unseen_ids(env, self, dom)), base + '/invites/unseen')
+            add('overdue', 'دعوت گذشته از مهلت', A.search_count(dom + overdue_domain()), base + '/invites?overdue=1')
+            add('expiring', 'دعوتی که تا ۳ روز دیگر منقضی می‌شود', A.search_count(dom + expiring_domain()), base + '/invites?expiring=1')
         if self.has_perm('clients:assign') or self.has_perm('clients:read_unassigned'):
-            add('unassigned', 'شرکت‌کنندگان بدون کارشناس مسئول',
+            add('unassigned', '%s بدون کارشناس مسئول' % ('مراجع' if ws.purpose == 'clinical' else 'شرکت‌کنندهٔ'),
                 C.search_count(visible_domain(self) + [('state', '=', 'active'), ('responsible_id', '=', False)]),
                 base + '/clients?filter=unassigned')
         if self.has_perm('clients:assign'):
-            add('handover', 'درخواست‌های واگذاری',
+            add('handover', 'درخواست واگذاری',
                 C.search_count(visible_domain(self) + [('state', '=', 'active'), ('handover_to_id', '!=', False)]),
                 base + '/clients?filter=handover')
         if self.has_perm('members:invite'):
-            add('invites', 'دعوت‌های همکار در انتظار پذیرش',
+            add('invites', 'دعوت همکار در انتظار پذیرش',
                 env['ts.member.invite'].sudo().search_count([('workspace_id', '=', ws.id), ('state', '=', 'pending'),
                                                              ('expires_at', '>', fields.Datetime.now())]), base + '/members')
         if self.has_perm('panel:settings') and ws.terms_version != TERMS_VERSION:
@@ -175,7 +178,7 @@ class TsMemberDashboard(models.Model):
                 out.append({'key': 'noshare', 'label': 'تکمیل‌شده بدون اشتراک نتیجه',
                             'n': A.search_count(dom + kind_domain('noshare', days)), 'text': None, 'url': link('noshare')})
         if self.has_perm('clients:be_responsible') and self.has_perm('clients:read_own'):
-            out.append({'key': 'mine_open', 'label': 'مراجعان باز من',
+            out.append({'key': 'mine_open', 'label': '%s من با دعوت باز' % people_word(ws.purpose),
                         'n': C.search_count(visible_domain(self) + [('state', '=', 'active'), ('responsible_id', '=', self.id), ('open_count', '>', 0)]),
                         'text': None, 'url': base + '/clients?filter=mine_open'})
         if self.has_perm('credits:read'):

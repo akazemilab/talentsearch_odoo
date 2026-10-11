@@ -17,36 +17,48 @@ UTC = ZoneInfo('UTC')
 PAGE = 50
 EXPORT_MAX = 5000
 
-FAMILIES = [('access', 'ورود و دسترسی'), ('members', 'اعضا'), ('clients', 'مراجعان'), ('invites', 'دعوت‌ها'),
-            ('results', 'نتایج'), ('exports', 'خروجی‌ها'), ('settings', 'تنظیمات'), ('support', 'پشتیبانی')]
+FAMILIES = [('access', 'ورود و دسترسی'), ('members', 'اعضا'), ('clients', 'شرکت‌کنندگان'), ('invites', 'دعوت‌ها'),
+            ('results', 'نتیجه‌ها'), ('exports', 'خروجی‌ها'), ('settings', 'تنظیمات'), ('support', 'پشتیبانی')]
+
+
+# What an export or job is about, for the audit sentences («از فهرست شرکت‌کنندگان خروجی گرفت»).
+OBJ_OF_KIND = {'export_clients': 'فهرست شرکت‌کنندگان', 'export_status': 'وضعیت دعوت‌ها', 'export_results': 'نتیجه‌ها',
+               'export_audit': 'دفتر ممیزی', 'import_clients': 'ورود از فایل', 'group_report': 'گزارش گروهی',
+               'data_export': 'داده‌های شخصی'}
+
+
+def families_for(purpose):
+    """Family labels in the words of the panel (glossary §9-3, UX audit G4 PT4): «مراجعان» only in clinical panels."""
+    return [(k, 'مراجعان' if (k == 'clients' and purpose == 'clinical') else label) for k, label in FAMILIES]
 OTHER = ('other', 'رویداد دیگر')
 
-# event_type -> (family, sentence). {who} = the person who acted, {obj} = the participant the event is about (may be empty).
+# event_type -> (family, sentence). {who} = the person who acted, {obj} = what the event is about (a participant, a member, a
+# file kind), {role} = the role named in the event detail.
 EVENTS = {
     'account.login_phone': ('access', '{who} با موبایل وارد شد'),
     'account.signup_phone': ('access', '{who} با موبایل ثبت‌نام کرد'),
     'auth.reauth': ('access', '{who} هویت خود را دوباره تأیید کرد'),
     'auth.reauth_fail': ('access', 'تأیید دوبارهٔ هویت {who} ناموفق بود'),
     'authz.deny': ('access', 'دسترسی {who} به یک صفحه رد شد'),
-    'member.add': ('members', '{who} عضوی را افزود'),
-    'member.change': ('members', '{who} نقش یا وضعیت یکی از اعضا را تغییر داد'),
-    'member.invite': ('members', '{who} همکاری را دعوت کرد'),
+    'member.add': ('members', '{who} {obj} را با نقش {role} افزود'),
+    'member.change': ('members', '{who} نقش یا وضعیت {obj} را تغییر داد'),
+    'member.invite': ('members', '{who} همکاری را با نقش {role} دعوت کرد'),
     'member.invite_accept': ('members', '{who} دعوت همکاری را پذیرفت'),
-    'member.invite_resend': ('members', '{who} دعوت یک همکار را دوباره فرستاد'),
+    'member.invite_resend': ('members', '{who} برای دعوت یک همکار پیوند تازه ساخت'),
     'member.invite_revoke': ('members', '{who} دعوت یک همکار را لغو کرد'),
-    'member.practice': ('members', '{who} نوع فعالیت یکی از اعضا را ثبت کرد'),
-    'member.verify': ('members', '{who} صلاحیت حرفه‌ای یکی از اعضا را بررسی کرد'),
+    'member.practice': ('members', '{who} نوع فعالیت {obj} را ثبت کرد'),
+    'member.verify': ('members', '{who} صلاحیت حرفه‌ای {obj} را بررسی کرد'),
     'client.create': ('clients', '{who} شرکت‌کننده‌ای را افزود'),
     'client.edit': ('clients', '{who} اطلاعات {obj} را ویرایش کرد'),
     'client.archive': ('clients', '{who} {obj} را بایگانی کرد'),
     'client.restore': ('clients', '{who} {obj} را از بایگانی درآورد'),
     'client.merge': ('clients', '{who} دو شرکت‌کنندهٔ تکراری را ادغام کرد'),
     'client.auto_link': ('clients', 'سامانه حساب یک شرکت‌کننده را به پروندهٔ او وصل کرد'),
-    'client.responsible_change': ('clients', '{who} مسئول {obj} را تغییر داد'),
+    'client.responsible_change': ('clients', '{who} کارشناس مسئول {obj} را تغییر داد'),
     'client.handover_request': ('clients', '{who} درخواست واگذاری {obj} را ثبت کرد'),
     'client.handover_decide': ('clients', '{who} دربارهٔ واگذاری {obj} تصمیم گرفت'),
-    'attempt.responsible_change': ('clients', '{who} مسئول {obj} را تغییر داد'),
-    'assignment.responsible_change': ('clients', '{who} مسئول {obj} را تغییر داد'),
+    'attempt.responsible_change': ('clients', '{who} کارشناس مسئول {obj} را تغییر داد'),
+    'assignment.responsible_change': ('clients', '{who} کارشناس مسئول {obj} را تغییر داد'),
     'import.run': ('clients', '{who} فایل شرکت‌کنندگان را وارد کرد'),
     'assignment.create': ('invites', '{who} برای {obj} دعوتی فرستاد'),
     'assignment.accept': ('invites', '{obj} دعوت را پذیرفت'),
@@ -71,9 +83,10 @@ EVENTS = {
     'attempt.submit': ('results', 'یک سنجه تکمیل شد'),
     'attempt.void': ('results', '{who} یک سنجهٔ {obj} را باطل کرد'),
     'attempt.score_error': ('results', 'در محاسبهٔ یک نتیجه خطا رخ داد'),
-    'export.create': ('exports', '{who} خروجی گرفت'),
-    'export.download': ('exports', '{who} فایل خروجی را دانلود کرد'),
-    'audit.export': ('exports', '{who} از ممیزی پنل خروجی گرفت'),
+    'export.create': ('exports', '{who} از {obj} خروجی گرفت'),
+    'export.download': ('exports', '{who} فایل خروجی {obj} را دریافت کرد'),
+    'job.download': ('exports', '{who} گزارش {obj} را دریافت کرد'),
+    'audit.export': ('exports', '{who} از دفتر ممیزی خروجی گرفت'),
     'workspace.create': ('settings', 'پنل ساخته شد'),
     'workspace.self_create': ('settings', '{who} پنل را ساخت'),
     'workspace.profile': ('settings', '{who} مشخصات پنل را تغییر داد'),
@@ -160,8 +173,10 @@ class TsAuditView(models.AbstractModel):
 
     @api.model
     def _describe(self, ws, events):
-        roles = {m.user_id.id: ROLE_LABELS.get(m.role, m.role) for m in
-                 self.env['ts.workspace.member'].sudo().search([('workspace_id', '=', ws.id)])}
+        import json
+        kinds = OBJ_OF_KIND
+        members = self.env['ts.workspace.member'].sudo().with_context(active_test=False).search([('workspace_id', '=', ws.id)])
+        roles = {m.user_id.id: ROLE_LABELS.get(m.role, m.role) for m in members}
         names = {}
         for model in ('ts.assignment', 'ts.attempt', 'ts.panel.client'):
             ids = [e.res_id for e in events if e.res_model == model]
@@ -169,17 +184,62 @@ class TsAuditView(models.AbstractModel):
                 recs = self.env[model].sudo().search([('id', 'in', ids), ('workspace_id', '=', ws.id)])
                 for r in recs:
                     c = r if model == 'ts.panel.client' else r.client_id
-                    names[(model, r.id)] = c.name or ''
+                    names[(model, r.id)] = (c.code or c.name or '') if c else ''
+        for m in members:
+            names[('ts.workspace.member', m.id)] = '«%s»' % m.user_id.name if m.user_id.name else ''
+        job_ids = [e.res_id for e in events if e.res_model == 'ts.job']
+        if job_ids:
+            for j in self.env['ts.job'].sudo().search([('id', 'in', job_ids), ('workspace_id', '=', ws.id)]):
+                names[('ts.job', j.id)] = kinds.get(j.kind, '')
+        fams = dict(families_for(ws.purpose))
         out = []
         for e in events:
             fam, sentence = EVENTS.get(e.event_type, (OTHER[0], OTHER[1]))
-            who = 'سامانه' if e.actor_id.id == SUPERUSER_ID else (e.actor_id.name or 'سامانه')      # the system user is never shown as OdooBot
-            obj = names.get((e.res_model, e.res_id)) or 'یک شرکت‌کننده'
-            text = sentence.replace('{who}', who).replace('{obj}', obj)
+            try:
+                detail = json.loads(e.detail) if e.detail else {}
+            except ValueError:
+                detail = {}
+            # The acting person: the account that acted; for rows written by the system user on behalf of a member (seeded or
+            # background rows) the member's own name, so a human action is never shown as «سامانه» (UX audit G4 P9-3).
+            if e.actor_id and e.actor_id.id != SUPERUSER_ID:
+                who = e.actor_id.name or 'سامانه'
+            elif e.member_id and e.member_id.user_id:
+                who = e.member_id.user_id.name
+            else:
+                who = 'سامانه'                       # the system user is never shown as OdooBot
+            obj = names.get((e.res_model, e.res_id)) or ''
+            if not obj and isinstance(detail, dict) and detail.get('kind') in kinds:
+                obj = kinds[detail['kind']]
+            if not obj:
+                obj = 'عضوی' if e.event_type.startswith('member.') else (
+                    'اطلاعات پنل' if e.event_type.startswith(('export.', 'job.')) else 'یک شرکت‌کننده')
+            role = ROLE_LABELS.get(detail.get('role'), '') if isinstance(detail, dict) else ''
+            text = sentence.replace('{who}', who).replace('{obj}', obj).replace(' با نقش {role}', (' با نقش «%s»' % role) if role else '')
+            text = text.replace('{role}', role)
+            when = jalali(e.create_date)
             out.append({
-                'id': e.id, 'type': e.event_type, 'family': dict(FAMILIES).get(fam, OTHER[1]), 'text': text,
-                'when': jalali(e.create_date), 'iso': e.create_date, 'actor': who if e.actor_id else '',
-                'role': roles.get(e.actor_id.id, ''), 'outcome': e.outcome, 'detail': e.detail or ''})
+                'id': e.id, 'type': e.event_type, 'family_key': fam, 'family': fams.get(fam, OTHER[1]), 'text': text,
+                'when': when, 'day': jalali(e.create_date, with_time=False), 'time': when.rsplit(' ', 1)[-1] if e.create_date else '',
+                'iso': e.create_date, 'actor': who if (e.actor_id or e.member_id) else '',
+                'role': roles.get(e.actor_id.id, '') or (roles.get(e.member_id.user_id.id, '') if e.member_id else ''),
+                'outcome': e.outcome, 'detail': e.detail or '', 'count': 1,
+                'key': (e.event_type, e.actor_id.id, e.member_id.id, e.res_model, e.res_id, e.outcome)})
+        return out
+
+    @api.model
+    def collapse(self, rows, minutes=5):
+        """Identical consecutive events (same type, person, object and outcome) within `minutes` become one row with a count
+        (UX audit G4 P9-3). Presentation only: the export keeps every event."""
+        out = []
+        for r in rows:
+            last = out[-1] if out else None
+            if last and last['key'] == r['key'] and last['iso'] and r['iso'] and \
+                    abs((last['first_iso'] - r['iso']).total_seconds()) <= minutes * 60:
+                last['count'] += 1
+                last['first_iso'] = r['iso']
+                continue
+            r = dict(r, first_iso=r['iso'])
+            out.append(r)
         return out
 
     @api.model

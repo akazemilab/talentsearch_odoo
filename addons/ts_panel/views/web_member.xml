@@ -14,7 +14,7 @@
                             <a t-attf-href="/my/workspaces/#{ws.id}/members" class="ts-back">اعضا و نقش‌ها</a>
                             <header class="tsp-head">
                                 <div>
-                                    <h1 class="tsp-head__title" t-out="m.user_id.name"/>
+                                    <h1 class="tsp-head__title"><bdi t-out="m.user_id.name"/></h1>
                                     <p class="tsp-head__help"><span t-out="m_role"/> · <span t-attf-class="ts-pill #{pill}" t-out="state"/></p>
                                 </div>
                             </header>
@@ -35,10 +35,10 @@
                                         <legend class="tsp-field__label">نقش تازه</legend>
                                         <label t-foreach="roles" t-as="ro" class="tsp-radio">
                                             <input type="radio" name="role" t-att-value="ro['key']" t-att-checked="'checked' if chosen == ro['key'] else None"/>
-                                            <span><strong t-out="ro['label']"/> <span class="tsp-field__hint" t-out="ro['blurb']"/></span>
+                                            <span><strong t-out="ro['label']"/><span class="tsp-field__hint tsp-radio__blurb" t-out="ro['blurb']"/></span>
                                         </label>
                                     </fieldset>
-                                    <p class="ts-hint">اگر نقش تازه نتواند مسئول شرکت‌کننده باشد، شرکت‌کنندگان او به صف «تخصیص‌نشده» می‌روند. مالک‌شدن نیاز به تأیید دوبارهٔ هویت دارد.</p>
+                                    <p class="ts-hint"><t t-if="clients">اگر نقش تازه نتواند مسئول شرکت‌کننده باشد، <span class="ts-num" t-out="fa(clients)"/> شرکت‌کنندهٔ او به فهرست «بدون کارشناس» می‌روند.</t><t t-else="">او اکنون مسئول هیچ شرکت‌کننده‌ای نیست.</t> برای مالک‌کردن، هویت شما دوباره پرسیده می‌شود.</p>
                                     <p><button type="submit" class="ts-btn ts-btn--primary">ذخیره نقش</button></p>
                                 </form>
                             </section>
@@ -89,11 +89,12 @@
                 <t t-call="website.layout" additional_title="title">
                     <div id="wrap" class="ts-page">
                         <t t-call="ts_panel.shell_frame">
-                            <header class="tsp-head"><div><h1 class="tsp-head__title">غیرفعال‌کردن «<t t-out="m.user_id.name"/>»</h1></div></header>
+                            <a t-attf-href="/my/workspaces/#{ws.id}/members" class="ts-backlink">اعضا و نقش‌ها</a>
+                            <header class="tsp-head"><div><h1 class="tsp-head__title">غیرفعال‌کردن «<bdi t-out="m.user_id.name"/>»</h1></div></header>
                             <section class="tsp-confirm ts-card">
                                 <ul>
                                     <li>دسترسی او به این پنل بلافاصله قطع می‌شود.</li>
-                                    <li t-if="clients"><span class="ts-num" t-out="fa(clients)"/> شرکت‌کننده که مسئول آن‌هاست به صف «تخصیص‌نشده» می‌رود.</li>
+                                    <li t-if="clients"><span class="ts-num" t-out="fa(clients)"/> شرکت‌کننده که مسئول آن‌هاست به فهرست «بدون کارشناس» می‌رود.</li>
                                     <li>سابقه‌اش در پنل می‌ماند و بعداً می‌توانید دوباره فعالش کنید.</li>
                                     <li t-if="is_self"><strong>این خود شماست.</strong> پس از غیرفعال‌شدن دیگر وارد این پنل نمی‌شوید؛ اگر مالک دیگری نباشد، این کار انجام نمی‌شود.</li>
                                 </ul>

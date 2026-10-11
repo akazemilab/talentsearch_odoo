@@ -118,7 +118,7 @@ check('the home has the participant navigation', '/my/sharing' in body and '/my/
 st, body = get(inv, '/my')
 check('an invited user sees the waiting invitation with its link', st == 200 and 'ts-home-invites' in body and '/invite/%s' % ITOK in body)
 st, body = get(going, '/my')
-check('a user with an unfinished attempt sees the resume card', st == 200 and 'ts-home-going' in body and '/take/%s' % GTOK in body)
+check('a user with an unfinished attempt sees the resume card', st == 200 and ('ts-home-going' in body or 'ts-home-next' in body) and '/take/%s' % GTOK in body)
 st, body = get(res, '/my')
 check('a user with results sees them and the sharing count', st == 200 and 'ts-home-results' in body and '/my/assessments/%s' % AT in body and 'به اشتراک گذاشته' in body)
 check('the home of a user with results does not offer the empty card', 'ts-home-empty' not in body)

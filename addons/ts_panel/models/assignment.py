@@ -12,7 +12,7 @@ CHANNELS = [('link', 'پیوند'), ('sms', 'پیامک'), ('email', 'ایمیل
 class TsAssignment(models.Model):
     _inherit = 'ts.assignment'
 
-    client_id = fields.Many2one('ts.panel.client', 'مراجع', index=True, ondelete='restrict')
+    client_id = fields.Many2one('ts.panel.client', 'شرکت‌کننده', index=True, ondelete='restrict')
     state = fields.Selection(selection_add=[('opened', 'بازشده'), ('expired', 'منقضی')])
     channel = fields.Selection(CHANNELS, 'کانال', default='link')
     expires_at = fields.Datetime('انقضای دعوت', index=True)

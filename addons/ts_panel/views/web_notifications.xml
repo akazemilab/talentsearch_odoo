@@ -8,29 +8,34 @@
         <field name="website_id" ref="ts_website.website_ts"/>
         <field name="arch" type="xml">
             <t t-name="ts_panel.notifications">
-                <t t-call="website.layout" additional_title="title">
+                <t t-call="website.layout" additional_title.f="اعلان‌ها">
                     <div id="wrap" class="ts-page">
                         <section class="tsp-section container" style="max-width:760px">
                             <h1 class="tsp-head__title">اعلان‌ها</h1>
+                            <t t-call="ts_panel.my_nav" active.f="notifications"/>
                             <p t-if="flash" class="tsp-flash" role="status" t-out="flash"/>
-                            <p class="tsp-inline">
-                                <a t-if="only_unread" href="/my/notifications" class="ts-btn ts-btn--outline">نمایش همه</a>
-                                <a t-else="" href="/my/notifications?unread=1" class="ts-btn ts-btn--outline">فقط خوانده‌نشده‌ها</a>
-                                <a href="/my/notifications/prefs" class="ts-btn ts-btn--quiet">ترجیح‌های اعلان</a>
-                            </p>
-                            <form t-if="unread" action="/my/notifications/read_all" method="post" data-tsp-once="1">
-                                <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
-                                <button type="submit" class="ts-btn ts-btn--outline">همه را خوانده‌شده کن</button>
-                            </form>
+                            <div class="tsp-notif-bar">
+                                <nav class="tsp-seg" aria-label="نمایش اعلان‌ها">
+                                    <a href="/my/notifications" t-attf-class="tsp-seg__item #{'is-on' if not only_unread else ''}" t-att-aria-current="'page' if not only_unread else None">همه</a>
+                                    <a href="/my/notifications?unread=1" t-attf-class="tsp-seg__item #{'is-on' if only_unread else ''}" t-att-aria-current="'page' if only_unread else None">خوانده‌نشده<t t-if="unread"> (<t t-out="fa(unread)"/>)</t></a>
+                                </nav>
+                                <form t-if="unread &gt; 1" action="/my/notifications/read_all" method="post" class="tsp-inline" data-tsp-once="1">
+                                    <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                                    <button type="submit" class="ts-btn ts-btn--quiet ts-btn--sm">علامت‌گذاری همه به‌عنوان خوانده‌شده</button>
+                                </form>
+                            </div>
                             <div class="ts-card">
-                                <p t-if="not rows" class="ts-hint">اعلانی ندارید.</p>
-                                <ul t-if="rows" class="tsp-list">
-                                    <li t-foreach="rows" t-as="r">
-                                        <span t-if="not r.read_at" class="ts-pill ts-pill--info">تازه</span> <a t-attf-href="/my/notifications/#{r.id}"><t t-out="r.title"/></a>
-                                        <span class="ts-hint"> — <t t-out="jalali(r.create_date)"/></span>
+                                <p t-if="not items" class="ts-hint"><t t-if="only_unread">اعلان خوانده‌نشده‌ای ندارید.</t><t t-else="">اعلانی ندارید.</t></p>
+                                <ul t-if="items" class="tsp-list tsp-rows">
+                                    <li t-foreach="items" t-as="r" t-attf-class="#{'is-new' if r['new'] else ''}">
+                                        <div class="tsp-rows__text">
+                                            <a t-attf-href="/my/notifications/#{r['id']}"><span t-if="r['new']" class="ts-pill ts-pill--info">تازه<span class="tsp-sr">: </span></span> <t t-out="r['title']"/></a>
+                                            <span class="ts-hint" t-out="r['when']"/>
+                                        </div>
                                     </li>
                                 </ul>
                             </div>
+                            <p><a href="/my/notifications/prefs">تنظیم اعلان‌ها</a></p>
                         </section>
                     </div>
                 </t>
@@ -45,22 +50,41 @@
         <field name="website_id" ref="ts_website.website_ts"/>
         <field name="arch" type="xml">
             <t t-name="ts_panel.notification_prefs">
-                <t t-call="website.layout" additional_title="title">
+                <t t-call="website.layout" additional_title.f="تنظیم اعلان‌ها">
                     <div id="wrap" class="ts-page">
-                        <section class="tsp-section container" style="max-width:760px">
-                            <h1 class="tsp-head__title">ترجیح‌های اعلان</h1>
-                            <p class="tsp-head__help">برای هر رویداد انتخاب کنید که در همین سایت (زنگ اعلان) به شما گفته شود یا پیامک هم بگیرید. عنوان اعلان‌ها نام و نتیجه‌ای را نشان نمی‌دهد.</p>
+                        <section class="tsp-section container" style="max-width:860px">
+                            <a href="/my/notifications" class="ts-backlink">اعلان‌ها</a>
+                            <h1 class="tsp-head__title">تنظیم اعلان‌ها</h1>
+                            <t t-call="ts_panel.my_nav" active.f="notifications"/>
+                            <p class="tsp-head__help">برای هر رویداد انتخاب کنید که در همین سایت (زنگ اعلان) به شما گفته شود یا پیامک هم بگیرید. عنوان اعلان‌ها نام کسی یا نتیجه‌ای را نشان نمی‌دهد.</p>
                             <p t-if="flash" class="tsp-flash" role="status" t-out="flash"/>
-                            <p t-if="not has_phone" class="ts-hint">پیامک فقط برای کسی ممکن است که شمارهٔ موبایل خود را با کد تأیید کرده باشد. <a href="/my/phone">تأیید موبایل</a></p>
-                            <p t-if="has_phone and not sms_live" class="ts-hint">ارسال پیامک اعلان‌ها فعلاً از سوی پلتفرم فعال نشده است؛ ترجیح شما ذخیره می‌شود و بعداً اعمال می‌شود.</p>
-                            <form action="/my/notifications/prefs" method="post" class="tsp-form ts-card" data-tsp-once="1">
+                            <p t-if="any_sms and not has_phone" class="ts-hint" id="tsp-sms-why">پیامک فقط برای کسی ممکن است که شمارهٔ موبایل خود را با کد تأیید کرده باشد؛ برای همین گزینه‌های پیامک خاموش‌اند. <a href="/my/phone">تأیید موبایل</a></p>
+                            <p t-if="any_sms and has_phone and not sms_live" class="ts-hint" id="tsp-sms-why">ارسال پیامک اعلان‌ها هنوز از سوی تلنت سرچ راه نیفتاده است؛ انتخاب شما ذخیره می‌شود و بعداً اعمال می‌شود.</p>
+                            <form action="/my/notifications/prefs" method="post" class="tsp-form" data-tsp-once="1">
                                 <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
-                                <fieldset t-foreach="types" t-as="t" class="tsp-field">
-                                    <legend class="tsp-field__label" t-out="t[1]"/>
-                                    <label class="tsp-check"><input type="checkbox" t-attf-name="app_#{t[0]}" value="1" t-att-checked="'checked' if prefs[t[0]][0] else None"/><span>اعلان در سایت</span></label>
-                                    <label t-if="t[2]" class="tsp-check"><input type="checkbox" t-attf-name="sms_#{t[0]}" value="1" t-att-checked="'checked' if prefs[t[0]][1] else None" t-att-disabled="'disabled' if not has_phone else None"/><span>پیامک</span></label>
-                                </fieldset>
-                                <p><button type="submit" class="ts-btn ts-btn--primary">ذخیره</button> <a href="/my/notifications" class="ts-btn ts-btn--quiet">بازگشت</a></p>
+                                <section t-foreach="groups" t-as="g" class="ts-card tsp-prefs" t-attf-aria-labelledby="tsp-pg-#{g['key']}">
+                                    <h2 class="h5" t-attf-id="tsp-pg-#{g['key']}" t-out="g['label']"/>
+                                    <table class="ts-table tsp-table tsp-table--cards tsp-prefs__table">
+                                        <caption class="tsp-sr" t-out="g['label']"/>
+                                        <thead><tr><th scope="col">رویداد</th><th scope="col">در سایت</th><th scope="col" t-if="any_sms">پیامک</th></tr></thead>
+                                        <tbody>
+                                            <tr t-foreach="g['rows']" t-as="t">
+                                                <th scope="row" data-label="رویداد"><t t-out="t[1]"/><span t-if="t[3]" class="ts-hint tsp-prefs__lock" t-attf-id="tsp-lock-#{t[0]}">برای امنیت همیشه روشن است.</span></th>
+                                                <td data-label="در سایت">
+                                                    <label class="tsp-check">
+                                                        <input t-if="t[3]" type="checkbox" checked="checked" disabled="disabled" t-attf-aria-describedby="tsp-lock-#{t[0]}"/>
+                                                        <input t-else="" type="checkbox" t-attf-name="app_#{t[0]}" value="1" t-att-checked="'checked' if prefs[t[0]][0] else None"/>
+                                                        <span>اعلان در سایت</span></label>
+                                                </td>
+                                                <td t-if="any_sms" data-label="پیامک">
+                                                    <label t-if="t[2]" t-attf-class="tsp-check #{'is-disabled' if not has_phone else ''}"><input type="checkbox" t-attf-name="sms_#{t[0]}" value="1" t-att-checked="'checked' if prefs[t[0]][1] else None" t-att-disabled="'disabled' if not has_phone else None" t-att-aria-describedby="'tsp-sms-why' if not has_phone or not sms_live else None"/><span>پیامک</span></label>
+                                                    <span t-else="" class="ts-hint">ندارد</span>
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </section>
+                                <p><button type="submit" class="ts-btn ts-btn--primary">ذخیره</button> <a href="/my/notifications" class="ts-btn ts-btn--quiet">انصراف</a></p>
                             </form>
                         </section>
                     </div>

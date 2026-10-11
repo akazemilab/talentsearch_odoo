@@ -7,6 +7,8 @@ from odoo.http import request
 from odoo.addons.ts_assessment.controllers.main import _ts_site_or_404
 from odoo.addons.ts_sms.controllers.signup import safe_next
 
+from odoo.addons.ts_assessment.models.attempt import fa_digits
+
 from .base import reauth_minutes
 
 MAX_PASSWORD_FAILS = 5
@@ -36,11 +38,12 @@ class TsPanelReauth(http.Controller):
         user = request.env.user
         phone = request.env['ts.reauth.code'].ts_phone_of(user)
         sent = request.session.get('ts_reauth_sent')
+        nxt = safe_next(kw.get('next'))
         return request.render('ts_panel.reauth', {
-            'next': safe_next(kw.get('next')), 'why': request.session.get('ts_reauth_why') or 'این کار',
+            'next': nxt, 'cancel': _cancel_url(nxt), 'why': request.session.get('ts_reauth_why') or '',
             'phone_masked': _mask(phone) if phone else None, 'sent': bool(sent and phone),
-            'flash_err': request.session.pop('ts_flash', None), 'minutes': reauth_minutes(),
-            'page_name': 'ts_panel_reauth'})
+            'flash_err': request.session.pop('ts_flash', None), 'minutes': reauth_minutes(), 'fa': fa_digits,
+            'title': 'تأیید هویت', 'page_name': 'ts_panel_reauth'})
 
     @http.route('/my/reauth/send', type='http', auth='user', website=True, methods=['POST'], sitemap=False)
     def send(self, **post):
@@ -84,8 +87,32 @@ class TsPanelReauth(http.Controller):
         request.session['ts_reauth_uid'] = user.id
         request.session.pop('ts_reauth_sent', None)
         request.session.pop('ts_reauth_why', None)
+        request.session.pop('ts_reauth_cancel', None)
         request.env['ts.audit.event'].sudo().log('auth.reauth', method='code' if request.env['ts.reauth.code'].ts_phone_of(user) else 'password')
         return request.redirect(nxt)
+
+
+def _cancel_url(nxt):
+    """Where «انصراف» goes: the page the person came from (kept for the whole visit, so a wrong code does not lose it),
+    never a URL that would itself perform the action (a file download or an export)."""
+    from urllib.parse import urlsplit
+    ref = request.httprequest.referrer or ''
+    parts = urlsplit(ref)
+    host = request.httprequest.host
+    if ref and parts.netloc == host and parts.path and not parts.path.startswith('/my/reauth'):
+        request.session['ts_reauth_cancel'] = [nxt, safe_next(parts.path + ('?' + parts.query if parts.query else ''))]
+    kept = request.session.get('ts_reauth_cancel') or []
+    cancel = kept[1] if len(kept) == 2 and kept[0] == nxt else None
+    if not cancel:
+        path = nxt.split('?', 1)[0]
+        for tail in ('/download', '/export', '/revoke'):
+            if path.endswith(tail):
+                path = path[:-len(tail)] or '/my'
+        cancel = path if path.startswith('/') else '/my'
+    for tail in ('/download', '/audit/export'):
+        if cancel.split('?', 1)[0].endswith(tail):
+            cancel = cancel.split('?', 1)[0][:-len(tail.rsplit('/', 1)[1]) - 1] or '/my'
+    return cancel
 
 
 def _q(path):

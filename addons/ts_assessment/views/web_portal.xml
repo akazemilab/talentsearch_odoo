@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
     <record id="portal_entry_assessments" model="portal.entry">
-        <field name="name">سنجه‌های من</field>
+        <field name="name">سنجه‌ها و نتیجه‌ها</field>
         <field name="description">پاسخ‌دهی، ادامهٔ سنجه‌های نیمه‌تمام و گزارش نتایج</field>
         <field name="url">/my/assessments</field>
         <field name="sequence">1</field>
@@ -15,55 +15,65 @@
         <field name="website_id" ref="ts_website.website_ts"/>
         <field name="arch" type="xml">
             <t t-name="ts_assessment.my_list">
-                <t t-call="website.layout" additional_title.f="سنجه‌های من">
+                <t t-call="website.layout" additional_title.f="سنجه‌ها و نتیجه‌ها">
                     <div id="wrap" class="ts-page">
                         <section class="ts-section">
                             <div class="ts-container">
                                 <div class="ts-section__head">
-                                    <h1>سنجه‌های من</h1>
-                                    <p>سنجه‌های نیمه‌تمام را ادامه دهید و گزارش نتایج را ببینید. این صفحه فقط برای شما قابل مشاهده است.</p>
+                                    <h1>سنجه‌ها و نتیجه‌ها</h1>
+                                    <p t-if="tu">سنجه‌های نیمه‌تمام را ادامه بده و گزارش نتیجه‌ها را ببین.</p>
+                                    <p t-else="">سنجه‌های نیمه‌تمام را ادامه دهید و گزارش نتیجه‌ها را ببینید.</p>
                                 </div>
                                 <t t-if="not attempts">
                                     <div class="ts-card ts-card--soft">
-                                        <h3>هنوز سنجه‌ای انجام نداده‌اید</h3>
-                                        <p>از فهرست سنجه‌ها یکی را انتخاب کنید.</p>
-                                        <a href="/assessments" class="ts-btn ts-btn--primary">مشاهدهٔ سنجه‌ها</a>
+                                        <h2 t-if="tu">هنوز سنجه‌ای انجام نداده‌ای</h2>
+                                        <h2 t-else="">هنوز سنجه‌ای انجام نداده‌اید</h2>
+                                        <p t-if="tu">از فهرست سنجه‌ها یکی را انتخاب کن.</p>
+                                        <p t-else="">از فهرست سنجه‌ها یکی را انتخاب کنید.</p>
+                                        <a href="/assessments" class="ts-btn ts-btn--primary">دیدن سنجه‌ها</a>
                                     </div>
                                 </t>
                                 <t t-else="">
-                                    <section t-if="going" class="ts-card" id="ts-list-going" aria-labelledby="ts-list-going-h">
+                                    <section t-if="going" class="ts-card ts-list-card" id="ts-list-going" aria-labelledby="ts-list-going-h">
                                         <h2 id="ts-list-going-h">نیمه‌تمام</h2>
                                         <ul class="tsp-list tsp-rows">
                                             <li t-foreach="going" t-as="a">
+                                                <t t-set="fresh" t-value="a.state == 'consent' or not a.answered_count"/>
                                                 <div class="tsp-rows__text">
                                                     <strong t-out="a.instrument_id.title"/>
-                                                    <span class="ts-hint"><t t-if="a.workspace_id">از طرف <t t-out="a.workspace_id.partner_id.name"/> · </t><t t-if="a.state == 'in_progress'"><t t-out="fa(a.progress)"/>٪ پاسخ داده‌اید · </t>آخرین ذخیره <t t-out="a.jalali(a.write_date, False)"/></span>
+                                                    <span class="ts-hint"><t t-if="a.workspace_id">از طرف <t t-out="a.workspace_id.partner_id.name"/> · </t><t t-if="fresh"><t t-if="tu">هنوز شروع نکرده‌ای</t><t t-else="">هنوز شروع نکرده‌اید</t></t><t t-else=""><t t-out="fa(a.progress)"/>٪ پاسخ <t t-if="tu">داده‌ای</t><t t-else="">داده‌اید</t> · آخرین ذخیره <t t-out="a.jalali(a.write_date, False)"/></t></span>
                                                 </div>
-                                                <a t-attf-href="/take/#{a.access_token}" class="ts-btn ts-btn--primary ts-btn--sm"><t t-if="a.state == 'in_progress'">ادامه</t><t t-else="">شروع</t></a>
+                                                <a t-attf-href="/take/#{a.access_token}" class="ts-btn ts-btn--primary ts-btn--sm"><t t-if="fresh">شروع</t><t t-else="">ادامه</t><span class="visually-hidden"> «<t t-out="a.instrument_id.title"/>»</span></a>
                                             </li>
                                         </ul>
                                     </section>
-                                    <section t-foreach="groups" t-as="g" class="ts-card" t-attf-id="ts-list-inst-#{g['inst'].id}">
-                                        <h2 t-out="g['inst'].title"/>
-                                        <p class="ts-hint" t-if="len(g['rows']) > 1"><t t-out="fa(len(g['rows']))"/> بار انجام شده؛ جدیدترین اول. نتیجه‌های نسخه‌های مختلف نمره‌گذاری با هم مقایسه‌پذیر نیستند.</p>
-                                        <ul class="tsp-list tsp-rows">
-                                            <li t-foreach="g['rows']" t-as="a">
-                                                <div class="tsp-rows__text">
-                                                    <strong><t t-out="a.jalali(a.submitted_at or a.create_date, False)"/><t t-if="a.subject_label"> · دربارهٔ <t t-out="a.subject_label"/></t></strong>
-                                                    <span class="ts-hint">
-                                                        <t t-if="a.state == 'done' and a.released">نتیجه آماده<t t-if="a.workspace_id"> · به دعوت <t t-out="a.workspace_id.partner_id.name"/></t></t>
-                                                        <t t-elif="a.state == 'done'">نتیجه در دسترس نیست</t>
-                                                        <t t-else="">محاسبه انجام نشد</t>
-                                                        <t t-if="a.version_id.contract_version"> · نسخهٔ نمره‌گذاری <bdi dir="ltr" t-out="a.version_id.contract_version"/></t>
-                                                    </span>
-                                                </div>
-                                                <a t-if="a.state == 'done' and a.released" t-attf-href="/my/assessments/#{a.id}" class="ts-btn ts-btn--outline ts-btn--sm">گزارش</a>
-                                                <a t-elif="a.state == 'done'" t-attf-href="/my/assessments/#{a.id}" class="ts-btn ts-btn--quiet ts-btn--sm">چرا؟</a>
-                                            </li>
-                                        </ul>
+                                    <section t-if="groups" class="ts-card ts-list-card" id="ts-list-results" aria-labelledby="ts-list-results-h">
+                                        <h2 id="ts-list-results-h">نتیجه‌ها</h2>
+                                        <div t-foreach="groups" t-as="g" class="ts-list-group" t-attf-id="ts-list-inst-#{g['inst'].id}">
+                                            <h3 t-out="g['inst'].title"/>
+                                            <p class="ts-hint" t-if="len(g['rows']) > 1"><t t-out="fa(len(g['rows']))"/> بار انجام شده؛ جدیدترین اول.</p>
+                                            <ul class="tsp-list tsp-rows">
+                                                <li t-foreach="g['rows']" t-as="a">
+                                                    <div class="tsp-rows__text">
+                                                        <strong><t t-out="a.jalali(a.submitted_at or a.create_date, False)"/><t t-if="a.subject_label"> · دربارهٔ <t t-out="a.subject_label"/></t></strong>
+                                                        <span class="ts-hint">
+                                                            <t t-if="a.state == 'done' and a.released">نتیجه آماده<t t-if="a.workspace_id"> · به دعوت <t t-out="a.workspace_id.partner_id.name"/></t></t>
+                                                            <t t-elif="a.state == 'done'">نتیجه در دسترس نیست</t>
+                                                            <t t-else="">محاسبه انجام نشد</t>
+                                                            <t t-if="g['mixed'] and a.version_id != g['rows'][0].version_id"> · <t t-if="tu">نسخهٔ دیگر؛ با هم مقایسه نکن</t><t t-else="">نسخهٔ دیگر؛ با هم مقایسه نکنید</t></t>
+                                                        </span>
+                                                        <span class="ts-hint ts-list-share" t-if="a.state == 'done' and a.released">
+                                                            <a href="/my/sharing"><t t-if="shares.get(a.id)">با «<t t-out="shares[a.id]"/>» به اشتراک گذاشته شده</t><t t-elif="tu">فقط تو می‌بینی</t><t t-else="">فقط شما می‌بینید</t></a>
+                                                        </span>
+                                                    </div>
+                                                    <a t-if="a.state == 'done' and a.released" t-attf-href="/my/assessments/#{a.id}" class="ts-btn ts-btn--outline ts-btn--sm">گزارش<span class="visually-hidden"> <t t-out="a.jalali(a.submitted_at or a.create_date, False)"/></span></a>
+                                                    <a t-elif="a.state == 'done'" t-attf-href="/my/assessments/#{a.id}" class="ts-btn ts-btn--quiet ts-btn--sm">چرا؟</a>
+                                                </li>
+                                            </ul>
+                                        </div>
                                     </section>
                                 </t>
-                                <p><a href="/assessments">مشاهدهٔ همهٔ سنجه‌ها</a></p>
+                                <p><a href="/assessments?all=1"><t t-if="tu">سنجه‌های دیگری که می‌توانی انجام بدهی</t><t t-else="">سنجه‌های دیگری که می‌توانید انجام دهید</t></a></p>
                             </div>
                         </section>
                     </div>
@@ -84,7 +94,7 @@
                         <section class="ts-section ts-report-page">
                             <div class="ts-container ts-report-wrap">
                                 <div class="ts-report-actions ts-noprint">
-                                    <a href="/my/assessments" class="ts-back">سنجه‌های من</a>
+                                    <a href="/my/assessments" class="ts-back">سنجه‌ها و نتیجه‌ها</a>
                                     <button type="button" class="ts-btn ts-btn--outline ts-js-print">چاپ یا ذخیره به‌صورت PDF</button>
                                 </div>
                                 <p t-if="submitted" class="ts-notice ts-noprint" role="status">پاسخ‌های شما ثبت شد و گزارش آماده است.</p>
@@ -166,8 +176,8 @@
                                     <section class="ts-doc__sec ts-doc__foot">
                                         <h2>محدودیت‌ها و گام بعدی</h2>
                                         <p t-out="inst.limitations"/>
-                                        <p>اگر نتیجه برایتان پرسش ایجاد کرده یا نگران‌تان کرده است، با یک متخصص مشورت کنید. تلنت سرچ خدمت اورژانسی نیست؛ در شرایط اضطراری با اورژانس <bdi dir="ltr">115</bdi> تماس بگیرید.</p>
-                                        <p class="ts-hint">این گزارش فقط برای شرکت‌کننده است. شناسهٔ گزارش <bdi dir="ltr" t-out="attempt.name"/> · اثر نتیجه <bdi dir="ltr" t-out="(attempt.output_hash or '')[:12]"/></p>
+                                        <p>اگر نتیجه برایتان پرسش ایجاد کرده یا نگران‌تان کرده است، با یک متخصص مشورت کنید. تلنت سرچ خدمت اورژانسی نیست؛ اگر حالتان خوب نیست، منتظر نمانید: اورژانس ۱۱۵.</p>
+                                        <p class="ts-hint">این گزارش متعلق به شماست. شناسهٔ گزارش <bdi dir="ltr" t-out="attempt.name"/> · اثر نتیجه <bdi dir="ltr" t-out="(attempt.output_hash or '')[:12]"/></p>
                                     </section>
                                 </article>
                             </div>

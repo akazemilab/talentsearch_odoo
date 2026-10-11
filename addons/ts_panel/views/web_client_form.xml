@@ -11,13 +11,14 @@
                 <t t-call="website.layout" additional_title="title">
                     <div id="wrap" class="ts-page">
                         <t t-call="ts_panel.shell_frame">
+                            <a t-if="c" t-attf-href="/my/workspaces/#{ws.id}/clients/#{c.id}" class="ts-backlink"><bdi t-out="c.name"/></a>
+                            <a t-else="" t-attf-href="/my/workspaces/#{ws.id}/clients" class="ts-backlink">شرکت‌کنندگان</a>
                             <header class="tsp-head">
                                 <div>
-                                    <p class="tsp-field__hint"><a t-attf-href="/my/workspaces/#{ws.id}/clients#{('/%s' % c.id) if c else ''}">← بازگشت</a></p>
-                                    <h1 class="tsp-head__title"><t t-if="c">ویرایش شرکت‌کننده</t><t t-else="">شرکت‌کنندهٔ جدید</t></h1>
+                                    <h1 class="tsp-head__title"><t t-if="c">ویرایش «<bdi t-out="c.name"/>»</t><t t-else="">شرکت‌کنندهٔ جدید</t></h1>
                                 </div>
                             </header>
-                            <p t-if="errors" class="tsp-flash tsp-flash--danger" role="alert">فرم را بررسی کنید: <t t-out="len(errors)"/> مورد نیاز به اصلاح دارد.</p>
+                            <p t-if="errors" class="tsp-flash tsp-flash--danger" role="alert">فرم را بررسی کنید: <t t-out="fa(len(errors))"/> مورد نیاز به اصلاح دارد.</p>
                             <section t-if="dups" class="ts-notice" role="alert">
                                 <p><strong>به نظر می‌رسد این فرد قبلاً ثبت شده است:</strong></p>
                                 <ul class="tsp-list"><li t-foreach="dups" t-as="d"><a t-attf-href="/my/workspaces/#{ws.id}/clients/#{d.id}" t-out="d.name"/></li></ul>
@@ -58,14 +59,14 @@
                                         <input id="f_email" name="email" type="email" dir="ltr" maxlength="200" t-att-value="vals.get('email')" t-att-aria-invalid="'true' if errors.get('email') else None"/>
                                         <p t-if="errors.get('email')" class="tsp-field__error" t-out="errors['email']"/>
                                     </div>
-                                    <fieldset class="tsp-field">
-                                        <legend class="tsp-field__label">سرپرست (برای زیر ۱۸ سال، اختیاری)</legend>
+                                    <fieldset class="tsp-field" data-ts-show="age_group=minor">
+                                        <legend class="tsp-field__label">ولی (پدر، مادر یا سرپرست قانونی) — فقط برای زیر ۱۸ سال، اختیاری</legend>
                                         <div class="tsp-field">
-                                            <label class="tsp-field__label" for="f_gname">نام سرپرست</label>
+                                            <label class="tsp-field__label" for="f_gname">نام ولی</label>
                                             <input id="f_gname" name="guardian_name" type="text" maxlength="120" t-att-value="vals.get('guardian_name')"/>
                                         </div>
                                         <div class="tsp-field">
-                                            <label class="tsp-field__label" for="f_gphone">موبایل سرپرست</label>
+                                            <label class="tsp-field__label" for="f_gphone">موبایل ولی</label>
                                             <input id="f_gphone" name="guardian_phone" type="tel" dir="ltr" inputmode="tel" maxlength="20" t-att-value="vals.get('guardian_phone')" t-att-aria-invalid="'true' if errors.get('guardian_phone') else None"/>
                                             <p t-if="errors.get('guardian_phone')" class="tsp-field__error" t-out="errors['guardian_phone']"/>
                                         </div>
@@ -81,11 +82,16 @@
                                     <label class="tsp-field__label" for="f_resp">کارشناس مسئول</label>
                                     <select id="f_resp" name="responsible_id">
                                         <option value="">بدون کارشناس</option>
-                                        <option t-foreach="cands" t-as="m" t-att-value="m.id"><t t-out="m.user_id.name"/> — <t t-out="role_labels.get(m.role, m.role)"/></option>
+                                        <option t-foreach="cands" t-as="m" t-att-value="m.id" t-att-selected="'selected' if str(m.id) == default_resp else None"><t t-out="m.user_id.name"/> — <t t-out="role_labels.get(m.role, m.role)"/></option>
                                     </select>
                                 </div>
-                                <p><button type="submit" class="ts-btn ts-btn--primary">ذخیره</button></p>
+                                <div class="tsp-actions">
+                                    <button type="submit" class="ts-btn ts-btn--primary"><t t-if="c">ذخیرهٔ تغییرها</t><t t-else="">ثبت شرکت‌کننده</t></button>
+                                    <button t-if="not c and can_invite" type="submit" name="then" value="invite" class="ts-btn ts-btn--outline">ثبت و دعوت به سنجه</button>
+                                    <a t-attf-href="/my/workspaces/#{ws.id}/clients#{('/%s' % c.id) if c else ''}" class="ts-btn ts-btn--quiet tsp-actions__end">انصراف</a>
+                                </div>
                             </form>
+                            <t t-call="ts_org.reveal_js"/>
                         </t>
                     </div>
                 </t>

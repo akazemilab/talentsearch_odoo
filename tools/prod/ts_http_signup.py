@@ -134,7 +134,7 @@ env.cr.commit(); print('TOK2', a.token)
 """)
 tok2 = re.search(r'TOK2 (\S+)', a2).group(1)
 st, _, page = c3.req('/invite/%s' % tok2)
-check('fresh invite offers mobile sign-in with next=/invite/…', st == 200 and '/signup?next=/invite/%s' % tok2 in page and 'ورود یا ثبت‌نام با موبایل' in page, str(st))
+check('fresh invite offers mobile sign-in with next=/invite/…', st == 200 and '/signup?next=/invite/%s' % tok2 in page and 'ادامه با شمارهٔ موبایل' in page, str(st))
 # rate limit through the real endpoint
 for i in range(6):
     bypass_cooldown()

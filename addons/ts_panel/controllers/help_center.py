@@ -9,8 +9,8 @@ from odoo.http import request
 
 from odoo.addons.ts_assessment.controllers.main import _ts_site_or_404
 
-CHECKED = '۱۰ مهر ۱۴۰۵'          # keep in step with the text of web_help.xml, update when a section changes
-SECTIONS = ('invite', 'import', 'report', 'roles', 'sharing', 'minors', 'export', 'support', 'credits')
+CHECKED = '۱۹ مهر ۱۴۰۵'          # keep in step with the text of web_help.xml, update when a section changes
+SECTIONS = ('invite', 'import', 'report', 'roles', 'sharing', 'minors', 'export', 'audit', 'support', 'credits')
 
 
 class TsPanelHelp(http.Controller):
@@ -19,10 +19,13 @@ class TsPanelHelp(http.Controller):
     def panel_help(self, **kw):
         _ts_site_or_404()
         contact = '/contact?topic=panel'
+        audit_url = None
         if not request.env.user._is_public():
             member = request.env['ts.workspace.member'].sudo().search(  # ts-scope-ok: the caller's own membership, found by user
                 [('user_id', '=', request.env.user.id), ('active', '=', True)], limit=1)
             if member:
                 contact += '&panel=%s' % member.workspace_id.id
-        return request.render('ts_panel.help_panel', {'checked': CHECKED, 'contact_url': contact,
+                if member.has_perm('audit:read'):
+                    audit_url = '/my/workspaces/%s/audit' % member.workspace_id.id
+        return request.render('ts_panel.help_panel', {'checked': CHECKED, 'contact_url': contact, 'audit_url': audit_url,
                                                       'page_name': 'ts_panel_help'})

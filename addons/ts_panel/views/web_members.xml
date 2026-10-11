@@ -20,7 +20,8 @@
 
                             <section t-if="new_inv" class="ts-notice" role="status">
                                 دعوت برای نقش «<t t-out="invite_role_label(new_inv)"/>» ساخته شد. این پیوند را خودتان برای همکار بفرستید؛ تلنت سرچ پیامک یا ایمیلی نمی‌فرستد.
-                                <input type="text" readonly="readonly" class="ts-copy" t-att-value="new_inv.invite_url()" aria-label="پیوند دعوت" dir="ltr"/>
+                                <input type="text" readonly="readonly" class="ts-copy" id="tsp-newinv" t-att-value="new_inv.invite_url()" aria-label="پیوند دعوت" dir="ltr"/>
+                                <button type="button" class="ts-btn ts-btn--outline ts-btn--sm" data-tsp-copy="tsp-newinv" hidden="hidden">کپی پیوند</button>
                             </section>
 
                             <p t-if="solo" class="tsp-empty">شما تنها عضو این پنل هستید. همکاری را دعوت کنید یا تنها ادامه دهید.</p>
@@ -31,12 +32,12 @@
                                     <thead><tr><th scope="col">نام</th><th scope="col">نقش</th><th scope="col">وضعیت</th><th scope="col">شرکت‌کنندگان</th><th scope="col">آخرین فعالیت</th><th scope="col"><span class="tsp-sr">عملیات</span></th></tr></thead>
                                     <tbody>
                                         <tr t-foreach="rows" t-as="r">
-                                            <th scope="row" data-label="نام"><t t-out="r['name']"/><span t-if="r['self']" class="ts-hint"> (شما)</span></th>
+                                            <th scope="row" data-label="نام"><bdi t-out="r['name']"/><span t-if="r['self']" class="ts-hint"> (شما)</span></th>
                                             <td data-label="نقش" t-out="r['role']"/>
                                             <td data-label="وضعیت"><span t-attf-class="ts-pill #{r['pill']}" t-out="r['state']"/></td>
                                             <td data-label="شرکت‌کنندگان" class="ts-num" t-out="fa(r['clients'])"/>
                                             <td data-label="آخرین فعالیت" t-out="r['last']"/>
-                                            <td class="tsp-row-actions"><a t-if="can_manage or r['self']" t-attf-href="/my/workspaces/#{ws.id}/members/#{r['m'].id}">مشاهده</a></td>
+                                            <td class="tsp-row-actions"><a t-if="can_manage or r['self']" t-attf-href="/my/workspaces/#{ws.id}/members/#{r['m'].id}" t-att-aria-label="'مشاهدهٔ ' + r['name']">مشاهده</a></td>
                                         </tr>
                                     </tbody>
                                 </table>
@@ -44,20 +45,31 @@
 
                             <section t-if="can_invite and invites" class="ts-card" id="tsp-pending" aria-labelledby="tsp-pending-h">
                                 <h2 id="tsp-pending-h" class="h5">دعوت‌های در انتظار</h2>
-                                <ul class="tsp-list">
+                                <ul class="tsp-list tsp-rows tsp-invrows">
                                     <li t-foreach="invites" t-as="i">
-                                        <span><bdi dir="ltr" t-out="i.phone or i.email"/> · <t t-out="invite_role_label(i)"/> · تا <t t-out="expires(i)"/></span>
-                                        <form t-attf-action="/my/workspaces/#{ws.id}/members/invites/#{i.id}/resend" method="post" class="tsp-inline">
-                                            <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
-                                            <button type="submit" class="ts-btn ts-btn--outline ts-btn--sm">ارسال دوباره</button>
-                                        </form>
-                                        <form t-attf-action="/my/workspaces/#{ws.id}/members/invites/#{i.id}/revoke" method="post" class="tsp-inline">
-                                            <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
-                                            <button type="submit" class="ts-btn ts-btn--quiet ts-btn--sm">لغو دعوت</button>
-                                        </form>
+                                        <t t-set="who" t-value="i.phone or i.email"/>
+                                        <div class="tsp-rows__text">
+                                            <strong><bdi dir="ltr" class="tsp-wrap-any" t-out="who"/></strong>
+                                            <span class="ts-hint"><t t-out="invite_role_label(i)"/> · مهلت تا <t t-out="expires(i)"/></span>
+                                        </div>
+                                        <div t-if="confirm_revoke and confirm_revoke.id == i.id" class="ts-confirm tsp-confirm" role="group" t-attf-aria-labelledby="tsp-rv-#{i.id}">
+                                            <p t-attf-id="tsp-rv-#{i.id}"><strong>دعوت <bdi dir="ltr" t-out="who"/> لغو شود؟</strong> پیوند این دعوت دیگر باز نمی‌شود و برگرداندنی نیست؛ اگر لازم شد، دعوت تازه می‌سازید.</p>
+                                            <form t-attf-action="/my/workspaces/#{ws.id}/members/invites/#{i.id}/revoke" method="post" class="tsp-inline" data-tsp-once="1">
+                                                <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                                                <button type="submit" class="ts-btn ts-btn--danger ts-btn--sm">بله، دعوت لغو شود</button>
+                                                <a t-attf-href="/my/workspaces/#{ws.id}/members#tsp-pending" class="ts-btn ts-btn--quiet ts-btn--sm">انصراف</a>
+                                            </form>
+                                        </div>
+                                        <div t-else="" class="tsp-inline tsp-invrows__actions">
+                                            <form t-attf-action="/my/workspaces/#{ws.id}/members/invites/#{i.id}/resend" method="post" class="tsp-inline" data-tsp-once="1">
+                                                <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                                                <button type="submit" class="ts-btn ts-btn--outline ts-btn--sm" t-att-aria-label="'ساخت پیوند تازه برای ' + (who or '')">ساخت پیوند تازه</button>
+                                            </form>
+                                            <a t-attf-href="/my/workspaces/#{ws.id}/members?revoke=#{i.id}#tsp-pending" class="ts-btn ts-btn--quiet ts-btn--sm" t-att-aria-label="'لغو دعوت ' + (who or '')">لغو دعوت…</a>
+                                        </div>
                                     </li>
                                 </ul>
-                                <p class="ts-hint">«ارسال دوباره» پیوند قبلی را از کار می‌اندازد و پیوند تازه‌ای با ۷ روز مهلت می‌سازد.</p>
+                                <p class="ts-hint">«ساخت پیوند تازه» پیامکی نمی‌فرستد: پیوند قبلی را از کار می‌اندازد و پیوند تازه‌ای با ۷ روز مهلت نشان می‌دهد تا خودتان برای همکار بفرستید.</p>
                             </section>
 
                             <section t-if="can_invite" class="ts-card" id="tsp-invite" aria-labelledby="tsp-invite-h">
@@ -68,8 +80,8 @@
                                     <fieldset class="tsp-field">
                                         <legend class="tsp-field__label">نقش</legend>
                                         <label t-foreach="roles" t-as="ro" class="tsp-radio">
-                                            <input type="radio" name="role" t-att-value="ro['key']" required="required" t-att-checked="'checked' if vals.get('role') == ro['key'] else None"/>
-                                            <span><strong t-out="ro['label']"/> <span class="tsp-field__hint" t-out="ro['blurb']"/></span>
+                                            <input type="radio" name="role" t-att-value="ro['key']" required="required" t-att-checked="'checked' if default_role == ro['key'] else None"/>
+                                            <span><strong t-out="ro['label']"/><span class="tsp-field__hint tsp-radio__blurb" t-out="ro['blurb']"/></span>
                                         </label>
                                     </fieldset>
                                     <div class="tsp-field">

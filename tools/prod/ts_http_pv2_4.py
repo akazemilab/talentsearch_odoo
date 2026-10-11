@@ -122,7 +122,7 @@ check('filter «بایگانی‌شده»', 'بایگانی‌شده' in tbl(bod
 
 # counselors: own + unassigned only (education)
 c1 = login('c1')
-st, body = get(c1, '/my/workspaces/%s/clients' % A)
+st, body = get(c1, '/my/workspaces/%s/clients?filter=all' % A)   # counselors start on «شرکت‌کنندگان من»; «همه» = own + unassigned
 check('counselor 1 sees own and unassigned', st == 200 and 'علیرضا کریمی' in tbl(body) and 'بدون کارشناس' in tbl(body), str(rows(body)))
 check('counselor 1 does not see a colleague\'s client', 'مریم از کارشناس دو' not in tbl(body))
 st, body = get(c1, '/my/workspaces/%s/clients/%s' % (A, K2))

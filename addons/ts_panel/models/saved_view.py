@@ -12,7 +12,7 @@ class TsSavedView(models.Model):
     _order = 'name, id'
 
     member_id = fields.Many2one('ts.workspace.member', required=True, index=True, ondelete='cascade')
-    page = fields.Selection([('clients', 'شرکت‌کنندگان'), ('invites', 'دعوت‌ها'), ('audit', 'گزارش رویدادها')],
+    page = fields.Selection([('clients', 'شرکت‌کنندگان'), ('invites', 'دعوت‌ها'), ('audit', 'دفتر ممیزی')],
                             required=True, default='clients')
     name = fields.Char(required=True)
     query = fields.Char()

@@ -14,7 +14,7 @@ from ..models.phone_otp import iran_mobile
 MESSAGES = {
     'sent': ('ok', 'کد تأیید پیامک شد و تا ۵ دقیقه معتبر است.'),
     'format': ('warn', 'شمارهٔ موبایل ایران را به شکل ۰۹۱۲۳۴۵۶۷۸۹ وارد کنید.'),
-    'cooldown': ('warn', 'لطفاً یک دقیقه صبر کنید و دوباره کد بخواهید.'),
+    'cooldown': ('warn', 'یک دقیقه صبر کنید و دوباره کد بخواهید.'),
     'limit': ('warn', 'تعداد درخواست‌ها زیاد بوده است؛ کمی بعد دوباره تلاش کنید.'),
     'send': ('warn', 'ارسال پیامک انجام نشد. کمی بعد دوباره تلاش کنید.'),
     'disabled': ('warn', 'تأیید شمارهٔ موبایل هنوز فعال نشده است.'),
@@ -74,7 +74,9 @@ class TsSmsController(TsOrg):
     @http.route('/my/phone', type='http', auth='user', website=True, sitemap=False)
     def phone(self, msg=None, pending=None, **kw):
         _ts_site_or_404()
-        return request.render('ts_sms.phone', self._phone_values(msg, bool(pending)))
+        values = self._phone_values(msg, bool(pending))
+        values['confirm_remove'] = kw.get('confirm') == 'remove' and values['verified']
+        return request.render('ts_sms.phone', values)
 
     @http.route('/my/phone/send', type='http', auth='user', website=True, methods=['POST'], sitemap=False)
     def phone_send(self, phone=None, **post):

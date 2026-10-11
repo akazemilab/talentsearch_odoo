@@ -21,25 +21,43 @@
                                 </div>
                             </header>
                             <p t-if="filtered" class="ts-notice" role="status">نمایش فقط: <strong t-out="filtered"/> (<span class="ts-num" t-out="fa(total)"/> دعوت) — <a t-att-href="clear_url">نمایش همه</a></p>
-                            <nav class="tsp-chips" aria-label="فیلتر وضعیت">
-                                <a t-att-href="url(state='all', page=1)" t-attf-class="tsp-chip #{'is-on' if state == 'all' else ''}" t-att-aria-current="'true' if state == 'all' else None">همه <span class="ts-num" t-out="fa(all_total)"/></a>
-                                <a t-foreach="state_order" t-as="k" t-att-href="url(state=k, page=1)" t-attf-class="tsp-chip #{'is-on' if state == k else ''}" t-att-aria-current="'true' if state == k else None"><t t-out="state_labels[k]"/> <span class="ts-num" t-out="fa(counts[k])"/></a>
+                            <nav class="tsp-chips tsp-chips--daily" aria-label="فیلتر وضعیت">
+                                <a t-att-href="url(state='all', page=1)" t-attf-class="tsp-chip #{'is-on' if state == 'all' else ''}" t-att-aria-current="'true' if state == 'all' else None">همه <span class="tsp-chip__n ts-num" t-out="fa(all_total)"/></a>
+                                <a t-foreach="state_order" t-as="k" t-att-href="url(state=k, page=1)" t-attf-class="tsp-chip #{'is-on' if state == k else ''} #{'tsp-chip--zero' if not counts[k] and state != k else ''}" t-att-aria-current="'true' if state == k else None"><t t-out="state_labels[k]"/> <span class="tsp-chip__n ts-num" t-out="fa(counts[k])"/></a>
+                                <a t-att-href="mine_url" t-attf-class="tsp-chip #{'is-on' if mine else ''}" t-att-aria-current="'true' if mine else None">دعوت‌های من</a>
                             </nav>
-                            <p t-if="not rows" class="tsp-empty">
-                                <t t-if="state == 'all'">هنوز دعوتی نساخته‌اید.<t t-if="can_create"> با «دعوت تازه» شروع کنید.</t></t>
-                                <t t-else="">دعوتی در این وضعیت نیست.</t>
-                            </p>
+                            <form t-attf-action="/my/workspaces/#{ws.id}/invites" method="get" class="tsp-inline tsp-only-phone" data-tsp-autosubmit="1">
+                                <label for="tsp_inv_state">وضعیت‌های دیگر</label>
+                                <select id="tsp_inv_state" name="state">
+                                    <option value="all">همه</option>
+                                    <option t-foreach="state_order" t-as="k" t-att-value="k" t-att-selected="'selected' if state == k else None"><t t-out="state_labels[k]"/> (<t t-out="fa(counts[k])"/>)</option>
+                                </select>
+                                <input t-if="mine" type="hidden" name="mine" value="1"/>
+                                <button type="submit" class="ts-btn ts-btn--outline ts-btn--sm" data-tsp-nojs="1">نمایش</button>
+                            </form>
+                            <div t-if="not rows" class="tsp-empty">
+                                <t t-if="state == 'all' and not filtered">
+                                    <p>هنوز دعوتی نساخته‌اید.<t t-if="can_create"> با «دعوت تازه» اولین دعوت را بفرستید.</t></p>
+                                    <a t-if="can_create" t-attf-href="/my/workspaces/#{ws.id}/invites/new?fresh=1" class="ts-btn ts-btn--primary">دعوت تازه</a>
+                                </t>
+                                <p t-else="">دعوتی با این پالایش نیست. <a t-att-href="clear_url">نمایش همه</a></p>
+                            </div>
                             <div t-if="rows" class="ts-table-wrap">
                                 <table class="ts-table tsp-table tsp-table--cards">
                                     <caption class="tsp-sr">فهرست دعوت‌ها</caption>
-                                    <thead><tr><th scope="col">شرکت‌کننده</th><th scope="col">سنجه</th><th scope="col">وضعیت</th><th scope="col">ارسال</th><th scope="col">انقضا</th></tr></thead>
+                                    <thead><tr><th scope="col">شرکت‌کننده</th><th scope="col">سنجه</th><th scope="col">وضعیت</th><th scope="col">فرستنده</th><th scope="col">ساخته‌شده</th><th scope="col">انقضا</th><th scope="col"><span class="tsp-sr">نتیجه</span></th></tr></thead>
                                     <tbody>
-                                        <tr t-foreach="rows" t-as="a">
-                                            <th scope="row" data-label="شرکت‌کننده"><a t-attf-href="/my/workspaces/#{ws.id}/invites/#{a.id}" t-out="a.invitee_name"/></th>
+                                        <tr t-foreach="rows" t-as="a" t-attf-class="#{'tsp-row--new' if a.id in unseen else ''}">
+                                            <th scope="row" data-label="شرکت‌کننده"><a t-attf-href="/my/workspaces/#{ws.id}/invites/#{a.id}"><bdi t-out="a.invitee_name"/></a></th>
                                             <td data-label="سنجه" t-out="a.instrument_id.name"/>
                                             <td data-label="وضعیت"><span t-attf-class="ts-pill #{pill.get(a.state, '')}" t-out="state_labels.get(a.state, a.state)"/></td>
-                                            <td data-label="ارسال" t-out="jalali(a.create_date)"/>
+                                            <td data-label="فرستنده"><bdi t-out="a.invited_by_id.sudo().name or '—'"/></td>
+                                            <td data-label="ساخته‌شده" t-out="jalali(a.create_date)"/>
                                             <td data-label="انقضا"><t t-if="a.state in ('invited', 'opened', 'expired') and a.expires_at" t-out="jalali(a.expires_at)"/><t t-else="">—</t></td>
+                                            <td data-label="">
+                                                <a t-if="results.get(a.id)" t-att-href="results[a.id]" class="ts-btn ts-btn--outline ts-btn--sm">نتیجه<span class="tsp-sr"> <t t-out="a.invitee_name"/></span></a>
+                                                <span t-if="a.id in unseen" class="ts-pill ts-pill--info">تازه</span>
+                                            </td>
                                         </tr>
                                     </tbody>
                                 </table>
@@ -49,6 +67,7 @@
                                 <span aria-current="page">صفحهٔ <t t-out="fa(page)"/> از <t t-out="fa(pages)"/></span>
                                 <a t-if="page &lt; pages" t-att-href="url(page=page + 1)" rel="next">صفحهٔ بعد</a>
                             </nav>
+                            <t t-call="ts_panel.daily_js"/>
                         </t>
                     </div>
                 </t>
@@ -73,16 +92,17 @@
                                     <p class="tsp-head__help">در چهار گام: چه کسی، کدام سنجه، تنظیمات و مرور. چیزی پیش از گام آخر ارسال نمی‌شود.</p>
                                 </div>
                             </header>
-                            <ol class="tsp-steps" aria-label="مراحل دعوت">
+                            <ol class="tsp-steps tsp-steps--daily" aria-label="مراحل دعوت">
                                 <li t-foreach="steps" t-as="s" t-attf-class="tsp-steps__item #{'is-on' if s[0] == step else ''}" t-att-aria-current="'step' if s[0] == step else None"><span class="ts-num" t-out="fa(s[0])"/>. <t t-out="s[1]"/></li>
                             </ol>
+                            <p class="tsp-steps-text" aria-hidden="true">گام <t t-out="fa(step)"/> از ۴ · <t t-out="dict(steps)[step]"/></p>
 
                             <!-- 1: who -->
                             <t t-if="step == '1'">
                                 <section class="ts-card" aria-labelledby="tsp-w1a">
                                     <h2 id="tsp-w1a" class="h5">شرکت‌کنندهٔ موجود</h2>
                                     <div t-if="client" class="ts-notice" role="status">
-                                        انتخاب‌شده: <strong t-out="client.name"/>
+                                        انتخاب‌شده: <strong><bdi t-out="client.name"/></strong>
                                         <form t-attf-action="/my/workspaces/#{ws.id}/invites/new" method="post" class="tsp-inline" data-tsp-once="1">
                                             <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
                                             <input type="hidden" name="step" value="1"/>
@@ -90,7 +110,7 @@
                                             <button type="submit" class="ts-btn ts-btn--primary">ادامه با این فرد</button>
                                         </form>
                                     </div>
-                                    <form t-attf-action="/my/workspaces/#{ws.id}/invites/new" method="post" class="tsp-search">
+                                    <form t-attf-action="/my/workspaces/#{ws.id}/invites/new" method="post" class="tsp-search" role="search">
                                         <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
                                         <input type="hidden" name="step" value="1"/>
                                         <input type="hidden" name="search" value="1"/>
@@ -98,56 +118,77 @@
                                         <input id="tsp_wq" name="q" type="search" t-att-value="q or ''" maxlength="100" autocomplete="off" placeholder="نام، شناسه یا موبایل"/>
                                         <button type="submit" class="ts-btn ts-btn--outline">جست‌وجو</button>
                                     </form>
-                                    <t t-if="searched">
-                                        <p t-if="not found" class="tsp-empty">کسی پیدا نشد. می‌توانید او را در بخش «فرد تازه» بنویسید.</p>
-                                        <form t-if="found" t-attf-action="/my/workspaces/#{ws.id}/invites/new" method="post" data-tsp-once="1">
-                                            <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
-                                            <input type="hidden" name="step" value="1"/>
-                                            <fieldset class="tsp-field">
-                                                <legend class="tsp-field__label">یکی را برگزینید</legend>
-                                                <label t-foreach="found" t-as="c" class="tsp-radio"><input type="radio" name="choose" t-att-value="c.id" required="required"/><span t-out="c.name"/></label>
-                                            </fieldset>
-                                            <p><button type="submit" class="ts-btn ts-btn--primary">ادامه</button></p>
-                                        </form>
-                                    </t>
+                                    <t t-set="pick" t-value="found if searched else recent"/>
+                                    <p t-if="searched and not found" class="tsp-empty">کسی پیدا نشد. می‌توانید او را در بخش «فرد تازه» بنویسید.</p>
+                                    <form t-if="pick" t-attf-action="/my/workspaces/#{ws.id}/invites/new" method="post" data-tsp-once="1" class="tsp-form">
+                                        <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                                        <input type="hidden" name="step" value="1"/>
+                                        <fieldset class="tsp-field">
+                                            <legend class="tsp-field__label"><t t-if="searched">یکی را برگزینید</t><t t-else="">تازه‌ترین شرکت‌کنندگان</t></legend>
+                                            <label t-foreach="pick" t-as="c" class="tsp-radio"><input type="radio" name="choose" t-att-value="c.id" required="required"/><span><bdi t-out="c.name"/><span t-if="c.code" class="ts-hint"> · <bdi dir="ltr" class="ts-bdi" t-out="c.code"/></span></span></label>
+                                        </fieldset>
+                                        <div class="tsp-actions">
+                                            <button type="submit" class="ts-btn ts-btn--primary">ادامه</button>
+                                            <a t-att-href="cancel_url" class="ts-btn ts-btn--quiet tsp-actions__end">انصراف</a>
+                                        </div>
+                                    </form>
                                 </section>
-                                <form t-attf-action="/my/workspaces/#{ws.id}/invites/new" method="post" class="tsp-form ts-card" data-tsp-once="1" aria-labelledby="tsp-w1b">
-                                    <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
-                                    <input type="hidden" name="step" value="1"/>
-                                    <h2 id="tsp-w1b" class="h5">فرد تازه</h2>
-                                    <label class="tsp-field"><span class="tsp-field__label">نام</span><input type="text" name="new_name" maxlength="120" class="form-control"/></label>
-                                    <label class="tsp-field"><span class="tsp-field__label">موبایل (اختیاری)</span><input type="tel" name="new_phone" maxlength="20" dir="ltr" inputmode="tel" class="form-control"/></label>
-                                    <label class="tsp-field"><span class="tsp-field__label">ایمیل (اختیاری)</span><input type="email" name="new_email" maxlength="200" dir="ltr" class="form-control"/></label>
-                                    <p class="ts-hint">اگر موبایل یا ایمیل با یکی از شرکت‌کنندگان فعلی یکی باشد، دعوت برای همان ردیف ثبت می‌شود.</p>
-                                    <p><button type="submit" class="ts-btn ts-btn--primary">ادامه</button></p>
-                                </form>
+                                <section class="ts-card" aria-labelledby="tsp-w1b">
+                                    <h2 id="tsp-w1b" class="h5"><button type="button" class="tsp-disclose" aria-expanded="false" aria-controls="tsp-w-new" hidden="hidden" data-tsp-disclose="tsp-w-new">یا فرد تازه بنویسید</button><span class="tsp-disclose-nojs">فرد تازه</span></h2>
+                                    <form id="tsp-w-new" t-attf-action="/my/workspaces/#{ws.id}/invites/new" method="post" class="tsp-form" data-tsp-once="1">
+                                        <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                                        <input type="hidden" name="step" value="1"/>
+                                        <label class="tsp-field"><span class="tsp-field__label">نام</span><input type="text" name="new_name" maxlength="120" class="form-control" autocomplete="off"/></label>
+                                        <label class="tsp-field"><span class="tsp-field__label">گروه سنی</span>
+                                            <select name="new_age" class="form-select">
+                                                <option t-foreach="age" t-as="ag" t-att-value="ag[0]" t-att-selected="'selected' if ag[0] == age_default else None" t-out="ag[1]"/>
+                                            </select></label>
+                                        <label class="tsp-field"><span class="tsp-field__label">موبایل (اختیاری)</span><input type="tel" name="new_phone" maxlength="20" dir="ltr" inputmode="tel" class="form-control" autocomplete="off"/></label>
+                                        <label class="tsp-field"><span class="tsp-field__label">ایمیل (اختیاری)</span><input type="email" name="new_email" maxlength="200" dir="ltr" class="form-control" autocomplete="off"/></label>
+                                        <p class="ts-hint">اگر موبایل یا ایمیل با یکی از شرکت‌کنندگان فعلی یکی باشد، دعوت برای همان شرکت‌کننده ثبت می‌شود.</p>
+                                        <div class="tsp-actions">
+                                            <button type="submit" class="ts-btn ts-btn--outline">ادامه با فرد تازه</button>
+                                            <a t-att-href="cancel_url" class="ts-btn ts-btn--quiet tsp-actions__end">انصراف</a>
+                                        </div>
+                                    </form>
+                                </section>
                             </t>
 
                             <!-- 2: instrument -->
                             <form t-if="step == '2'" t-attf-action="/my/workspaces/#{ws.id}/invites/new" method="post" class="tsp-form ts-card" data-tsp-once="1">
                                 <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
                                 <input type="hidden" name="step" value="2"/>
+                                <p t-if="client" class="ts-hint">شرکت‌کننده: <strong><bdi t-out="client.name"/></strong></p>
                                 <fieldset class="tsp-field">
                                     <legend class="tsp-field__label">سنجه</legend>
-                                    <label t-foreach="instruments" t-as="i" class="tsp-radio"><input type="radio" name="instrument_id" t-att-value="i.id" required="required" t-att-checked="'checked' if inst == i else None"/><span t-out="i.name"/></label>
+                                    <label t-foreach="instruments" t-as="i" class="tsp-radio"><input type="radio" name="instrument_id" t-att-value="i.id" required="required" t-att-checked="'checked' if (inst == i or len(instruments) == 1) else None"/><span t-out="i.name"/></label>
                                 </fieldset>
-                                <p><button type="submit" class="ts-btn ts-btn--primary">ادامه</button> <a t-attf-href="/my/workspaces/#{ws.id}/invites/new?step=1" class="ts-btn ts-btn--quiet">قبلی</a></p>
+                                <div class="tsp-actions">
+                                    <a t-attf-href="/my/workspaces/#{ws.id}/invites/new?step=1" class="ts-btn ts-btn--quiet tsp-prev">قبلی</a>
+                                    <button type="submit" class="ts-btn ts-btn--primary">ادامه</button>
+                                    <a t-att-href="cancel_url" class="ts-btn ts-btn--quiet tsp-actions__end">انصراف</a>
+                                </div>
                             </form>
 
                             <!-- 3: options -->
                             <form t-if="step == '3'" t-attf-action="/my/workspaces/#{ws.id}/invites/new" method="post" class="tsp-form ts-card" data-tsp-once="1">
                                 <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
                                 <input type="hidden" name="step" value="3"/>
-                                <label class="tsp-field"><span class="tsp-field__label">مهلت (اختیاری)</span><input type="date" name="deadline" t-att-value="draft.get('deadline')" class="form-control"/>
-                                    <span class="tsp-field__hint">بدون مهلت، دعوت ۳۰ روز اعتبار دارد.</span></label>
+                                <div class="tsp-field">
+                                    <t t-call="ts_website.jdate" jd_name.f="deadline" jd_id.f="tsp_deadline" jd_label.f="مهلت پاسخ (اختیاری)" jd_value="draft.get('deadline') or False" jd_hint.f="بدون مهلت، پیوند دعوت ۳۰ روز باز است"/>
+                                </div>
                                 <label class="tsp-field"><span class="tsp-field__label">یادداشت برای شرکت‌کننده (اختیاری)</span><input type="text" name="note" maxlength="300" t-att-value="draft.get('note')" class="form-control"/></label>
                                 <fieldset t-if="sms_ok and ((client and client.phone) or draft.get('new_phone'))" class="tsp-field">
                                     <legend class="tsp-field__label">پیامک</legend>
                                     <label class="tsp-check"><input type="checkbox" name="sms" value="1" t-att-checked="'checked' if draft.get('sms') else None"/><span>پیوند دعوت را با پیامک هم بفرست</span></label>
-                                    <label class="tsp-check"><input type="checkbox" name="attest" value="1" t-att-checked="'checked' if draft.get('sms') else None"/><span>تأیید می‌کنم که شرکت‌کننده (یا سرپرست قانونی او) با دریافت پیامک موافق است؛ این تأیید شامل یک پیامک دعوت و یک یادآوری است.</span></label>
+                                    <label class="tsp-check tsp-check--sub" data-ts-show="sms=1"><input type="checkbox" name="attest" value="1" t-att-checked="'checked' if draft.get('sms') else None"/><span>تأیید می‌کنم که شرکت‌کننده (یا ولی او) با دریافت پیامک موافق است؛ این تأیید شامل یک پیامک دعوت و یک یادآوری است.</span></label>
                                 </fieldset>
                                 <p t-else="" class="ts-hint">پیامک فقط وقتی ممکن است که شمارهٔ موبایل ثبت شده باشد. پیوند را خودتان هم می‌توانید بفرستید.</p>
-                                <p><button type="submit" class="ts-btn ts-btn--primary">ادامه</button> <a t-attf-href="/my/workspaces/#{ws.id}/invites/new?step=2" class="ts-btn ts-btn--quiet">قبلی</a></p>
+                                <div class="tsp-actions">
+                                    <a t-attf-href="/my/workspaces/#{ws.id}/invites/new?step=2" class="ts-btn ts-btn--quiet tsp-prev">قبلی</a>
+                                    <button type="submit" class="ts-btn ts-btn--primary">ادامه</button>
+                                    <a t-att-href="cancel_url" class="ts-btn ts-btn--quiet tsp-actions__end">انصراف</a>
+                                </div>
                             </form>
 
                             <!-- 4: review -->
@@ -156,16 +197,23 @@
                                 <input type="hidden" name="step" value="4"/>
                                 <h2 class="h5">مرور و ساخت</h2>
                                 <dl class="tsp-dl">
-                                    <dt>شرکت‌کننده</dt><dd t-out="client.name if client else draft.get('new_name')"/>
+                                    <dt>شرکت‌کننده</dt><dd><bdi t-out="client.name if client else draft.get('new_name')"/></dd>
+                                    <t t-if="not client"><dt>گروه سنی</dt><dd t-out="age_label"/></t>
                                     <dt>سنجه</dt><dd t-out="inst.name"/>
-                                    <dt>مهلت</dt><dd><t t-if="draft.get('deadline')" t-out="deadline_fa"/><t t-else="">۳۰ روز اعتبار</t></dd>
+                                    <dt>مهلت</dt><dd><t t-if="draft.get('deadline')" t-out="deadline_fa"/><t t-else="">بدون مهلت؛ پیوند ۳۰ روز باز است</t></dd>
                                     <dt t-if="draft.get('note')">یادداشت</dt><dd t-if="draft.get('note')" t-out="draft['note']"/>
                                     <dt>پیامک</dt><dd><t t-if="draft.get('sms')">بله، با تأیید رضایت</t><t t-else="">نه؛ پیوند را خودتان می‌فرستید</t></dd>
                                 </dl>
-                                <p t-if="dups" class="ts-notice" role="status">این مشخصات با «<t t-out="', '.join(dups.mapped('name'))"/>» یکی است؛ دعوت برای همان ردیف ثبت می‌شود.</p>
-                                <p t-if="needs_guardian" class="ts-notice" id="ts-guardian-box"><label><input type="checkbox" name="guardian_ok" value="1"/> رضایت ولی یا سرپرست قانونی این شرکت‌کننده را گرفته‌ایم و نزد ما محفوظ است.</label> <a class="tsp-what" href="/help/panel#minors">این چیست؟</a></p>
-                                <p><button type="submit" class="ts-btn ts-btn--primary">ساخت دعوت</button> <a t-attf-href="/my/workspaces/#{ws.id}/invites/new?step=3" class="ts-btn ts-btn--quiet">قبلی</a></p>
+                                <p t-if="dups" class="ts-notice" role="status">این مشخصات با «<t t-out="'، '.join(dups.mapped('name'))"/>» یکی است؛ دعوت برای همان شرکت‌کننده ثبت می‌شود.</p>
+                                <p t-if="needs_guardian" class="ts-notice" id="ts-guardian-box"><label class="tsp-check"><input type="checkbox" name="guardian_ok" value="1" required="required"/><span>رضایت ولی (پدر، مادر یا سرپرست قانونی) این شرکت‌کننده را گرفته‌ایم و نزد ما محفوظ است.</span></label> <a class="tsp-what" href="/help/panel#minors">این چیست؟</a></p>
+                                <div class="tsp-actions">
+                                    <a t-attf-href="/my/workspaces/#{ws.id}/invites/new?step=3" class="ts-btn ts-btn--quiet tsp-prev">قبلی</a>
+                                    <button type="submit" class="ts-btn ts-btn--primary">ساخت دعوت</button>
+                                    <a t-att-href="cancel_url" class="ts-btn ts-btn--quiet tsp-actions__end">انصراف</a>
+                                </div>
                             </form>
+                            <t t-call="ts_org.reveal_js"/>
+                            <t t-call="ts_panel.daily_js"/>
                         </t>
                     </div>
                 </t>
@@ -184,12 +232,15 @@
                 <t t-call="website.layout" additional_title="title">
                     <div id="wrap" class="ts-page">
                         <t t-call="ts_panel.shell_frame">
+                            <a t-attf-href="/my/workspaces/#{ws.id}/invites" class="ts-backlink">دعوت‌ها</a>
                             <header class="tsp-head">
                                 <div>
-                                    <h1 class="tsp-head__title">دعوت <t t-out="a.invitee_name"/></h1>
+                                    <h1 class="tsp-head__title">دعوت <bdi t-out="a.invitee_name"/></h1>
                                     <p class="tsp-head__help"><span t-attf-class="ts-pill #{pill.get(a.state, '')}" t-out="state_labels.get(a.state, a.state)"/> · <t t-out="a.instrument_id.name"/> · <a t-attf-href="/my/workspaces/#{ws.id}/clients/#{c.id}">صفحهٔ شرکت‌کننده</a></p>
                                 </div>
-                                <a t-attf-href="/my/workspaces/#{ws.id}/invites" class="ts-btn ts-btn--quiet">همهٔ دعوت‌ها</a>
+                                <div t-if="result" class="tsp-head__actions">
+                                    <a t-att-href="result" class="ts-btn ts-btn--primary">دیدن نتیجه</a>
+                                </div>
                             </header>
                             <section t-if="is_new" class="ts-notice" role="status">
                                 دعوت ساخته شد.
@@ -202,6 +253,7 @@
                                 <p class="tsp-inline">
                                     <input id="tsp_invite_url" type="text" readonly="readonly" class="ts-copy" dir="ltr" t-att-value="url" aria-label="پیوند دعوت"/>
                                     <button type="button" class="ts-btn ts-btn--outline" data-tsp-copy="tsp_invite_url" hidden="hidden">رونوشت پیوند</button>
+                                    <button type="button" class="ts-btn ts-btn--outline" data-tsp-share="tsp_invite_url" t-att-data-tsp-share-title="'دعوت به سنجه: %s' % a.instrument_id.name" hidden="hidden">هم‌رسانی پیوند</button>
                                     <span class="tsp-field__hint" role="status" data-tsp-copied="1"></span>
                                 </p>
                                 <img t-attf-src="/my/workspaces/#{ws.id}/invites/#{a.id}/qr.png" width="200" height="200" alt="کد QR پیوند دعوت برای اسکن با گوشی" class="tsp-qr"/>
@@ -209,7 +261,8 @@
                             <section class="ts-card" aria-labelledby="tsp-i-det">
                                 <h2 id="tsp-i-det" class="h5">جزئیات</h2>
                                 <dl class="tsp-dl">
-                                    <dt>ارسال</dt><dd t-out="jalali(a.create_date)"/>
+                                    <dt>ساخته‌شده</dt><dd t-out="jalali(a.create_date)"/>
+                                    <dt>فرستنده</dt><dd><bdi t-out="a.invited_by_id.sudo().name or '—'"/></dd>
                                     <dt>کانال</dt><dd t-out="channel_label"/>
                                     <dt>انقضا</dt><dd><t t-if="a.expires_at" t-out="jalali(a.expires_at)"/><t t-else="">—</t></dd>
                                     <dt t-if="a.opened_at">نخستین بازشدن</dt><dd t-if="a.opened_at" t-out="jalali(a.opened_at)"/>
@@ -218,15 +271,17 @@
                                     <dt t-if="a.sms_consent">پیامک دعوت</dt><dd t-if="a.sms_consent"><t t-if="a.sms_sent_at">ارسال شد</t><t t-elif="a.sms_error">نرسید</t><t t-else="">ارسال نشده</t></dd>
                                     <dt t-if="a.reminder_count">یادآوری‌ها</dt><dd t-if="a.reminder_count"><t t-out="fa(a.reminder_count)"/> بار، آخرین: <t t-out="jalali(a.last_reminder_at)"/></dd>
                                 </dl>
-                                <p t-if="level != 'none' and a.attempt_id"><a t-attf-href="/my/workspaces/#{ws.id}/clients/#{a.client_id.id}/r/#{a.attempt_id.id}" class="ts-btn ts-btn--outline">دیدن نتیجه</a></p>
                             </section>
                             <section t-if="can_manage and a.state in ('invited', 'opened', 'accepted', 'in_progress')" class="ts-card" aria-labelledby="tsp-i-rem">
                                 <h2 id="tsp-i-rem" class="h5">یادآوری</h2>
-                                <p class="ts-hint">به شرکت‌کننده‌ای که حساب دارد یا با پیامکِ موافقت‌شده، یک یادآوری می‌فرستد. در هر ۲۴ ساعت یکی و در کل حداکثر ۳ تا؛ در ساعت‌های ۲۱ تا ۸ فرستاده نمی‌شود.</p>
-                                <form t-attf-action="/my/workspaces/#{ws.id}/invites/#{a.id}/remind" method="post" data-tsp-once="1">
-                                    <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
-                                    <button type="submit" class="ts-btn ts-btn--outline">فرستادن یادآوری</button>
-                                </form>
+                                <t t-if="can_remind">
+                                    <p class="ts-hint">یک یادآوری می‌فرستد. در هر ۲۴ ساعت یکی و در کل حداکثر ۳ تا؛ در ساعت‌های ۲۱ تا ۸ فرستاده نمی‌شود.</p>
+                                    <form t-attf-action="/my/workspaces/#{ws.id}/invites/#{a.id}/remind" method="post" data-tsp-once="1">
+                                        <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                                        <button type="submit" class="ts-btn ts-btn--outline">فرستادن یادآوری</button>
+                                    </form>
+                                </t>
+                                <p t-else="" class="ts-hint">این شرکت‌کننده هنوز حساب ندارد و موافقت پیامکی هم ثبت نشده است؛ یادآوری فقط با پیوند ممکن است. پیوند بالا را دوباره برایش بفرستید.</p>
                             </section>
                             <section t-if="can_manage" class="ts-card" aria-labelledby="tsp-i-ext">
                                 <h2 id="tsp-i-ext" class="h5">تمدید</h2>
@@ -238,17 +293,90 @@
                                 </form>
                             </section>
                             <section t-if="can_withdraw" class="ts-card" aria-labelledby="tsp-i-wd">
-                                <h2 id="tsp-i-wd" class="h5">لغو دعوت</h2>
-                                <form t-attf-action="/my/workspaces/#{ws.id}/invites/#{a.id}/withdraw" method="post" class="tsp-form" data-tsp-once="1">
+                                <h2 id="tsp-i-wd" class="h5">لغو این دعوت</h2>
+                                <form t-attf-action="/my/workspaces/#{ws.id}/invites/#{a.id}/withdraw" method="post" class="ts-confirm" data-tsp-once="1" role="group" aria-labelledby="tsp-i-wd-t">
                                     <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
-                                    <p class="ts-hint">پیوند از کار می‌افتد. اگر شرکت‌کننده شروع کرده باشد، پاسخ‌هایش دست‌نخورده می‌ماند.</p>
-                                    <label class="tsp-check"><input type="checkbox" name="confirm" value="1"/><span>مطمئنم، این دعوت لغو شود</span></label>
-                                    <p><button type="submit" class="ts-btn ts-btn--outline">لغو دعوت</button></p>
+                                    <p class="ts-confirm__title" id="tsp-i-wd-t">لغو دعوت <bdi t-out="a.invitee_name"/></p>
+                                    <p class="ts-confirm__consequence">پیوند از کار می‌افتد و شرکت‌کننده دیگر نمی‌تواند شروع کند. اگر شروع کرده باشد، پاسخ‌هایش دست‌نخورده می‌ماند. این کار برگشت ندارد؛ برای ادامه باید دعوت تازه بسازید.</p>
+                                    <label class="ts-check"><input type="checkbox" name="confirm" value="1" required="required"/><span>مطمئنم، این دعوت لغو شود</span></label>
+                                    <div class="ts-confirm__actions"><button type="submit" class="ts-btn ts-btn--danger">لغو این دعوت</button></div>
                                 </form>
                             </section>
+                            <t t-call="ts_panel.daily_js"/>
                         </t>
                     </div>
                 </t>
+            </t>
+        </field>
+    </record>
+    <!-- Small progressive enhancements of the daily-work pages (UX audit 2026-10-11). Every page works without it:
+         data-tsp-share     «هم‌رسانی» button next to a link field (navigator.share; stays hidden when unsupported)
+         data-tsp-autosubmit a GET filter form that submits on change (its [data-tsp-nojs] button is hidden)
+         data-tsp-disclose  button that opens/closes the element whose id it names (aria-expanded)
+         data-tsp-bulkbar   bulk-action box shown only once a row checkbox (name=sel) is ticked; inside it, an element
+                            with data-tsp-for="a,b" is shown only while the select name=bulk has one of those values
+         data-tsp-print     print button (window.print) -->
+    <record id="tpl_daily_js" model="ir.ui.view">
+        <field name="name">TS panel: daily-work page helpers</field>
+        <field name="type">qweb</field>
+        <field name="key">ts_panel.daily_js</field>
+        <field name="website_id" ref="ts_website.website_ts"/>
+        <field name="arch" type="xml">
+            <t t-name="ts_panel.daily_js">
+                <script>(function () {
+    if (window.tspDailyInit) { return; }
+    window.tspDailyInit = true;
+    function all(sel, root) { return Array.prototype.slice.call((root || document).querySelectorAll(sel)); }
+    function run() {
+        all('[data-tsp-share]').forEach(function (btn) {
+            var field = document.getElementById(btn.getAttribute('data-tsp-share'));
+            if (!field || !navigator.share) { return; }
+            btn.hidden = false;
+            btn.addEventListener('click', function () {
+                navigator.share({ title: btn.getAttribute('data-tsp-share-title') || document.title, url: field.value }).catch(function () {});
+            });
+        });
+        all('form[data-tsp-autosubmit]').forEach(function (form) {
+            all('[data-tsp-nojs]', form).forEach(function (b) { b.hidden = true; });
+            all('select', form).forEach(function (sel) { sel.addEventListener('change', function () { form.submit(); }); });
+        });
+        all('[data-tsp-disclose]').forEach(function (btn) {
+            var region = document.getElementById(btn.getAttribute('data-tsp-disclose'));
+            if (!region) { return; }
+            var twin = btn.parentNode.querySelector('.tsp-disclose-nojs');
+            if (twin) { twin.hidden = true; }
+            btn.hidden = false;
+            region.hidden = true;
+            btn.addEventListener('click', function () {
+                var open = btn.getAttribute('aria-expanded') === 'true';
+                btn.setAttribute('aria-expanded', open ? 'false' : 'true');
+                region.hidden = open;
+                if (!open) { var f = region.querySelector('input:not([type=hidden]), select'); if (f) { f.focus(); } }
+            });
+        });
+        all('[data-tsp-bulkbar]').forEach(function (bar) {
+            var boxes = all('input[name=sel]');
+            var action = bar.querySelector('select[name=bulk]');
+            function sync() {
+                bar.hidden = !boxes.some(function (b) { return b.checked; });
+                var v = action ? action.value : '';
+                all('[data-tsp-for]', bar).forEach(function (el) {
+                    el.hidden = el.getAttribute('data-tsp-for').split(',').indexOf(v) === -1;
+                });
+            }
+            boxes.forEach(function (b) { b.addEventListener('change', sync); });
+            var head = document.querySelector('[data-tsp-selectall]');
+            if (head) { head.addEventListener('change', function () { setTimeout(sync, 0); }); }
+            if (action) { action.addEventListener('change', sync); }
+            sync();
+        });
+        all('[data-tsp-print]').forEach(function (btn) {
+            btn.hidden = false;
+            btn.addEventListener('click', function () { window.print(); });
+        });
+    }
+    if (document.readyState === 'loading') { document.addEventListener('DOMContentLoaded', run); } else { run(); }
+})();</script>
             </t>
         </field>
     </record>

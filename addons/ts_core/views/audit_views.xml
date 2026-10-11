@@ -56,7 +56,7 @@
                 <field name="workspace_id"/>
                 <group>
                     <filter name="by_type" string="نوع" context="{'group_by': 'event_type'}"/>
-                    <filter name="by_ws" string="فضای کاری" context="{'group_by': 'workspace_id'}"/>
+                    <filter name="by_ws" string="پنل" context="{'group_by': 'workspace_id'}"/>
                 </group>
             </search>
         </field>

@@ -118,7 +118,7 @@ class TsAssessment(http.Controller):
             'attempt': attempt, 'inst': attempt.instrument_id, 'items': chunk, 'answers': answers,
             'page': page, 'n_pages': n_pages, 'scale': SCALE, 'fa': fa_digits,
             'first_index': (page - 1) * PAGE_SIZE, 'answered': len(answers), 'total': len(items),
-            'error': kw.get('error'),
+            'error': kw.get('error'), 'tu': attempt.ts_informal(),
         })
 
     @http.route('/take/<string:token>/consent', type='http', auth='user', website=True, methods=['POST'], sitemap=False)
@@ -151,6 +151,9 @@ class TsAssessment(http.Controller):
             return request.redirect('/take/%s?page=%d' % (token, page - 1))
         if go == 'review':
             return request.redirect('/take/%s/review' % token)
+        if go == 'exit':
+            # «ذخیره و خروج»: the page was saved above, then back to the list (UX audit G2-P11-3)
+            return request.redirect('/my/assessments')
         return request.redirect('/take/%s?page=%d' % (token, page + 1))
 
     @http.route('/take/<string:token>/answer', type='http', auth='user', website=True, methods=['POST'], sitemap=False)
@@ -208,7 +211,17 @@ class TsAssessment(http.Controller):
                     break
             else:
                 groups.append({'inst': a.instrument_id, 'rows': [a]})
+        for g in groups:
+            # the scoring version is shown only when it actually differs inside one instrument (G2-P2-2)
+            g['mixed'] = len(set(r.version_id.id for r in g['rows'])) > 1
+        shares = {}
+        for a in attempts.filtered(lambda a: a.state == 'done'):
+            asg = a.ts_org_assignment() if hasattr(a, 'ts_org_assignment') else None
+            if asg and asg.share_level != 'none':
+                shares[a.id] = asg.workspace_id.partner_id.name or asg.workspace_id.name
+        tu = any(a.ts_informal() for a in attempts[:5])
         return request.render('ts_assessment.my_list', {'attempts': attempts, 'going': going, 'groups': groups,
+                                                         'shares': shares, 'tu': tu,
                                                          'fa': fa_digits, 'page_name': 'ts_assessments'})
 
     @http.route('/my/assessments/<int:attempt_id>', type='http', auth='user', website=True, sitemap=False)

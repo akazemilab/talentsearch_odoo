@@ -54,7 +54,23 @@
         if (ev.target.closest && ev.target.closest('.ts-js-print')) { window.print(); }
     });
 
+    // Consent pages: the guardian confirmation appears only after «under 18» (no-JS keeps it visible; the server
+    // still validates it). UX audit G1-P12-2.
+    function syncGuardian() {
+        var box = document.getElementById('ts-guardian-box');
+        if (!box) { return; }
+        var no = document.querySelector('input[name="age18"][value="no"]');
+        var show = !!(no && no.checked);
+        if (show) { box.removeAttribute('hidden'); } else { box.setAttribute('hidden', 'hidden'); }
+        var cb = box.querySelector('input[name="guardian_ok"]');
+        if (cb) { if (show) { cb.setAttribute('required', 'required'); } else { cb.removeAttribute('required'); cb.checked = false; } }
+    }
+    document.addEventListener('change', function (ev) {
+        if (ev.target && ev.target.name === 'age18') { syncGuardian(); }
+    });
+
     document.addEventListener('DOMContentLoaded', function () {
+        syncGuardian();
         document.querySelectorAll('.ts-q').forEach(function (li) {
             if (li.querySelector('input:checked')) { li.classList.add('is-answered'); }
         });

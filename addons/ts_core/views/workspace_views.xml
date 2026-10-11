@@ -35,7 +35,7 @@
                         <button name="action_view_audit" type="object" class="oe_stat_button" icon="fa-list" string="ممیزی" groups="ts_core.group_ts_user"/>
                     </div>
                     <div class="alert alert-warning" role="alert" invisible="not gated">
-                        این فضای کاری (سازمان، کلینیک یا رفاه کارکنان) در انتظار تأیید مالک پلتفرم است؛ تا آن زمان مالک می‌تواند پنل را تنظیم و همکار دعوت کند ولی شرکت‌کنندهٔ واقعی دعوت نمی‌شود.
+                        این پنل (سازمان، کلینیک یا رفاه کارکنان) در انتظار تأیید مالک پلتفرم است؛ تا آن زمان مالک می‌تواند پنل را تنظیم و همکار دعوت کند ولی شرکت‌کنندهٔ واقعی دعوت نمی‌شود.
                     </div>
                     <div class="oe_title">
                         <label for="name"/>
@@ -101,12 +101,12 @@
         </field>
     </record>
     <record id="ts_workspace_action" model="ir.actions.act_window">
-        <field name="name">فضاهای کاری</field>
+        <field name="name">پنل‌ها</field>
         <field name="res_model">ts.workspace</field>
         <field name="view_mode">list,form</field>
         <field name="help" type="html">
-            <p class="o_view_nocontent_smiling_face">هنوز فضای کاری‌ای ساخته نشده است</p>
-            <p>برای هر سازمان مشتری و هر هدف (استخدام یا بالینی) یک فضای کاری جدا بسازید.</p>
+            <p class="o_view_nocontent_smiling_face">هنوز پنلی ساخته نشده است</p>
+            <p>برای هر سازمان مشتری و هر هدف (استخدام یا بالینی) یک پنل جدا بسازید.</p>
         </field>
     </record>
     <record id="ts_workspace_pending_action" model="ir.actions.act_window">

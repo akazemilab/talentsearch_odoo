@@ -68,7 +68,7 @@ st, _, page3 = own.req('/my/workspaces/%s/legacy' % ws_id)
 check('role outside the panel kind refused (flash shown)', 'برای این نوع پنل مجاز نیست' in page3)
 
 st, _, jp = anon.req('/join/' + tok)
-check('anonymous join page asks to sign in', st == 200 and 'وارد شوید' in jp and '/web/login?redirect=' in jp)
+check('anonymous join page asks to sign in', st == 200 and 'وارد شوید' in jp and ('/web/login?redirect=' in jp or '/signup?next=' in jp))
 oth = Client(TS)
 check('other person login', oth.login(OTH, oth_pw))
 st, _, jp = oth.req('/join/' + tok)
@@ -109,7 +109,7 @@ st, _, sp = own.req('/my/workspaces/%s/legacy' % sid)   # the old page keeps the
 check('school panel is live: no pending banner, invite form present', 'id="ts-pending"' not in sp and 'id="ts-invite"' in sp)
 check('person with two panels gets a panel switcher', 'تغییر پنل' in sp and '/my/workspaces/%s' % ws_id in sp)
 st, _, tp = anon.req('/panel/terms')
-check('terms explain what happens when a specialist leaves', 'وقتی کارشناس می‌رود' in tp and 'دسترسی اضطراری' in tp)
+check('terms explain what happens when a specialist leaves', 'وقتی عضوی از پنل می‌رود' in tp and 'دسترسی اضطراری' in tp)
 
 # platform approval lifts the gate
 shell("ws=env['ts.workspace'].browse(%s)\nws.action_approve()\nenv.cr.commit()\nprint('OK')\n" % ws_id)
@@ -163,7 +163,7 @@ st, _, sp = own.req('/my/workspaces/' + sid + '/legacy')
 check('the panel sees the shared result in its unassigned queue', st == 200 and 'href="?resp=none"' in sp)
 st, loc, _ = pc.req('/my/assessments/%s/unshare' % at_id, {'csrf_token': pc.csrf(rep)})
 st, _, rep = pc.req('/my/assessments/' + at_id)
-check('participant can stop sharing', 'نتیجه با سازمان به اشتراک گذاشته نشده است' in rep)
+check('participant can stop sharing', 'نتیجه با پنل به اشتراک گذاشته نشده است' in rep)
 
 # eot.ir isolation
 e = Client('www.eot.ir')

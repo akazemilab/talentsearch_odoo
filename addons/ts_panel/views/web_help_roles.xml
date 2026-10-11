@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <!-- /help/roles (S3): what each role can do, generated from the permission table. -->
+    <!-- /help/roles (S3): what each role can do, generated from the permission table. Role cards carry id="role-<key>"
+         so the shell's «نقش شما: …» link lands on the caller's own role (audit G5 PT-2). -->
     <record id="tpl_help_roles" model="ir.ui.view">
         <field name="name">TS panel: role help</field>
         <field name="type">qweb</field>
@@ -8,23 +9,30 @@
         <field name="website_id" ref="ts_website.website_ts"/>
         <field name="arch" type="xml">
             <t t-name="ts_panel.help_roles">
-                <t t-call="website.layout" additional_title="title">
+                <t t-set="ref" t-value="request.httprequest.referrer or ''"/>
+                <t t-set="from_panel" t-value="'/my/workspaces/' in ref and ref.startswith(request.httprequest.host_url)"/>
+                <t t-call="website.layout" additional_title.f="نقش‌ها و دسترسی‌ها">
                     <div id="wrap" class="ts-page">
                         <section class="tsp-section container">
+                            <a t-if="from_panel" t-att-href="ref" class="ts-backlink">بازگشت به پنل</a>
+                            <a t-else="" href="/help/panel" class="ts-backlink">راهنمای پنل</a>
                             <header class="tsp-head">
                                 <div>
                                     <h1 class="tsp-head__title">نقش‌ها و دسترسی‌ها</h1>
-                                    <p class="tsp-head__help">هر نقش در پنل <t t-out="purpose_label"/> چه کارهایی می‌تواند انجام دهد.</p>
+                                    <p class="tsp-head__help">هر نقش در پنل <t t-out="purpose_label"/> چه چیزهایی را می‌بیند و چه کارهایی می‌تواند انجام دهد. نقش هر عضو را مالک پنل تعیین می‌کند.</p>
                                 </div>
                             </header>
-                            <ul class="tsp-list" aria-label="نقش‌ها">
+                            <ul class="tsp-list tsp-roles" aria-label="نقش‌ها">
                                 <t t-foreach="roles" t-as="r">
-                                    <li class="ts-card"><strong t-out="r['label']"/> — <span t-out="r['blurb']"/></li>
+                                    <li class="ts-card" t-att-id="'role-%s' % r['key']">
+                                        <h2 t-out="r['label']"/>
+                                        <p t-if="r['blurb']" t-out="r['blurb'].split(': ', 1)[1] if ': ' in r['blurb'][:40] else r['blurb']"/>
+                                    </li>
                                 </t>
                             </ul>
-                            <div class="ts-card ts-table-wrap" style="overflow-x:auto" tabindex="0" role="region" aria-label="جدول دسترسی هر نقش">
+                            <div class="ts-card ts-table-wrap" style="overflow-x:auto" tabindex="0" role="region" aria-labelledby="tsp-roles-cap">
                                 <table class="tsp-table">
-                                    <caption class="tsp-sr">جدول دسترسی هر نقش</caption>
+                                    <caption id="tsp-roles-cap" class="tsp-roles__cap">جدول دسترسی هر نقش: <span aria-hidden="true">✓</span> دارد · <span aria-hidden="true">—</span> ندارد</caption>
                                     <thead>
                                         <tr>
                                             <th scope="col">کار</th>
@@ -33,10 +41,11 @@
                                     </thead>
                                     <tbody>
                                         <t t-foreach="table" t-as="row">
-                                            <tr>
+                                            <!-- a row nobody has in this kind of panel is noise -->
+                                            <tr t-if="any(row['cells'])">
                                                 <th scope="row" t-out="row['label']"/>
                                                 <t t-foreach="row['cells']" t-as="c">
-                                                    <td><t t-if="c">✓<span class="tsp-sr">دارد</span></t><t t-else=""><span aria-hidden="true">—</span><span class="tsp-sr">ندارد</span></t></td>
+                                                    <td><t t-if="c"><span aria-hidden="true">✓</span><span class="tsp-sr">دارد</span></t><t t-else=""><span aria-hidden="true">—</span><span class="tsp-sr">ندارد</span></t></td>
                                                 </t>
                                             </tr>
                                         </t>

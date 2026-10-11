@@ -10,7 +10,7 @@ PERM_LABELS = {
     'panel:view': 'دیدن داشبورد پنل',
     'panel:profile': 'ویرایش نام و لوگوی پنل',
     'panel:settings': 'دیدن شرایط استفاده و اطلاعات پنل',
-    'panel:transfer': 'واگذاری مالکیت پنل',
+    'panel:transfer': 'انتقال مالکیت پنل',
     'panel:close': 'بستن پنل',
     'members:read': 'دیدن فهرست اعضا',
     'members:invite': 'دعوت همکار',
@@ -23,7 +23,7 @@ PERM_LABELS = {
     'clients:assign': 'تعیین کارشناس مسئول',
     'clients:be_responsible': 'مسئول شرکت‌کننده شدن',
     'clients:archive': 'بایگانی شرکت‌کننده',
-    'clients:merge': 'یکی‌کردن رکوردهای تکراری',
+    'clients:merge': 'ادغام رکوردهای تکراری',
     'clients:import': 'ورود فهرست از فایل',
     'clients:export': 'خروجی فهرست شرکت‌کنندگان',
     'groups:manage': 'ساخت و ویرایش گروه',
@@ -36,8 +36,8 @@ PERM_LABELS = {
     'results:export': 'خروجی نتیجه‌ها',
     'reports:group': 'گزارش گروهی',
     'credits:read': 'دیدن اعتبار و مصرف',
-    'audit:read': 'دیدن سابقهٔ رویدادها',
-    'audit:export': 'خروجی سابقهٔ رویدادها',
+    'audit:read': 'دیدن دفتر ممیزی',
+    'audit:export': 'خروجی از دفتر ممیزی',
     'support:view': 'دیدن دسترسی‌های پشتیبانی به پنل',
     'help:view': 'راهنما',
 }
@@ -48,22 +48,33 @@ LIVE = {
     'members:read', 'members:invite', 'members:manage', 'members:add_owner',
     'clients:read_all', 'clients:read_own', 'clients:read_unassigned', 'clients:assign',
     'clients:write', 'clients:archive', 'clients:merge', 'clients:be_responsible', 'groups:manage',
-    'invites:create', 'invites:manage',
+    'invites:create', 'invites:manage', 'invites:bulk',
     'results:summary', 'results:education', 'results:clinical',
+    # UX audit 2026-10-11 (G4 P17-3): owner powers that exist today and that an owner needs to see before delegating.
+    'panel:transfer', 'panel:close', 'clients:import', 'clients:export', 'results:export', 'reports:group',
+    'credits:read', 'audit:read', 'audit:export',
 }
 
+# One line per role, WITHOUT the role name: pages print the bold role label first (UX audit G4 PT15).
 ROLE_BLURBS = {
-    'owner': 'مالک پنل: مسئول نهایی پنل است و اعضا و تنظیمات را اداره می‌کند. هر پنل دست‌کم یک مالک دارد.',
-    'admin': 'هماهنگ‌کنندهٔ پنل: کارهای اجرایی را پیش می‌برد و هیچ نتیجه‌ای را نمی‌بیند؛ فقط وضعیت دعوت‌ها را می‌بیند.',
-    'counselor': 'مشاور: شرکت‌کنندگان خود را می‌بیند و گزارش را در سطح مشاور می‌خواند.',
-    'clinic_director': 'مدیر درمانگاه: اعضا و دعوت‌ها را اداره می‌کند و پس از احراز صلاحیت، گزارش بالینی را می‌بیند.',
-    'clinician': 'متخصص بالینی: پس از احراز صلاحیت، گزارش کامل مراجعان خود را می‌بیند.',
-    'hr_admin': 'مدیر منابع انسانی: اعضا و دعوت‌ها را اداره می‌کند و خلاصهٔ نتیجهٔ داوطلبان را می‌بیند.',
-    'hiring_manager': 'مدیر استخدام: داوطلبان خود را می‌بیند و خلاصهٔ نتیجهٔ آن‌ها را می‌خواند.',
-    'reviewer': 'بازبین: خلاصهٔ نتیجهٔ داوطلبان را می‌خواند و دعوت نمی‌فرستد.',
+    'owner': 'مسئول نهایی پنل است و اعضا و تنظیمات را اداره می‌کند. هر پنل دست‌کم یک مالک دارد.',
+    'admin': 'کارهای اجرایی را پیش می‌برد و هیچ نتیجه‌ای را نمی‌بیند؛ فقط وضعیت دعوت‌ها را می‌بیند.',
+    'counselor': 'شرکت‌کنندگان خود را می‌بیند و گزارش را در سطح مشاور می‌خواند.',
+    'clinic_director': 'اعضا و دعوت‌ها را اداره می‌کند و پس از احراز صلاحیت، گزارش بالینی را می‌بیند.',
+    'clinician': 'پس از احراز صلاحیت، گزارش کامل مراجعان خود را می‌بیند.',
+    'hr_admin': 'اعضا و دعوت‌ها را اداره می‌کند و خلاصهٔ نتیجهٔ شرکت‌کنندگان را می‌بیند.',
+    'hiring_manager': 'شرکت‌کنندگان خود را می‌بیند و خلاصهٔ نتیجهٔ آن‌ها را می‌خواند.',
+    'reviewer': 'خلاصهٔ نتیجهٔ شرکت‌کنندگان را می‌خواند و دعوت نمی‌فرستد.',
 }
 
 assert set(PERM_LABELS) == set(ALL_PERMS), 'every permission string needs a Persian label'
 assert LIVE <= set(PERM_LABELS)
 
 ROLE_ORDER = ['owner', 'admin', 'clinic_director', 'hr_admin', 'counselor', 'clinician', 'hiring_manager', 'reviewer']
+
+# Order of role PICKERS (invite, change role, transfer): least privilege first, the owner last, so the most powerful role is
+# never the first target under the thumb (UX audit G4 P1-4, PT15). ROLE_ORDER above stays the order of lists and tables.
+PICK_ORDER = ['counselor', 'clinician', 'reviewer', 'hiring_manager', 'admin', 'hr_admin', 'clinic_director', 'owner']
+# The role preselected in the invite form of each panel purpose (None = the person must choose).
+DEFAULT_PICK = {'education': 'counselor', 'clinical': 'clinician', 'employment': 'reviewer'}
+assert sorted(PICK_ORDER) == sorted(ROLE_ORDER)

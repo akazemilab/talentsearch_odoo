@@ -1,4 +1,6 @@
 """Notification center and preferences (S10, NOT-1, NOT-2, ACC-7). Every route is for the signed-in person's own rows only."""
+import re
+
 from odoo import http
 from odoo.http import request
 
@@ -9,6 +11,30 @@ from ..models.notify_texts import PREF_LABELS, SMS_STAFF_TYPES, TITLES, TYPES
 
 PARTICIPANT_TYPES = ('invite', 'reminder', 'result_ready_participant', 'data_request_update')
 PAGE = 50
+# Preference groups of the settings page (UX audit G4 P19-1) and the security events that always reach the site bell (P19-2).
+PREF_GROUPS = [
+    ('mine', 'سنجه‌های خودم', ('invite', 'reminder', 'result_ready_participant', 'data_request_update')),
+    ('people', 'شرکت‌کنندگان پنل', ('result_ready_staff', 'shared_with_panel', 'share_revoked', 'client_handover_request')),
+    ('admin', 'مدیریت پنل', ('panel_approved', 'panel_rejected', 'panel_suspended', 'member_joined', 'export_ready', 'import_done')),
+    ('security', 'امنیت', ('support_access_opened', 'panel_transferred', 'panel_closed')),
+]
+ALWAYS_ON = ('support_access_opened', 'panel_transferred', 'panel_closed')
+_RESULT_URL = re.compile(r'^/my/assessments/(\d+)')
+
+
+def _display_title(row, user):
+    """The title shown in the list. Stored titles never carry a name or a score; the page adds what this reader may see anyway:
+    the instrument of the reader's own result, the panel name for a member (UX audit G2 P7-3, G4 P18-3)."""
+    title = row.title or TITLES.get(row.type, '')
+    if row.type == 'result_ready_participant':
+        m = _RESULT_URL.match(row.url or '')
+        if m:
+            at = request.env['ts.attempt'].sudo().search([('id', '=', int(m.group(1))), ('user_id', '=', user.id)], limit=1)  # ts-scope-ok: own attempt
+            if at:
+                return 'نتیجهٔ «%s» آماده است' % at.instrument_id.title
+    if row.workspace_id and row.type not in PARTICIPANT_TYPES:
+        return '%s: %s' % (row.workspace_id.sudo().name, title)
+    return title
 
 
 def _safe_internal(url):
@@ -25,9 +51,10 @@ class TsPanelNotifications(http.Controller):
         only_unread = kw.get('unread') == '1'
         dom = [('user_id', '=', user.id)] + ([('read_at', '=', False)] if only_unread else [])
         rows = N.search(dom, limit=PAGE)
+        items = [{'id': r.id, 'title': _display_title(r, user), 'new': not r.read_at, 'when': jalali(r.create_date)} for r in rows]
         return request.render('ts_panel.notifications', {
-            'jalali': jalali, 'fa': fa_digits, 'rows': rows, 'unread': N._unread_count(user), 'only_unread': only_unread, 'flash': request.session.pop('ts_flash', None),
-            'page_name': 'ts_panel_notifications'})
+            'jalali': jalali, 'fa': fa_digits, 'rows': rows, 'items': items, 'unread': N._unread_count(user), 'only_unread': only_unread,
+            'flash': request.session.pop('ts_flash', None), 'page_name': 'ts_panel_notifications'})
 
     @http.route('/my/notifications/read_all', type='http', auth='user', website=True, methods=['POST'], sitemap=False)
     def read_all(self, **post):
@@ -58,10 +85,17 @@ class TsPanelNotifications(http.Controller):
         sms_live = bool(company.kv_enabled and company.ts_sms_staff)
         if request.httprequest.method == 'POST':
             for t in shown:
-                env['ts.notify.pref'].ts_save(user, t, post.get('app_' + t) == '1', bool(phone) and post.get('sms_' + t) == '1')
+                in_app = t in ALWAYS_ON or post.get('app_' + t) == '1'      # security events always reach the bell
+                env['ts.notify.pref'].ts_save(user, t, in_app, bool(phone) and post.get('sms_' + t) == '1')
             request.session['ts_flash'] = 'ترجیح‌های اعلان ذخیره شد.'
             return request.redirect('/my/notifications/prefs')
         prefs = {t: N._pref(user, t) for t in shown}
+        groups = []
+        for key, label, types in PREF_GROUPS:
+            rows = [(t, PREF_LABELS[t], t in SMS_STAFF_TYPES, t in ALWAYS_ON) for t in types if t in shown]
+            if rows:
+                groups.append({'key': key, 'label': label, 'rows': rows})
         return request.render('ts_panel.notification_prefs', {
-            'types': [(t, PREF_LABELS[t], t in SMS_STAFF_TYPES) for t in shown], 'prefs': prefs, 'has_phone': bool(phone),
+            'types': [(t, PREF_LABELS[t], t in SMS_STAFF_TYPES) for t in shown], 'groups': groups, 'prefs': prefs, 'has_phone': bool(phone),
+            'any_sms': any(t in SMS_STAFF_TYPES for t in shown),
             'sms_live': sms_live, 'flash': request.session.pop('ts_flash', None), 'page_name': 'ts_panel_notification_prefs'})

@@ -1,0 +1,84 @@
+// Panel daily-work pages (dashboard, participants, invitations, campaigns, groups): UX audit 2026-10-11 fixes.
+// Tokens only, logical properties, 44 px targets. Everything is scoped under #wrapwrap like panel.scss.
+#wrapwrap {
+    // elements toggled by ts_panel.daily_js / ts_org.reveal_js: [hidden] must win over their display value
+    [data-tsp-bulkbar][hidden], [data-tsp-for][hidden], [data-tsp-share][hidden], [data-tsp-print][hidden], [data-tsp-nojs][hidden],
+    .tsp-disclose[hidden], .tsp-disclose-nojs[hidden], form[hidden], [data-ts-show][hidden] { display: none !important; }
+
+    // ---- action rows: «قبلی» at the start with an arrow, primary next, «انصراف» pushed to the end (G3-P12-4)
+    .tsp-actions { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); margin-block-start: var(--space-2); }
+    .tsp-actions__end { margin-inline-start: auto; }
+    .tsp-prev::before { content: '→'; margin-inline-end: 6px; }
+    @media (max-width: 575.98px) {
+        .tsp-actions .ts-btn--primary { flex: 1 1 100%; justify-content: center; }
+        .tsp-actions__end { margin-inline-start: 0; }
+    }
+
+    // ---- chips: count as a small badge with space before it; zero-count states fold into a select on phones (G3-P11-3, G5-P4-2)
+    .tsp-chips--daily .tsp-chip { gap: 6px; min-block-size: var(--control-min); }
+    .tsp-chip__n { display: inline-flex; align-items: center; justify-content: center; min-inline-size: 1.6em; padding: 0 6px; border-radius: 999px; background: var(--color-neutral-900); color: var(--color-neutral-300); font-size: var(--fs-0); line-height: 1.6; }
+    .tsp-chip.is-on .tsp-chip__n { background: var(--color-accent); color: var(--color-surface); }
+    .tsp-only-phone { display: none; }
+    @media (max-width: 767.98px) {
+        .tsp-chips--daily .tsp-chip--zero { display: none; }
+        .tsp-only-phone { display: flex; }
+    }
+
+    // ---- wizard steps: on a phone a plain «گام ۱ از ۴ · …» line replaces the clipped chip row (G3-P12-3)
+    .tsp-steps-text { display: none; margin: 0; font-weight: 500; color: var(--color-neutral-300); }
+    @media (max-width: 767.98px) {
+        .tsp-steps--daily { position: absolute; inline-size: 1px; block-size: 1px; overflow: hidden; clip-path: inset(50%); }
+        .tsp-steps-text { display: block; }
+    }
+    .tsp-disclose { display: inline-flex; align-items: center; gap: var(--space-2); min-block-size: var(--control-min); padding: 0; background: none; border: 0; color: var(--color-accent-300); font: inherit; font-weight: 500; cursor: pointer; text-align: start; }
+    .tsp-disclose::after { content: ''; inline-size: 9px; block-size: 9px; border-inline-end: 2px solid currentColor; border-block-end: 2px solid currentColor; transform: rotate(45deg); transition: transform .15s; }
+    .tsp-disclose[aria-expanded="true"]::after { transform: rotate(-135deg); }
+    .tsp-disclose:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 2px; border-radius: var(--r-8); }
+    .tsp-check--sub, .tsp-check-sub { margin-inline-start: var(--space-6); }
+    .tsp-check.is-disabled { color: var(--muted); }
+
+    // ---- lists: unseen results stand out (word + weight, not colour alone); row links
+    .tsp-row--new th a { font-weight: 700; }
+    .tsp-row-link { display: inline-flex; align-items: center; min-block-size: var(--control-min); margin-inline-start: var(--space-2); font-size: var(--fs-0); }
+    .tsp-table--cards td[data-label=""] { grid-template-columns: 1fr; }
+    .tsp-progress { display: block; block-size: 6px; margin-block-start: 4px; border-radius: 3px; background: var(--color-neutral-900); overflow: hidden; max-inline-size: 160px; }
+    .tsp-progress > span { display: block; block-size: 100%; background: var(--color-accent-500); }
+
+    // ---- dashboard
+    .tsp-role-note { margin: 0; padding: var(--space-3) var(--space-4); border-radius: var(--r-12); background: var(--info-soft, var(--status-info-soft)); color: var(--color-text); font-size: var(--fs-1); }
+    .tsp-role-note a { margin-inline-start: var(--space-1); font-weight: 500; }
+    .tsp-dash-empty h2 { margin: 0; }
+    .tsp-stats--daily { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    @media (max-width: 767.98px) { .tsp-stats--daily { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+    .tsp-funnel .tsp-bar { margin-inline-end: auto; }
+    .tsp-checklist { list-style: none; padding: 0; margin: 0 0 var(--space-3); display: grid; gap: var(--space-2); }
+    .tsp-checklist li { display: flex; align-items: center; gap: var(--space-2); min-block-size: var(--control-min); }
+    .tsp-checklist li.is-done { color: var(--color-neutral-400); }
+    .tsp-check-ico, .tsp-open-ico { flex: none; inline-size: 20px; block-size: 20px; border-radius: 50%; position: relative; }
+    .tsp-open-ico { border: 2px solid var(--color-neutral-600); }
+    .tsp-check-ico { background: var(--status-ok-soft); box-shadow: 0 0 0 1px var(--status-ok); }
+    .tsp-check-ico::after { content: ''; position: absolute; inset-block-start: 4px; inset-inline-start: 7px; inline-size: 5px; block-size: 9px; border-right: 2px solid var(--status-ok); border-bottom: 2px solid var(--status-ok); transform: rotate(45deg); }   // a tick: physical sides on purpose
+    .tsp-done-label { padding: 0 8px; border-radius: 999px; background: var(--status-ok-soft); color: var(--status-ok); font-size: var(--fs-0); font-weight: 500; }
+
+    // ---- campaign page: state counts are information, not filter chips (G3-P17-2)
+    .tsp-counts { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: var(--space-2) var(--space-4); font-size: var(--fs-1); color: var(--color-neutral-300); }
+    .tsp-counts strong { color: var(--color-text); margin-inline-start: 4px; }
+    .tsp-counts .is-zero { color: var(--muted); }
+    .tsp-qr-link { display: inline-grid; justify-items: center; gap: var(--space-1); text-decoration: none; font-size: var(--fs-1); }
+    .tsp-qr-link:hover span { text-decoration: underline; }
+    .tsp-qr--big { inline-size: 100%; max-inline-size: 320px; block-size: auto; }
+
+    // ---- groups: no double frame around the phone cards (G5-P5-2)
+    @media (max-width: 767.98px) {
+        .tsp-groups-wrap { background: none; border: 0; box-shadow: none; padding: 0; border-radius: 0; overflow: visible; }
+    }
+    #new-group:target, #new-group:focus { outline: 2px solid var(--color-accent); outline-offset: 2px; }
+}
+
+// The fixed bottom tab bar must not cover the end of the footer (copyright, ۱۱۵ line) on phones (PT-6, G5-P13-5, G5-P14-3).
+@media (max-width: 1023.98px) {
+    body:has(.tsp-tabbar) .ts-footer { padding-block-end: calc(64px + env(safe-area-inset-bottom, 0px)); }
+}
+@media print {
+    [data-tsp-print], .tsp-actions { display: none !important; }
+}

@@ -1,6 +1,26 @@
 // Talent Search (website 4) site + shared components, redesign 2026-10 (tokens in tokens.scss).
 // Loaded only through ts_website.assets_ts by website-4 layout views. RTL-first: logical properties only.
 // Estedad for headings (500-600), Vazirmatn for text; the FD builds carry Persian digits for 0-9.
+//
+// SHARED UTILITY CONTRACTS (audit 2026-10-11; other modules code against these names, keep them stable):
+//   .ts-confirm     danger-tinted confirmation box (style only; the server still checks the box). Markup:
+//                     <div class="ts-confirm" role="group" aria-labelledby="x_t">
+//                       <p class="ts-confirm__title" id="x_t">بستن پنل</p>
+//                       <p class="ts-confirm__consequence">همهٔ دعوت‌های باز بسته می‌شود و این کار برگشت ندارد.</p>  (or <ul>)
+//                       <label class="ts-check"><input type="checkbox" name="confirm" required="required"/> مطمئنم، پنل بسته شود</label>
+//                       <div class="ts-confirm__actions"><button class="ts-btn ts-btn--danger">بستن پنل</button>
+//                         <a class="ts-btn ts-btn--quiet" href="...">انصراف</a></div>
+//                     </div>
+//                   .ts-btn--danger-outline: the quieter destructive button (danger border and text, no fill).
+//   .ts-backlink    back link, the arrow points to the reading start (RTL «→ عنوان»); drawn by CSS, so the markup is
+//                   only <a class="ts-backlink" href="/my/workspaces/5/clients">شرکت‌کنندگان</a> (text = parent page name).
+//   .ts-bdi         bidi-isolated LTR run (codes, phones, emails, devices) in a font with Latin digits:
+//                   <bdi class="ts-bdi" dir="ltr">TSW-0005</bdi>. bdi[dir=ltr] and span[dir=ltr] get the same font.
+//   .ts-scroller    horizontal scroller (chips, tabs): thin scrollbar on hover/focus, fade on the edge that hides
+//                   more items (ts_nav.js sets data-ts-fade="l|r|lr"), the item with .is-on / aria-current scrolled
+//                   into view. Markup: <div class="ts-scroller"> ...flex: none items... </div>. .tsp-subnav,
+//                   .tsp-chips and .tsp-steps get the same behaviour.
+//   ts_website.jdate / ts_website.filefield (views/components.xml) are styled at the end of this file.
 @font-face {
     font-family: 'Vazirmatn FD';
     src: url('/ts_website/static/fonts/Vazirmatn-FD-Var.woff2') format('woff2-variations'),
@@ -51,7 +71,10 @@
     .container::before, .container::after { content: none; display: none; }
     img { max-inline-size: 100%; block-size: auto; }
     bdi, code, .ts-ltr { unicode-bidi: isolate; }
-    bdi[dir=ltr], code, kbd, .ts-ltr, input[type=email], input[type=url], input[dir=ltr] { font-family: Vazirmatn, var(--font-text); }   // identifiers keep Latin digits
+    bdi[dir=ltr], span[dir=ltr], .ts-bdi, code, kbd, .ts-ltr, input[type=email], input[type=url], input[dir=ltr] { font-family: Vazirmatn, var(--font-text); }   // identifiers keep Latin digits
+    span[dir=ltr], .ts-bdi { unicode-bidi: isolate; }
+    .ts-bdi { direction: ltr; overflow-wrap: anywhere; }
+    .ts-jdate__input[dir=ltr] { font-family: var(--font-text); text-align: end; }   // a Jalali date keeps Persian digits
     code { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: .9em; }
     .text-muted { color: var(--color-neutral-400) !important; }
 
@@ -287,8 +310,10 @@
     .ts-cols h3 { font-size: 19px; font-weight: 500; margin-block-end: 14px; }
     .ts-list-check { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 10px; }
     .ts-list-check li { position: relative; padding-inline-start: 28px; font-size: 14.5px; line-height: 1.85; color: var(--color-neutral-200); }
-    .ts-list-check li::before { content: ''; position: absolute; inset-inline-start: 2px; inset-block-start: .55em; inline-size: 13px; block-size: 7px; border-left: 2px solid var(--color-accent-300); border-bottom: 2px solid var(--color-accent-300); transform: rotate(-45deg); }
-    .ts-list-no li::before { inline-size: 12px; block-size: 12px; border: 0; background: linear-gradient(45deg, transparent 44%, var(--color-neutral-400) 44%, var(--color-neutral-400) 56%, transparent 56%), linear-gradient(-45deg, transparent 44%, var(--color-neutral-400) 44%, var(--color-neutral-400) 56%, transparent 56%); transform: none; inset-block-start: .5em; }
+    // check mark: a tall narrow box with two borders, turned 45deg (it read as a down-chevron before, audit G2-P12-5)
+    .ts-list-check li::before { content: ''; position: absolute; inset-inline-start: 6px; inset-block-start: .35em; inline-size: 6px; block-size: 11px; border-inline-end: 2px solid var(--color-accent-300); border-block-end: 2px solid var(--color-accent-300); transform: rotate(45deg); }
+    [dir=rtl] & .ts-list-check li::before, &[dir=rtl] .ts-list-check li::before { transform: rotate(-45deg); }
+    .ts-list-no li::before, [dir=rtl] & .ts-list-no li::before { inline-size: 12px; block-size: 12px; border: 0; background: linear-gradient(45deg, transparent 44%, var(--color-neutral-400) 44%, var(--color-neutral-400) 56%, transparent 56%), linear-gradient(-45deg, transparent 44%, var(--color-neutral-400) 44%, var(--color-neutral-400) 56%, transparent 56%); transform: none; inset-block-start: .5em; }
     .ts-principles { list-style: none; margin: 0; padding: 0; display: grid; }
     .ts-principles li { display: grid; gap: 6px 24px; padding-block: 20px; border-block-start: 1px solid var(--color-neutral-900); }
     .ts-principles strong { font-family: var(--font-display); font-size: var(--fs-4); font-weight: 600; }
@@ -381,7 +406,8 @@
     .ts-plan__for { font-size: 13.5px; line-height: 1.8; color: var(--color-neutral-400); }
     .ts-plan ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; flex: 1; }
     .ts-plan li { position: relative; padding-inline-start: 26px; font-size: 14px; line-height: 1.8; color: var(--color-neutral-200); }
-    .ts-plan li::before { content: ''; position: absolute; inset-inline-start: 2px; inset-block-start: .58em; inline-size: 12px; block-size: 7px; border-left: 2px solid var(--color-accent-300); border-bottom: 2px solid var(--color-accent-300); transform: rotate(-45deg); }
+    .ts-plan li::before { content: ''; position: absolute; inset-inline-start: 6px; inset-block-start: .4em; inline-size: 6px; block-size: 11px; border-inline-end: 2px solid var(--color-accent-300); border-block-end: 2px solid var(--color-accent-300); transform: rotate(45deg); }
+    [dir=rtl] & .ts-plan li::before, &[dir=rtl] .ts-plan li::before { transform: rotate(-45deg); }
     .ts-plan__warn { display: flex; gap: 10px; padding: 12px 14px; border-radius: var(--r-12); background: var(--color-neutral-900); font-size: 13px; line-height: 1.8; color: var(--color-neutral-200); }
     .ts-plan__warn svg { inline-size: 18px; block-size: 18px; color: var(--color-accent-300); margin-block-start: 3px; flex: none; }
     .ts-plan__foot { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
@@ -496,6 +522,10 @@
     .oe_website_login_container:not(:has(.ts-auth)) { max-inline-size: 440px; margin: clamp(24px, 6vw, 72px) auto; padding: clamp(22px, 4vw, 32px); background: var(--color-surface); box-shadow: var(--shadow-md); border-radius: var(--r-18); color: var(--color-text); }
     .oe_website_login_container .form-control { min-block-size: 46px; border-radius: var(--r-8); font: inherit; }
     .ts-auth__links { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px 16px; font-size: var(--fs-1); }
+    .ts-auth__links a { min-block-size: 44px; display: inline-flex; align-items: center; }
+    .ts-auth__intro { margin: 0; }
+    // Odoo's login CSS gives these forms max-width 300px and margin 50px auto (blank bands inside the card, audit G1-P4-2)
+    .ts-auth__card form.oe_login_form, .ts-auth__card form.oe_reset_password_form, .ts-auth__card form.oe_signup_form { margin: 0; max-inline-size: none; position: static; }
 
     // ---------- footer ----------
     .ts-footer { border-block-start: 1px solid var(--color-neutral-900); background: color-mix(in oklab, var(--color-surface) 35%, var(--color-bg)); padding-block: 48px 28px; color: var(--color-neutral-400); }
@@ -516,7 +546,99 @@
     .ts-footer--slim a { color: var(--color-neutral-300); }
     .ts-footer--slim p { margin: 0; }
 
+    // ---------- shared controls (audit 2026-10-11) ----------
+    // native radios and checkboxes look like .ts-check everywhere: 22px control, the whole label a 44px row (audit PT-5).
+    // :where() keeps the control rule at id-only weight, so components that hide or stretch their inputs
+    // (.ts-opt / .tt-opt answer tiles, Bootstrap .form-check-input) keep their own sizes.
+    :where(input[type=checkbox]:not(.form-check-input):not(.btn-check), input[type=radio]:not(.form-check-input):not(.btn-check)) {
+        inline-size: 22px; block-size: 22px; margin: 0; flex: none; accent-color: var(--color-accent); cursor: pointer; vertical-align: -.3em;
+    }
+    label:where(:has(> input[type=checkbox]:first-child), :has(> input[type=radio]:first-child)):not(.ts-opt):not(.tt-opt), .ts-check {
+        display: flex; align-items: flex-start; gap: 10px; min-block-size: var(--control-min); padding-block: 10px; margin: 0;
+        font-weight: 400; font-size: var(--fs-1); line-height: 1.6; color: var(--color-text); cursor: pointer;
+    }
+    label:where(:has(> input[type=checkbox]:first-child), :has(> input[type=radio]:first-child)):not(.ts-opt):not(.tt-opt) > input:first-child, .ts-check > input { margin-block-start: 0; }
+    :where(td, th) > label:where(:has(> input[type=checkbox]:first-child)):not(.ts-opt):not(.tt-opt) { padding-block: 0; justify-content: center; }
+    fieldset { border: 0; padding: 0; margin: 0; min-inline-size: 0; }
+    fieldset > legend { float: none; inline-size: auto; padding: 0; margin-block-end: 4px; font-family: var(--font-text); font-size: 13.5px; font-weight: 500; color: var(--color-neutral-200); }
+
+    // selects show a chevron at the end side in both themes (they read as text boxes before, audit G4 PT8)
+    select:not([multiple]):not([size]), .form-select {
+        appearance: none; -webkit-appearance: none;
+        background-image: linear-gradient(45deg, transparent 50%, currentColor 50%), linear-gradient(135deg, currentColor 50%, transparent 50%);
+        background-size: 6px 6px, 6px 6px; background-repeat: no-repeat;
+        background-position: left 18px center, left 12px center;
+        padding-inline-end: 38px; padding-inline-start: 12px;
+        border: 1px solid var(--field-line); border-radius: var(--r-8); background-color: var(--color-bg); color: var(--color-text);
+        font-family: var(--font-text); font-size: 1rem; cursor: pointer;
+    }
+    &[dir=ltr] select:not([multiple]):not([size]), [dir=ltr] & select:not([multiple]):not([size]), [dir=ltr] & .form-select { background-position: right 12px center, right 18px center; }
+
+    // file picker (ts_website.filefield and every <input type=file> upgraded by ts_nav.js)
+    .ts-file { display: grid; gap: 6px; }
+    .ts-file__label { font-weight: 500; font-size: 13.5px; color: var(--color-neutral-200); margin: 0; }
+    .ts-file__row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; min-inline-size: 0; }
+    .ts-file__btn, .ts-file__name { display: none; }
+    .ts-file.is-ready .ts-file__input, .ts-file__input.is-ready { position: absolute; inline-size: 1px; block-size: 1px; opacity: 0; overflow: hidden; clip-path: inset(50%); }
+    .ts-file.is-ready .ts-file__btn { display: inline-flex; cursor: pointer; }
+    .ts-file.is-ready .ts-file__name { display: inline; color: var(--color-neutral-300); font-size: var(--fs-1); overflow-wrap: anywhere; min-inline-size: 0; }
+    .ts-file.is-ready .ts-file__input:focus-visible + .ts-file__btn { outline: 2px solid var(--color-accent); outline-offset: 2px; }
+    .ts-file.is-ready .ts-file__input:disabled + .ts-file__btn { opacity: .5; cursor: not-allowed; }
+
+    // Solar Hijri date field (ts_website.jdate)
+    .ts-jdate { display: grid; gap: 4px; }
+    .ts-jdate__label { font-weight: 500; font-size: 13.5px; color: var(--color-neutral-200); margin: 0; }
+    .ts-jdate__input { max-inline-size: 16rem; letter-spacing: .02em; }
+    .ts-jdate__hint, .ts-jdate__out { margin: 0; font-size: var(--fs-0); }
+    .ts-jdate__out { color: var(--color-neutral-300); min-block-size: 1.4em; }
+    .ts-jdate__out.is-bad { color: var(--status-danger); font-weight: 500; }
+    .ts-jdate__input[aria-invalid=true] { border-color: var(--status-danger); }
+
+    // sign-in choices (ts_website.auth_choices)
+    .ts-authchoice { display: grid; gap: 4px; }
+    .ts-authchoice__alt { margin: 0; text-align: center; font-size: var(--fs-1); }
+    .ts-authchoice__alt a { display: inline-flex; align-items: center; min-block-size: var(--control-min); padding-inline: 4px; }
+
+    // destructive confirmation box (style only)
+    .ts-confirm { display: grid; gap: 10px; padding: 16px; border: 1px solid var(--status-danger); border-radius: var(--r-12); background: var(--status-danger-soft); color: var(--color-text); }
+    .ts-confirm__title { margin: 0; font-family: var(--font-display); font-weight: 600; font-size: var(--fs-2); color: var(--status-danger); }
+    .ts-confirm__consequence { margin: 0; color: var(--color-text); font-size: var(--fs-1); }
+    ul.ts-confirm__consequence { padding-inline-start: 20px; display: grid; gap: 4px; }
+    .ts-confirm .ts-check, .ts-confirm label:where(:has(> input[type=checkbox]:first-child)) { font-weight: 500; }
+    .ts-confirm__actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+    .ts-btn--danger-outline { background: transparent; color: var(--status-danger); border-color: var(--status-danger); }
+    .ts-btn--danger-outline:hover { background: var(--status-danger-soft); color: var(--status-danger); }
+
+    // back link: the arrow points to the start of the reading direction (→ in RTL), drawn with a mask in currentColor
+    .ts-backlink { display: inline-flex; align-items: center; gap: 8px; min-block-size: var(--control-min); font-weight: 500; font-size: var(--fs-1); color: var(--color-accent-300); text-decoration: none; align-self: flex-start; }
+    .ts-backlink:hover { text-decoration: underline; }
+    .ts-backlink::before {
+        content: ''; inline-size: 18px; block-size: 18px; flex: none; background: currentColor;
+        -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 12h14M13 6l6 6-6 6'/%3E%3C/svg%3E") center / contain no-repeat;
+                mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 12h14M13 6l6 6-6 6'/%3E%3C/svg%3E") center / contain no-repeat;
+    }
+    &[dir=ltr] .ts-backlink::before, [dir=ltr] & .ts-backlink::before { transform: scaleX(-1); }
+
+    // horizontal scrollers: thin scrollbar on hover/focus, fade on the side that hides more (data-ts-fade from ts_nav.js)
+    .ts-scroller { display: flex; gap: 8px; flex-wrap: nowrap; overflow-x: auto; max-inline-size: 100%; padding-block-end: 6px; scroll-padding-inline: 24px; }
+    .ts-scroller > * { flex: none; }
+    .ts-scroller, .tsp-subnav, .tsp-chips, .tsp-steps { scrollbar-width: thin; scrollbar-color: transparent transparent; -webkit-overflow-scrolling: touch; }
+    .ts-scroller:hover, .ts-scroller:focus-within, .tsp-subnav:hover, .tsp-subnav:focus-within, .tsp-chips:hover, .tsp-chips:focus-within, .tsp-steps:hover, .tsp-steps:focus-within { scrollbar-color: var(--color-neutral-600) transparent; }
+    .ts-scroller::-webkit-scrollbar, .tsp-subnav::-webkit-scrollbar, .tsp-chips::-webkit-scrollbar, .tsp-steps::-webkit-scrollbar { display: block; block-size: 6px; }
+    .ts-scroller::-webkit-scrollbar-thumb, .tsp-subnav::-webkit-scrollbar-thumb, .tsp-chips::-webkit-scrollbar-thumb, .tsp-steps::-webkit-scrollbar-thumb { background: transparent; border-radius: 3px; }
+    .ts-scroller:hover::-webkit-scrollbar-thumb, .ts-scroller:focus-within::-webkit-scrollbar-thumb, .tsp-subnav:hover::-webkit-scrollbar-thumb, .tsp-subnav:focus-within::-webkit-scrollbar-thumb,
+    .tsp-chips:hover::-webkit-scrollbar-thumb, .tsp-chips:focus-within::-webkit-scrollbar-thumb, .tsp-steps:hover::-webkit-scrollbar-thumb, .tsp-steps:focus-within::-webkit-scrollbar-thumb { background: var(--color-neutral-600); }
+    [data-ts-fade="l"] { -webkit-mask-image: linear-gradient(to right, transparent 0, #000 32px); mask-image: linear-gradient(to right, transparent 0, #000 32px); }
+    [data-ts-fade="r"] { -webkit-mask-image: linear-gradient(to left, transparent 0, #000 32px); mask-image: linear-gradient(to left, transparent 0, #000 32px); }
+    [data-ts-fade="lr"] { -webkit-mask-image: linear-gradient(to right, transparent 0, #000 32px, #000 calc(100% - 32px), transparent 100%); mask-image: linear-gradient(to right, transparent 0, #000 32px, #000 calc(100% - 32px), transparent 100%); }
+
     &:has(.ts-header--focus) .ts-header { position: static; }
+}
+
+// Focus and anchors are never hidden behind the sticky header (68px) or a fixed bottom bar (WCAG 2.4.11).
+html { scroll-padding-block-start: 84px; }
+@media (max-width: 767.98px) {
+    html:has(.ts-qnav) { scroll-padding-block-end: 140px; }
 }
 
 @media (prefers-reduced-motion: reduce) {

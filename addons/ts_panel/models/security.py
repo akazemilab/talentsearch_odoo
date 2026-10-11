@@ -79,5 +79,5 @@ class ResUsersPassword(models.Model):
             for user in self:
                 pw = user.password
                 if pw and len(pw) < MIN_PASSWORD:
-                    raise ValidationError('گذرواژه باید دست‌کم ۱۵ نویسه باشد.')
+                    raise ValidationError('رمز عبور باید دست‌کم ۱۵ نویسه باشد.')
         return super()._set_password()

@@ -51,8 +51,8 @@ check('invite with a foreign instrument id refused', 'error=form' in loc, loc)
 
 anon = Client(TS)
 st, _, page = anon.req('/invite/' + tok)
-check('anonymous invite page offers sign-up and login', st == 200 and '/web/signup?redirect=' in page and '/web/login?redirect=' in page)
-check('invite page explains what is shared', 'بازهٔ هر بُعد' in page)
+check('anonymous invite page offers sign-up and login', st == 200 and ('/web/signup?redirect=' in page or '/signup?next=' in page) and '/web/login?redirect=' in page)
+check('invite page explains what is shared', 'سطح هر عامل' in page)
 
 p = Client(TS)
 check('participant login', p.login(PART, part_pw))
@@ -75,7 +75,7 @@ st, loc, _ = p.req('/take/%s/submit' % token, {'csrf_token': p.csrf(page), 'subm
 report = path_of(loc).split('?')[0]
 check('participant submit -> own report', report.startswith('/my/assessments/'), loc)
 st, _, page = p.req(report)
-check('own report shows sharing note + revoke', st == 200 and 'اشتراک با سازمان' in page and '/unshare' in page)
+check('own report shows sharing note + revoke', st == 200 and 'اشتراک با پنل' in page and '/unshare' in page)
 st, loc, _ = p.req('/invite/' + tok)
 check('invite link after completion -> own report', path_of(loc).startswith('/my/assessments/'), loc)
 

@@ -10,7 +10,8 @@ from odoo.http import request
 
 from odoo.addons.ts_assessment.controllers.main import TsAssessment, _my_attempt, _ts_site_or_404
 
-TEXT_VERSION = 'TS-MINOR-1405-07-v1'
+# v2 (1405-07-19, UX audit 2026-10-11): reworded age, guardian and assent lines
+TEXT_VERSION = 'TS-MINOR-1405-07-19-v2'
 
 
 class TsPanelConsent(TsAssessment):

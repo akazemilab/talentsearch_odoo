@@ -14,7 +14,7 @@ from odoo.addons.ts_talent.models import engine_matrix as EM
 from .base import RESULT_PERMS, deny, forbidden, member_or_404, render_in_shell, require
 from .clients import _client_or_404, visible_domain
 
-LEVEL_KIND = {'status': 'وضعیت', 'summary': 'خلاصهٔ نتیجه', 'education': 'نتیجهٔ آموزشی', 'clinical': 'گزارش بالینی'}
+LEVEL_KIND = {'status': 'فقط وضعیت', 'summary': 'خلاصهٔ نتیجه', 'education': 'گزارش در سطح مشاور', 'clinical': 'گزارش بالینی'}
 
 
 def result_url(ws_id, client_id, attempt_id):
@@ -46,13 +46,26 @@ class TsPanelReports(http.Controller):
         back = '/my/workspaces/%s/clients/%s' % (me.workspace_id.id, client.id)
         request.env['ts.audit.event'].sudo().log('result.view', at, workspace=me.workspace_id, member=me, level=level)
         if level == 'education' and at.ts_is_matrix():
-            ctx = report_ctx(at, org_view=True, ws=me.workspace_id)
-            ctx.update(back_url=back, print_url=url + '/print', autoprint=bool(print))
-            return request.render('ts_talent.report', ctx)
+            # UX audit G3 P7-3 / P7-7: the talent report renders inside the panel shell (menu, tab bar, panel name; the
+            # print CSS hides the shell) with a small action bar and, for audit:read, who opened it.
+            ws = me.workspace_id
+            actions = []
+            if me.can_invite() and me.has_perm('invites:create') and me.can_invite_participants():
+                actions.append(('دعوت به سنجهٔ دیگر', '/my/workspaces/%s/invites/new?client=%s' % (ws.id, client.id)))
+            if me.has_perm('clients:assign'):
+                who = client.responsible_id.user_id.name if client.responsible_id else 'ندارد'
+                actions.append(('کارشناس مسئول: %s · تغییر' % who, back + '#tsp-c-resp'))
+            ctx = report_ctx(at, org_view=True, ws=ws, panel_actions=actions)
+            ctx.update(print_url=url + '/print', autoprint=bool(print), report_frame='ts_panel.shell_frame',
+                       viewers=request.env['ts.audit.view'].viewers(ws, at) if me.has_perm('audit:read') else None)
+            for k in ('title', 'page_name'):      # the shell's own values win
+                ctx.pop(k, None)
+            return render_in_shell('ts_talent.report', me, 'clients', 'گزارش ' + at.instrument_id.title,
+                                   back_url=back, back_label=client.name or 'شرکت‌کننده', **ctx)
         results = at.result_rows() if level != 'status' else request.env['ts.attempt.result']
         return render_in_shell(
             'ts_panel.result_bands', me, 'clients', 'نتیجه', client=client, attempt=at, inst=at.instrument_id, level=level,
-            results=results, kind=LEVEL_KIND[level], back_url=back, print_url=url + '/print', autoprint=bool(print),
+            results=results, kind=LEVEL_KIND[level], back_url=back, back_label=client.name or 'شرکت‌کننده', print_url=url + '/print', autoprint=bool(print),
             when=at.submitted_at,
             viewers=request.env['ts.audit.view'].viewers(me.workspace_id, at) if me.has_perm('audit:read') else None)
 
@@ -70,16 +83,25 @@ class TsPanelReports(http.Controller):
         if not any(me.has_perm(p) for p in RESULT_PERMS):
             return forbidden(me, 'results', 'reports')
         T = request.env['ts.attempt'].sudo()
-        clients = request.env['ts.panel.client'].sudo().search(visible_domain(me) + [('state', '=', 'active')])  # ts-scope-ok: visible_domain() starts with the member's workspace
+        ws = me.workspace_id
+        params = {k: kw[k] for k in ('group_id', 'instrument_id') if str(kw.get(k) or '').isdigit()}
+        cdom = visible_domain(me) + [('state', '=', 'active')]
+        if params.get('group_id'):
+            cdom.append(('group_ids', 'in', [int(params['group_id'])]))
+        clients = request.env['ts.panel.client'].sudo().search(cdom)  # ts-scope-ok: visible_domain() starts with the member's workspace
+        adom = [('workspace_id', '=', ws.id), ('client_id', 'in', clients.ids), ('state', '=', 'done'), ('voided', '=', False)]
+        if params.get('instrument_id'):
+            adom.append(('instrument_id', '=', int(params['instrument_id'])))
         rows = []
-        for at in T.search([('workspace_id', '=', me.workspace_id.id), ('client_id', 'in', clients.ids), ('state', '=', 'done'),
-                            ('voided', '=', False)], order='submitted_at desc, id desc', limit=80):
+        for at in T.search(adom, order='submitted_at desc, id desc', limit=80):
             level = at.ts_result_level(me)
             if level in ('summary', 'education', 'clinical'):
                 rows.append((at, level))
             if len(rows) >= 20:
                 break
-        return render_in_shell('ts_panel.reports', me, 'reports', 'گزارش‌ها', rows=rows, kinds=LEVEL_KIND,
+        return render_in_shell('ts_panel.reports', me, 'reports', 'گزارش‌ها', rows=rows, kinds=LEVEL_KIND, params=params,
+                               groups=request.env['ts.panel.group'].sudo().search([('workspace_id', '=', ws.id), ('active', '=', True)]),
+                               instruments=me.allowed_instruments(), max_rows=20,
                                can_group=me.has_perm('reports:group'), url=result_url)
 
     # ------------------------------------------------------------------ group report
@@ -98,6 +120,7 @@ class TsPanelReports(http.Controller):
         camps = request.env['ts.campaign'].sudo().search([('workspace_id', '=', ws.id)])
         return render_in_shell(
             'ts_panel.group_report', me, 'reports', 'گزارش گروهی', rep=rep, params=params, groups=groups, campaigns=camps,
+            can_invite=me.has_perm('invites:bulk') and me.can_act(), can_invite1=me.has_perm('invites:manage') and me.can_act(),
             instruments=me.allowed_instruments(), names=EM.NAMES,
             periods=((0, 'همهٔ زمان‌ها'), (30, '۳۰ روز گذشته'), (90, '۹۰ روز گذشته'), (365, 'یک سال گذشته')))
 

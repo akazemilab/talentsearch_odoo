@@ -9,11 +9,12 @@
         <field name="website_id" ref="ts_website.website_ts"/>
         <field name="arch" type="xml">
             <t t-name="ts_panel.my_nav">
-                <nav class="tsp-subnav" aria-label="صفحه‌های من">
+                <t t-set="acct" t-value="active in ('account', 'privacy', 'sessions', 'notifications', 'phone', 'security')"/>
+                <nav class="tsp-subnav tsp-subnav--my" aria-label="صفحه‌های من" data-tsp-subnav="1">
                     <a href="/my" t-attf-class="tsp-subnav__item #{'is-on' if active == 'home' else ''}" t-att-aria-current="'page' if active == 'home' else None">کارهای من</a>
                     <a href="/my/assessments" t-attf-class="tsp-subnav__item #{'is-on' if active == 'results' else ''}" t-att-aria-current="'page' if active == 'results' else None">سنجه‌ها و نتیجه‌ها</a>
                     <a href="/my/sharing" t-attf-class="tsp-subnav__item #{'is-on' if active == 'sharing' else ''}" t-att-aria-current="'page' if active == 'sharing' else None">چه کسی می‌بیند</a>
-                    <a href="/my/account" t-attf-class="tsp-subnav__item #{'is-on' if active in ('account', 'privacy', 'sessions', 'notifications') else ''}" t-att-aria-current="'page' if active in ('account', 'privacy', 'sessions', 'notifications') else None">حساب</a>
+                    <a href="/my/account" t-attf-class="tsp-subnav__item #{'is-on' if acct else ''}" t-att-aria-current="('page' if active == 'account' else 'true') if acct else None">حساب</a>
                 </nav>
             </t>
         </field>
@@ -31,25 +32,41 @@
                     <div id="wrap" class="ts-page">
                         <section class="tsp-section container" style="max-width:860px">
                             <h1 class="tsp-head__title">کارهای من</h1>
-                            <t t-call="ts_panel.my_nav" active="home"/>
-                            <p t-if="unread" class="tsp-flash" role="status">
-                                <a href="/my/notifications"><t t-out="fa(unread)"/> اعلان تازه دارید.</a>
+                            <t t-call="ts_panel.my_nav" active.f="home"/>
+                            <!-- the header bell already shows the count on wide screens; on a phone its badge is tiny -->
+                            <p t-if="unread" class="tsp-flash tsp-only-narrow" role="status">
+                                <a href="/my/notifications"><t t-out="fa(unread)"/> اعلان تازه <t t-if="tu">داری</t><t t-else="">دارید</t>.</a>
                             </p>
                             <section t-if="next_action" class="tsp-next" id="ts-home-next" aria-labelledby="ts-next-h">
                                 <p class="tsp-next__kicker" id="ts-next-h">
-                                    <t t-if="next_action['kind'] == 'invite'">یک دعوت منتظر شماست</t>
-                                    <t t-elif="next_action['kind'] == 'resume'">یک سنجهٔ نیمه‌تمام دارید</t>
+                                    <t t-if="next_action['kind'] == 'invite'">یک دعوت منتظر <t t-if="tu">توست</t><t t-else="">شماست</t></t>
+                                    <t t-elif="next_action['kind'] == 'resume'">یک سنجهٔ نیمه‌تمام <t t-if="tu">داری</t><t t-else="">دارید</t></t>
                                     <t t-else="">نتیجهٔ تازه‌ای آماده است</t>
                                 </p>
                                 <h2 class="tsp-next__title" t-out="next_action['title']"/>
                                 <p class="tsp-next__meta">
                                     <t t-if="next_action.get('org')">از طرف <strong t-out="next_action['org']"/> · </t>
-                                    <t t-elif="next_action['kind'] != 'invite'">به انتخاب خودتان · </t>
+                                    <t t-elif="next_action['kind'] != 'invite'"><t t-if="tu">خودت شروع کردی</t><t t-else="">خودتان شروع کردید</t> · </t>
                                     <t t-if="next_action['kind'] == 'invite'">دعوت در <t t-out="next_action['when']"/><t t-if="next_action.get('deadline')"> · مهلت تا <t t-out="next_action['deadline']"/></t></t>
-                                    <t t-elif="next_action['kind'] == 'resume'"><t t-out="fa(next_action['progress'])"/>٪ پاسخ داده‌اید · آخرین ذخیره <t t-out="next_action['when']"/></t>
+                                    <t t-elif="next_action['kind'] == 'resume'">
+                                        <t t-if="next_action['progress']"><t t-out="fa(next_action['progress'])"/>٪ پاسخ <t t-if="tu">داده‌ای</t><t t-else="">داده‌اید</t></t>
+                                        <t t-else="">هنوز شروع <t t-if="tu">نکرده‌ای</t><t t-else="">نکرده‌اید</t></t>
+                                        · آخرین ذخیره <t t-out="next_action['when']"/></t>
                                     <t t-else="">تکمیل در <t t-out="next_action['when']"/></t>
                                 </p>
                                 <a t-att-href="next_action['url']" class="ts-btn ts-btn--primary ts-btn--lg" t-out="next_action['label']"/>
+                            </section>
+                            <!-- a panel member with nothing to answer: the panel is the next step (UX audit G4 P24-1) -->
+                            <section t-if="memberships and not next_action" class="tsp-next" id="ts-home-panels" aria-labelledby="ts-panels-h">
+                                <p class="tsp-next__kicker" id="ts-panels-h">پنل‌های من</p>
+                                <t t-if="len(memberships) == 1">
+                                    <h2 class="tsp-next__title"><bdi t-out="memberships[0].workspace_id.name"/></h2>
+                                    <a t-attf-href="/my/workspaces/#{memberships[0].workspace_id.id}" class="ts-btn ts-btn--primary ts-btn--lg">رفتن به پنل <bdi t-out="memberships[0].workspace_id.name"/></a>
+                                </t>
+                                <t t-else="">
+                                    <h2 class="tsp-next__title">عضو <t t-out="fa(len(memberships))"/> پنل هستید</h2>
+                                    <a href="/my/workspaces" class="ts-btn ts-btn--primary ts-btn--lg">رفتن به پنل‌ها</a>
+                                </t>
                             </section>
                             <div t-if="invites" class="ts-card" id="ts-home-invites">
                                 <h2>دعوت‌های باز</h2>
@@ -64,14 +81,15 @@
                                 </ul>
                             </div>
                             <div t-if="going" class="ts-card" id="ts-home-going">
-                                <h2>سنجه‌های نیمه‌تمام</h2>
+                                <h2>سنجه‌های نیمه‌تمام دیگر</h2>
                                 <ul class="tsp-list tsp-rows">
                                     <li t-foreach="going" t-as="a">
+                                        <t t-set="started" t-value="a.state == 'in_progress' and a.progress"/>
                                         <div class="tsp-rows__text">
                                             <strong t-out="a.instrument_id.title"/>
-                                            <span class="ts-hint"><t t-if="a.workspace_id">از طرف <t t-out="a.workspace_id.partner_id.name"/> · </t><t t-if="a.state == 'in_progress'"><t t-out="fa(a.progress)"/>٪ انجام شده · </t>آخرین ذخیره <t t-out="jalali(a.write_date, with_time=False)"/></span>
+                                            <span class="ts-hint"><t t-if="a.workspace_id">از طرف <t t-out="a.workspace_id.partner_id.name"/> · </t><t t-if="started"><t t-out="fa(a.progress)"/>٪ انجام شده · </t><t t-else="">هنوز شروع نشده · </t>آخرین ذخیره <t t-out="jalali(a.write_date, with_time=False)"/></span>
                                         </div>
-                                        <a t-attf-href="/take/#{a.access_token}" class="ts-btn ts-btn--outline ts-btn--sm"><t t-if="a.state == 'in_progress'">ادامه</t><t t-else="">شروع</t></a>
+                                        <a t-attf-href="/take/#{a.access_token}" class="ts-btn ts-btn--outline ts-btn--sm"><t t-if="started">ادامه</t><t t-else="">شروع</t></a>
                                     </li>
                                 </ul>
                             </div>
@@ -81,19 +99,28 @@
                                     <li t-foreach="done" t-as="a">
                                         <div class="tsp-rows__text">
                                             <strong t-out="a.instrument_id.title"/>
-                                            <span class="ts-hint"><t t-out="jalali(a.submitted_at, with_time=False)"/> · <t t-if="shared_n.get(a.id)">با <t t-out="fa(shared_n[a.id])"/> پنل به اشتراک گذاشته شده</t><t t-else="">فقط شما می‌بینید</t></span>
+                                            <span class="ts-hint"><t t-out="jalali(a.submitted_at, with_time=False)"/> · <t t-if="shared_n.get(a.id)">با <t t-out="fa(shared_n[a.id])"/> پنل به اشتراک گذاشته شده</t><t t-elif="tu">فقط تو می‌بینی</t><t t-else="">فقط شما می‌بینید</t></span>
                                         </div>
                                         <a t-attf-href="/my/assessments/#{a.id}" class="ts-btn ts-btn--outline ts-btn--sm">گزارش</a>
                                     </li>
                                 </ul>
                                 <p class="ts-hint"><a href="/my/assessments">همهٔ نتیجه‌ها</a> · <a href="/my/sharing">چه کسی نتیجه‌های من را می‌بیند؟</a></p>
                             </div>
-                            <div t-if="not invites and not going and not done" class="ts-card ts-card--soft" id="ts-home-empty">
-                                <h2>فعلاً کاری ندارید</h2>
-                                <p>دعوتی منتظر شما نیست و سنجهٔ نیمه‌تمامی ندارید. نتیجه‌های قبلی در <a href="/my/assessments">سنجه‌ها و نتیجه‌ها</a> می‌مانند؛ هر وقت خواستید می‌توانید یک سنجه را خودتان انجام دهید.</p>
-                                <a href="/assessments" class="ts-btn ts-btn--outline">مشاهدهٔ سنجه‌ها</a>
-                            </div>
-                            <div t-if="memberships" class="ts-card" id="ts-home-panels">
+                            <t t-if="not next_action and not invites and not going and not done">
+                                <p t-if="memberships" class="ts-hint" id="ts-home-empty">دعوت یا سنجهٔ نیمه‌تمامی ندارید. نتیجه‌های قبلی در <a href="/my/assessments">سنجه‌ها و نتیجه‌ها</a> می‌مانند.</p>
+                                <div t-else="" class="ts-card ts-card--soft" id="ts-home-empty">
+                                    <t t-if="tu">
+                                        <h2>فعلاً کاری نداری</h2>
+                                        <p>دعوتی منتظرت نیست و سنجهٔ نیمه‌تمامی نداری. نتیجه‌های قبلی در <a href="/my/assessments">سنجه‌ها و نتیجه‌ها</a> می‌مانند؛ هر وقت خواستی می‌توانی یک سنجه را خودت انجام بدهی.</p>
+                                    </t>
+                                    <t t-else="">
+                                        <h2>فعلاً کاری ندارید</h2>
+                                        <p>دعوتی منتظر شما نیست و سنجهٔ نیمه‌تمامی ندارید. نتیجه‌های قبلی در <a href="/my/assessments">سنجه‌ها و نتیجه‌ها</a> می‌مانند؛ هر وقت خواستید می‌توانید یک سنجه را خودتان انجام دهید.</p>
+                                    </t>
+                                    <a href="/assessments" class="ts-btn ts-btn--outline">سنجه‌هایی که می‌توان انجام داد</a>
+                                </div>
+                            </t>
+                            <div t-if="memberships and next_action" class="ts-card" id="ts-home-panels-more">
                                 <h2>پنل‌های من</h2>
                                 <p>شما عضو <t t-out="fa(len(memberships))"/> پنل هستید.</p>
                                 <a href="/my/workspaces" class="ts-btn ts-btn--outline">رفتن به پنل‌ها</a>
@@ -113,35 +140,42 @@
         <field name="website_id" ref="ts_website.website_ts"/>
         <field name="arch" type="xml">
             <t t-name="ts_panel.my_account">
-                <t t-call="website.layout" additional_title.f="حساب من">
+                <t t-call="website.layout" additional_title.f="حساب">
                     <div id="wrap" class="ts-page">
                         <section class="tsp-section container" style="max-width:640px">
-                            <h1 class="tsp-head__title">حساب من</h1>
-                            <t t-call="ts_panel.my_nav" active="account"/>
+                            <h1 class="tsp-head__title">حساب</h1>
+                            <t t-call="ts_panel.my_nav" active.f="account"/>
                             <p t-if="ok" class="tsp-flash" role="status" t-out="ok"/>
                             <p t-if="error" class="tsp-flash tsp-flash--err" role="alert" t-out="error"/>
                             <form action="/my/account/name" method="post" class="ts-card" data-tsp-once="1">
                                 <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
                                 <label for="acc-name"><strong>نام</strong></label>
-                                <input id="acc-name" name="name" type="text" class="form-control" maxlength="80" required="required" t-att-value="user.name" autocomplete="name"/>
-                                <p class="ts-hint">این نام در گزارش‌های شما و برای پنل‌هایی که نتیجه را با آن‌ها به اشتراک می‌گذارید دیده می‌شود.</p>
+                                <p class="ts-hint" id="acc-name-h"><t t-if="tu">نام و نام خانوادگی‌ات را همان‌طور بنویس که مدرسه می‌شناسد؛ این نام در گزارش و برای پنل‌هایی که نتیجه را می‌بینند نمایش داده می‌شود.</t><t t-else="">نام و نام خانوادگی خود را همان‌طور بنویسید که پنل‌ها شما را می‌شناسند؛ این نام در گزارش‌ها و برای پنل‌هایی که نتیجه را می‌بینند نمایش داده می‌شود.</t></p>
+                                <input id="acc-name" name="name" type="text" class="form-control" maxlength="80" required="required" t-att-value="user.name" autocomplete="name" aria-describedby="acc-name-h"/>
                                 <button type="submit" class="ts-btn ts-btn--primary">ذخیرهٔ نام</button>
                             </form>
                             <div class="ts-card" id="acc-contact">
                                 <h2>راه‌های ارتباط</h2>
-                                <p><strong>نام ورود:</strong> <span dir="ltr" t-out="user.login"/></p>
-                                <p t-if="phone_verified">شمارهٔ موبایل شما تأیید شده است. <a href="/my/phone">مدیریت موبایل</a></p>
-                                <p t-else="">شمارهٔ موبایل تأییدشده‌ای ندارید. موبایل تنها با کد پیامکی تأیید می‌شود. <a href="/my/phone">تأیید موبایل</a></p>
+                                <p><strong>نام ورود:</strong> <bdi dir="ltr" class="ts-bdi" t-out="user.login"/></p>
+                                <t t-if="tu">
+                                    <p t-if="phone_verified">شمارهٔ موبایلت تأیید شده است. <a href="/my/phone">مدیریت موبایل</a></p>
+                                    <p t-else="">هنوز شمارهٔ موبایل تأییدشده‌ای نداری. موبایل فقط با کد پیامکی تأیید می‌شود. <a href="/my/phone">تأیید موبایل</a></p>
+                                </t>
+                                <t t-else="">
+                                    <p t-if="phone_verified">شمارهٔ موبایل شما تأیید شده است. <a href="/my/phone">مدیریت موبایل</a></p>
+                                    <p t-else="">شمارهٔ موبایل تأییدشده‌ای ندارید. موبایل فقط با کد پیامکی تأیید می‌شود. <a href="/my/phone">تأیید موبایل</a></p>
+                                </t>
                             </div>
                             <nav class="ts-card" aria-labelledby="acc-more-h">
                                 <h2 id="acc-more-h">تنظیمات و پشتیبانی</h2>
                                 <ul class="tsp-links">
-                                    <li><a href="/my/notifications/prefs">اعلان‌ها و راه اطلاع‌رسانی</a><span class="ts-hint">چه خبری، از چه راهی</span></li>
+                                    <li><a href="/my/notifications">اعلان‌ها</a><span class="ts-hint">خبرهای تازهٔ حساب</span></li>
+                                    <li><a href="/my/notifications/prefs">تنظیم اعلان‌ها</a><span class="ts-hint">چه خبری، از چه راهی</span></li>
                                     <li><a href="/my/sharing">چه کسی نتیجه‌های من را می‌بیند</a><span class="ts-hint">اشتراک با پنل‌ها و لغو آن</span></li>
                                     <li><a href="/my/privacy">داده‌های من</a><span class="ts-hint">دریافت نسخه یا درخواست حذف</span></li>
                                     <li><a href="/my/sessions">دستگاه‌های واردشده</a><span class="ts-hint">خروج از دستگاه‌های دیگر</span></li>
-                                    <li><a href="/my/security">گذرواژه و امنیت</a><span class="ts-hint">تغییر گذرواژه</span></li>
-                                    <li><a href="/help">راهنما و پرسش‌های رایج</a><span class="ts-hint">روند کار و حقوق شما</span></li>
+                                    <li><a href="/my/security">رمز عبور و امنیت</a><span class="ts-hint">تغییر رمز عبور</span></li>
+                                    <li><a href="/help">راهنما و پرسش‌های رایج</a><span class="ts-hint">روند کار و حقوق کاربران</span></li>
                                     <li><a href="/contact?topic=support">تماس با پشتیبانی</a><span class="ts-hint">پاسخ در ساعت کاری؛ در شرایط اضطراری با اورژانس <bdi dir="ltr">۱۱۵</bdi> تماس بگیرید</span></li>
                                     <li><a href="/web/session/logout?redirect=/" rel="nofollow">خروج از حساب</a></li>
                                 </ul>
@@ -165,42 +199,91 @@
                     <div id="wrap" class="ts-page">
                         <section class="tsp-section container" style="max-width:860px">
                             <h1 class="tsp-head__title">چه کسی نتیجه‌های من را می‌بیند؟</h1>
-                            <t t-call="ts_panel.my_nav" active="sharing"/>
-                            <p class="ts-hint">پاسخ‌های خام شما را هیچ پنلی نمی‌بیند. هر نتیجه را می‌توانید با حداکثر <t t-out="fa(limit)"/> پنل به اشتراک بگذارید و هر زمان اشتراک را لغو کنید. <a class="tsp-what" href="/help/panel#sharing">این چیست؟</a></p>
+                            <t t-call="ts_panel.my_nav" active.f="sharing"/>
+                            <p class="ts-hint"><t t-if="tu">پاسخ‌های خامت را هیچ پنلی نمی‌بیند. هر نتیجه را می‌توانی با حداکثر <t t-out="fa(limit)"/> پنل به اشتراک بگذاری.</t><t t-else="">پاسخ‌های خام شما را هیچ پنلی نمی‌بیند. هر نتیجه را می‌توانید با حداکثر <t t-out="fa(limit)"/> پنل به اشتراک بگذارید.</t> <a class="tsp-what" href="/help/panel#sharing">اشتراک چطور کار می‌کند؟</a></p>
                             <p t-if="ok" class="tsp-flash" role="status" t-out="ok"/>
                             <p t-if="error" class="tsp-flash tsp-flash--err" role="alert" t-out="error"/>
                             <div t-if="not blocks" class="ts-card ts-card--soft">
-                                <h2>هنوز نتیجه‌ای ندارید</h2>
-                                <p>بعد از انجام یک سنجه، این‌جا می‌بینید چه کسی نتیجهٔ آن را می‌بیند.</p>
-                                <a href="/assessments" class="ts-btn ts-btn--primary">مشاهدهٔ سنجه‌ها</a>
+                                <h2>هنوز نتیجه‌ای <t t-if="tu">نداری</t><t t-else="">ندارید</t></h2>
+                                <p>بعد از انجام یک سنجه، این‌جا می‌بینی چه کسی نتیجهٔ آن را می‌بیند.</p>
+                                <a href="/assessments" class="ts-btn ts-btn--primary">سنجه‌هایی که می‌توان انجام داد</a>
                             </div>
                             <div t-foreach="blocks" t-as="b" class="ts-card ts-sharing-block">
                                 <t t-set="att" t-value="b['at']"/>
+                                <t t-set="act" t-value="b['act']"/>
                                 <h2><t t-out="att.instrument_id.title"/></h2>
                                 <p class="ts-hint"><t t-out="att.jalali(att.submitted_at, False)"/> · <a t-attf-href="/my/assessments/#{att.id}">مشاهدهٔ گزارش</a></p>
-                                <t t-set="act" t-value="[s for s in b['shares'] if s['active']]"/>
-                                <p t-if="not act" class="ts-sharing-none">این نتیجه را هیچ پنل یا سازمانی نمی‌بیند. فقط شما.</p>
+                                <p t-if="not act" class="ts-sharing-none">این نتیجه را هیچ پنلی نمی‌بیند. <t t-if="tu">فقط خودت.</t><t t-else="">فقط شما.</t></p>
                                 <ul t-if="act" class="tsp-list">
                                     <li t-foreach="act" t-as="s" class="ts-sharing-row">
                                         <strong t-out="s['panel']"/>
+                                        <p class="ts-sharing-who">
+                                            <t t-if="s['purpose'] == 'education'">
+                                                <t t-if="s['resp']">در این پنل، مالک پنل و <t t-if="tu">مشاورت</t><t t-else="">مشاور شما</t>، «<bdi t-out="s['resp']"/>»، گزارش را می‌بینند.</t>
+                                                <t t-else="">در این پنل، مالک پنل و مشاوران آن گزارش را می‌بینند. هنوز مشاور مشخصی <t t-if="tu">برایت</t><t t-else="">برای شما</t> تعیین نشده است.</t>
+                                            </t>
+                                            <t t-else="">در این پنل فقط کسانی که نقششان اجازه می‌دهد نتیجه را می‌بینند<t t-if="s['resp']">، از جمله «<bdi t-out="s['resp']"/>»</t>.</t>
+                                        </p>
                                         <div class="ts-hint">
-                                            کارشناس مسئول: <t t-if="s['resp']" t-out="s['resp']"/><t t-else="">هنوز تعیین نشده</t>
+                                            <t t-out="s['resp_word']"/>: <t t-if="s['resp']"><bdi t-out="s['resp']"/></t><t t-else="">هنوز تعیین نشده</t>
                                             · از <t t-out="s['since']"/> · <t t-out="s['level']"/>
                                         </div>
-                                        <div class="ts-hint" t-if="s['views']">
-                                            دیده‌شدن‌ها:
-                                            <t t-foreach="s['views']" t-as="v"><span><t t-out="v[0]"/> (<t t-out="v[1]"/>)</span><t t-if="not v_last">، </t></t>
+                                        <div class="ts-sharing-views" t-if="s['views']">
+                                            <p class="ts-hint">چه کسانی گزارش را باز کرده‌اند:</p>
+                                            <ul class="tsp-mini">
+                                                <li t-foreach="s['views']" t-as="v"><t t-out="v[0]"/>: <t t-out="fa(v[1])"/> بار، آخرین بار <t t-out="v[2]"/></li>
+                                            </ul>
                                         </div>
                                         <div class="ts-hint" t-else="">این پنل هنوز نتیجه را باز نکرده است.</div>
-                                        <form t-attf-action="/my/sharing/#{s['aid']}/revoke" method="post" data-tsp-once="1">
-                                            <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
-                                            <button type="submit" class="ts-btn ts-btn--outline ts-btn--sm">لغو اشتراک با این پنل</button>
-                                        </form>
+                                        <p><a t-attf-href="/my/sharing/#{s['aid']}/revoke" class="ts-btn ts-btn--outline ts-btn--sm">لغو اشتراک با این پنل</a></p>
                                     </li>
                                 </ul>
                                 <p t-if="b['can_share'] and len(act) &lt; limit">
-                                    <a t-attf-href="/my/assessments/#{att.id}/share" class="ts-btn ts-btn--outline ts-btn--sm">ارسال برای مشاور</a>
+                                    <a t-attf-href="/my/assessments/#{att.id}/share" class="ts-btn ts-btn--outline ts-btn--sm">ارسال برای مشاورم</a>
                                 </p>
+                            </div>
+                        </section>
+                    </div>
+                </t>
+            </t>
+        </field>
+    </record>
+
+    <!-- UX audit G2 P5-2, X6: revoking a share is a confirmed step that names the panel and the consequence -->
+    <record id="tpl_my_sharing_revoke" model="ir.ui.view">
+        <field name="name">TS panel: confirm revoking a share</field>
+        <field name="type">qweb</field>
+        <field name="key">ts_panel.my_sharing_revoke</field>
+        <field name="website_id" ref="ts_website.website_ts"/>
+        <field name="arch" type="xml">
+            <t t-name="ts_panel.my_sharing_revoke">
+                <t t-call="website.layout" additional_title.f="لغو اشتراک">
+                    <div id="wrap" class="ts-page">
+                        <section class="tsp-section container" style="max-width:640px">
+                            <a t-att-href="'/my/assessments/%s' % a.attempt_id.id if back == 'report' else '/my/sharing'" class="ts-backlink"><t t-if="back == 'report'">گزارش</t><t t-else="">چه کسی می‌بیند</t></a>
+                            <h1 class="tsp-head__title">لغو اشتراک با «<bdi t-out="panel"/>»</h1>
+                            <t t-call="ts_panel.my_nav" active.f="sharing"/>
+                            <div class="ts-card ts-confirm tsp-confirm" id="ts-revoke-confirm">
+                                <ul>
+                                    <li>بعد از لغو، «<bdi t-out="panel"/>» دیگر نتیجهٔ «<t t-out="title_text"/>» را نمی‌بیند.</li>
+                                    <li>آنچه پنل تا امروز دیده است و ثبت دیده‌شدن‌ها پاک نمی‌شود.</li>
+                                    <t t-if="invited">
+                                        <li t-if="tu">این سنجه به دعوت همین پنل انجام شده است؛ اگر بعداً پشیمان شدی، باید از مشاورت دعوت تازه بگیری.</li>
+                                        <li t-else="">این سنجه به دعوت همین پنل انجام شده است؛ اگر بعداً پشیمان شدید، باید از پنل دعوت تازه بگیرید.</li>
+                                    </t>
+                                    <t t-else="">
+                                        <li t-if="tu">هر وقت بخواهی می‌توانی دوباره با «کد پنل» آن را بفرستی.</li>
+                                        <li t-else="">هر وقت بخواهید می‌توانید دوباره با «کد پنل» آن را بفرستید.</li>
+                                    </t>
+                                </ul>
+                                <form t-attf-action="/my/sharing/#{a.id}/revoke" method="post" data-tsp-once="1">
+                                    <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                                    <input t-if="back" type="hidden" name="back" t-att-value="back"/>
+                                    <p>
+                                        <button type="submit" class="ts-btn ts-btn--danger"><t t-if="tu">بله، لغو کن</t><t t-else="">بله، اشتراک لغو شود</t></button>
+                                        <a t-att-href="'/my/assessments/%s' % a.attempt_id.id if back == 'report' else '/my/sharing'" class="ts-btn ts-btn--quiet">انصراف</a>
+                                    </p>
+                                </form>
                             </div>
                         </section>
                     </div>
@@ -221,12 +304,16 @@
                     <div id="wrap" class="ts-page">
                         <section class="tsp-section container" style="max-width:760px">
                             <h1 class="tsp-head__title">داده‌های من</h1>
-                            <t t-call="ts_panel.my_nav" active="privacy"/>
+                            <t t-call="ts_panel.my_nav" active.f="privacy"/>
                             <p t-if="ok" class="tsp-flash" role="status" t-out="ok"/>
                             <p t-if="error" class="tsp-flash tsp-flash--err" role="alert" t-out="error"/>
                             <div class="ts-card" id="prv-export">
                                 <h2>دریافت نسخه‌ای از داده‌های من</h2>
-                                <p>یک فایل فشرده شامل نمایه، سنجه‌ها، نتیجه‌ها، اشتراک‌ها و رضایت‌های شما (JSON و CSV) ساخته می‌شود. پاسخ‌های خام و کلید نمره‌دهی در آن نیست. پیوند دریافت ۲۴ ساعت معتبر است. برای امنیت، پیش از این کار هویت شما دوباره تأیید می‌شود.</p>
+                                <p t-if="resumed_export" class="tsp-flash tsp-flash--ok" role="status"><t t-if="tu">هویتت تأیید شد. برای ساختن فایل، دکمهٔ «درخواست نسخهٔ داده‌ها» را بزن.</t><t t-else="">هویت شما تأیید شد. برای ساختن فایل، دکمهٔ «درخواست نسخهٔ داده‌ها» را بزنید.</t></p>
+                                <t t-if="tu"><p>یک فایل فشرده ساخته می‌شود با اطلاعات حسابت، سنجه‌ها، نتیجه‌ها، اشتراک‌ها و موافقت‌هایت (به شکل JSON و CSV). پاسخ‌های خام در این فایل نیست؛ پاسخ‌هایت را در صفحهٔ هر گزارش می‌بینی. پیوند دریافت ۲۴ ساعت باز است.</p>
+                                    <p class="ts-hint">پیش از ساختن فایل، برای امنیت، هویتت دوباره پرسیده می‌شود.</p></t>
+                                <t t-else=""><p>یک فایل فشرده ساخته می‌شود با اطلاعات حساب، سنجه‌ها، نتیجه‌ها، اشتراک‌ها و موافقت‌های شما (به شکل JSON و CSV). پاسخ‌های خام در این فایل نیست؛ پاسخ‌هایتان را در صفحهٔ هر گزارش می‌بینید. پیوند دریافت ۲۴ ساعت باز است.</p>
+                                    <p class="ts-hint">پیش از ساختن فایل، برای امنیت، هویت شما دوباره پرسیده می‌شود.</p></t>
                                 <form action="/my/privacy/export" method="post" data-tsp-once="1">
                                     <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
                                     <button type="submit" class="ts-btn ts-btn--primary">درخواست نسخهٔ داده‌ها</button>
@@ -234,22 +321,81 @@
                             </div>
                             <div class="ts-card" id="prv-erase">
                                 <h2>درخواست حذف داده‌ها</h2>
-                                <p>با ثبت این درخواست، تا ۳۰ روز دیگر نتیجه‌ها و پاسخ‌های شما حذف و اشتراک‌ها لغو می‌شود. شمار استفادهٔ پنل‌ها (بدون نام و محتوا) باقی می‌ماند. وضعیت درخواست را همین‌جا می‌بینید.</p>
-                                <form action="/my/privacy/erase" method="post" data-tsp-once="1">
-                                    <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
-                                    <button type="submit" class="ts-btn ts-btn--outline">ثبت درخواست حذف</button>
-                                </form>
+                                <p t-if="tu">با این درخواست، نتیجه‌ها و پاسخ‌هایت حذف و اشتراک‌هایت لغو می‌شود. پیش از ثبت، در صفحهٔ بعد می‌بینی دقیقاً چه چیزی حذف می‌شود.</p>
+                                <p t-else="">با این درخواست، نتیجه‌ها و پاسخ‌های شما حذف و اشتراک‌هایتان لغو می‌شود. پیش از ثبت، در صفحهٔ بعد می‌بینید دقیقاً چه چیزی حذف می‌شود.</p>
+                                <a href="/my/privacy/erase" class="ts-btn ts-btn--outline">درخواست حذف داده‌ها…</a>
                             </div>
                             <div class="ts-card" id="prv-list">
                                 <h2>درخواست‌های من</h2>
-                                <p t-if="not reqs" class="ts-hint">درخواستی ثبت نکرده‌اید.</p>
+                                <p t-if="not reqs" class="ts-hint">درخواستی ثبت <t t-if="tu">نکرده‌ای</t><t t-else="">نکرده‌اید</t>.</p>
                                 <ul t-if="reqs" class="tsp-list">
                                     <li t-foreach="reqs" t-as="r">
                                         <strong><t t-if="r.kind == 'export'">دریافت نسخهٔ داده‌ها</t><t t-elif="r.kind == 'erase'">حذف داده‌ها</t><t t-else="">اصلاح داده‌ها</t></strong>
-                                        <span class="ts-hint"> — <t t-out="words.get(r.state, r.state)"/> · ثبت: <t t-out="jalali(r.create_date, with_time=False)"/><t t-if="r.due_on and r.state in ('new', 'in_review')"> · مهلت بررسی تا <t t-out="jd(r.due_on)"/></t></span>
+                                        <span class="ts-hint"><t t-out="words.get(r.state, r.state)"/> · ثبت: <t t-out="jalali(r.create_date, with_time=False)"/><t t-if="r.due_on and r.state in ('new', 'in_review')"> · مهلت بررسی تا <t t-out="jd(r.due_on)"/></t></span>
                                         <a t-if="r.job_id" t-attf-href="/my/privacy/jobs/#{r.job_id.id}" class="ts-btn ts-btn--outline ts-btn--sm">مشاهده</a>
                                     </li>
                                 </ul>
+                            </div>
+                        </section>
+                    </div>
+                </t>
+            </t>
+        </field>
+    </record>
+
+    <!-- UX audit G2 P6-1, G4 P22-1/2: the erase request is confirmed on its own page; re-authentication follows the button -->
+    <record id="tpl_my_privacy_erase" model="ir.ui.view">
+        <field name="name">TS panel: confirm an erase request</field>
+        <field name="type">qweb</field>
+        <field name="key">ts_panel.my_privacy_erase</field>
+        <field name="website_id" ref="ts_website.website_ts"/>
+        <field name="arch" type="xml">
+            <t t-name="ts_panel.my_privacy_erase">
+                <t t-call="website.layout" additional_title.f="درخواست حذف داده‌ها">
+                    <div id="wrap" class="ts-page">
+                        <section class="tsp-section container" style="max-width:700px">
+                            <a href="/my/privacy" class="ts-backlink">داده‌های من</a>
+                            <h1 class="tsp-head__title">درخواست حذف داده‌ها</h1>
+                            <t t-call="ts_panel.my_nav" active.f="privacy"/>
+                            <t t-if="resumed">
+                                <p t-if="tu" class="tsp-flash tsp-flash--ok" role="status">هویتت تأیید شد. علامت تأییدت را نگه داشتیم؛ برای ثبت درخواست، دکمهٔ پایین را بزن. تا آن را نزنی چیزی ثبت نمی‌شود.</p>
+                                <p t-else="" class="tsp-flash tsp-flash--ok" role="status">هویت شما تأیید شد. علامت تأیید را نگه داشتیم؛ برای ثبت درخواست، دکمهٔ پایین را بزنید. تا آن را نزنید چیزی ثبت نمی‌شود.</p>
+                            </t>
+                            <p t-if="error" class="tsp-flash tsp-flash--err" role="alert" t-out="error"/>
+                            <div t-if="owned" class="ts-notice ts-notice--warn" id="prv-erase-owner">
+                                <div>
+                                    <p><strong>شما مالک <t t-out="fa(len(owned))"/> پنل هستید.</strong> پیش از درخواست حذف، مالکیت هر پنل را به همکار دیگری منتقل کنید تا پنل بی‌مالک نماند.</p>
+                                    <ul>
+                                        <li t-foreach="owned" t-as="w"><bdi t-out="w.name"/> · <a t-attf-href="/my/workspaces/#{w.id}/settings/transfer">انتقال مالکیت</a></li>
+                                    </ul>
+                                </div>
+                            </div>
+                            <div class="ts-card ts-confirm tsp-confirm" id="prv-erase-confirm">
+                                <h2 class="h5">با ثبت این درخواست:</h2>
+                                <ul t-if="tu">
+                                    <li>نتیجه‌ها و پاسخ‌هایت حذف می‌شود.</li>
+                                    <li t-if="shared">اشتراک نتیجه‌هایت با پنل‌ها (<t t-out="fa(shared)"/> مورد) لغو می‌شود و آن پنل‌ها دیگر نتیجه را نمی‌بینند.</li>
+                                    <li>شمار استفادهٔ پنل‌ها، بدون نام و بدون محتوا، باقی می‌ماند.</li>
+                                    <li>درخواست تا ۳۰ روز بررسی می‌شود و وضعیتش را در «داده‌های من» می‌بینی.</li>
+                                    <li>بعد از ثبت، درخواست را از این‌جا نمی‌شود پس گرفت؛ اگر پرسشی داشتی با پشتیبانی تماس بگیر.</li>
+                                </ul>
+                                <ul t-else="">
+                                    <li>نتیجه‌ها و پاسخ‌های شما حذف می‌شود.</li>
+                                    <li t-if="shared">اشتراک نتیجه‌های شما با پنل‌ها (<t t-out="fa(shared)"/> مورد) لغو می‌شود و آن پنل‌ها دیگر نتیجه را نمی‌بینند.</li>
+                                    <li>شمار استفادهٔ پنل‌ها، بدون نام و بدون محتوا، باقی می‌ماند.</li>
+                                    <li>درخواست تا ۳۰ روز بررسی می‌شود و وضعیتش را در «داده‌های من» می‌بینید.</li>
+                                    <li>بعد از ثبت، درخواست را از این‌جا نمی‌توان پس گرفت؛ اگر پرسشی دارید با پشتیبانی تماس بگیرید.</li>
+                                </ul>
+                                <form action="/my/privacy/erase" method="post" class="tsp-form" data-tsp-once="1">
+                                    <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                                    <label class="tsp-check tsp-check--lg"><input type="checkbox" name="confirm" value="1" required="required" t-att-checked="'checked' if checked else None"/>
+                                        <span>می‌دانم نتیجه‌های حذف‌شده برنمی‌گردند.</span></label>
+                                    <p class="ts-hint">پس از زدن دکمه، برای امنیت هویت <t t-if="tu">تو</t><t t-else="">شما</t> دوباره پرسیده می‌شود (اگر در چند دقیقهٔ اخیر تأیید نشده باشد).</p>
+                                    <p>
+                                        <button type="submit" class="ts-btn ts-btn--danger">بله، درخواست حذف ثبت شود</button>
+                                        <a href="/my/privacy" class="ts-btn ts-btn--quiet">انصراف</a>
+                                    </p>
+                                </form>
                             </div>
                         </section>
                     </div>
@@ -269,7 +415,7 @@
                     <div id="wrap" class="ts-page">
                         <section class="tsp-section container" style="max-width:640px">
                             <h1 class="tsp-head__title">نسخهٔ داده‌های من</h1>
-                            <t t-call="ts_panel.my_nav" active="privacy"/>
+                            <t t-call="ts_panel.my_nav" active.f="privacy"/>
                             <div class="ts-card" id="prv-job">
                                 <t t-if="ready">
                                     <p>فایل شما آماده است و تا <t t-out="jalali(job.expires_at)"/> قابل دریافت است.</p>
@@ -277,8 +423,8 @@
                                 </t>
                                 <p t-elif="job.state == 'expired'">مهلت دریافت این فایل تمام شد. اگر هنوز لازم دارید، یک درخواست تازه ثبت کنید.</p>
                                 <p t-elif="job.state == 'failed'">ساخت فایل ناموفق بود. دوباره درخواست دهید یا با پشتیبانی تماس بگیرید.</p>
-                                <p t-else="">فایل شما در حال آماده‌سازی است. چند لحظهٔ دیگر همین صفحه را تازه کنید.</p>
-                                <p><a href="/my/privacy">بازگشت به داده‌های من</a></p>
+                                <p t-else="" role="status">فایل در حال آماده‌سازی است. چند لحظهٔ دیگر <a href="">همین صفحه را تازه کنید</a>.</p>
+                                <p><a href="/my/privacy" class="ts-backlink">داده‌های من</a></p>
                             </div>
                         </section>
                     </div>
@@ -321,19 +467,40 @@
         <field name="website_id" ref="ts_website.website_ts"/>
         <field name="arch" type="xml">
             <t t-name="ts_panel.who_sees">
+                <!-- One block for "who sees it", "what they see" and "stop sharing" (UX audit G2 P3-9: the matrix report used to
+                     repeat the same facts in a second block with other words). Revoking goes through the confirmation page. -->
                 <t t-if="attempt.state == 'done' and attempt.user_id == request.env.user">
                     <t t-set="ws_all" t-value="attempt.ts_shares()"/>
                     <t t-set="ws_act" t-value="ws_all.filtered(lambda s: s.share_level != 'none')"/>
                     <section class="ts-doc__sec ts-noprint" id="ts-who-sees">
                         <h2>چه کسی این نتیجه را می‌بیند؟</h2>
-                        <p t-if="not ws_act">هیچ پنل یا سازمانی این نتیجه را نمی‌بیند. فقط شما.</p>
-                        <ul t-if="ws_act">
-                            <li t-foreach="ws_act" t-as="s"><strong t-out="s.workspace_id.name"/> — <t t-out="s.ts_level_word()"/></li>
+                        <p t-if="not ws_act">هیچ پنلی این نتیجه را نمی‌بیند. فقط شما.</p>
+                        <ul t-if="ws_act" class="ts-who-sees__list">
+                            <li t-foreach="ws_act" t-as="s">
+                                <strong t-out="s.workspace_id.name"/> — <t t-out="s.ts_level_word()"/>
+                                <t t-if="s.invited_by_id == attempt.user_id"> (خودتان فرستادید)</t><t t-else=""> (به دعوت همین پنل)</t>
+                                · <a t-attf-href="/my/sharing/#{s.id}/revoke?back=report">لغو اشتراک</a>
+                            </li>
                         </ul>
                         <p>پاسخ‌های خام شما را هیچ پنلی نمی‌بیند. <a href="/my/sharing">مدیریت اشتراک‌ها و دیدن اینکه چه کسی نتیجه را باز کرده است</a></p>
                     </section>
                 </t>
             </t>
+        </field>
+    </record>
+
+    <!-- /my/phone (ts_sms) joins the participant navigation (UX audit G2 P9-3, G4 P26-1, X2). An inherit here, so ts_sms
+         keeps no dependency on ts_panel; the sub-nav replaces the single back link. -->
+    <record id="tpl_phone_nav" model="ir.ui.view">
+        <field name="name">TS panel: participant navigation on the phone page</field>
+        <field name="type">qweb</field>
+        <field name="inherit_id" ref="ts_sms.tpl_phone"/>
+        <field name="website_id" ref="ts_website.website_ts"/>
+        <field name="arch" type="xml">
+            <xpath expr="//a[hasclass('ts-backlink')]" position="replace"/>
+            <xpath expr="//div[@id='ts-phone-head']/h1" position="after">
+                <t t-call="ts_panel.my_nav" active.f="phone"/>
+            </xpath>
         </field>
     </record>
 
@@ -346,7 +513,7 @@
         <field name="arch" type="xml">
             <xpath expr="//div[hasclass('ts-section__head')]" position="replace">
                 <h1 class="tsp-head__title">سنجه‌ها و نتیجه‌ها</h1>
-                <t t-call="ts_panel.my_nav" active="results"/>
+                <t t-call="ts_panel.my_nav" active.f="results"/>
             </xpath>
         </field>
     </record>

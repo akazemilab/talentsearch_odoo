@@ -8,6 +8,9 @@ from odoo import fields, http
 from odoo.exceptions import UserError, ValidationError
 from odoo.http import request
 
+from odoo.addons.ts_assessment.models.attempt import jalali
+from odoo.addons.ts_website.tools import parse_jdate
+
 from .base import STATE_LABELS, flash_error, flash_ok, forbidden, member_or_404, render_in_shell, require
 from .clients import visible_domain
 from .invites import PILL, STATE_ORDER, _fa, assignment_domain, sms_available
@@ -15,7 +18,13 @@ from .invites import PILL, STATE_ORDER, _fa, assignment_domain, sms_available
 DRAFT = 'ts_campaign_draft_%s'
 PAGE = 25
 MAX_LIST = 200          # one campaign; larger batches wait for the background jobs of S8
-KIND_LABELS = {'list': 'دعوت گروهی', 'open_link': 'پیوند باز'}
+KIND_LABELS = {'list': 'فهرست افراد (کلاس یا گروه)', 'open_link': 'پیوند باز'}   # «دعوت گروهی» is the section (G3-P15-2)
+_DIGITS = str.maketrans('۰۱۲۳۴۵۶۷۸۹٠١٢٣٤٥٦٧٨٩', '01234567890123456789')
+
+
+def _date_fa(iso):
+    from datetime import datetime, time
+    return jalali(datetime.combine(fields.Date.to_date(iso), time(12)), with_time=False) if iso else ''
 STATE_C = {'open': 'باز', 'closed': 'بسته', 'draft': 'پیش‌نویس'}
 SKIP_LABELS = {'busy': 'دعوت باز برای همین سنجه دارند', 'locked': 'اطلاعات تماسشان قفل است', 'archived': 'بایگانی شده‌اند'}
 
@@ -65,8 +74,10 @@ class TsPanelCampaigns(http.Controller):
         page = min(max(int(kw['page']) if (kw.get('page') or '').isdigit() else 1, 1), pages)
         rows = C.search(dom, limit=PAGE, offset=(page - 1) * PAGE)
         vis = assignment_domain(me)
-        joined = {c.id: request.env['ts.assignment'].sudo().search_count(vis + [('campaign_id', '=', c.id)]) for c in rows}  # ts-scope-ok: vis is the workspace-scoped assignment domain
-        return render_in_shell('ts_panel.campaigns', me, 'campaigns', 'دعوت گروهی', rows=rows, joined=joined, kind_labels=KIND_LABELS,
+        A = request.env['ts.assignment'].sudo()
+        joined = {c.id: A.search_count(vis + [('campaign_id', '=', c.id)]) for c in rows}  # ts-scope-ok: vis is the workspace-scoped assignment domain
+        done = {c.id: A.search_count(vis + [('campaign_id', '=', c.id), ('state', '=', 'done')]) for c in rows}  # ts-scope-ok: same domain
+        return render_in_shell('ts_panel.campaigns', me, 'campaigns', 'دعوت گروهی', rows=rows, joined=joined, done=done, kind_labels=KIND_LABELS,
                                state_c=STATE_C, total=total, page=page, pages=pages, ws_id=ws_id)
 
     # ------------------------------------------------------------------ form and review
@@ -114,7 +125,7 @@ class TsPanelCampaigns(http.Controller):
             extra = dict(clients=clients, to_invite=to_invite, skipped=skipped, skip_labels=SKIP_LABELS,
                          minors=to_invite.filtered(lambda c: c.ts_needs_guardian()))
         inst = request.env['ts.instrument'].sudo().browse(d['instrument_id'])  # ts-scope-ok: instrument is global, not workspace data
-        return render_in_shell('ts_panel.campaign_review', me, 'campaigns', 'مرور دعوت گروهی', draft=d, inst=inst,
+        return render_in_shell('ts_panel.campaign_review', me, 'campaigns', 'مرور دعوت گروهی', draft=d, inst=inst, deadline_fa=_date_fa(d.get('deadline')),
                                groups=self._groups(me).filtered(lambda g: g.id in d.get('group_ids', [])),
                                kind_labels=KIND_LABELS, **extra)
 
@@ -132,13 +143,12 @@ class TsPanelCampaigns(http.Controller):
         if not iid.isdigit() or int(iid) not in me.allowed_instruments().ids:
             err = err or 'سنجهٔ انتخاب‌شده برای این پنل مجاز نیست.'
         d['instrument_id'] = int(iid) if iid.isdigit() else 0
-        dl = (post.get('deadline') or '').strip()
-        if dl:
-            try:
-                dd = fields.Date.to_date(dl)
-            except Exception:
-                dd = None
-            if not dd or dd < fields.Date.today():
+        typed = (post.get('deadline') or '').strip() or (post.get('deadline_jalali') or '').strip()
+        if typed:
+            dd = parse_jdate(post.get('deadline'), post.get('deadline_jalali'))
+            if not dd:
+                err = err or 'مهلت را به شکل ۱۴۰۵/۰۸/۱۵ بنویسید.'
+            elif dd < fields.Date.today():
                 err = err or 'مهلت باید تاریخی از امروز به بعد باشد.'
             else:
                 d['deadline'] = str(dd)
@@ -153,9 +163,9 @@ class TsPanelCampaigns(http.Controller):
             if post.get('sms') and not post.get('attest'):
                 err = err or 'برای ارسال پیامک، تأیید رضایت شرکت‌کنندگان را تیک بزنید.'
                 d['sms'] = False
-            d['remind'] = bool(post.get('remind'))
+            d['remind'] = bool(post.get('remind')) and d['sms']   # the reminder goes by SMS, so it follows the SMS tick (G3-P16-4)
         else:
-            mx = post.get('open_max') or ''
+            mx = (post.get('open_max') or '').strip().translate(_DIGITS)
             d['open_max'] = int(mx) if mx.isdigit() and 1 <= int(mx) <= 500 else 0
             if not d['open_max']:
                 err = err or 'سقف پیوستن را بین ۱ تا ۵۰۰ بنویسید.'
@@ -228,7 +238,8 @@ class TsPanelCampaigns(http.Controller):
                                state_order=STATE_ORDER, state_labels=STATE_LABELS, pill=PILL, kind_labels=KIND_LABELS,
                                state_c=STATE_C, open_state=c.open_state() if c.kind == 'open_link' else None,
                                url=c.invite_url() if c.kind == 'open_link' else None, joined=c.joined_count() if c.kind == 'open_link' else 0,
-                               can_close=c.state == 'open', is_new=bool(kw.get('new')))
+                               can_close=c.state == 'open', is_new=bool(kw.get('new')), deadline_fa=_date_fa(c.deadline),
+                               groups=c.group_ids if c.kind == 'list' else c.group_ids.browse())
 
     @http.route('/my/workspaces/<int:ws_id>/campaigns/<int:cid>/close', type='http', auth='user', website=True, methods=['POST'], sitemap=False)
     def close(self, ws_id, cid, **post):
@@ -239,10 +250,10 @@ class TsPanelCampaigns(http.Controller):
         if not self._can_open(me, c):
             return forbidden(me, 'invites:bulk', 'campaigns')
         if not post.get('confirm'):
-            flash_error('برای بستن، تأیید را تیک بزنید.')
+            flash_error('برای پایان دادن، تأیید را تیک بزنید.')
         else:
             c.ts_close(me)
-            flash_ok('بسته شد؛ از این پس کسی نمی‌پیوندد. دعوت‌های ساخته‌شده سر جایشان هستند.')
+            flash_ok('دعوت گروهی پایان یافت؛ از این پس کسی نمی‌پیوندد و یادآوری فرستاده نمی‌شود. دعوت‌های ساخته‌شده سر جایشان هستند.')
         return request.redirect('/my/workspaces/%s/campaigns/%s' % (ws_id, c.id))
 
     @http.route('/my/workspaces/<int:ws_id>/campaigns/<int:cid>/qr.png', type='http', auth='user', website=True, methods=['GET'], sitemap=False)
@@ -271,5 +282,6 @@ class TsPanelCampaigns(http.Controller):
             invs = request.env['ts.assignment'].sudo().search(  # ts-scope-ok: domain is campaign-scoped, campaign checked against workspace above
                 assignment_domain(me) + [('campaign_id', '=', c.id), ('state', 'in', ('invited', 'opened'))], limit=60)
         return render_in_shell('ts_panel.campaign_sheet', me, 'campaigns', 'برگهٔ چاپی ' + c.name, c=c, invs=invs,
+                               groups=c.group_ids if c.kind == 'list' else c.group_ids.browse(),
                                url=c.invite_url() if c.kind == 'open_link' else None,
                                open_ok=c.kind == 'open_link' and c.open_state() == 'ok')

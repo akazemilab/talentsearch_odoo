@@ -12,7 +12,7 @@
         <field name="name">پشتیبان عملیات</field>
         <field name="sequence">10</field>
         <field name="privilege_id" ref="privilege_ts"/>
-        <field name="comment">مشاهده فضاهای کاری و ممیزی برای پشتیبانی؛ بدون دسترسی به پاسخ‌ها یا نتایج شرکت‌کنندگان.</field>
+        <field name="comment">مشاهدهٔ پنل‌ها و دفتر ممیزی برای پشتیبانی؛ بدون دسترسی به پاسخ‌ها یا نتایج شرکت‌کنندگان.</field>
     </record>
     <record model="res.groups" id="group_ts_curator">
         <field name="name">سرپرست سنجه‌ها (روان‌سنجی)</field>

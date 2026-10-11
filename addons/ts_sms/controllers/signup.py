@@ -26,6 +26,26 @@ def safe_next(value):
     return '/my'
 
 
+# Why the person is asked to sign in, keyed on where they came from (UX audit G1-P8-1, PT-4).
+WHY = [
+    ('/my/workspaces/new', 'برای ساخت پنل، اول وارد شوید؛ بعد به فرم ساخت پنل برمی‌گردید.'),
+    ('/invite/', 'برای پاسخ‌دادن به دعوت، اول وارد شوید؛ بعد به همان دعوت برمی‌گردید.'),
+    ('/c/', 'برای پاسخ‌دادن به دعوت، اول وارد شوید؛ بعد به همان دعوت برمی‌گردید.'),
+    ('/join/', 'برای پیوستن به پنل، اول وارد شوید؛ بعد به همان دعوت برمی‌گردید.'),
+    ('/assessments/', 'پاسخ‌ها و نتیجه در حساب شما ذخیره می‌شود؛ بعد از ورود به همان سنجه برمی‌گردید.'),
+    ('/take/', 'پاسخ‌ها و نتیجه در حساب شما ذخیره می‌شود؛ بعد از ورود به همان سنجه برمی‌گردید.'),
+]
+
+
+def why_for(nxt):
+    for prefix, text in WHY:
+        if (nxt or '').startswith(prefix):
+            return text
+    if nxt and nxt not in ('/my', '/'):
+        return 'بعد از ورود به همان صفحه‌ای برمی‌گردید که در آن بودید.'
+    return None
+
+
 def _enabled():
     c = request.env.company.sudo()
     return bool(c.kv_enabled and c.ts_sms_otp)
@@ -37,6 +57,7 @@ class TsSignup(http.Controller):
         phone = request.session.get('ts_signup_phone') or ''
         return request.render('ts_sms.signup', {
             'enabled': _enabled(), 'step': step, 'msg': MESSAGES.get(msg), 'next': nxt,
+            'next_q': quote(nxt, safe='/'), 'why': why_for(nxt),
             'masked': fa_digits(phone[:4] + '***' + phone[-4:]) if phone else '', 'page_name': 'ts_signup',
         })
 

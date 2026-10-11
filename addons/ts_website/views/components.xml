@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Shared form components of website 4 (audit 2026-10-11). Other modules call them; keep the parameter names stable.
+
+         1. ts_website.jdate - Solar Hijri date field (replaces <input type="date">, which shows a Gregorian mm/dd/yyyy picker)
+              <t t-call="ts_website.jdate" jd_name.f="deadline" jd_id.f="inv_deadline" jd_label.f="مهلت پاسخ"
+                 jd_value="invite.deadline" jd_hint.f="اختیاری" jd_required="True"/>
+            Static strings MUST use the .f suffix (jd_name.f="deadline"): a plain attribute is evaluated as a Python
+            expression, so jd_name="deadline" would read a variable named deadline. Use the plain form only for
+            expressions (jd_value="invite.deadline").
+            jd_name      form field name; a hidden input with this name posts ISO yyyy-mm-dd (filled by ts_nav.js)
+            jd_id        id of the visible input (the label points at it)
+            jd_label     label text
+            jd_value     ISO date string, a date, or False (prefilled server-side as ۱۴۰۵/۰۷/۲۰)
+            jd_hint      optional hint text, shown before the format example
+            jd_required  optional truthy
+            The visible input is named <jd_name>_jalali, so the form also works without JavaScript. Read both with
+            odoo.addons.ts_website.tools.parse_jdate(post.get(jd_name), post.get(jd_name + '_jalali')).
+
+         2. ts_website.filefield - Persian file picker (the native control says «Choose File / No file chosen»)
+              <t t-call="ts_website.filefield" ff_name.f="logo" ff_id.f="set_logo" ff_label.f="لوگو"
+                 ff_accept.f="image/png,image/jpeg" ff_hint.f="PNG یا JPG، تا ۶۰۰ کیلوبایت"/>
+            ff_name, ff_id, ff_label, ff_accept (optional), ff_hint (optional), ff_required (optional truthy)
+            With JavaScript the native input is visually hidden but stays focusable; a button «انتخاب فایل» and a live
+            line («فایلی انتخاب نشده» / the file name) are shown. Without JavaScript the native input is shown.
+            ts_nav.js also upgrades any bare <input type="file"> on website 4 the same way.
+
+         3. ts_website.auth_choices - sign-in choice on entry pages (/invite, /c, /join; audit G1 PT-3): one primary for
+            the mobile number, the e-mail account as a quiet text link (not three equal buttons).
+              <t t-call="ts_website.auth_choices" phone_url="urls['phone_url']" login_url="urls['login_url']"
+                 signup_url="urls.get('signup_url')"/>
+            only.f="phone" / only.f="email" (or only="expr"): show just the method a colleague invite is bound to. -->
+    <record id="tpl_jdate" model="ir.ui.view">
+        <field name="name">TS: Solar Hijri date field</field>
+        <field name="type">qweb</field>
+        <field name="key">ts_website.jdate</field>
+        <field name="website_id" ref="website_ts"/>
+        <field name="arch" type="xml">
+            <t t-name="ts_website.jdate">
+                <t t-set="jd_shown" t-value="website.ts_jalali_str(jd_value) if jd_value else ''"/>
+                <div class="ts-jdate" data-ts-jdate="1">
+                    <label t-att-for="jd_id" class="ts-jdate__label"><t t-out="jd_label"/><span t-if="jd_required" class="ts-sr"> (لازم)</span></label>
+                    <input type="text" class="ts-input ts-jdate__input" t-att-id="jd_id" t-att-name="'%s_jalali' % jd_name" t-att-value="jd_shown"
+                           inputmode="numeric" autocomplete="off" placeholder="۱۴۰۵/۰۷/۲۰" dir="ltr" maxlength="12"
+                           t-att-required="'required' if jd_required else None" t-att-aria-describedby="'%s_hint %s_out' % (jd_id, jd_id)"/>
+                    <input type="hidden" class="ts-jdate__iso" t-att-name="jd_name" t-att-value="jd_value or ''"/>
+                    <p class="ts-hint ts-jdate__hint" t-att-id="'%s_hint' % jd_id"><t t-if="jd_hint"><t t-out="jd_hint"/> · </t>سال/ماه/روز خورشیدی، مثل ۱۴۰۵/۰۷/۲۰</p>
+                    <p class="ts-jdate__out" t-att-id="'%s_out' % jd_id" aria-live="polite"><t t-if="jd_value" t-out="website.ts_jalali_str(jd_value, True)"/></p>
+                </div>
+            </t>
+        </field>
+    </record>
+
+    <record id="tpl_filefield" model="ir.ui.view">
+        <field name="name">TS: file picker</field>
+        <field name="type">qweb</field>
+        <field name="key">ts_website.filefield</field>
+        <field name="website_id" ref="website_ts"/>
+        <field name="arch" type="xml">
+            <t t-name="ts_website.filefield">
+                <div class="ts-file" data-ts-file="1">
+                    <label t-att-for="ff_id" class="ts-file__label" t-out="ff_label"/>
+                    <span class="ts-file__row">
+                        <input type="file" class="ts-file__input" t-att-id="ff_id" t-att-name="ff_name" t-att-accept="ff_accept or None"
+                               t-att-required="'required' if ff_required else None"
+                               t-att-aria-describedby="('%s_name' % ff_id) + ((' %s_hint' % ff_id) if ff_hint else '')"/>
+                        <span class="ts-btn ts-btn--outline ts-file__btn" aria-hidden="true">انتخاب فایل</span>
+                        <span class="ts-file__name" t-att-id="'%s_name' % ff_id" aria-live="polite">فایلی انتخاب نشده</span>
+                    </span>
+                    <p t-if="ff_hint" class="ts-hint ts-file__hint" t-att-id="'%s_hint' % ff_id" t-out="ff_hint"/>
+                </div>
+            </t>
+        </field>
+    </record>
+
+    <record id="tpl_auth_choices" model="ir.ui.view">
+        <field name="name">TS: sign-in choices</field>
+        <field name="type">qweb</field>
+        <field name="key">ts_website.auth_choices</field>
+        <field name="website_id" ref="website_ts"/>
+        <field name="arch" type="xml">
+            <t t-name="ts_website.auth_choices">
+                <div class="ts-authchoice">
+                    <t t-if="only == 'email'">
+                        <a t-if="login_url" t-att-href="login_url" class="ts-btn ts-btn--primary ts-btn--lg ts-btn--block">ورود با ایمیل</a>
+                    </t>
+                    <t t-elif="phone_url">
+                        <a t-att-href="phone_url" class="ts-btn ts-btn--primary ts-btn--lg ts-btn--block">ادامه با شمارهٔ موبایل</a>
+                        <p t-if="login_url and not only" class="ts-authchoice__alt">
+                            <a t-att-href="login_url">حساب ایمیلی دارم</a>
+                            <t t-if="signup_url"> · <a t-att-href="signup_url">ثبت‌نام با ایمیل</a></t>
+                        </p>
+                    </t>
+                    <t t-elif="not only">
+                        <!-- no mobile sign-in on this site yet: e-mail sign-up is the primary, sign-in the text link -->
+                        <a t-if="signup_url" t-att-href="signup_url" class="ts-btn ts-btn--primary ts-btn--lg ts-btn--block">ساخت حساب</a>
+                        <p t-if="login_url" class="ts-authchoice__alt"><a t-att-href="login_url">حساب دارم؛ ورود</a></p>
+                    </t>
+                </div>
+            </t>
+        </field>
+    </record>
+</odoo>

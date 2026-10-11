@@ -1,0 +1,95 @@
+// Panel admin and account pages (members, reports, audit, settings, import, /my): UX audit 2026-10-11 fixes.
+// Tokens only (tokens.scss), logical properties, 44 px targets. Everything under #wrapwrap like panel.scss.
+#wrapwrap {
+    // ---------- participant sub-navigation (G2 X1, G4 PT11) ----------
+    .tsp-subnav--my .tsp-subnav__item { min-block-size: var(--control-min); scroll-margin-inline: var(--space-6); }
+    .tsp-subnav--my .tsp-subnav__item.is-on { font-weight: 600; box-shadow: inset 0 -3px 0 var(--color-accent); }
+    @media (max-width: 480px) {
+        .tsp-subnav--my { display: grid; grid-template-columns: 1fr 1fr; overflow: visible; }
+        .tsp-subnav--my .tsp-subnav__item { justify-content: center; text-align: center; padding-inline: var(--space-2); }
+    }
+    // card headings never larger than the page h1 (G4 PT12)
+    .tsp-section .ts-card h2, .tsp-section .ts-card > form > h2 { font-size: var(--fs-3); }
+    .tsp-only-narrow { display: none; }
+    @media (max-width: 767.98px) { .tsp-only-narrow { display: block; } }
+
+    // ---------- shared bits ----------
+    .tsp-wrap-any { overflow-wrap: anywhere; word-break: break-word; }
+    .tsp-radio__blurb { display: block; }
+    .tsp-radio { cursor: pointer; }
+    .tsp-check--lg { min-block-size: var(--control-min); padding: var(--space-2) var(--space-3); border-radius: var(--r-12);
+        background: var(--color-surface); box-shadow: var(--shadow-sm); align-items: center; cursor: pointer; }
+    .tsp-check--lg input { inline-size: 22px; block-size: 22px; margin: 0; }
+    .tsp-check.is-disabled { opacity: .6; cursor: not-allowed; }
+    .tsp-mini { margin: var(--space-1) 0 0; padding-inline-start: var(--space-5); }
+    .tsp-mini li { margin-block: 2px; }
+    .tsp-empty-state { display: grid; gap: var(--space-2); }
+    .tsp-notice--stack > div { display: grid; gap: var(--space-1); }
+    .tsp-notice--stack p { margin: 0; }
+    .ts-sharing-who { margin-block: var(--space-1); }
+    .tsp-logo-now { display: flex; align-items: center; gap: var(--space-3); margin: 0 0 var(--space-2); }
+    .tsp-logo-now img { border-radius: var(--r-8); box-shadow: var(--shadow-sm); background: var(--color-surface); object-fit: contain; }
+    .tsp-danger-zone { margin-block-start: var(--space-8); }
+
+    // selects look like selects in both themes (G4 PT8; RTL: the chevron sits on the inline-end = left)
+    .tsp-shell .form-select, .tsp-section .form-select {
+        appearance: none; -webkit-appearance: none; min-block-size: var(--control-min);
+        background-image: linear-gradient(45deg, transparent 50%, var(--color-neutral-400) 50%), linear-gradient(135deg, var(--color-neutral-400) 50%, transparent 50%);
+        background-position: left 18px center, left 12px center; background-size: 6px 6px, 6px 6px; background-repeat: no-repeat;
+        padding-inline-end: 36px;
+    }
+    // a card table on a phone: no empty framed box under the last card (G4 PT9)
+    @media (max-width: 767.98px) {
+        .ts-card > .ts-table-wrap, .ts-card > div > .ts-table-wrap { background: none; border: 0; box-shadow: none; padding: 0; border-radius: 0; overflow: visible; }
+    }
+
+    // ---------- segmented control (notifications filter, audit periods) ----------
+    .tsp-seg { display: inline-flex; flex-wrap: wrap; gap: 2px; padding: 3px; border-radius: 999px; background: var(--color-neutral-900); box-shadow: 0 0 0 1px var(--color-neutral-800); }
+    .tsp-seg__item { display: inline-flex; align-items: center; gap: var(--space-1); min-block-size: 38px; padding: 0 var(--space-4); border-radius: 999px;
+        color: var(--color-neutral-300); text-decoration: none; cursor: pointer; font-size: var(--fs-1); }
+    .tsp-seg__item:hover { color: var(--color-text); text-decoration: none; }
+    .tsp-seg__item.is-on, .tsp-seg--radio .tsp-seg__item:has(input:checked) { background: var(--color-surface); color: var(--color-text); font-weight: 600; box-shadow: var(--shadow-sm); }
+    .tsp-seg--radio input { position: absolute; opacity: 0; inline-size: 1px; block-size: 1px; }
+    .tsp-seg--radio .tsp-seg__item:has(input:focus-visible) { outline: 2px solid var(--color-accent); outline-offset: 2px; }
+    .tsp-notif-bar { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: var(--space-2); margin-block: var(--space-3); }
+    .tsp-rows li.is-new a { font-weight: 600; }
+
+    // ---------- members: pending invitations (G4 P1-2) ----------
+    .tsp-invrows li { align-items: flex-start; }
+    .tsp-invrows__actions { flex-wrap: wrap; }
+    .tsp-invrows .ts-confirm, .tsp-invrows .tsp-confirm { flex: 1 1 100%; }
+
+    // ---------- filters (audit, reports, group report) ----------
+    .tsp-filterbar { display: flex; flex-wrap: wrap; gap: var(--space-2); align-items: center; margin-block: var(--space-3) var(--space-2); }
+    .tsp-filters--grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: var(--space-3) var(--space-4); align-items: end; }
+    .tsp-filters--grid .tsp-field--wide { grid-column: 1 / -1; margin: 0; }
+    .tsp-filters--grid[hidden] { display: none; }
+
+    // ---------- audit list (G4 P9-5): one line per event, grouped by day ----------
+    .tsp-audit__day { margin: var(--space-4) 0 var(--space-1); color: var(--color-neutral-400); font-size: var(--fs-1); }
+    .tsp-audit { list-style: none; margin: 0; padding: 0; }
+    .tsp-audit__row { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--space-1) var(--space-3); padding-block: var(--space-2);
+        border-block-end: 1px solid var(--line); }
+    .tsp-audit__row:last-child { border-block-end: 0; }
+    .tsp-audit__time { flex: none; min-inline-size: 3.2em; color: var(--color-neutral-400); font-size: var(--fs-1); }
+    .tsp-audit__text { flex: 1 1 260px; min-inline-size: 0; overflow-wrap: anywhere; }
+    .tsp-audit__fam { font-size: var(--fs-0); }
+
+    // ---------- import ----------
+    .tsp-steps__item.is-done { color: var(--color-neutral-300); }
+    .tsp-steps__item.is-done::before { content: '✓ '; }
+    .tsp-import-list { margin-block-start: var(--space-5); }
+    @media (max-width: 575.98px) {
+        .tsp-dl--grid { grid-template-columns: 1fr auto; gap: var(--space-2) var(--space-4); }
+        .tsp-dl--grid dd { margin-block-end: 0; text-align: end; }
+    }
+
+    // ---------- notification preferences (G4 P19): a compact table on wide screens ----------
+    .tsp-prefs { margin-block-end: var(--space-4); }
+    .tsp-prefs__table th[scope=row] { font-weight: 500; }
+    .tsp-prefs__lock { display: block; font-weight: 400; }
+    @media (min-width: 768px) {
+        .tsp-prefs__table .tsp-check span { position: absolute; inline-size: 1px; block-size: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+        .tsp-prefs__table td { inline-size: 7.5rem; }
+    }
+}

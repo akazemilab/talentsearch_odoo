@@ -6,16 +6,20 @@ from odoo.exceptions import UserError
 
 from odoo.addons.ts_core.models.workspace import GATED_PURPOSES as GATED, ROLES_BY_PURPOSE
 
-TERMS_VERSION = 'panel-terms-1405-07-v2'
+TERMS_VERSION = 'panel-terms-1405-07-v3'
+TERMS_LABEL = 'نسخهٔ ۳، از ۱۹ مهر ۱۴۰۵'   # shown with the code; change both together (UX audit G1-P2-2)
 MAX_PANELS_PER_DAY = 3
 # what the person picks -> workspace purpose
 KINDS = {'school': 'education', 'org': 'employment', 'clinic': 'clinical'}
 SOLO_AS = {'counselor': 'education', 'psychologist': 'clinical', 'hr': 'employment'}
 ROLE_LABELS = {
     'owner': 'مالک پنل', 'admin': 'هماهنگ‌کنندهٔ پنل', 'hr_admin': 'مدیر منابع انسانی', 'hiring_manager': 'مدیر استخدام',
-    'clinic_director': 'مدیر درمانگاه', 'clinician': 'متخصص بالینی', 'counselor': 'مشاور',
+    'clinic_director': 'مدیر کلینیک', 'clinician': 'متخصص بالینی', 'counselor': 'مشاور',
     'reviewer': 'بازبین', 'school_admin': 'مدیر مدرسه',
 }
+# One label per panel purpose for the panel list, the landing page and the create form (UX audit G3-P20-2).
+PURPOSE_LABELS = {'education': 'مدرسه یا مرکز مشاوره', 'employment': 'سازمان (استخدام و منابع انسانی)',
+                  'clinical': 'کلینیک روان‌شناسی و مشاوره', 'benefits': 'رفاه کارکنان'}
 
 
 _DIGITS = str.maketrans('۰۱۲۳۴۵۶۷۸۹٠١٢٣٤٥٦٧٨٩', '01234567890123456789')
@@ -104,7 +108,7 @@ class TsWorkspace(models.Model):
                     ws.name, dict(ws._fields['purpose'].selection).get(ws.purpose)),
                 partner_ids=managers.partner_id.ids, message_type='notification', subtype_xmlid='mail.mt_comment')
 
-    def ts_update_profile(self, name=None, logo_bytes=None):
+    def ts_update_profile(self, name=None, logo_bytes=None, remove_logo=False):
         self.ensure_one()
         vals = {}
         if name is not None:
@@ -127,6 +131,9 @@ class TsWorkspace(models.Model):
                     self.partner_id.sudo().write({'image_1920': base64.b64encode(logo_bytes).decode()})
             except Exception:
                 raise UserError('این فایل تصویر معتبری نیست.')
-        self.env['ts.audit.event'].sudo().log('workspace.profile', self, workspace=self, logo=bool(logo_bytes))
+        elif remove_logo and self.partner_id.image_1920:
+            self.partner_id.sudo().write({'image_1920': False})
+        self.env['ts.audit.event'].sudo().log('workspace.profile', self, workspace=self, logo=bool(logo_bytes),
+                                              logo_removed=bool(remove_logo and not logo_bytes))
 
 

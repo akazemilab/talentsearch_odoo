@@ -14,7 +14,7 @@ class TsEmergencyAccess(models.Model):
     _description = 'Talent Search emergency access'
     _order = 'id desc'
 
-    workspace_id = fields.Many2one('ts.workspace', 'فضای کاری', required=True, ondelete='restrict',
+    workspace_id = fields.Many2one('ts.workspace', 'پنل', required=True, ondelete='restrict',
                                    domain=[('purpose', '=', 'clinical')])
     user_id = fields.Many2one('res.users', 'مدیر پلتفرم', readonly=True, default=lambda s: s.env.user)
     reason = fields.Text('دلیل اضطراری', required=True)

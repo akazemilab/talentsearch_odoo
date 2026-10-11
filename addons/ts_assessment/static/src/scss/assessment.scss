@@ -19,7 +19,7 @@
     .ts-hero--soft .ts-hero__actions form { display: inline; }
     .ts-factors { list-style: none; padding: 0; display: grid; gap: 12px; }
     .ts-factors li { background: var(--color-surface); border: 0; box-shadow: var(--shadow-sm); border-radius: var(--r-12); padding: 14px 16px; }
-    .ts-factors strong { display: block; color: var(--brand-deep); }
+    .ts-factors strong { display: block; color: var(--color-accent-300); }
     .ts-factors span { display: block; color: var(--muted); font-size: .92rem; margin-block-start: 4px; }
 
     // consent / meta
@@ -40,7 +40,10 @@
     .ts-qlist { list-style: none; padding: 0; margin: 0; display: grid; gap: 14px; }
     .ts-q fieldset { border: 0; box-shadow: var(--shadow-sm); border-radius: 14px; background: var(--color-surface); padding: 16px 18px; margin: 0; min-width: 0; }
     .ts-q.is-answered fieldset { box-shadow: 0 0 0 1px var(--color-accent-700); }
-    .ts-q__text { font-size: 1.05rem; font-weight: 500; color: var(--ink); margin-block-end: 12px; float: none; width: 100%; padding: 0; }
+    // floated legend renders inside the card instead of on the fieldset border (G2-P11-1)
+    .ts-q__text { font-size: 1.05rem; font-weight: 500; color: var(--color-text); margin-block-end: 12px; float: inline-start; width: 100%; padding: 0; }
+    .ts-q__text + * { clear: both; }
+    .ts-q { scroll-margin-block: 96px 150px; }
     .ts-q__num { display: inline-grid; place-items: center; min-width: 30px; height: 30px; border-radius: 50%; background: var(--brand-soft); color: var(--brand-deep); font-size: .85rem; margin-inline-end: 8px; }
     .ts-scale { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 8px; }
     .ts-opt { position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;
@@ -62,8 +65,27 @@
         .ts-qnav .ts-btn--quiet { flex: 1 1 auto; font-size: var(--fs-0, .85rem); }
     }
     .ts-missing { display: grid; gap: 6px; padding-inline-start: 1.2em; }
+    .ts-review__title { font-size: var(--fs-5, 1.5rem); }
+    .ts-step { margin: 0 0 4px; font-size: var(--fs-0, .85rem); font-weight: 600; color: var(--color-neutral-400); }
+    // the sticky bottom bar must never hide the focused question (WCAG 2.4.11)
+    @media (max-width: 767.98px) { html:has(.ts-player) { scroll-padding-block-end: 150px; } }
+
+    // age question and guardian confirmation on consent pages (G1-P12-2, PT-5): one 44 px row per option
+    .ts-age { border: 0; padding: 0; margin: 0 0 6px; min-inline-size: 0; display: grid; gap: 4px; }
+    .ts-age legend { float: inline-start; width: 100%; font-weight: 600; font-size: 1rem; color: var(--color-text); margin-block-end: 4px; padding: 0; }
+    .ts-age legend + * { clear: both; }
+    .ts-age .ts-check, .ts-assent.ts-check { display: flex; gap: 10px; align-items: center; min-block-size: 44px; font-weight: 400; font-size: .95rem; color: var(--color-text); cursor: pointer; }
+    .ts-age .ts-check input, .ts-assent.ts-check input { inline-size: 22px; block-size: 22px; margin: 0; flex: none; accent-color: var(--color-accent); }
+    .ts-age .ts-guardian { padding: 8px 12px; border-radius: var(--r-12); background: var(--status-info-soft); }
+    .ts-age .ts-guardian[hidden] { display: none; }
+    .ts-age .ts-guardian .ts-check { align-items: flex-start; }
+    .ts-age .ts-guardian .ts-check input { margin-block-start: 3px; }
 
     // account list
+    .ts-list-card + .ts-list-card { margin-block-start: var(--space-4); }
+    .ts-list-group + .ts-list-group { margin-block-start: var(--space-5); padding-block-start: var(--space-4); border-block-start: 1px solid var(--line); }
+    .ts-list-group h3 { font-size: var(--fs-3, 1.125rem); margin-block-end: 6px; }
+    .ts-list-share a { text-decoration: underline; text-underline-offset: 3px; }
     .ts-table-wrap { overflow-x: auto; position: relative; } // contains .visually-hidden (absolute) so it cannot widen the page in RTL
     .ts-table { width: 100%; border-collapse: collapse; background: var(--color-surface); box-shadow: var(--shadow-sm); border-radius: var(--r-18); overflow: hidden; }
     .ts-table th, .ts-table td { padding: 12px 14px; text-align: start; border-block-end: 1px solid var(--line); vertical-align: middle; }
@@ -76,7 +98,10 @@
     // report
     .ts-report-actions { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; margin-block-end: 12px; }
     .ts-report-wrap { max-width: 900px; }
-    .ts-doc { background: var(--color-surface); border: 0; box-shadow: var(--shadow-md); border-radius: var(--r-18); padding: clamp(18px, 4vw, 40px); }
+    .ts-doc { background: var(--color-surface); color: var(--color-text); border: 0; box-shadow: var(--shadow-md); border-radius: var(--r-18); padding: clamp(18px, 4vw, 40px); }
+    // explicit text colours: Odoo's heading/dd colours otherwise stay dark on the dark paper (G2-P3-6)
+    .ts-doc h1, .ts-doc h2, .ts-doc h3, .ts-doc dd { color: var(--color-text); }
+    .ts-doc small, .ts-doc dt, .ts-doc .ts-hint { color: var(--color-neutral-400); }
     .ts-doc__head { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding-block-end: 14px; border-block-end: 2px solid var(--color-accent); }
     .ts-doc__brand { display: flex; align-items: center; gap: 10px; color: var(--brand-deep); }
     .ts-doc__brand img { border-radius: 50%; }

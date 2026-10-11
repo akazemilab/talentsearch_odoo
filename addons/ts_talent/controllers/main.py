@@ -15,9 +15,11 @@ from odoo.addons.ts_org.controllers.main import _membership as _org_membership
 
 from ..models import engine_matrix as EM
 from ..models import report as R
-from ..models.text import item_segments
+from ..models.text import item_segments, norm_label
 
 PAGE = 5
+# Optional suggestions under the field-name input (UX audit G1-P13-3); hidden when already used.
+SUGGESTIONS = ['ریاضی', 'نقاشی', 'فوتبال', 'برنامه‌نویسی', 'موسیقی']
 ORDINALS = ['اوّل', 'دوّم', 'سوّم', 'چهارم', 'پنجم', 'ششم', 'هفتم', 'هشتم']
 _TEXTS = {}
 
@@ -38,13 +40,30 @@ def _n_pages(items):
     return max(1, math.ceil(len(items) / PAGE))
 
 
-def report_ctx(attempt, org_view=False, ws=None, submitted=None):
-    """Template context of the matrix report; org_view drops raw answers (institute side)."""
+def _share_info(attempt):
+    """Who else reads this report (presentation only; access is decided elsewhere)."""
+    asg = attempt.ts_org_assignment() if hasattr(attempt, 'ts_org_assignment') else None
+    shared = bool(asg and asg.share_level != 'none')
+    return {
+        'asg': asg, 'shared': shared,
+        'shared_edu': shared and asg.workspace_id.purpose == 'education',
+        'shared_name': (asg.workspace_id.partner_id.name or asg.workspace_id.name) if shared else '',
+        'can_share': not asg and not attempt.workspace_id and attempt.source != 'import',
+    }
+
+
+def report_ctx(attempt, org_view=False, ws=None, submitted=None, panel_actions=None):
+    """Template context of the matrix report; org_view drops raw answers (institute side).
+
+    voice: 'org' (third person, panel member), 'tu' (student), 'shoma' (adult) - copy only.
+    Participant views round to whole numbers (differences under +-8 are not meaningful)."""
     profile = attempt.ts_profile()
     interp = profile['interpretation']
     gap = interp.get('gap', 10)
     fields = profile['fields']
     t = texts()
+    voice = 'org' if org_view else ('tu' if attempt.ts_informal() else 'shoma')
+    digits = 1 if org_view else 0
     raw = []
     if not org_view:
         items = attempt.active_items()
@@ -57,21 +76,34 @@ def report_ctx(attempt, org_view=False, ws=None, submitted=None):
                          for it in items]} for f in fields]
     defs = [(EM.NAMES[c], t['scales'][c]['definition']) for c in EM.SCALES]
     defs += [(EM.NAMES[c], t['composites'][c]['definition']) for c in ('INT', 'CRE', 'SCH', 'CRT', 'CRP') if c in t['composites']]
-    single = R.single_field_lines(interp) if interp['n_fields'] < 2 else None
+    defs = [(name, R.norm_text(text)) for name, text in R.split_pair_definition(defs)]
+    single = R.single_field_lines(interp, voice) if interp['n_fields'] < 2 else None
     multi = interp['n_fields'] >= 2
-    return {
+    flagged = interp.get('flagged') or [f['label'] for f in fields if f['flags'].get('straight') or f['flags'].get('fast')]
+
+    def fmt(v, d=None):
+        return R.fmt(v, digits if d is None else d)
+    ctx = {
         'attempt': attempt, 'inst': attempt.instrument_id, 'version': attempt.version_id,
-        'tiles': R.tiles(interp, profile), 'fields': fields,
-        'charts': {f['label']: R.field_chart(f) for f in fields},
+        'tiles': R.tiles(interp, profile, voice, digits), 'fields': fields,
+        'charts': {f['label']: R.field_chart(f, digits) for f in fields},
         'legend': [EM.NAMES[c] for c in EM.SCALES], 'single': single,
-        'lv': R.levels(interp, profile) if not single else [], 'interp': interp,
-        'programs': R.programs_list(interp), 'rows': R.table_rows(profile, gap), 'raw': raw,
+        'lv': R.levels(interp, profile, voice, digits) if not single else [], 'interp': interp,
+        'programs': R.programs_view(interp, voice), 'rows': R.table_rows(profile, gap), 'raw': raw,
         'cmp_rows': R.compare_rows(profile, gap) if multi else [],
         'cmp_cards': R.field_cards(profile, gap) if multi else [],
-        'cmp_lines': R.compare_lines(interp) if multi else [],
+        'cmp_lines': R.compare_lines(interp, voice, digits) if multi else [],
+        'summary': R.summary(interp, profile, voice, 0 if not org_view else 1),
+        'flagged': flagged, 'all_flagged': bool(fields) and len(flagged) >= len(fields),
+        'fields_tied': R.fields_all_tied(interp),
         'gap': int(gap), 'org_view': org_view, 'ws': ws, 'who': attempt.person_id.name or attempt.partner_id.name or '',
-        'texts': t, 'defs': defs, 'submitted': submitted,
-        'fa': fa_digits, 'fmt': R.fmt, 'joinfa': R.joinfa, 'page_name': 'ts_workspaces' if org_view else 'ts_assessments'}
+        'voice': voice, 'tu': voice == 'tu',
+        'quote': R.norm_text(t['quotes']['purpose']['text']),
+        'texts': t, 'defs': defs, 'submitted': submitted, 'panel_actions': panel_actions or [],
+        'fa': fa_digits, 'fmt': fmt, 'joinfa': R.joinfa, 'page_name': 'ts_workspaces' if org_view else 'ts_assessments'}
+    if not org_view:
+        ctx.update(_share_info(attempt))
+    return ctx
 
 
 class TsTalent(TsAssessment):
@@ -83,7 +115,33 @@ class TsTalent(TsAssessment):
     def _name_error(self, kw):
         return request.session.pop('tt_error', None) if kw.get('error') == 'name' else None
 
+    def _name_ctx(self, attempt, done, guidance, kw, rename=None):
+        v = attempt.version_id
+        used = {f.label_norm for f in attempt.field_ids}
+        return {
+            'attempt': attempt, 'n': len(done) + 1, 'ordinal': ordinal(len(done) + 1), 'guidance': guidance,
+            'rename': rename, 'label': None, 'error': self._name_error(kw), 'done': bool(done), 'n_done': len(done),
+            'field_min': v.field_min, 'field_max': v.field_max, 'fa': fa_digits, 'tu': attempt.ts_informal(),
+            'suggestions': [x for x in SUGGESTIONS if norm_label(x) not in used] if not rename else [],
+        }
+
     # ------------------------------------------------------------ player
+    @http.route('/take/<string:token>/reopen', type='http', auth='user', website=True, methods=['POST'], sitemap=False)
+    def reopen(self, token, **post):
+        """Open a completed field again before the final submit (UX audit G1-P15-2)."""
+        _ts_site_or_404()
+        attempt = _my_attempt(token)
+        if not attempt.ts_is_matrix() or attempt.state != 'in_progress':
+            return request.redirect('/take/%s' % token)
+        try:
+            field = attempt.field_ids.filtered(lambda f: f.id == int(post.get('field_id') or 0))
+            if not field:
+                raise request.not_found()
+            attempt.ts_reopen_field(field)
+        except (UserError, ValueError):
+            return request.redirect(self._tt_url(token, error='reopen'))
+        return request.redirect(self._tt_url(token, p=1))
+
     @http.route()
     def review(self, token, **kw):
         # the generic Likert review page means nothing for a matrix attempt (UX audit 2026-10-11, P16-1):
@@ -106,19 +164,17 @@ class TsTalent(TsAssessment):
             return request.render('ts_assessment.error', {'attempt': attempt})
         if attempt.state == 'consent':
             return request.render('ts_talent.consent', {
-                'attempt': attempt, 'consent_version': CONSENT_VERSION, 'error': kw.get('error')})
+                'attempt': attempt, 'consent_version': CONSENT_VERSION, 'error': kw.get('error'),
+                'tu': attempt.ts_informal(), 'fa': fa_digits, 'v': attempt.version_id})
         v = attempt.version_id
         cur = attempt.ts_current_field()
         done = attempt.ts_done_fields()
         view = kw.get('v')
         guidance = v.field_guidance or ''
         if cur and view == 'rename' and not cur.cell_ids:
-            return request.render('ts_talent.name', {
-                'attempt': attempt, 'n': cur.sequence, 'ordinal': ordinal(len(done) + 1), 'guidance': guidance,
-                'rename': cur, 'label': None, 'error': self._name_error(kw), 'done': bool(done),
-                'field_min': v.field_min, 'field_max': v.field_max, 'fa': fa_digits})
+            return request.render('ts_talent.name', self._name_ctx(attempt, done, guidance, kw, rename=cur))
         if cur and view == 'straight':
-            return request.render('ts_talent.straight', {'attempt': attempt, 'field': cur})
+            return request.render('ts_talent.straight', {'attempt': attempt, 'field': cur, 'tu': attempt.ts_informal()})
         if cur:
             items = attempt.active_items()
             n_pages = _n_pages(items)
@@ -133,16 +189,20 @@ class TsTalent(TsAssessment):
             return request.render('ts_talent.statements', {
                 'attempt': attempt, 'field': cur, 'page': p, 'n_pages': n_pages, 'items': chunk,
                 'first': (p - 1) * PAGE, 'scale': SCALE, 'cells': cells, 'missing': missing,
-                'error': kw.get('error'), 'segments': item_segments, 'fa': fa_digits})
+                'field_no': len(done.filtered(lambda f: f.sequence < cur.sequence)) + 1, 'n_done': len(done),
+                'error': kw.get('error'), 'segments': item_segments, 'fa': fa_digits, 'tu': attempt.ts_informal()})
         if not done or view == 'name':
-            n = len(attempt.field_ids) + 1
-            return request.render('ts_talent.name', {
-                'attempt': attempt, 'n': n, 'ordinal': ordinal(len(done) + 1), 'guidance': guidance,
-                'rename': None, 'label': None, 'error': self._name_error(kw), 'done': bool(done),
-                'field_min': v.field_min, 'field_max': v.field_max, 'fa': fa_digits})
+            return request.render('ts_talent.name', self._name_ctx(attempt, done, guidance, kw))
+        tu = attempt.ts_informal()
+        errors = {
+            'finish': 'پایان ممکن نشد؛ دست‌کم %s زمینهٔ کامل لازم است.' % fa_digits(v.field_min),
+            'reopen': 'این زمینه باز نشد؛ اول زمینهٔ در حال پاسخ را کامل کن.' if tu else 'این زمینه باز نشد؛ اول زمینهٔ در حال پاسخ را کامل کنید.',
+        }
+        last = done.sorted(lambda f: f.finished_at or f.create_date)[-1:] or done[-1:]
         return request.render('ts_talent.between', {
-            'attempt': attempt, 'done': done, 'last': done[-1], 'field_min': v.field_min, 'field_max': v.field_max,
-            'ordinal_min': ordinal(v.field_min), 'error': 'پایان ممکن نشد؛ دست‌کم %s زمینهٔ کامل لازم است.' % fa_digits(v.field_min) if kw.get('error') == 'finish' else None, 'fa': fa_digits})
+            'attempt': attempt, 'done': done, 'last': last, 'field_min': v.field_min, 'field_max': v.field_max,
+            'n_items': len(attempt.active_items()), 'ordinal_min': ordinal(v.field_min),
+            'error': errors.get(kw.get('error')), 'fa': fa_digits, 'tu': tu})
 
     @http.route('/take/<string:token>/field', type='http', auth='user', website=True, methods=['POST'], sitemap=False)
     def field_post(self, token, **post):
@@ -251,7 +311,7 @@ class TsTalentOrg(http.Controller):
             raise request.not_found()
         request.env['ts.audit.event'].sudo().log('attempt.result_view', attempt, workspace=member.workspace_id,
                                                  viewer=request.env.user.id)
-        return request.render('ts_talent.report', report_ctx(attempt, org_view=True, ws=member.workspace_id))
+        return request.render('ts_talent.report', report_ctx(attempt, org_view=True, ws=member.workspace_id))  # legacy alias
 
 
 _SAMPLE = [  # fully fictional profile; never derived from a real person

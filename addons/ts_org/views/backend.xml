@@ -64,7 +64,7 @@
                 <filter name="open" string="باز" domain="[('state', 'in', ('invited', 'accepted', 'in_progress'))]"/>
                 <filter name="done" string="تکمیل‌شده" domain="[('state', '=', 'done')]"/>
                 <group>
-                    <filter name="by_ws" string="فضای کاری" context="{'group_by': 'workspace_id'}"/>
+                    <filter name="by_ws" string="پنل" context="{'group_by': 'workspace_id'}"/>
                     <filter name="by_state" string="وضعیت" context="{'group_by': 'state'}"/>
                 </group>
             </search>

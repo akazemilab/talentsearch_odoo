@@ -225,10 +225,10 @@ j3 = re.search(r'/import/(\d+)/map', loc).group(1)
 post(own, W + '/import/%s/map' % j3, pairs)
 post(own, W + '/import/%s/start' % j3, {})
 st, body = get(own, W + '/jobs/%s' % j3)
-check('a long file is queued and the page refreshes itself', 'در صف' in body and 'http-equiv="refresh"' in body, str(st))
+check('a long file is queued and the page refreshes itself', 'در صف' in body and 'data-tsp-poll="1"' in body, str(st))   # UX audit G4 P8-1: in-place poll, no meta refresh
 shell("print('RAN', env['ts.job']._cron_run_jobs()); env.cr.commit()")
 st, body = get(own, W + '/jobs/%s' % j3)
-check('after the runner the job is done and the refresh is off', 'انجام شد' in body and 'http-equiv="refresh"' not in body)
+check('after the runner the job is done and the refresh is off', 'انجام شد' in body and 'data-tsp-poll' not in body)
 check('the five people were created', q("select count(*) from ts_panel_client where workspace_id = %s and code like 'Q%%'" % A) == '[(5,)]')
 shell("env['ir.config_parameter'].sudo().set_str('ts_panel.job_inline_rows', '500'); env.cr.commit()")
 

@@ -18,7 +18,7 @@ AUDIT_YEARS = 5
 RULES = [                                   # (code, label, auto)
     ('notifications', 'اعلان‌های قدیمی‌تر از ۱۸۰ روز', True),
     ('invite_contacts', 'اطلاعات تماس دعوت‌های بی‌پاسخ پس از ۹۰ روز از انقضا', True),
-    ('closed_panels', 'مراجعان پنل‌های بسته‌شده پس از ۹۰ روز', True),
+    ('closed_panels', 'شرکت‌کنندگان پنل‌های بسته‌شده پس از ۹۰ روز', True),
     ('abandoned_attempts', 'آزمون‌های نیمه‌تمام بدون فعالیت (فقط گزارش)', False),
     ('audit_events', 'رویدادهای ممیزی قدیمی‌تر از ۵ سال (فقط گزارش)', False),
 ]

@@ -1,22 +1,28 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <!-- S16: age question for people who take a test on their own, and the child's own assent in a panel (GRD-2, GRD-5) -->
+    <!-- S16: age question for people who take a test on their own, and the child's own assent in a panel (GRD-2, GRD-5).
+         UX audit 2026-10-11 (G1-P12-2, PT-5): one 44 px row per option; the guardian box shows only after «under 18»
+         (no-JS keeps it visible; the server still checks it). Text version TS-MINOR-1405-07-19-v2. -->
     <template id="consent_age_ass" name="Age and assent on the consent page">
+        <t t-set="tu_c" t-value="attempt.ts_informal()"/>
         <t t-if="not attempt.workspace_id">
             <fieldset id="ts-age-box" class="ts-age">
-                <legend>آیا ۱۸ سال یا بیشتر دارید؟</legend>
-                <p t-if="error == 'age'" class="ts-form__error tt-error" role="alert">لطفاً سن خود را مشخص کنید.</p>
-                <p t-if="error == 'guardian_ok'" class="ts-form__error tt-error" role="alert">برای زیر ۱۸ سال، رضایت ولی یا سرپرست قانونی لازم است.</p>
-                <label><input type="radio" name="age18" value="yes" required="required"/> بله</label>
-                <label><input type="radio" name="age18" value="no"/> خیر، کمتر از ۱۸ سال دارم</label>
-                <label class="ts-check"><input type="checkbox" name="guardian_ok" value="1"/>
-                    <span>اگر کمتر از ۱۸ سال دارید: ولی یا سرپرست قانونی‌ام از انجام این آزمون آگاه است و موافقت کرده است.</span></label>
+                <legend t-if="tu_c">۱۸ سال یا بیشتر داری؟</legend>
+                <legend t-else="">۱۸ سال یا بیشتر دارید؟</legend>
+                <p t-if="error == 'age'" class="ts-form__error tt-error" role="alert"><t t-if="tu_c">سنت را مشخص کن.</t><t t-else="">سن خود را مشخص کنید.</t></p>
+                <p t-if="error == 'guardian_ok'" class="ts-form__error tt-error" role="alert">برای زیر ۱۸ سال، موافقت ولی (پدر، مادر یا سرپرست قانونی) لازم است.</p>
+                <label class="ts-check"><input type="radio" name="age18" value="yes" required="required"/> <span>بله، ۱۸ سال یا بیشتر</span></label>
+                <label class="ts-check"><input type="radio" name="age18" value="no" t-att-checked="'checked' if error == 'guardian_ok' else None"/> <span>نه، کمتر از ۱۸ سال</span></label>
+                <div id="ts-guardian-box" class="ts-guardian" aria-live="polite">
+                    <label class="ts-check"><input type="checkbox" name="guardian_ok" value="1"/>
+                        <span>ولی‌ام (پدر، مادر یا سرپرست قانونی) از انجام این سنجه خبر دارد و موافق است.</span></label>
+                </div>
             </fieldset>
         </t>
         <t t-elif="attempt.client_id and attempt.client_id.age_group == 'minor'">
-            <p t-if="error == 'assent'" class="ts-form__error tt-error" role="alert">برای ادامه باید موافقت خودتان را اعلام کنید.</p>
-            <label class="ts-check"><input type="checkbox" name="assent_ok" value="1" required="required"/>
-                <span>برایم توضیح داده‌اند که این آزمون چیست و می‌توانم هر وقت خواستم متوقف شوم؛ خودم هم موافقم.</span></label>
+            <p t-if="error == 'assent'" class="ts-form__error tt-error" role="alert">برای ادامه، موافقت خودت لازم است.</p>
+            <label class="ts-check ts-assent"><input type="checkbox" name="assent_ok" value="1" required="required"/>
+                <span>برایم توضیح داده‌اند این سنجه چیست و هر وقت بخواهم می‌توانم دست نگه دارم؛ خودم هم موافقم.</span></label>
         </t>
     </template>
 
@@ -43,19 +49,29 @@
         </field>
     </record>
 
-    <!-- portal v3 (P2): who sees the result, from the real invitation (purpose + accepted share level), never a fixed sentence -->
+    <!-- portal v3 (P2): who sees the result, from the real invitation (purpose + accepted share level), never a fixed sentence.
+         UX audit 2026-10-11: «تو» for students, «مشاور» instead of «مشاور مسئول» (glossary §9-4). -->
     <template id="who_sees_line" name="Who sees this result (one line)">
         <t t-set="asg" t-value="attempt.ts_org_assignment()"/>
         <t t-set="org" t-value="asg.workspace_id.partner_id.name if asg else ''"/>
+        <t t-set="tu_w" t-value="attempt.ts_informal()"/>
         <span id="ts-who-sees-line" t-att-data-level="asg.share_level if asg else 'self'">
             <t t-if="asg and asg.share_level != 'none'">
-                <t t-if="asg.workspace_id.purpose == 'education'">شما، و <strong t-out="org"/> (مشاور مسئول شما) گزارش نتیجه را می‌بیند؛ پاسخ‌های خام را فقط خودتان می‌بینید.</t>
-                <t t-elif="asg.workspace_id.purpose == 'clinical'">شما، و گزارش کامل همراه با راهنمای متخصص فقط برای متخصص بالینی تأییدشدهٔ <strong t-out="org"/>.</t>
-                <t t-else="">شما، و <strong t-out="org"/> فقط بازهٔ هر بُعد (کم، متوسط یا زیاد) را می‌بیند؛ نه پاسخ‌ها، نه نمره‌ها، نه متن تفسیر.</t>
-                <span class="ts-hint"> اشتراک را هر زمان می‌توانید از صفحهٔ گزارش لغو کنید.</span>
+                <t t-if="asg.workspace_id.purpose == 'education'">
+                    <t t-if="tu_w">تو، و مشاورت در <strong t-out="org"/> گزارش نتیجه را می‌بینید؛ پاسخ‌های خام را فقط خودت می‌بینی.</t>
+                    <t t-else="">شما، و مشاورتان در <strong t-out="org"/> گزارش نتیجه را می‌بینید؛ پاسخ‌های خام را فقط خودتان می‌بینید.</t>
+                </t>
+                <t t-elif="asg.workspace_id.purpose == 'clinical'">شما، و فقط متخصص بالینی تأییدشدهٔ <strong t-out="org"/> گزارش کامل را همراه با متن متخصص می‌بیند.</t>
+                <t t-else="">شما، و <strong t-out="org"/> فقط سطح هر بُعد (کم، متوسط یا زیاد) را می‌بیند؛ نه پاسخ‌ها، نه نمره‌ها، نه متن تفسیر.</t>
+                <span class="ts-hint" t-if="tu_w"> هر وقت بخواهی می‌توانی اشتراک‌گذاری را از صفحهٔ گزارش قطع کنی.</span>
+                <span class="ts-hint" t-else=""> هر وقت بخواهید می‌توانید اشتراک‌گذاری را از صفحهٔ گزارش قطع کنید.</span>
             </t>
-            <t t-elif="asg">فقط شما. <strong t-out="org"/> فقط وضعیت انجام (شروع‌شده یا تکمیل‌شده) را می‌بیند، چون اشتراک نتیجه را نپذیرفته‌اید.</t>
-            <t t-else="">فقط شما، در حساب کاربری‌تان. بعداً می‌توانید خودتان نتیجه را برای مشاورتان بفرستید.</t>
+            <t t-elif="asg">
+                <t t-if="tu_w">فقط تو. <strong t-out="org"/> فقط وضعیت انجام (شروع‌شده یا تکمیل‌شده) را می‌بیند، چون اشتراک نتیجه را نپذیرفته‌ای.</t>
+                <t t-else="">فقط شما. <strong t-out="org"/> فقط وضعیت انجام (شروع‌شده یا تکمیل‌شده) را می‌بیند، چون اشتراک نتیجه را نپذیرفته‌اید.</t>
+            </t>
+            <t t-elif="tu_w">فقط تو، در حساب کاربری‌ات. بعداً اگر بخواهی، می‌توانی نتیجه را برای مشاورت بفرستی.</t>
+            <t t-else="">فقط شما، در حساب کاربری‌تان. بعداً اگر بخواهید، می‌توانید نتیجه را برای مشاورتان بفرستید.</t>
         </span>
     </template>
 
@@ -80,20 +96,45 @@
         <field name="mode">extension</field>
         <field name="website_id" ref="ts_website.website_ts"/>
         <field name="arch" type="xml">
-            <xpath expr="//p[hasclass('tt-mini')][1]" position="replace">
-                <p class="tt-mini">زمینه‌ها را خودتان می‌نویسید و برای هر کدام ۱۵ جمله را پاسخ می‌دهید. هر زمینه حدود یک دقیقه است.</p>
-                <p class="tt-mini"><strong>چه کسی نتیجه را می‌بیند:</strong> <t t-call="ts_panel.who_sees_line"/></p>
+            <xpath expr="//dd[@id='tt-who-sees']" position="replace">
+                <dd id="tt-who-sees"><t t-call="ts_panel.who_sees_line"/></dd>
+            </xpath>
+        </field>
+    </record>
+    <!-- the check-your-answers step (talent) and the generic review repeat who will see the result before the final submit -->
+    <record id="finish_who_sees_talent" model="ir.ui.view">
+        <field name="name">ts_panel.finish.who_sees.talent</field>
+        <field name="inherit_id" ref="ts_talent.tpl_between"/>
+        <field name="mode">extension</field>
+        <field name="website_id" ref="ts_website.website_ts"/>
+        <field name="arch" type="xml">
+            <xpath expr="//p[@id='tt-who-sees-finish']" position="replace">
+                <p id="tt-who-sees-finish"><strong>چه کسی نتیجه را می‌بیند:</strong> <t t-call="ts_panel.who_sees_line"/></p>
+            </xpath>
+        </field>
+    </record>
+    <record id="review_who_sees_assessment" model="ir.ui.view">
+        <field name="name">ts_panel.review.who_sees.assessment</field>
+        <field name="inherit_id" ref="ts_assessment.tpl_review"/>
+        <field name="mode">extension</field>
+        <field name="website_id" ref="ts_website.website_ts"/>
+        <field name="arch" type="xml">
+            <xpath expr="//p[@id='ts-review-who']" position="replace">
+                <p id="ts-review-who"><strong>چه کسی نتیجه را می‌بیند:</strong> <t t-call="ts_panel.who_sees_line"/></p>
             </xpath>
         </field>
     </record>
 
     <!-- portal v3 (P2): after submission the report opens with what was received, who sees it and one next step -->
     <template id="submitted_block" name="Submission received">
+        <t t-set="tu_s" t-value="attempt.ts_informal()"/>
         <section class="ts-received ts-noprint" role="status" aria-labelledby="ts-received-h">
-            <h2 id="ts-received-h">پاسخ‌های شما دریافت و ثبت شد</h2>
-            <p>نتیجه آماده است و همین‌جا می‌ماند؛ هر وقت خواستید از «سنجه‌ها و نتیجه‌ها» به آن برگردید. پاسخ‌ها پس از ارسال تغییر نمی‌کنند.</p>
+            <h2 id="ts-received-h" t-if="tu_s">پاسخ‌هایت ثبت شد</h2>
+            <h2 id="ts-received-h" t-else="">پاسخ‌های شما ثبت شد</h2>
+            <p t-if="tu_s">نتیجه آماده است و همین‌جا می‌ماند؛ هر وقت خواستی از «سنجه‌ها و نتیجه‌ها» به آن برگرد. پاسخ‌ها پس از ارسال قفل شده‌اند.</p>
+            <p t-else="">نتیجه آماده است و همین‌جا می‌ماند؛ هر وقت خواستید از «سنجه‌ها و نتیجه‌ها» به آن برگردید. پاسخ‌ها پس از ارسال قفل شده‌اند.</p>
             <p><strong>چه کسی این نتیجه را می‌بیند:</strong> <t t-call="ts_panel.who_sees_line"/></p>
-            <p class="ts-received__actions"><a href="#ts-summary" class="ts-btn ts-btn--primary">خواندن نتیجه</a> <a href="/my" class="ts-btn ts-btn--quiet">بازگشت به کارهای من</a></p>
+            <p class="ts-received__actions"><a t-att-href="'#tt-sec-summary' if attempt.version_id.mode == 'matrix' else '#ts-summary'" class="ts-btn ts-btn--primary">خواندن نتیجه</a> <a href="/my" class="ts-btn ts-btn--quiet">بازگشت به کارهای من</a></p>
         </section>
     </template>
     <record id="report_submitted_assessment" model="ir.ui.view">

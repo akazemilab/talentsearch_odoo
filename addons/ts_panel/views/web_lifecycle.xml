@@ -11,26 +11,41 @@
                 <t t-call="website.layout" additional_title="title">
                     <div id="wrap" class="ts-page">
                         <t t-call="ts_panel.shell_frame">
+                            <a t-attf-href="/my/workspaces/#{ws.id}/settings" class="ts-backlink">تنظیمات</a>
                             <header class="tsp-head"><div><h1 class="tsp-head__title">انتقال مالکیت پنل</h1>
-                                <p class="tsp-head__help">عضوی که انتخاب می‌کنید مالک پنل «<t t-out="ws.name"/>» می‌شود.</p></div></header>
+                                <p class="tsp-head__help">عضوی که انتخاب می‌کنید مالک پنل «<bdi t-out="ws.name"/>» می‌شود.</p></div></header>
+                            <p t-if="resumed" class="tsp-flash tsp-flash--ok" role="status">هویت شما تأیید شد. انتخاب‌هایتان را نگه داشتیم؛ برای انجام انتقال، دکمهٔ پایین فرم را بزنید. تا آن را نزنید چیزی تغییر نمی‌کند.</p>
                             <section class="ts-card" id="tsp-transfer">
-                                <p t-if="not others" class="ts-notice">عضو فعال دیگری برای انتقال وجود ندارد. ابتدا یک عضو به پنل اضافه کنید.</p>
-                                <form t-else="" t-attf-action="/my/workspaces/#{ws.id}/settings/transfer" method="post" class="tsp-form" data-tsp-once="1">
+                                <p t-if="not others" class="ts-notice">عضو فعال دیگری برای انتقال وجود ندارد. ابتدا از «اعضا و نقش‌ها» یک همکار به پنل دعوت کنید.</p>
+                                <form t-else="" t-attf-action="/my/workspaces/#{ws.id}/settings/transfer" method="post" class="tsp-form" data-tsp-once="1" data-tsp-transfer="1">
                                     <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
                                     <fieldset class="tsp-field">
                                         <legend class="tsp-field__label">مالک تازه</legend>
-                                        <t t-foreach="others" t-as="o">
-                                            <label class="ts-check"><input type="radio" name="new_owner" t-att-value="o.id" required="required"/>
-                                                <span><t t-out="o.user_id.name"/> <span class="ts-hint">(<t t-out="role_labels.get(o.role, o.role)"/>)</span></span></label>
-                                        </t>
+                                        <label t-foreach="others" t-as="o" class="tsp-radio">
+                                            <input type="radio" name="new_owner" t-att-value="o.id" required="required" t-att-data-name="o.user_id.name"
+                                                   t-att-checked="'checked' if chosen_owner == str(o.id) else None"/>
+                                            <span><strong><bdi t-out="o.user_id.name"/></strong><span class="tsp-field__hint tsp-radio__blurb">اکنون <t t-out="role_labels.get(o.role, o.role)"/></span></span>
+                                        </label>
                                     </fieldset>
                                     <fieldset class="tsp-field">
                                         <legend class="tsp-field__label">نقش شما پس از انتقال</legend>
-                                        <label class="ts-check"><input type="radio" name="stay" value="admin" checked="checked"/> <span>مدیر پنل</span></label>
-                                        <label class="ts-check"><input type="radio" name="stay" value="owner"/> <span>مالک می‌مانم (دو مالک)</span></label>
+                                        <p class="tsp-field__hint">یکی را انتخاب کنید؛ پیش‌فرضی وجود ندارد.</p>
+                                        <label t-foreach="stay_opts" t-as="so" class="tsp-radio">
+                                            <input type="radio" name="stay" t-att-value="so['key']" required="required" t-att-checked="'checked' if chosen_stay == so['key'] else None"/>
+                                            <span><strong t-out="so['label']"/><span class="tsp-field__hint tsp-radio__blurb" t-out="so['blurb']"/></span>
+                                        </label>
                                     </fieldset>
-                                    <p class="ts-notice">پس از تأیید، هر دو نفر خبردار می‌شوند و این کار در گزارش ممیزی ثبت می‌شود.</p>
-                                    <p><button type="submit" class="ts-btn ts-btn--primary">انتقال مالکیت</button>
+                                    <div class="ts-confirm tsp-confirm" id="tsp-transfer-effects">
+                                        <p><strong>پس از انتقال:</strong></p>
+                                        <ul>
+                                            <li>مالک تازه همهٔ کارهای مالک را انجام می‌دهد: اعضا، تنظیمات، خروجی، دفتر ممیزی، اعتبار و بستن پنل.</li>
+                                            <li t-if="len(stay_opts) &gt; 1">اگر «<t t-out="role_labels.get('admin', 'admin')"/>» را انتخاب کنید، دیگر نتیجه‌ها و شرکت‌کنندگان را نمی‌بینید و نمی‌توانید اعضا را اداره کنید.</li>
+                                            <li>این کار را خودتان نمی‌توانید برگردانید؛ فقط مالک تازه می‌تواند دوباره شما را مالک کند.</li>
+                                            <li>هر دو نفر خبردار می‌شوند و این کار در دفتر ممیزی ثبت می‌شود.</li>
+                                        </ul>
+                                        <p class="ts-hint">پس از زدن دکمه، هویت شما دوباره پرسیده می‌شود (اگر در چند دقیقهٔ اخیر تأیید نکرده باشید).</p>
+                                    </div>
+                                    <p><button type="submit" class="ts-btn ts-btn--danger" data-tsp-transfer-btn="1">انتقال مالکیت</button>
                                         <a t-attf-href="/my/workspaces/#{ws.id}/settings" class="ts-btn ts-btn--quiet">انصراف</a></p>
                                 </form>
                             </section>
@@ -51,20 +66,26 @@
                 <t t-call="website.layout" additional_title="title">
                     <div id="wrap" class="ts-page">
                         <t t-call="ts_panel.shell_frame">
-                            <header class="tsp-head"><div><h1 class="tsp-head__title">بستن پنل «<t t-out="ws.name"/>»</h1></div></header>
-                            <section class="ts-card" id="tsp-close">
-                                <p>با بستن پنل:</p>
+                            <a t-attf-href="/my/workspaces/#{ws.id}/settings" class="ts-backlink">تنظیمات</a>
+                            <header class="tsp-head"><div><h1 class="tsp-head__title">بستن «<bdi t-out="ws.name"/>»</h1>
+                                <p class="tsp-head__help">بستن پنل برگشت ندارد. پیش از آن، نتیجهٔ این کار را بخوانید.</p></div></header>
+                            <p t-if="resumed" class="tsp-flash tsp-flash--ok" role="status">هویت شما تأیید شد. تأییدتان را نگه داشتیم؛ برای بستن پنل، دکمهٔ «بستن پنل» را بزنید. تا آن را نزنید پنل باز می‌ماند.</p>
+                            <section class="ts-confirm tsp-confirm ts-card" id="tsp-close" aria-labelledby="tsp-close-h">
+                                <h2 id="tsp-close-h" class="h5">با بستن پنل:</h2>
                                 <ul>
-                                    <li>دعوت تازه ساخته نمی‌شود و کسی جز مالک چیزی نمی‌بیند.</li>
-                                    <li>مالک تا ۹۰ روز می‌تواند فهرست مراجعان را بیرون بکشد.</li>
-                                    <li>پس از ۹۰ روز اطلاعات تماس مراجعان پاک می‌شود.</li>
-                                    <li>شرکت‌کنندگان نتایج خودشان را در حساب خود نگه می‌دارند.</li>
+                                    <li>دعوت تازه ساخته نمی‌شود.</li>
+                                    <li>اعضای دیگر فقط پیام «پنل بسته شده» را می‌بینند و به <t t-out="people"/> و نتیجه‌ها دسترسی ندارند.</li>
+                                    <li>شما تا ۹۰ روز می‌توانید از فهرست <t t-out="people"/> خروجی بگیرید.</li>
+                                    <li>پس از ۹۰ روز اطلاعات تماس <t t-out="people"/> پاک می‌شود.</li>
+                                    <li>هر شرکت‌کننده نتیجه‌های خودش را در حساب خودش نگه می‌دارد.</li>
                                 </ul>
+                                <p t-if="can_export"><a t-attf-href="/my/workspaces/#{ws.id}/exports">پیش از بستن، از فهرست <t t-out="people"/> خروجی بگیرید</a></p>
                                 <form t-attf-action="/my/workspaces/#{ws.id}/settings/close" method="post" class="tsp-form" data-tsp-once="1">
                                     <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
-                                    <label class="ts-check"><input type="checkbox" name="confirm" value="1" required="required"/>
-                                        <span>پنل «<t t-out="ws.name"/>» را می‌بندم و می‌دانم برگشت ندارد.</span></label>
-                                    <p><button type="submit" class="ts-btn ts-btn--primary">بستن پنل</button>
+                                    <label class="tsp-check tsp-check--lg"><input type="checkbox" name="confirm" value="1" required="required" t-att-checked="'checked' if confirmed else None"/>
+                                        <span>پنل «<bdi t-out="ws.name"/>» را می‌بندم و می‌دانم برگشت ندارد.</span></label>
+                                    <p class="ts-hint">پس از زدن دکمه، هویت شما دوباره پرسیده می‌شود (اگر در چند دقیقهٔ اخیر تأیید نکرده باشید).</p>
+                                    <p><button type="submit" class="ts-btn ts-btn--danger">بستن پنل</button>
                                         <a t-attf-href="/my/workspaces/#{ws.id}/settings" class="ts-btn ts-btn--quiet">انصراف</a></p>
                                 </form>
                             </section>
@@ -82,10 +103,17 @@
         <field name="website_id" ref="ts_website.website_ts"/>
         <field name="arch" type="xml">
             <xpath expr="//section[@id='tsp-contact']" position="after">
-                <section t-if="can_lifecycle" class="ts-card" id="tsp-lifecycle" aria-labelledby="tsp-lifecycle-h">
-                    <h2 id="tsp-lifecycle-h" class="h5">مالکیت و پایان پنل</h2>
-                    <p><a t-attf-href="/my/workspaces/#{ws.id}/settings/transfer" class="ts-btn ts-btn--outline">انتقال مالکیت</a>
-                        <a t-attf-href="/my/workspaces/#{ws.id}/settings/close" class="ts-btn ts-btn--outline">بستن پنل</a></p>
+                <section t-if="can_lifecycle and member.has_perm('panel:transfer')" class="ts-card" id="tsp-lifecycle" aria-labelledby="tsp-lifecycle-h">
+                    <h2 id="tsp-lifecycle-h" class="h5">مالکیت پنل</h2>
+                    <p>مالکیت را به یکی از اعضای فعال پنل می‌سپارید و خودتان مالک می‌مانید یا نقش دیگری می‌گیرید.</p>
+                    <p><a t-attf-href="/my/workspaces/#{ws.id}/settings/transfer" class="ts-btn ts-btn--outline">انتقال مالکیت…</a></p>
+                </section>
+            </xpath>
+            <xpath expr="//t[@t-call='ts_panel.shell_frame']" position="inside">
+                <section t-if="can_lifecycle and member.has_perm('panel:close')" class="ts-card ts-confirm tsp-confirm tsp-danger-zone" id="tsp-danger" aria-labelledby="tsp-danger-h">
+                    <h2 id="tsp-danger-h" class="h5">منطقهٔ خطر</h2>
+                    <p>بستن پنل برگشت ندارد: دعوت تازه ساخته نمی‌شود و اعضای دیگر دسترسی‌شان را از دست می‌دهند.</p>
+                    <p><a t-attf-href="/my/workspaces/#{ws.id}/settings/close" class="ts-btn ts-btn--danger">بستن پنل…</a></p>
                 </section>
             </xpath>
         </field>

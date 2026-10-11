@@ -15,7 +15,7 @@ class TsWorkspaceHealth(models.Model):
     _inherit = 'ts.workspace'
 
     ts_member_count = fields.Integer('اعضا', compute='_compute_health')
-    ts_client_count = fields.Integer('مراجعان', compute='_compute_health')
+    ts_client_count = fields.Integer('شرکت‌کنندگان', compute='_compute_health')
     ts_open_invites = fields.Integer('دعوت‌های باز', compute='_compute_health')
     ts_done_30d = fields.Integer('تکمیل در ۳۰ روز', compute='_compute_health')
     ts_last_activity = fields.Datetime('آخرین فعالیت', compute='_compute_health')

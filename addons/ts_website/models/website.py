@@ -15,8 +15,47 @@ TS_MENU = [
     ('هزینه و پرسش‌ها', '/pricing', 30),
     ('تماس', '/contact', 40),
 ]
+# Persian page names by path prefix (most specific first), used by ts_fallback_title.
+TS_TITLES = [
+    ('/my/notifications/prefs', 'ترجیح‌های اعلان'),
+    ('/my/notifications', 'اعلان‌ها'),
+    ('/my/reauth', 'تأیید هویت'),
+    ('/my/sessions', 'دستگاه‌های واردشده'),
+    ('/my/privacy', 'حریم خصوصی'),
+    ('/my/sharing', 'چه کسی می‌بیند'),
+    ('/my/account', 'حساب'),
+    ('/my/phone', 'شمارهٔ موبایل'),
+    ('/my/assessments', 'سنجه‌ها و نتیجه‌ها'),
+    ('/my/workspaces', 'پنل'),
+    ('/my', 'حساب'),
+    ('/help/roles', 'نقش‌ها و دسترسی‌ها'),
+    ('/help', 'راهنما'),
+    ('/take', 'پاسخ به سنجه'),
+    ('/invite', 'دعوت'),
+    ('/join', 'دعوت همکار'),
+    ('/c', 'دعوت گروهی'),
+]
+
+
 class Website(models.Model):
     _inherit = 'website'
+
+    # ------------------------------------------------------------------ QWeb helpers (website 4 templates)
+    @api.model
+    def ts_jalali_str(self, value, words=False):
+        """ISO date / date -> '۱۴۰۵/۰۷/۲۰' for ts_website.jdate (server-side prefill, so the field works without JS)."""
+        from odoo.addons.ts_website.tools import format_jalali
+        return format_jalali(value, words=words)
+
+    @api.model
+    def ts_fallback_title(self, path):
+        """Persian page name for a page rendered without additional_title (else the English view name leaks into
+        <title>, audit G4 PT5). '' when the path is unknown."""
+        path = path or ''
+        for prefix, name in TS_TITLES:
+            if path == prefix or path.startswith(prefix + '/'):
+                return name
+        return ''
 
     @api.model
     def _ts_site(self):

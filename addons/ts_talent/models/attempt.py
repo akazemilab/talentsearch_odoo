@@ -45,6 +45,17 @@ class TsAttempt(models.Model):
             a.answered_count = n
             a.progress = 100 if a.state == 'done' else min(99, int(round(100.0 * n / (per * fields_n))))
 
+    def ts_informal(self):
+        """The talent inventory targets students (15+): a self-taken attempt outside any panel is addressed
+        with «تو» unless a panel or client says otherwise (copy register only)."""
+        self.ensure_one()
+        if self.ts_is_matrix():
+            ws = self['workspace_id'] if 'workspace_id' in self._fields else False
+            client = self['client_id'] if 'client_id' in self._fields else False
+            if not ws and not (client and client.age_group == 'adult'):
+                return True
+        return super().ts_informal()
+
     def ts_fields_sorted(self):
         return self.field_ids.sorted('sequence')
 
@@ -133,6 +144,18 @@ class TsAttempt(models.Model):
         field.write({'state': 'done', 'finished_at': fields.Datetime.now(), 'seconds': seconds,
                      'flag_straight': straight, 'flag_fast': seconds < EM.FAST_SECONDS})
         return 'ok'
+
+    def ts_reopen_field(self, field):
+        """Before the final submit a completed field can be opened again to correct answers (UX audit G1-P15-2).
+        Only the participant's own draft data changes; scoring, audit and locking still happen at submit."""
+        self._ts_check_open()
+        if field.attempt_id != self or field.state != 'done':
+            raise UserError('این زمینه را نمی‌شود دوباره باز کرد.')
+        self.ts_drop_empty_draft()
+        if self.ts_current_field():
+            raise UserError('ابتدا زمینهٔ در حال پاسخ را کامل کنید.')
+        field.write({'state': 'draft', 'finished_at': False, 'flag_straight': False, 'flag_fast': False})
+        return field
 
     # ------------------------------------------------------------ scoring
     def ts_engine_input(self):

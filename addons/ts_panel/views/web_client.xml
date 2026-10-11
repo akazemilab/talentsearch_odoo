@@ -11,21 +11,18 @@
                 <t t-call="website.layout" additional_title="title">
                     <div id="wrap" class="ts-page">
                         <t t-call="ts_panel.shell_frame">
+                            <a t-attf-href="/my/workspaces/#{ws.id}/clients" class="ts-backlink">شرکت‌کنندگان</a>
                             <header class="tsp-head">
                                 <div>
-                                    <p class="tsp-field__hint"><a t-attf-href="/my/workspaces/#{ws.id}/clients">← شرکت‌کنندگان</a></p>
-                                    <h1 class="tsp-head__title" t-out="c.name"/>
+                                    <h1 class="tsp-head__title"><bdi t-out="c.name"/></h1>
                                     <p class="tsp-head__help">
                                         <span t-if="c.source == 'import'" class="ts-pill ts-pill--info">واردشده از دادهٔ تاریخی</span>
                                         <span t-if="c.state == 'archived'" class="ts-pill">بایگانی</span>
                                     </p>
                                 </div>
                                 <div class="tsp-head__actions">
+                                    <a t-if="can_invite" t-attf-href="/my/workspaces/#{ws.id}/invites/new?fresh=1&amp;client=#{c.id}" class="ts-btn ts-btn--primary">دعوت به سنجه</a>
                                     <a t-if="can_write" t-attf-href="/my/workspaces/#{ws.id}/clients/#{c.id}/edit" class="ts-btn ts-btn--outline">ویرایش</a>
-                                    <form t-if="can_archive and c.state == 'active'" t-attf-action="/my/workspaces/#{ws.id}/clients/#{c.id}/archive" method="post" class="tsp-inline" data-tsp-once="1">
-                                        <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
-                                        <button type="submit" class="ts-btn ts-btn--quiet">بایگانی</button>
-                                    </form>
                                     <form t-if="can_archive and c.state == 'archived' and not c.merged_into_id" t-attf-action="/my/workspaces/#{ws.id}/clients/#{c.id}/restore" method="post" class="tsp-inline" data-tsp-once="1">
                                         <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
                                         <button type="submit" class="ts-btn ts-btn--outline">بازیابی</button>
@@ -47,23 +44,23 @@
                                         <dt>ایمیل</dt><dd><bdi dir="ltr" t-out="c.email or '—'"/></dd>
                                     </t>
                                     <t t-if="c.age_group == 'minor' and not c.contact_locked">
-                                        <dt>سرپرست</dt><dd><t t-out="c.guardian_name or '—'"/> <bdi dir="ltr" t-if="c.guardian_phone" t-out="c.guardian_phone"/></dd>
+                                        <dt>ولی</dt><dd><t t-out="c.guardian_name or '—'"/> <bdi dir="ltr" t-if="c.guardian_phone" t-out="c.guardian_phone"/></dd>
                                     </t>
-                                    <dt>حساب کاربری</dt><dd><t t-if="c.user_id">پیوند خورده</t><t t-else="">هنوز پیوند نخورده</t></dd>
+                                    <dt>حساب</dt><dd><t t-if="c.user_id">به حساب شرکت‌کننده وصل است</t><t t-else="">هنوز به حسابی وصل نشده</t></dd>
                                     <dt>آخرین فعالیت</dt><dd t-out="jalali(c.last_activity_at, with_time=False)"/>
                                 </dl>
                             </section>
 
                             <section class="ts-card" aria-labelledby="tsp-c-resp">
                                 <h2 id="tsp-c-resp" class="h5">کارشناس مسئول</h2>
-                                <p><t t-if="c.responsible_id"><strong t-out="c.responsible_id.user_id.name"/> (<t t-out="role_labels.get(c.responsible_id.role, c.responsible_id.role)"/>)</t><t t-else="">این شرکت‌کننده کارشناس مسئول ندارد.</t></p>
+                                <p><t t-if="c.responsible_id"><strong><bdi t-out="c.responsible_id.user_id.name"/></strong> (<t t-out="role_labels.get(c.responsible_id.role, c.responsible_id.role)"/>)</t><t t-else="">این شرکت‌کننده کارشناس مسئول ندارد (بدون کارشناس).</t></p>
                                 <t t-if="c.handover_to_id">
                                     <p class="tsp-flash" role="status">درخواست واگذاری به «<t t-out="c.handover_to_id.user_id.name"/>» از طرف «<t t-out="c.handover_by_id.user_id.name"/>» منتظر تأیید است.</p>
                                     <div t-if="can_assign" class="tsp-row-actions">
                                         <form t-attf-action="/my/workspaces/#{ws.id}/clients/#{c.id}/decide" method="post" class="tsp-inline" data-tsp-once="1">
                                             <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
                                             <input type="hidden" name="accept" value="1"/>
-                                            <button type="submit" class="ts-btn ts-btn--primary">تأیید واگذاری</button>
+                                            <button type="submit" class="ts-btn ts-btn--outline">تأیید واگذاری</button>
                                         </form>
                                         <form t-attf-action="/my/workspaces/#{ws.id}/clients/#{c.id}/decide" method="post" class="tsp-inline" data-tsp-once="1">
                                             <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
@@ -83,7 +80,7 @@
                                             </option>
                                         </select>
                                     </div>
-                                    <p><button type="submit" class="ts-btn ts-btn--primary">ذخیره</button></p>
+                                    <p><button type="submit" class="ts-btn ts-btn--outline">ذخیرهٔ کارشناس مسئول</button></p>
                                 </form>
                                 <form t-if="colleagues and not c.handover_to_id and c.state == 'active'" t-attf-action="/my/workspaces/#{ws.id}/clients/#{c.id}/handover" method="post" class="tsp-form" data-tsp-once="1">
                                     <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
@@ -132,7 +129,8 @@
                                         <tbody>
                                             <tr t-foreach="assignments" t-as="a">
                                                 <th scope="row" data-label="سنجه" t-out="a.instrument_id.name"/>
-                                                <td data-label="وضعیت"><span class="ts-pill" t-out="state_labels.get(a.state, a.state)"/></td>
+                                                <td data-label="وضعیت"><span class="ts-pill" t-out="state_labels.get(a.state, a.state)"/>
+                                                    <a t-if="can_manage_inv and a.state != 'done'" t-attf-href="/my/workspaces/#{ws.id}/invites/#{a.id}" class="tsp-row-link"><t t-if="a.state in ('invited', 'opened', 'accepted', 'in_progress', 'expired')">پیوند و یادآوری</t><t t-else="">جزئیات دعوت</t></a></td>
                                                 <td data-label="تاریخ" t-out="jalali(a.create_date, with_time=False)"/>
                                                 <td><a t-if="a.state == 'done' and level(a) != 'none'" t-attf-href="/my/workspaces/#{ws.id}/clients/#{c.id}/r/#{a.attempt_id.id}">نتیجه</a></td>
                                             </tr>
@@ -145,6 +143,17 @@
                                         </tbody>
                                     </table>
                                 </div>
+                            </section>
+
+                            <section t-if="can_archive and c.state == 'active'" class="ts-card" aria-labelledby="tsp-c-arch">
+                                <h2 id="tsp-c-arch" class="h5">بایگانی این شرکت‌کننده</h2>
+                                <form t-attf-action="/my/workspaces/#{ws.id}/clients/#{c.id}/archive" method="post" class="ts-confirm" data-tsp-once="1" role="group" aria-labelledby="tsp-c-arch-t">
+                                    <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                                    <p class="ts-confirm__title" id="tsp-c-arch-t">بایگانی <bdi t-out="c.name"/></p>
+                                    <p class="ts-confirm__consequence">از فهرست پیش‌فرض بیرون می‌رود و دعوت تازه نمی‌گیرد. سنجه‌ها و نتیجه‌هایش حذف نمی‌شوند و از پالایش «بایگانی‌شده» برمی‌گردد.</p>
+                                    <label class="ts-check"><input type="checkbox" name="confirm" value="1" required="required"/><span>مطمئنم، این شرکت‌کننده بایگانی شود</span></label>
+                                    <div class="ts-confirm__actions"><button type="submit" class="ts-btn ts-btn--danger-outline">بایگانی شرکت‌کننده</button></div>
+                                </form>
                             </section>
                         </t>
                     </div>

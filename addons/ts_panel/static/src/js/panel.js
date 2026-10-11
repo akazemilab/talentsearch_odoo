@@ -11,9 +11,17 @@
         var scrim = shell.querySelector('.tsp-scrim');
         var openers = document.querySelectorAll('[data-tsp-open]');
         var lastOpener = null;
+        var mq = window.matchMedia('(min-width: 1024px)');
         shell.setAttribute('data-js', '1');
+        // A closed drawer is out of the focus order and the accessibility tree (it was reported as unnamed links, PT13).
+        function syncInert() {
+            var closed = !mq.matches && !shell.hasAttribute('data-open');
+            rail.inert = closed;
+            if (closed) { rail.setAttribute('aria-hidden', 'true'); } else { rail.removeAttribute('aria-hidden'); }
+        }
         function setOpen(open, opener) {
             if (open) { shell.setAttribute('data-open', '1'); } else { shell.removeAttribute('data-open'); }
+            syncInert();
             if (scrim) { scrim.hidden = !open; }
             openers.forEach(function (b) { b.setAttribute('aria-expanded', open ? 'true' : 'false'); });
             document.documentElement.style.overflow = open ? 'hidden' : '';
@@ -28,8 +36,8 @@
         openers.forEach(function (b) { b.addEventListener('click', function () { setOpen(!shell.hasAttribute('data-open'), b); }); });
         document.querySelectorAll('[data-tsp-close]').forEach(function (b) { b.addEventListener('click', function () { setOpen(false); }); });
         document.addEventListener('keydown', function (ev) { if (ev.key === 'Escape' && shell.hasAttribute('data-open')) { setOpen(false); } });
-        var mq = window.matchMedia('(min-width: 1024px)');
-        var onChange = function () { if (mq.matches && shell.hasAttribute('data-open')) { setOpen(false); } };
+        var onChange = function () { if (mq.matches && shell.hasAttribute('data-open')) { setOpen(false); } else { syncInert(); } };
+        syncInert();
         if (mq.addEventListener) { mq.addEventListener('change', onChange); } else if (mq.addListener) { mq.addListener(onChange); }
     }
 

@@ -2,7 +2,8 @@
 <odoo>
     <!-- Sign-in page of website 4 in Persian (the stock form carries English placeholders and buttons). Priority 99 so the
          replacement runs after auth_signup / auth_passkey extended the stock form. Field names stay the same as the stock
-         form (login, password, redirect, type) so /web/login handles the POST unchanged. -->
+         form (login, password, redirect, type) so /web/login handles the POST unchanged.
+         The mobile links keep the return path: /signup reads `next` (ts_sms), the sign-in page gets `redirect`. -->
     <record id="login_ts" model="ir.ui.view">
         <field name="name">TS: sign-in form</field>
         <field name="type">qweb</field>
@@ -17,10 +18,11 @@
                 <xpath expr="//h1[hasclass('visually-hidden')]" position="replace"/>
                 <xpath expr="//owl-component[@name='web.user_switch']" position="replace"/>
                 <xpath expr="//form[contains(@t-attf-class, 'oe_login_form')]" position="replace">
+                    <t t-set="ts_signup_url" t-value="('/signup?' + keep_query(next=redirect)) if redirect else '/signup'"/>
                     <div class="ts-auth">
                         <div class="ts-auth__card">
                             <h1>ورود به تلنت سرچ</h1>
-                            <p class="ts-hint" style="margin: 0">با ایمیل و گذرواژه وارد شوید. اگر با شمارهٔ موبایل ثبت‌نام کرده‌اید، <a href="/signup">ورود با کد پیامکی</a> را انتخاب کنید.</p>
+                            <p class="ts-hint ts-auth__intro">با ایمیل و رمز عبور وارد شوید. اگر با شمارهٔ موبایل ثبت‌نام کرده‌اید، <a t-att-href="ts_signup_url">با شمارهٔ موبایل وارد شوید</a>.</p>
                             <form class="oe_login_form ts-form" role="form" action="/web/login" method="post" onsubmit="this.action = '/web/login' + location.hash" data-captcha="login">
                                 <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
                                 <input type="hidden" name="type" value="password"/>
@@ -30,21 +32,92 @@
                                     <input type="email" name="login" t-att-value="login" id="login" class="ts-input" dir="ltr" required="required" autocapitalize="off" autocomplete="username" inputmode="email"/>
                                 </div>
                                 <div>
-                                    <label for="password">گذرواژه</label>
+                                    <label for="password">رمز عبور</label>
                                     <input type="password" name="password" id="password" class="ts-input" dir="ltr" required="required" autocomplete="current-password" t-att-autofocus="'autofocus' if login else None" maxlength="4096"/>
                                 </div>
                                 <p class="ts-form__error" t-if="error" role="alert" t-out="error"/>
                                 <p class="ts-notice" t-if="message" role="status" t-out="message"/>
                                 <button type="submit" class="ts-btn ts-btn--primary ts-btn--lg ts-btn--block">ورود</button>
                                 <div class="ts-auth__links">
-                                    <a href="/web/reset_password">گذرواژه را فراموش کرده‌اید؟</a>
-                                    <a href="/signup">حساب ندارید؟ ثبت‌نام با موبایل</a>
+                                    <a href="/web/reset_password">رمز عبور را فراموش کرده‌اید؟</a>
+                                    <a t-att-href="ts_signup_url">حساب ندارید؟ ثبت‌نام با موبایل</a>
                                 </div>
                             </form>
                         </div>
                     </div>
                 </xpath>
+                <!-- the empty editor drop zones of the stock page add blank space around the card -->
+                <xpath expr="//div[@id='oe_structure_login_top']" position="replace"/>
+                <xpath expr="//div[@id='oe_structure_login_bottom']" position="replace"/>
             </data>
+        </field>
+    </record>
+
+    <!-- Reset password on website 4 (audit G1-P5-1/2): the stock page is English («Reset password», «- or -»,
+         «Use a Passkey»), has no h1 and no gutter. Same POST contract as auth_signup: login (request), or token +
+         password + confirm_password (new password), plus csrf_token, redirect, token. -->
+    <record id="reset_password_ts" model="ir.ui.view">
+        <field name="name">TS: reset password</field>
+        <field name="type">qweb</field>
+        <field name="inherit_id" ref="auth_signup.reset_password"/>
+        <field name="website_id" ref="website_ts"/>
+        <field name="priority">99</field>
+        <field name="arch" type="xml">
+            <xpath expr="//t[@t-call='web.login_layout']" position="replace">
+                <t t-call="web.login_layout" additional_title.f="بازیابی رمز عبور">
+                    <div class="ts-auth">
+                        <div class="ts-auth__card">
+                            <t t-if="message">
+                                <h1>پیوند فرستاده شد</h1>
+                                <p class="ts-notice ts-notice--info" role="status" t-out="message"/>
+                                <p class="ts-hint ts-auth__intro">اگر تا چند دقیقهٔ دیگر ایمیلی نرسید، پوشهٔ هرزنامه را ببینید یا دوباره درخواست بدهید.</p>
+                                <a href="/web/login" class="ts-backlink">ورود به تلنت سرچ</a>
+                            </t>
+                            <t t-elif="token and invalid_token">
+                                <h1>این پیوند دیگر کار نمی‌کند</h1>
+                                <p class="ts-hint ts-auth__intro">پیوند تغییر رمز عبور مهلتش تمام شده یا یک بار استفاده شده است. پیوند تازه بگیرید.</p>
+                                <p class="ts-form__error" t-if="error" role="alert" t-out="error"/>
+                                <a href="/web/reset_password" class="ts-btn ts-btn--primary ts-btn--lg ts-btn--block">گرفتن پیوند تازه</a>
+                                <a href="/web/login" class="ts-backlink">ورود به تلنت سرچ</a>
+                            </t>
+                            <t t-else="">
+                                <t t-if="token">
+                                    <h1>رمز عبور تازه</h1>
+                                    <p class="ts-hint ts-auth__intro">رمز عبور تازه را دو بار بنویسید. پس از ذخیره، با همین رمز وارد می‌شوید.</p>
+                                </t>
+                                <t t-else="">
+                                    <h1>بازیابی رمز عبور</h1>
+                                    <p class="ts-hint ts-auth__intro">ایمیل حسابتان را بنویسید تا پیوند تغییر رمز عبور برایتان فرستاده شود. اگر با شمارهٔ موبایل ثبت‌نام کرده‌اید، رمز عبور ندارید؛ <a href="/signup">با شمارهٔ موبایل وارد شوید</a>.</p>
+                                </t>
+                                <form class="oe_reset_password_form ts-form" role="form" method="post" data-captcha="password_reset">
+                                    <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                                    <t t-if="token">
+                                        <div>
+                                            <label for="password">رمز عبور تازه</label>
+                                            <input type="password" name="password" id="password" class="ts-input" dir="ltr" required="required" autocomplete="new-password" autofocus="autofocus" maxlength="4096"/>
+                                        </div>
+                                        <div>
+                                            <label for="confirm_password">تکرار رمز عبور تازه</label>
+                                            <input type="password" name="confirm_password" id="confirm_password" class="ts-input" dir="ltr" required="required" autocomplete="new-password" maxlength="4096"/>
+                                        </div>
+                                    </t>
+                                    <div t-else="">
+                                        <label for="login">ایمیل</label>
+                                        <input type="text" name="login" t-att-value="login" id="login" class="ts-input" dir="ltr" required="required" autocapitalize="off" autocomplete="username" inputmode="email" autofocus="autofocus"/>
+                                    </div>
+                                    <p class="ts-form__error" t-if="error" role="alert" t-out="error"/>
+                                    <input type="hidden" name="redirect" t-att-value="redirect"/>
+                                    <input type="hidden" name="token" t-att-value="token"/>
+                                    <button type="submit" class="ts-btn ts-btn--primary ts-btn--lg ts-btn--block"><t t-if="token">ذخیرهٔ رمز عبور</t><t t-else="">فرستادن پیوند</t></button>
+                                    <div class="ts-auth__links">
+                                        <a t-attf-href="/web/login?{{ keep_query() }}">بازگشت به ورود</a>
+                                    </div>
+                                </form>
+                            </t>
+                        </div>
+                    </div>
+                </t>
+            </xpath>
         </field>
     </record>
 </odoo>

@@ -163,14 +163,14 @@ WB, WC = '/my/workspaces/%s' % B, '/my/workspaces/%s' % C
 # ---- the page
 st, body = get(own, W + '/exports')
 check('the exports page opens with its sections', st == 200 and body.count('<h1') == 1 and 'ساخت فایل شرکت‌کنندگان' in body
-      and 'ساخت فایل وضعیت' in body and 'ساخت فایل نتایج' in body, str(st))
+      and 'ساخت فایل وضعیت' in body and 'ساخت فایل نتیجه‌ها' in body, str(st))
 check('the menu has the exports item', W + '/exports' in get(own, W)[1])
 check('a counselor gets the 403 page', get(c1, W + '/exports')[0] == 403)
 st, body = get(hr, WB + '/exports')
-check('the hr admin of an employment panel sees the results export', st == 200 and 'ساخت فایل نتایج' in body)
+check('the hr admin of an employment panel sees the results export', st == 200 and 'ساخت فایل نتیجه‌ها' in body)
 check('a reviewer gets the 403 page', get(rv, WB + '/exports')[0] == 403)
 st, body = get(cow, WC + '/exports')
-check('a clinical panel owner may export clients but sees no results export', st == 200 and 'ساخت فایل شرکت‌کنندگان' in body and 'ساخت فایل نتایج' not in body, str(st))
+check('a clinical panel owner may export clients but sees no results export', st == 200 and 'ساخت فایل شرکت‌کنندگان' in body and 'ساخت فایل نتیجه‌ها' not in body, str(st))
 check('an anonymous visitor is sent to sign in', Client(TS).req(W + '/exports')[0] in (302, 303))
 e = Client('www.eot.ir')
 e.login(L['owner'], pw[L['owner']])
