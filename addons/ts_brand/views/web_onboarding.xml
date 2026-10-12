@@ -108,7 +108,7 @@
         <field name="inherit_id" ref="ts_panel.tpl_help_panel"/>
         <field name="website_id" ref="ts_website.website_ts"/>
         <field name="arch" type="xml">
-            <xpath expr="//nav[@aria-label='فهرست راهنما']/ul/li[a[@href='#credits']]" position="after">
+            <xpath expr="//a[@href='#credits']/.." position="after">
                 <li><a href="#center-setup">راهنمای راه‌اندازی مرکز مشاوره</a></li>
             </xpath>
             <xpath expr="//article[@id='credits']" position="after">
