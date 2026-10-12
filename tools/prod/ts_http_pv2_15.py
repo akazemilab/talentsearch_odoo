@@ -144,7 +144,7 @@ check('eot.ir account page is stock (no name form of ours)', 'acc-name' not in g
 st, body = get(res, '/my/sharing')
 check('the sharing page lists the three panels', st == 200 and all(n in body for n in ('پنل S15 یک', 'پنل S15 دو', 'پنل S15 سه')), str(st))
 check('...with the level in words and the specialist state', 'بدون پاسخ‌های خام' in body and 'هنوز تعیین نشده' in body)
-check('...a revoke button for each', body.count('لغو اشتراک با این پنل') >= 3)
+check('...a revoke button for each', body.count('قطع اشتراک‌گذاری با این پنل') >= 3)
 check('...views by role and date, never a name', 'مشاور' in body and 'ts-sharing-row' in body)
 check('...the panel that has not opened it says so', 'هنوز نتیجه را باز نکرده است' in body)
 st, body = get(new, '/my/sharing')
@@ -159,7 +159,7 @@ check('...it is now none in the database', "'none'" in q("select share_level fro
 check('...a share_revoke ledger row exists', "(1,)" in q("select count(*) from ts_consent_record where assignment_id=%s and kind='share_revoke'" % sid) or
       "(2,)" in q("select count(*) from ts_consent_record where assignment_id=%s and kind='share_revoke'" % sid))
 body = get(res, '/my/sharing')[1]
-check('...the page shows two active panels and the send-to-counselor link again', body.count('لغو اشتراک با این پنل') == 2 and '/share' in body)
+check('...the page shows two active panels and the send-to-counselor link again', body.count('قطع اشتراک‌گذاری با این پنل') == 2 and '/share' in body)
 revoked_ws = q("select workspace_id from ts_assignment where id=%s" % sid)
 wid = re.search(r'\d+', revoked_ws).group(0)
 wcode = re.search(r"'([^']+)'", q("select code from ts_workspace where id=%s" % wid)).group(1)

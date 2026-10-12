@@ -37,7 +37,7 @@ class TsAssignmentConsent(models.Model):
         """What the panel sees of the result, in words for the participant (PRV-2)."""
         self.ensure_one()
         if self.share_level == 'none':
-            return 'اشتراک لغو شده است'
+            return 'اشتراک‌گذاری قطع شده است'
         purpose = self.workspace_id.purpose
         return LEVEL_WORDS['education'] if purpose == 'education' else (
             LEVEL_WORDS['clinical'] if purpose == 'clinical' else LEVEL_WORDS['summary'])

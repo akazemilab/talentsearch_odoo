@@ -302,7 +302,7 @@
 
                             <t t-if="r['level'] != 'summary'">
                                 <section class="ts-card">
-                                    <p t-if="a.state == 'done'">داوطلب ارزیابی را تمام کرده، اما اشتراک نتیجه را نپذیرفته یا لغو کرده است.</p>
+                                    <p t-if="a.state == 'done'">داوطلب ارزیابی را تمام کرده، اما اشتراک‌گذاری نتیجه را نپذیرفته یا قطع کرده است.</p>
                                     <p t-elif="r['progress'] and r['progress'][1]">داوطلب <t t-out="fa(r['progress'][0])"/> بخش از <t t-out="fa(r['progress'][1])"/> بخش را تمام کرده است.</p>
                                     <p t-else="">داوطلب هنوز ارزیابی را شروع نکرده است.</p>
                                     <div t-if="url" class="tsh-link">

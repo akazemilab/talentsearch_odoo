@@ -8,7 +8,7 @@ TYPES = [
     ('result_ready_participant', 'نتیجهٔ شما آماده است'),
     ('result_ready_staff', 'نتیجهٔ تازه در پنل شما'),             # clinic phase 5 (docs/clinic/05_sms_texts.md section 3)
     ('shared_with_panel', 'نتیجه با پنل به اشتراک گذاشته شد'),
-    ('share_revoked', 'اشتراک یک نتیجه لغو شد'),
+    ('share_revoked', 'اشتراک‌گذاری یک نتیجه قطع شد'),
     ('panel_approved', 'پنل تأیید شد'),
     ('panel_rejected', 'پنل تأیید نشد'),
     ('panel_suspended', 'پنل معلق شد'),
@@ -47,7 +47,7 @@ PREF_LABELS = {
     'result_ready_participant': 'آماده‌شدن نتیجهٔ خودم',
     'result_ready_staff': 'آماده‌شدن نتیجهٔ شرکت‌کنندگان من',
     'shared_with_panel': 'به‌اشتراک‌گذاری نتیجه با پنل',
-    'share_revoked': 'لغو اشتراک نتیجه',
+    'share_revoked': 'قطع اشتراک‌گذاری نتیجه',
     'panel_approved': 'تأیید پنل',
     'panel_rejected': 'رد پنل',
     'panel_suspended': 'تعلیق پنل',

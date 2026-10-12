@@ -142,7 +142,8 @@
     </record>
 
     <!-- Progressive disclosure: an element with data-ts-show="name=v1|v2;other=v" is shown only while every named control
-         of its form has one of the values. Without JavaScript everything stays visible (labels say when a field applies). -->
+         of its form has one of the values; a control inside it marked data-ts-req is required only while it is shown. Without
+         JavaScript everything stays visible and nothing is required by the browser (labels say when a field applies). -->
     <record id="tpl_reveal_js" model="ir.ui.view">
         <field name="name">TS: reveal dependent fields</field>
         <field name="type">qweb</field>
@@ -169,6 +170,7 @@
                     return values(scope, kv[0]).some(function (v) { return want.indexOf(v) !== -1; });
                 });
                 n.hidden = !ok;
+                n.querySelectorAll('[data-ts-req]').forEach(function (el) { el.required = ok; });
             });
         }
         document.addEventListener('change', update);
@@ -255,19 +257,19 @@
                                 <a t-attf-href="/my/assessments/#{attempt.id}" class="ts-backlink">نتیجهٔ این سنجه</a>
                                 <div class="ts-section__head">
                                     <h1>ارسال برای مشاورم</h1>
-                                    <p>مشاور شما یک «کد پنل» دارد. با وارد کردن آن، فقط بازهٔ هر زمینه در نتیجهٔ شما برای مشاور دیده می‌شود. پاسخ‌های خام هرگز دیده نمی‌شوند و هر زمان بخواهید اشتراک را لغو می‌کنید.</p>
+                                    <p>مشاور شما یک «کد پنل» دارد. با وارد کردن آن، فقط بازهٔ هر زمینه در نتیجهٔ شما برای مشاور دیده می‌شود. پاسخ‌های خام هرگز دیده نمی‌شوند و هر زمان بخواهید اشتراک‌گذاری را قطع می‌کنید.</p>
                                 </div>
                                 <p t-if="error" class="ts-notice ts-notice--warn" role="alert" t-out="error"/>
                                 <div t-if="owned_by" class="ts-card ts-card--soft" role="status">
                                     <h2 class="h5">این نتیجه از قبل به یک پنل رسیده است</h2>
                                     <p t-if="owned_by">این سنجه به دعوت پنل «<bdi t-out="owned_by.ts_public_name()"/>» انجام شده و همان پنل، طبق اجازه‌ای که داده‌اید، آن را می‌بیند. ارسال دوباره با کد پنل لازم نیست.</p>
-                                    <p><a href="/my/sharing" class="ts-btn ts-btn--outline">دیدن یا لغو اشتراک در «چه کسی می‌بیند»</a></p>
+                                    <p><a href="/my/sharing" class="ts-btn ts-btn--outline">دیدن یا قطع اشتراک‌گذاری در «چه کسی می‌بیند»</a></p>
                                 </div>
                                 <t t-else="">
                                     <div t-if="shares" class="ts-notice" role="status">
                                         این نتیجه هم‌اکنون با این پنل‌ها به اشتراک گذاشته شده است:
                                         <strong><bdi t-out="'، '.join(w.ts_public_name() for w in shares.workspace_id)"/></strong>.
-                                        <a href="/my/sharing">مدیریت اشتراک‌ها</a>
+                                        <a href="/my/sharing">مدیریت اشتراک‌گذاری‌ها</a>
                                     </div>
                                     <form t-if="not ws" t-attf-action="/my/assessments/#{attempt.id}/share" method="get" class="ts-form">
                                         <label for="ts_sh_code">کد پنل</label>

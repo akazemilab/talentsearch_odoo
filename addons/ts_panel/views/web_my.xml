@@ -200,7 +200,7 @@
                         <section class="tsp-section container" style="max-width:860px">
                             <h1 class="tsp-head__title">چه کسی نتیجه‌های من را می‌بیند؟</h1>
                             <t t-call="ts_panel.my_nav" active.f="sharing"/>
-                            <p class="ts-hint"><t t-if="tu">پاسخ‌های خامت را هیچ پنلی نمی‌بیند. هر نتیجه را می‌توانی با حداکثر <t t-out="fa(limit)"/> پنل به اشتراک بگذاری.</t><t t-else="">پاسخ‌های خام شما را هیچ پنلی نمی‌بیند. هر نتیجه را می‌توانید با حداکثر <t t-out="fa(limit)"/> پنل به اشتراک بگذارید.</t> <a class="tsp-what" href="/help/panel#sharing">اشتراک چطور کار می‌کند؟</a></p>
+                            <p class="ts-hint"><t t-if="tu">پاسخ‌های خامت را هیچ پنلی نمی‌بیند. هر نتیجه را می‌توانی با حداکثر <t t-out="fa(limit)"/> پنل به اشتراک بگذاری.</t><t t-else="">پاسخ‌های خام شما را هیچ پنلی نمی‌بیند. هر نتیجه را می‌توانید با حداکثر <t t-out="fa(limit)"/> پنل به اشتراک بگذارید.</t> <a class="tsp-what" href="/help/panel#sharing">اشتراک‌گذاری چطور کار می‌کند؟</a></p>
                             <p t-if="ok" class="tsp-flash" role="status" t-out="ok"/>
                             <p t-if="error" class="tsp-flash tsp-flash--err" role="alert" t-out="error"/>
                             <div t-if="not blocks" class="ts-card ts-card--soft">
@@ -235,7 +235,7 @@
                                             </ul>
                                         </div>
                                         <div class="ts-hint" t-else="">این پنل هنوز نتیجه را باز نکرده است.</div>
-                                        <p><a t-attf-href="/my/sharing/#{s['aid']}/revoke" class="ts-btn ts-btn--outline ts-btn--sm">لغو اشتراک با این پنل</a></p>
+                                        <p><a t-attf-href="/my/sharing/#{s['aid']}/revoke" class="ts-btn ts-btn--outline ts-btn--sm">قطع اشتراک‌گذاری با این پنل</a></p>
                                     </li>
                                 </ul>
                                 <p t-if="b['can_share'] and len(act) &lt; limit">
@@ -257,11 +257,11 @@
         <field name="website_id" ref="ts_website.website_ts"/>
         <field name="arch" type="xml">
             <t t-name="ts_panel.my_sharing_revoke">
-                <t t-call="website.layout" additional_title.f="لغو اشتراک">
+                <t t-call="website.layout" additional_title.f="قطع اشتراک‌گذاری">
                     <div id="wrap" class="ts-page">
                         <section class="tsp-section container" style="max-width:640px">
                             <a t-att-href="'/my/assessments/%s' % a.attempt_id.id if back == 'report' else '/my/sharing'" class="ts-backlink"><t t-if="back == 'report'">گزارش</t><t t-else="">چه کسی می‌بیند</t></a>
-                            <h1 class="tsp-head__title">لغو اشتراک با «<bdi t-out="panel"/>»</h1>
+                            <h1 class="tsp-head__title">قطع اشتراک‌گذاری با «<bdi t-out="panel"/>»</h1>
                             <t t-call="ts_panel.my_nav" active.f="sharing"/>
                             <div class="ts-card ts-confirm tsp-confirm" id="ts-revoke-confirm">
                                 <ul>
@@ -280,7 +280,7 @@
                                     <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
                                     <input t-if="back" type="hidden" name="back" t-att-value="back"/>
                                     <p>
-                                        <button type="submit" class="ts-btn ts-btn--danger"><t t-if="tu">بله، لغو کن</t><t t-else="">بله، اشتراک لغو شود</t></button>
+                                        <button type="submit" class="ts-btn ts-btn--danger"><t t-if="tu">بله، قطع کن</t><t t-else="">بله، اشتراک‌گذاری قطع شود</t></button>
                                         <a t-att-href="'/my/assessments/%s' % a.attempt_id.id if back == 'report' else '/my/sharing'" class="ts-btn ts-btn--quiet">انصراف</a>
                                     </p>
                                 </form>
@@ -310,9 +310,9 @@
                             <div class="ts-card" id="prv-export">
                                 <h2>دریافت نسخه‌ای از داده‌های من</h2>
                                 <p t-if="resumed_export" class="tsp-flash tsp-flash--ok" role="status"><t t-if="tu">هویتت تأیید شد. برای ساختن فایل، دکمهٔ «درخواست نسخهٔ داده‌ها» را بزن.</t><t t-else="">هویت شما تأیید شد. برای ساختن فایل، دکمهٔ «درخواست نسخهٔ داده‌ها» را بزنید.</t></p>
-                                <t t-if="tu"><p>یک فایل فشرده ساخته می‌شود با اطلاعات حسابت، سنجه‌ها، نتیجه‌ها، اشتراک‌ها و موافقت‌هایت (به شکل JSON و CSV). پاسخ‌های خام در این فایل نیست؛ پاسخ‌هایت را در صفحهٔ هر گزارش می‌بینی. پیوند دریافت ۲۴ ساعت باز است.</p>
+                                <t t-if="tu"><p>یک فایل فشرده ساخته می‌شود با اطلاعات حسابت، سنجه‌ها، نتیجه‌ها، اشتراک‌گذاری‌ها و موافقت‌هایت (به شکل JSON و CSV). پاسخ‌های خام در این فایل نیست؛ پاسخ‌هایت را در صفحهٔ هر گزارش می‌بینی. پیوند دریافت ۲۴ ساعت باز است.</p>
                                     <p class="ts-hint">پیش از ساختن فایل، برای امنیت، هویتت دوباره پرسیده می‌شود.</p></t>
-                                <t t-else=""><p>یک فایل فشرده ساخته می‌شود با اطلاعات حساب، سنجه‌ها، نتیجه‌ها، اشتراک‌ها و موافقت‌های شما (به شکل JSON و CSV). پاسخ‌های خام در این فایل نیست؛ پاسخ‌هایتان را در صفحهٔ هر گزارش می‌بینید. پیوند دریافت ۲۴ ساعت باز است.</p>
+                                <t t-else=""><p>یک فایل فشرده ساخته می‌شود با اطلاعات حساب، سنجه‌ها، نتیجه‌ها، اشتراک‌گذاری‌ها و موافقت‌های شما (به شکل JSON و CSV). پاسخ‌های خام در این فایل نیست؛ پاسخ‌هایتان را در صفحهٔ هر گزارش می‌بینید. پیوند دریافت ۲۴ ساعت باز است.</p>
                                     <p class="ts-hint">پیش از ساختن فایل، برای امنیت، هویت شما دوباره پرسیده می‌شود.</p></t>
                                 <form action="/my/privacy/export" method="post" data-tsp-once="1">
                                     <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
@@ -321,8 +321,8 @@
                             </div>
                             <div class="ts-card" id="prv-erase">
                                 <h2>درخواست حذف داده‌ها</h2>
-                                <p t-if="tu">با این درخواست، نتیجه‌ها و پاسخ‌هایت حذف و اشتراک‌هایت لغو می‌شود. پیش از ثبت، در صفحهٔ بعد می‌بینی دقیقاً چه چیزی حذف می‌شود.</p>
-                                <p t-else="">با این درخواست، نتیجه‌ها و پاسخ‌های شما حذف و اشتراک‌هایتان لغو می‌شود. پیش از ثبت، در صفحهٔ بعد می‌بینید دقیقاً چه چیزی حذف می‌شود.</p>
+                                <p t-if="tu">با این درخواست، نتیجه‌ها و پاسخ‌هایت حذف و اشتراک‌گذاری‌هایت قطع می‌شود. پیش از ثبت، در صفحهٔ بعد می‌بینی دقیقاً چه چیزی حذف می‌شود.</p>
+                                <p t-else="">با این درخواست، نتیجه‌ها و پاسخ‌های شما حذف و اشتراک‌گذاری‌هایتان قطع می‌شود. پیش از ثبت، در صفحهٔ بعد می‌بینید دقیقاً چه چیزی حذف می‌شود.</p>
                                 <a href="/my/privacy/erase" class="ts-btn ts-btn--outline">درخواست حذف داده‌ها…</a>
                             </div>
                             <div class="ts-card" id="prv-list">
@@ -374,14 +374,14 @@
                                 <h2 class="h5">با ثبت این درخواست:</h2>
                                 <ul t-if="tu">
                                     <li>نتیجه‌ها و پاسخ‌هایت حذف می‌شود.</li>
-                                    <li t-if="shared">اشتراک نتیجه‌هایت با پنل‌ها (<t t-out="fa(shared)"/> مورد) لغو می‌شود و آن پنل‌ها دیگر نتیجه را نمی‌بینند.</li>
+                                    <li t-if="shared">اشتراک‌گذاری نتیجه‌هایت با پنل‌ها (<t t-out="fa(shared)"/> مورد) قطع می‌شود و آن پنل‌ها دیگر نتیجه را نمی‌بینند.</li>
                                     <li>شمار استفادهٔ پنل‌ها، بدون نام و بدون محتوا، باقی می‌ماند.</li>
                                     <li>درخواست تا ۳۰ روز بررسی می‌شود و وضعیتش را در «داده‌های من» می‌بینی.</li>
                                     <li>بعد از ثبت، درخواست را از این‌جا نمی‌شود پس گرفت؛ اگر پرسشی داشتی با پشتیبانی تماس بگیر.</li>
                                 </ul>
                                 <ul t-else="">
                                     <li>نتیجه‌ها و پاسخ‌های شما حذف می‌شود.</li>
-                                    <li t-if="shared">اشتراک نتیجه‌های شما با پنل‌ها (<t t-out="fa(shared)"/> مورد) لغو می‌شود و آن پنل‌ها دیگر نتیجه را نمی‌بینند.</li>
+                                    <li t-if="shared">اشتراک‌گذاری نتیجه‌های شما با پنل‌ها (<t t-out="fa(shared)"/> مورد) قطع می‌شود و آن پنل‌ها دیگر نتیجه را نمی‌بینند.</li>
                                     <li>شمار استفادهٔ پنل‌ها، بدون نام و بدون محتوا، باقی می‌ماند.</li>
                                     <li>درخواست تا ۳۰ روز بررسی می‌شود و وضعیتش را در «داده‌های من» می‌بینید.</li>
                                     <li>بعد از ثبت، درخواست را از این‌جا نمی‌توان پس گرفت؛ اگر پرسشی دارید با پشتیبانی تماس بگیرید.</li>
@@ -479,10 +479,10 @@
                             <li t-foreach="ws_act" t-as="s">
                                 <strong t-out="s.workspace_id.ts_public_name()"/> — <t t-out="s.ts_level_word()"/>
                                 <t t-if="s.invited_by_id == attempt.user_id"> (خودتان فرستادید)</t><t t-else=""> (به دعوت همین پنل)</t>
-                                · <a t-attf-href="/my/sharing/#{s.id}/revoke?back=report">لغو اشتراک</a>
+                                · <a t-attf-href="/my/sharing/#{s.id}/revoke?back=report">قطع اشتراک‌گذاری</a>
                             </li>
                         </ul>
-                        <p>پاسخ‌های خام شما را هیچ پنلی نمی‌بیند. <a href="/my/sharing">مدیریت اشتراک‌ها و دیدن اینکه چه کسی نتیجه را باز کرده است</a></p>
+                        <p>پاسخ‌های خام شما را هیچ پنلی نمی‌بیند. <a href="/my/sharing">مدیریت اشتراک‌گذاری‌ها و دیدن اینکه چه کسی نتیجه را باز کرده است</a></p>
                     </section>
                 </t>
             </t>
