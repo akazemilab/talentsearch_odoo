@@ -209,5 +209,9 @@ items4, keys4 = at4._ts_items(json.loads(at4.task_json), 0)
 at4.ts_task_finish(0, responses=[{'c': k, 'rt': 400, 't': 85000} for k in keys4[:30]])
 check('H39 a speed block claiming more time than passed is flagged', json.loads(at4.task_json)['blocks'][0]['meta'].get('timing') == 1)
 check('H40 the mail server is chosen by the sender domain only', A._ts_mail_server().from_filter in (False, 'sepehrtherapy.ir'))
+clin = panel('clinical', 'مرکز آزمون بالینی HR')
+cm = M.create({'workspace_id': clin.id, 'user_id': puser().id, 'role': 'owner'})
+check('H41 HR instruments are not offered outside employment panels',
+      not cm.allowed_instruments().filtered('invite_only') and hr.allowed_instruments().filtered('invite_only'))
 
 print('SUMMARY %d/%d passed' % (sum(1 for _, ok in results if ok), len(results)))
