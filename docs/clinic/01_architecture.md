@@ -33,7 +33,7 @@ company in Rial; six starter batteries; Persian name «استعدادیاب».
 | Institution admin | member role `owner` (or `clinic_director`) | exists | sees credit, caps, all results (`owner:clin`) |
 | Counselor | member role `clinician`, verified, `license_number` | exists | + title, photo, signature, monthly cap, own usage |
 | Client | portal user (mobile OTP) + `ts.panel.client` | exists | takes a battery as one invitation |
-| Accountant (later) | native account groups | - | sees invoices and payments only; never counseling data (Phase 3b hides participant partners) |
+| Accountant (later) | native account groups | - | sees invoices and payments; participant contacts stay visible in the back office (owner 2026-10-12: Phase 3b hiding cancelled) |
 
 Counselors sign in with the existing mobile-OTP flow (`/signup`), join the panel through the existing colleague invite
 (`ts.member.invite`, phone-bound), and are verified by the super admin as today. Sepehr's 9 counselors are created this
@@ -212,8 +212,7 @@ Phase 5 as built: templates live in `ts_brand` (not `ts_sms`), see `05_sms_texts
 - No change to attempt/answer/result ACLs or to `result_level()`. Battery views call it per attempt.
 - New audit events (`ts.audit.event`): `catalog.change`, `credit.hold`, `credit.release`, `credit.debit`,
   `credit.topup`, `credit.cap`, `report.pdf`.
-- Accountants: native account groups only; participant partners are hidden from CRM/accounting users by Phase 3b
-  (`ts_participant` flag) before the first real invoice. Invoices name the institution, never a client.
+- Accountants: native account groups only. Participant contacts stay visible in the back office (owner 2026-10-12, Phase 3b hiding cancelled); invoices name the institution, never a client; back-office access = who is given an internal user.
 - SMS never carries result content (existing rule).
 
 ## 8. Modules and files
