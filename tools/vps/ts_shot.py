@@ -28,6 +28,22 @@ WIDTHS = tuple(int(x) for x in os.environ.get('TS_SHOT_WIDTHS', '1280,375').spli
 DARK = tuple(int(x) for x in os.environ.get('TS_SHOT_DARK', '').split(',') if x)   # extra dark-theme pass (contrast + png)
 CHROME = '/snap/chromium/current/usr/lib/chromium-browser/chrome'
 LOCAL = 10000 + int(PORT)          # one tunnel per clone port: a stale 18071 tunnel once pointed the shots at another slot's clone
+
+
+def _drop_stale_tunnels():
+    """An ssh tunnel already listening on LOCAL but forwarding to another prod port is killed (2026-10-12: an Oct-1 tunnel
+    18071 -> prod:8073 made a whole slot-0 matrix photograph slot 1's clone; every sign-in failed and every token was 404)."""
+    out = subprocess.run(['ps', '-eo', 'pid=,args='], capture_output=True, text=True).stdout
+    for line in out.splitlines():
+        pid, _sp, cmd = line.strip().partition(' ')
+        m = re.search(r'\bssh\b.*-L\s*(?:127\.0\.0\.1:)?%d:([^:\s]+):(\d+)' % LOCAL, cmd)
+        if m and m.group(2) != str(PORT):
+            print('stale tunnel %s -> %s:%s killed (pid %s)' % (LOCAL, m.group(1), m.group(2), pid), flush=True)
+            subprocess.run(['kill', pid])
+            time.sleep(1)
+
+
+_drop_stale_tunnels()
 subprocess.run('ssh -fN -o ExitOnForwardFailure=yes -L %s:127.0.0.1:%s eot-odoo-prod 2>/dev/null || true' % (LOCAL, PORT), shell=True)
 os.makedirs('/root/ts-jobs/shots', exist_ok=True)
 EN = re.compile(r'\b(Loading|Search|Submit|Login|Log in|Sign in|Logout|My Account|Home|Next|Previous|Back|Save|Cancel|Delete|Edit|Error|Page Not Found|Powered by|Skip to Content|Enter your|Passkey|Password|Email|or|OdooBot)\b')
