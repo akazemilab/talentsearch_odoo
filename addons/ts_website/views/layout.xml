@@ -37,7 +37,9 @@
                     </t>
                 </xpath>
                 <xpath expr="//a[hasclass('o_skip_to_content')]" position="replace">
-                    <a class="o_skip_to_content ts-skip" href="#wrap" groups="!base.group_user">پرش به محتوا</a>
+                    <!-- visually-hidden-focusable (Bootstrap, !important) hides it at rest on every page whatever the cascade;
+                         .ts-skip only styles the focused state -->
+                    <a class="o_skip_to_content ts-skip visually-hidden-focusable" href="#wrap" groups="!base.group_user">پرش به محتوا</a>
                 </xpath>
                 <xpath expr="//header[@id='top']" position="replace">
                     <t t-set="ts_path" t-value="request.httprequest.path"/>

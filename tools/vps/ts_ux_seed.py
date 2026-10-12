@@ -83,7 +83,8 @@ def likert(state):
 step('likert', lambda: likert('progress'))
 
 tok = lambda k: R[k].access_token if k in R else None
-pub = ['/panel', '/panel/terms', '/signup', '/web/login', '/web/reset_password', '/help/panel', '/assessments/%s' % inst.slug,
+pub = ['/panel', '/panel/terms', '/signup', 'POSTSHOT /signup/send phone=09127770375&next=/my',   # code step (ts_ui_matrix.sh seeds it)
+       '/web/login', '/web/reset_password', '/help/panel', '/assessments/%s' % inst.slug,
        '/my/workspaces/new', '/contact?topic=credit']     # «درخواست شارژ اعتبار» without a panel (signed out)
 if 'pending' in R: pub.append('/invite/%s' % R['pending'].token)
 if 'minv' in R and R['minv']: pub.append('/join/%s' % R['minv'].token)

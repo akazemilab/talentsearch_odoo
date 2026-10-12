@@ -278,6 +278,15 @@ def audit(p, login, paths):
                 page.keyboard.press('Tab')   # keyboard modality, so :focus-visible styles apply to programmatic focus
                 nofocus = page.evaluate(FOCUS_JS)
                 if nofocus: probs.append('no-focus-ring ' + '|'.join(nofocus))
+            # the shot shows the page at rest: the Tab above lands on the skip link, which is drawn only while focused
+            page.evaluate("() => { const a = document.activeElement; if (a && a !== document.body && a.blur) { a.blur(); } }")
+            skip = page.evaluate("""() => { const s = document.querySelector('.o_skip_to_content');
+              if (!s) { return 0; } const r = s.getBoundingClientRect(), c = getComputedStyle(s);
+              return (c.display !== 'none' && c.visibility !== 'hidden' && r.width > 2 && r.height > 2
+                      && !/inset\\(50%\\)/.test(c.clipPath) && c.clip.indexOf('rect(0') !== 0) ? Math.round(r.width) : 0; }""")
+            if skip:
+                bad += 0 if probs else 1
+                probs.append('skip-link-visible %dpx' % skip)
             page.screenshot(path=stem + '.png', full_page=True)
             print('%s %-4s %-40s %s%s' % (r.status if r else '-', w, path[:40], '; '.join(probs) or 'ok', info), flush=True)
         for w in DARK:

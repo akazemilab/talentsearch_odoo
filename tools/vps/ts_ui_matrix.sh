@@ -10,6 +10,29 @@ DB=$1; PORT=$2; OUT=$3; SLOT=${TS_SLOT:-0}
 if [ "$SLOT" = 0 ]; then STAGE=/opt/odoo/talentsearch_stage; REPO=/root/talentsearch_odoo
 else STAGE=/opt/odoo/talentsearch_stage_s$SLOT; REPO=/root/ts_wt_s$SLOT; fi
 SHELL_CMD="cd /tmp && sudo -u odoo env HOME=/opt/odoo /opt/odoo/venv/bin/python3 /opt/odoo/odoo/odoo-bin shell -c /etc/odoo20.conf -d $DB --db-filter='^$DB\$' --addons-path=$STAGE/addons,/opt/odoo/themes,/opt/odoo/enterprise,/opt/odoo/odoo/addons --no-http --log-level=error"
+case "$DB" in eot_ts*) ;; *) echo "!! shots run on eot_ts* clones only"; exit 2 ;; esac
+# onb1: the mobile sign-in (S-AUTH) renders only while codes can be sent. On the clone SMS is switched on with Kavenegar
+# pointed at the discard port of the clone host (nothing listens there) and a dummy key, so no SMS can ever leave it;
+# invitation/result SMS stay off. A pending code for 09127770375 (created «tomorrow», so its resend wait never ends)
+# lets the matrix capture the code step: POSTSHOT /signup/send with that number.
+echo "=== $(date +%T) sms on (dead endpoint)"
+ssh eot-odoo-prod "$SHELL_CMD" <<'PY' 2>&1 | grep -E '^SHOTSMS|Error' | tail -3
+from datetime import timedelta
+from odoo import fields
+assert env.cr.dbname.startswith('eot_ts'), env.cr.dbname
+env['ir.config_parameter'].sudo().set_str('ts_kavenegar.api_base', 'http://127.0.0.1:9/v1/%s/%s.json')
+c = env.company.sudo()
+c.write({'kv_lines': '10004346'})
+c.write({'kv_enabled': True, 'kv_api_key': 'SHOTS-NO-SEND', 'kv_sender': '10004346', 'ts_sms_otp': True,
+         'ts_sms_invite': False, 'ts_sms_result': False})
+P, O = '09127770375', env['ts.signup.otp'].sudo()
+O.search([('phone', '=', P)]).unlink()
+env['ts.signup.lock'].sudo().search([('phone', '=', P)]).unlink()
+r = O.create({'phone': P, 'salt': 'shots', 'code_hash': '0' * 64, 'expires_at': fields.Datetime.now() + timedelta(days=2)})
+env.cr.execute("update ts_signup_otp set create_date = now() + interval '1 day' where id = %s", [r.id])
+env.cr.commit()
+print('SHOTSMS on: kavenegar -> 127.0.0.1:9 (dead), otp', bool(c.kv_enabled and c.ts_sms_otp), 'code step for', P)
+PY
 echo "=== $(date +%T) seed"
 ssh -n eot-odoo-prod "TS_SLOT=$SLOT PYTHONIOENCODING=utf-8 python3 -u $STAGE/tools/prod/ts_http_pv2_19.py $DB $PORT 2>&1 | grep -E '^(FAIL|SUMMARY)'"
 if [ "${TS_SHOT_WIDTHS:-}" = ux ]; then

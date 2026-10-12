@@ -22,7 +22,9 @@ a2 = attempt(U['owner'], oth, True)
 done = A.search([('user_id', '=', U['owner'].id), ('state', '=', 'done')], limit=1)
 env.cr.commit()
 pub = ['/', '/schools', '/assessments', '/assessments?all=1', '/assessments/%s' % tal.slug, '/panel', '/pricing', '/contact',
-       '/privacy', '/contact/thanks', '/help/panel', '/web/login', '/signup', '/nist-404']
+       '/privacy', '/contact/thanks', '/help/panel', '/web/login', '/signup',
+       'POSTSHOT /signup/send phone=09127770375&next=/my',     # the code step (pending code seeded by ts_ui_matrix.sh)
+       '/nist-404']
 own = [W, W + '/clients', W + '/clients/new', W + '/invites', W + '/invites/new', W + '/campaigns', W + '/groups', W + '/members',
        W + '/reports', W + '/reports/group', W + '/credits', W + '/notifications', W + '/audit', W + '/settings', W + '/exports',
        W + '/import', '/my/workspaces', '/my', '/my/account', '/my/sharing', '/my/privacy', '/my/sessions', '/my/assessments',
