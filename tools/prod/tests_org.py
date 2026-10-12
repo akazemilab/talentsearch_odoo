@@ -55,7 +55,8 @@ m_clin.action_verify()
 check('unverified clinician cannot act', not m_clin2.can_act() and m_clin.can_act())
 check('hr admin may invite, reviewer may not', m_hr.can_invite() and not m_rev.can_invite())
 check('employment member sees only employment instruments', set(m_hr.allowed_instruments().ids) == set(emp.ids))
-check('clinical member sees whole published catalog', set(m_clin.allowed_instruments().ids) == set(pub.ids))
+_nohr = pub.filtered(lambda i: not i.invite_only) if 'invite_only' in pub._fields else pub   # HR instruments: employment panels only
+check('clinical member sees whole published catalog (except the employment-only HR instruments)', set(m_clin.allowed_instruments().ids) == set(_nohr.ids))
 
 A = env['ts.assignment']
 mental = pub.filtered(lambda i: i.category in MENTAL)[:1]

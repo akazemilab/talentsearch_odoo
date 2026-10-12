@@ -185,6 +185,8 @@ check('B19 re-publishing the instrument clears the flag', not b2.has_retired)
 ws_p = panel('clinical')
 cl_p = member(ws_p, 'clinician')
 base_clin = Inst.search([('state', '=', 'published')])
+if 'invite_only' in Inst._fields:
+    base_clin = base_clin.filtered(lambda i: not i.invite_only)   # HR instruments (ts_tasks/ts_hire) belong to employment panels only
 check('C01 purpose mode keeps the ts_org rule (clinical: every published instrument)', ids(cl_p.allowed_instruments()) == ids(base_clin))
 ws_e = panel('employment')
 hr_e = member(ws_e, 'hr_admin')
