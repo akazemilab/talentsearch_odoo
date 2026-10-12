@@ -175,7 +175,7 @@ class TsMemberDashboard(models.Model):
                         for a in done if a.attempt_id.submitted_at and a.attempt_id.started_at]
                 if len(mins) >= MIN_N:
                     out.append({'key': 'median', 'label': 'میانهٔ زمان تکمیل (دقیقه)', 'n': round(median(mins)), 'text': None, 'url': None})
-                out.append({'key': 'noshare', 'label': 'تکمیل‌شده بدون اشتراک نتیجه',
+                out.append({'key': 'noshare', 'label': 'تکمیل‌شده بدون اشتراک‌گذاری نتیجه',
                             'n': A.search_count(dom + kind_domain('noshare', days)), 'text': None, 'url': link('noshare')})
         if self.has_perm('clients:be_responsible') and self.has_perm('clients:read_own'):
             out.append({'key': 'mine_open', 'label': '%s من با دعوت باز' % people_word(ws.purpose),

@@ -79,7 +79,7 @@ EVENTS = {
     'report.view': ('results', 'گزارش {obj} دیده شد'),
     'report.group_view': ('results', '{who} گزارش گروهی را دید'),
     'assignment.self_share': ('results', '{obj} نتیجهٔ خود را با پنل به اشتراک گذاشت'),
-    'assignment.share_revoke': ('results', '{obj} اشتراک نتیجهٔ خود را لغو کرد'),
+    'assignment.share_revoke': ('results', '{obj} اشتراک‌گذاری نتیجهٔ خود را قطع کرد'),
     'attempt.consent': ('results', 'رضایت‌نامهٔ یک سنجه پذیرفته شد'),
     'attempt.submit': ('results', 'یک سنجه تکمیل شد'),
     'attempt.void': ('results', '{who} یک سنجهٔ {obj} را باطل کرد'),

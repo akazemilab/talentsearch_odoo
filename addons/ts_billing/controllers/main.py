@@ -141,9 +141,13 @@ class TsBillingCredits(TsPanelCredits):
             else '/my/workspaces/%s/credits#tsb-caps' % ws_id
         if not target:
             raise request.not_found()
-        # the member page offers «بدون سقف» / «با سقف» (cap_mode); the caps table still sends the number, ۰ = no cap
-        rial = 0 if post.get('cap_mode') == 'none' else _rial_from_toman(post.get('cap'))
+        # the member page and each row of the caps table offer «بدون سقف» / «با سقف» (cap_mode): «بدون سقف» wins whatever the
+        # amount (without JS the amount stays visible), «با سقف» needs an amount; a post without cap_mode keeps «۰ = no cap»
+        mode = post.get('cap_mode')
+        rial = 0 if mode == 'none' else _rial_from_toman(post.get('cap'))
         try:
+            if mode == 'cap' and rial == 0:
+                raise UserError('مبلغ سقف را به تومان بنویسید؛ اگر سقف نمی‌خواهید «بدون سقف» را انتخاب کنید.')
             if rial is None:
                 raise UserError('سقف را به تومان و با عدد بنویسید؛ برای برداشتن سقف «بدون سقف» را انتخاب کنید یا ۰ بنویسید.')
             changed = target.ts_set_cap(me, rial)

@@ -207,7 +207,7 @@ check('the non-sharing candidate shows no band in the list', row and 'tsh-band--
 pos_shared, pos_ns = body.find('/c/%s"' % AID), body.find('/c/%s"' % NID)
 check('the non-sharing candidate is listed after the ranked ones', 0 < pos_shared < pos_ns, (pos_shared, pos_ns))
 st, body = get(hr, B + '/c/%s' % NID)
-check('the non-sharing candidate page shows no fit', st == 200 and 'tsh-band--' not in body and 'اشتراک نتیجه را نپذیرفته' in body, str(st))
+check('the non-sharing candidate page shows no fit', st == 200 and 'tsh-band--' not in body and 'اشتراک‌گذاری نتیجه را نپذیرفته' in body, str(st))
 st, body = get(hr, B + '/compare?ids=%s&ids=%s' % (AID, NID))
 check('compare ignores a candidate without a shared result', 'دو یا سه داوطلب' in body, str(st))
 out = shell("o = env['ts.assignment'].sudo().search([('position_id', '!=', %s), ('position_id', '!=', False)], limit=1); print('OTHER', o.id or 0)" % PID)

@@ -62,9 +62,16 @@
     .tsb-inline { display: flex; flex-wrap: nowrap; gap: 8px; align-items: center; }
     .tsb-inline .tsb-money { flex: 1 1 9rem; min-inline-size: 9rem; min-block-size: var(--control-min); }
     .tsb-inline .ts-btn { flex: none; min-block-size: var(--control-min); }
+    // caps table row: «بدون سقف» / «با سقف», then the amount (only for «با سقف», revealed by ts_org.reveal_js) and «ذخیره»
+    .tsb-capform__set { border: 0; padding: 0; margin: 0; min-inline-size: 0; display: grid; gap: var(--space-1); }
+    .tsb-capform__modes { display: flex; flex-wrap: wrap; column-gap: var(--space-4); }
+    .tsb-capform__amt { display: flex; flex: 1 1 9rem; min-inline-size: 9rem; }
+    .tsb-capform__amt[hidden] { display: none; }
+    .tsb-capform__amt .tsb-money { flex: 1 1 auto; min-block-size: var(--control-min); }
     @media (max-width: 575.98px) {
         .tsb-inline { flex-wrap: wrap; }
         .tsb-inline .tsb-money { flex: 1 1 100%; max-inline-size: none; min-inline-size: 0; }
+        .tsb-inline .tsb-capform__amt { flex: 1 1 100%; min-inline-size: 0; }
         .tsb-caps td[data-label] { inline-size: 100%; }
     }
 

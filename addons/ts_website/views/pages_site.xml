@@ -28,7 +28,7 @@
                                 <div class="ts-mock__stats">
                                     <div><strong>32</strong><span>دانش‌آموز</span></div>
                                     <div><strong>21</strong><span>تکمیل‌شده</span></div>
-                                    <div><strong>14</strong><span>نتیجهٔ به‌اشتراک</span></div>
+                                    <div><strong>14</strong><span>به اشتراک گذاشته‌شده</span></div>
                                 </div>
                                 <div class="ts-mock__rows">
                                     <div><i>س</i><em>سارا محمدی</em><span class="ts-chip">به اشتراک گذاشت</span></div>
@@ -340,7 +340,7 @@
                                         <ul class="ts-list-check">
                                             <li>پیش از شروع می‌بیند چه کسی نتیجه را می‌بیند.</li>
                                             <li>نتیجه فقط با اجازهٔ خودش به پنل می‌رسد.</li>
-                                            <li>هر وقت بخواهد، اشتراک را قطع می‌کند.</li>
+                                            <li>هر وقت بخواهد، اشتراک‌گذاری را قطع می‌کند.</li>
                                         </ul>
                                     </div>
                                     <div>

@@ -84,7 +84,7 @@ step('likert', lambda: likert('progress'))
 
 tok = lambda k: R[k].access_token if k in R else None
 pub = ['/panel', '/panel/terms', '/signup', '/web/login', '/web/reset_password', '/help/panel', '/assessments/%s' % inst.slug,
-       '/my/workspaces/new']
+       '/my/workspaces/new', '/contact?topic=credit']     # «درخواست شارژ اعتبار» without a panel (signed out)
 if 'pending' in R: pub.append('/invite/%s' % R['pending'].token)
 if 'minv' in R and R['minv']: pub.append('/join/%s' % R['minv'].token)
 if 'camp_open' in R and R['camp_open'].open_token: pub.append('/c/%s' % R['camp_open'].open_token)
@@ -305,7 +305,8 @@ else:
     m[QL('owner')] = [QW, QW + '/credits', QW + '/members/%s' % qm1.id,
                       shot_(QW + '/campaigns/new', step='review', kind='open_link', name='پیوند باز پذیرش پاییز',
                             item_kind='single', instrument_id=qi1.id, open_max=20, open_days=14),
-                      QW + '/campaigns/new?keep=1']
+                      QW + '/campaigns/new?keep=1',
+                      QWS.ts_topup_request_url()]          # «درخواست شارژ اعتبار»: /contact?topic=credit&panel=<code>
     m[QL('c1')] = [QW, QW + '/credits', QW + '/invites/new?fresh=1',
                    post_(QW + '/invites/new', step=1, new_name='نسترن آزمایشی', new_phone='', new_email='', new_age='adult'),
                    QW + '/invites/new?step=2',

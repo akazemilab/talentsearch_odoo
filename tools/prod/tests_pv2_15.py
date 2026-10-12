@@ -104,7 +104,7 @@ s1.action_revoke_share(me)
 s1.action_revoke_share(me)
 check('revoking twice writes one row only', C.search_count([('user_id', '=', me.id), ('kind', '=', 'share_revoke')]) == n_rv + 1)
 check('ts_org_assignment prefers an active share', at.ts_org_assignment().share_level != 'none')
-check('the level word names what the panel sees', 'بدون پاسخ‌های خام' in s3.ts_level_word() and 'لغو' in s2.ts_level_word())
+check('the level word names what the panel sees', 'بدون پاسخ‌های خام' in s3.ts_level_word() and 'قطع' in s2.ts_level_word())
 
 ICP = env['ir.config_parameter'].sudo()
 ICP.set_str('ts_panel.share_max_panels', '1')

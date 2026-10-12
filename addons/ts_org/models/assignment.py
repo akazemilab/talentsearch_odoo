@@ -19,7 +19,7 @@ RESPONSIBLE_ROLES = roles_with('clients:be_responsible')
 from odoo.addons.ts_assessment.models.loader import EMPLOYMENT_CATEGORIES  # noqa: F401 (single source)
 
 SHARE_LEVELS = [
-    ('none', 'بدون اشتراک نتیجه'),
+    ('none', 'بدون اشتراک‌گذاری نتیجه'),
     ('summary', 'خلاصهٔ بازه‌ها (بدون پاسخ‌ها و متن تفسیر)'),
     ('clinical', 'گزارش کامل برای مشاوران همین مرکز'),
 ]
@@ -49,7 +49,7 @@ class TsAssignment(models.Model):
     invited_by_id = fields.Many2one('res.users', 'دعوت‌کننده', readonly=True, default=lambda s: s.env.user)
     user_id = fields.Many2one('res.users', 'حساب شرکت‌کننده', readonly=True, index=True)
     attempt_id = fields.Many2one('ts.attempt', 'اجرا', readonly=True)
-    share_level = fields.Selection(SHARE_LEVELS, 'اشتراک نتیجه', readonly=True, default='none')
+    share_level = fields.Selection(SHARE_LEVELS, 'اشتراک‌گذاری نتیجه', readonly=True, default='none')
     accepted_at = fields.Datetime('پذیرش', readonly=True)
     deadline = fields.Date('مهلت')
     state = fields.Selection([
@@ -204,7 +204,7 @@ class TsAssignment(models.Model):
             raise UserError('این نتیجه پیش‌تر با همین پنل به اشتراک گذاشته شده است.')
         limit = self.env['ir.config_parameter'].sudo().get_int('ts_panel.share_max_panels', 3) or 3     # owner decision D3
         if len(active) >= limit:
-            raise UserError('این نتیجه همین حالا با %s پنل به اشتراک گذاشته شده است؛ ابتدا یکی از اشتراک‌ها را لغو کنید.' % limit)
+            raise UserError('این نتیجه همین حالا با %s پنل به اشتراک گذاشته شده است؛ ابتدا اشتراک‌گذاری با یکی از آن‌ها را قطع کنید.' % limit)
         again = existing.filtered(lambda x: x.workspace_id == ws and x.invited_by_id == user)
         if again:                                  # re-sharing with a panel the person revoked earlier: the same record
             again[0].write({'share_level': 'summary'})

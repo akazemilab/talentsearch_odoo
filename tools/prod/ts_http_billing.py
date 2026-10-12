@@ -136,11 +136,23 @@ check('owner: price list with the instrument price', 'فهرست قیمت این
 check('owner: the invoice with its portal link and state', INV_NAME in body and ('/my/invoices/%s?access_token=' % INV) in body
       and 'در انتظار پرداخت' in body)
 check('owner: caps editor and threshold form', 'name="cap"' in body and ('name="member_id" value="%s"' % M1) in body and 'name="threshold"' in body)
+check('owner: each cap row offers «بدون سقف» / «با سقف»', 'name="cap_mode" value="none"' in body and 'name="cap_mode" value="cap"' in body
+      and 'data-ts-show="cap_mode=cap"' in body and 'data-ts-dirty="سقف ماهانهٔ ' in body)
+def cap_now():
+    out = shell("print('CAP', int(env['ts.workspace.member'].browse(%s).monthly_cap))" % M1)
+    m = re.search(r'CAP (\d+)', out)
+    return int(m.group(1)) if m else None
 cap = SPENT + P1 + 800000          # room for exactly one more invitation of P1
-st, loc, _ = post(own, W + '/credits/cap', {'member_id': M1, 'cap': str(cap // 10)})
-check('owner sets the counselor\'s monthly cap (typed in toman)', st in (302, 303) and '/credits' in loc, loc)
-out = shell("print('CAP', int(env['ts.workspace.member'].browse(%s).monthly_cap))" % M1)
-check('the cap is stored in Rial', ('CAP %d' % cap) in out, out[-200:])
+st, loc, _ = post(own, W + '/credits/cap', {'member_id': M1, 'cap_mode': 'cap', 'cap': str(cap // 10)})
+check('owner sets the counselor\'s monthly cap «با سقف» (typed in toman)', st in (302, 303) and '/credits' in loc, loc)
+check('the cap is stored in Rial', cap_now() == cap, str(cap_now()))
+# «بدون سقف» wins over a typed amount (without JS both stay visible) and stores ۰; «با سقف» without an amount changes nothing
+st, loc, _ = post(own, W + '/credits/cap', {'member_id': M1, 'cap_mode': 'none', 'cap': str(cap // 10)})
+check('caps row «بدون سقف» (amount still typed) stores 0', st in (302, 303) and cap_now() == 0, str(cap_now()))
+st, loc, _ = post(own, W + '/credits/cap', {'member_id': M1, 'cap_mode': 'cap', 'cap': ''})
+check('caps row «با سقف» without an amount is refused and stores nothing', st in (302, 303) and cap_now() == 0, str(cap_now()))
+st, loc, _ = post(own, W + '/credits/cap', {'member_id': M1, 'cap_mode': 'cap', 'cap': ('%d' % (cap // 10)).translate(str.maketrans('0123456789', '۰۱۲۳۴۵۶۷۸۹'))})
+check('caps row «با سقف» with an amount (Persian digits) stores it in Rial', st in (302, 303) and cap_now() == cap, str(cap_now()))
 st, _, _ = post(c1, W + '/credits/cap', {'member_id': M1, 'cap': '0'})
 check('a counselor cannot change caps (403)', st == 403, str(st))
 

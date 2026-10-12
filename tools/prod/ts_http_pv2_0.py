@@ -52,8 +52,8 @@ ws_id, att_id, solo_id = mm.groups()
 s = Client(TS)
 check('student login', s.login(STU, pw[STU]))
 st, _, page = s.req('/my/assessments/%s' % att_id)
-check('G30: shared TALENT-INV-15 report shows the status block and «لغو اشتراک»',
-      st == 200 and 'id="ts-who-sees"' in page and 'لغو اشتراک' in page, str(st))   # UX audit G2 P3-9: one merged block
+check('G30: shared TALENT-INV-15 report shows the status block and «قطع اشتراک‌گذاری»',
+      st == 200 and 'id="ts-who-sees"' in page and 'قطع اشتراک‌گذاری' in page, str(st))   # UX audit G2 P3-9: one merged block
 check('the block is outside the printed report (ts-noprint)', re.search(r'class="ts-doc__sec ts-noprint"\s+id="ts-who-sees"', page) is not None)
 check('wording says profile report without raw answers', 'گزارش نیمرخ شما، بدون پاسخ‌های خام' in page and 'پاسخ‌های خام شما را هیچ پنلی نمی‌بیند' in page)
 check('no duplicate «ارسال برای مشاورم» while shared', 'id="ts-share-counselor"' not in page)
@@ -63,9 +63,9 @@ check('counselor login', c.login(CNS, pw[CNS]))
 st, _, cpage = c.req('/my/workspaces/%s/p/%s' % (ws_id, att_id))
 check('counselor opens the shared report', st == 200 and 'tt-cobrand' in cpage, str(st))
 check('G30: the institute view never contains the revoke form or the share block',
-      'لغو اشتراک' not in cpage and 'ts-who-sees' not in cpage and 'ts-share-counselor' not in cpage)
+      'قطع اشتراک‌گذاری' not in cpage and 'ts-who-sees' not in cpage and 'ts-share-counselor' not in cpage)
 
-# UX audit G2 P5-2: «لغو اشتراک» on the report opens the confirmation page; its form posts the (unchanged) revoke
+# UX audit G2 P5-2: «قطع اشتراک‌گذاری» on the report opens the confirmation page; its form posts the (unchanged) revoke
 rv = re.search(r'href="(/my/sharing/\d+/revoke\?back=report)"', page)
 st, _, cf = s.req(rv.group(1)) if rv else (0, '', '')
 fm = re.search(r'<form[^>]*action="(/my/sharing/\d+/revoke)"[^>]*>(.*?)</form>', cf, re.S)
@@ -78,7 +78,7 @@ st, loc, _ = s.req(fm.group(1), fields) if fm else (st, '', '')
 check('student revokes from the report', bool(rv and fm) and st in (302, 303)
       and loc.endswith('/my/assessments/%s' % att_id), '%s %s' % (st, loc))
 st, _, page2 = s.req('/my/assessments/%s' % att_id)
-check('after revoking the report says it is not shared', st == 200 and 'هیچ پنلی این نتیجه را نمی‌بیند' in page2 and 'لغو اشتراک' not in page2)
+check('after revoking the report says it is not shared', st == 200 and 'هیچ پنلی این نتیجه را نمی‌بیند' in page2 and 'قطع اشتراک‌گذاری' not in page2)
 st, _, pg = c.req('/my/workspaces/%s/p/%s' % (ws_id, att_id))
 check('counselor view turns to not shared (404, or since S13 the status page without scores)', st == 404 or (st == 200 and 'tt-cobrand' not in pg and 'ts-factor__score' not in pg), str(st))
 
@@ -88,7 +88,7 @@ check('solo login', o.login(SOLO, pw[SOLO]))
 st, _, page = o.req('/my/assessments/%s' % solo_id)
 check('G30: self-taken TALENT-INV-15 report offers «ارسال برای مشاورم» (in «قدم بعدی», UX audit G2 P3-5)',
       st == 200 and 'tt-next__cta' in page and ('/my/assessments/%s/share' % solo_id) in page and 'ارسال برای مشاورم' in page, str(st))
-check('self-taken report has no revoke form', 'لغو اشتراک' not in page)
+check('self-taken report has no revoke form', 'قطع اشتراک‌گذاری' not in page)
 st, _, sp = o.req('/my/assessments/%s/share' % solo_id)
 check('G31: share page tells the truth for the talent inventory', st == 200 and 'گزارش نیمرخ شما (نمرهٔ هر زمینه و توانایی‌ها)' in sp and 'فقط بازهٔ هر زمینه' not in sp, str(st))
 check('another user cannot open my share page', Client(TS).req('/my/assessments/%s/share' % solo_id)[0] in (302, 303, 404))

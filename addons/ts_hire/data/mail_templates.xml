@@ -16,7 +16,7 @@
     <p style="margin: 24px 0;">
         <a t-att-href="object.invite_url()" style="background-color: #5446a8; color: #ffffff; padding: 12px 22px; border-radius: 8px; text-decoration: none; display: inline-block;">دیدن دعوت</a>
     </p>
-    <p style="font-size: 13px; color: #595d6c;">پذیرش دعوت اختیاری است. پیش از شروع می‌بینید سازمان چه چیزی از نتیجه را می‌بیند و می‌توانید اشتراک نتیجه را هر زمان لغو کنید.</p>
+    <p style="font-size: 13px; color: #595d6c;">پذیرش دعوت اختیاری است. پیش از شروع می‌بینید سازمان چه چیزی از نتیجه را می‌بیند و می‌توانید اشتراک‌گذاری نتیجه را هر زمان قطع کنید.</p>
     <p style="font-size: 13px; color: #595d6c;">اگر این ایمیل برای شما نیست، آن را نادیده بگیرید.</p>
     <p style="font-size: 12px; color: #75798c;">استعدادیاب · talentsearch.ir</p>
 </div>
@@ -49,7 +49,7 @@
         <field name="body_html" type="html">
 <div dir="rtl" style="font-family: Tahoma, Arial, sans-serif; font-size: 15px; line-height: 1.9; color: #1f2130; max-width: 560px; margin: 0 auto; text-align: right;">
     <p><strong t-out="object.invitee_name or ''"/> <t t-out="object.ts_mail_what()"/> را تمام کرد.</p>
-    <p>اگر داوطلب اشتراک نتیجه را پذیرفته باشد، خلاصهٔ تناسب شغلی در پنل آماده است.</p>
+    <p>اگر داوطلب اشتراک‌گذاری نتیجه را پذیرفته باشد، خلاصهٔ تناسب شغلی در پنل آماده است.</p>
     <p style="margin: 24px 0;">
         <a t-att-href="object.ts_mail_staff_url()" style="background-color: #5446a8; color: #ffffff; padding: 12px 22px; border-radius: 8px; text-decoration: none; display: inline-block;">دیدن در پنل</a>
     </p>

@@ -402,6 +402,12 @@ Data step (owner-only, NOT in code): approve workspace 1, set pilot, add the cou
 - Clones: tools/prod/ts_db.sh switches mail servers off and drops the outgoing queue (also adopted by the clinic6 session).
 - Open: translator/psychologist review of the questionnaire and WS-XW-v0; real norms (automatic at 100 completions per block); criterion validation with early-access employers; no employment panel exists on live yet (the super admin approves the first HR customer's panel).
 
+## clinic7 — final polish (2026-10-12/13, LIVE)
+
+- Credits page caps table: per counselor «بدون سقف» / «با سقف» radios + amount (required only for «با سقف», `data-ts-req` in ts_org.reveal_js); server stores 0 for no cap as before and now refuses «با سقف» without an amount (member page too). «اشتراک» alone → «اشتراک‌گذاری» / «قطع اشتراک‌گذاری» in 18 files (all meant sharing); contact page «راه‌های دیگر» h3 → h2; contact top-up page in the shots matrix; shots digit check ignores textareas.
+- Clone eot_ts94: 9 suites 489/489; shots 435 files, only contact heading skip (fixed) and HR's pre-existing 404 on /my/assessments/battery/<id> for ts.hire.cand.http (also in the HR session's own shots eot_ts91 — for the HR session).
+- Rehearsal eot_ts95: 1 failure (tests_pv2_15 expected «لغو»; now «قطع»). eot_ts98 was destroyed mid-run by another session's job with the same clone name: use distinctive clone names. Rehearsal eot_ts181 (commit 73aecca, incl. ts_onet/ts_tasks/ts_hire): guard UNCHANGED, portal UNCHANGED, unexpected failures 0. Ship clinic7: OK, eot.ir UNCHANGED.
+
 ## onb1 — sign-in (S-AUTH) and panels without approval (2026-10-12, built, not shipped)
 
 - Owner decisions 2026-10-12: every panel is active when made; approval replaced by a first-week invitation limit (50 / 24 h for 7 days, self-service panels only, every invite surface; open-link joins not counted), a super-admin suspend («این پنل موقتاً متوقف شده است…»: no invitations, no new attempts, participants keep their results) and the back-office list «پنل‌های تازه (۷ روز)»; the licence is a badge (optional, edited by the member, reset on change, «پروانهٔ تأییدشده» after the EOT check, printed on reports only when verified; A5b kept with an explicit message); one mobile sign-in for talentsearch.ir. Design and owner actions: docs/onboarding/01_signin_and_approval.md.

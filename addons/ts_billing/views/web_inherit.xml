@@ -221,7 +221,7 @@
                             <label class="tsp-radio"><input type="radio" name="cap_mode" value="cap" t-att-checked="'checked' if cap_st['cap'] else None"/><span>با سقف</span></label>
                             <div class="tsp-field" data-ts-show="cap_mode=cap">
                                 <label class="tsp-field__label" for="tsb_member_cap">مبلغ سقف (تومان)</label>
-                                <input id="tsb_member_cap" type="text" name="cap" inputmode="numeric" maxlength="16" class="form-control tsb-money" aria-describedby="tsb_member_cap_h" t-att-value="ws.ts_fa_num(cap_st['cap'] // 10) if cap_st['cap'] else ''"/>
+                                <input id="tsb_member_cap" type="text" name="cap" inputmode="numeric" maxlength="16" class="form-control tsb-money" aria-describedby="tsb_member_cap_h" data-ts-req="1" t-att-value="ws.ts_fa_num(cap_st['cap'] // 10) if cap_st['cap'] else ''"/>
                             </div>
                         </fieldset>
                         <p><button type="submit" class="ts-btn ts-btn--primary">ذخیرهٔ سقف</button></p>

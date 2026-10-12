@@ -92,7 +92,7 @@
 
                             <section t-if="capped" class="ts-card" id="tsb-caps" aria-labelledby="tsb-caps-h">
                                 <h2 id="tsb-caps-h" class="h5">سقف ماهانهٔ مشاوران</h2>
-                                <p class="ts-hint">سقف، بیشترین هزینهٔ دعوت‌هایی است که هر مشاور در یک ماه شمسی می‌فرستد. دعوتی که از سقف بگذرد ساخته نمی‌شود. دعوت لغوشده یا منقضی‌شده مبلغش را به سقف برمی‌گرداند. ۰ یعنی بدون سقف. <t t-out="ws.ts_credit_roles('و')"/> سقف ندارند.</p>
+                                <p class="ts-hint">سقف، بیشترین هزینهٔ دعوت‌هایی است که هر مشاور در یک ماه شمسی می‌فرستد. دعوتی که از سقف بگذرد ساخته نمی‌شود. دعوت لغوشده یا منقضی‌شده مبلغش را به سقف برمی‌گرداند. <t t-out="ws.ts_credit_roles('و')"/> سقف ندارند.</p>
                                 <div class="ts-table-wrap">
                                 <table class="ts-table tsp-table tsp-table--cards tsb-caps" aria-labelledby="tsb-caps-h">
                                     <thead><tr><th scope="col">عضو</th><th scope="col">تعهد این ماه</th><th scope="col">سقف (تومان)</th></tr></thead>
@@ -101,12 +101,24 @@
                                             <th scope="row" data-label="عضو"><bdi t-out="cm.user_id.name"/></th>
                                             <td data-label="تعهد این ماه" class="tsb-amt" t-out="toman(wallet.ts_month_spend(cm))"/>
                                             <td data-label="سقف (تومان)">
-                                                <form t-if="can_manage" t-attf-action="/my/workspaces/#{ws.id}/credits/cap" method="post" class="tsb-inline" data-tsp-once="1" t-att-data-ts-dirty="'سقف ماهانهٔ ' + (cm.user_id.name or '')">
+                                                <!-- «بدون سقف» / «با سقف» as on the member page (ts_billing.member_cap_section); the server stores ۰ for no cap -->
+                                                <form t-if="can_manage" t-attf-action="/my/workspaces/#{ws.id}/credits/cap" method="post" class="tsb-capform" data-tsp-once="1" t-att-data-ts-dirty="'سقف ماهانهٔ ' + (cm.user_id.name or '')">
                                                     <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
                                                     <input type="hidden" name="member_id" t-att-value="cm.id"/>
-                                                    <label class="tsp-sr" t-attf-for="tsb_cap_#{cm.id}">سقف ماهانهٔ <t t-out="cm.user_id.name"/> به تومان</label>
-                                                    <input t-attf-id="tsb_cap_#{cm.id}" type="text" name="cap" inputmode="numeric" maxlength="16" class="form-control tsb-money" t-att-value="ws.ts_fa_num(int(cm.monthly_cap or 0) // 10)"/>
-                                                    <button type="submit" class="ts-btn ts-btn--outline">ذخیره</button>
+                                                    <fieldset class="tsb-capform__set">
+                                                        <legend class="tsp-sr">سقف ماهانهٔ <t t-out="cm.user_id.name"/></legend>
+                                                        <div class="tsb-capform__modes">
+                                                            <label class="tsp-radio"><input type="radio" name="cap_mode" value="none" t-att-checked="'checked' if not cm.monthly_cap else None"/><span>بدون سقف</span></label>
+                                                            <label class="tsp-radio"><input type="radio" name="cap_mode" value="cap" t-att-checked="'checked' if cm.monthly_cap else None"/><span>با سقف</span></label>
+                                                        </div>
+                                                        <div class="tsb-inline">
+                                                            <span class="tsb-capform__amt" data-ts-show="cap_mode=cap">
+                                                                <label class="tsp-sr" t-attf-for="tsb_cap_#{cm.id}">مبلغ سقف ماهانهٔ <t t-out="cm.user_id.name"/> به تومان</label>
+                                                                <input t-attf-id="tsb_cap_#{cm.id}" type="text" name="cap" inputmode="numeric" maxlength="16" class="form-control tsb-money" data-ts-req="1" t-att-value="ws.ts_fa_num(int(cm.monthly_cap) // 10) if cm.monthly_cap else ''"/>
+                                                            </span>
+                                                            <button type="submit" class="ts-btn ts-btn--outline">ذخیره</button>
+                                                        </div>
+                                                    </fieldset>
                                                 </form>
                                                 <span t-elif="cm.monthly_cap" class="tsb-amt" t-out="toman(cm.monthly_cap)"/>
                                                 <t t-else="">بدون سقف</t>
@@ -115,6 +127,7 @@
                                     </tbody>
                                 </table>
                                 </div>
+                                <t t-if="can_manage" t-call="ts_org.reveal_js"/>
                             </section>
 
                             <section t-if="can_manage" class="ts-card" id="tsb-alert" aria-labelledby="tsb-alert-h">

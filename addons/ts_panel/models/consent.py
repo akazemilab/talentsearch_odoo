@@ -7,7 +7,7 @@ level in a word and a hashed address only. Changing or deleting a row is refused
 from odoo import api, fields, models
 from odoo.exceptions import UserError
 
-KINDS = [('service', 'خدمت'), ('research', 'پژوهش'), ('share', 'اشتراک نتیجه'), ('share_revoke', 'لغو اشتراک'),
+KINDS = [('service', 'خدمت'), ('research', 'پژوهش'), ('share', 'اشتراک‌گذاری نتیجه'), ('share_revoke', 'قطع اشتراک‌گذاری'),
          ('guardian', 'ولی'), ('guardian_attest', 'تأیید مؤسسه برای ولی'), ('assent', 'رضایت کودک'), ('sms', 'پیامک'),
          ('terms', 'شرایط پنل'), ('privacy', 'حریم خصوصی')]
 SHARE_VERSION = 'TS-SHARE-1405-07-v1'
