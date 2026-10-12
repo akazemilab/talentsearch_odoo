@@ -100,6 +100,8 @@ def prev_element(el):
     return p
 
 
+# Odoo refuses some attributes as xpath selectors in inherited views (found 2026-10-12: aria-label)
+BAD_XPATH_ATTRS = ('aria-label', 'aria-labelledby', 'title', 'placeholder', 'alt')
 view_ids = {}   # module -> set of xml ids of views/templates
 for p in glob.glob(f'{ADDONS}/**/*.xml', recursive=True):
     mod = rel(p).split(os.sep)[1]
@@ -111,6 +113,8 @@ for p in glob.glob(f'{ADDONS}/**/*.xml', recursive=True):
     for el in tree.iter():
         if not isinstance(el.tag, str):
             continue
+        if el.tag == 'xpath' and any(('@%s' % a) in el.get('expr', '') for a in BAD_XPATH_ATTRS):
+            errors.append(f'xpath {rel(p)}:{el.sourceline} uses a forbidden selector attribute: {el.get("expr")[:80]}')
         if 't-elif' in el.attrib or 't-else' in el.attrib:
             pr = prev_element(el)
             par = el.getparent()
