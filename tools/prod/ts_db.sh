@@ -38,6 +38,8 @@ case $CMD in
     sudo -u postgres createdb -O odoo "$DB" || exit 1
     sudo -u postgres pg_restore -d "$DB" --no-owner --role=odoo -j 4 "$DUMP" 2>&1 | grep -v '^$' | tail -3
     cp -a "$FS/eot_main" "$FS/$DB"; chown -R odoo:odoo "$FS/$DB"
+    # clones never send real email (eot_main has the Liara server since 2026-10-12): servers off, queue dropped
+    sudo -u postgres psql -d "$DB" -Atc "UPDATE ir_mail_server SET active = false; DELETE FROM mail_mail WHERE state IN ('outgoing', 'exception'); SELECT 'mail servers off: '||count(*) FROM ir_mail_server" 2>&1 | tail -1
     step done; sudo -u postgres psql -d "$DB" -Atc "select 'websites='||count(*) from website" ;;
   install|upgrade)
     MODS=${3:?modules}; FLAG=-i; [[ $CMD == upgrade ]] && FLAG=-u
