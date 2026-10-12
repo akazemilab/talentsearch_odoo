@@ -397,10 +397,8 @@ def center_panel():
         {'name': CNAME, 'is_company': True})
     ws = env['ts.workspace'].search([('partner_id', '=', org.id)], limit=1) or env['ts.workspace'].create(
         {'name': CNAME, 'purpose': 'clinical', 'partner_id': org.id, 'escalation_contact_id': org.id})
-    if not ws.approved_on:
-        ws.write({'approved_on': '2026-01-01 00:00:00'})
-    if ws.state != 'pilot':
-        ws.state = 'pilot'
+    if ws.state != 'active':
+        ws.state = 'active'      # onb1: no approval step
     ws.write({'public_name': 'مرکز مشاورهٔ آرامش', 'contact_line': '۰۲۱-۸۸۰۰۰۰۰۰ · aramesh.example', 'brand_color': '#2a6f97',
               'ts_onb_nocap_on': False})
     if not org.image_1920:

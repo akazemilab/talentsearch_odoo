@@ -69,6 +69,8 @@ has ts_battery && NOCOMMIT+=(tests_battery.py)   # HTTP companion: ts_http_batte
 has ts_billing && NOCOMMIT+=(tests_billing.py)   # clinic phase 4; HTTP companion: ts_http_billing.py (below)
 has ts_brand && NOCOMMIT+=(tests_brand.py)       # clinic phase 5; HTTP companion: ts_http_brand.py (below)
 has ts_hire && NOCOMMIT+=(tests_hire.py)         # HR hiring (ts_onet, ts_tasks, ts_hire); HTTP companion: ts_http_hire.py (below)
+# onb1: no approval (+ migration), first-week invite limit, suspend, licence badge, S-AUTH models; HTTP companion: ts_http_onb1.py
+{ has ts_core || has ts_org || has ts_panel || has ts_sms; } && NOCOMMIT+=(tests_onb1.py)
 for f in "${NOCOMMIT[@]}"; do
   [ -f $REPO_DIR/tools/prod/$f ] || continue
   grep -q "cr.commit" $REPO_DIR/tools/prod/$f && { echo "!! $f commits; it cannot run beside the guard"; continue; }
@@ -140,6 +142,8 @@ has ts_battery && { echo "=== $(date +%T) http clinic phase 3 (battery run)"; ht
 has ts_billing && { echo "=== $(date +%T) http clinic phase 4 (prepaid billing)"; http ts_http_billing.py; }
 has ts_brand && { echo "=== $(date +%T) http clinic phase 5 (branding, PDF, SMS templates, short links)"; http ts_http_brand.py; }
 has ts_hire && { echo "=== $(date +%T) http HR hiring (positions, job fit, tasks, feedback)"; http ts_http_hire.py; }
+# onb1: mobile sign-in (JSON states, WebOTP line, cookie length, staff numbers, lock), names, invite limit, suspend, badge
+{ has ts_sms || has ts_panel; } && { echo "=== $(date +%T) http onb1 (S-AUTH sign-in, no approval, suspend, licence badge)"; http ts_http_onb1.py; }
 if has ts_kavenegar; then
   echo "=== $(date +%T) kavenegar tests (fake API, commits)"; orm tests_kavenegar.py
   echo "=== $(date +%T) kavenegar webhooks (http)"; http ts_http_kv.py

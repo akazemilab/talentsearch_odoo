@@ -155,7 +155,7 @@ IDS = [p[0] for p in pairs]
 st, body = get(p1, '/take/' + T[0])
 check('ONE consent page: names the battery, lists every instrument with the total time',
       st == 200 and 'consent_service' in body and 'این دعوت یک مجموعه است' in body and all(t in body for t in INST_TITLES)
-      and 'روی هم' in body and 'TS-CONSENT-1405-07-20-v4' in body, str(st))
+      and 'روی هم' in body and 'TS-CONSENT-1405-07-20-v5' in body, str(st))
 st, loc, _ = p1.req('/take/' + T[1])
 check('a sibling never shows its own consent page (redirect to the first)', st in (302, 303) and T[0] in loc, '%s %s' % (st, loc))
 post(p1, '/take/%s/consent' % T[0], {'consent_service': '1'})

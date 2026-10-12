@@ -138,7 +138,7 @@ check('and settings is 403', u.req('/my/workspaces/%s/settings' % C)[0] == 403)
 # suspended panel
 shell("w = env['ts.workspace'].browse(%s); w.state = 'suspended'; env.cr.commit()" % B)
 st, _, page = pages[('hr', B)][0].req('/my/workspaces/%s' % B)
-check('suspended panel shows its notice page', st == 200 and 'موقتاً معلق' in page and menu(page) == ['پیشخوان', 'راهنما'], '%s %s' % (st, menu(page)))
+check('suspended panel shows its notice page', st == 200 and 'موقتاً متوقف شده است' in page and menu(page) == ['پیشخوان', 'راهنما'], '%s %s' % (st, menu(page)))
 shell("w = env['ts.workspace'].browse(%s); w.state = 'active'; env.cr.commit()" % B)
 
 # strangers

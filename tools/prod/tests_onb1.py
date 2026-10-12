@@ -293,6 +293,7 @@ np = env['res.partner'].with_context(ts_name_placeholder=True).create({'name': '
 check('E19 a mobile-only account has no name for the site', np.ts_known_name() == '' and np.name == '0912 777 9921')
 np.with_context(ts_name_placeholder=True).write({'phone': '09127779921'})
 check('E20 internal writes keep «name unknown»', np.ts_name_unknown)
+np = env['res.partner'].browse(np.id)          # a plain environment, as on the account page
 np.write({'name': 'مینا آزمون'})
 check('E21 a real name ends «name unknown»', not np.ts_name_unknown and np.ts_known_name() == 'مینا آزمون')
 

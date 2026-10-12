@@ -207,7 +207,7 @@ def audit(p, login, paths):
         ok = False
         for _try in (1, 2):                  # a reset tunnel during the sign-in once left a whole user on the login page
             try:
-                nav(page, '/web/login')
+                nav(page, '/web/login?email=1')      # onb1: plain /web/login on talentsearch.ir is the mobile sign-in
                 page.fill('input[name=login]', login); page.fill('input[name=password]', password)
                 # wait for the POST navigation itself: networkidle alone could return before it started, and the next goto
                 # then aborted the sign-in (flaky «sign-in failed» for a random login, 2026-10-11)

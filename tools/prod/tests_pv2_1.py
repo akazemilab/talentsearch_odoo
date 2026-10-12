@@ -170,11 +170,11 @@ check('P06 licence is a badge (onb1): unverified clinician and clinic_director h
       and 'results:clinical' in cl_un.perms() and cl_un.can_act())
 cl_un.write({'license_number': 'T-x', 'verification_state': 'verified'})
 check('P06 verified clinician gets the table', set(cl_un.perms()) == set(ROLE_PERMS[('clinician', 'clinical')]))
-check('P06 an unverified clinician cannot act (404 today)', not cd_un.can_act() and cl_un.can_act())
+check('P06 an unverified clinic director acts too (licence is a badge, onb1)', cd_un.can_act() and cl_un.can_act())
 ws_p = panel('clinical')
 o_p = member(ws_p, 'owner', owner_practices=True)
-check('P06 unverified practising owner: everything except results:clinical',
-      set(o_p.perms()) == set(ROLE_PERMS[('owner', 'clinical')]) - {'results:clinical'})
+check('P06 practising owner without a verified licence: the whole owner table, results:clinical included (onb1)',
+      set(o_p.perms()) == set(ROLE_PERMS[('owner', 'clinical')]))
 
 # ---------------------------------------------------------------- results
 inst = env['ts.instrument'].search([('code', '=', 'TALENT-INV-15')])
@@ -340,9 +340,9 @@ check('P17 stored detail has no raw reason/phone and the raw IP column is not wr
 h1 = env['ts.audit.event']._hash_ip('203.0.113.9')
 check('P17 an address is stored only as a salted hash (16 hex)', bool(h1) and len(h1) == 16 and '203' not in h1 and h1 == env['ts.audit.event']._hash_ip('203.0.113.9'))
 ws_n = panel('education')
-ws_n.write({'approval_note': 'یادداشت محرمانه'})
+ws_n.write({'suspend_note': 'یادداشت محرمانه'})
 env['ts.audit.event'].search([('workspace_id', '=', ws_n.id)])
-check('P17 audit rows never carry the approval note text',
+check('P17 audit rows never carry the internal note text',
       not env['ts.audit.event'].search_count([('workspace_id', '=', ws_n.id), ('detail', 'ilike', 'محرمانه')]))
 
 # P23 accepting a colleague invitation while already an active member
