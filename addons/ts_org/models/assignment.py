@@ -166,6 +166,9 @@ class TsAssignment(models.Model):
             raise UserError('این دعوت قبلاً با حساب دیگری پذیرفته شده است.')
         if not self.user_id and self.invite_state() == 'expired':
             raise UserError('مهلت این دعوت تمام شده است.')
+        if not self.user_id and self.workspace_id.state != 'active':
+            # onb1: a suspended (or closed) panel starts no new attempt; finished results stay with their owners
+            raise UserError('پنلی که این دعوت را فرستاده موقتاً متوقف شده است؛ پاسخ‌دهی تازه شروع نمی‌شود.')
         if not self.user_id:
             share_level = self.default_share_level() if share else 'none'
             if self.responsible_id.user_id == user:
