@@ -287,8 +287,8 @@ check('owner dashboard: «راه‌اندازی مرکز» with «۲ از ۴ ا�
 check('owner dashboard: the generic checklist is replaced', 'گام‌های راه‌اندازی' not in body)
 check('owner dashboard: open steps always shown; the phone toggle folds only the done steps (aria-expanded + aria-controls)',
       'id="tsob-open"' in sec and 'aria-controls="tsob-more"' in sec and 'aria-expanded=' in sec and 'id="tsob-more"' in sec)
-check('owner dashboard: the EOT team\'s part (panel approval, counselor licences) shown as status lines',
-      'تأیید پنل' in sec and 'پروانهٔ مشاوران' in sec)
+check('owner dashboard: no panel approval line any more; the licence badges are an information line (onb1)',
+      'تأیید پنل' not in sec and 'نشان «پروانهٔ تأییدشده»' in sec)
 check('owner dashboard: one current step with the only primary button of the list', sec.count('tsob-step--current') == 1
       and sec.count('ts-btn--primary') == 1, str(sec.count('ts-btn--primary')))
 links = step_links(sec)
