@@ -89,11 +89,11 @@ class TsOnetOccupation(models.Model):
             raw = fh.read()
         digest = hashlib.sha256(raw).hexdigest()
         ICP = self.env['ir.config_parameter'].sudo()
-        if ICP.get_param('ts_onet.data_hash') == digest and self.with_context(active_test=False).search_count([]):
+        if ICP.get_str('ts_onet.data_hash') == digest and self.with_context(active_test=False).search_count([]):
             return {'skipped': True}
         data = json.loads(raw.decode('utf-8'))
         _data.cache_clear()
-        prev = json.loads(ICP.get_param('ts_onet.shipped_titles') or '{}')
+        prev = json.loads(ICP.get_str('ts_onet.shipped_titles') or '{}')
         existing = {o.code: o for o in self.with_context(active_test=False).search([])}
         stats = {'created': 0, 'updated': 0, 'kept_manual': 0}
         shipped = {}
@@ -116,7 +116,7 @@ class TsOnetOccupation(models.Model):
                 stats['kept_manual'] += 1
             rec.write(vals)
             stats['updated'] += 1
-        ICP.set_param('ts_onet.shipped_titles', json.dumps(shipped, ensure_ascii=False))
-        ICP.set_param('ts_onet.data_hash', digest)
+        ICP.set_str('ts_onet.shipped_titles', json.dumps(shipped, ensure_ascii=False))
+        ICP.set_str('ts_onet.data_hash', digest)
         _logger.info('ts_onet catalogue load: %s', stats)
         return stats

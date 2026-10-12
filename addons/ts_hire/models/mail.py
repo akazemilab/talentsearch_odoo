@@ -13,7 +13,7 @@ DEFAULT_FROM = '"استعدادیاب" <no-reply@sepehrtherapy.ir>'
 
 
 def _icp(env, key, default=''):
-    return env['ir.config_parameter'].sudo().get_param(key, default)
+    return env['ir.config_parameter'].sudo().get_str(key, default)
 
 
 class TsAssignmentMail(models.Model):
