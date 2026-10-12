@@ -65,7 +65,7 @@ st, _, page = p.req('/take/' + token)
 st, loc, _ = p.req('/take/%s/consent' % token, {'csrf_token': p.csrf(page), 'consent_service': '1'})
 st, _, page = p.req('/take/' + token)
 csrf = p.csrf(page)
-pages = int(re.search(r'صفحهٔ [۰-۹]+ از ([۰-۹]+)', page).group(1).translate(str.maketrans('۰۱۲۳۴۵۶۷۸۹', '0123456789')))
+pages = int((re.search(r'صفحهٔ [۰-۹]+ از ([۰-۹]+)', page) or re.match('(۱)', '۱')).group(1).translate(str.maketrans('۰۱۲۳۴۵۶۷۸۹', '0123456789')))  # one page: no page count
 for n in range(1, pages + 1):
     _, _, pg = p.req('/take/%s?page=%d' % (token, n))
     for iid in re.findall(r'class="ts-q" data-item="(\d+)"', pg):

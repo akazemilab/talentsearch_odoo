@@ -99,7 +99,7 @@ nq = page.count('class="ts-q"')
 check('player page renders (up to 10 items per page, 5-point scale)', st == 200 and 1 <= nq <= 10 and page.count('type="radio"') == 5 * nq,
       '%s q=%d' % (st, page.count('class="ts-q"')))
 csrf = u.csrf(page)
-pages = int(re.search(r'صفحهٔ [۰-۹]+ از ([۰-۹]+)', page).group(1).translate(str.maketrans('۰۱۲۳۴۵۶۷۸۹', '0123456789')))
+pages = int((re.search(r'صفحهٔ [۰-۹]+ از ([۰-۹]+)', page) or re.match('(۱)', '۱')).group(1).translate(str.maketrans('۰۱۲۳۴۵۶۷۸۹', '0123456789')))  # one page: no page count
 answered = 0
 for p in range(1, pages + 1):
     st, _, page = u.req('/take/%s?page=%d' % (token, p))
