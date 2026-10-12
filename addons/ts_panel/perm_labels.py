@@ -7,7 +7,7 @@ not built yet. Each stage that builds a feature adds its permission strings to L
 from odoo.addons.ts_org.models.perms import ALL_PERMS
 
 PERM_LABELS = {
-    'panel:view': 'دیدن داشبورد پنل',
+    'panel:view': 'دیدن پیشخوان پنل',
     'panel:profile': 'ویرایش نام و لوگوی پنل',
     'panel:settings': 'دیدن شرایط استفاده و اطلاعات پنل',
     'panel:transfer': 'انتقال مالکیت پنل',
@@ -30,7 +30,7 @@ PERM_LABELS = {
     'invites:create': 'فرستادن دعوت',
     'invites:bulk': 'دعوت گروهی و پیوند باز',
     'invites:manage': 'یادآوری، تمدید و لغو دعوت',
-    'results:summary': 'دیدن خلاصهٔ نتیجه (بازهٔ هر بُعد)',
+    'results:summary': 'دیدن خلاصهٔ نتیجه (سطح هر عامل)',
     'results:education': 'دیدن گزارش در سطح مشاور',
     'results:clinical': 'دیدن گزارش کامل ویژهٔ مشاور',
     'results:export': 'خروجی نتیجه‌ها',

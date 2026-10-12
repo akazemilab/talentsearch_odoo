@@ -63,7 +63,7 @@ def core_menu(page):
     return [t for t in menu(page) if t not in LATER]
 
 
-BASE = ['داشبورد']
+BASE = ['پیشخوان']
 INV = ['دعوت‌ها']
 HELP = ['راهنما']
 SETT = ['تنظیمات']
@@ -131,14 +131,14 @@ check('and the name did not change', 'NAME پنل S2 آموزشی' in name, name
 # unverified clinician
 u = login('unv')
 st, _, page = u.req('/my/workspaces/%s' % C)
-check('unverified clinician sees the notice page on the panel address', st == 200 and 'در حال بررسی است' in page and menu(page) == ['داشبورد', 'راهنما'], '%s %s' % (st, menu(page)))
+check('unverified clinician sees the notice page on the panel address', st == 200 and 'در حال بررسی است' in page and menu(page) == ['پیشخوان', 'راهنما'], '%s %s' % (st, menu(page)))
 check('the old page still answers 404 for them', u.req('/my/workspaces/%s/legacy' % C)[0] == 404)
 check('and settings is 403', u.req('/my/workspaces/%s/settings' % C)[0] == 403)
 
 # suspended panel
 shell("w = env['ts.workspace'].browse(%s); w.state = 'suspended'; env.cr.commit()" % B)
 st, _, page = pages[('hr', B)][0].req('/my/workspaces/%s' % B)
-check('suspended panel shows its notice page', st == 200 and 'موقتاً معلق' in page and menu(page) == ['داشبورد', 'راهنما'], '%s %s' % (st, menu(page)))
+check('suspended panel shows its notice page', st == 200 and 'موقتاً معلق' in page and menu(page) == ['پیشخوان', 'راهنما'], '%s %s' % (st, menu(page)))
 shell("w = env['ts.workspace'].browse(%s); w.state = 'pilot'; env.cr.commit()" % B)
 
 # strangers
@@ -163,7 +163,7 @@ check('anonymous header has no «پنل من»', 'پنل من' not in Client(TS)
 # old pages
 c, _ = pages[('owner', A)]
 st, _, old = c.req('/my/workspaces/%s/legacy' % A)
-check('old panel page (W/legacy) shows the notice with a link to the dashboard', st == 200 and ('href="/my/workspaces/%s"' % A) in old and 'رفتن به داشبورد' in old, str(st))
+check('old panel page (W/legacy) shows the notice with a link to the dashboard', st == 200 and ('href="/my/workspaces/%s"' % A) in old and 'رفتن به پیشخوان' in old, str(st))
 st, _, lst = c.req('/my/workspaces')
 check('panel list enters the new dashboard', st == 200 and ('href="/my/workspaces/%s"' % A) in lst)
 summary()

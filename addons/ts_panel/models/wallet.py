@@ -176,7 +176,7 @@ class TsWallet(models.Model):
         self.ensure_one()
         cr = self.env.cr
         self.env.flush_all()
-        cr.execute("""SELECT (timezone('Asia/Tehran', timezone('UTC', t.txn_date)))::date, COALESCE(i.name, '—'),
+        cr.execute("""SELECT (timezone('Asia/Tehran', timezone('UTC', t.txn_date)))::date, COALESCE(NULLIF(i.title, ''), i.name, '—'),
                              SUM(CASE WHEN t.type = 'debit_usage' THEN t.units WHEN t.type = 'refund' THEN -t.units ELSE 0 END)
                         FROM ts_wallet_txn t LEFT JOIN ts_instrument i ON i.id = t.instrument_id
                        WHERE t.wallet_id = %s AND t.type IN ('debit_usage', 'refund') AND t.txn_date >= now() - interval '400 days'

@@ -237,7 +237,7 @@ else:
         if b:
             b._ts_ensure_product()
             if not b.ts_list_price:
-                b.ts_list_price = 2500000
+                b.ts_list_price = 1800000       # Rial (۱۸۰٬۰۰۰ تومان); live batteries cost 70% of their parts
         return b
     step('bill_bat', bill_battery_price)
 
@@ -292,21 +292,26 @@ else:
 
     def bill_cap():
         spent = wal.ts_month_spend(qm1)
-        cap = -(-(spent + 2600000) // 1000000) * 1000000      # room for the instrument and the battery, not for the dear one
+        # room (2,000,000-2,099,999 Rial) for the instrument (1,200,000) and the battery (1,800,000), not for the dear one
+        # (2,500,000, ts_http_billing.py P2)
+        cap = -(-(spent + 2000000) // 100000) * 100000
         if int(qm1.monthly_cap) != cap:
             qm1.sudo().write({'monthly_cap': cap})
         return cap
     step('bill_cap', bill_cap)
 
     post_ = lambda path, **kw: 'POST %s %s' % (path, urlencode(kw))
+    shot_ = lambda path, **kw: 'POSTSHOT %s %s' % (path, urlencode(kw))     # the answer of the post is captured (G7-P4-3)
     m[QL('owner')] = [QW, QW + '/credits', QW + '/members/%s' % qm1.id,
-                      post_(QW + '/campaigns/new', step='review', kind='open_link', name='پیوند باز پذیرش پاییز',
+                      shot_(QW + '/campaigns/new', step='review', kind='open_link', name='پیوند باز پذیرش پاییز',
                             item_kind='single', instrument_id=qi1.id, open_max=20, open_days=14),
                       QW + '/campaigns/new?keep=1']
     m[QL('c1')] = [QW, QW + '/credits', QW + '/invites/new?fresh=1',
                    post_(QW + '/invites/new', step=1, new_name='نسترن آزمایشی', new_phone='', new_email='', new_age='adult'),
                    QW + '/invites/new?step=2',
                    post_(QW + '/invites/new', step=2, item_kind='single', instrument_id=qi1.id),
+                   QW + '/invites/new?step=3',
+                   post_(QW + '/invites/new', step=3, deadline='', note=''),
                    QW + '/invites/new?step=4']
 
 # ---------------------------------------------------------------- counseling-center set-up guide (clinic phase 6, 2026-10-12)
@@ -408,7 +413,8 @@ if 'center' in R:
     m[CK('c1')] = [CW + '/members/%s' % cs['c1'].id] + ([CW + '/clients/%s/r/%s' % (ccl.id, cat.id)] if ccl and cat else [])
     m[CK('c2')] = [CW, CW + '/members/%s' % cs['c2'].id]
     if cat:
-        m[CK('p1')] = ['/my/assessments/%s' % cat.id]
+        # the branded report and its print mode (the PDF route's fallback; ts_shot.py also writes a _print.png, G8-P10-7)
+        m[CK('p1')] = ['/my/assessments/%s' % cat.id, '/my/assessments/%s?print=1' % cat.id]
     pub.append('/help/panel#center-setup')
 json.dump(m, open('/tmp/ux_matrix.json', 'w'))
 print('UXMATRIX', ' '.join('%s=%d' % ((k or 'public').split('@')[0], len(v)) for k, v in m.items()), 'total', sum(len(v) for v in m.values()))

@@ -207,8 +207,9 @@ class TsWorkspaceBrand(models.Model):
         return self.purpose in BRAND_PURPOSES
 
     def ts_public_name(self):
+        """The report name (public_name), else the panel name (ts_core's base)."""
         self.ensure_one()
-        return clean_line(self.public_name) or self.name or ''
+        return clean_line(self.public_name) or super().ts_public_name() or ''
 
     def ts_sms_sender(self):
         """Line 1 of an SMS sent on behalf of this panel (05_sms_texts.md rule 7): sms_name, else the public name cut at a

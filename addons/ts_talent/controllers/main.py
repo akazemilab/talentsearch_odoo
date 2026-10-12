@@ -47,7 +47,7 @@ def _share_info(attempt):
     return {
         'asg': asg, 'shared': shared,
         'shared_edu': shared and asg.workspace_id.purpose == 'education',
-        'shared_name': (asg.workspace_id.partner_id.name or asg.workspace_id.name) if shared else '',
+        'shared_name': asg.workspace_id.ts_public_name() if shared else '',
         'can_share': not asg and not attempt.workspace_id and attempt.source != 'import',
     }
 

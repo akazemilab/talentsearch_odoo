@@ -125,7 +125,7 @@ class TsWorkspace(models.Model):
             if not (head.startswith(b'\x89PNG') or head.startswith(b'\xff\xd8\xff') or (head[:4] == b'RIFF' and head[8:12] == b'WEBP')):
                 raise UserError('لوگو باید تصویر PNG، JPG یا WEBP باشد.')
             if len(logo_bytes) > 512 * 1024:
-                raise UserError('حجم لوگو باید کمتر از ۵۱۲ کیلوبایت باشد.')
+                raise UserError('حجم لوگو باید کمتر از ۵۰۰ کیلوبایت باشد.')
             try:
                 with self.env.cr.savepoint():
                     self.partner_id.sudo().write({'image_1920': base64.b64encode(logo_bytes).decode()})

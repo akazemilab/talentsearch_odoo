@@ -101,7 +101,7 @@
                                             <th scope="row" data-label="عضو"><bdi t-out="cm.user_id.name"/></th>
                                             <td data-label="تعهد این ماه" class="tsb-amt" t-out="toman(wallet.ts_month_spend(cm))"/>
                                             <td data-label="سقف (تومان)">
-                                                <form t-if="can_manage" t-attf-action="/my/workspaces/#{ws.id}/credits/cap" method="post" class="tsb-inline" data-tsp-once="1">
+                                                <form t-if="can_manage" t-attf-action="/my/workspaces/#{ws.id}/credits/cap" method="post" class="tsb-inline" data-tsp-once="1" t-att-data-ts-dirty="'سقف ماهانهٔ ' + (cm.user_id.name or '')">
                                                     <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
                                                     <input type="hidden" name="member_id" t-att-value="cm.id"/>
                                                     <label class="tsp-sr" t-attf-for="tsb_cap_#{cm.id}">سقف ماهانهٔ <t t-out="cm.user_id.name"/> به تومان</label>
@@ -119,7 +119,7 @@
 
                             <section t-if="can_manage" class="ts-card" id="tsb-alert" aria-labelledby="tsb-alert-h">
                                 <h2 id="tsb-alert-h" class="h5">هشدار کم شدن اعتبار</h2>
-                                <form t-attf-action="/my/workspaces/#{ws.id}/credits/threshold" method="post" class="tsp-form" data-tsp-once="1">
+                                <form t-attf-action="/my/workspaces/#{ws.id}/credits/threshold" method="post" class="tsp-form" data-tsp-once="1" data-ts-dirty="هشدار کم شدن اعتبار">
                                     <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
                                     <div class="tsp-field">
                                         <label class="tsp-field__label" for="tsb_threshold">وقتی موجودی قابل استفاده کمتر از این مبلغ شد خبرم کن (تومان)</label>

@@ -252,16 +252,18 @@
             f.addEventListener('input', mark);
             f.addEventListener('change', mark);
         });
+        // Capture phase: this runs before the form's own submit handlers (panel.js data-tsp-once disables the button and
+        // says «در حال انجام…»); a «Cancel» stops the event there, so the button stays usable (G8-PT-7).
         document.addEventListener('submit', function (ev) {
             var form = ev.target;
             var others = dirtyOthers(form);
             if (others.length) {
                 var names = others.map(function (f) { return '«' + f.getAttribute('data-ts-dirty') + '»'; }).join('، ');
                 var ok = window.confirm('تغییرهای ' + names + ' هنوز ذخیره نشده و با این کار از دست می‌رود. ادامه می‌دهید؟');
-                if (!ok) { ev.preventDefault(); return; }
+                if (!ok) { ev.preventDefault(); ev.stopPropagation(); return; }
             }
             leaving = true;
-        });
+        }, true);
         window.addEventListener('beforeunload', function (ev) {
             if (leaving || !dirtyOthers(null).length) { return; }
             ev.preventDefault();

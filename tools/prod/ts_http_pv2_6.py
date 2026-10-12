@@ -166,7 +166,7 @@ check('the panel address is the dashboard with a new-invitation button and tiles
       st == 200 and 'پیشخوان' in body and '/invites/new' in body and (('/my/workspaces/%s/invites?state=opened' % A) in body or 'tsp-dash-empty' in body), str(st))
 check('W/home still answers (it redirects here)', get(own, W + '/home')[0] == 200)
 st, body = get(own, W + '/legacy')
-check('the old page lives on at W/legacy with its notice', st == 200 and 'رفتن به داشبورد' in body)
+check('the old page lives on at W/legacy with its notice', st == 200 and 'رفتن به پیشخوان' in body)
 st, body = get(own, W + '?state=done')
 check('an old state link lands in the new list', st == 200 and 'tsp-chip' in body and 'name="csrf_token"' not in body or 'دعوت‌ها' in body)
 

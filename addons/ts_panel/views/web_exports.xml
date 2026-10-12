@@ -54,7 +54,7 @@
                                             <option value="csv" t-att-selected="'selected' if pend.get('what') == 'status' and pend.get('format') == 'csv' else None">csv</option>
                                         </select></label>
                                     <label class="tsp-field"><span class="tsp-field__label">سنجه</span>
-                                        <select name="instrument_id" class="form-select"><option value="">همهٔ سنجه‌ها</option><option t-foreach="instruments" t-as="i" t-att-value="i.id" t-att-selected="'selected' if pend.get('what') == 'status' and pend.get('instrument_id') == str(i.id) else None" t-out="i.name"/></select></label>
+                                        <select name="instrument_id" class="form-select"><option value="">همهٔ سنجه‌ها</option><option t-foreach="instruments" t-as="i" t-att-value="i.id" t-att-selected="'selected' if pend.get('what') == 'status' and pend.get('instrument_id') == str(i.id) else None" t-out="i.ts_title()"/></select></label>
                                     <label t-if="groups" class="tsp-field"><span class="tsp-field__label">گروه</span>
                                         <select name="group_id" class="form-select"><option value="">همهٔ گروه‌ها</option><option t-foreach="groups" t-as="g" t-att-value="g.id" t-att-selected="'selected' if pend.get('what') == 'status' and pend.get('group_id') == str(g.id) else None" t-out="g.name"/></select></label>
                                     <p class="ts-hint">با زدن دکمه، اگر در چند دقیقهٔ اخیر هویتتان را تأیید نکرده باشید دوباره پرسیده می‌شود. فایل <t t-out="fa(ttl)"/> ساعت در دسترس می‌ماند.</p>
@@ -74,7 +74,7 @@
                                             <option value="csv" t-att-selected="'selected' if pend.get('what') == 'results' and pend.get('format') == 'csv' else None">csv</option>
                                         </select></label>
                                     <label class="tsp-field"><span class="tsp-field__label">سنجه</span>
-                                        <select name="instrument_id" class="form-select"><option value="">همهٔ سنجه‌ها</option><option t-foreach="instruments" t-as="i" t-att-value="i.id" t-att-selected="'selected' if pend.get('what') == 'results' and pend.get('instrument_id') == str(i.id) else None" t-out="i.name"/></select></label>
+                                        <select name="instrument_id" class="form-select"><option value="">همهٔ سنجه‌ها</option><option t-foreach="instruments" t-as="i" t-att-value="i.id" t-att-selected="'selected' if pend.get('what') == 'results' and pend.get('instrument_id') == str(i.id) else None" t-out="i.ts_title()"/></select></label>
                                     <label t-if="groups" class="tsp-field"><span class="tsp-field__label">گروه</span>
                                         <select name="group_id" class="form-select"><option value="">همهٔ گروه‌ها</option><option t-foreach="groups" t-as="g" t-att-value="g.id" t-att-selected="'selected' if pend.get('what') == 'results' and pend.get('group_id') == str(g.id) else None" t-out="g.name"/></select></label>
                                     <p class="ts-hint">با زدن دکمه، اگر در چند دقیقهٔ اخیر هویتتان را تأیید نکرده باشید دوباره پرسیده می‌شود. فایل <t t-out="fa(ttl)"/> ساعت در دسترس می‌ماند.</p>

@@ -13,7 +13,7 @@ from .base import STATE_LABELS, flash_error, flash_ok, forbidden, member_or_404,
 PAGE = 25
 SORTS = {'name': 'name_norm', 'activity': 'last_activity_at', 'open': 'open_count', 'done': 'done_count'}
 FILTERS = [('all', 'همه'), ('mine', 'شرکت‌کنندگان من'), ('unassigned', 'بدون کارشناس'), ('imported', 'واردشده'),
-           ('archived', 'بایگانی‌شده'), ('handover', 'درخواست واگذاری'), ('mine_open', 'شرکت‌کنندگان من با دعوت باز'),
+           ('archived', 'بایگانی‌شده'), ('handover', 'درخواست سپردن'), ('mine_open', 'شرکت‌کنندگان من با دعوت باز'),
            ('done', 'تکمیل‌شده')]
 
 
@@ -539,7 +539,7 @@ class TsPanelClients(http.Controller):
                 target = request.env['ts.workspace.member'].sudo().search(
                     [('id', '=', int(tid) if tid.isdigit() else 0), ('workspace_id', '=', ws_id)])
                 res = c.ts_request_handover(me, target)
-                flash_ok('کارشناس مسئول عوض شد.' if res == 'done' else 'درخواست واگذاری ثبت شد؛ پس از تأیید مالک یا هماهنگ‌کننده اعمال می‌شود.')
+                flash_ok('کارشناس مسئول عوض شد.' if res == 'done' else 'درخواست سپردن ثبت شد؛ پس از تأیید مالک یا هماهنگ‌کننده اعمال می‌شود.')
             elif action == 'decide':
                 c.ts_decide_handover(me, accept=post.get('accept') == '1')
                 flash_ok('تصمیم ثبت شد.')

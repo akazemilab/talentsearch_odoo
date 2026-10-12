@@ -29,7 +29,7 @@
                                         <tr t-foreach="rows" t-as="c">
                                             <th scope="row" data-label="عنوان"><a t-attf-href="/my/workspaces/#{ws.id}/campaigns/#{c.id}"><bdi t-out="c.name"/></a></th>
                                             <td data-label="نوع" t-out="kind_labels[c.kind]"/>
-                                            <td data-label="سنجه" t-out="c.instrument_id.name"/>
+                                            <td data-label="سنجه" t-out="c.instrument_id.ts_title()"/>
                                             <td data-label="پیشرفت">
                                                 <t t-set="tot" t-value="joined.get(c.id, 0)"/>
                                                 <t t-if="c.kind == 'open_link'">پیوسته <t t-out="fa(tot)"/> از <t t-out="fa(c.open_max)"/><t t-call="ts_website.sep"/></t>
@@ -71,7 +71,7 @@
                                     <p class="tsp-head__help">پس از این فرم یک صفحهٔ مرور می‌بینید؛ تا آن‌جا چیزی ساخته یا فرستاده نمی‌شود.</p>
                                 </div>
                             </header>
-                            <form t-attf-action="/my/workspaces/#{ws.id}/campaigns/new" method="post" class="tsp-form ts-card" data-tsp-once="1">
+                            <form t-attf-action="/my/workspaces/#{ws.id}/campaigns/new" method="post" class="tsp-form ts-card" data-tsp-once="1" id="tsp-c-form">
                                 <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
                                 <input type="hidden" name="step" value="review"/>
                                 <fieldset class="tsp-field">
@@ -83,6 +83,12 @@
                                     <label class="tsp-radio"><input type="radio" name="kind" value="list" t-att-checked="'checked' if kind_now == 'list' else None"/><span><strong t-out="kind_labels['list']"/>: برای همهٔ اعضای گروه‌های انتخابی دعوت جداگانه ساخته می‌شود<t t-if="not groups"><span class="tsp-field__hint tsp-radio__blurb">اول یک گروه بسازید: <a t-attf-href="/my/workspaces/#{ws.id}/groups">گروه‌ها</a></span></t></span></label>
                                 </fieldset>
                                 <label class="tsp-field"><span class="tsp-field__label">عنوان</span><input type="text" name="name" maxlength="80" required="required" t-att-value="draft.get('name')" class="form-control"/></label>
+                                <!-- a long catalog gets a filter box (G7-P5-3), the same one as step 2 of the invitation wizard -->
+                                <div class="tsp-field tsp-pickfilter" data-tsp-pickfilter="tsp-c-form" hidden="hidden">
+                                    <label class="tsp-field__label" for="tsp_c_pick_q">جست‌وجو در سنجه‌ها</label>
+                                    <input id="tsp_c_pick_q" type="search" class="form-control" autocomplete="off" aria-controls="tsp-c-form" aria-describedby="tsp_c_pick_n"/>
+                                    <p id="tsp_c_pick_n" class="tsp-field__hint" role="status"></p>
+                                </div>
                                 <fieldset class="tsp-field">
                                     <legend class="tsp-field__label">سنجه</legend>
                                     <label t-foreach="instruments" t-as="i" class="tsp-radio"><input type="radio" name="instrument_id" t-att-value="i.id" required="required" t-att-checked="'checked' if (draft.get('instrument_id') == i.id or len(instruments) == 1) else None"/><span t-out="i.ts_title()"/></label>
@@ -102,7 +108,7 @@
                                 </fieldset>
                                 <fieldset class="tsp-field tsp-kind-box" data-ts-show="kind=open_link">
                                     <legend class="tsp-field__label">فقط برای پیوند باز</legend>
-                                    <label class="tsp-field"><span class="tsp-field__label">سقف پیوستن (۱ تا ۵۰۰ نفر)</span><input type="text" name="open_max" inputmode="numeric" maxlength="3" t-att-value="fa(draft.get('open_max') or open_default)" class="form-control"/></label>
+                                    <label class="tsp-field"><span class="tsp-field__label">بیشترین تعداد نفرات (۱ تا ۵۰۰)</span><input type="text" name="open_max" inputmode="numeric" maxlength="3" t-att-value="fa(draft.get('open_max') or open_default)" class="form-control"/></label>
                                     <label class="tsp-field"><span class="tsp-field__label">پیوند تا چند روز باز بماند</span>
                                         <select name="open_days" class="form-select"><option value="7" t-att-selected="'selected' if draft.get('open_days') == 7 else None">۷ روز</option><option value="14" t-att-selected="'selected' if draft.get('open_days', 14) == 14 else None">۱۴ روز</option><option value="30" t-att-selected="'selected' if draft.get('open_days') == 30 else None">۳۰ روز</option></select></label>
                                 </fieldset>
@@ -116,6 +122,7 @@
                                 </div>
                             </form>
                             <t t-call="ts_org.reveal_js"/>
+                            <t t-call="ts_panel.daily_js"/>
                         </t>
                     </div>
                 </t>
@@ -154,7 +161,7 @@
                                         <dt>پیامک</dt><dd><t t-if="draft.get('sms')">بله، با تأیید رضایت</t><t t-else="">نه؛ پیوندها را خودتان می‌فرستید</t></dd>
                                     </t>
                                     <t t-else="">
-                                        <dt>سقف پیوستن</dt><dd t-out="fa(draft['open_max'])"/>
+                                        <dt>بیشترین تعداد نفرات</dt><dd t-out="fa(draft['open_max'])"/>
                                         <dt>پیوند باز می‌ماند</dt><dd><t t-out="fa(draft.get('open_days', 14))"/> روز</dd>
                                     </t>
                                 </dl>
@@ -329,8 +336,8 @@
                                 <div class="ts-section__head">
                                     <p class="ts-tag">دعوت به سنجه</p>
                                     <h1 t-out="inst.title"/>
-                                    <p t-if="student"><strong t-out="ws.partner_id.name"/> تو را به پاسخ‌دادن به این سنجه دعوت کرده است.</p>
-                                    <p t-else=""><strong t-out="ws.partner_id.name"/> شما را به پاسخ‌دادن به این سنجه دعوت کرده است.</p>
+                                    <p t-if="student"><strong t-out="ws.ts_public_name()"/> تو را به پاسخ‌دادن به این سنجه دعوت کرده است.</p>
+                                    <p t-else=""><strong t-out="ws.ts_public_name()"/> شما را به پاسخ‌دادن به این سنجه دعوت کرده است.</p>
                                 </div>
                                 <p t-if="flash" class="ts-notice" role="alert" t-out="flash"/>
                                 <div t-if="state != 'ok' and not mine" class="ts-card ts-card--soft" role="status">

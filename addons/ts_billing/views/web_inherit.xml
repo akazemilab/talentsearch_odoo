@@ -209,17 +209,24 @@
                     <h2 id="tsb-cap-h" class="h5">سقف ماهانهٔ هزینهٔ دعوت‌ها</h2>
                     <t t-if="cap_st['capped']" t-call="ts_billing.cap_bar" st="cap_st" toman="ws.ts_toman" cap_label="'سقف ماهانهٔ این عضو'" cap_who="True"/>
                     <p t-else="" class="ts-hint">تعهد این ماه: <span class="tsb-amt" t-out="ws.ts_toman(cap_st['spent'])"/>. برای این عضو سقفی تعیین نشده است.</p>
-                    <form t-attf-action="/my/workspaces/#{ws.id}/credits/cap" method="post" class="tsp-form" data-tsp-once="1">
+                    <form t-attf-action="/my/workspaces/#{ws.id}/credits/cap" method="post" class="tsp-form" data-tsp-once="1" data-ts-dirty="سقف ماهانه">
                         <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
                         <input type="hidden" name="member_id" t-att-value="m.id"/>
                         <input type="hidden" name="back" value="member"/>
-                        <div class="tsp-field">
-                            <label class="tsp-field__label" for="tsb_member_cap">سقف ماهانه (تومان)</label>
-                            <p class="tsp-field__hint" id="tsb_member_cap_h">هزینهٔ دعوت‌هایی که این عضو در یک ماه شمسی می‌فرستد. دعوتی که از سقف بگذرد ساخته نمی‌شود و این عضو پیامی می‌بیند که با <t t-out="ws.ts_credit_ask()"/> هماهنگ کند. دعوت لغوشده یا منقضی‌شده مبلغش را برمی‌گرداند. ۰ یعنی بدون سقف.</p>
-                            <input id="tsb_member_cap" type="text" name="cap" inputmode="numeric" maxlength="16" class="form-control tsb-money" aria-describedby="tsb_member_cap_h" t-att-value="ws.ts_fa_num(cap_st['cap'] // 10)"/>
-                        </div>
+                        <!-- «بدون سقف» is a choice, not the number ۰ (G8-P4-4); the server still reads ۰ as no cap -->
+                        <fieldset class="tsp-field">
+                            <legend class="tsp-field__label">سقف ماهانه</legend>
+                            <p class="tsp-field__hint" id="tsb_member_cap_h">هزینهٔ دعوت‌هایی که این عضو در یک ماه شمسی می‌فرستد. دعوتی که از سقف بگذرد ساخته نمی‌شود و این عضو پیامی می‌بیند که با <t t-out="ws.ts_credit_ask()"/> هماهنگ کند. دعوت لغوشده یا منقضی‌شده مبلغش را برمی‌گرداند.</p>
+                            <label class="tsp-radio"><input type="radio" name="cap_mode" value="none" t-att-checked="'checked' if not cap_st['cap'] else None"/><span>بدون سقف</span></label>
+                            <label class="tsp-radio"><input type="radio" name="cap_mode" value="cap" t-att-checked="'checked' if cap_st['cap'] else None"/><span>با سقف</span></label>
+                            <div class="tsp-field" data-ts-show="cap_mode=cap">
+                                <label class="tsp-field__label" for="tsb_member_cap">مبلغ سقف (تومان)</label>
+                                <input id="tsb_member_cap" type="text" name="cap" inputmode="numeric" maxlength="16" class="form-control tsb-money" aria-describedby="tsb_member_cap_h" t-att-value="ws.ts_fa_num(cap_st['cap'] // 10) if cap_st['cap'] else ''"/>
+                            </div>
+                        </fieldset>
                         <p><button type="submit" class="ts-btn ts-btn--primary">ذخیرهٔ سقف</button></p>
                     </form>
+                    <t t-call="ts_org.reveal_js"/>
                 </section>
             </xpath>
         </field>

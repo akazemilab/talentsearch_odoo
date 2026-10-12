@@ -65,8 +65,8 @@ def item_name(rec):
     title; never the internal name with its Latin item count (UX audit G7-PAT-1)."""
     if not rec:
         return ''
-    if hasattr(rec, 'ts_display_title'):
-        return rec.ts_display_title()
+    if hasattr(rec, 'ts_title'):
+        return rec.ts_title()
     return ('title' in rec._fields and rec.title) or rec.name
 
 
@@ -387,7 +387,8 @@ class TsPanelInvites(http.Controller):
         can_remind = bool(a.user_id or a.sms_consent)
         return render_in_shell('ts_panel.invite', me, 'invites', 'دعوت %s' % a.invitee_name, a=a, c=a.client_id, deadline_fa=deadline_fa,
                                can_remind=can_remind,
-                               result=result_url(ws_id, a.client_id.id, a.attempt_id.id) if (level != 'none' and a.attempt_id) else None,
+                               # «دیدن نتیجه» only once there is a result to see (G6-P8-1)
+                               result=result_url(ws_id, a.client_id.id, a.attempt_id.id) if (level != 'none' and a.attempt_id and a.attempt_id.state == 'done') else None,
                                url=a.invite_url() if open_link else None, open_link=open_link,
                                is_new=bool(kw.get('new')) and open_link, level=level,
                                can_manage=me.can_invite() and not a.user_id and a.state not in ('done', 'withdrawn', 'declined'),

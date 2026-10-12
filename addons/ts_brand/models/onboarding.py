@@ -129,9 +129,9 @@ class TsMemberOnboarding(models.Model):
             # 3. credit: the panel can hold the price of an invitation. Credit is added only by an invoice the EOT team
             #    issues, so the button asks for it (contact form, topic «شارژ اعتبار پنل», panel code filled in).
             available = env['ts.wallet']._for_workspace(ws).ts_available()
-            balance = 'موجودی: %s.' % ws.ts_toman(available)
+            balance = 'موجودی قابل استفاده: %s.' % ws.ts_toman(available)
             add('credit', 'اعتبار پنل', 'هر دعوت هزینهٔ خود را از اعتبار پنل رزرو می‌کند؛ بدون اعتبار، دعوت فرستاده نمی‌شود.',
-                available > 0, url=ws.ts_contact_url('credit') if me.has_perm('credits:read') else None, btn='درخواست شارژ اعتبار',
+                available > 0, url=ws.ts_topup_request_url() if me.has_perm('credits:read') else None, btn='درخواست شارژ اعتبار',
                 note=balance if available > 0 else balance + ' شارژ اعتبار با فاکتوری است که تیم استعدادیاب صادر می‌کند.',
                 keep_note=True)
 

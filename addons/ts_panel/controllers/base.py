@@ -16,9 +16,10 @@ from odoo.addons.ts_org.models.panel import ROLE_LABELS
 
 RESULT_PERMS = ('results:summary', 'results:education', 'results:clinical')
 
-# seq, key, group (sidebar heading, redesign 2026-10), label, path suffix below /my/workspaces/<id>, permission, needs_act, absolute url
+# seq, key, group (sidebar heading, redesign 2026-10), label, path suffix below /my/workspaces/<id>, permission, needs_act, absolute url;
+# optional: 'when' (callable(member) -> bool, checked after the permission) and 'active_key' (the page key that marks it current)
 MENU = [
-    {'seq': 10, 'key': 'home', 'group': 'نمای کلی', 'label': 'داشبورد', 'suffix': '', 'perm': 'panel:view'},
+    {'seq': 10, 'key': 'home', 'group': 'نمای کلی', 'label': 'پیشخوان', 'suffix': '', 'perm': 'panel:view'},
     {'seq': 20, 'key': 'clients', 'group': 'افراد و دعوت', 'label': 'شرکت‌کنندگان', 'suffix': '/clients', 'perm': 'clients:read_own',
      'needs_act': True},
     {'seq': 25, 'key': 'groups', 'group': 'افراد و دعوت', 'label': 'گروه‌ها', 'suffix': '/groups', 'perm': 'groups:manage',
@@ -107,8 +108,11 @@ def build_menu(member, active):
             continue
         if it.get('needs_act') and not member.can_act():
             continue
+        # an item added by a later module may decide itself who sees it (e.g. ts_billing's own-cost page for capped roles)
+        if it.get('when') and not it['when'](member):
+            continue
         url = it.get('url') or '/my/workspaces/%s%s' % (member.workspace_id.id, it['suffix'])
-        out.append({'key': it['key'], 'label': it['label'], 'url': url, 'current': it['key'] == active,
+        out.append({'key': it['key'], 'label': it['label'], 'url': url, 'current': it.get('active_key', it['key']) == active,
                     'group': it.get('group', '')})
     # A group heading over a single item says nothing (non-owners saw «پنل» above «راهنما» only, audit G5 PT-9):
     # such an item loses its heading and is set apart by a line instead.

@@ -104,7 +104,7 @@ def plain(html):
 st, page = get(login('inv'), '/my')
 check('home of an invited person leads with the invitation', st == 200 and 'id="ts-home-next"' in page and ('یک دعوت منتظر شماست' in page or 'یک دعوت منتظر توست' in page), st)
 check('…names the school and the deadline', 'مدرسهٔ نمونهٔ پرتال' in page and 'مهلت تا' in page)
-check('…and the open invitations list is dated and attributed', 'ts-home-invites' in page and 'از طرف' in page)
+check('…and the open invitations list is dated and attributed', 'ts-home-invites' in page and 'به دعوت' in page)
 st, page = get(login('going'), '/my')
 check('home of an unfinished attempt leads with resume', st == 200 and (('یک سنجهٔ نیمه‌تمام دارید' in page or 'یک سنجهٔ نیمه‌تمام داری' in page) and 'ادامهٔ پاسخ‌دهی' in page and 'آخرین ذخیره' in page
                                                                      or ('یک سنجه منتظر شماست' in page or 'یک سنجه منتظر توست' in page) and '>شروع<' in page and 'هنوز به هیچ جمله‌ای پاسخ' in page), st)

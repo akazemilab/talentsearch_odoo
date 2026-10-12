@@ -151,7 +151,7 @@ class TsBatteryPlayer(TsTalent):
             seen.append(a)
             done, total = a.ts_battery_progress()
             nxt = a.ts_battery_attempts().filtered(lambda x: x.state != 'done')[:1]
-            row = {'a': a, 'name': a.battery_id.name, 'org': a.workspace_id.partner_id.name or a.workspace_id.name,
+            row = {'a': a, 'name': a.battery_id.ts_title(), 'org': a.workspace_id.ts_public_name(),
                    'done': done, 'total': total, 'when': jalali(a.accepted_at or a.create_date, with_time=False)}
             if nxt:
                 row.update(url='/take/%s' % nxt.access_token, fresh=nxt.state == 'consent')
@@ -183,7 +183,7 @@ class TsBatteryPlayer(TsTalent):
         resp = a.responsible_id.sudo().user_id.name if a.responsible_id else ''
         return request.render('ts_battery.my_battery', {
             'a': a, 'battery': a.battery_id, 'sections': sections, 'done': done, 'total': total,
-            'org': a.workspace_id.partner_id.name or a.workspace_id.name, 'counselor': resp,
+            'org': a.workspace_id.ts_public_name(), 'counselor': resp,
             'when': jalali(max(rows.filtered(lambda t: t.submitted_at).mapped('submitted_at') or [a.create_date]), with_time=False),
             'submitted': kw.get('submitted'), 'limit_note': LIMIT_NOTE, 'tu': rows[:1].ts_informal(),
             'fa': fa_digits, 'page_name': 'ts_assessments'})
@@ -311,7 +311,7 @@ class TsBatteryMembers(TsPanelMembers):
             qc.update(panel_insts=ws.ts_catalog_instruments(), panel_bats=ws.ts_catalog_batteries(),
                       cat_restricted=restricted, cat_insts=set(insts.ids), cat_bats=set(bats.ids),
                       # «اکنون: فقط «X»، «Y» و ۲ مورد دیگر» (G6-P1-3): batteries first, then single instruments
-                      cat_now=_names_line([b.name for b in bats.sudo()] + [i.ts_title() for i in insts.sudo()]))
+                      cat_now=_names_line([b.ts_title() for b in bats.sudo()] + [i.ts_title() for i in insts.sudo()]))
         return res
 
     @http.route('/my/workspaces/<int:ws_id>/members/<int:mid>/catalog', type='http', auth='user', website=True,
@@ -364,7 +364,8 @@ def _catalog_note(me):
 
 
 def _picker_ctx(me, d):
-    bats = me.allowed_batteries()
+    # listed by the name people see (G7-PAT-2)
+    bats = me.allowed_batteries().sorted(lambda b: b.ts_title().replace('\u200c', ' '))
     bat = bats.filtered(lambda b: b.id == d.get('battery_id'))[:1] if d.get('battery_id') else bats.browse()
     # a member without single instruments (catalog restricted to batteries) gets the battery choice directly
     only_bats = bool(bats) and not me.allowed_instruments()

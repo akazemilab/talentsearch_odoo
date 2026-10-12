@@ -116,7 +116,7 @@ For each new assignment with `workspace_id.billing_mode == 'prepaid'`:
 
 ## 6. Pages (panel, website 4) — counseling vocabulary, «شما», no «!», no «متأسفانه»
 - `/my/workspaces/<ws>/credits` (exists, rework for prepaid): cards «موجودی قابل استفاده» (available), «رزروشده برای
-  دعوت‌های باز» (held), «مصرف این ماه»; table of this month's usage per counselor (name, invitations, amount) for
+  دعوت‌های باز» (held), «مصرف این ماه» (renamed «کسرشده این ماه» in the 2026-10-12 UX pass, see the end of this section); table of this month's usage per counselor (name, invitations, amount) for
   `credits:read`; caps editor per capped member (owner/admin/clinic_director); price list of the panel's granted
   items (`allowed_instruments()` ∪ `allowed_batteries()` with `fmt_toman`); invoices list (number, Jalali date, amount,
   state «پرداخت‌شده / در انتظار پرداخت», link). For a clinician: own cap and «مصرف این ماه» only, plus the price list.
@@ -131,6 +131,24 @@ For each new assignment with `workspace_id.billing_mode == 'prepaid'`:
   with `credits:read`, at most once per 24 h per wallet (`low_alert_sent_on`). SMS body added to SMS_BODIES (Phase 5
   may reword). Text: «اعتبار پنل «%s» به %s رسید. برای ادامهٔ دعوت‌ها اعتبار را شارژ کنید.»
 - Back office: wallet form shows Monetary columns; `ts_grant`/`ts_adjust` accept Rial amounts (multiples of 10).
+  A base price above 50,000,000 Rial (`PRICE_WARN_RIAL`, ts_billing/models/catalog.py) shows an onchange warning on the
+  instrument and battery forms (a toman/Rial slip; nothing is blocked, G8-P4-2).
+
+**UX pass 2026-10-12 (G7/G8 audits; presentation only, `ts_hold` / `ts_launch` / campaign creation decide as before):**
+- Credits page cards: «موجودی قابل استفاده» (available), «رزروشده برای دعوت‌های باز» (held) and «کسرشده این ماه»
+  (the month's debits, `wallet.ts_month_debited()`); the held + debited figure moved to the per-member table as
+  «تعهد این ماه» (what the monthly cap counts; every capped member listed, ۰ when none). Order: cards, total line
+  («کل اعتبار پنل = قابل استفاده + رزروشده»), low notice, «شارژ اعتبار» card (button «درخواست شارژ اعتبار» ->
+  `ws.ts_topup_request_url()` = `/contact?topic=credit&panel=<code>`, the contact page prefills «کد پنل» and
+  «مبلغ شارژ»), invoices, history (collapsed), commitment per member, caps, threshold, price list (collapsed).
+- Capped roles without `credits:read` in a prepaid panel reach their own page from the panel menu as «هزینهٔ دعوت‌ها»
+  (ts_billing appends the item to ts_panel's MENU with a `when` check). The member page offers «بدون سقف» / «با سقف»
+  (`cap_mode`); ۰ typed in the caps table still means no cap.
+- Refusal texts reworded (INSUFFICIENT, INSUFFICIENT_ASK, INSUFFICIENT_BATCH, CAP_OVER, OPEN_LINK_FLOOR): balances only
+  for `credits:read` members, others are told whom to ask (`tools.credit_ask`). The invitation wizard refuses an
+  unaffordable item already at step 2 (`TsBillingInvites._read_item`) with the same text as creation; `ts_hold` still
+  decides at creation.
+- The dashboard count tile is «سنجه‌های تکمیل‌شدهٔ این دوره» (a count, never «مصرف»).
 
 ## 7. Company currency switch (one-off, guarded, part of ts_billing install)
 `ts.wallet._ts_switch_company_currency()` called from a `<function>` data record (runs on install and every upgrade,

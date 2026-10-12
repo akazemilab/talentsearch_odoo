@@ -10,8 +10,16 @@
     .tsp-actions__end { margin-inline-start: auto; }
     .tsp-prev::before { content: '→'; margin-inline-end: 6px; }
     @media (max-width: 575.98px) {
-        .tsp-actions .ts-btn--primary { flex: 1 1 100%; justify-content: center; }
+        // phones: the primary action first and full width, «قبلی» and «انصراف» as quiet buttons on one row below (G6-P5-2)
+        .tsp-actions .ts-btn--primary { flex: 1 1 100%; justify-content: center; order: -1; }
         .tsp-actions__end { margin-inline-start: 0; }
+        .tsp-actions:has(.tsp-prev) .tsp-actions__end { margin-inline-start: auto; }
+    }
+
+    // ---- participant page on phones: «سنجه‌ها» right under the header, then details, responsible, groups (G6-P6-1)
+    @media (max-width: 767.98px) {
+        .tsp-shell__main > .tsp-c-after { order: 1; }
+        .tsp-shell__main > .tsp-c-tests ~ :not(.tsp-c-after) { order: 2; }
     }
 
     // ---- chips: count as a small badge with space before it; zero-count states fold into a select on phones (G3-P11-3, G5-P4-2)

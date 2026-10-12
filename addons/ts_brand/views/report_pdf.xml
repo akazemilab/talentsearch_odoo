@@ -28,6 +28,7 @@
                     .ts-pdf .ts-table th, .ts-pdf .ts-table td, .ts-pdf .tsp-table th, .ts-pdf .tsp-table td, .ts-pdf .tsp-tt th, .ts-pdf .tsp-tt td { border: 1px solid #dfe2ee; padding: 4px 6px; text-align: right; vertical-align: top; }
                     .ts-pdf thead th { background: #f4f5fb; }
                     .ts-pdf .ts-summary__bar, .ts-pdf .tsp-sr, .ts-pdf .ts-noprint, .ts-pdf .tsp-noprint { display: none !important; }
+                    .ts-pdf .ts-barnote { display: none !important; }
                     .ts-pdf .ts-band { padding: 0 6px; border: 1px solid #c9c4ef; border-radius: 8px; white-space: nowrap; }
                     .ts-pdf .ts-hint, .ts-pdf .tsp-hint { color: #595d6c; font-size: 9.5pt; }
                     .ts-pdf .ts-card, .ts-pdf .ts-factor, .ts-pdf .tsp-sec { page-break-inside: avoid; }
@@ -149,7 +150,7 @@
                             </table>
                             <t t-foreach="sections" t-as="sec">
                                 <section class="tsp-sec">
-                                    <h2 t-if="not single" t-out="sec['inst'].title or sec['inst'].name"/>
+                                    <h2 t-if="not single" t-out="sec['inst'].ts_title()"/>
                                     <p t-if="not sec['done']" class="tsp-hint">هنوز به این سنجه پاسخ داده نشده است.</p>
                                     <t t-elif="sec['talent']"><t t-call="ts_brand.pdf_talent" tal="sec['talent']"/></t>
                                     <t t-elif="mode == 'self' and sec['results']"><t t-call="ts_assessment.report_blocks" results="sec['results']" blk_sum_id="'s%s' % sec['at'].id" blk_sub="not single"/></t>

@@ -2,6 +2,10 @@
 """Headless layout audit of Talent Search pages on a served CLONE (never live accounts).
     ts_shot.py DB PORT [--as LOGIN] PATH...
     ts_shot.py DB PORT --matrix FILE.json        FILE = {"login": ["/path", ...], ...}   (Panel v2, 08_design_system.md section 5)
+Matrix entries: "/path[#anchor]" (loaded without the anchor, then scrolled to it, so every theme pass reloads the page);
+"POST /path body" (a form post that sets up the next page, no screenshot); "POSTSHOT /path body" (the page a form post
+answers with, captured like a page: one post per width / theme). A path with print=1, /my/assessments/ or /a/ also gets a
+print-media check and a _print.png.
 Tunnels VPS:18071 -> prod:PORT, maps talentsearch.ir to it, signs in with the clone-only test user
 (password read from prod's root-only file, never printed) and reports per page and width:
 status, horizontal overflow, elements wider than the viewport, small tap targets, images without alt,
@@ -117,6 +121,41 @@ FOCUS_JS = r"""() => {
 }"""
 
 
+BASE = 'http://talentsearch.ir'
+POST_JS = """async ([u, d]) => {
+  const b = new URLSearchParams(d), t = document.querySelector('input[name=csrf_token]');
+  b.set('csrf_token', t ? t.value : ((window.odoo && odoo.csrf_token) || ''));
+  const r = await fetch(u, {method: 'POST', body: b, credentials: 'same-origin', redirect: 'manual'});
+  return r.type === 'opaqueredirect' ? 303 : r.status; }"""
+FORM_JS = """([u, d]) => {
+  const f = document.createElement('form'), b = new URLSearchParams(d), t = document.querySelector('input[name=csrf_token]');
+  b.set('csrf_token', t ? t.value : ((window.odoo && odoo.csrf_token) || ''));
+  f.method = 'post'; f.action = u;
+  for (const [k, v] of b) { const i = document.createElement('input'); i.type = 'hidden'; i.name = k; i.value = v; f.appendChild(i); }
+  document.body.appendChild(f); f.submit(); }"""
+
+
+def shot_name(path):
+    if path.startswith('POSTSHOT '):
+        path = path.split(' ', 2)[1] + '_post'
+    return re.sub(r'[^a-z0-9]+', '_', path.lower()).strip('_') or 'home'
+
+
+def nav(page, path):
+    """Open one matrix entry. An #anchor is not part of the navigation (a fragment-only change does not reload the page, so
+    the dark pass used to capture the light page, G8-P5-3): load the page, then scroll the anchor into view."""
+    if path.startswith('POSTSHOT '):
+        _p, url, data = (path.split(' ', 2) + [''])[:3]
+        with page.expect_navigation(timeout=90000, wait_until='networkidle') as nv:
+            page.evaluate(FORM_JS, [url, data])
+        return nv.value
+    url, _sep, frag = path.partition('#')
+    r = page.goto(BASE + url, timeout=90000, wait_until='networkidle')
+    if frag:
+        page.evaluate("f => { const e = document.getElementById(f); if (e) { e.scrollIntoView({block: 'start'}); } }", frag)
+    return r
+
+
 def audit(p, login, paths):
     bad = 0
     pw_file = '/root/.ts_flow_%s_%s' % (DB, (login or '').split('@')[0])
@@ -124,11 +163,11 @@ def audit(p, login, paths):
     b = p.chromium.launch(executable_path=CHROME, args=['--no-sandbox', '--disable-dev-shm-usage', '--disable-gpu',
                                                         '--host-resolver-rules=MAP talentsearch.ir:80 127.0.0.1:%s' % LOCAL])
     ctx = b.new_context(locale='fa-IR')
+    ctx.add_init_script('window.print = function () {};')   # ?print=1 pages open the print dialog; headless must not wait on it
     page = ctx.new_page()
     errors = []
     page.on('console', lambda m: errors.append(m.text[:160]) if m.type == 'error' else None)
     page.on('pageerror', lambda e: errors.append(str(e)[:160]))
-    BASE = 'http://talentsearch.ir'
     if login:
         page.goto(BASE + '/web/login', timeout=90000)
         page.fill('input[name=login]', login); page.fill('input[name=password]', password)
@@ -144,18 +183,14 @@ def audit(p, login, paths):
         if path.startswith('POST '):
             # «POST path urlencoded-body»: a form post that sets up the next page (wizard draft), no screenshot
             _p, url, data = (path.split(' ', 2) + [''])[:3]
-            st = page.evaluate("""async ([u, d]) => {
-              const b = new URLSearchParams(d), t = document.querySelector('input[name=csrf_token]');
-              b.set('csrf_token', t ? t.value : ((window.odoo && odoo.csrf_token) || ''));
-              const r = await fetch(u, {method: 'POST', body: b, credentials: 'same-origin', redirect: 'manual'});
-              return r.type === 'opaqueredirect' ? 303 : r.status; }""", [url, data])
+            st = page.evaluate(POST_JS, [url, data])
             print('post %-4s %-40s %s' % (st, url[:40], 'ok' if st in (200, 303) else 'FAILED'), flush=True)
             bad += 0 if st in (200, 303) else 1
             continue
         for w in WIDTHS:
             errors.clear()
             page.set_viewport_size({'width': w, 'height': 900})
-            r = page.goto(BASE + path, timeout=90000, wait_until='networkidle')
+            r = nav(page, path)
             m = page.evaluate(JS)
             body = m.pop('text')
             en = sorted(set(EN.findall(body)))
@@ -180,7 +215,7 @@ def audit(p, login, paths):
             if not m['lang'].startswith('fa'): probs.append('lang=' + (m['lang'] or '-'))
             info = (' [ascii-digits %d]' % m['ascii']) if m.get('ascii') else ''
             bad += 1 if probs else 0
-            name = re.sub(r'[^a-z0-9]+', '_', path.lower()).strip('_') or 'home'
+            name = shot_name(path)
             stem = '/root/ts-jobs/shots/%s%s_%d' % ((login.split('@')[0] + '_') if MATRIX else '', name, w)
             if w == max(WIDTHS):
                 open(stem + '.txt', 'w').write('URL %s\nTITLE %s\nFINAL %s\n\n%s' % (path, m['title'], page.url.replace(BASE, ''), body))
@@ -192,17 +227,20 @@ def audit(p, login, paths):
         for w in DARK:
             page.set_viewport_size({'width': w, 'height': 900})
             page.evaluate("() => localStorage.setItem('ts-site-theme', 'dark')")
-            page.goto(BASE + path, timeout=90000, wait_until='networkidle')
+            nav(page, path)
             m = page.evaluate(JS); m.pop('text')
-            name = re.sub(r'[^a-z0-9]+', '_', path.lower()).strip('_') or 'home'
+            name = shot_name(path)
             page.screenshot(path='/root/ts-jobs/shots/%s%s_%d_dark.png' % ((login.split('@')[0] + '_') if MATRIX else '', name, w), full_page=True)
             print('dark %-4s %-40s %s' % (w, path[:40], ('contrast ' + '|'.join(m['lowcontrast'])) if m['lowcontrast'] else 'ok'), flush=True)
             page.evaluate("() => localStorage.setItem('ts-site-theme', 'light')")
-        if '/my/assessments/' in path or '/a/' in path:
+        if '/my/assessments/' in path or '/a/' in path or 'print=1' in path:
+            if 'print=1' in path:
+                nav(page, path)          # the print mode page itself (G8-P10-7), not the last theme pass
             page.emulate_media(media='print'); page.set_viewport_size({'width': 794, 'height': 1123})
             hidden = page.evaluate("() => [...document.querySelectorAll('.ts-noprint, header#top, footer')].filter(e => getComputedStyle(e).display !== 'none').length")
             over = page.evaluate("() => document.documentElement.scrollWidth - window.innerWidth")
             print('print     %-40s %s' % (path[:40], 'ok' if not hidden and over <= 0 else 'visible-chrome=%d overflow=%d' % (hidden, over)), flush=True)
+            page.screenshot(path='/root/ts-jobs/shots/%s%s_print.png' % ((login.split('@')[0] + '_') if MATRIX else '', shot_name(path)), full_page=True)
             page.emulate_media(media='screen')
     b.close()
     return bad

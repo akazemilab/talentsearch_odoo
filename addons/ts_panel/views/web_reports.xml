@@ -13,12 +13,12 @@
                         <t t-call="ts_panel.shell_frame">
                             <header class="tsp-head">
                                 <div>
-                                    <h1 class="tsp-head__title"><t t-out="inst.name"/> — <t t-out="client.name"/></h1>
-                                    <p class="tsp-head__help"><span class="ts-pill" t-out="kind"/> <t t-if="when">· <t t-out="jalali(when, with_time=False)"/></t></p>
+                                    <h1 class="tsp-head__title"><t t-out="inst.ts_title()"/> — <t t-out="client.name"/></h1>
+                                    <p class="tsp-head__help"><span class="ts-pill" t-out="kind"/><t t-if="when"><t t-call="ts_website.sep"/><t t-out="jalali(when, with_time=False)"/></t></p>
                                 </div>
                                 <form t-if="level != 'status'" method="post" t-att-action="print_url" class="tsp-inline tsp-noprint">
                                     <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
-                                    <button type="submit" class="ts-btn ts-btn--outline">چاپ یا ذخیره به‌صورت PDF</button>
+                                    <button type="submit" class="ts-btn ts-btn--quiet">چاپ همین صفحه</button>
                                 </form>
                             </header>
                             <t t-call="ts_panel.result_bands_body"/>
@@ -56,13 +56,13 @@
                             </section>
                             <t t-if="level != 'status'">
                                 <section class="ts-card" t-att-aria-labelledby="(blk_id or 'tsp-r') + '-1'">
-                                    <h3 t-if="blk_sub" t-att-id="(blk_id or 'tsp-r') + '-1'" class="h6">خلاصهٔ نتایج</h3>
-                                    <h2 t-else="" t-att-id="(blk_id or 'tsp-r') + '-1'" class="h5">خلاصهٔ نتایج</h2>
-                                    <p t-if="level in ('summary', 'education')" class="ts-hint">فقط بازهٔ هر بُعد نمایش داده می‌شود. نمره‌ها، پاسخ‌ها و متن‌های تفسیری شخصی نزد شرکت‌کننده می‌ماند. این نتیجه به‌تنهایی مبنای تصمیم نیست.</p>
-                                    <p t-else="" class="ts-hint">نمرهٔ هر بُعد میانگین پاسخ‌ها روی مقیاس ۱ تا ۵ است.</p>
+                                    <h3 t-if="blk_sub" t-att-id="(blk_id or 'tsp-r') + '-1'" class="h6">خلاصهٔ نتیجه‌ها</h3>
+                                    <h2 t-else="" t-att-id="(blk_id or 'tsp-r') + '-1'" class="h5">خلاصهٔ نتیجه‌ها</h2>
+                                    <p t-if="level in ('summary', 'education')" class="ts-hint">فقط سطح هر عامل نمایش داده می‌شود. نمره‌ها، پاسخ‌ها و متن‌های تفسیری شخصی نزد شرکت‌کننده می‌ماند. این نتیجه به‌تنهایی مبنای تصمیم نیست.</p>
+                                    <p t-else="" class="ts-hint">نمرهٔ هر عامل میانگین پاسخ‌ها از ۱ تا ۵ است.</p>
                                     <table class="ts-table tsp-table">
-                                        <caption class="tsp-sr">نتیجهٔ هر بُعد</caption>
-                                        <thead><tr><th scope="col">بُعد</th><th t-if="level == 'clinical'" scope="col">نمره (۱ تا ۵)</th><th scope="col">بازه</th></tr></thead>
+                                        <caption class="tsp-sr">نتیجهٔ هر عامل</caption>
+                                        <thead><tr><th scope="col">عامل</th><th t-if="level == 'clinical'" scope="col">نمره (۱ تا ۵)</th><th scope="col">سطح</th></tr></thead>
                                         <tbody>
                                             <tr t-foreach="results" t-as="r">
                                                 <th scope="row" t-out="r.factor_id.name"/>
@@ -112,7 +112,7 @@
                                     </select></label>
                                 <label class="tsp-field"><span class="tsp-field__label">سنجه</span>
                                     <select name="instrument_id" class="form-select"><option value="">همهٔ سنجه‌ها</option>
-                                        <option t-foreach="instruments" t-as="i" t-att-value="i.id" t-att-selected="'selected' if params.get('instrument_id') == str(i.id) else None" t-out="fa(i.name)"/>
+                                        <option t-foreach="instruments" t-as="i" t-att-value="i.id" t-att-selected="'selected' if params.get('instrument_id') == str(i.id) else None" t-out="i.ts_title()"/>
                                     </select></label>
                                 <p class="tsp-field--wide"><button type="submit" class="ts-btn ts-btn--outline">نمایش</button>
                                     <a t-if="params" t-attf-href="/my/workspaces/#{ws.id}/reports" class="ts-btn ts-btn--quiet">حذف پالایه‌ها</a></p>
@@ -127,7 +127,7 @@
                                     <tbody>
                                         <tr t-foreach="rows" t-as="row">
                                             <th scope="row" data-label="شرکت‌کننده"><a t-attf-href="#{url(ws.id, row[0].client_id.id, row[0].id)}" t-out="row[0].client_id.name"/></th>
-                                            <td data-label="سنجه" t-out="row[0].instrument_id.name"/>
+                                            <td data-label="سنجه" t-out="row[0].instrument_id.ts_title()"/>
                                             <td data-label="نوع گزارش" t-out="kinds.get(row[1], row[1])"/>
                                             <td data-label="تاریخ" t-out="jalali(row[0].submitted_at, with_time=False)"/>
                                         </tr>
@@ -183,7 +183,7 @@
                                     </select></label>
                                 <label class="tsp-field"><span class="tsp-field__label">سنجه</span>
                                     <select name="instrument_id" class="form-select"><option value="">همه</option>
-                                        <option t-foreach="instruments" t-as="i" t-att-value="i.id" t-att-selected="'selected' if params.get('instrument_id') == str(i.id) else None" t-out="fa(i.name)"/>
+                                        <option t-foreach="instruments" t-as="i" t-att-value="i.id" t-att-selected="'selected' if params.get('instrument_id') == str(i.id) else None" t-out="i.ts_title()"/>
                                     </select></label>
                                 <label class="tsp-field"><span class="tsp-field__label">بازهٔ زمانی</span>
                                     <select name="period" class="form-select">
@@ -205,8 +205,8 @@
                                     <p><t t-call="ts_panel.group_report_next"/></p>
                                 </div>
                                 <table t-if="ins['factors']" class="ts-table tsp-table">
-                                    <caption class="tsp-sr">تعداد افراد در هر بازه</caption>
-                                    <thead><tr><th scope="col">بُعد</th><th scope="col">کم</th><th scope="col">متوسط</th><th scope="col">زیاد</th></tr></thead>
+                                    <caption class="tsp-sr">تعداد افراد در هر سطح</caption>
+                                    <thead><tr><th scope="col">عامل</th><th scope="col">کم</th><th scope="col">متوسط</th><th scope="col">زیاد</th></tr></thead>
                                     <tbody>
                                         <tr t-foreach="ins['factors']" t-as="f">
                                             <th scope="row" t-out="f['name']"/>

@@ -218,7 +218,7 @@ class TsAssessment(http.Controller):
         for a in attempts.filtered(lambda a: a.state == 'done'):
             asg = a.ts_org_assignment() if hasattr(a, 'ts_org_assignment') else None
             if asg and asg.share_level != 'none':
-                shares[a.id] = asg.workspace_id.partner_id.name or asg.workspace_id.name
+                shares[a.id] = asg.workspace_id.ts_public_name()
         tu = any(a.ts_informal() for a in attempts[:5])
         return request.render('ts_assessment.my_list', {'attempts': attempts, 'going': going, 'groups': groups,
                                                          'shares': shares, 'tu': tu,

@@ -45,15 +45,15 @@
                             <div t-if="rows" class="ts-table-wrap">
                                 <table class="ts-table tsp-table tsp-table--cards">
                                     <caption class="tsp-sr">فهرست دعوت‌ها</caption>
-                                    <thead><tr><th scope="col">شرکت‌کننده</th><th scope="col">سنجه</th><th scope="col">وضعیت</th><th scope="col">فرستنده</th><th scope="col">ساخته‌شده</th><th scope="col">انقضا</th><th scope="col"><span class="tsp-sr">نتیجه</span></th></tr></thead>
+                                    <thead><tr><th scope="col">شرکت‌کننده</th><th scope="col">سنجه</th><th scope="col">وضعیت</th><th scope="col">فرستنده</th><th scope="col">ساخته‌شده</th><th scope="col">پیوند باز است تا</th><th scope="col"><span class="tsp-sr">نتیجه</span></th></tr></thead>
                                     <tbody>
                                         <tr t-foreach="rows" t-as="a" t-attf-class="#{'tsp-row--new' if a.id in unseen else ''}">
                                             <th scope="row" data-label="شرکت‌کننده"><a t-attf-href="/my/workspaces/#{ws.id}/invites/#{a.id}"><bdi t-out="a.invitee_name"/></a></th>
-                                            <td data-label="سنجه" t-out="a.instrument_id.name"/>
+                                            <td data-label="سنجه" t-out="a.instrument_id.ts_title()"/>
                                             <td data-label="وضعیت"><span t-attf-class="ts-pill #{pill.get(a.state, '')}" t-out="state_labels.get(a.state, a.state)"/></td>
                                             <td data-label="فرستنده"><bdi t-out="a.invited_by_id.sudo().name or '—'"/></td>
                                             <td data-label="ساخته‌شده" t-out="jalali(a.create_date)"/>
-                                            <td data-label="انقضا"><t t-if="a.state in ('invited', 'opened', 'expired') and a.expires_at" t-out="jalali(a.expires_at)"/><t t-else="">—</t></td>
+                                            <td data-label="پیوند باز است تا"><t t-if="a.state in ('invited', 'opened', 'expired') and a.expires_at" t-out="jalali(a.expires_at)"/><t t-else="">—</t></td>
                                             <td data-label="">
                                                 <a t-if="results.get(a.id)" t-att-href="results[a.id]" class="ts-btn ts-btn--outline ts-btn--sm">نتیجه<span class="tsp-sr"> <t t-out="a.invitee_name"/></span></a>
                                                 <span t-if="a.id in unseen" class="ts-pill ts-pill--info">تازه</span>
@@ -247,7 +247,7 @@
                             <header class="tsp-head">
                                 <div>
                                     <h1 class="tsp-head__title">دعوت <bdi t-out="a.invitee_name"/></h1>
-                                    <p class="tsp-head__help"><span t-attf-class="ts-pill #{pill.get(a.state, '')}" t-out="state_labels.get(a.state, a.state)"/> · <t t-out="a.instrument_id.name"/> · <a t-attf-href="/my/workspaces/#{ws.id}/clients/#{c.id}">صفحهٔ شرکت‌کننده</a></p>
+                                    <p class="tsp-head__help"><span t-attf-class="ts-pill #{pill.get(a.state, '')}" t-out="state_labels.get(a.state, a.state)"/><t t-call="ts_website.sep"/><t t-out="a.instrument_id.name"/><t t-call="ts_website.sep"/><a t-attf-href="/my/workspaces/#{ws.id}/clients/#{c.id}">صفحهٔ شرکت‌کننده</a></p>
                                 </div>
                                 <div t-if="result" class="tsp-head__actions">
                                     <a t-att-href="result" class="ts-btn ts-btn--primary">دیدن نتیجه</a>
@@ -264,7 +264,7 @@
                                 <p class="tsp-inline">
                                     <input id="tsp_invite_url" type="text" readonly="readonly" class="ts-copy" dir="ltr" t-att-value="url" aria-label="پیوند دعوت"/>
                                     <button type="button" class="ts-btn ts-btn--outline" data-tsp-copy="tsp_invite_url" hidden="hidden">رونوشت پیوند</button>
-                                    <button type="button" class="ts-btn ts-btn--outline" data-tsp-share="tsp_invite_url" t-att-data-tsp-share-title="'دعوت به سنجه: %s' % a.instrument_id.name" hidden="hidden">هم‌رسانی پیوند</button>
+                                    <button type="button" class="ts-btn ts-btn--outline" data-tsp-share="tsp_invite_url" t-att-data-tsp-share-title="'دعوت به سنجه: %s' % a.instrument_id.ts_title()" hidden="hidden">هم‌رسانی پیوند</button>
                                     <span class="tsp-field__hint" role="status" data-tsp-copied="1"></span>
                                 </p>
                                 <img t-attf-src="/my/workspaces/#{ws.id}/invites/#{a.id}/qr.png" width="200" height="200" alt="کد QR پیوند دعوت برای اسکن با گوشی" class="tsp-qr"/>
@@ -275,10 +275,10 @@
                                     <dt>ساخته‌شده</dt><dd t-out="jalali(a.create_date)"/>
                                     <dt>فرستنده</dt><dd><bdi t-out="a.invited_by_id.sudo().name or '—'"/></dd>
                                     <dt>کانال</dt><dd t-out="channel_label"/>
-                                    <dt>انقضا</dt><dd><t t-if="a.expires_at" t-out="jalali(a.expires_at)"/><t t-else="">—</t></dd>
+                                    <dt>پیوند باز است تا</dt><dd><t t-if="a.expires_at" t-out="jalali(a.expires_at)"/><t t-else="">تعیین نشده</t></dd>
                                     <dt t-if="a.opened_at">نخستین بازشدن</dt><dd t-if="a.opened_at" t-out="jalali(a.opened_at)"/>
                                     <dt t-if="a.note">یادداشت</dt><dd t-if="a.note" t-out="a.note"/>
-                                    <dt>مهلت</dt><dd><t t-if="deadline_fa" t-out="deadline_fa"/><t t-else="">—</t></dd>
+                                    <dt>مهلت پاسخ</dt><dd><t t-if="deadline_fa" t-out="deadline_fa"/><t t-else="">تعیین نشده</t></dd>
                                     <dt t-if="a.sms_consent">پیامک دعوت</dt><dd t-if="a.sms_consent"><t t-if="a.sms_sent_at">ارسال شد</t><t t-elif="a.sms_error">نرسید</t><t t-else="">ارسال نشده</t></dd>
                                     <dt t-if="a.reminder_count">یادآوری‌ها</dt><dd t-if="a.reminder_count"><t t-out="fa(a.reminder_count)"/> بار، آخرین: <t t-out="jalali(a.last_reminder_at)"/></dd>
                                 </dl>

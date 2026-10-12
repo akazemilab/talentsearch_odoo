@@ -136,16 +136,16 @@ st, body2 = get(own, W + '/invites?overdue=1')
 check('a filtered invitation list says what it shows and offers «نمایش همه»', st == 200 and 'نمایش فقط' in body2 and 'نمایش همه' in body2)
 check('an unknown filter value is ignored', 'نمایش فقط' not in get(own, W + '/invites?kind=zzz&overdue=2')[1])
 st, b3 = get(own, W + '/clients?filter=handover')
-check('the client list has the handover filter', st == 200 and 'درخواست واگذاری' in b3)
+check('the client list has the handover filter', st == 200 and 'درخواست سپردن' in b3)
 
 # ---- roles
 st, cb = get(c1, W)
-check('a counselor sees the dashboard without workload and credits', st == 200 and 'حجم کار اعضا' not in cb and 'مصرف این دوره' not in cb)
+check('a counselor sees the dashboard without workload and credits', st == 200 and 'حجم کار اعضا' not in cb and 'سنجه‌های تکمیل‌شدهٔ این دوره' not in cb)
 check('...and without the setup checklist', 'گام‌های راه‌اندازی' not in cb)
 cl = [(u.replace('&amp;', '&'), t) for u, t in pat.findall(cb)]
 badc = [(u, t) for u, t in cl if list_count(c1, u)[1] != (num(t.split('از')[-1]) if 'از' in t else num(t))]
 check('a counselor\'s numbers equal their own lists', cl and not badc, str(badc))
-check('the owner sees the workload and credits tile', 'حجم کار اعضا' in body and 'مصرف این دوره' in body and 'رایگان در این فصل' in body)
+check('the owner sees the workload and credits tile', 'حجم کار اعضا' in body and 'سنجه‌های تکمیل‌شدهٔ این دوره' in body and 'رایگان در این فصل' in body)
 
 # ---- checklist and dismissal
 check('the owner sees the checklist', 'گام‌های راه‌اندازی' in body)

@@ -7,7 +7,24 @@ import logging
 
 from odoo import api, fields, models
 
+from ..tools import fa_num
+
 _logger = logging.getLogger(__name__)
+
+# Live prices are 80,000-250,000 toman per instrument (800,000-2,500,000 Rial), a battery 70% of its parts. A base price above
+# this ceiling is almost always a toman/Rial slip (UX audit G8-P4-2): the back office gets a warning, nothing is blocked.
+PRICE_WARN_RIAL = 50000000
+
+
+def _price_warning(price):
+    if price and price > PRICE_WARN_RIAL:
+        return {'warning': {
+            'title': 'قیمت بسیار بالا',
+            'message': 'قیمت پایه به ریال است: %s ریال یعنی %s تومان، بسیار بیشتر از قیمت‌های معمول (۸۰٬۰۰۰ تا ۲۵۰٬۰۰۰ '
+                       'تومان برای هر سنجه). اگر مبلغ درست است ذخیره کنید؛ وگرنه ریال و تومان را بررسی کنید.'
+                       % (fa_num(price), fa_num(int(price) // 10)),
+        }}
+    return None
 
 
 def _product_vals(env, name, code, link_field, rec_id):
@@ -73,6 +90,10 @@ class TsInstrumentProduct(models.Model):
     ts_list_price = fields.Float('قیمت پایه (ریال)', related='product_id.list_price', readonly=False, digits=(16, 0),
                                  help='قیمت فهرست، به ریال و مضربی از ۱۰. فهرست قیمت ویژهٔ یک مرکز روی طرف حساب آن مرکز تعیین می‌شود.')
 
+    @api.onchange('ts_list_price')
+    def _onchange_ts_list_price_warn(self):
+        return _price_warning(self.ts_list_price)
+
     @api.model_create_multi
     def create(self, vals_list):
         recs = super().create(vals_list)
@@ -93,6 +114,10 @@ class TsBatteryProduct(models.Model):
 
     ts_list_price = fields.Float('قیمت پایه (ریال)', related='product_id.list_price', readonly=False, digits=(16, 0),
                                  help='قیمت فهرست کل مجموعه، به ریال و مضربی از ۱۰.')
+
+    @api.onchange('ts_list_price')
+    def _onchange_ts_list_price_warn(self):
+        return _price_warning(self.ts_list_price)
 
     @api.model_create_multi
     def create(self, vals_list):

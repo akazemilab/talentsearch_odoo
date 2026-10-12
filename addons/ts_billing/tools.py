@@ -34,11 +34,11 @@ def credit_ask(purpose):
 
 
 def item_title(rec):
-    """Display name of an instrument or battery: ts_display_title() when the catalog offers it, else the catalog title."""
+    """Display name of an instrument or battery: ts_title() when the catalog offers it, else the catalog title."""
     if not rec:
         return ''
-    if hasattr(rec, 'ts_display_title'):
-        return rec.ts_display_title()
+    if hasattr(rec, 'ts_title'):
+        return rec.ts_title()
     return ('title' in rec._fields and rec.title) or rec.name
 
 

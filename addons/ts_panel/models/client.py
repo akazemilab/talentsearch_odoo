@@ -39,9 +39,9 @@ class TsPanelClient(models.Model):
     guardian_relation = fields.Selection([('father', 'پدر'), ('mother', 'مادر'), ('guardian', 'سرپرست قانونی'),
                                           ('other', 'سایر')], 'نسبت')
     group_ids = fields.Many2many('ts.panel.group', 'ts_panel_client_group_rel', 'client_id', 'group_id', 'گروه‌ها')
-    handover_to_id = fields.Many2one('ts.workspace.member', 'واگذاری به', ondelete='set null')
+    handover_to_id = fields.Many2one('ts.workspace.member', 'سپردن به', ondelete='set null')
     handover_by_id = fields.Many2one('ts.workspace.member', 'درخواست‌کننده', ondelete='set null')
-    handover_on = fields.Datetime('زمان درخواست واگذاری')
+    handover_on = fields.Datetime('زمان درخواست سپردن')
     user_id = fields.Many2one('res.users', 'حساب کاربری', index=True, ondelete='set null')
     account_is_guardian = fields.Boolean('حساب متعلق به سرپرست است')
     partner_id = fields.Many2one('res.partner', 'شخص (دادهٔ تاریخی)', ondelete='restrict')
@@ -221,9 +221,9 @@ class TsPanelClient(models.Model):
         self.ensure_one()
         if by.workspace_id != self.workspace_id or not by.can_act() or self.responsible_id != by \
                 or not by.has_perm('clients:be_responsible'):
-            raise UserError('فقط کارشناس مسئول می‌تواند واگذاری را درخواست کند.')
+            raise UserError('فقط کارشناس مسئول می‌تواند درخواست سپردن بدهد.')
         if self.state != 'active':
-            raise UserError('شرکت‌کنندهٔ بایگانی‌شده واگذار نمی‌شود.')
+            raise UserError('شرکت‌کنندهٔ بایگانی‌شده به همکار سپرده نمی‌شود.')
         self._check_handover_target(target, by)
         if by.has_perm('clients:assign'):
             self.write({'responsible_id': target.id, 'handover_to_id': False, 'handover_by_id': False, 'handover_on': False})
@@ -242,7 +242,7 @@ class TsPanelClient(models.Model):
         self.ensure_one()
         self._check_actor(by, 'clients:assign')
         if not self.handover_to_id:
-            raise UserError('درخواست واگذاری بازی وجود ندارد.')
+            raise UserError('درخواست سپردن بازی وجود ندارد.')
         target, requester = self.handover_to_id, self.handover_by_id
         vals = {'handover_to_id': False, 'handover_by_id': False, 'handover_on': False}
         if accept:

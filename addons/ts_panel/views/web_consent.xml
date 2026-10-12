@@ -54,7 +54,7 @@
          2026-10-12 (G6, CONSENT_VERSION v4): «حساب» (glossary §7), «اشتراک‌گذاری» (§6), «عامل» (§4). -->
     <template id="who_sees_line" name="Who sees this result (one line)">
         <t t-set="asg" t-value="attempt.ts_org_assignment()"/>
-        <t t-set="org" t-value="asg.workspace_id.partner_id.name if asg else ''"/>
+        <t t-set="org" t-value="asg.workspace_id.ts_public_name() if asg else ''"/>
         <t t-set="tu_w" t-value="attempt.ts_informal()"/>
         <span id="ts-who-sees-line" t-att-data-level="asg.share_level if asg else 'self'">
             <t t-if="asg and asg.share_level != 'none'">
@@ -87,7 +87,7 @@
             </xpath>
             <xpath expr="//p[hasclass('ts-lead')]" position="replace">
                 <t t-set="asg0" t-value="attempt.ts_org_assignment()"/>
-                <p class="ts-lead"><t t-if="asg0">به دعوت <strong t-out="asg0.workspace_id.partner_id.name"/>. </t>پیش از شروع، این موارد را بخوانید.</p>
+                <p class="ts-lead"><t t-if="asg0">به دعوت <strong t-out="asg0.workspace_id.ts_public_name()"/>. </t>پیش از شروع، این موارد را بخوانید.</p>
             </xpath>
         </field>
     </record>

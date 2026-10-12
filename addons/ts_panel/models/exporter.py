@@ -132,7 +132,7 @@ def status_rows(env, member, params):
         j1, i1 = date_cols(a.create_date)
         j2, i2 = date_cols(a.deadline)
         j3, i3 = date_cols(a.attempt_id.submitted_at if a.state == 'done' else False)
-        rows.append([c.name, c.code, a.instrument_id.name, labels.get(a.state, a.state), j1, i1, j2, i2, j3, i3])
+        rows.append([c.name, c.code, a.instrument_id.ts_title(), labels.get(a.state, a.state), j1, i1, j2, i2, j3, i3])
     return STATUS_HEADERS, rows
 
 
@@ -154,10 +154,10 @@ def result_rows(env, member, params):
             prof = at.ts_profile()
             for n, f in enumerate(prof.get('fields', []), 1):
                 sc = f.get('scales', {})
-                rows.append([c.name, c.code, a.instrument_id.name, n, '', *[round(sc.get(k, 0), 1) for k in SCALES],
+                rows.append([c.name, c.code, a.instrument_id.ts_title(), n, '', *[round(sc.get(k, 0), 1) for k in SCALES],
                              round(f.get('composites', {}).get('TOT', 0), 1)])
         else:
             for r in at.result_rows():
-                rows.append([c.name, c.code, a.instrument_id.name, r.factor_id.name, r.band_fa() or band_fa.get(r.band, ''),
+                rows.append([c.name, c.code, a.instrument_id.ts_title(), r.factor_id.name, r.band_fa() or band_fa.get(r.band, ''),
                              '', '', '', '', '', ''])
     return RESULT_HEADERS, rows

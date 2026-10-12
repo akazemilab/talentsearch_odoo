@@ -137,7 +137,7 @@ class TsMemberDashboard(models.Model):
                 C.search_count(visible_domain(self) + [('state', '=', 'active'), ('responsible_id', '=', False)]),
                 base + '/clients?filter=unassigned')
         if self.has_perm('clients:assign'):
-            add('handover', 'درخواست واگذاری',
+            add('handover', 'درخواست سپردن',
                 C.search_count(visible_domain(self) + [('state', '=', 'active'), ('handover_to_id', '!=', False)]),
                 base + '/clients?filter=handover')
         if self.has_perm('members:invite'):
@@ -186,7 +186,7 @@ class TsMemberDashboard(models.Model):
                         'text': None, 'url': base + '/clients?filter=mine_open'})
         if self.has_perm('credits:read'):
             wallet = env['ts.wallet']._for_workspace(ws)
-            out.append({'key': 'usage', 'label': 'مصرف این دوره', 'n': wallet.units_since(period_start(days)),
+            out.append({'key': 'usage', 'label': 'سنجه‌های تکمیل‌شدهٔ این دوره', 'n': wallet.units_since(period_start(days)),
                         'text': 'رایگان در این فصل' if wallet._free_mode() else None, 'url': base + '/credits'})
         return out[:8]
 

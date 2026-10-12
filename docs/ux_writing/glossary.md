@@ -105,8 +105,13 @@ B Odoo backend staff, ALL everyone.
 
 | Term | Meaning | Use for | Never use | Audience | Evidence |
 |---|---|---|---|---|---|
-| پیشخوان | panel home page | nav item, page title | «داشبورد» | E C H | «داشبورد» ۸. «پیشخوان» is what Persian WordPress users know; verify the Farhangestan entry before the copy pass. Low risk either way; pick once. |
-| اعتبار و مصرف / اعتبار؛ **شارژ اعتبار** (top-up) | prepaid credit and usage; adding credit by invoice | credits section, invoices, SMS low_balance («اعتبار را شارژ کنید») | «کیف پول»، «شارژ» alone, «خرید اعتبار»/«افزایش اعتبار» for top-up, «اعتبار» for validity (§5) | E C H | «اعتبار» ۲۳. Owner decision 2026-10-12: top-up is «شارژ اعتبار» everywhere (clinic phase 5). |
+| پیشخوان | panel home page | nav item, page title | «داشبورد» | E C H | «داشبورد» ۸ before 2026-10-12; applied everywhere user-visible on 2026-10-12 (nav, tab bar, back links, permission label, page title). «پیشخوان» is what Persian WordPress users know. |
+| اعتبار و مصرف / اعتبار؛ **شارژ اعتبار** (top-up) | prepaid credit and usage; adding credit by invoice | credits section, invoices, SMS low_balance («اعتبار را شارژ کنید»); button «درخواست شارژ اعتبار» -> `/contact?topic=credit&panel=<code>` (contact topic «شارژ اعتبار پنل») | «کیف پول»، «شارژ» alone, «خرید اعتبار»/«افزایش اعتبار» for top-up, «اعتبار» for validity (§5), «اعتبار:» alone for the balance (say «موجودی قابل استفاده») | E C H | «اعتبار» ۲۳. Owner decision 2026-10-12: top-up is «شارژ اعتبار» everywhere (clinic phase 5). |
+| **موجودی قابل استفاده** | available credit: what new invitations can still hold | credits page card, dashboard line, refusals, set-up checklist («موجودی قابل استفاده: …») | «اعتبار:» alone for the balance, «موجودی» alone where held money exists | E C H | UX audit G7-PAT-5 (2026-10-12). |
+| رزروشده | held: the price of open invitations, set aside at invitation | «رزروشده برای دعوت‌های باز» | «بلوکه»، «مسدود» | E C H | ts_hold. |
+| کسرشده | debited: the price of completed instruments | «کسرشده این ماه» (card) | «مصرف» for money taken | E C H | wallet.ts_month_debited(). |
+| تعهد این ماه | held + debited of one member in the current Jalali month; what the monthly cap counts | per-member table, cap bar | «مصرف این ماه» | E C H | G7-P2-1. |
+| (count words) | numbers of instruments or invitations | «سنجه‌های تکمیل‌شدهٔ این دوره» | «مصرف» for a count | E C H | G7-P1-3: «مصرف» only for money. |
 | خروجی (noun) / «دریافت فایل» (button) | data export | section «خروجی‌ها»، button «دریافت فایل»، job names «خروجی نتیجه‌ها» | «برون‌بری» | E C H | «خروجی» ۲۴، «برون‌بری» ۴ (job kinds), «دریافت فایل» ۳. |
 | ورود از فایل | import | section and button | «درون‌ریزی»، «ایمپورت»؛ «واردشده» is fine as a filter label | E C H | «ورود از فایل» ۶، «واردشده» ۱۸. |
 | ادغام | merge duplicate participants | action | «یکی کردن» | E C H | «ادغام» ۱۰. |

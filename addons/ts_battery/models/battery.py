@@ -105,6 +105,15 @@ class TsBattery(models.Model):
         for b in self:
             b.has_retired = any(s == 'retired' for s in b.line_ids.mapped('instrument_id.state'))
 
+    def ts_title(self):
+        """The name people see (same helper as ts.instrument.ts_title()): a battery has no separate title field."""
+        self.ensure_one()
+        return (self.name or '').strip()
+
+    def ts_display_title(self):
+        """Alias of ts_title() kept for older callers."""
+        return self.ts_title()
+
     def unlink(self):
         return super(TsBattery, self.with_context(ts_battery_unlink=True)).unlink()
 

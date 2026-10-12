@@ -5,7 +5,7 @@ import logging
 from odoo import api, fields, models
 from odoo.tools.misc import file_path
 
-from .attempt import DEF_HEADING, split_interpretation
+from .attempt import DEF_HEADING, fa_digits, split_interpretation
 
 _logger = logging.getLogger(__name__)
 
@@ -130,14 +130,14 @@ class TsInstrumentLoader(models.Model):
             employment = aud == 'adult' and inst.category in EMPLOYMENT_CATEGORIES
             upd['purpose'] = 'employment' if employment else 'personal'
             if inst.category and scored and employment:
-                upd['intended_use'] = ('کاربرد: خودشناسی و گفت‌وگوی مشاوره‌ای در حوزهٔ «%s»؛ در پنل استخدامی، فقط با رضایت داوطلب '
-                                       'و به‌صورت خلاصهٔ بازه‌ها، به‌عنوان یکی از ورودی‌های گفت‌وگوی شغلی. این سنجه %s بُعد را توصیف می‌کند: %s. %s '
+                upd['intended_use'] = ('کاربرد: خودشناسی و گفت‌وگوی مشاوره‌ای در حوزهٔ «%s»؛ در پنل استخدامی، فقط با رضایت شرکت‌کننده '
+                                       'و به‌صورت سطح هر عامل، به‌عنوان یکی از ورودی‌های گفت‌وگوی شغلی. این سنجه %s عامل را توصیف می‌کند: %s. %s '
                                        'این سنجه برای تشخیص به کار نمی‌رود و به‌تنهایی مبنای تصمیم استخدامی نیست.'
-                                       % (inst.category, len(scored), names, who))
+                                       % (inst.category, fa_digits(len(scored)), names, who))
             elif inst.category and scored:
-                upd['intended_use'] = ('کاربرد: خودشناسی و گفت‌وگوی مشاوره‌ای در حوزهٔ «%s». این سنجه %s بُعد را توصیف می‌کند: %s. %s '
+                upd['intended_use'] = ('کاربرد: خودشناسی و گفت‌وگوی مشاوره‌ای در حوزهٔ «%s». این سنجه %s عامل را توصیف می‌کند: %s. %s '
                                        'این سنجه برای تشخیص یا تصمیم استخدامی به کار نمی‌رود.'
-                                       % (inst.category, len(scored), names, who))
+                                       % (inst.category, fa_digits(len(scored)), names, who))
             if not inst.approved_at:
                 upd.update({'approved_by_id': owner.id, 'approved_at': now})
             inst.write(upd)

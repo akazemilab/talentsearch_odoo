@@ -22,7 +22,9 @@ L = {n: 'ts.bill.%s.http@example.invalid' % n for n in NAMES}
 pw = {u: ensure_user(u) for u in L.values()}
 FA = str.maketrans('۰۱۲۳۴۵۶۷۸۹', '0123456789')
 MONEY_WORDS = ('تومان', 'ریال', 'اعتبار')
-P1, P2, START = 1200000, 900000000, 3000000
+# Rial. P2 is a real top-of-range price (۲۵۰٬۰۰۰ تومان) that is still above START - P1 and the counselor's cap room
+# (G8-P4-2: the old 900,000,000 Rial showed «۹۰٬۰۰۰٬۰۰۰ تومان» in screenshots).
+P1, P2, START = 1200000, 2500000, 3000000
 
 code = r"""
 from odoo import fields

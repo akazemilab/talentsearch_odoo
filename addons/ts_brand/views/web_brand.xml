@@ -209,7 +209,7 @@
                             <dd t-else="">ثبت نشده</dd>
                         </dl>
                         <p class="ts-hint">شمارهٔ پروانه را تیم استعدادیاب بررسی و ثبت می‌کند. <a t-att-href="ws.ts_contact_url('support')">برای ثبت یا تغییر شمارهٔ پروانه به پشتیبانی پیام بدهید</a>.</p>
-                        <p><button type="submit" class="ts-btn ts-btn--primary">ذخیره</button></p>
+                        <p><button type="submit" class="ts-btn ts-btn--primary">ذخیرهٔ هویت در گزارش‌ها</button></p>
                     </form>
                 </section>
             </t>

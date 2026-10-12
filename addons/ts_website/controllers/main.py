@@ -14,8 +14,9 @@ TOPICS = {
     'question': 'پرسش',
     'support': 'پشتیبانی',
     'partner': 'سازمان یا مرکز مشاوره',
-    'credit': 'شارژ اعتبار پنل',     # from a prepaid panel's credits page: /contact?topic=credit&panel=<code>
-    'credit': 'شارژ اعتبار پنل',       # owner decision 2026-10-12: the panel's top-up request (credit is added by invoice)
+    # owner decision 2026-10-12: a prepaid panel's top-up request (credit is added by invoice);
+    # every «درخواست شارژ اعتبار» button links /contact?topic=credit&panel=<code> (ts.workspace.ts_topup_request_url())
+    'credit': 'شارژ اعتبار پنل',
     # older form values, still accepted
     'quote': 'درخواست پیش‌فاکتور',
     'evidence': 'پرسش دربارهٔ شواهد',

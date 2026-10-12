@@ -13,7 +13,7 @@ from odoo.addons.ts_website.tools import parse_jdate
 
 from .base import STATE_LABELS, flash_error, flash_ok, forbidden, member_or_404, render_in_shell, require
 from .clients import visible_domain
-from .invites import PILL, STATE_ORDER, _fa, assignment_domain, sms_available
+from .invites import PILL, STATE_ORDER, _fa, assignment_domain, sms_available, sorted_items
 from ..models.text import people_word
 
 DRAFT = 'ts_campaign_draft_%s'
@@ -96,7 +96,7 @@ class TsPanelCampaigns(http.Controller):
     def _form_ctx(self, me, d, **extra):
         groups = self._groups(me)
         purpose = me.workspace_id.purpose
-        vals = dict(draft=d, instruments=me.allowed_instruments(), groups=groups, sms_ok=sms_available(me.workspace_id),
+        vals = dict(draft=d, instruments=sorted_items(me.allowed_instruments()), groups=groups, sms_ok=sms_available(me.workspace_id),
                     open_default=request.env['ir.config_parameter'].sudo().get_int('ts_panel.open_link_max', 60) or 60,
                     max_list=MAX_LIST, kind_labels=kind_labels(purpose), people=people_word(purpose),
                     # a panel without groups cannot send a list: the open link is the default (G6-P2-1)
@@ -197,7 +197,7 @@ class TsPanelCampaigns(http.Controller):
             mx = (post.get('open_max') or '').strip().translate(_DIGITS)
             d['open_max'] = int(mx) if mx.isdigit() and 1 <= int(mx) <= 500 else 0
             if not d['open_max']:
-                err = err or 'سقف پیوستن را بین ۱ تا ۵۰۰ بنویسید.'
+                err = err or 'بیشترین تعداد نفرات را بین ۱ تا ۵۰۰ بنویسید.'
             days = post.get('open_days') or ''
             d['open_days'] = int(days) if days in ('7', '14', '30') else 14
         return d, err

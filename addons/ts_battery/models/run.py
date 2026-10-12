@@ -150,7 +150,7 @@ class TsAssignmentBattery(models.Model):
         if not self.battery_id:
             return super()._ts_invite_sms_body()
         return '«%s» شما را به مجموعهٔ «%s» در استعدادیاب دعوت کرده است. پذیرش اختیاری است:\n%s' % (
-            self.workspace_id.name, self.battery_id.name, self.invite_url())
+            self.workspace_id.ts_public_name(), self.battery_id.ts_title(), self.invite_url())
 
 
 class TsBatteryRunHelpers(models.Model):

@@ -15,7 +15,7 @@
                     <div id="wrap" class="ts-page">
                         <section class="ts-section tsb-page">
                             <div class="ts-container ts-narrow">
-                                <p class="ts-hero__kicker">مجموعهٔ <t t-out="battery.name"/></p>
+                                <p class="ts-hero__kicker">مجموعهٔ <t t-out="battery.ts_title()"/></p>
                                 <ol class="tsb-dots" role="img" t-att-aria-label="'%s از %s سنجه انجام شده' % (fa(done_count), fa(total))">
                                     <li t-foreach="range(1, total + 1)" t-as="k" t-attf-class="tsb-dots__i #{'is-done' if k &lt;= done_count else ''}"/>
                                 </ol>
@@ -137,7 +137,7 @@
                     </fieldset>
                     <fieldset t-if="panel_bats" class="tsp-field" data-ts-show="catalog_mode=list">
                         <legend class="tsp-field__label">مجموعه‌ها</legend>
-                        <label t-foreach="panel_bats" t-as="b" class="tsp-check"><input type="checkbox" name="battery_ids" t-att-value="b.id" t-att-checked="'checked' if b.id in cat_bats else None"/><span><t t-out="b.name"/> <span class="ts-hint">(<t t-out="fa(len(b.line_ids))"/> سنجه)</span></span></label>
+                        <label t-foreach="panel_bats" t-as="b" class="tsp-check"><input type="checkbox" name="battery_ids" t-att-value="b.id" t-att-checked="'checked' if b.id in cat_bats else None"/><span><t t-out="b.ts_title()"/> <span class="ts-hint">(<t t-out="fa(len(b.line_ids))"/> سنجه)</span></span></label>
                     </fieldset>
                     <fieldset t-if="panel_insts" class="tsp-field" data-ts-show="catalog_mode=list">
                         <legend class="tsp-field__label">سنجه‌های تکی</legend>
@@ -227,7 +227,7 @@
                                         </div>
                                         <div class="ts-doc__kind">گزارش مجموعهٔ سنجه‌ها</div>
                                     </header>
-                                    <h1 class="ts-doc__title" t-out="battery.name"/>
+                                    <h1 class="ts-doc__title" t-out="battery.ts_title()"/>
                                     <p class="ts-doc__lead">نتیجهٔ <t t-out="a.user_id.partner_id.name"/><t t-call="ts_website.sep"/><t t-out="when"/></p>
                                     <dl class="ts-meta ts-doc__meta tsb-meta">
                                         <dt>به دعوت</dt><dd t-out="org"/>
@@ -257,7 +257,7 @@
                                     <section class="ts-doc__sec ts-noprint" id="tsb-who-sees">
                                         <h2>چه کسی این نتیجه را می‌بیند؟</h2>
                                         <t t-if="a.share_level != 'none'">
-                                            <p><strong t-out="a.workspace_id.name"/> — <t t-out="a.ts_level_word()"/>، برای همهٔ سنجه‌های این مجموعه. پاسخ‌های خام <t t-if="tu">تو</t><t t-else="">شما</t> را هیچ پنلی نمی‌بیند.</p>
+                                            <p><strong t-out="a.workspace_id.ts_public_name()"/> — <t t-out="a.ts_level_word()"/>، برای همهٔ سنجه‌های این مجموعه. پاسخ‌های خام <t t-if="tu">تو</t><t t-else="">شما</t> را هیچ پنلی نمی‌بیند.</p>
                                             <p><a t-attf-href="/my/sharing/#{a.id}/revoke">قطع اشتراک‌گذاری با این پنل</a><t t-call="ts_website.sep"/><a href="/my/sharing">همهٔ اشتراک‌گذاری‌ها</a></p>
                                         </t>
                                         <p t-elif="tu">فقط تو. پنل فقط وضعیت انجام را می‌بیند، چون اشتراک‌گذاری نتیجه را نپذیرفته‌ای.</p>
@@ -290,7 +290,7 @@
                         <t t-call="ts_panel.shell_frame">
                             <header class="tsp-head">
                                 <div>
-                                    <h1 class="tsp-head__title">مجموعهٔ <t t-out="battery.name"/> — <t t-out="client.name"/></h1>
+                                    <h1 class="tsp-head__title">مجموعهٔ <t t-out="battery.ts_title()"/> — <t t-out="client.name"/></h1>
                                     <p class="tsp-head__help"><span class="ts-pill" t-out="kind"/><t t-call="ts_website.sep"/><bdi t-out="jalali(when, with_time=False)"/><t t-call="ts_website.sep"/><bdi><t t-out="fa(done)"/> از <t t-out="fa(total)"/> سنجه انجام شده</bdi></p>
                                 </div>
                                 <!-- the PDF file is the one button (ts_brand adds it after this form); printing is quiet (G6-PT5) -->

@@ -44,7 +44,7 @@
         <field name="website_id" ref="ts_website.website_ts"/>
         <field name="arch" type="xml">
             <xpath expr="//a[hasclass('ts-back')]" position="after">
-                <p class="ts-notice" role="status">این صفحهٔ قدیمی پنل است و به‌زودی برداشته می‌شود. <a t-attf-href="/my/workspaces/#{ws.id}">رفتن به داشبورد</a></p>
+                <p class="ts-notice" role="status">این صفحهٔ قدیمی پنل است و به‌زودی برداشته می‌شود. <a t-attf-href="/my/workspaces/#{ws.id}">رفتن به پیشخوان</a></p>
             </xpath>
         </field>
     </record>

@@ -1,4 +1,6 @@
 """Workspace and member fields of prepaid billing (docs/clinic/04_billing_brief.md sections 2, 3, 5.4, 6)."""
+from urllib.parse import quote
+
 from markupsafe import Markup
 
 from odoo import api, fields, models
@@ -75,7 +77,7 @@ class TsWorkspaceBilling(models.Model):
     def ts_topup_request_url(self):
         """«درخواست شارژ اعتبار»: the contact form, topic credit, with the panel code (credit comes only by an EOT invoice)."""
         self.ensure_one()
-        return '/contact?topic=credit&panel=%s' % (self.sudo().code or '')
+        return '/contact?topic=credit&panel=%s' % quote(self.sudo().code or '')
 
     def ts_item_title(self, rec):
         return item_title(rec)

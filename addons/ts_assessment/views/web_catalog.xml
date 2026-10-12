@@ -78,7 +78,7 @@
                             <div class="ts-container ts-grid ts-grid--2">
                                 <div class="ts-prose">
                                     <h2>کاربرد</h2>
-                                    <p t-out="inst.intended_use"/>
+                                    <p t-out="inst.ts_intended_use()"/>
                                     <h2>ابعادی که توصیف می‌شود</h2>
                                     <ul class="ts-factors">
                                         <t t-foreach="version.factor_ids.filtered('scored')" t-as="f">

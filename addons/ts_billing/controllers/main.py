@@ -12,13 +12,25 @@ from odoo import http
 from odoo.exceptions import UserError, ValidationError
 from odoo.http import request
 
-from odoo.addons.ts_panel.controllers.base import flash_error, flash_ok, forbidden, member_or_404, render_in_shell
+from odoo.addons.ts_panel.controllers.base import MENU, flash_error, flash_ok, forbidden, member_or_404, render_in_shell
 from odoo.addons.ts_battery.controllers.main import TsBatteryInvites
 from odoo.addons.ts_panel.controllers.credits import TsPanelCredits
 
 from ..tools import CAPPED_ROLES, fmt_toman, item_title, rial_int
 
 TEAM = 'به دست تیم استعدادیاب'
+
+
+def _sees_own_costs(member):
+    """A capped role without credits:read in a prepaid panel has its own cost page (_own_page) at /credits (G7-P7-2)."""
+    ws = member.workspace_id
+    return (member.role in CAPPED_ROLES and not member.has_perm('credits:read') and member.can_act()
+            and hasattr(ws, 'ts_is_prepaid') and ws.ts_is_prepaid())
+
+
+if not any(it['key'] == 'credits_own' for it in MENU):
+    MENU.append({'seq': 51, 'key': 'credits_own', 'active_key': 'credits', 'group': 'گزارش و داده', 'label': 'هزینهٔ دعوت‌ها',
+                 'suffix': '/credits', 'perm': None, 'when': _sees_own_costs})
 
 _DIGITS = str.maketrans('۰۱۲۳۴۵۶۷۸۹٠١٢٣٤٥٦٧٨٩٬,', '01234567890123456789  ')
 
@@ -129,10 +141,11 @@ class TsBillingCredits(TsPanelCredits):
             else '/my/workspaces/%s/credits#tsb-caps' % ws_id
         if not target:
             raise request.not_found()
-        rial = _rial_from_toman(post.get('cap'))
+        # the member page offers «بدون سقف» / «با سقف» (cap_mode); the caps table still sends the number, ۰ = no cap
+        rial = 0 if post.get('cap_mode') == 'none' else _rial_from_toman(post.get('cap'))
         try:
             if rial is None:
-                raise UserError('سقف را به تومان و با عدد بنویسید؛ ۰ یعنی بدون سقف.')
+                raise UserError('سقف را به تومان و با عدد بنویسید؛ برای برداشتن سقف «بدون سقف» را انتخاب کنید یا ۰ بنویسید.')
             changed = target.ts_set_cap(me, rial)
         except (UserError, ValidationError) as e:
             flash_error(str(e.args[0] if e.args else e))

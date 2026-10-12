@@ -297,7 +297,7 @@ class TsOrg(http.Controller):
             'a': a, 'inst': a.instrument_id, 'ws': a.workspace_id, 'public': public,
             'fa': fa_digits, **self._auth_urls('/invite/%s' % token),
             'inv_state': inv_state if not (inv_state == 'used' and a.user_id == user) else 'ok',
-            'inv_msg': INVITE_MSG, 'user_name': '' if public else user.name, 'mismatch': mismatch,
+            'inv_msg': INVITE_MSG, 'user_name': '' if public else (user.name or '').strip(), 'mismatch': mismatch,
             'logout_url': '/web/session/logout?redirect=%s' % quote('/invite/%s' % token),
             'ask_decline': kw.get('decline') == '1' and not public,
             'student': a.workspace_id.purpose == 'education',

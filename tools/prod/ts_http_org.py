@@ -75,7 +75,7 @@ st, loc, _ = p.req('/take/%s/submit' % token, {'csrf_token': p.csrf(page), 'subm
 report = path_of(loc).split('?')[0]
 check('participant submit -> own report', report.startswith('/my/assessments/'), loc)
 st, _, page = p.req(report)
-check('own report shows sharing note + revoke', st == 200 and 'اشتراک با پنل' in page and '/unshare' in page)
+check('own report shows sharing note + revoke', st == 200 and 'اشتراک‌گذاری با پنل' in page and '/unshare' in page)
 st, loc, _ = p.req('/invite/' + tok)
 check('invite link after completion -> own report', path_of(loc).startswith('/my/assessments/'), loc)
 
@@ -84,7 +84,7 @@ aid = re.search(r'/my/workspaces/%s/a/(\d+)' % ws_id, page)
 check('dashboard lists the completed assignment', bool(aid))
 st, _, page = hr.req('/my/workspaces/%s/a/%s' % (ws_id, aid.group(1)))
 text = html.unescape(re.sub(r'<[^>]+>', ' ', page))
-check('HR sees band summary', st == 200 and 'ts-band' in page and 'خلاصهٔ نتایج' in page)
+check('HR sees band summary', st == 200 and 'ts-band' in page and 'خلاصهٔ نتیجه‌ها' in page)
 check('HR sees no scores and no interpretation texts', 'نمره (۱ تا ۵)' not in text and 'راهنمای مشاور' not in text and 'راهنمای متخصص' not in text and 'تفسیر نتیجهٔ شما' not in text)
 check('HR cannot open the participant attempt or report', hr.req('/take/' + token)[0] == 404 and hr.req(report)[0] == 404)
 
