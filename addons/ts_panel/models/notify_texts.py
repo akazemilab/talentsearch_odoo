@@ -31,8 +31,6 @@ SMS_STAFF_TYPES = ('result_ready_staff', 'panel_suspended', 'low_balance', 'cap_
 
 SMS_BODIES = {
     'result_ready_staff': 'در استعدادیاب نتیجهٔ یکی از شرکت‌کنندگان پنل شما آماده است. برای دیدن آن وارد پنل شوید:\n%(url)s',
-    'panel_approved': 'پنل شما در استعدادیاب تأیید شد. برای ادامه وارد پنل شوید:\n%(url)s',
-    'panel_rejected': 'درخواست پنل شما در استعدادیاب تأیید نشد. جزئیات را در پنل ببینید:\n%(url)s',
     'panel_suspended': 'پنل شما در استعدادیاب موقتاً متوقف شد. جزئیات را در پنل ببینید:\n%(url)s',
     'reminder': 'یادآوری: دعوت شما به یک سنجش در استعدادیاب هنوز باز است. پذیرش کاملاً اختیاری است:\n%(url)s',
     # Fallbacks only: with ts_brand installed every body comes from its sms.template (docs/clinic/05_sms_texts.md).

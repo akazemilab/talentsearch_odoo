@@ -126,7 +126,8 @@ class TsSignupOtp(models.Model):
         if not last:
             return 0
         left = COOLDOWN_S - (fields.Datetime.now() - last.create_date).total_seconds()
-        return max(0, int(left + 0.999))
+        # fields.Datetime.now() drops the microseconds, create_date keeps them: never show more than the cooldown itself
+        return max(0, min(COOLDOWN_S, int(left + 0.999)))
 
     @api.model
     def verify_code(self, phone, code):

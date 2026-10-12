@@ -214,7 +214,8 @@ class TsAuthSiteHome(AuthSignupHome):
 
     @http.route()
     def web_login(self, redirect=None, **kw):
-        if (request.httprequest.method == 'GET' and not request.session.uid and _ts_site()
+        # only while mobile codes can be sent: with SMS switched off the stock e-mail sign-in stays the way in
+        if (request.httprequest.method == 'GET' and not request.session.uid and _ts_site() and _enabled()
                 and not kw.get('email') and not kw.get('login') and not kw.get('error')):
             # shown in place (not redirected) so a returning visitor, a link from an e-mail or a stock "please sign in"
             # redirect all land on the one sign-in; «با ایمیل ثبت‌نام کرده بودید؟» leads back here with email=1
@@ -229,7 +230,7 @@ class TsAuthSiteHome(AuthSignupHome):
     def web_auth_signup(self, *args, **kw):
         # e-mail sign-up stays only for a colleague invitation bound to an e-mail address (/join/...) and for Odoo's
         # own signup tokens; everyone else signs up with the mobile code
-        if request.httprequest.method == 'GET' and _ts_site() and not kw.get('token') \
+        if request.httprequest.method == 'GET' and _ts_site() and _enabled() and not kw.get('token') \
                 and not (kw.get('redirect') or '').startswith('/join/'):
             return request.redirect(signin_url(kw.get('redirect')))
         return super().web_auth_signup(*args, **kw)
