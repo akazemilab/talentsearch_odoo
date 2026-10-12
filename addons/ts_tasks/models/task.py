@@ -464,3 +464,14 @@ class TsAttemptResultTask(models.Model):
         if self.attempt_id.version_id.mode == 'task':
             return 'صدک %s از ۱۰۰، بازهٔ %s' % (G.fa(int(round(self.score))), self.band_fa())
         return 'نمره ' + self.score_fa() + ' از ۵، بازهٔ ' + self.band_fa()
+
+
+class TsWorkspaceMemberTask(models.Model):
+    _inherit = 'ts.workspace.member'
+
+    def allowed_instruments(self):
+        """The HR instruments (timed tasks and the HR questionnaire, `invite_only`) belong to employment panels only."""
+        res = super().allowed_instruments()
+        if self.workspace_id.purpose != 'employment':
+            res = res.filtered(lambda i: not i.invite_only)
+        return res
