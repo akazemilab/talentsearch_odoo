@@ -14,7 +14,15 @@ import re
 
 from odoo import http
 from odoo.exceptions import UserError, ValidationError
-from odoo.http import content_disposition, request
+from urllib.parse import quote
+
+from odoo.http import request
+
+
+def content_disposition(filename):
+    """RFC 6266 attachment header with an ASCII fallback and the UTF-8 name (odoo.http no longer exports it in Odoo 20)."""
+    ascii_name = ''.join(c if c.isascii() and c not in '"\\' else '_' for c in filename) or 'report.pdf'
+    return 'attachment; filename="%s"; filename*=UTF-8\'\'%s' % (ascii_name, quote(filename))
 
 from odoo.addons.ts_assessment.controllers.main import _my_attempt, _ts_site_or_404
 from odoo.addons.ts_battery.controllers.main import TsBatteryMembers, TsBatteryPanelReport
