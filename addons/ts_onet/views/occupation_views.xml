@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="ts_onet_occupation_list" model="ir.ui.view">
+        <field name="name">ts.onet.occupation.list</field>
+        <field name="model">ts.onet.occupation</field>
+        <field name="arch" type="xml">
+            <list string="مشاغل O*NET">
+                <field name="code"/>
+                <field name="title_fa"/>
+                <field name="title_en"/>
+                <field name="job_zone"/>
+                <field name="has_styles"/>
+                <field name="has_abilities"/>
+            </list>
+        </field>
+    </record>
+    <record id="ts_onet_occupation_form" model="ir.ui.view">
+        <field name="name">ts.onet.occupation.form</field>
+        <field name="model">ts.onet.occupation</field>
+        <field name="arch" type="xml">
+            <form string="شغل O*NET">
+                <sheet>
+                    <group>
+                        <field name="code" readonly="1"/>
+                        <field name="title_fa"/>
+                        <field name="title_en" readonly="1"/>
+                        <field name="desc_fa"/>
+                        <field name="job_zone" readonly="1"/>
+                        <field name="active"/>
+                    </group>
+                    <p class="text-muted">عنوان و شرح فارسی ترجمهٔ EOT است و قابل ویرایش است؛ نیازهای شغل از O*NET 31.0
+                        (USDOL/ETA، مجوز CC BY 4.0) خوانده می‌شود و تغییر نمی‌کند.</p>
+                </sheet>
+            </form>
+        </field>
+    </record>
+    <record id="ts_onet_occupation_search" model="ir.ui.view">
+        <field name="name">ts.onet.occupation.search</field>
+        <field name="model">ts.onet.occupation</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="search_text" string="عنوان یا کد"/>
+                <filter name="no_styles" string="بدون دادهٔ سبک کاری" domain="[('has_styles', '=', False)]"/>
+            </search>
+        </field>
+    </record>
+    <record id="ts_onet_occupation_action" model="ir.actions.act_window">
+        <field name="name">مشاغل O*NET</field>
+        <field name="res_model">ts.onet.occupation</field>
+        <field name="view_mode">list,form</field>
+    </record>
+    <menuitem id="menu_ts_onet" name="مشاغل O*NET" parent="ts_core.menu_ts_customers"
+              action="ts_onet_occupation_action" sequence="60" groups="ts_core.group_ts_manager"/>
+</odoo>

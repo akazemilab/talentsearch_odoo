@@ -1,0 +1,777 @@
+{
+ "source": "IPIP-HEXACO (Ashton, Lee & Goldberg 2007), ipip.ori.org, public domain",
+ "url": "https://ipip.ori.org/newHEXACO_PI_key.htm",
+ "facet_map": {
+  "H:Sinc (Sincerity)": "Sincerity",
+  "H:Fair (Fairness)": "Fairness",
+  "H:Gree (Greed Avoidance)": "Greed Avoidance",
+  "H:Mode (Modesty)": "Modesty",
+  "E:Fear (Fearfulness)": "Fearfulness",
+  "E:Anxi (Anxiety)": "Anxiety",
+  "E:Depe (Dependence)": "Dependence",
+  "E:Sent (Sentimentality)": "Sentimentality",
+  "X:Expr (Expressiveness)": "Expressiveness",
+  "X:SocB (Social Boldness)": "Social Boldness",
+  "X:Soci (Sociability)": "Sociability",
+  "X:Live (Liveliness)": "Liveliness",
+  "A:Forg (Forgiveness)": "Forgiveness",
+  "A:Gent (Gentleness)": "Gentleness",
+  "A:Flex (Flexibility)": "Flexibility",
+  "A:Pati (Patience)": "Patience",
+  "C:Orga (Organization)": "Organization",
+  "C:Dili (Diligence)": "Diligence",
+  "C:Perf (Perfectionism)": "Perfectionism",
+  "C:Prud (Prudence)": "Prudence",
+  "O:AesA (Aesthetic Appreciation)": "Aesthetic Appreciation",
+  "O:Inqu (Inquisitiveness)": "Inquisitiveness",
+  "O:Crea (Creativity)": "Creativity",
+  "O:Unco (Unconventionality)": "Unconventionality"
+ },
+ "notes": "IPIP scale labels match the 24 facet names 1:1 (no renaming needed; IPIP has no Social Self-Esteem scale). Selection order follows the IPIP key listing (no item-total statistics are published on that page). IPIP Dependence (E:Depe) has no reverse-keyed items, so its 5 items are all +keyed. Response scale: 1=بسیار کم 2=کم 3=متوسط 4=زیاد 5=بسیار زیاد; score = 6 - x for key -1.",
+ "response_scale": {
+  "prompt": "این جمله چقدر دربارهٔ شما درست است؟",
+  "options": [
+   "بسیار کم",
+   "کم",
+   "متوسط",
+   "زیاد",
+   "بسیار زیاد"
+  ]
+ },
+ "items": [
+  {
+   "facet": "Sincerity",
+   "key": 1,
+   "en": "Don't pretend to be more than I am.",
+   "fa": "خودم را بیشتر از آنچه هستم نشان نمی‌دهم."
+  },
+  {
+   "facet": "Sincerity",
+   "key": -1,
+   "en": "Use flattery to get ahead.",
+   "fa": "برای پیشرفت کردن از چاپلوسی استفاده می‌کنم."
+  },
+  {
+   "facet": "Sincerity",
+   "key": -1,
+   "en": "Tell other people what they want to hear so that they will do what I want them to do.",
+   "fa": "حرفی را می‌زنم که دیگران دوست دارند بشنوند تا کارم را انجام دهند."
+  },
+  {
+   "facet": "Sincerity",
+   "key": -1,
+   "en": "Put on a show to impress people.",
+   "fa": "برای جلب تحسین دیگران ظاهرسازی می‌کنم."
+  },
+  {
+   "facet": "Sincerity",
+   "key": -1,
+   "en": "Pretend to be concerned for others.",
+   "fa": "وانمود می‌کنم که نگران دیگران هستم."
+  },
+  {
+   "facet": "Fairness",
+   "key": 1,
+   "en": "Would never take things that aren't mine.",
+   "fa": "هرگز چیزی را که مال من نیست برنمی‌دارم."
+  },
+  {
+   "facet": "Fairness",
+   "key": 1,
+   "en": "Return extra change when a cashier makes a mistake.",
+   "fa": "اگر فروشنده اشتباهی پول اضافه پس بدهد، آن را برمی‌گردانم."
+  },
+  {
+   "facet": "Fairness",
+   "key": 1,
+   "en": "Try to follow the rules.",
+   "fa": "سعی می‌کنم از قوانین و مقررات پیروی کنم."
+  },
+  {
+   "facet": "Fairness",
+   "key": -1,
+   "en": "Admire a really clever scam.",
+   "fa": "یک کلاهبرداری واقعاً زیرکانه را تحسین می‌کنم."
+  },
+  {
+   "facet": "Fairness",
+   "key": -1,
+   "en": "Cheat to get ahead.",
+   "fa": "برای جلو افتادن از دیگران تقلب می‌کنم."
+  },
+  {
+   "facet": "Greed Avoidance",
+   "key": 1,
+   "en": "Would not enjoy being a famous celebrity.",
+   "fa": "از اینکه چهره‌ای مشهور باشم لذت نمی‌برم."
+  },
+  {
+   "facet": "Greed Avoidance",
+   "key": -1,
+   "en": "Love luxury.",
+   "fa": "به زندگی تجملی علاقهٔ زیادی دارم."
+  },
+  {
+   "facet": "Greed Avoidance",
+   "key": -1,
+   "en": "Have a strong need for power.",
+   "fa": "به قدرت نیاز شدیدی دارم."
+  },
+  {
+   "facet": "Greed Avoidance",
+   "key": -1,
+   "en": "Seek status.",
+   "fa": "به دنبال کسب مقام و منزلت هستم."
+  },
+  {
+   "facet": "Greed Avoidance",
+   "key": -1,
+   "en": "Am mainly interested in money.",
+   "fa": "بیشتر از هر چیز به پول علاقه دارم."
+  },
+  {
+   "facet": "Modesty",
+   "key": 1,
+   "en": "Don't think that I'm better than other people.",
+   "fa": "فکر نمی‌کنم از دیگران بهتر باشم."
+  },
+  {
+   "facet": "Modesty",
+   "key": 1,
+   "en": "See myself as an average person.",
+   "fa": "خودم را آدمی معمولی می‌دانم."
+  },
+  {
+   "facet": "Modesty",
+   "key": -1,
+   "en": "Like to attract attention.",
+   "fa": "دوست دارم توجه دیگران را به خودم جلب کنم."
+  },
+  {
+   "facet": "Modesty",
+   "key": -1,
+   "en": "Am likely to show off if I get the chance.",
+   "fa": "اگر فرصتی پیش بیاید، خودنمایی می‌کنم."
+  },
+  {
+   "facet": "Modesty",
+   "key": -1,
+   "en": "Boast about my virtues.",
+   "fa": "دربارهٔ خوبی‌هایم به دیگران فخر می‌فروشم."
+  },
+  {
+   "facet": "Fearfulness",
+   "key": 1,
+   "en": "Am a physical coward.",
+   "fa": "در برابر خطرهای جسمی آدم ترسویی هستم."
+  },
+  {
+   "facet": "Fearfulness",
+   "key": 1,
+   "en": "Begin to panic when there is danger.",
+   "fa": "وقتی خطری در کار است، دستپاچه و وحشت‌زده می‌شوم."
+  },
+  {
+   "facet": "Fearfulness",
+   "key": -1,
+   "en": "Like to do frightening things.",
+   "fa": "انجام دادن کارهای ترسناک را دوست دارم."
+  },
+  {
+   "facet": "Fearfulness",
+   "key": -1,
+   "en": "Face danger confidently.",
+   "fa": "با اطمینان خاطر با خطر روبه‌رو می‌شوم."
+  },
+  {
+   "facet": "Fearfulness",
+   "key": -1,
+   "en": "Am willing to take risks.",
+   "fa": "حاضرم خطر کنم و ریسک بپذیرم."
+  },
+  {
+   "facet": "Anxiety",
+   "key": 1,
+   "en": "Worry about things.",
+   "fa": "دربارهٔ مسائل مختلف نگران می‌شوم."
+  },
+  {
+   "facet": "Anxiety",
+   "key": 1,
+   "en": "Get stressed out easily.",
+   "fa": "به‌راحتی دچار استرس می‌شوم."
+  },
+  {
+   "facet": "Anxiety",
+   "key": 1,
+   "en": "Often worry about things that turn out to be unimportant.",
+   "fa": "اغلب نگران چیزهایی می‌شوم که بعداً معلوم می‌شود مهم نبوده‌اند."
+  },
+  {
+   "facet": "Anxiety",
+   "key": -1,
+   "en": "Remain calm under pressure.",
+   "fa": "زیر فشار آرامشم را حفظ می‌کنم."
+  },
+  {
+   "facet": "Anxiety",
+   "key": -1,
+   "en": "Am not easily disturbed by events.",
+   "fa": "اتفاقات به‌راحتی آرامشم را به هم نمی‌زنند."
+  },
+  {
+   "facet": "Dependence",
+   "key": 1,
+   "en": "Need reassurance.",
+   "fa": "نیاز دارم دیگران به من اطمینان خاطر بدهند."
+  },
+  {
+   "facet": "Dependence",
+   "key": 1,
+   "en": "Need the approval of others.",
+   "fa": "به تأیید دیگران نیاز دارم."
+  },
+  {
+   "facet": "Dependence",
+   "key": 1,
+   "en": "Often need help.",
+   "fa": "اغلب به کمک دیگران نیاز دارم."
+  },
+  {
+   "facet": "Dependence",
+   "key": 1,
+   "en": "Seek support.",
+   "fa": "در مشکلات به دنبال حمایت دیگران هستم."
+  },
+  {
+   "facet": "Dependence",
+   "key": 1,
+   "en": "Let myself be influenced by others.",
+   "fa": "اجازه می‌دهم دیگران روی من تأثیر بگذارند."
+  },
+  {
+   "facet": "Sentimentality",
+   "key": 1,
+   "en": "Feel others' emotions.",
+   "fa": "احساسات دیگران را در خودم حس می‌کنم."
+  },
+  {
+   "facet": "Sentimentality",
+   "key": 1,
+   "en": "Am deeply moved by others' misfortunes.",
+   "fa": "گرفتاری و بدبیاری دیگران عمیقاً متأثرم می‌کند."
+  },
+  {
+   "facet": "Sentimentality",
+   "key": 1,
+   "en": "Immediately feel sad when hearing of an unhappy event.",
+   "fa": "با شنیدن خبری ناگوار، بی‌درنگ غمگین می‌شوم."
+  },
+  {
+   "facet": "Sentimentality",
+   "key": -1,
+   "en": "Am seldom bothered by the apparent suffering of strangers.",
+   "fa": "رنج آشکار غریبه‌ها به‌ندرت ناراحتم می‌کند."
+  },
+  {
+   "facet": "Sentimentality",
+   "key": -1,
+   "en": "Seldom get emotional.",
+   "fa": "به‌ندرت احساساتی می‌شوم."
+  },
+  {
+   "facet": "Expressiveness",
+   "key": 1,
+   "en": "Talk a lot.",
+   "fa": "زیاد حرف می‌زنم."
+  },
+  {
+   "facet": "Expressiveness",
+   "key": 1,
+   "en": "Am never at a loss for words.",
+   "fa": "هیچ‌وقت در حرف زدن کم نمی‌آورم."
+  },
+  {
+   "facet": "Expressiveness",
+   "key": 1,
+   "en": "Tell people about it when I'm irritated.",
+   "fa": "وقتی از چیزی دلخورم، آن را به دیگران می‌گویم."
+  },
+  {
+   "facet": "Expressiveness",
+   "key": -1,
+   "en": "Bottle up my feelings.",
+   "fa": "احساساتم را در خودم نگه می‌دارم."
+  },
+  {
+   "facet": "Expressiveness",
+   "key": -1,
+   "en": "Say little.",
+   "fa": "آدم کم‌حرفی هستم."
+  },
+  {
+   "facet": "Social Boldness",
+   "key": 1,
+   "en": "Am good at making impromptu speeches.",
+   "fa": "در صحبت کردن بدون آمادگی قبلی جلوی جمع مهارت دارم."
+  },
+  {
+   "facet": "Social Boldness",
+   "key": 1,
+   "en": "Have leadership abilities.",
+   "fa": "توانایی رهبری و هدایت دیگران را دارم."
+  },
+  {
+   "facet": "Social Boldness",
+   "key": -1,
+   "en": "Would be afraid to give a speech in public.",
+   "fa": "از سخنرانی در جمع می‌ترسم."
+  },
+  {
+   "facet": "Social Boldness",
+   "key": -1,
+   "en": "Find it difficult to approach others.",
+   "fa": "پیش‌قدم شدن برای ارتباط با دیگران برایم دشوار است."
+  },
+  {
+   "facet": "Social Boldness",
+   "key": -1,
+   "en": "Keep in the background.",
+   "fa": "ترجیح می‌دهم در حاشیه و دور از دید باشم."
+  },
+  {
+   "facet": "Sociability",
+   "key": 1,
+   "en": "Usually like to spend my free time with people.",
+   "fa": "معمولاً دوست دارم وقت آزادم را با دیگران بگذرانم."
+  },
+  {
+   "facet": "Sociability",
+   "key": 1,
+   "en": "Make friends easily.",
+   "fa": "به‌راحتی دوست پیدا می‌کنم."
+  },
+  {
+   "facet": "Sociability",
+   "key": 1,
+   "en": "Enjoy being part of a group.",
+   "fa": "از اینکه عضوی از یک گروه باشم لذت می‌برم."
+  },
+  {
+   "facet": "Sociability",
+   "key": -1,
+   "en": "Would not enjoy a job that involves a lot of social interaction.",
+   "fa": "از شغلی که ارتباط زیادی با مردم دارد لذت نمی‌برم."
+  },
+  {
+   "facet": "Sociability",
+   "key": -1,
+   "en": "Keep others at a distance.",
+   "fa": "با دیگران فاصله‌ام را حفظ می‌کنم."
+  },
+  {
+   "facet": "Liveliness",
+   "key": 1,
+   "en": "Maintain high energy throughout the day.",
+   "fa": "در طول روز انرژی‌ام را بالا نگه می‌دارم."
+  },
+  {
+   "facet": "Liveliness",
+   "key": 1,
+   "en": "Am usually active and full of energy.",
+   "fa": "معمولاً فعال و پرانرژی هستم."
+  },
+  {
+   "facet": "Liveliness",
+   "key": 1,
+   "en": "Feel that I have a lot of inner strength.",
+   "fa": "احساس می‌کنم توان درونی زیادی دارم."
+  },
+  {
+   "facet": "Liveliness",
+   "key": -1,
+   "en": "Tire out quickly.",
+   "fa": "زود خسته می‌شوم."
+  },
+  {
+   "facet": "Liveliness",
+   "key": -1,
+   "en": "Often feel blue.",
+   "fa": "اغلب احساس دلتنگی و بی‌حوصلگی می‌کنم."
+  },
+  {
+   "facet": "Forgiveness",
+   "key": 1,
+   "en": "Try to forgive and forget.",
+   "fa": "سعی می‌کنم ببخشم و فراموش کنم."
+  },
+  {
+   "facet": "Forgiveness",
+   "key": 1,
+   "en": "Am nice to people I should be angry at.",
+   "fa": "با کسانی که حق دارم از آن‌ها عصبانی باشم، مهربانم."
+  },
+  {
+   "facet": "Forgiveness",
+   "key": -1,
+   "en": "Find it hard to forgive others.",
+   "fa": "بخشیدن دیگران برایم سخت است."
+  },
+  {
+   "facet": "Forgiveness",
+   "key": -1,
+   "en": "Hold a grudge.",
+   "fa": "کینهٔ دیگران را به دل می‌گیرم."
+  },
+  {
+   "facet": "Forgiveness",
+   "key": -1,
+   "en": "Get back at people who insult me.",
+   "fa": "از کسانی که به من توهین می‌کنند انتقام می‌گیرم."
+  },
+  {
+   "facet": "Gentleness",
+   "key": 1,
+   "en": "Accept people as they are.",
+   "fa": "آدم‌ها را همان‌طور که هستند می‌پذیرم."
+  },
+  {
+   "facet": "Gentleness",
+   "key": 1,
+   "en": "Have a good word for everyone.",
+   "fa": "دربارهٔ همه حرف خوبی برای گفتن دارم."
+  },
+  {
+   "facet": "Gentleness",
+   "key": -1,
+   "en": "Am quick to judge others.",
+   "fa": "زود دربارهٔ دیگران قضاوت می‌کنم."
+  },
+  {
+   "facet": "Gentleness",
+   "key": -1,
+   "en": "Have a sharp tongue.",
+   "fa": "زبان تند و نیش‌داری دارم."
+  },
+  {
+   "facet": "Gentleness",
+   "key": -1,
+   "en": "Criticize others' shortcomings.",
+   "fa": "از کاستی‌های دیگران انتقاد می‌کنم."
+  },
+  {
+   "facet": "Flexibility",
+   "key": 1,
+   "en": "Adjust easily.",
+   "fa": "به‌راحتی خودم را با شرایط تطبیق می‌دهم."
+  },
+  {
+   "facet": "Flexibility",
+   "key": 1,
+   "en": "Am good at taking advice.",
+   "fa": "توصیه‌های دیگران را به‌خوبی می‌پذیرم."
+  },
+  {
+   "facet": "Flexibility",
+   "key": -1,
+   "en": "Am hard to convince.",
+   "fa": "قانع کردن من سخت است."
+  },
+  {
+   "facet": "Flexibility",
+   "key": -1,
+   "en": "Can't stand being contradicted.",
+   "fa": "تحمل مخالفت دیگران با حرفم را ندارم."
+  },
+  {
+   "facet": "Flexibility",
+   "key": -1,
+   "en": "React strongly to criticism.",
+   "fa": "در برابر انتقاد واکنش تندی نشان می‌دهم."
+  },
+  {
+   "facet": "Patience",
+   "key": 1,
+   "en": "Am usually a patient person.",
+   "fa": "معمولاً آدم صبوری هستم."
+  },
+  {
+   "facet": "Patience",
+   "key": 1,
+   "en": "Find that it takes a lot to make me feel angry at someone.",
+   "fa": "به این سادگی‌ها از کسی عصبانی نمی‌شوم."
+  },
+  {
+   "facet": "Patience",
+   "key": -1,
+   "en": "Get angry easily.",
+   "fa": "زود عصبانی می‌شوم."
+  },
+  {
+   "facet": "Patience",
+   "key": -1,
+   "en": "Lose my temper.",
+   "fa": "کنترل خشمم را از دست می‌دهم."
+  },
+  {
+   "facet": "Patience",
+   "key": -1,
+   "en": "Am easily annoyed.",
+   "fa": "به‌راحتی دلخور و آزرده می‌شوم."
+  },
+  {
+   "facet": "Organization",
+   "key": 1,
+   "en": "Like order.",
+   "fa": "نظم و ترتیب را دوست دارم."
+  },
+  {
+   "facet": "Organization",
+   "key": 1,
+   "en": "Keep things tidy.",
+   "fa": "وسایلم را مرتب نگه می‌دارم."
+  },
+  {
+   "facet": "Organization",
+   "key": 1,
+   "en": "Get chores done right away.",
+   "fa": "کارهای روزمره را بی‌درنگ انجام می‌دهم."
+  },
+  {
+   "facet": "Organization",
+   "key": -1,
+   "en": "Leave my belongings around.",
+   "fa": "وسایلم را این‌طرف و آن‌طرف رها می‌کنم."
+  },
+  {
+   "facet": "Organization",
+   "key": -1,
+   "en": "Often forget to put things back in their proper place.",
+   "fa": "اغلب فراموش می‌کنم وسایل را سر جایشان برگردانم."
+  },
+  {
+   "facet": "Diligence",
+   "key": 1,
+   "en": "Push myself very hard to succeed.",
+   "fa": "برای موفق شدن، خودم را سخت به تلاش وامی‌دارم."
+  },
+  {
+   "facet": "Diligence",
+   "key": 1,
+   "en": "Work hard.",
+   "fa": "سخت کار می‌کنم."
+  },
+  {
+   "facet": "Diligence",
+   "key": -1,
+   "en": "Do just enough work to get by.",
+   "fa": "فقط به اندازه‌ای کار می‌کنم که کارم راه بیفتد."
+  },
+  {
+   "facet": "Diligence",
+   "key": -1,
+   "en": "Stop when work becomes too difficult.",
+   "fa": "وقتی کار خیلی سخت می‌شود، دست از آن می‌کشم."
+  },
+  {
+   "facet": "Diligence",
+   "key": -1,
+   "en": "Quickly lose interest in the tasks I start.",
+   "fa": "به کارهایی که شروع می‌کنم زود بی‌علاقه می‌شوم."
+  },
+  {
+   "facet": "Perfectionism",
+   "key": 1,
+   "en": "Continue until everything is perfect.",
+   "fa": "تا وقتی همه چیز بی‌نقص نشود، ادامه می‌دهم."
+  },
+  {
+   "facet": "Perfectionism",
+   "key": 1,
+   "en": "Want every detail taken care of.",
+   "fa": "می‌خواهم به همهٔ جزئیات رسیدگی شود."
+  },
+  {
+   "facet": "Perfectionism",
+   "key": 1,
+   "en": "Demand quality.",
+   "fa": "بر کیفیت بالای کار پافشاری می‌کنم."
+  },
+  {
+   "facet": "Perfectionism",
+   "key": -1,
+   "en": "Pay too little attention to details.",
+   "fa": "به جزئیات توجه چندانی نمی‌کنم."
+  },
+  {
+   "facet": "Perfectionism",
+   "key": -1,
+   "en": "Prefer to just let things happen.",
+   "fa": "ترجیح می‌دهم بگذارم کارها خودشان پیش بروند."
+  },
+  {
+   "facet": "Prudence",
+   "key": 1,
+   "en": "Make plans and stick to them.",
+   "fa": "برنامه می‌ریزم و به آن پایبند می‌مانم."
+  },
+  {
+   "facet": "Prudence",
+   "key": 1,
+   "en": "Avoid mistakes.",
+   "fa": "مراقبم که اشتباه نکنم."
+  },
+  {
+   "facet": "Prudence",
+   "key": -1,
+   "en": "Jump into things without thinking.",
+   "fa": "بدون فکر وارد کارها می‌شوم."
+  },
+  {
+   "facet": "Prudence",
+   "key": -1,
+   "en": "Make rash decisions.",
+   "fa": "تصمیم‌های عجولانه می‌گیرم."
+  },
+  {
+   "facet": "Prudence",
+   "key": -1,
+   "en": "Do things without thinking of the consequences.",
+   "fa": "بدون فکر کردن به پیامدها، کارها را انجام می‌دهم."
+  },
+  {
+   "facet": "Aesthetic Appreciation",
+   "key": 1,
+   "en": "Believe in the importance of art.",
+   "fa": "به اهمیت هنر باور دارم."
+  },
+  {
+   "facet": "Aesthetic Appreciation",
+   "key": 1,
+   "en": "See beauty in things that others might not notice.",
+   "fa": "در چیزهایی زیبایی می‌بینم که شاید دیگران متوجهش نشوند."
+  },
+  {
+   "facet": "Aesthetic Appreciation",
+   "key": 1,
+   "en": "Get deeply immersed in music.",
+   "fa": "هنگام شنیدن موسیقی، عمیقاً در آن غرق می‌شوم."
+  },
+  {
+   "facet": "Aesthetic Appreciation",
+   "key": -1,
+   "en": "Do not like poetry.",
+   "fa": "شعر را دوست ندارم."
+  },
+  {
+   "facet": "Aesthetic Appreciation",
+   "key": -1,
+   "en": "Seldom notice the emotional aspects of paintings and pictures.",
+   "fa": "به‌ندرت به جنبه‌های احساسی نقاشی‌ها و تصاویر توجه می‌کنم."
+  },
+  {
+   "facet": "Inquisitiveness",
+   "key": 1,
+   "en": "Am interested in science.",
+   "fa": "به علم و دانش علاقه دارم."
+  },
+  {
+   "facet": "Inquisitiveness",
+   "key": 1,
+   "en": "Would love to explore strange places.",
+   "fa": "دوست دارم مکان‌های ناشناخته و عجیب را کشف کنم."
+  },
+  {
+   "facet": "Inquisitiveness",
+   "key": 1,
+   "en": "Love to read challenging material.",
+   "fa": "خواندن مطالب دشوار و چالش‌برانگیز را دوست دارم."
+  },
+  {
+   "facet": "Inquisitiveness",
+   "key": -1,
+   "en": "Will not probe deeply into a subject.",
+   "fa": "در موضوعات، عمیق کندوکاو نمی‌کنم."
+  },
+  {
+   "facet": "Inquisitiveness",
+   "key": -1,
+   "en": "Don't know much about history.",
+   "fa": "اطلاعات زیادی دربارهٔ تاریخ ندارم."
+  },
+  {
+   "facet": "Creativity",
+   "key": 1,
+   "en": "Am full of ideas.",
+   "fa": "ذهنم پر از ایده است."
+  },
+  {
+   "facet": "Creativity",
+   "key": 1,
+   "en": "Love to think up new ways of doing things.",
+   "fa": "دوست دارم برای انجام کارها راه‌های تازه پیدا کنم."
+  },
+  {
+   "facet": "Creativity",
+   "key": 1,
+   "en": "Have a vivid imagination.",
+   "fa": "تخیل قوی و زنده‌ای دارم."
+  },
+  {
+   "facet": "Creativity",
+   "key": -1,
+   "en": "Have difficulty imagining things.",
+   "fa": "تصور کردن چیزها در ذهنم برایم دشوار است."
+  },
+  {
+   "facet": "Creativity",
+   "key": -1,
+   "en": "Seldom experience sudden intuitive insights.",
+   "fa": "به‌ندرت ایده‌ای ناگهانی و شهودی به ذهنم می‌رسد."
+  },
+  {
+   "facet": "Unconventionality",
+   "key": 1,
+   "en": "Know that my ideas sometimes surprise people.",
+   "fa": "می‌دانم که ایده‌هایم گاهی دیگران را شگفت‌زده می‌کند."
+  },
+  {
+   "facet": "Unconventionality",
+   "key": 1,
+   "en": "Swim against the current.",
+   "fa": "برخلاف جریان غالب حرکت می‌کنم."
+  },
+  {
+   "facet": "Unconventionality",
+   "key": 1,
+   "en": "Do things that others find strange.",
+   "fa": "کارهایی می‌کنم که به نظر دیگران عجیب است."
+  },
+  {
+   "facet": "Unconventionality",
+   "key": -1,
+   "en": "Like to be viewed as proper and conventional.",
+   "fa": "دوست دارم دیگران مرا فردی آداب‌دان و متعارف بدانند."
+  },
+  {
+   "facet": "Unconventionality",
+   "key": -1,
+   "en": "Would hate to be considered odd or strange.",
+   "fa": "از اینکه دیگران مرا عجیب و غیرعادی بدانند بیزارم."
+  }
+ ],
+ "attention": [
+  {
+   "fa": "برای نشان دادن دقتتان، در این سطر گزینهٔ «بسیار کم» را انتخاب کنید.",
+   "expect": 1
+  },
+  {
+   "fa": "برای نشان دادن دقتتان، در این سطر گزینهٔ «زیاد» را انتخاب کنید.",
+   "expect": 4
+  },
+  {
+   "fa": "این یک جملهٔ کنترلی است؛ لطفاً گزینهٔ «متوسط» را انتخاب کنید.",
+   "expect": 3
+  }
+ ]
+}

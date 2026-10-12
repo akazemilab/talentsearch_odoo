@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Timed task player (website 2 only). The script renders the blocks inside .tst-stage. -->
+    <record id="tpl_task_player" model="ir.ui.view">
+        <field name="name">TS tasks: player</field>
+        <field name="type">qweb</field>
+        <field name="key">ts_tasks.player</field>
+        <field name="website_id" ref="ts_website.website_ts"/>
+        <field name="arch" type="xml">
+            <t t-name="ts_tasks.player">
+                <t t-call="website.layout" additional_title="inst.title">
+                    <div id="wrap" class="ts-page">
+                        <section class="ts-section tst-player" t-att-data-token="attempt.access_token"
+                                 t-att-data-csrf="request.csrf_token()" t-att-data-config="cfg_json">
+                            <div class="ts-container ts-narrow">
+                                <p class="ts-hero__kicker">آزمون زمان‌دار</p>
+                                <h1 class="tst-title" t-out="inst.title"/>
+                                <p class="ts-lead" t-out="cfg['intro']"/>
+                                <p class="ts-hint" t-if="cfg['accom'] and cfg['accom'] &gt; 1">برای شما زمان بیشتری در نظر گرفته شده است.</p>
+                                <div class="tst-stage" aria-live="off">
+                                    <noscript><p class="ts-notice ts-notice--warn">این آزمون بدون جاوااسکریپت اجرا نمی‌شود. لطفاً آن را در مرورگر فعال کنید.</p></noscript>
+                                    <p class="tst-wait">در حال بارگذاری…</p>
+                                </div>
+                                <p class="tst-live visually-hidden" aria-live="assertive"/>
+                                <p class="ts-hint tst-foot">نتیجه در میانهٔ کار نمایش داده نمی‌شود. اگر صفحه بسته شود، زمانِ بخشِ شروع‌شده ادامه پیدا می‌کند.</p>
+                            </div>
+                        </section>
+                    </div>
+                </t>
+            </t>
+        </field>
+    </record>
+    <!-- Report blocks: task results are percentiles 0-100 (not means on 1-5). Hint, column and meter follow. -->
+    <record id="report_blocks_task" model="ir.ui.view">
+        <field name="name">ts_tasks.report_blocks</field>
+        <field name="inherit_id" ref="ts_assessment.tpl_report_blocks"/>
+        <field name="website_id" ref="ts_website.website_ts"/>
+        <field name="arch" type="xml">
+            <xpath expr="//section[1]/p[hasclass('ts-hint')]" position="replace">
+                <p class="ts-hint" t-if="results and results[0].attempt_id.version_id.mode == 'task'">برای هر توانایی، جایگاه شما در مقایسه با دیگر شرکت‌کنندگان (صدک) نشان داده می‌شود؛ تا جمع شدن داده‌های کافی، این جایگاه برآورد موقت است. بازه‌ها: کم، متوسط و زیاد.</p>
+                <p class="ts-hint" t-else="">نمرهٔ هر بُعد میانگین پاسخ‌های شما روی مقیاس ۱ تا ۵ است (عبارت‌های معکوس پیش از میانگین‌گیری برگردانده می‌شوند). بازه‌ها: کم، متوسط و زیاد.</p>
+            </xpath>
+            <xpath expr="//section[1]//thead/tr/th[2]" position="replace">
+                <th scope="col" t-if="results and results[0].attempt_id.version_id.mode == 'task'">صدک (۰ تا ۱۰۰)</th>
+                <th scope="col" t-else="">نمره (۱ تا ۵)</th>
+            </xpath>
+            <xpath expr="//section[1]//span[hasclass('ts-meter__seg')]" position="attributes">
+                <attribute name="t-attf-style">width: #{b.ts_seg_pct()}%</attribute>
+            </xpath>
+            <xpath expr="//section[1]//div[hasclass('ts-meter')]" position="attributes">
+                <attribute name="t-att-aria-label">r.ts_meter_label()</attribute>
+            </xpath>
+        </field>
+    </record>
+</odoo>

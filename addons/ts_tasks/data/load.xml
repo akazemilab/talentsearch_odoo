@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Idempotent: creates and publishes the five task instruments once (by code). -->
+    <function model="ts.instrument" name="_ts_load_tasks"/>
+</odoo>

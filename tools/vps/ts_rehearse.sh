@@ -68,12 +68,14 @@ has ts_panel && NOCOMMIT+=(tests_pv2_0.py tests_pv2_1.py tests_pv2_2.py tests_pv
 has ts_battery && NOCOMMIT+=(tests_battery.py)   # HTTP companion: ts_http_battery.py (runs with the committing suites below)
 has ts_billing && NOCOMMIT+=(tests_billing.py)   # clinic phase 4; HTTP companion: ts_http_billing.py (below)
 has ts_brand && NOCOMMIT+=(tests_brand.py)       # clinic phase 5; HTTP companion: ts_http_brand.py (below)
+has ts_hire && NOCOMMIT+=(tests_hire.py)         # HR hiring (ts_onet, ts_tasks, ts_hire); HTTP companion: ts_http_hire.py (below)
 for f in "${NOCOMMIT[@]}"; do
   [ -f $REPO_DIR/tools/prod/$f ] || continue
   grep -q "cr.commit" $REPO_DIR/tools/prod/$f && { echo "!! $f commits; it cannot run beside the guard"; continue; }
   echo "=== $(date +%T) orm $f"; orm $f
 done
 has ts_talent && { echo "=== $(date +%T) talent engine"; ssh $P "python3 $STAGE/tools/prod/tests_talent_engine.py" 2>&1 | grep -E '^(FAIL|SUMMARY)'; }
+has ts_hire && { echo "=== $(date +%T) hr engines"; ssh $P "python3 $STAGE/tools/prod/tests_hire_engine.py" 2>&1 | grep -E '^(FAIL|SUMMARY)'; }
 wait $GPID; g=$?
 echo "=== $(date +%T) guard result"; cat $J/${DB}_guard.txt | tail -15
 

@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Idempotent loaders (by code): the HR personality questionnaire, then the two HR batteries. -->
+    <function model="ts.instrument" name="_ts_load_hexaco"/>
+    <function model="ts.battery" name="_ts_load_hr"/>
+</odoo>

@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="ts_hire_position_list" model="ir.ui.view">
+        <field name="name">ts.hire.position.list</field>
+        <field name="model">ts.hire.position</field>
+        <field name="arch" type="xml">
+            <list string="موقعیت‌های شغلی">
+                <field name="name"/>
+                <field name="workspace_id"/>
+                <field name="occupation_id"/>
+                <field name="battery_choice"/>
+                <field name="state"/>
+                <field name="create_date"/>
+            </list>
+        </field>
+    </record>
+    <record id="ts_hire_position_form" model="ir.ui.view">
+        <field name="name">ts.hire.position.form</field>
+        <field name="model">ts.hire.position</field>
+        <field name="arch" type="xml">
+            <form string="موقعیت شغلی">
+                <sheet>
+                    <group>
+                        <field name="name"/>
+                        <field name="workspace_id"/>
+                        <field name="occupation_id"/>
+                        <field name="battery_choice"/>
+                        <field name="battery_id" readonly="1"/>
+                        <field name="state"/>
+                        <field name="deadline"/>
+                        <field name="critical_json" readonly="1"/>
+                        <field name="dropped_json" readonly="1"/>
+                    </group>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+    <record id="ts_hire_position_action" model="ir.actions.act_window">
+        <field name="name">موقعیت‌های شغلی</field>
+        <field name="res_model">ts.hire.position</field>
+        <field name="view_mode">list,form</field>
+    </record>
+    <menuitem id="menu_ts_hire_positions" name="موقعیت‌های شغلی" parent="ts_core.menu_ts_customers"
+              action="ts_hire_position_action" sequence="55" groups="ts_core.group_ts_manager"/>
+</odoo>

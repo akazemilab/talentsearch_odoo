@@ -1,0 +1,51 @@
+// HR positions (ts_hire). Tokens: ts_website/static/src/scss/tokens.scss; prefix tsh-.
+.tsh-steps { margin: 0 0 var(--space-4); padding-inline-start: 1.2rem; display: grid; gap: var(--space-2); }
+.tsh-empty { display: flex; flex-direction: column; gap: var(--space-3); align-items: flex-start; }
+.tsh-search__row { display: flex; gap: var(--space-2); flex-wrap: wrap; }
+.tsh-search__row input { flex: 1 1 16rem; min-width: 0; }
+.tsh-occ strong { font-weight: 700; }
+.tsh-stats { display: flex; flex-wrap: wrap; gap: var(--space-3); list-style: none; padding: 0; margin: 0 0 var(--space-4); }
+.tsh-stats li { background: var(--color-surface); box-shadow: var(--shadow-sm); border-radius: var(--r-12);
+    padding: var(--space-3) var(--space-4); font-size: var(--fs-1); color: var(--color-neutral-400); }
+.tsh-stats strong { display: block; font-size: var(--fs-5); color: var(--color-text); font-variant-numeric: tabular-nums; }
+.tsh-note { margin-block: 0 var(--space-4); }
+.tsh-band { display: inline-block; padding: .15rem .65rem; border-radius: 999px; font-weight: 700; font-size: var(--fs-1); white-space: nowrap; }
+.tsh-band--strong { background: var(--status-ok-soft); color: var(--status-ok); }
+.tsh-band--moderate { background: var(--status-info-soft); color: var(--status-info); }
+.tsh-band--limited { background: var(--status-neutral-soft); color: var(--status-neutral); }
+.tsh-band--lg { font-size: var(--fs-3); padding: .35rem 1rem; }
+.tsh-verdict { display: flex; flex-direction: column; align-items: flex-end; gap: var(--space-1); }
+.tsh-dot { font-size: var(--fs-1); white-space: nowrap; }
+.tsh-dot::before { content: ''; display: inline-block; inline-size: .6rem; block-size: .6rem; border-radius: 50%; margin-inline-end: .35rem; background: currentColor; }
+.tsh-dot--strong { color: var(--status-ok); }
+.tsh-dot--moderate { color: var(--status-info); }
+.tsh-dot--limited { color: var(--status-neutral); }
+.tsh-st { font-size: var(--fs-1); }
+.tsh-st--match, .tsh-st--met { color: var(--status-ok); font-weight: 700; }
+.tsh-st--gap, .tsh-st--short { color: var(--status-warn); font-weight: 700; }
+.tsh-st--neutral { color: var(--color-neutral-400); }
+.tsh-crit { margin-inline-start: var(--space-2); font-size: var(--fs-0); }
+.tsh-flag { margin-inline-start: var(--space-2); font-size: var(--fs-0); }
+.tsh-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 18rem), 1fr)); gap: var(--space-4); margin-block-end: var(--space-4); }
+.tsh-grid > .ts-card { min-width: 0; }
+.tsh-list { margin: 0; padding-inline-start: 1.1rem; display: grid; gap: var(--space-2); line-height: 1.9; }
+.tsh-h--ok { color: var(--status-ok); }
+.tsh-h--warn { color: var(--status-warn); }
+.tsh-chips { list-style: none; padding: 0; margin: 0; display: flex; flex-wrap: wrap; gap: var(--space-2); }
+.tsh-link { display: flex; flex-wrap: wrap; gap: var(--space-2); align-items: center; margin-block: var(--space-3); }
+.tsh-link input { flex: 1 1 18rem; min-width: 0; }
+.tsh-decisions { display: flex; flex-wrap: wrap; gap: var(--space-2) var(--space-4); }
+.tsh-method { margin-block-start: var(--space-6); }
+.tsh-credit { margin-block-start: var(--space-6); font-size: var(--fs-0); }
+.tsh-req th[scope="row"] { font-weight: 600; }
+.tsh-cmp-table td, .tsh-cmp-table th { vertical-align: top; }
+.tsh-cmp-total th, .tsh-cmp-total td { background: var(--color-neutral-900); }
+.tsh-state { margin-block-start: var(--space-4); }
+.tsh-invite { margin-block: var(--space-4); }
+.tsh-demo { border: 1px solid var(--color-neutral-800); border-radius: var(--r-12); padding: var(--space-3) var(--space-4); margin-block: var(--space-3);
+    display: grid; gap: var(--space-2); }
+.tsh-demo legend { font-weight: 700; font-size: var(--fs-2); padding-inline: var(--space-1); float: none; inline-size: auto; }
+.tsh-feedback { margin-block: var(--space-4); }
+.tsh-ab--high { background: var(--status-ok-soft); color: var(--status-ok); }
+.tsh-ab--medium { background: var(--status-info-soft); color: var(--status-info); }
+.tsh-ab--low { background: var(--status-neutral-soft); color: var(--status-neutral); }

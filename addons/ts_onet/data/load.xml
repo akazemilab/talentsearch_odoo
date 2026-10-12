@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Idempotent: upserts the catalogue from data/onet_hr.json on every install/upgrade (hash-guarded). -->
+    <function model="ts.onet.occupation" name="_ts_load"/>
+</odoo>

@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Owner decision 2026-10-12: email through Sepehr's Liara account (sender: ts_hire.email_from). Links only, never
+         results. Copy: «شما», counselling tone, one action per email. -->
+    <record id="mail_invite" model="mail.template">
+        <field name="name">استعدادیاب: دعوت به ارزیابی</field>
+        <field name="model_id" ref="ts_org.model_ts_assignment"/>
+        <field name="subject">دعوت {{ object.ts_mail_org() }} به ارزیابی در استعدادیاب</field>
+        <field name="auto_delete" eval="True"/>
+        <field name="body_html" type="html">
+<div dir="rtl" style="font-family: Tahoma, Arial, sans-serif; font-size: 15px; line-height: 1.9; color: #1f2130; max-width: 560px; margin: 0 auto; text-align: right;">
+    <p>سلام <t t-out="object.invitee_name or ''"/>،</p>
+    <p><strong t-out="object.ts_mail_org()"/> شما را به <t t-out="object.ts_mail_what()"/> در استعدادیاب دعوت کرده است.</p>
+    <p>زمان تقریبی: <t t-out="object.ts_mail_minutes()"/> دقیقه<t t-if="object.deadline"> · مهلت: <t t-out="object.ts_mail_deadline()"/></t></p>
+    <p t-if="object.battery_id and object.position_id">بخشی از ارزیابی آزمون زمان‌دار است؛ آن را در جایی آرام و بهتر است با رایانه انجام دهید.</p>
+    <p style="margin: 24px 0;">
+        <a t-att-href="object.invite_url()" style="background-color: #5446a8; color: #ffffff; padding: 12px 22px; border-radius: 8px; text-decoration: none; display: inline-block;">دیدن دعوت</a>
+    </p>
+    <p style="font-size: 13px; color: #595d6c;">پذیرش دعوت اختیاری است. پیش از شروع می‌بینید سازمان چه چیزی از نتیجه را می‌بیند و می‌توانید اشتراک نتیجه را هر زمان لغو کنید.</p>
+    <p style="font-size: 13px; color: #595d6c;">اگر این ایمیل برای شما نیست، آن را نادیده بگیرید.</p>
+    <p style="font-size: 12px; color: #75798c;">استعدادیاب · talentsearch.ir</p>
+</div>
+        </field>
+    </record>
+
+    <record id="mail_reminder" model="mail.template">
+        <field name="name">استعدادیاب: یادآوری دعوت</field>
+        <field name="model_id" ref="ts_org.model_ts_assignment"/>
+        <field name="subject">یادآوری: دعوت {{ object.ts_mail_org() }} در استعدادیاب</field>
+        <field name="auto_delete" eval="True"/>
+        <field name="body_html" type="html">
+<div dir="rtl" style="font-family: Tahoma, Arial, sans-serif; font-size: 15px; line-height: 1.9; color: #1f2130; max-width: 560px; margin: 0 auto; text-align: right;">
+    <p>سلام <t t-out="object.invitee_name or ''"/>،</p>
+    <p>دعوت <strong t-out="object.ts_mail_org()"/> به <t t-out="object.ts_mail_what()"/> هنوز باز است<t t-if="object.deadline"> و تا <t t-out="object.ts_mail_deadline()"/> فرصت دارید</t>.</p>
+    <p style="margin: 24px 0;">
+        <a t-att-href="object.invite_url()" style="background-color: #5446a8; color: #ffffff; padding: 12px 22px; border-radius: 8px; text-decoration: none; display: inline-block;">ادامه</a>
+    </p>
+    <p style="font-size: 13px; color: #595d6c;">اگر نمی‌خواهید شرکت کنید، می‌توانید دعوت را در همان صفحه رد کنید.</p>
+    <p style="font-size: 12px; color: #75798c;">استعدادیاب · talentsearch.ir</p>
+</div>
+        </field>
+    </record>
+
+    <record id="mail_candidate_done" model="mail.template">
+        <field name="name">استعدادیاب: داوطلب ارزیابی را تمام کرد</field>
+        <field name="model_id" ref="ts_org.model_ts_assignment"/>
+        <field name="subject">{{ object.invitee_name }} ارزیابی را تمام کرد</field>
+        <field name="auto_delete" eval="True"/>
+        <field name="body_html" type="html">
+<div dir="rtl" style="font-family: Tahoma, Arial, sans-serif; font-size: 15px; line-height: 1.9; color: #1f2130; max-width: 560px; margin: 0 auto; text-align: right;">
+    <p><strong t-out="object.invitee_name or ''"/> <t t-out="object.ts_mail_what()"/> را تمام کرد.</p>
+    <p>اگر داوطلب اشتراک نتیجه را پذیرفته باشد، خلاصهٔ تناسب شغلی در پنل آماده است.</p>
+    <p style="margin: 24px 0;">
+        <a t-att-href="object.ts_mail_staff_url()" style="background-color: #5446a8; color: #ffffff; padding: 12px 22px; border-radius: 8px; text-decoration: none; display: inline-block;">دیدن در پنل</a>
+    </p>
+    <p style="font-size: 12px; color: #75798c;">نتیجه فقط یکی از ورودی‌های تصمیم استخدامی است. · استعدادیاب</p>
+</div>
+        </field>
+    </record>
+</odoo>
