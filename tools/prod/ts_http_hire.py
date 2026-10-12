@@ -91,7 +91,7 @@ PID = pm.group(1) if pm else '0'
 B = W + '/positions/%s' % PID
 st, body = get(hr, B + '/profile')
 check('profile lists work styles and abilities with checkboxes and the O*NET credit',
-      st == 200 and 'دقت در جزئیات' in body and 'name="critical"' in body and 'CC BY 4.0' in body, str(st))
+      st == 200 and 'دقت در جزئیات' in body and 'name="critical"' in body and 'CC BY' in body, str(st))
 st, loc, _ = post(hr, B + '/profile', [('critical', 'Attention to Detail'), ('dropped', 'Social Orientation')])
 check('saving the profile goes to the candidates page', st in (302, 303) and loc.rstrip('/').endswith('/positions/%s' % PID), loc)
 

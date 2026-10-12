@@ -10,7 +10,7 @@ from . import jobfit as J
 
 _logger = logging.getLogger(__name__)
 DATA = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'data', 'onet_hr.json')
-CREDIT = ('اطلاعات شغلی از پایگاه دادهٔ O*NET 31.0 وزارت کار آمریکا (USDOL/ETA) با مجوز CC BY 4.0؛ '
+CREDIT = ('اطلاعات شغلی از پایگاه دادهٔ O*NET نسخهٔ ۳۱٫۰ وزارت کار آمریکا (USDOL/ETA) با مجوز CC BY ۴٫۰؛ '
           'عنوان‌ها و شرح‌های فارسی و قواعد تناسب از استعدادیاب است و USDOL/ETA آن‌ها را تأیید یا آزمون نکرده است.')
 
 _FA_FIX = str.maketrans({'ي': 'ی', 'ك': 'ک', '‌': ' ', 'ۀ': 'ه', 'ة': 'ه', 'أ': 'ا', 'إ': 'ا'})
