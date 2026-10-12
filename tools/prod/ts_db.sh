@@ -53,6 +53,7 @@ case $CMD in
     odoo "${ARGS[@]}" --stop-after-init --no-http > "/tmp/ts_apply_$DB.log" 2>&1; rc=$?
     grep -E " (ERROR|CRITICAL) |Traceback|ParseError" "/tmp/ts_apply_$DB.log" | grep -v theme_paptic | head -20
     grep -E "Talent Search instruments loaded" "/tmp/ts_apply_$DB.log" | tail -1 | cut -c1-240
+    if [ $rc -ne 0 ]; then echo "--- last traceback lines:"; awk '/Traceback/{buf=""} {buf=buf $0 "\n"} END{printf "%s", buf}' "/tmp/ts_apply_$DB.log" | tail -25 | cut -c1-300; fi
     step "rc=$rc"; exit $rc ;;
   serve)
     PORT=${3:-8071}; pkill -f "[-]d $DB " 2>/dev/null; sleep 1
