@@ -139,6 +139,7 @@ has ts_battery && { echo "=== $(date +%T) http clinic phase 3 (battery run)"; ht
 # clinic phase 4 (prepaid billing): commits its panel, prices and an unpaid top-up invoice on the clone
 has ts_billing && { echo "=== $(date +%T) http clinic phase 4 (prepaid billing)"; http ts_http_billing.py; }
 has ts_brand && { echo "=== $(date +%T) http clinic phase 5 (branding, PDF, SMS templates, short links)"; http ts_http_brand.py; }
+has ts_hire && { echo "=== $(date +%T) http HR hiring (positions, job fit, tasks, feedback)"; http ts_http_hire.py; }
 if has ts_kavenegar; then
   echo "=== $(date +%T) kavenegar tests (fake API, commits)"; orm tests_kavenegar.py
   echo "=== $(date +%T) kavenegar webhooks (http)"; http ts_http_kv.py
