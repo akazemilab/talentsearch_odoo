@@ -58,7 +58,7 @@
                                                     <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
                                                     <input type="hidden" name="member_id" t-att-value="cm.id"/>
                                                     <label class="tsp-sr" t-attf-for="tsb_cap_#{cm.id}">سقف ماهانهٔ <t t-out="cm.user_id.name"/> به تومان</label>
-                                                    <input t-attf-id="tsb_cap_#{cm.id}" type="text" name="cap" inputmode="numeric" maxlength="16" dir="ltr" class="form-control tsb-money" t-att-value="ws.ts_fa_num(int(cm.monthly_cap or 0) // 10)"/>
+                                                    <input t-attf-id="tsb_cap_#{cm.id}" type="text" name="cap" inputmode="numeric" maxlength="16" class="form-control tsb-money" t-att-value="ws.ts_fa_num(int(cm.monthly_cap or 0) // 10)"/>
                                                     <button type="submit" class="ts-btn ts-btn--outline">ذخیره</button>
                                                 </form>
                                                 <span t-elif="cm.monthly_cap" class="tsb-amt" t-out="toman(cm.monthly_cap)"/>
@@ -77,7 +77,7 @@
                                     <div class="tsp-field">
                                         <label class="tsp-field__label" for="tsb_threshold">وقتی موجودی کمتر از این مبلغ شد خبرم کن (تومان)</label>
                                         <p class="tsp-field__hint" id="tsb_threshold_h">در روز حداکثر یک اعلان به مالک و مدیران پنل می‌رسد. ۰ یعنی خاموش.</p>
-                                        <input id="tsb_threshold" type="text" name="threshold" inputmode="numeric" maxlength="16" dir="ltr" class="form-control tsb-money" aria-describedby="tsb_threshold_h" t-att-value="ws.ts_fa_num(threshold // 10)"/>
+                                        <input id="tsb_threshold" type="text" name="threshold" inputmode="numeric" maxlength="16" class="form-control tsb-money" aria-describedby="tsb_threshold_h" t-att-value="ws.ts_fa_num(threshold // 10)"/>
                                     </div>
                                     <p><button type="submit" class="ts-btn ts-btn--primary">ذخیرهٔ آستانه</button></p>
                                 </form>

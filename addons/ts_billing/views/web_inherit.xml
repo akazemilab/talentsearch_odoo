@@ -137,7 +137,7 @@
                         <div class="tsp-field">
                             <label class="tsp-field__label" for="tsb_member_cap">سقف ماهانه (تومان)</label>
                             <p class="tsp-field__hint" id="tsb_member_cap_h">هزینهٔ دعوت‌هایی که این عضو در یک ماه شمسی می‌فرستد. ۰ یعنی بدون سقف. دعوتی که از سقف بگذرد فرستاده نمی‌شود و از این عضو خواسته می‌شود با مدیر پنل صحبت کند.</p>
-                            <input id="tsb_member_cap" type="text" name="cap" inputmode="numeric" maxlength="16" dir="ltr" class="form-control tsb-money" aria-describedby="tsb_member_cap_h" t-att-value="ws.ts_fa_num(cap_st['cap'] // 10)"/>
+                            <input id="tsb_member_cap" type="text" name="cap" inputmode="numeric" maxlength="16" class="form-control tsb-money" aria-describedby="tsb_member_cap_h" t-att-value="ws.ts_fa_num(cap_st['cap'] // 10)"/>
                         </div>
                         <p><button type="submit" class="ts-btn ts-btn--primary">ذخیرهٔ سقف</button></p>
                     </form>

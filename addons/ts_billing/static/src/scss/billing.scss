@@ -33,7 +33,7 @@
     .tsb-review-cap { display: block; margin-block-start: 4px; color: var(--ink-2); }
 
     // money inputs are typed in Latin or Persian digits, left to right
-    .tsb-money { max-inline-size: 16rem; font-family: var(--font-text); }
+    .tsb-money { max-inline-size: 16rem; inline-size: 100%; font-family: var(--font-text); text-align: start; font-variant-numeric: tabular-nums; }
     .tsb-inline { display: flex; flex-wrap: nowrap; gap: 8px; align-items: center; }
     .tsb-inline .tsb-money { flex: 1 1 6rem; min-inline-size: 0; min-block-size: 44px; }
     .tsb-inline .ts-btn { flex: none; min-block-size: 44px; }
