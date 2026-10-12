@@ -81,7 +81,7 @@ hr, rev, cand = login('hr'), login('rev'), login('cand')
 st, body = get(hr, W + '/positions')
 check('HR sees the positions page with the menu entry', st == 200 and 'موقعیت‌های شغلی' in body and '/positions/new' in body, str(st))
 st, body = get(hr, W + '/positions/new?q=' + 'توسعه نرم افزار')
-occ = re.search(r'name="occupation_id" value="(\d+)"', body)
+occ = re.search(r'name="occupation_id"[^>]*value="(\d+)"', body)
 check('Persian search finds the software developer (ZWNJ-insensitive)', st == 200 and occ and 'توسعه‌دهندهٔ نرم‌افزار' in body, str(st))
 st, loc, _ = post(hr, W + '/positions/new', {'name': 'برنامه‌نویس وب آزمون', 'occupation_id': occ.group(1) if occ else '0',
                                               'battery_choice': 'short', 'deadline': ''})

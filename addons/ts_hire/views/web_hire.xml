@@ -340,7 +340,7 @@
                                         <tbody><tr t-foreach="res['ws']['rows']" t-as="x">
                                             <th scope="row"><t t-out="x['fa']"/><span t-if="x['critical']" class="ts-pill ts-pill--info tsh-crit">کلیدی</span></th>
                                             <td t-out="x['importance_fa']"/>
-                                            <td><span t-attf-class="tsh-st tsh-st--#{x['status']}" t-out="status[x['status']]"/></td>
+                                            <td><span t-attf-class="tsh-st tsh-st--#{x['status']}" t-out="st_labels[x['status']]"/></td>
                                         </tr></tbody>
                                     </table></div>
                                 </section>
@@ -352,7 +352,7 @@
                                         <tbody><tr t-foreach="res['ab']['rows']" t-as="x">
                                             <th scope="row"><t t-out="x['fa']"/><span t-if="x['critical']" class="ts-pill ts-pill--info tsh-crit">کلیدی</span></th>
                                             <td t-out="x['importance_fa']"/>
-                                            <td><span t-attf-class="tsh-st tsh-st--#{x['status']}" t-out="status[x['status']]"/></td>
+                                            <td><span t-attf-class="tsh-st tsh-st--#{x['status']}" t-out="st_labels[x['status']]"/></td>
                                         </tr></tbody>
                                     </table></div>
                                     <p t-if="ex['unmeasured']" class="ts-hint">توانایی‌های مهمِ سنجیده‌نشده: <t t-out="'، '.join(ex['unmeasured'])"/>. این‌ها را در مصاحبه یا کار نمونه ببینید.</p>
@@ -436,7 +436,7 @@
                                                 <td t-foreach="rows" t-as="r">
                                                     <t t-set="part" t-value="(r['res']['ws'] or {}) if q['kind'] == 'WS' else r['res']['ab']"/>
                                                     <t t-set="hit" t-value="[x for x in part.get('rows', []) if x['name'] == q['name']]"/>
-                                                    <span t-if="hit" t-attf-class="tsh-st tsh-st--#{hit[0]['status']}" t-out="status[hit[0]['status']]"/>
+                                                    <span t-if="hit" t-attf-class="tsh-st tsh-st--#{hit[0]['status']}" t-out="st_labels[hit[0]['status']]"/>
                                                     <span t-else="" class="ts-hint">سنجیده نشده</span>
                                                 </td>
                                             </tr>

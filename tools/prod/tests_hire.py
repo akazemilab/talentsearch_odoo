@@ -130,7 +130,8 @@ check('H21 job fit uses personality and abilities, overrides applied',
       res['ws'] and res['ab']['rows'] and res['overrides']['critical'] == ['Attention to Detail']
       and not any(x['name'] == 'Social Orientation' for x in res['ws']['rows']))
 check('H22 HR and reviewer see the summary level', a.result_level(hr) == 'summary' and a.result_level(rev) == 'summary')
-check('H23 a clean answer pattern has no validity flags', not a.validity_flags, a.validity_flags)
+check('H23 a careful answer pattern raises no attention/straight/inconsistency flag (a script is always fast)',
+      not ({'attention', 'straight', 'inconsistent'} & set((a.validity_flags or '').split(','))), a.validity_flags)
 
 # ---------------------------------------------------------------- deadline and validity
 c2 = puser()

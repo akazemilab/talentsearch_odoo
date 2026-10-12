@@ -288,7 +288,7 @@ class TsHirePositions(http.Controller):
         request.env['ts.audit.event'].sudo().log('hire.view', a, workspace=me.workspace_id, level=row['level'])
         ver = request.env['ts.assignment'].sudo().search([('verify_of_id', '=', a.id)], limit=1)
         open_link = a.state in ('invited', 'opened', 'expired')
-        return render_in_shell('ts_hire.candidate', me, 'positions', a.invitee_name, p=p, r=row, a=a, status=STATUS,
+        return render_in_shell('ts_hire.candidate', me, 'positions', a.invitee_name, p=p, r=row, a=a, st_labels=STATUS,
                                decisions=DECISIONS, can_decide=me.has_perm('invites:manage') and me.can_act(),
                                can_invite=me.has_perm('invites:create') and me.can_act(), ver=ver,
                                url=a.invite_url() if open_link else None, base=_base(ws_id, p.id),
@@ -363,7 +363,7 @@ class TsHirePositions(http.Controller):
             return request.redirect(_base(ws_id, p.id))
         reqs = p.ts_requirements()
         return render_in_shell('ts_hire.compare', me, 'positions', 'مقایسهٔ داوطلبان', p=p, rows=rows, reqs=reqs,
-                               status=STATUS, back_url=_base(ws_id, p.id), back_label=p.name)
+                               st_labels=STATUS, back_url=_base(ws_id, p.id), back_label=p.name)
 
     # ------------------------------------------------------------------ fairness
     @http.route('/my/workspaces/<int:ws_id>/positions/<int:pid>/fairness', type='http', auth='user', website=True,

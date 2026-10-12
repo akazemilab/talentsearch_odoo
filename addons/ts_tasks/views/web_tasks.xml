@@ -44,7 +44,7 @@
                 <th scope="col" t-if="results and results[0].attempt_id.version_id.mode == 'task'">صدک (۰ تا ۱۰۰)</th>
                 <th scope="col" t-else="">نمره (۱ تا ۵)</th>
             </xpath>
-            <xpath expr="//section[1]//span[hasclass('ts-meter__seg')]" position="attributes">
+            <xpath expr="//section[1]//span[contains(@t-attf-class, 'ts-meter__seg')]" position="attributes">
                 <attribute name="t-attf-style">width: #{b.ts_seg_pct()}%</attribute>
             </xpath>
             <xpath expr="//section[1]//div[hasclass('ts-meter')]" position="attributes">

@@ -133,7 +133,7 @@ class TsHirePosition(models.Model):
         self.write({'critical_json': json.dumps(critical), 'dropped_json': json.dumps(dropped),
                     'profile_reviewed': True, 'state': 'open' if self.state == 'draft' else self.state})
         self.env['ts.audit.event'].sudo().log('position.profile', self, workspace=self.workspace_id,
-                                              critical=critical, dropped=dropped, old=old, member=member.id)
+                                              critical=critical, dropped=dropped, old=old, member=member)
         self.assignment_ids.sudo()._ts_hire_refresh()
 
     def ts_counts(self):
@@ -306,8 +306,8 @@ class TsAssignmentHire(models.Model):
         old = self.sudo().search([('verify_of_id', '=', self.id), ('state', 'not in', ('withdrawn', 'declined'))], limit=1)
         if old:
             return old
-        v = self.sudo().with_user(member.user_id).create({
-            'workspace_id': self.workspace_id.id, 'instrument_id': inst.id, 'invitee_name': self.invitee_name,
+        v = self.with_user(member.user_id).sudo().create({
+            'workspace_id': self.workspace_id.id, 'instrument_id': inst.id, 'invitee_name': self.invitee_name, 'invited_by_id': member.user_id.id,
             'invitee_email': self.invitee_email, 'verify_of_id': self.id, 'note': 'آزمون تأیید حضوری',
             'responsible_id': self.responsible_id.id, 'ts_extra_time': self.ts_extra_time})
         self.env['ts.audit.event'].sudo().log('hire.verify_invite', self, workspace=self.workspace_id)
