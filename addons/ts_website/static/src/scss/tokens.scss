@@ -57,6 +57,9 @@
     --shadow-1: var(--shadow-sm); --shadow-2: var(--shadow-lg);
 }
 
+// Dark tokens apply on screen only: a printout (or «ذخیره به‌صورت PDF») is always light, also for someone reading in dark mode
+// (2026-10-12: a print from dark mode had pale text on the white page).
+@media screen {
 :root[data-theme="dark"] {
     --white: var(--color-surface);   // Odoo frontend CSS (loaded after this bundle) redefines --white on :root
     color-scheme: dark;
@@ -81,6 +84,7 @@
     --status-info: #a6c8ec; --status-info-soft: #1e3146;
     --status-neutral: #cfd3e5; --status-neutral-soft: #2e3039;
     --field-line: var(--color-neutral-600);
+}
 }
 
 html, body { background: var(--color-bg); }
