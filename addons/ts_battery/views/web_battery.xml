@@ -238,7 +238,7 @@
                             <header class="tsp-head">
                                 <div>
                                     <h1 class="tsp-head__title">مجموعهٔ <t t-out="battery.name"/> — <t t-out="client.name"/></h1>
-                                    <p class="tsp-head__help"><span class="ts-pill" t-out="kind"/> · <t t-out="jalali(when, with_time=False)"/> · <t t-out="fa(done)"/> از <t t-out="fa(total)"/> سنجه انجام شده</p>
+                                    <p class="tsp-head__help"><span class="ts-pill" t-out="kind"/> · <bdi t-out="jalali(when, with_time=False)"/> · <bdi><t t-out="fa(done)"/> از <t t-out="fa(total)"/> سنجه انجام شده</bdi></p>
                                 </div>
                                 <form t-if="level != 'status'" method="post" t-att-action="print_url" class="tsp-inline tsp-noprint">
                                     <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>

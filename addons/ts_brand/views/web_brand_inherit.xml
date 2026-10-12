@@ -146,7 +146,7 @@
         <field name="website_id" ref="ts_website.website_ts"/>
         <field name="arch" type="xml">
             <xpath expr="//div[hasclass('tsp-switch')]/a[hasclass('tsp-switch__link')]" position="before">
-                <a t-if="ws.ts_brand_enabled() and member.active" t-attf-href="/my/workspaces/#{ws.id}/members/#{member.id}#tsbr-member" class="tsp-switch__link tsbr-self-link">هویت من در گزارش‌ها</a>
+                <a t-if="ws.ts_brand_enabled() and member.active" t-attf-href="/my/workspaces/#{ws.id}/members/#{member.id}#tsbr-member" class="tsp-switch__link tsbr-self-link" aria-label="هویت من در گزارش‌ها">هویت من در گزارش‌ها</a>
             </xpath>
         </field>
     </record>

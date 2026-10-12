@@ -38,7 +38,7 @@ class TsPanel(http.Controller):
 
     def _login_url(self, path):
         urls = self._auth_urls(path)
-        return urls.get('phone_url') or urls.get('signup_url') or urls.get('login_url')
+        return urls.get('phone_url') or urls.get('login_url') or urls.get('signup_url')   # the Persian sign-in page links to sign-up
 
     # --------------------------------------------------------------- landing + terms
     @http.route('/panel', type='http', auth='public', website=True, sitemap=False)

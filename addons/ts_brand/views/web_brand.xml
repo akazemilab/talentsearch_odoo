@@ -88,7 +88,7 @@
                             <label class="tsp-field__label" for="tsbr_color">رنگ نشان مرکز</label>
                             <p class="tsp-field__hint" id="tsbr_color_h">فقط برای خط باریک بالای سربرگ گزارش؛ به شکل #rrggbb. خالی یعنی رنگ استعدادیاب.</p>
                             <span class="tsbr-color">
-                                <input id="tsbr_color" name="brand_color" type="text" dir="ltr" maxlength="7" pattern="#[0-9a-fA-F]{6}" placeholder="#5446a8" t-att-value="ws.brand_color or ''" aria-describedby="tsbr_color_h" data-tsbr-bind="color"/>
+                                <input id="tsbr_color" name="brand_color" type="text" dir="ltr" class="ts-bdi" maxlength="7" pattern="#[0-9a-fA-F]{6}" placeholder="#5446a8" t-att-value="ws.brand_color or ''" aria-describedby="tsbr_color_h" data-tsbr-bind="color"/>
                                 <input type="color" class="tsbr-color__pick" t-att-value="ws.brand_color or '#5446a8'" aria-label="انتخاب رنگ" data-tsbr-pick="1" hidden="hidden"/>
                             </span>
                         </div>
