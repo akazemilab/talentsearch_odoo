@@ -69,7 +69,8 @@ fresh = env['ts.assignment'].create({'workspace_id': ws.id, 'instrument_id': ins
                                      'invited_by_id': m1.user_id.id})
 inv = env['ts.member.invite'].search([('workspace_id', '=', ws.id), ('state', '=', 'pending'), ('phone', '=', '09127770961')], limit=1) \
     or env['ts.member.invite'].ts_create(mo, 'clinician', phone_raw='09127770961')
-bat = m1.allowed_batteries().filtered(lambda b: b.audience == 'adult')[:1]
+bat = m1.allowed_batteries().filtered(lambda b: b.audience == 'adult' and not any(
+    l.instrument_id.current_version_id.mode == 'task' for l in b.line_ids))[:1]   # timed-task batteries (ts_hire) are played, not answered item by item
 ab = env['ts.assignment'].search([('workspace_id', '=', ws.id), ('user_id', '=', p1.id), ('battery_id', '!=', False),
                                   ('state', '=', 'done')], limit=1)
 if bat and not ab:
