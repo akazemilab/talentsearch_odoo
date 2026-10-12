@@ -111,7 +111,7 @@ own, c1, c2, hr, oth = login('owner'), login('c1'), login('c2'), login('hr'), lo
 # ---- the profile at education level (P12)
 st, body = get(own, RT)
 check('the owner opens the talent profile of a shared result', st == 200 and 'tt-report' in body, str(st))
-check('...with a back link to the participant and a print form', ('/clients/%s' % tc) in body and (RT + '/print') in body)
+check('...with a back link to the participant and one print/PDF button', ('/clients/%s' % tc) in body and ((RT + '/print') in body or (RT + '/pdf') in body))
 check('the responsible counselor opens it too', get(c1, RT)[0] == 200)
 check('another counselor of the panel gets a 404', get(c2, RT)[0] == 404)
 check('a member of another panel gets a 404', get(oth, RT)[0] == 404)

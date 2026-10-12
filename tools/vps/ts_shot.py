@@ -2,13 +2,17 @@
 """Headless layout audit of Talent Search pages on a served CLONE (never live accounts).
     ts_shot.py DB PORT [--as LOGIN] PATH...
     ts_shot.py DB PORT --matrix FILE.json        FILE = {"login": ["/path", ...], ...}   (Panel v2, 08_design_system.md section 5)
+Matrix entries: "/path[#anchor]" (loaded without the anchor, then scrolled to it, so every theme pass reloads the page);
+"POST /path body" (a form post that sets up the next page, no screenshot); "POSTSHOT /path body" (the page a form post
+answers with, captured like a page: one post per width / theme). A path with print=1, /my/assessments/ or /a/ also gets a
+print-media check and a _print.png.
 Tunnels VPS:18071 -> prod:PORT, maps talentsearch.ir to it, signs in with the clone-only test user
 (password read from prod's root-only file, never printed) and reports per page and width:
 status, horizontal overflow, elements wider than the viewport, small tap targets, images without alt,
 English UI words (body and <title>), missing/duplicate h1, inputs without a label, text contrast
 below 4.5:1 (3:1 for large text), console errors, and for report pages the print layout.
 Exit code 1 if any page has a problem. Screenshots stay in /root/ts-jobs/shots/."""
-import json, os, re, subprocess, sys
+import json, os, re, subprocess, sys, time
 from playwright.sync_api import sync_playwright
 
 args = sys.argv[1:]
@@ -24,6 +28,22 @@ WIDTHS = tuple(int(x) for x in os.environ.get('TS_SHOT_WIDTHS', '1280,375').spli
 DARK = tuple(int(x) for x in os.environ.get('TS_SHOT_DARK', '').split(',') if x)   # extra dark-theme pass (contrast + png)
 CHROME = '/snap/chromium/current/usr/lib/chromium-browser/chrome'
 LOCAL = 10000 + int(PORT)          # one tunnel per clone port: a stale 18071 tunnel once pointed the shots at another slot's clone
+
+
+def _drop_stale_tunnels():
+    """An ssh tunnel already listening on LOCAL but forwarding to another prod port is killed (2026-10-12: an Oct-1 tunnel
+    18071 -> prod:8073 made a whole slot-0 matrix photograph slot 1's clone; every sign-in failed and every token was 404)."""
+    out = subprocess.run(['ps', '-eo', 'pid=,args='], capture_output=True, text=True).stdout
+    for line in out.splitlines():
+        pid, _sp, cmd = line.strip().partition(' ')
+        m = re.search(r'\bssh\b.*-L\s*(?:127\.0\.0\.1:)?%d:([^:\s]+):(\d+)' % LOCAL, cmd)
+        if m and m.group(2) != str(PORT):
+            print('stale tunnel %s -> %s:%s killed (pid %s)' % (LOCAL, m.group(1), m.group(2), pid), flush=True)
+            subprocess.run(['kill', pid])
+            time.sleep(1)
+
+
+_drop_stale_tunnels()
 subprocess.run('ssh -fN -o ExitOnForwardFailure=yes -L %s:127.0.0.1:%s eot-odoo-prod 2>/dev/null || true' % (LOCAL, PORT), shell=True)
 os.makedirs('/root/ts-jobs/shots', exist_ok=True)
 EN = re.compile(r'\b(Loading|Search|Submit|Login|Log in|Sign in|Logout|My Account|Home|Next|Previous|Back|Save|Cancel|Delete|Edit|Error|Page Not Found|Powered by|Skip to Content|Enter your|Passkey|Password|Email|or|OdooBot)\b')
@@ -73,6 +93,7 @@ JS = r"""() => {
     const r = el.getBoundingClientRect();
     if (!t || !r.width || !r.height) continue;
     const cs = getComputedStyle(el); if (cs.visibility === 'hidden' || cs.opacity === '0') continue;
+    if (el.closest('.ts-sr, .tsp-sr, .sr-only, .visually-hidden') || (r.width <= 1 && r.height <= 1)) continue;   // screen-reader-only text
     seen++;
     const fg = parse(cs.color); if (!fg) continue;
     const bg = bgOf(el); if (!bg) continue;   // gradient or image behind the text: cannot be computed, skip
@@ -117,6 +138,59 @@ FOCUS_JS = r"""() => {
 }"""
 
 
+BASE = 'http://talentsearch.ir'
+POST_JS = """async ([u, d]) => {
+  const b = new URLSearchParams(d), t = document.querySelector('input[name=csrf_token]');
+  b.set('csrf_token', t ? t.value : ((window.odoo && odoo.csrf_token) || ''));
+  const r = await fetch(u, {method: 'POST', body: b, credentials: 'same-origin', redirect: 'manual'});
+  return r.type === 'opaqueredirect' ? 303 : r.status; }"""
+FORM_JS = """([u, d]) => {
+  const f = document.createElement('form'), b = new URLSearchParams(d), t = document.querySelector('input[name=csrf_token]');
+  b.set('csrf_token', t ? t.value : ((window.odoo && odoo.csrf_token) || ''));
+  f.method = 'post'; f.action = u;
+  for (const [k, v] of b) { const i = document.createElement('input'); i.type = 'hidden'; i.name = k; i.value = v; f.appendChild(i); }
+  document.body.appendChild(f); f.submit(); }"""
+
+
+def shot_name(path):
+    if path.startswith('POSTSHOT '):
+        path = path.split(' ', 2)[1] + '_post'
+    return re.sub(r'[^a-z0-9]+', '_', path.lower()).strip('_') or 'home'
+
+
+def _nav(page, path):
+    """Open one matrix entry. An #anchor is not part of the navigation (a fragment-only change does not reload the page, so
+    the dark pass used to capture the light page, G8-P5-3): load the page, then scroll the anchor into view."""
+    if path.startswith('POSTSHOT '):
+        _p, url, data = (path.split(' ', 2) + [''])[:3]
+        with page.expect_navigation(timeout=90000, wait_until='networkidle') as nv:
+            page.evaluate(FORM_JS, [url, data])
+        return nv.value
+    url, _sep, frag = path.partition('#')
+    r = page.goto(BASE + url, timeout=90000, wait_until='networkidle')
+    if frag:
+        page.evaluate("f => { const e = document.getElementById(f); if (e) { e.scrollIntoView({block: 'start'}); } }", frag)
+    return r
+
+
+def tunnel():
+    subprocess.run('ssh -fN -o ExitOnForwardFailure=yes -L %s:127.0.0.1:%s eot-odoo-prod 2>/dev/null || true' % (LOCAL, PORT), shell=True)
+
+
+def nav(page, path, tries=3):
+    """_nav with retries: a reset ssh tunnel (ERR_CONNECTION_RESET / SOCKET_NOT_CONNECTED) is re-opened and the page loaded
+    again; after the last try the error is printed and None returned, so one bad page never ends the whole matrix."""
+    for i in range(1, tries + 1):
+        try:
+            return _nav(page, path)
+        except Exception as e:
+            if i == tries:
+                print('!! navigation failed %-40s %s' % (path[:40], str(e).splitlines()[0][:120]), flush=True)
+                return None
+            time.sleep(3 * i)
+            tunnel()
+
+
 def audit(p, login, paths):
     bad = 0
     pw_file = '/root/.ts_flow_%s_%s' % (DB, (login or '').split('@')[0])
@@ -124,38 +198,55 @@ def audit(p, login, paths):
     b = p.chromium.launch(executable_path=CHROME, args=['--no-sandbox', '--disable-dev-shm-usage', '--disable-gpu',
                                                         '--host-resolver-rules=MAP talentsearch.ir:80 127.0.0.1:%s' % LOCAL])
     ctx = b.new_context(locale='fa-IR')
+    ctx.add_init_script('window.print = function () {};')   # ?print=1 pages open the print dialog; headless must not wait on it
     page = ctx.new_page()
     errors = []
     page.on('console', lambda m: errors.append(m.text[:160]) if m.type == 'error' else None)
     page.on('pageerror', lambda e: errors.append(str(e)[:160]))
-    BASE = 'http://talentsearch.ir'
     if login:
-        page.goto(BASE + '/web/login', timeout=90000)
-        page.fill('input[name=login]', login); page.fill('input[name=password]', password)
-        # wait for the POST navigation itself: networkidle alone could return before it started, and the next goto then
-        # aborted the sign-in (flaky «sign-in failed» for a random login, 2026-10-11)
-        with page.expect_navigation(timeout=90000):
-            page.click('form[action="/web/login"] button[type=submit]')
-        page.wait_for_load_state('networkidle', timeout=90000)
-        ok = '/web/login' not in page.url
+        ok = False
+        for _try in (1, 2):                  # a reset tunnel during the sign-in once left a whole user on the login page
+            try:
+                nav(page, '/web/login')
+                page.fill('input[name=login]', login); page.fill('input[name=password]', password)
+                # wait for the POST navigation itself: networkidle alone could return before it started, and the next goto
+                # then aborted the sign-in (flaky «sign-in failed» for a random login, 2026-10-11)
+                with page.expect_navigation(timeout=90000):
+                    page.click('form[action="/web/login"] button[type=submit]')
+                page.wait_for_load_state('networkidle', timeout=90000)
+                ok = '/web/login' not in page.url
+            except Exception:
+                ok = False
+            if ok:
+                break
+            time.sleep(3)
+            tunnel()
         print(('signed in as %s' % login.split('@')[0]) if ok else '!! sign-in failed for %s' % login.split('@')[0], flush=True)
         bad += 0 if ok else 1
     for path in paths:
         if path.startswith('POST '):
             # «POST path urlencoded-body»: a form post that sets up the next page (wizard draft), no screenshot
             _p, url, data = (path.split(' ', 2) + [''])[:3]
-            st = page.evaluate("""async ([u, d]) => {
-              const b = new URLSearchParams(d), t = document.querySelector('input[name=csrf_token]');
-              b.set('csrf_token', t ? t.value : ((window.odoo && odoo.csrf_token) || ''));
-              const r = await fetch(u, {method: 'POST', body: b, credentials: 'same-origin', redirect: 'manual'});
-              return r.type === 'opaqueredirect' ? 303 : r.status; }""", [url, data])
+            st = page.evaluate(POST_JS, [url, data])
             print('post %-4s %-40s %s' % (st, url[:40], 'ok' if st in (200, 303) else 'FAILED'), flush=True)
             bad += 0 if st in (200, 303) else 1
             continue
         for w in WIDTHS:
             errors.clear()
             page.set_viewport_size({'width': w, 'height': 900})
-            r = page.goto(BASE + path, timeout=90000, wait_until='networkidle')
+            r = None
+            for attempt in (1, 2):           # one retry: a transient socket error must not end the whole matrix
+                try:
+                    r = nav(page, path)
+                    break
+                except Exception as e:
+                    if attempt == 2:
+                        print('!! %-4s %-40s navigation failed: %s' % (w, path[:40], str(e).splitlines()[0][:120]), flush=True)
+                    else:
+                        time.sleep(3)
+            else:
+                bad += 1
+                continue
             m = page.evaluate(JS)
             body = m.pop('text')
             en = sorted(set(EN.findall(body)))
@@ -180,7 +271,7 @@ def audit(p, login, paths):
             if not m['lang'].startswith('fa'): probs.append('lang=' + (m['lang'] or '-'))
             info = (' [ascii-digits %d]' % m['ascii']) if m.get('ascii') else ''
             bad += 1 if probs else 0
-            name = re.sub(r'[^a-z0-9]+', '_', path.lower()).strip('_') or 'home'
+            name = shot_name(path)
             stem = '/root/ts-jobs/shots/%s%s_%d' % ((login.split('@')[0] + '_') if MATRIX else '', name, w)
             if w == max(WIDTHS):
                 open(stem + '.txt', 'w').write('URL %s\nTITLE %s\nFINAL %s\n\n%s' % (path, m['title'], page.url.replace(BASE, ''), body))
@@ -192,17 +283,20 @@ def audit(p, login, paths):
         for w in DARK:
             page.set_viewport_size({'width': w, 'height': 900})
             page.evaluate("() => localStorage.setItem('ts-site-theme', 'dark')")
-            page.goto(BASE + path, timeout=90000, wait_until='networkidle')
+            nav(page, path)
             m = page.evaluate(JS); m.pop('text')
-            name = re.sub(r'[^a-z0-9]+', '_', path.lower()).strip('_') or 'home'
+            name = shot_name(path)
             page.screenshot(path='/root/ts-jobs/shots/%s%s_%d_dark.png' % ((login.split('@')[0] + '_') if MATRIX else '', name, w), full_page=True)
             print('dark %-4s %-40s %s' % (w, path[:40], ('contrast ' + '|'.join(m['lowcontrast'])) if m['lowcontrast'] else 'ok'), flush=True)
             page.evaluate("() => localStorage.setItem('ts-site-theme', 'light')")
-        if '/my/assessments/' in path or '/a/' in path:
+        if '/my/assessments/' in path or '/a/' in path or 'print=1' in path:
+            if 'print=1' in path:
+                nav(page, path)          # the print mode page itself (G8-P10-7), not the last theme pass
             page.emulate_media(media='print'); page.set_viewport_size({'width': 794, 'height': 1123})
             hidden = page.evaluate("() => [...document.querySelectorAll('.ts-noprint, header#top, footer')].filter(e => getComputedStyle(e).display !== 'none').length")
             over = page.evaluate("() => document.documentElement.scrollWidth - window.innerWidth")
             print('print     %-40s %s' % (path[:40], 'ok' if not hidden and over <= 0 else 'visible-chrome=%d overflow=%d' % (hidden, over)), flush=True)
+            page.screenshot(path='/root/ts-jobs/shots/%s%s_print.png' % ((login.split('@')[0] + '_') if MATRIX else '', shot_name(path)), full_page=True)
             page.emulate_media(media='screen')
     b.close()
     return bad

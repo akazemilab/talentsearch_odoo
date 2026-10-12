@@ -5,8 +5,8 @@ from datetime import timedelta
 from odoo import fields
 from odoo.exceptions import UserError, ValidationError
 from odoo.addons.ts_billing.models.campaign import JOIN_FULL, OPEN_LINK_FLOOR
-from odoo.addons.ts_billing.models.wallet import CAP_FULL, INSUFFICIENT
-from odoo.addons.ts_billing.tools import fa_num, fmt_toman, jalali_month_bounds
+from odoo.addons.ts_billing.models.wallet import CAP_OVER, INSUFFICIENT_ASK, INSUFFICIENT_BATCH
+from odoo.addons.ts_billing.tools import credit_ask, fa_num, fmt_toman, jalali_month_bounds
 
 assert env.cr.dbname.startswith('eot_ts'), 'refusing to run tests outside a clone'
 results = []
@@ -182,7 +182,8 @@ check('R04 fmt_toman: Persian digits, U+066C, تومان', fmt_toman(12000000) =
 w = ws.ts_wallet()
 n0 = A.search_count([('workspace_id', '=', ws.id)])
 msg = refused(lambda: invite(ws, c1, i1))
-check('H01 insufficient credit: exact message', msg == INSUFFICIENT % (fmt_toman(0), fmt_toman(P1)), msg)
+check('H01 insufficient credit: exact message (a counselor is told whom to ask, not the balance)',
+      msg == INSUFFICIENT_ASK % credit_ask('clinical'), msg)
 check('H01 the refused invitation does not exist', A.search_count([('workspace_id', '=', ws.id)]) == n0)
 check('H01 credit.refused audited (kind insufficient)', Audit.search_count([('event_type', '=', 'credit.refused'), ('workspace_id', '=', ws.id),
                                                                            ('detail', 'ilike', 'insufficient')]) == 1)
@@ -198,7 +199,7 @@ c1.ts_set_cap(own, 2000000)
 check('H04 cap change audited', Audit.search_count([('event_type', '=', 'credit.cap_change'), ('workspace_id', '=', ws.id)]) == 1)
 check('H04 committed this month = the held price', w.ts_month_spend(c1) == P1)
 msg = refused(lambda: invite(ws, c1, i1, name='دوم'))
-check('H05 cap refusal: exact message', msg == CAP_FULL % (fmt_toman(P1), fmt_toman(2000000)), msg)
+check('H05 cap refusal: exact message', msg == CAP_OVER % (fmt_toman(P1), fmt_toman(2000000 - P1), credit_ask('clinical')), msg)
 check('H05 credit.refused audited (kind cap)', Audit.search_count([('event_type', '=', 'credit.refused'), ('workspace_id', '=', ws.id),
                                                                    ('detail', 'ilike', '"cap"')]) == 1)
 a_dir = invite(ws, dire, i1, name='مدیر')
@@ -314,13 +315,14 @@ clients = Cl.create([{'workspace_id': ws.id, 'name': 'گروهی %d' % k} for k 
 camp = env['ts.campaign'].create({'workspace_id': ws.id, 'name': 'دعوت گروهی اعتبار', 'instrument_id': i1.id, 'kind': 'list',
                                   'created_by_id': dire.id})
 msg = refused(lambda: camp.ts_launch(clients))
-check('G01 a batch above the credit is refused once, with the total', msg == INSUFFICIENT % (fmt_toman(2 * P1), fmt_toman(3 * P1)), msg)
+check('G01 a batch above the credit is refused once, with the total',
+      msg == INSUFFICIENT_BATCH % (fa_num(3), fmt_toman(P1), fmt_toman(3 * P1), fmt_toman(2 * P1)), msg)
 check('G01 nothing was created', not A.search_count([('campaign_id', '=', camp.id)]))
 c2.ts_set_cap(own, P1)
 camp2 = env['ts.campaign'].create({'workspace_id': ws.id, 'name': 'دعوت گروهی سقف', 'instrument_id': i1.id, 'kind': 'list',
                                    'created_by_id': c2.id})
 msg = refused(lambda: camp2.ts_launch(clients[:2]))
-check('G02 all-or-nothing: the cap stops the 2nd hold and the 1st invitation is undone', msg.startswith('سقف ماهانهٔ شما پر شده است')
+check('G02 all-or-nothing: the cap stops the 2nd hold and the 1st invitation is undone', 'از باقی‌ماندهٔ سقف ماهانهٔ شما' in msg
       and not A.search_count([('campaign_id', '=', camp2.id)]), msg)
 need = 10 * P1
 msg = refused(lambda: env['ts.campaign'].create({'workspace_id': ws.id, 'name': 'پیوند باز اعتبار', 'instrument_id': i1.id,

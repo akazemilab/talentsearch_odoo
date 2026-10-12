@@ -13,12 +13,19 @@ from odoo.addons.ts_website.tools import parse_jdate
 
 from .base import STATE_LABELS, flash_error, flash_ok, forbidden, member_or_404, render_in_shell, require
 from .clients import visible_domain
-from .invites import PILL, STATE_ORDER, _fa, assignment_domain, sms_available
+from .invites import PILL, STATE_ORDER, _fa, assignment_domain, sms_available, sorted_items
+from ..models.text import people_word
 
 DRAFT = 'ts_campaign_draft_%s'
 PAGE = 25
 MAX_LIST = 200          # one campaign; larger batches wait for the background jobs of S8
 KIND_LABELS = {'list': 'فهرست افراد (کلاس یا گروه)', 'open_link': 'پیوند باز'}   # «دعوت گروهی» is the section (G3-P15-2)
+# UX audit 2026-10-12 (G6-P2-2): the list kind is named for the panel's people, not for a school in every panel
+GROUP_WORDS = {'education': 'کلاس یا گروه', 'clinical': 'گروهی از مراجعان', 'employment': 'گروهی از متقاضیان'}
+
+
+def kind_labels(purpose):
+    return {'list': '%s (فهرست)' % GROUP_WORDS.get(purpose, 'گروهی از شرکت‌کنندگان'), 'open_link': 'پیوند باز'}
 _DIGITS = str.maketrans('۰۱۲۳۴۵۶۷۸۹٠١٢٣٤٥٦٧٨٩', '01234567890123456789')
 
 
@@ -77,7 +84,9 @@ class TsPanelCampaigns(http.Controller):
         A = request.env['ts.assignment'].sudo()
         joined = {c.id: A.search_count(vis + [('campaign_id', '=', c.id)]) for c in rows}  # ts-scope-ok: vis is the workspace-scoped assignment domain
         done = {c.id: A.search_count(vis + [('campaign_id', '=', c.id), ('state', '=', 'done')]) for c in rows}  # ts-scope-ok: same domain
-        return render_in_shell('ts_panel.campaigns', me, 'campaigns', 'دعوت گروهی', rows=rows, joined=joined, done=done, kind_labels=KIND_LABELS,
+        purpose = me.workspace_id.purpose
+        return render_in_shell('ts_panel.campaigns', me, 'campaigns', 'دعوت گروهی', rows=rows, joined=joined, done=done,
+                               kind_labels=kind_labels(purpose), group_word=GROUP_WORDS.get(purpose, 'گروهی از شرکت‌کنندگان'),
                                state_c=STATE_C, total=total, page=page, pages=pages, ws_id=ws_id)
 
     # ------------------------------------------------------------------ form and review
@@ -85,9 +94,13 @@ class TsPanelCampaigns(http.Controller):
         return request.env['ts.panel.group'].sudo().search([('workspace_id', '=', me.workspace_id.id), ('active', '=', True)])
 
     def _form_ctx(self, me, d, **extra):
-        vals = dict(draft=d, instruments=me.allowed_instruments(), groups=self._groups(me), sms_ok=sms_available(me.workspace_id),
+        groups = self._groups(me)
+        purpose = me.workspace_id.purpose
+        vals = dict(draft=d, instruments=sorted_items(me.allowed_instruments()), groups=groups, sms_ok=sms_available(me.workspace_id),
                     open_default=request.env['ir.config_parameter'].sudo().get_int('ts_panel.open_link_max', 60) or 60,
-                    max_list=MAX_LIST)
+                    max_list=MAX_LIST, kind_labels=kind_labels(purpose), people=people_word(purpose),
+                    # a panel without groups cannot send a list: the open link is the default (G6-P2-1)
+                    default_kind='list' if groups else 'open_link')
         vals.update(extra)
         return vals
 
@@ -127,7 +140,7 @@ class TsPanelCampaigns(http.Controller):
         inst = request.env['ts.instrument'].sudo().browse(d['instrument_id'])  # ts-scope-ok: instrument is global, not workspace data
         return render_in_shell('ts_panel.campaign_review', me, 'campaigns', 'مرور دعوت گروهی', draft=d, inst=inst, deadline_fa=_date_fa(d.get('deadline')),
                                groups=self._groups(me).filtered(lambda g: g.id in d.get('group_ids', [])),
-                               kind_labels=KIND_LABELS, **extra)
+                               kind_labels=kind_labels(me.workspace_id.purpose), **extra)
 
     # What is invited. ts_battery overrides these three to offer a battery next to single instruments.
     def _read_item(self, me, post, d):
@@ -171,7 +184,9 @@ class TsPanelCampaigns(http.Controller):
             gids = request.httprequest.form.getlist('group_ids')
             ok = set(self._groups(me).ids)
             d['group_ids'] = sorted({int(g) for g in gids if g.isdigit() and int(g) in ok})
-            if not d['group_ids']:
+            if not ok:
+                err = err or 'هنوز گروهی نساخته‌اید؛ «پیوند باز» را انتخاب کنید یا اول یک گروه بسازید.'
+            elif not d['group_ids']:
                 err = err or 'دست‌کم یک گروه را انتخاب کنید.'
             d['sms'] = bool(post.get('sms')) and sms_available(me.workspace_id)
             if post.get('sms') and not post.get('attest'):
@@ -182,7 +197,7 @@ class TsPanelCampaigns(http.Controller):
             mx = (post.get('open_max') or '').strip().translate(_DIGITS)
             d['open_max'] = int(mx) if mx.isdigit() and 1 <= int(mx) <= 500 else 0
             if not d['open_max']:
-                err = err or 'سقف پیوستن را بین ۱ تا ۵۰۰ بنویسید.'
+                err = err or 'بیشترین تعداد نفرات را بین ۱ تا ۵۰۰ بنویسید.'
             days = post.get('open_days') or ''
             d['open_days'] = int(days) if days in ('7', '14', '30') else 14
         return d, err
@@ -250,7 +265,7 @@ class TsPanelCampaigns(http.Controller):
         rows = A.search(vis + [('campaign_id', '=', c.id)], order='create_date desc, id desc', limit=100)
         total = A.search_count(vis + [('campaign_id', '=', c.id)])
         return render_in_shell('ts_panel.campaign', me, 'campaigns', c.name, c=c, counts=counts, rows=rows, total=total,
-                               state_order=STATE_ORDER, state_labels=STATE_LABELS, pill=PILL, kind_labels=KIND_LABELS,
+                               state_order=STATE_ORDER, state_labels=STATE_LABELS, pill=PILL, kind_labels=kind_labels(me.workspace_id.purpose),
                                state_c=STATE_C, open_state=c.open_state() if c.kind == 'open_link' else None,
                                url=c.invite_url() if c.kind == 'open_link' else None, joined=c.joined_count() if c.kind == 'open_link' else 0,
                                can_close=c.state == 'open', is_new=bool(kw.get('new')), deadline_fa=_date_fa(c.deadline),

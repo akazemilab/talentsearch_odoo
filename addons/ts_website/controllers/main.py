@@ -14,6 +14,9 @@ TOPICS = {
     'question': 'پرسش',
     'support': 'پشتیبانی',
     'partner': 'سازمان یا مرکز مشاوره',
+    # owner decision 2026-10-12: a prepaid panel's top-up request (credit is added by invoice);
+    # every «درخواست شارژ اعتبار» button links /contact?topic=credit&panel=<code> (ts.workspace.ts_topup_request_url())
+    'credit': 'شارژ اعتبار پنل',
     # older form values, still accepted
     'quote': 'درخواست پیش‌فاکتور',
     'evidence': 'پرسش دربارهٔ شواهد',
@@ -49,10 +52,12 @@ class TsWebsite(http.Controller):
         email, phone = _split_contact(post)
         topic = post.get('topic') if post.get('topic') in TOPICS else 'demo'
         if not name or not (EMAIL_RE.match(email) or phone) or post.get('consent_contact') != '1':
-            return request.redirect('/contact?topic=%s&error=1' % topic)
+            panel = re.sub(r'[^A-Za-z0-9_-]', '', post.get('panel') or '')[:40]
+            return request.redirect('/contact?topic=%s&error=1%s' % (topic, ('&panel=' + panel) if panel else ''))
         segment = SEGMENTS.get(post.get('segment') or '', '')
         lines = [
-            ('موضوع', TOPICS[topic]), ('نوع مجموعه', segment), ('مدرسه یا مرکز', post.get('company')),
+            ('موضوع', TOPICS[topic]), ('کد پنل', (post.get('panel') or '').strip()[:40]), ('نوع مجموعه', segment),
+            ('مدرسه یا مرکز', post.get('company')),
             ('تعداد کارکنان', post.get('size')), ('سنجش سالانهٔ تقریبی', post.get('volume')), ('نقش‌ها یا کاربرد', post.get('roles')),
             ('رضایت تماس', 'بله'), ('دریافت اخبار', 'بله' if post.get('consent_news') == '1' else 'خیر'),
         ]

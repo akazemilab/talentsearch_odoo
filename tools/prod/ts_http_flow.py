@@ -99,7 +99,7 @@ nq = page.count('class="ts-q"')
 check('player page renders (up to 10 items per page, 5-point scale)', st == 200 and 1 <= nq <= 10 and page.count('type="radio"') == 5 * nq,
       '%s q=%d' % (st, page.count('class="ts-q"')))
 csrf = u.csrf(page)
-pages = int(re.search(r'صفحهٔ [۰-۹]+ از ([۰-۹]+)', page).group(1).translate(str.maketrans('۰۱۲۳۴۵۶۷۸۹', '0123456789')))
+pages = int((re.search(r'صفحهٔ [۰-۹]+ از ([۰-۹]+)', page) or re.match('(۱)', '۱')).group(1).translate(str.maketrans('۰۱۲۳۴۵۶۷۸۹', '0123456789')))  # one page: no page count
 answered = 0
 for p in range(1, pages + 1):
     st, _, page = u.req('/take/%s?page=%d' % (token, p))
@@ -117,7 +117,7 @@ check('submit -> report', st in (302, 303) and report.startswith('/my/assessment
 st, loc2, _ = u.req('/take/%s/submit' % token, {'csrf_token': u.csrf(page), 'submission_key': token})
 check('second submit redirects to the same report', path_of(loc2).split('?')[0] == report.split('?')[0], loc2)
 st, _, page = u.req(report.split('?')[0])
-check('report 200 with summary, bands and interpretation', st == 200 and 'خلاصهٔ نتایج' in page and 'ts-band' in page and 'تفسیر نتیجهٔ شما' in page)
+check('report 200 with summary, bands and interpretation', st == 200 and 'خلاصهٔ نتیجه‌ها' in page and 'ts-band' in page and 'تفسیر نتیجهٔ شما' in page)
 check('report hides therapist guidance', 'راهنمای تخصصی درمانگر' not in page and 'راهنمای تخصصی مشاور' not in page and 'تحلیل و تفسیر' not in page)
 check('report has no English band words', not re.search(r'\b(Low|Medium|High)\b', html.unescape(re.sub(r'<[^>]+>', ' ', page))))
 st, _, page = u.req('/my/assessments')

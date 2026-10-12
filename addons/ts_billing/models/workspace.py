@@ -1,10 +1,12 @@
 """Workspace and member fields of prepaid billing (docs/clinic/04_billing_brief.md sections 2, 3, 5.4, 6)."""
+from urllib.parse import quote
+
 from markupsafe import Markup
 
 from odoo import api, fields, models
 from odoo.exceptions import AccessError, UserError, ValidationError
 
-from ..tools import CAPPED_ROLES, fa_num, fmt_toman, rial_int, round10
+from ..tools import CAPPED_ROLES, credit_ask, credit_roles, fa_num, fmt_toman, item_title, rial_int, round10
 
 BILLING_MODES = [('free', 'رایگان'), ('prepaid', 'پیش‌پرداخت')]
 
@@ -61,6 +63,24 @@ class TsWorkspaceBilling(models.Model):
 
     def ts_fa_num(self, n):
         return fa_num(n)
+
+    def ts_credit_roles(self, conj='و'):
+        """«مالک، هماهنگ‌کننده و مدیر مرکز مشاوره»: the roles that see and manage this panel's credit."""
+        self.ensure_one()
+        return credit_roles(self.sudo().purpose, conj)
+
+    def ts_credit_ask(self):
+        """«مالک یا مدیر مرکز مشاوره»: whom a counselor asks for a top-up or a higher cap."""
+        self.ensure_one()
+        return credit_ask(self.sudo().purpose)
+
+    def ts_topup_request_url(self):
+        """«درخواست شارژ اعتبار»: the contact form, topic credit, with the panel code (credit comes only by an EOT invoice)."""
+        self.ensure_one()
+        return '/contact?topic=credit&panel=%s' % quote(self.sudo().code or '')
+
+    def ts_item_title(self, rec):
+        return item_title(rec)
 
     def ts_toman_signed(self, rial):
         """Ledger amount with an explicit sign: «−۱۲۰٬۰۰۰ تومان» / «+۱۲۰٬۰۰۰ تومان». The signed number is an LTR isolate, so the
@@ -136,7 +156,7 @@ class TsWorkspaceMemberBilling(models.Model):
         """Owner / admin / director / hr_admin of the same panel (credits:manage). Rial, multiple of 10, 0 = no cap."""
         self.ensure_one()
         if not by.has_perm('credits:manage') or by.workspace_id != self.workspace_id:
-            raise UserError('سقف ماهانه را مالک، هماهنگ‌کننده یا مدیر پنل تعیین می‌کند.')
+            raise UserError('سقف ماهانه را %s تعیین می‌کند.' % credit_roles(self.workspace_id.purpose, 'یا'))
         if not self.ts_is_capped_role():
             raise UserError('برای این نقش سقف ماهانه تعیین نمی‌شود.')
         amount = rial_int(amount)
@@ -168,7 +188,8 @@ class TsWorkspaceMemberBilling(models.Model):
     # ------------------------------------------------------------------ numbers for the pages (sudo after the caller's checks)
     def ts_bill_state(self):
         """What the pages of this member show about money; None for a free panel.
-        {available, held, month, can_read, can_manage, cap, spent, capped}"""
+        {available, held, total, month (committed: held + debited), debited, threshold, low, can_read, can_manage, cap,
+        spent (the member's commitment this month), capped, cap_left, cap_pct, cap_near}"""
         self.ensure_one()
         me = self.sudo()
         ws = me.workspace_id
@@ -179,15 +200,21 @@ class TsWorkspaceMemberBilling(models.Model):
         capped = me.ts_is_capped_role() and me.monthly_cap > 0
         out = {'can_read': can_read, 'can_manage': me.has_perm('credits:manage'), 'capped': capped,
                'cap': rial_int(me.monthly_cap), 'spent': w.ts_month_spend(me) if me.ts_is_capped_role() else 0,
-               'available': w.ts_available(), 'held': w.ts_held(), 'month': w.ts_month_spend() if can_read else 0}
+               'available': w.ts_available(), 'held': w.ts_held(), 'month': w.ts_month_spend() if can_read else 0,
+               'debited': w.ts_month_debited() if can_read else 0, 'threshold': rial_int(w.low_threshold)}
+        out['total'] = out['available'] + out['held']
+        out['low'] = bool(can_read and out['threshold'] and out['available'] < out['threshold'])
         out['cap_left'] = max(out['cap'] - out['spent'], 0) if capped else None
         out['cap_pct'] = min(100, int(100.0 * out['spent'] / out['cap'])) if capped and out['cap'] else 0
+        out['cap_near'] = bool(capped and out['cap_pct'] >= 90)
         return out
 
     def ts_bill_prices(self):
         """Prices of the items this member may invite (prepaid panels): {'inst': {id: rial}, 'bat': {id: rial},
-        'ok_inst': {id: bool}, 'ok_bat': {id: bool}, 'available': rial}; None for a free panel. An item is «ok» when the
-        panel can hold its price and the member's cap allows it (the server decides again at creation)."""
+        'ok_inst': {id: bool}, 'ok_bat': {id: bool}, 'why_inst' / 'why_bat': {id: None | 'panel' | 'cap'}, 'available': rial,
+        'can_read', 'cap_left', 'state'}; None for a free panel. An item is «ok» when the panel can hold its price and the
+        member's cap allows it (the server decides again at creation). `why` names the limit that stops it: the panel balance
+        first, else the member's monthly cap (UX audit G7-P10-1; presentation only)."""
         self.ensure_one()
         st = self.ts_bill_state()
         if st is None:
@@ -202,5 +229,13 @@ class TsWorkspaceMemberBilling(models.Model):
 
         def ok(price):
             return price <= room
+
+        def why(price):
+            if price <= room:
+                return None
+            return 'panel' if price > st['available'] else 'cap'
         return {'inst': inst, 'bat': bat, 'ok_inst': {k: ok(v) for k, v in inst.items()},
-                'ok_bat': {k: ok(v) for k, v in bat.items()}, 'available': st['available'], 'state': st}
+                'ok_bat': {k: ok(v) for k, v in bat.items()}, 'why_inst': {k: why(v) for k, v in inst.items()},
+                'why_bat': {k: why(v) for k, v in bat.items()}, 'available': st['available'], 'state': st,
+                'can_read': st['can_read'], 'cap_left': st['cap_left'],
+                'panel_short': any(why(v) == 'panel' for v in list(inst.values()) + list(bat.values()))}

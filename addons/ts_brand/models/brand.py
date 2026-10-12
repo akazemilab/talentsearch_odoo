@@ -9,8 +9,11 @@ The report header (screen, print, PDF) is drawn only for attempts of a counselin
 attempt outside any panel keeps the plain استعدادیاب header. The counselor block never carries contact data.
 """
 import base64
+import hashlib
 import logging
 import re
+
+from urllib.parse import quote
 
 from odoo import api, fields, models
 from odoo.exceptions import UserError, ValidationError
@@ -44,29 +47,148 @@ def short_name(text, limit=SMS_MAX):
     return out
 
 
+MIME = {'png': 'image/png', 'jpg': 'image/jpeg', 'gif': 'image/gif', 'webp': 'image/webp', 'svg': 'image/svg+xml'}
+# Odoo's own stand-in pictures: a partner or company that never got a real image may still hold one of these. They are not a
+# logo or a photo, so a report header treats them as «no image» (UX audit G8-PT-1, G8-P6-1).
+PLACEHOLDER_FILES = ('base/static/img/avatar_grey.png', 'base/static/img/avatar.png', 'base/static/img/placeholder.png',
+                     'base/static/img/company_image.png', 'base/static/img/res_company_logo.png',
+                     'web/static/img/placeholder.png', 'web/static/img/user_menu_avatar.png')
+_PLACEHOLDER_SUMS = []
+
+
 def image_kind(data):
-    head = (data or b'')[:12]
+    """The real type of image bytes, sniffed from the content (never from a file name or a stored mime type)."""
+    data = data if isinstance(data, (bytes, bytearray)) else b''
+    head = data[:16]
     if head.startswith(b'\x89PNG'):
         return 'png'
     if head.startswith(b'\xff\xd8\xff'):
         return 'jpg'
+    if head[:6] in (b'GIF87a', b'GIF89a'):
+        return 'gif'
     if head[:4] == b'RIFF' and head[8:12] == b'WEBP':
         return 'webp'
+    text = data[:512].lstrip(b'\xef\xbb\xbf \t\r\n')
+    if text.startswith(b'<') and b'<svg' in data[:2048].lower():
+        return 'svg'
     return None
 
 
-def png_data_uri(b64, size=256):
-    """A stored image (base64) as a PNG data URI: wkhtmltopdf's WebKit has no WEBP, and the PDF must not fetch anything."""
-    if not b64:
+def _raw_image(value):
+    """Image bytes of a stored binary, whatever the field returned: base64 (bytes or str) or already raw bytes."""
+    if not value:
+        return b''
+    if isinstance(value, str):
+        value = value.encode()
+    elif not isinstance(value, bytes):
+        # Odoo 20 returns lazy binary values (BinaryBytes / BinaryValueAttachment): not sliceable, but they expose the
+        # buffer protocol (base64.b64decode accepted them before), so bytes() gives the stored content.
+        try:
+            value = bytes(value)
+        except Exception:
+            try:
+                value = memoryview(value).tobytes()
+            except Exception:
+                return b''
+    if image_kind(value):
+        return value
+    try:
+        raw = base64.b64decode(value)
+    except Exception:
+        return b''
+    return raw if image_kind(raw) else b''
+
+
+def _placeholder_sums():
+    if not _PLACEHOLDER_SUMS:
+        sums = set()
+        try:
+            from odoo.tools.misc import file_path
+        except Exception:
+            file_path = None
+        for rel in PLACEHOLDER_FILES:
+            try:
+                with open(file_path(rel), 'rb') as fh:
+                    sums.add(hashlib.sha1(fh.read()).hexdigest())
+            except Exception:
+                continue
+        _PLACEHOLDER_SUMS.append(sums)
+    return _PLACEHOLDER_SUMS[0]
+
+
+def is_default_image(raw):
+    """True for Odoo's grey silhouette / placeholder files and for its generated letter avatar (an SVG with one <text>)."""
+    if not raw:
         return False
+    if image_kind(raw) == 'svg' and b'<text' in raw and b'hsl(' in raw:
+        return True
+    return hashlib.sha1(raw).hexdigest() in _placeholder_sums()
+
+
+def has_image(value):
+    """A real, uploaded image (not empty, not one of Odoo's stand-ins)."""
+    raw = _raw_image(value)
+    return bool(raw) and not is_default_image(raw)
+
+
+def _to_png(raw, size):
     try:
         from odoo.tools.image import image_process
-        raw = base64.b64decode(b64)
-        png = image_process(raw, size=(size, size), output_format='PNG')
-        return 'data:image/png;base64,' + base64.b64encode(png).decode()
+        out = image_process(raw, size=(size, size), output_format='PNG')
+        if image_kind(out) == 'png':
+            return out
     except Exception:
+        pass
+    try:                                   # Odoo leaves WEBP untouched; PIL converts it when it was built with WEBP
+        import io
+        from PIL import Image
+        im = Image.open(io.BytesIO(raw))
+        im.thumbnail((size, size))
+        if im.mode not in ('RGB', 'RGBA'):
+            im = im.convert('RGBA')
+        buf = io.BytesIO()
+        im.save(buf, 'PNG')
+        out = buf.getvalue()
+        return out if image_kind(out) == 'png' else None
+    except Exception:
+        return None
+
+
+def png_data_uri(b64, size=256):
+    """A stored image as a data URI for a report header (screen, print and PDF: the PDF must not fetch anything).
+    Raster images become PNG (wkhtmltopdf's WebKit has no WEBP). The mime type always comes from the bytes themselves: an
+    SVG is sent as image/svg+xml, never labelled PNG (that was the broken logo / photo of UX audit G8-PT-1). Odoo's stand-in
+    pictures and anything that is not an image -> False, so the template draws no <img> at all (no broken frame)."""
+    raw = _raw_image(b64)
+    if not raw or is_default_image(raw):
+        return False
+    kind = image_kind(raw)
+    out = _to_png(raw, size) if kind != 'svg' else None
+    if out:
+        kind = 'png'
+    elif kind in ('svg', 'png', 'jpg', 'gif', 'webp'):
+        out = raw                          # could not convert: keep the original bytes with their real type
+    else:
         _logger.info('ts_brand: image could not be converted for a report header')
         return False
+    return 'data:%s;base64,%s' % (MIME[kind], base64.b64encode(out).decode())
+
+
+def initial_of(name):
+    """First letter of a name, for the monogram drawn when a counselor has no photo."""
+    for ch in clean_line(name):
+        if ch.isalpha():
+            return ch.upper()
+    return ''
+
+
+def text_dir(text):
+    """'rtl' when a line holds Persian/Arabic letters, else 'ltr' (a phone number and a web address read left to right).
+    wkhtmltopdf has no dir=auto, so the PDF needs the answer."""
+    for ch in text or '':
+        if '\u0600' <= ch <= '\u06ff' and ch.isalpha():
+            return 'rtl'
+    return 'ltr'
 
 
 class TsWorkspaceBrand(models.Model):
@@ -96,8 +218,9 @@ class TsWorkspaceBrand(models.Model):
         return self.purpose in BRAND_PURPOSES
 
     def ts_public_name(self):
+        """The report name (public_name), else the panel name (ts_core's base)."""
         self.ensure_one()
-        return clean_line(self.public_name) or self.name or ''
+        return clean_line(self.public_name) or super().ts_public_name() or ''
 
     def ts_sms_sender(self):
         """Line 1 of an SMS sent on behalf of this panel (05_sms_texts.md rule 7): sms_name, else the public name cut at a
@@ -118,6 +241,27 @@ class TsWorkspaceBrand(models.Model):
             m = M.search([('workspace_id', '=', self.id), ('user_id', '=', a.invited_by_id.id), ('active', '=', True)], limit=1)
         return m if m and m.workspace_id == self else M
 
+    def ts_has_logo(self):
+        """The panel has a real logo (Odoo's stand-in company picture does not count)."""
+        self.ensure_one()
+        return has_image(self.sudo().partner_id.image_1920)
+
+    def ts_logo_uri(self, size=256):
+        self.ensure_one()
+        p = self.sudo().partner_id
+        return png_data_uri(p.image_1920, size) if has_image(p.image_1920) else False
+
+    def ts_people_word(self, plural=True):
+        """«مراجع» in a counseling-center panel, «شرکت‌کننده» elsewhere (glossary §9-3)."""
+        self.ensure_one()
+        from odoo.addons.ts_panel.models.text import people_word
+        return people_word(self.purpose, plural)
+
+    def ts_contact_url(self, topic='support'):
+        """The contact form, with this panel's code filled in (the EOT team's side of the set-up: approval, licences, credit)."""
+        self.ensure_one()
+        return '/contact?topic=%s&panel=%s' % (topic, quote(self.code or ''))
+
     def ts_brand_header(self, assignment=None, attempt=None):
         """Values of the report header, or False when this panel has none (employment/benefits panels)."""
         self.ensure_one()
@@ -125,19 +269,32 @@ class TsWorkspaceBrand(models.Model):
         if not ws.ts_brand_enabled():
             return False
         m = ws.ts_brand_member(assignment, attempt)
+        contact = clean_line(ws.contact_line)
         return {
-            'name': ws.ts_public_name(), 'contact': clean_line(ws.contact_line), 'color': ws.brand_color or False,
-            'logo': png_data_uri(ws.partner_id.image_256 or ws.partner_id.image_1920),
+            'name': ws.ts_public_name(), 'contact': contact, 'contact_dir': text_dir(contact), 'color': ws.brand_color or False,
+            'logo': ws.ts_logo_uri(),
             'counselor': m.ts_brand_block() if m and m.show_on_report else None,
             'footer': FOOTER_LINE,
         }
 
-    def ts_brand_preview(self, member):
-        """Header values for the settings preview: this panel, with the editing member as the sample counselor."""
+    def ts_brand_sample_member(self):
+        """The counselor shown in the settings preview: the first active counselor with a title (shown on reports)."""
         self.ensure_one()
-        h = dict(self.ts_brand_header() or {'name': self.ts_public_name(), 'contact': '', 'color': False, 'logo': False,
-                                             'footer': FOOTER_LINE})
-        h['counselor'] = member.ts_brand_block() if member and member.show_on_report else None
+        return self.env['ts.workspace.member'].sudo().search(
+            [('workspace_id', '=', self.id), ('active', '=', True), ('role', 'in', ('clinician', 'clinic_director', 'counselor')),
+             ('title', '!=', False), ('show_on_report', '=', True)], order='id', limit=1)
+
+    def ts_brand_preview(self, member=None):
+        """Header values for the settings preview: this panel, with a real counselor of the panel (the first one with a
+        title) or a labelled sample block. `preview` marks the empty logo box drawn only here."""
+        self.ensure_one()
+        h = dict(self.ts_brand_header() or {'name': self.ts_public_name(), 'contact': '', 'contact_dir': 'ltr', 'color': False,
+                                             'logo': False, 'footer': FOOTER_LINE})
+        sample = self.ts_brand_sample_member()
+        h['counselor'] = sample.ts_brand_block() if sample else {
+            'name': 'نام مشاور', 'title': 'عنوان حرفه‌ای', 'license': '…', 'photo': False, 'initial': '', 'bio': '',
+            'signature': False, 'sample': True}
+        h['preview'] = True
         return h
 
     # ------------------------------------------------------------------ writing (settings page)
@@ -200,12 +357,22 @@ class TsMemberBrand(models.Model):
         self.ensure_one()
         m = self.sudo()
         partner = m.user_id.partner_id
+        photo = partner.image_1920 if has_image(partner.image_1920) else False
         return {
             'name': m.user_id.name or '', 'title': clean_line(m.title), 'bio': clean_line(m.report_bio),
-            'license': m.ts_license_shown(),
-            'photo': png_data_uri(partner.image_256 or partner.image_1920, 192),
+            'license': m.ts_license_shown(), 'initial': initial_of(m.user_id.name),
+            'photo': png_data_uri(photo, 192) if photo else False,
             'signature': png_data_uri(m.signature, 400),
         }
+
+    def ts_has_photo(self):
+        """The member uploaded a real photo (Odoo's grey silhouette or letter avatar is not one)."""
+        self.ensure_one()
+        return has_image(self.sudo().user_id.partner_id.image_1920)
+
+    def ts_photo_uri(self):
+        self.ensure_one()
+        return png_data_uri(self.sudo().user_id.partner_id.image_1920, 128) if self.ts_has_photo() else False
 
     def ts_brand_save(self, by, vals, photo=None, signature=None, remove_photo=False, remove_signature=False):
         """Self: title, report_bio, show_on_report, photo (<= 512 KB), signature (<= 300 KB). A brand manager of the same panel:
@@ -247,14 +414,14 @@ class TsMemberBrand(models.Model):
             if image_kind(photo) not in ('png', 'jpg', 'webp'):
                 raise UserError('عکس باید تصویر PNG، JPG یا WEBP باشد.')
             if len(photo) > PHOTO_MAX:
-                raise UserError('حجم عکس باید کمتر از ۵۱۲ کیلوبایت باشد.')
+                raise UserError('حجم عکس باید کمتر از ۵۰۰ کیلوبایت باشد.')
             try:
                 with self.env.cr.savepoint():
                     self.user_id.partner_id.sudo().write({'image_1920': base64.b64encode(photo).decode()})
             except Exception:
                 raise UserError('این فایل تصویر معتبری نیست.')
             changed.append('photo')
-        elif remove_photo and self.user_id.partner_id.image_1920:
+        elif remove_photo and self.ts_has_photo():
             self.user_id.partner_id.sudo().write({'image_1920': False})
             changed.append('photo')
         changed = sorted(set(changed))

@@ -104,7 +104,7 @@ def plain(html):
 st, page = get(login('inv'), '/my')
 check('home of an invited person leads with the invitation', st == 200 and 'id="ts-home-next"' in page and ('یک دعوت منتظر شماست' in page or 'یک دعوت منتظر توست' in page), st)
 check('…names the school and the deadline', 'مدرسهٔ نمونهٔ پرتال' in page and 'مهلت تا' in page)
-check('…and the open invitations list is dated and attributed', 'ts-home-invites' in page and 'از طرف' in page)
+check('…and the open invitations list is dated and attributed', 'ts-home-invites' in page and 'به دعوت' in page)
 st, page = get(login('going'), '/my')
 check('home of an unfinished attempt leads with resume', st == 200 and (('یک سنجهٔ نیمه‌تمام دارید' in page or 'یک سنجهٔ نیمه‌تمام داری' in page) and 'ادامهٔ پاسخ‌دهی' in page and 'آخرین ذخیره' in page
                                                                      or ('یک سنجه منتظر شماست' in page or 'یک سنجه منتظر توست' in page) and '>شروع<' in page and 'هنوز به هیچ جمله‌ای پاسخ' in page), st)
@@ -123,7 +123,7 @@ st, page = get(login('going'), '/take/%s' % GTOK)
 check('an unfinished attempt opens the player (not the consent page)', st == 200 and 'ts-qform' in page, st)
 emp = login('emp')
 st, page = get(emp, '/take/%s' % ETOK)
-check('consent of a company invitation says the company sees only the band per dimension', st == 200 and 'id="ts-who-sees-line"' in page and 'فقط سطح هر بُعد' in page and 'شرکت نمونهٔ پرتال' in page, st)
+check('consent of a company invitation says the company sees only the band per dimension', st == 200 and 'id="ts-who-sees-line"' in page and 'فقط سطح هر عامل' in page and 'شرکت نمونهٔ پرتال' in page, st)
 check('…and not the old "only you" sentence', 'با هیچ کارفرما یا مرکزی' not in page)
 st, page = get(login('edu'), '/take/%s' % XTOK)
 check('consent of a school invitation names the counselor (glossary 9-4: «مشاور»)', st == 200 and 'مشاورت' in page and 'مشاور مسئول' not in page and 'مدرسهٔ نمونهٔ پرتال' in page, st)
@@ -132,7 +132,7 @@ o = shell("u = env['res.users'].search([('login', '=', %r)]); i = env['ts.instru
           "a = env['ts.attempt'].search([('user_id', '=', u.id), ('state', '=', 'consent')], limit=1) or env['ts.attempt'].create({'user_id': u.id, 'instrument_id': i.id, 'version_id': i.current_version_id.id}); env.cr.commit(); print('TOK', a.access_token)" % L['self'])
 stok = re.search(r'TOK (\S+)', o).group(1)
 st, page = get(login('self'), '/take/%s' % stok)
-check('consent of a self-started attempt says only you', st == 200 and ('فقط شما، در حساب کاربری‌تان' in page or 'فقط تو، در حساب کاربری‌ات' in page), st)
+check('consent of a self-started attempt says only you', st == 200 and ('فقط شما، در حسابتان' in page or 'فقط تو، در حسابت' in page), st)
 
 # ---- unavailable result: no redirect loop
 h = login('hold')

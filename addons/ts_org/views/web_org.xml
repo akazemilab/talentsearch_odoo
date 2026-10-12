@@ -273,7 +273,7 @@
                             <div class="ts-container ts-report-wrap">
                                 <div class="ts-report-actions ts-noprint">
                                     <a t-attf-href="/my/workspaces/#{ws.id}" class="ts-back" t-out="ws.name"/>
-                                    <button t-if="level != 'none'" type="button" class="ts-btn ts-btn--outline ts-js-print">چاپ یا ذخیره به‌صورت PDF</button>
+                                    <button t-if="level != 'none'" type="button" class="ts-btn ts-btn--quiet ts-js-print">چاپ همین صفحه</button>
                                 </div>
                                 <article class="ts-doc">
                                     <header class="ts-doc__head">
@@ -314,11 +314,11 @@
 
                                     <t t-if="level != 'none'">
                                         <section class="ts-doc__sec">
-                                            <h2>خلاصهٔ نتایج</h2>
-                                            <p t-if="level == 'summary'" class="ts-hint">فقط بازهٔ هر بُعد نمایش داده می‌شود. نمره‌ها، پاسخ‌ها و متن‌های تفسیری شخصی نزد شرکت‌کننده می‌ماند. این نتیجه به‌تنهایی مبنای تصمیم استخدامی نیست.</p>
-                                            <p t-else="" class="ts-hint">نمرهٔ هر بُعد میانگین پاسخ‌ها روی مقیاس ۱ تا ۵ است (عبارت‌های معکوس پیش از میانگین‌گیری برگردانده می‌شوند).</p>
+                                            <h2>خلاصهٔ نتیجه‌ها</h2>
+                                            <p t-if="level == 'summary'" class="ts-hint">فقط سطح هر عامل نمایش داده می‌شود. نمره‌ها، پاسخ‌ها و متن‌های تفسیری شخصی نزد شرکت‌کننده می‌ماند. این نتیجه به‌تنهایی مبنای تصمیم استخدامی نیست.</p>
+                                            <p t-else="" class="ts-hint">نمرهٔ هر عامل میانگین پاسخ‌ها از ۱ تا ۵ است.</p>
                                             <table class="ts-table ts-summary">
-                                                <thead><tr><th scope="col">بُعد</th><th t-if="level == 'clinical'" scope="col">نمره (۱ تا ۵)</th><th scope="col">بازه</th></tr></thead>
+                                                <thead><tr><th scope="col">عامل</th><th t-if="level == 'clinical'" scope="col">نمره (۱ تا ۵)</th><th scope="col">سطح</th></tr></thead>
                                                 <tbody>
                                                     <tr t-foreach="results" t-as="r">
                                                         <td t-out="r.factor_id.name"/>
@@ -379,8 +379,8 @@
                                 <div class="ts-section__head">
                                     <p class="ts-tag">دعوت به سنجه</p>
                                     <h1 t-out="inst.title"/>
-                                    <p t-if="student"><strong t-out="ws.partner_id.name"/> تو را به پاسخ‌دادن به این سنجه دعوت کرده است.</p>
-                                    <p t-else=""><strong t-out="ws.partner_id.name"/> شما را به پاسخ‌دادن به این سنجه دعوت کرده است.</p>
+                                    <p t-if="student"><strong t-out="ws.ts_public_name()"/> تو را به پاسخ‌دادن به این سنجه دعوت کرده است.</p>
+                                    <p t-else=""><strong t-out="ws.ts_public_name()"/> شما را به پاسخ‌دادن به این سنجه دعوت کرده است.</p>
                                     <p t-if="matrix and student">زمینه‌هایی را که دوست داری می‌نویسی و می‌بینی در کدام‌ها توانایی بیشتری حس می‌کنی.</p>
                                     <p t-elif="matrix">زمینه‌هایی را که دوست دارید می‌نویسید و می‌بینید در کدام‌ها توانایی بیشتری حس می‌کنید.</p>
                                 </div>
@@ -393,14 +393,14 @@
                                         <t t-if="student">با حساب «<bdi t-out="user_name"/>» وارد شده‌ای.</t>
                                         <t t-else="">با حساب «<bdi t-out="user_name"/>» وارد شده‌اید.</t>
                                         <t t-if="mismatch">
-                                            این دعوت برای «<bdi t-out="a.invitee_name"/>» است.
+                                            این دعوت برای «<bdi t-out="(a.invitee_name or '').strip()"/>» است.
                                             <t t-if="student">اگر این دعوت مال تو نیست، از حساب خارج شو و با حساب درست وارد شو.</t>
                                             <t t-else="">اگر این دعوت برای شما نیست، از حساب خارج شوید و با حساب درست وارد شوید.</t>
                                             <a t-att-href="logout_url">خروج از این حساب</a>
                                         </t>
                                     </div>
                                     <dl class="ts-meta">
-                                        <dt>دعوت برای</dt><dd><bdi t-out="a.invitee_name"/></dd>
+                                        <dt>دعوت برای</dt><dd><bdi t-out="(a.invitee_name or '').strip()"/></dd>
                                         <t t-if="matrix">
                                             <dt>اندازهٔ کار</dt><dd><t t-if="student">۱۵ جمله برای هر زمینه؛ ۲ تا ۸ زمینه را خودت می‌نویسی</t><t t-else="">۱۵ جمله برای هر زمینه؛ ۲ تا ۸ زمینه را خودتان می‌نویسید</t></dd>
                                             <dt>زمان تقریبی</dt><dd>حدود ۲ دقیقه برای هر زمینه</dd>
@@ -422,12 +422,12 @@
                                             <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
                                             <label class="ts-check">
                                                 <input type="checkbox" name="share" value="1" checked="checked" aria-describedby="ts_share_note"/>
-                                                <span t-if="ws.purpose == 'education'">اجازه می‌دهم مدرسه و مشاورم گزارش نتیجه‌ام را در پنل «<bdi t-out="ws.name"/>» ببینند.</span>
-                                                <span t-elif="ws.purpose == 'employment'">اجازه می‌دهم سطح هر عامل با پنل «<bdi t-out="ws.name"/>» به اشتراک گذاشته شود.</span>
-                                                <span t-else="">اجازه می‌دهم گزارش کامل با مشاور تأییدشدهٔ پنل «<bdi t-out="ws.name"/>» به اشتراک گذاشته شود.</span>
+                                                <span t-if="ws.purpose == 'education'">اجازه می‌دهم مدرسه و مشاورم گزارش نتیجه‌ام را در پنل «<bdi t-out="ws.ts_public_name()"/>» ببینند.</span>
+                                                <span t-elif="ws.purpose == 'employment'">اجازه می‌دهم سطح هر عامل با پنل «<bdi t-out="ws.ts_public_name()"/>» به اشتراک گذاشته شود.</span>
+                                                <span t-else="">اجازه می‌دهم گزارش کامل با مشاور تأییدشدهٔ پنل «<bdi t-out="ws.ts_public_name()"/>» به اشتراک گذاشته شود.</span>
                                             </label>
                                             <p id="ts_share_note" class="ts-hint"><t t-if="student">اگر تیک را برداری هم می‌توانی سنجه را انجام بدهی؛ آن وقت نتیجه فقط برای خودت می‌ماند.</t><t t-else="">اگر تیک را بردارید هم می‌توانید سنجه را انجام دهید؛ آن وقت نتیجه فقط برای خودتان می‌ماند.</t></p>
-                                            <button type="submit" class="ts-btn ts-btn--primary">پذیرش و ادامه</button>
+                                            <button type="submit" class="ts-btn ts-btn--primary">پذیرفتن دعوت و ادامه</button>
                                         </form>
                                         <section t-if="ask_decline" class="ts-confirm" id="ts-decline" aria-labelledby="ts-decline-h">
                                             <h2 class="h6" id="ts-decline-h"><t t-if="student">دعوت را نمی‌پذیری؟</t><t t-else="">دعوت را نمی‌پذیرید؟</t></h2>
@@ -460,27 +460,27 @@
         <field name="arch" type="xml">
             <t t-name="ts_org.share_box">
                 <div class="ts-card ts-card--soft ts-share-box">
-                    <h2 class="h5">چه چیزی با پنل «<bdi t-out="share_ws.name"/>» دیده می‌شود؟</h2>
+                    <h2 class="h5">چه چیزی با پنل «<bdi t-out="share_ws.ts_public_name()"/>» دیده می‌شود؟</h2>
                     <ul class="ts-list-check" t-if="share_ws.purpose == 'education' and share_student">
                         <li>مدرسه و مشاور مسئولت گزارش نتیجه‌ات را می‌بینند.</li>
                         <li>پاسخ‌های خامت را هرگز نمی‌بینند.</li>
-                        <li>هر وقت بخواهی می‌توانی اشتراک را از صفحهٔ گزارش لغو کنی.</li>
+                        <li>هر وقت بخواهی می‌توانی اشتراک‌گذاری را از صفحهٔ گزارش قطع کنی.</li>
                     </ul>
                     <ul class="ts-list-check" t-elif="share_ws.purpose == 'education'">
                         <li>مدرسه و مشاور مسئول شما گزارش نتیجه را می‌بینند.</li>
                         <li>پاسخ‌های خام شما را هرگز نمی‌بینند.</li>
-                        <li>هر زمان بخواهید می‌توانید اشتراک را از صفحهٔ گزارش لغو کنید.</li>
+                        <li>هر زمان بخواهید می‌توانید اشتراک‌گذاری را از صفحهٔ گزارش قطع کنید.</li>
                     </ul>
                     <ul class="ts-list-check" t-elif="share_ws.purpose == 'employment'">
                         <li>پنل وضعیت دعوت (شروع‌شده یا تکمیل‌شده) را می‌بیند.</li>
                         <li>اگر اجازه دهید، فقط سطح هر عامل (کم، متوسط یا زیاد) را می‌بیند.</li>
                         <li>پاسخ‌های شما، نمره‌ها و متن‌های تفسیری فقط برای شما نمایش داده می‌شود.</li>
-                        <li>هر زمان بخواهید می‌توانید اشتراک را از صفحهٔ گزارش لغو کنید.</li>
+                        <li>هر زمان بخواهید می‌توانید اشتراک‌گذاری را از صفحهٔ گزارش قطع کنید.</li>
                     </ul>
                     <ul class="ts-list-check" t-else="">
                         <li>مرکز مشاوره وضعیت دعوت را می‌بیند.</li>
                         <li>اگر اجازه دهید، گزارش کامل همراه با راهنمای مشاور فقط به مشاور تأییدشدهٔ این مرکز مشاوره نمایش داده می‌شود.</li>
-                        <li>هر زمان بخواهید می‌توانید اشتراک را از صفحهٔ گزارش لغو کنید.</li>
+                        <li>هر زمان بخواهید می‌توانید اشتراک‌گذاری را از صفحهٔ گزارش قطع کنید.</li>
                     </ul>
                 </div>
             </t>
@@ -516,9 +516,9 @@
                     <a t-attf-href="/my/assessments/#{attempt.id}/share" class="ts-btn ts-btn--outline ts-btn--sm">ارسال برای مشاورم</a>
                 </section>
                 <section t-if="ts_share" class="ts-doc__sec ts-noprint">
-                    <h2>اشتراک با پنل</h2>
-                    <p t-if="ts_share.invited_by_id == attempt.user_id">این نتیجه را شما برای <strong t-out="ts_share.workspace_id.name"/> فرستاده‌اید.</p>
-                    <p t-else="">این سنجه به دعوت <strong t-out="ts_share.workspace_id.partner_id.name"/> انجام شد.</p>
+                    <h2>اشتراک‌گذاری با پنل</h2>
+                    <p t-if="ts_share.invited_by_id == attempt.user_id">این نتیجه را شما برای <strong t-out="ts_share.workspace_id.ts_public_name()"/> فرستاده‌اید.</p>
+                    <p t-else="">این سنجه به دعوت <strong t-out="ts_share.workspace_id.ts_public_name()"/> انجام شد.</p>
                     <p>
                         <t t-if="ts_share.share_level == 'summary'">پنل فقط سطح هر زمینه یا عامل را می‌بیند.</t>
                         <t t-elif="ts_share.share_level == 'clinical'">گزارش کامل برای مشاور تأییدشدهٔ این مرکز مشاوره قابل مشاهده است.</t>

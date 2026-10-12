@@ -87,7 +87,7 @@ class ReportAttemptPdf(models.AbstractModel):
         return {
             'doc_ids': at.ids, 'doc_model': 'ts.attempt', 'docs': at, 'attempt': at, 'mode': mode, 'level': level,
             'sections': [sec], 'single': True, 'brand': at.ts_brand_header(), 'fa': fa_digits,
-            'kind': KIND.get('self' if mode == 'self' else level, ''), 'title': at.instrument_id.title or at.instrument_id.name,
+            'kind': KIND.get('self' if mode == 'self' else level, ''), 'title': at.instrument_id.ts_title(),
             'who': _who(at, mode), 'when': at.jalali(at.submitted_at, False) if at.submitted_at else '',
             'ref': at.name, 'limitations': at.instrument_id.limitations or '', 'font_faces': _font_faces(),
         }

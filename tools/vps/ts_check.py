@@ -10,6 +10,7 @@ Catches, before a 25-minute rehearsal, the failures that cost whole cycles on 20
              (install fails on eot_main: website makes ir_ui_view.visibility NOT NULL)
   W phone    the same test mobile number used in two test files (fixtures collide)
   W pycache  __pycache__ files tracked by git
+  W copy     «اشتراک» alone in ts_* code/templates (reads as "subscription"; glossary §6: «اشتراک‌گذاری» / «به اشتراک گذاشتن»)
   Panel v2 rules (ts_panel only):
   E audit    an audit `.log(` call passes a keyword that can carry personal data (name, phone, ...); error from S1
   E scope    `sudo().search/browse/...` in ts_panel/controllers (outside base.py) without `workspace_id` in the
@@ -100,6 +101,8 @@ def prev_element(el):
     return p
 
 
+# Odoo refuses some attributes as xpath selectors in inherited views (found 2026-10-12: aria-label)
+BAD_XPATH_ATTRS = ('aria-label', 'title', 'placeholder', 'alt', 'string', 'help')   # translatable attributes
 view_ids = {}   # module -> set of xml ids of views/templates
 for p in glob.glob(f'{ADDONS}/**/*.xml', recursive=True):
     mod = rel(p).split(os.sep)[1]
@@ -111,6 +114,8 @@ for p in glob.glob(f'{ADDONS}/**/*.xml', recursive=True):
     for el in tree.iter():
         if not isinstance(el.tag, str):
             continue
+        if el.tag == 'xpath' and any(('@%s=' % a) in el.get('expr', '').replace(' ', '') for a in BAD_XPATH_ATTRS):
+            errors.append(f'xpath {rel(p)}:{el.sourceline} uses a forbidden selector attribute: {el.get("expr")[:80]}')
         if 't-elif' in el.attrib or 't-else' in el.attrib:
             pr = prev_element(el)
             par = el.getparent()
@@ -163,6 +168,16 @@ tracked = [l for l in (git('ls-files') or '').splitlines() if '__pycache__' in l
 if tracked:
     warns.append(f'pycache {len(tracked)} __pycache__ files tracked by git')
 
+# ---------------------------------------------------------------- copy: «اشتراک» alone (UX audit G6-PT6, glossary §6)
+# A warning while older copy still has it (one line per file); the verb «به اشتراک گذاشتن/نگذاشتن» and «اشتراک‌گذاری» pass.
+SHARE_RE = re.compile(r'اشتراک(?!\u200cگذا|\u200cنگذا|\s*(?:گذا|بگذا|نگذا|می\u200cگذا|نمی\u200cگذا))')
+for p in sorted(glob.glob(f'{ADDONS}/ts_*/**/*.*', recursive=True)):
+    if not p.endswith(('.py', '.xml', '.js')) or os.sep + 'source' + os.sep in p or '__pycache__' in p:
+        continue
+    hits = [i for i, line in enumerate(open(p, encoding='utf-8'), 1) if SHARE_RE.search(line)]
+    if hits:
+        warns.append(f'copy {rel(p)}: «اشتراک» alone on line(s) {", ".join(map(str, hits[:8]))}{" ..." if len(hits) > 8 else ""}'
+                     ' (use «اشتراک‌گذاری»)')
 
 # ---------------------------------------------------------------- Panel v2 rules (ts_panel)
 PANEL = os.path.join(ADDONS, 'ts_panel')

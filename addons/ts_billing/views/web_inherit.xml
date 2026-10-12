@@ -12,8 +12,9 @@
         <field name="arch" type="xml">
             <xpath expr="//p[hasclass('tsp-role-note')]" position="after">
                 <t t-set="bill_st" t-value="member.ts_bill_state() if member.can_act() else None"/>
-                <p t-if="bill_st and bill_st['can_read']" class="tsb-dash" id="tsb-dash-credit">
-                    <a t-attf-href="/my/workspaces/#{ws.id}/credits"><span class="tsb-dash__part">اعتبار: <span class="tsb-amt" t-out="ws.ts_toman(bill_st['available'])"/></span> <span aria-hidden="true">·</span> <span class="tsb-dash__part">رزروشده: <span class="tsb-amt" t-out="ws.ts_toman(bill_st['held'])"/></span></a>
+                <p t-if="bill_st and bill_st['can_read'] and bill_st['low']" class="ts-notice ts-notice--warn tsb-dash tsb-dash--low" id="tsb-dash-credit" role="status">موجودی قابل استفاده به <span class="tsb-amt" t-out="ws.ts_toman(bill_st['available'])"/> رسیده و از آستانهٔ هشدار کمتر است (رزروشده: <span class="tsb-amt" t-out="ws.ts_toman(bill_st['held'])"/>). <a t-attf-href="/my/workspaces/#{ws.id}/credits#tsb-topup">شارژ اعتبار</a> · <a t-attf-href="/my/workspaces/#{ws.id}/credits">اعتبار و مصرف</a></p>
+                <p t-elif="bill_st and bill_st['can_read']" class="tsb-dash" id="tsb-dash-credit">
+                    <a t-attf-href="/my/workspaces/#{ws.id}/credits"><span class="tsb-dash__part">موجودی قابل استفاده: <span class="tsb-amt" t-out="ws.ts_toman(bill_st['available'])"/></span> <span aria-hidden="true">·</span> <span class="tsb-dash__part">رزروشده: <span class="tsb-amt" t-out="ws.ts_toman(bill_st['held'])"/></span> <span class="tsb-dash__more">(اعتبار و مصرف)</span></a>
                 </p>
                 <div t-if="bill_st and bill_st['capped'] and not bill_st['can_read']" class="tsb-dash" id="tsb-dash-cap">
                     <t t-call="ts_billing.cap_bar" st="bill_st" toman="ws.ts_toman"/>
@@ -29,20 +30,29 @@
         <field name="inherit_id" ref="ts_panel.tpl_invite_wizard"/>
         <field name="website_id" ref="ts_website.website_ts"/>
         <field name="arch" type="xml">
+            <xpath expr="//ol[hasclass('tsp-steps')]" position="before">
+                <t t-set="bill_st" t-value="member.ts_bill_state()"/>
+            </xpath>
+            <xpath expr="//p[hasclass('tsp-steps-text')]" position="after">
+                <p t-if="bill_st and bill_st['capped']" class="ts-hint tsb-capline" id="tsb-capline">باقی‌مانده تا سقف ماهانهٔ شما: <span class="tsb-amt" t-out="ws.ts_toman(bill_st['cap_left'] or 0)"/></p>
+            </xpath>
             <xpath expr="//form[@t-if=&quot;step == '2'&quot;]" position="before">
                 <t t-set="bill" t-value="member.ts_bill_prices() if step in ('2', '4') else None"/>
+            </xpath>
+            <xpath expr="//form[@t-if=&quot;step == '2'&quot;]/input[@name='step']" position="after">
+                <t t-call="ts_billing.short_notice"/>
             </xpath>
             <xpath expr="//form[@t-if=&quot;step == '2'&quot;]/fieldset/label[@t-foreach='instruments']/input" position="attributes">
                 <attribute name="t-att-disabled">'disabled' if (bill and not bill['ok_inst'].get(i.id, True)) else None</attribute>
             </xpath>
             <xpath expr="//form[@t-if=&quot;step == '2'&quot;]/fieldset/label[@t-foreach='instruments']/span" position="after">
-                <t t-call="ts_billing.item_price" price="bill['inst'].get(i.id, 0) if bill else 0" ok="bill['ok_inst'].get(i.id, True) if bill else True"/>
+                <t t-call="ts_billing.item_price" price="bill['inst'].get(i.id, 0) if bill else 0" ok="bill['ok_inst'].get(i.id, True) if bill else True" why="bill['why_inst'].get(i.id) if bill else None"/>
             </xpath>
             <xpath expr="//form[@t-if=&quot;step == '4'&quot;]/dl" position="inside">
                 <t t-if="bill">
                     <t t-set="bill_price" t-value="bill['bat'].get(bat.id, 0) if bat else bill['inst'].get(inst.id, 0)"/>
                     <dt>هزینه</dt>
-                    <dd id="tsb-review-price"><t t-if="bill_price"><span class="tsb-amt" t-out="ws.ts_toman(bill_price)"/>؛ با فرستادن دعوت از اعتبار پنل رزرو و با تکمیل کسر می‌شود.<span t-if="bill['state']['capped']" class="tsb-review-cap">از سقف ماهانهٔ شما پس از این دعوت <span class="tsb-amt" t-out="ws.ts_toman(max((bill['state']['cap_left'] or 0) - bill_price, 0))"/> باقی می‌ماند.</span></t><t t-else="">بدون هزینه</t></dd>
+                    <dd id="tsb-review-price"><t t-if="bill_price"><strong class="tsb-review-amt tsb-amt" t-out="ws.ts_toman(bill_price)"/><span class="tsb-review-how">با ساخت دعوت رزرو و با تکمیل کسر می‌شود؛ اگر دعوت لغو شود یا مهلتش تمام شود، برمی‌گردد.</span><span t-if="bill['state']['capped']" class="tsb-review-cap">از سقف ماهانهٔ شما پس از این دعوت <span class="tsb-amt" t-out="ws.ts_toman(max((bill['state']['cap_left'] or 0) - bill_price, 0))"/> باقی می‌ماند.</span></t><t t-else="">بدون هزینه</t></dd>
                 </t>
             </xpath>
         </field>
@@ -54,19 +64,23 @@
         <field name="arch" type="xml">
             <xpath expr="//label[@t-foreach='instruments']/input" position="attributes">
                 <attribute name="t-att-disabled">'disabled' if (bill and not bill['ok_inst'].get(i.id, True)) else None</attribute>
+                <attribute name="t-att-data-tsb-price">bill['inst'].get(i.id, 0) if bill else None</attribute>
             </xpath>
             <xpath expr="//label[@t-foreach='instruments']/span" position="after">
-                <t t-call="ts_billing.item_price" price="bill['inst'].get(i.id, 0) if bill else 0" ok="bill['ok_inst'].get(i.id, True) if bill else True"/>
+                <t t-call="ts_billing.item_price" price="bill['inst'].get(i.id, 0) if bill else 0" ok="bill['ok_inst'].get(i.id, True) if bill else True" why="bill['why_inst'].get(i.id) if bill else None"/>
             </xpath>
             <xpath expr="//label[@t-foreach='batteries']/input" position="attributes">
                 <attribute name="t-att-disabled">'disabled' if (bill and not bill['ok_bat'].get(b.id, True)) else None</attribute>
+                <attribute name="t-att-data-tsb-price">bill['bat'].get(b.id, 0) if bill else None</attribute>
             </xpath>
             <xpath expr="//span[hasclass('tsb-card__facts')]" position="after">
-                <t t-call="ts_billing.item_price" price="bill['bat'].get(b.id, 0) if bill else 0" ok="bill['ok_bat'].get(b.id, True) if bill else True"/>
+                <t t-call="ts_billing.item_price" price="bill['bat'].get(b.id, 0) if bill else 0" ok="bill['ok_bat'].get(b.id, True) if bill else True" why="bill['why_bat'].get(b.id) if bill else None"/>
             </xpath>
         </field>
     </record>
-    <!-- params: price (rial), ok (bool); prints nothing when the price is 0 (free panel or unpriced item) -->
+    <!-- params: price (rial), ok (bool), why (None | 'panel' | 'cap'); reads `bill` of the caller. Prints nothing when the
+         price is 0 (free panel or unpriced item). The reason line names the real limit and the next step (G7-P10-1, PAT-3);
+         the top-up link for members who may top up is printed once above the list (ts_billing.short_notice). -->
     <record id="tpl_item_price" model="ir.ui.view">
         <field name="name">TS billing: item price</field>
         <field name="type">qweb</field>
@@ -74,7 +88,20 @@
         <field name="website_id" ref="ts_website.website_ts"/>
         <field name="arch" type="xml">
             <t t-name="ts_billing.item_price">
-                <span t-if="price" t-attf-class="tsb-price #{'tsb-price--short' if not ok else ''}">هزینه: <span class="ts-num" t-out="ws.ts_toman(price)"/><t t-if="not ok"> · اعتبار کافی نیست</t></span>
+                <span t-if="price" t-attf-class="tsb-price #{'tsb-price--short' if not ok else ''}">هزینه: <span class="ts-num" t-out="ws.ts_toman(price)"/><t t-if="not ok"> · <t t-if="why == 'cap'">از باقی‌ماندهٔ سقف ماهانهٔ شما (<span class="ts-num" t-out="ws.ts_toman(bill['cap_left'] or 0)"/>) بیشتر است</t><t t-elif="bill and bill['can_read']">اعتبار پنل کافی نیست</t><t t-else="">اعتبار پنل برای این مورد کافی نیست؛ به <t t-out="ws.ts_credit_ask()"/> خبر دهید.</t></t></span>
+            </t>
+        </field>
+    </record>
+    <!-- Once above an item list: some items are disabled because the panel balance is short; the member who may top up gets
+         the way to do it (outside the disabled labels). Reads `bill`. -->
+    <record id="tpl_short_notice" model="ir.ui.view">
+        <field name="name">TS billing: short-credit notice</field>
+        <field name="type">qweb</field>
+        <field name="key">ts_billing.short_notice</field>
+        <field name="website_id" ref="ts_website.website_ts"/>
+        <field name="arch" type="xml">
+            <t t-name="ts_billing.short_notice">
+                <p t-if="bill and bill['panel_short'] and bill['can_read']" class="ts-notice ts-notice--warn tsb-short" role="status">موجودی قابل استفادهٔ پنل (<span class="tsb-amt" t-out="ws.ts_toman(bill['available'])"/>) برای بعضی موارد کافی نیست؛ آن‌ها غیرفعال‌اند. <a t-attf-href="/my/workspaces/#{ws.id}/credits#tsb-topup">شارژ اعتبار</a></p>
             </t>
         </field>
     </record>
@@ -88,14 +115,47 @@
             <xpath expr="//form" position="before">
                 <t t-set="bill" t-value="member.ts_bill_prices()"/>
             </xpath>
+            <xpath expr="//form/input[@name='step']" position="after">
+                <t t-call="ts_billing.short_notice"/>
+            </xpath>
             <xpath expr="//fieldset[legend[text()='سنجه']]/label[@t-foreach='instruments']/input" position="attributes">
                 <attribute name="t-att-disabled">'disabled' if (bill and not bill['ok_inst'].get(i.id, True)) else None</attribute>
+                <attribute name="t-att-data-tsb-price">bill['inst'].get(i.id, 0) if bill else None</attribute>
             </xpath>
             <xpath expr="//fieldset[legend[text()='سنجه']]/label[@t-foreach='instruments']/span" position="after">
-                <t t-call="ts_billing.item_price" price="bill['inst'].get(i.id, 0) if bill else 0" ok="bill['ok_inst'].get(i.id, True) if bill else True"/>
+                <t t-call="ts_billing.item_price" price="bill['inst'].get(i.id, 0) if bill else 0" ok="bill['ok_inst'].get(i.id, True) if bill else True" why="bill['why_inst'].get(i.id) if bill else None"/>
             </xpath>
-            <xpath expr="//fieldset[@data-ts-show='kind=open_link']" position="inside">
-                <p t-if="bill" class="ts-hint" id="tsb-open-floor">برای ساخت پیوند باز، اعتبار پنل باید دست‌کم به اندازهٔ هزینهٔ ۱۰ دعوت باشد (اگر سقف پیوستن کمتر از ۱۰ نفر است، به اندازهٔ همان سقف). هزینهٔ هر نفر هنگام پیوستن او رزرو و با تکمیل کسر می‌شود.</p>
+            <!-- the credit an open link needs, right under the field it depends on (G7-P5-1); a few lines of JS compute it -->
+            <xpath expr="//fieldset[@data-ts-show='kind=open_link']/label[input[@name='open_max']]" position="after">
+                <p t-if="bill" class="ts-hint tsb-open-floor" id="tsb-open-floor" aria-live="polite" t-att-data-tsb-avail="bill['available'] if bill['can_read'] else None">برای ساخت پیوند باز، اعتبار پنل باید دست‌کم هزینهٔ ۱۰ نفر را پوشش دهد (اگر بیشترین تعداد نفرات کمتر از ۱۰ است، هزینهٔ همان تعداد). هزینهٔ هر نفر هنگام پیوستن او رزرو و با تکمیل کسر می‌شود.</p>
+                <script t-if="bill">(function () {
+    function run() {
+        var out = document.getElementById('tsb-open-floor');
+        var form = out &amp;&amp; out.closest('form');
+        if (!form) { return; }
+        var max = form.querySelector('[name=open_max]');
+        var lat = { '۰': '0', '۱': '1', '۲': '2', '۳': '3', '۴': '4', '۵': '5', '۶': '6', '۷': '7', '۸': '8', '۹': '9' };
+        function num(v) { return parseInt(String(v || '').replace(/[۰-۹]/g, function (d) { return lat[d]; }).replace(/[^0-9]/g, ''), 10) || 0; }
+        function fa(n) { return Math.round(n).toLocaleString('fa-IR'); }
+        var fallback = out.textContent;
+        function update() {
+            var kind = form.querySelector('[name=item_kind]:checked');
+            var sel = (kind &amp;&amp; kind.value === 'battery') ? '[name=battery_id]:checked' : '[name=instrument_id]:checked';
+            var pick = form.querySelector(sel);
+            var price = pick ? num(pick.getAttribute('data-tsb-price')) / 10 : 0;
+            if (!pick || !price) { out.textContent = fallback; return; }
+            var n = Math.min(num(max &amp;&amp; max.value) || 10, 10);
+            var text = 'اعتبار لازم برای ساخت: ' + fa(price * n) + ' تومان (' + fa(n) + ' نفر × ' + fa(price) + ').';
+            var avail = out.getAttribute('data-tsb-avail');
+            if (avail !== null) { text += ' موجودی قابل استفاده: ' + fa(num(avail) / 10) + ' تومان.'; }
+            out.textContent = text + ' هزینهٔ هر نفر هنگام پیوستن او رزرو می‌شود.';
+        }
+        form.addEventListener('change', update);
+        if (max) { max.addEventListener('input', update); }
+        update();
+    }
+    if (document.readyState === 'loading') { document.addEventListener('DOMContentLoaded', run); } else { run(); }
+})();</script>
             </xpath>
         </field>
     </record>
@@ -107,12 +167,31 @@
             <xpath expr="//form" position="before">
                 <t t-set="bill" t-value="member.ts_bill_prices()"/>
                 <t t-set="bill_price" t-value="(bill['bat'].get(bat.id, 0) if bat else bill['inst'].get(inst.id, 0)) if bill else 0"/>
+                <t t-set="bill_n" t-value="len(to_invite) if draft['kind'] == 'list' else (draft.get('open_max') or 10)"/>
+                <t t-set="bill_floor" t-value="bill_price * min(draft.get('open_max') or 10, 10)"/>
+                <t t-set="bill_all" t-value="bill_price * bill_n"/>
             </xpath>
             <xpath expr="//dl[hasclass('tsp-dl')]" position="inside">
                 <t t-if="bill_price">
-                    <dt>هزینهٔ هر دعوت</dt><dd class="ts-num" t-out="ws.ts_toman(bill_price)"/>
-                    <t t-if="draft['kind'] == 'list'"><dt>جمع رزرو</dt><dd id="tsb-review-total"><span class="ts-num" t-out="ws.ts_toman(bill_price * len(to_invite))"/>؛ موجودی قابل استفاده: <span class="ts-num" t-out="ws.ts_toman(bill['available'])"/></dd></t>
-                    <t t-else=""><dt>اعتبار لازم برای ساخت</dt><dd id="tsb-review-total"><span class="ts-num" t-out="ws.ts_toman(bill_price * min(draft.get('open_max') or 10, 10))"/>؛ موجودی قابل استفاده: <span class="ts-num" t-out="ws.ts_toman(bill['available'])"/></dd></t>
+                    <dt>هزینهٔ هر نفر</dt><dd class="ts-num" t-out="ws.ts_toman(bill_price)"/>
+                    <t t-if="draft['kind'] == 'list'"><dt>جمع رزرو</dt><dd id="tsb-review-total"><span class="ts-num" t-out="ws.ts_toman(bill_all)"/> (<t t-out="ws.ts_fa_num(bill_n)"/> نفر)<t t-if="bill['can_read']">؛ موجودی قابل استفاده: <span class="ts-num" t-out="ws.ts_toman(bill['available'])"/></t></dd></t>
+                    <t t-else="">
+                        <dt>اگر همه بپیوندند</dt><dd id="tsb-review-total"><span class="ts-num" t-out="ws.ts_toman(bill_all)"/> (<t t-out="ws.ts_fa_num(bill_n)"/> نفر)<t t-if="bill['can_read']">؛ موجودی قابل استفاده: <span class="ts-num" t-out="ws.ts_toman(bill['available'])"/></t></dd>
+                        <dt>اعتبار لازم برای ساخت</dt><dd id="tsb-review-floor"><span class="ts-num" t-out="ws.ts_toman(bill_floor)"/> (هزینهٔ <t t-out="ws.ts_fa_num(min(bill_n, 10))"/> نفر)</dd>
+                    </t>
+                </t>
+            </xpath>
+            <xpath expr="//dl[hasclass('tsp-dl')]" position="after">
+                <t t-if="bill_price">
+                    <p t-if="draft['kind'] != 'list'" class="ts-hint" id="tsb-review-hold">هنگام ساخت چیزی رزرو نمی‌شود؛ هزینهٔ هر نفر هنگام پیوستن او رزرو و با تکمیل کسر می‌شود.</p>
+                    <t t-if="bill_all &gt; bill['available']">
+                        <p t-if="draft['kind'] == 'list' and bill['can_read']" class="ts-notice ts-notice--warn" role="status" id="tsb-review-short">اعتبار پنل برای این دعوت گروهی کافی نیست: <t t-out="ws.ts_fa_num(bill_n)"/> نفر، هر نفر <t t-out="ws.ts_toman(bill_price)"/>، روی هم <t t-out="ws.ts_toman(bill_all)"/> لازم است و موجودی قابل استفاده <t t-out="ws.ts_toman(bill['available'])"/> است. <a t-attf-href="/my/workspaces/#{ws.id}/credits#tsb-topup">شارژ اعتبار</a> یا گروه کوچک‌تری انتخاب کنید.</p>
+                        <p t-elif="draft['kind'] == 'list'" class="ts-notice ts-notice--warn" role="status" id="tsb-review-short">اعتبار پنل برای این دعوت گروهی کافی نیست. به <t t-out="ws.ts_credit_ask()"/> خبر دهید تا اعتبار را شارژ کند.</p>
+                        <p t-elif="bill_floor &gt; bill['available'] and bill['can_read']" class="ts-notice ts-notice--warn" role="status" id="tsb-review-short">موجودی قابل استفاده (<t t-out="ws.ts_toman(bill['available'])"/>) از اعتبار لازم برای ساخت این پیوند کمتر است و ساخت آن پذیرفته نمی‌شود. <a t-attf-href="/my/workspaces/#{ws.id}/credits#tsb-topup">شارژ اعتبار</a> یا تعداد نفرات را کمتر کنید.</p>
+                        <p t-elif="bill_floor &gt; bill['available']" class="ts-notice ts-notice--warn" role="status" id="tsb-review-short">اعتبار پنل برای ساخت این پیوند کافی نیست. به <t t-out="ws.ts_credit_ask()"/> خبر دهید تا اعتبار را شارژ کند.</p>
+                        <p t-elif="bill['can_read']" class="ts-notice ts-notice--warn" role="status" id="tsb-review-short">موجودی قابل استفادهٔ فعلی برای <t t-out="ws.ts_fa_num(bill['available'] // bill_price)"/> نفر کافی است؛ بعد از آن، پیوستن تا شارژ اعتبار ممکن نیست. <a t-attf-href="/my/workspaces/#{ws.id}/credits#tsb-topup">شارژ اعتبار</a></p>
+                        <p t-else="" class="ts-notice ts-notice--warn" role="status" id="tsb-review-short">اعتبار فعلی پنل برای همهٔ <t t-out="ws.ts_fa_num(bill_n)"/> نفر کافی نیست؛ بعد از پر شدن اعتبار، پیوستن تا شارژ ممکن نیست. به <t t-out="ws.ts_credit_ask()"/> خبر دهید.</p>
+                    </t>
                 </t>
             </xpath>
         </field>
@@ -128,19 +207,26 @@
                 <t t-set="cap_st" t-value="m.ts_bill_state() if (m.active and m.ts_is_capped_role() and member.has_perm('credits:manage') and member.can_act()) else None"/>
                 <section t-if="cap_st" class="ts-card" id="tsb-cap" aria-labelledby="tsb-cap-h">
                     <h2 id="tsb-cap-h" class="h5">سقف ماهانهٔ هزینهٔ دعوت‌ها</h2>
-                    <t t-if="cap_st['capped']" t-call="ts_billing.cap_bar" st="cap_st" toman="ws.ts_toman" cap_label="'سقف ماهانهٔ این عضو'"/>
-                    <p t-else="" class="ts-hint">مصرف این ماه: <span class="tsb-amt" t-out="ws.ts_toman(cap_st['spent'])"/>. برای این عضو سقفی تعیین نشده است.</p>
-                    <form t-attf-action="/my/workspaces/#{ws.id}/credits/cap" method="post" class="tsp-form" data-tsp-once="1">
+                    <t t-if="cap_st['capped']" t-call="ts_billing.cap_bar" st="cap_st" toman="ws.ts_toman" cap_label="'سقف ماهانهٔ این عضو'" cap_who="True"/>
+                    <p t-else="" class="ts-hint">تعهد این ماه: <span class="tsb-amt" t-out="ws.ts_toman(cap_st['spent'])"/>. برای این عضو سقفی تعیین نشده است.</p>
+                    <form t-attf-action="/my/workspaces/#{ws.id}/credits/cap" method="post" class="tsp-form" data-tsp-once="1" data-ts-dirty="سقف ماهانه">
                         <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
                         <input type="hidden" name="member_id" t-att-value="m.id"/>
                         <input type="hidden" name="back" value="member"/>
-                        <div class="tsp-field">
-                            <label class="tsp-field__label" for="tsb_member_cap">سقف ماهانه (تومان)</label>
-                            <p class="tsp-field__hint" id="tsb_member_cap_h">هزینهٔ دعوت‌هایی که این عضو در یک ماه شمسی می‌فرستد. ۰ یعنی بدون سقف. دعوتی که از سقف بگذرد فرستاده نمی‌شود و از این عضو خواسته می‌شود با مدیر پنل صحبت کند.</p>
-                            <input id="tsb_member_cap" type="text" name="cap" inputmode="numeric" maxlength="16" class="form-control tsb-money" aria-describedby="tsb_member_cap_h" t-att-value="ws.ts_fa_num(cap_st['cap'] // 10)"/>
-                        </div>
+                        <!-- «بدون سقف» is a choice, not the number ۰ (G8-P4-4); the server still reads ۰ as no cap -->
+                        <fieldset class="tsp-field">
+                            <legend class="tsp-field__label">سقف ماهانه</legend>
+                            <p class="tsp-field__hint" id="tsb_member_cap_h">هزینهٔ دعوت‌هایی که این عضو در یک ماه شمسی می‌فرستد. دعوتی که از سقف بگذرد ساخته نمی‌شود و این عضو پیامی می‌بیند که با <t t-out="ws.ts_credit_ask()"/> هماهنگ کند. دعوت لغوشده یا منقضی‌شده مبلغش را برمی‌گرداند.</p>
+                            <label class="tsp-radio"><input type="radio" name="cap_mode" value="none" t-att-checked="'checked' if not cap_st['cap'] else None"/><span>بدون سقف</span></label>
+                            <label class="tsp-radio"><input type="radio" name="cap_mode" value="cap" t-att-checked="'checked' if cap_st['cap'] else None"/><span>با سقف</span></label>
+                            <div class="tsp-field" data-ts-show="cap_mode=cap">
+                                <label class="tsp-field__label" for="tsb_member_cap">مبلغ سقف (تومان)</label>
+                                <input id="tsb_member_cap" type="text" name="cap" inputmode="numeric" maxlength="16" class="form-control tsb-money" aria-describedby="tsb_member_cap_h" t-att-value="ws.ts_fa_num(cap_st['cap'] // 10) if cap_st['cap'] else ''"/>
+                            </div>
+                        </fieldset>
                         <p><button type="submit" class="ts-btn ts-btn--primary">ذخیرهٔ سقف</button></p>
                     </form>
+                    <t t-call="ts_org.reveal_js"/>
                 </section>
             </xpath>
         </field>

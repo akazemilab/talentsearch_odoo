@@ -21,7 +21,7 @@
                                     </p>
                                 </div>
                                 <div class="tsp-head__actions">
-                                    <a t-if="can_invite" t-attf-href="/my/workspaces/#{ws.id}/invites/new?fresh=1&amp;client=#{c.id}" class="ts-btn ts-btn--primary">دعوت به سنجه</a>
+                                    <a t-if="can_invite" t-attf-href="/my/workspaces/#{ws.id}/invites/new?fresh=1&amp;client=#{c.id}" class="ts-btn ts-btn--primary">دعوت تازه</a>
                                     <a t-if="can_write" t-attf-href="/my/workspaces/#{ws.id}/clients/#{c.id}/edit" class="ts-btn ts-btn--outline">ویرایش</a>
                                     <form t-if="can_archive and c.state == 'archived' and not c.merged_into_id" t-attf-action="/my/workspaces/#{ws.id}/clients/#{c.id}/restore" method="post" class="tsp-inline" data-tsp-once="1">
                                         <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
@@ -30,7 +30,7 @@
                                 </div>
                             </header>
 
-                            <section class="ts-card" aria-labelledby="tsp-c-info">
+                            <section class="ts-card tsp-c-after" aria-labelledby="tsp-c-info">
                                 <h2 id="tsp-c-info" class="h5">مشخصات</h2>
                                 <dl class="tsp-dl">
                                     <dt>شناسهٔ پنل</dt><dd><t t-out="c.code or '—'"/></dd>
@@ -39,9 +39,12 @@
                                     <t t-if="c.contact_locked">
                                         <dt>اطلاعات تماس</dt><dd>برای افراد واردشده از دادهٔ تاریخی ثبت و نمایش داده نمی‌شود.</dd>
                                     </t>
+                                    <t t-elif="not c.phone and not c.email">
+                                        <dt>اطلاعات تماس</dt><dd>موبایل و ایمیل ثبت نشده</dd>
+                                    </t>
                                     <t t-else="">
-                                        <dt>موبایل</dt><dd><bdi dir="ltr" t-out="c.phone or '—'"/></dd>
-                                        <dt>ایمیل</dt><dd><bdi dir="ltr" t-out="c.email or '—'"/></dd>
+                                        <dt>موبایل</dt><dd><t t-if="c.phone"><bdi dir="ltr" t-out="c.phone"/></t><t t-else="">ثبت نشده</t></dd>
+                                        <dt>ایمیل</dt><dd><t t-if="c.email"><bdi dir="ltr" t-out="c.email"/></t><t t-else="">ثبت نشده</t></dd>
                                     </t>
                                     <t t-if="c.age_group == 'minor' and not c.contact_locked">
                                         <dt>ولی</dt><dd><t t-out="c.guardian_name or '—'"/> <bdi dir="ltr" t-if="c.guardian_phone" t-out="c.guardian_phone"/></dd>
@@ -51,21 +54,21 @@
                                 </dl>
                             </section>
 
-                            <section class="ts-card" aria-labelledby="tsp-c-resp">
+                            <section class="ts-card tsp-c-after" aria-labelledby="tsp-c-resp">
                                 <h2 id="tsp-c-resp" class="h5">کارشناس مسئول</h2>
                                 <p><t t-if="c.responsible_id"><strong><bdi t-out="c.responsible_id.user_id.name"/></strong> (<t t-out="role_labels.get(c.responsible_id.role, c.responsible_id.role)"/>)</t><t t-else="">این شرکت‌کننده کارشناس مسئول ندارد (بدون کارشناس).</t></p>
                                 <t t-if="c.handover_to_id">
-                                    <p class="tsp-flash" role="status">درخواست واگذاری به «<t t-out="c.handover_to_id.user_id.name"/>» از طرف «<t t-out="c.handover_by_id.user_id.name"/>» منتظر تأیید است.</p>
+                                    <p class="tsp-flash" role="status">درخواست سپردن به «<t t-out="c.handover_to_id.user_id.name"/>» از طرف «<t t-out="c.handover_by_id.user_id.name"/>» منتظر تأیید است.</p>
                                     <div t-if="can_assign" class="tsp-row-actions">
                                         <form t-attf-action="/my/workspaces/#{ws.id}/clients/#{c.id}/decide" method="post" class="tsp-inline" data-tsp-once="1">
                                             <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
                                             <input type="hidden" name="accept" value="1"/>
-                                            <button type="submit" class="ts-btn ts-btn--outline">تأیید واگذاری</button>
+                                            <button type="submit" class="ts-btn ts-btn--outline">تأیید سپردن</button>
                                         </form>
                                         <form t-attf-action="/my/workspaces/#{ws.id}/clients/#{c.id}/decide" method="post" class="tsp-inline" data-tsp-once="1">
                                             <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
                                             <input type="hidden" name="accept" value="0"/>
-                                            <button type="submit" class="ts-btn ts-btn--quiet">رد واگذاری</button>
+                                            <button type="submit" class="ts-btn ts-btn--quiet">رد درخواست سپردن</button>
                                         </form>
                                     </div>
                                 </t>
@@ -85,17 +88,17 @@
                                 <form t-if="colleagues and not c.handover_to_id and c.state == 'active'" t-attf-action="/my/workspaces/#{ws.id}/clients/#{c.id}/handover" method="post" class="tsp-form" data-tsp-once="1">
                                     <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
                                     <div class="tsp-field">
-                                        <label class="tsp-field__label" for="tsp_handover">واگذاری این شرکت‌کننده به همکار</label>
+                                        <label class="tsp-field__label" for="tsp_handover">سپردن این شرکت‌کننده به همکار</label>
                                         <p class="tsp-field__hint" id="tsp_handover_h">درخواست شما پس از تأیید مالک یا هماهنگ‌کنندهٔ پنل اعمال می‌شود.</p>
                                         <select id="tsp_handover" name="target" required="required" aria-describedby="tsp_handover_h">
                                             <option t-foreach="colleagues" t-as="m" t-att-value="m.id"><t t-out="m.user_id.name"/> — <t t-out="role_labels.get(m.role, m.role)"/></option>
                                         </select>
                                     </div>
-                                    <p><button type="submit" class="ts-btn ts-btn--outline">درخواست واگذاری</button></p>
+                                    <p><button type="submit" class="ts-btn ts-btn--outline">درخواست سپردن</button></p>
                                 </form>
                             </section>
 
-                            <section class="ts-card" aria-labelledby="tsp-c-grp">
+                            <section class="ts-card tsp-c-after" aria-labelledby="tsp-c-grp">
                                 <h2 id="tsp-c-grp" class="h5">گروه‌ها</h2>
                                 <p t-if="not c.group_ids" class="ts-hint">در هیچ گروهی نیست.</p>
                                 <ul t-else="" class="tsp-list">
@@ -119,7 +122,7 @@
                                 </form>
                             </section>
 
-                            <section class="ts-card" aria-labelledby="tsp-c-ass">
+                            <section class="ts-card tsp-c-tests" aria-labelledby="tsp-c-ass">
                                 <h2 id="tsp-c-ass" class="h5">سنجه‌ها</h2>
                                 <p t-if="not assignments and not imports" class="tsp-empty">هنوز سنجه‌ای برای این فرد ثبت نشده است.</p>
                                 <div t-else="" class="ts-table-wrap">
@@ -128,14 +131,14 @@
                                         <thead><tr><th scope="col">سنجه</th><th scope="col">وضعیت</th><th scope="col">تاریخ</th><th scope="col"><span class="tsp-sr">نتیجه</span></th></tr></thead>
                                         <tbody>
                                             <tr t-foreach="assignments" t-as="a">
-                                                <th scope="row" data-label="سنجه" t-out="a.instrument_id.name"/>
+                                                <th scope="row" data-label="سنجه" t-out="a.instrument_id.ts_title()"/>
                                                 <td data-label="وضعیت"><span class="ts-pill" t-out="state_labels.get(a.state, a.state)"/>
                                                     <a t-if="can_manage_inv and a.state != 'done'" t-attf-href="/my/workspaces/#{ws.id}/invites/#{a.id}" class="tsp-row-link"><t t-if="a.state in ('invited', 'opened', 'accepted', 'in_progress', 'expired')">پیوند و یادآوری</t><t t-else="">جزئیات دعوت</t></a></td>
                                                 <td data-label="تاریخ" t-out="jalali(a.create_date, with_time=False)"/>
                                                 <td><a t-if="a.state == 'done' and level(a) != 'none'" t-attf-href="/my/workspaces/#{ws.id}/clients/#{c.id}/r/#{a.attempt_id.id}">نتیجه</a></td>
                                             </tr>
                                             <tr t-foreach="imports" t-as="t">
-                                                <th scope="row" data-label="سنجه" t-out="t.instrument_id.name"/>
+                                                <th scope="row" data-label="سنجه" t-out="t.instrument_id.ts_title()"/>
                                                 <td data-label="وضعیت"><span class="ts-pill ts-pill--info">واردشده</span></td>
                                                 <td data-label="تاریخ" t-out="jalali(t.create_date, with_time=False)"/>
                                                 <td><a t-if="level_t(t) != 'none'" t-attf-href="/my/workspaces/#{ws.id}/clients/#{c.id}/r/#{t.id}">نتیجه</a></td>

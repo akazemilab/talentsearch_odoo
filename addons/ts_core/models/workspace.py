@@ -73,6 +73,12 @@ class TsWorkspace(models.Model):
 
     _code_unique = models.Constraint('unique(code)', 'کد پنل باید یکتا باشد.')
 
+    def ts_public_name(self):
+        """The panel's name as participants see it (invite, consent, sharing, notifications). ts_brand overrides it with the
+        report name a counseling center chose (public_name), falling back to this."""
+        self.ensure_one()
+        return (self.name or '').strip()
+
     @api.depends('member_ids.role', 'member_ids.active', 'member_ids.user_id')
     def _compute_owner_user(self):
         for ws in self:

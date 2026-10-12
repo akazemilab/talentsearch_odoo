@@ -15,7 +15,7 @@
                     <div id="wrap" class="ts-page">
                         <section class="ts-section tsb-page">
                             <div class="ts-container ts-narrow">
-                                <p class="ts-hero__kicker">مجموعهٔ <t t-out="battery.name"/></p>
+                                <p class="ts-hero__kicker">مجموعهٔ <t t-out="battery.ts_title()"/></p>
                                 <ol class="tsb-dots" role="img" t-att-aria-label="'%s از %s سنجه انجام شده' % (fa(done_count), fa(total))">
                                     <li t-foreach="range(1, total + 1)" t-as="k" t-attf-class="tsb-dots__i #{'is-done' if k &lt;= done_count else ''}"/>
                                 </ol>
@@ -24,11 +24,13 @@
                                 <p t-else="" class="ts-lead">پاسخ‌های شما ذخیره و قفل شد.</p>
                                 <section class="ts-card tsb-next" aria-labelledby="tsb-next-h">
                                     <h2 id="tsb-next-h" class="tsb-next__k">سنجهٔ بعدی (<t t-out="fa(nxt.ts_battery_index())"/> از <t t-out="fa(total)"/>)</h2>
-                                    <p class="tsb-next__name" t-out="inst.title"/>
+                                    <p class="tsb-next__name" t-out="inst.ts_title()"/>
                                     <p class="ts-hint">
-                                        <t t-if="matrix"><t t-out="inst.ts_effort_label()"/> · <t t-out="inst.ts_duration_label()"/></t>
-                                        <t t-else=""><t t-out="fa(items)"/> پرسش · حدود <t t-out="fa(minutes)"/> دقیقه</t>
+                                        <t t-if="matrix"><t t-out="inst.ts_effort_label()"/>، <t t-out="inst.ts_duration_label()"/></t>
+                                        <t t-else=""><t t-out="fa(items)"/> پرسش، حدود <t t-out="fa(minutes)"/> دقیقه</t>
                                     </p>
+                                    <!-- the whole remaining battery, only when it is more than the next instrument (G6-P14-2) -->
+                                    <p t-if="rest_count &gt; 1" class="ts-hint tsb-rest">تا پایان مجموعه: <t t-out="fa(rest_count)"/> سنجه<t t-if="rest_items">، <t t-out="fa(rest_items)"/> پرسش، حدود <t t-out="fa(rest_minutes)"/> دقیقه</t></p>
                                 </section>
                                 <div class="tsb-actions">
                                     <a t-attf-href="/take/#{nxt.access_token}" class="ts-btn ts-btn--primary ts-btn--lg">شروع سنجهٔ بعدی</a>
@@ -45,7 +47,8 @@
     </record>
 
     <!-- Consent page of the first attempt of a battery: names the battery, lists its instruments, total size and time.
-         Sentence added with CONSENT_VERSION v3. -->
+         Sentence added with CONSENT_VERSION v3; v4 (G6-P12-2): «نه تشخیص» only once, in «محدودیت»; what the invitation's
+         sharing covers. -->
     <record id="consent_battery_block" model="ir.ui.view">
         <field name="name">TS battery: block on the consent page</field>
         <field name="type">qweb</field>
@@ -55,19 +58,21 @@
             <t t-name="ts_battery.consent_battery_block">
             <section t-if="bat_info" class="ts-card tsb-consent" aria-labelledby="tsb-consent-h">
                 <h2 id="tsb-consent-h" class="h5">این دعوت یک مجموعه است</h2>
-                <p>با یک بار موافقت در همین صفحه، به همهٔ سنجه‌های این مجموعه پاسخ می‌دهید. رضایت شما برای هر سنجه جداگانه ثبت و پاسخ هر سنجه جدا ذخیره می‌شود؛ هر جا خواستید دست نگه دارید و بعداً از همان‌جا ادامه دهید. این مجموعه برای کمک به گفت‌وگوی مشاوره است، نه تشخیص.</p>
+                <p>با یک بار موافقت در همین صفحه، به همهٔ سنجه‌های این مجموعه پاسخ می‌دهید. رضایت شما برای هر سنجه جداگانه ثبت و پاسخ هر سنجه جدا ذخیره می‌شود؛ هر جا خواستید دست نگه دارید و بعداً از همان‌جا ادامه دهید.</p>
                 <ol class="tsb-list">
-                    <li t-foreach="bat_info['lines']" t-as="ln"><span t-out="ln['name']"/> <span class="ts-hint">· <t t-out="fa(ln['items'])"/> پرسش</span></li>
+                    <li t-foreach="bat_info['lines']" t-as="ln"><span t-out="ln['name']"/><t t-call="ts_website.sep"/><span class="ts-hint"><t t-out="fa(ln['items'])"/> پرسش</span></li>
                 </ol>
                 <p class="tsb-total">روی هم <t t-out="fa(bat_info['count'])"/> سنجه، <t t-out="fa(bat_info['items'])"/> پرسش، حدود <t t-out="fa(bat_info['minutes'])"/> دقیقه.</p>
+                <p t-if="bat_info.get('shared')" class="ts-hint">اشتراک‌گذاری‌ای که در صفحهٔ دعوت پذیرفتید، برای گزارش همهٔ سنجه‌های این مجموعه است و از صفحهٔ گزارش مجموعه قطع می‌شود.</p>
             </section>
             </t>
         </field>
     </record>
 
     <!-- Step «what is invited» of the invitation wizard and of group invitations, when the member has batteries.
-         Params: instruments, batteries, bat_cards, item_kind, pick_inst_id. No `required` on the radios: the
-         hidden group would block the form; the server checks the choice. -->
+         Params: instruments, batteries, bat_cards, item_kind, pick_inst_id, cat_note (the member's catalog is restricted:
+         who chose it, G6-P5-1). No `required` on the radios: the hidden group would block the form; the server checks
+         the choice. The «نه تشخیص» limit is said once, under the legend «مجموعه» (G6-PT9). -->
     <record id="item_picker" model="ir.ui.view">
         <field name="name">TS battery: instrument or battery picker</field>
         <field name="type">qweb</field>
@@ -75,6 +80,7 @@
         <field name="website_id" ref="ts_website.website_ts"/>
         <field name="arch" type="xml">
             <t t-name="ts_battery.item_picker">
+            <p t-if="cat_note" class="ts-hint tsb-catnote" id="tsb-catnote" t-out="cat_note"/>
             <t t-if="instruments">
                 <fieldset class="tsp-field">
                     <legend class="tsp-field__label">چه چیزی بفرستید؟</legend>
@@ -83,18 +89,19 @@
                 </fieldset>
                 <fieldset class="tsp-field" data-ts-show="item_kind=single">
                     <legend class="tsp-field__label">سنجه</legend>
-                    <label t-foreach="instruments" t-as="i" class="tsp-radio"><input type="radio" name="instrument_id" t-att-value="i.id" t-att-checked="'checked' if (i.id == pick_inst_id or (len(instruments) == 1 and item_kind != 'battery')) else None"/><span t-out="i.name"/></label>
+                    <label t-foreach="instruments" t-as="i" class="tsp-radio"><input type="radio" name="instrument_id" t-att-value="i.id" t-att-checked="'checked' if (i.id == pick_inst_id or (len(instruments) == 1 and item_kind != 'battery')) else None"/><span t-out="i.ts_title()"/></label>
                 </fieldset>
             </t>
             <input t-else="" type="hidden" name="item_kind" value="battery"/>
             <fieldset class="tsp-field tsb-cards" t-att-data-ts-show="'item_kind=battery' if instruments else None">
                 <legend class="tsp-field__label">مجموعه</legend>
+                <p class="tsp-field__hint tsb-limit">هر مجموعه برای کمک به گفت‌وگوی مشاوره است، نه تشخیص.</p>
                 <label t-foreach="batteries" t-as="b" class="tsb-card">
                     <t t-set="card" t-value="bat_cards[b.id]"/>
                     <input type="radio" name="battery_id" t-att-value="b.id" t-att-checked="'checked' if (bat == b or (len(batteries) == 1 and item_kind == 'battery')) else None"/>
                     <span class="tsb-card__body">
                         <strong class="tsb-card__name" t-out="card['name']"/>
-                        <span class="tsb-card__facts"><t t-out="fa(card['count'])"/> سنجه · <t t-out="fa(card['items'])"/> پرسش · حدود <t t-out="fa(card['minutes'])"/> دقیقه</span>
+                        <span class="tsb-card__facts"><t t-out="fa(card['count'])"/> سنجه، <t t-out="fa(card['items'])"/> پرسش، حدود <t t-out="fa(card['minutes'])"/> دقیقه</span>
                         <span t-if="card['description']" class="tsb-card__desc" t-out="card['description']"/>
                         <span class="tsb-card__list"><t t-out="'، '.join(ln['name'] for ln in card['lines'])"/></span>
                     </span>
@@ -113,16 +120,15 @@
         <field name="arch" type="xml">
             <t t-name="ts_battery.member_catalog">
             <section t-if="can_catalog" class="ts-card" id="tsp-catalog" aria-labelledby="tsp-catalog-h">
-                <h2 id="tsp-catalog-h" class="h5">سنجه‌ها و مجموعه‌های مجاز برای این مشاور</h2>
+                <h2 id="tsp-catalog-h" class="h5">سنجه‌ها و مجموعه‌های مجاز برای این عضو</h2>
                 <p class="ts-hint">از میان سنجه‌ها و مجموعه‌هایی که برای این پنل فعال است، انتخاب کنید این عضو به کدام‌ها دعوت بفرستد. دعوت‌ها و نتیجه‌های قبلی دست نمی‌خورد.</p>
-                <p class="tsb-now" role="status"><strong>اکنون:</strong>
+                <!-- what is allowed now, by name (G6-P1-3); static text, not a live region -->
+                <p class="tsb-now"><strong>اکنون:</strong>
                     <t t-if="not cat_restricted">همهٔ موارد پنل</t>
-                    <t t-elif="cat_bats and cat_insts"><t t-out="fa(len(cat_bats))"/> مجموعه و <t t-out="fa(len(cat_insts))"/> سنجهٔ تکی انتخاب‌شده</t>
-                    <t t-elif="cat_bats"><t t-out="fa(len(cat_bats))"/> مجموعه انتخاب‌شده، بدون سنجهٔ تکی</t>
-                    <t t-elif="cat_insts"><t t-out="fa(len(cat_insts))"/> سنجهٔ تکی انتخاب‌شده، بدون مجموعه</t>
+                    <t t-elif="cat_now" t-out="cat_now"/>
                     <t t-else="">هیچ موردی انتخاب نشده؛ این عضو فعلاً نمی‌تواند دعوت بفرستد</t>
                 </p>
-                <form t-attf-action="/my/workspaces/#{ws.id}/members/#{m.id}/catalog" method="post" class="tsp-form" data-tsp-once="1">
+                <form t-attf-action="/my/workspaces/#{ws.id}/members/#{m.id}/catalog" method="post" class="tsp-form" data-tsp-once="1" data-ts-dirty="سنجه‌ها و مجموعه‌های مجاز">
                     <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
                     <fieldset class="tsp-field">
                         <legend class="tsp-field__label">دسترسی این عضو</legend>
@@ -131,17 +137,60 @@
                     </fieldset>
                     <fieldset t-if="panel_bats" class="tsp-field" data-ts-show="catalog_mode=list">
                         <legend class="tsp-field__label">مجموعه‌ها</legend>
-                        <label t-foreach="panel_bats" t-as="b" class="tsp-check"><input type="checkbox" name="battery_ids" t-att-value="b.id" t-att-checked="'checked' if b.id in cat_bats else None"/><span><t t-out="b.name"/> <span class="ts-hint">(<t t-out="fa(len(b.line_ids))"/> سنجه)</span></span></label>
+                        <label t-foreach="panel_bats" t-as="b" class="tsp-check"><input type="checkbox" name="battery_ids" t-att-value="b.id" t-att-checked="'checked' if b.id in cat_bats else None"/><span><t t-out="b.ts_title()"/> <span class="ts-hint">(<t t-out="fa(len(b.line_ids))"/> سنجه)</span></span></label>
                     </fieldset>
                     <fieldset t-if="panel_insts" class="tsp-field" data-ts-show="catalog_mode=list">
                         <legend class="tsp-field__label">سنجه‌های تکی</legend>
-                        <label t-foreach="panel_insts" t-as="i" class="tsp-check"><input type="checkbox" name="instrument_ids" t-att-value="i.id" t-att-checked="'checked' if i.id in cat_insts else None"/><span t-out="i.name"/></label>
+                        <label t-foreach="panel_insts" t-as="i" class="tsp-check"><input type="checkbox" name="instrument_ids" t-att-value="i.id" t-att-checked="'checked' if i.id in cat_insts else None"/><span t-out="i.ts_title()"/></label>
                     </fieldset>
                     <p t-if="not panel_insts and not panel_bats" class="ts-hint">هنوز سنجه‌ای برای این پنل فعال نیست.</p>
-                    <p><button type="submit" class="ts-btn ts-btn--primary">ذخیرهٔ موارد مجاز</button></p>
+                    <p><button type="submit" class="ts-btn ts-btn--primary">ذخیرهٔ سنجه‌ها و مجموعه‌های مجاز</button></p>
                 </form>
                 <t t-call="ts_org.reveal_js"/>
             </section>
+            </t>
+        </field>
+    </record>
+
+    <!-- Overview of a battery result (UX audit 2026-10-12, G6-PT2): one table «سنجه / عامل / سطح» (+ «نمره» when show_score)
+         for every instrument, right after the meta; each instrument links to its section below. Params: sections (from the
+         controller's _sections), show_score (bool), ov_id (heading id). -->
+    <record id="tpl_overview" model="ir.ui.view">
+        <field name="name">TS battery: overview</field>
+        <field name="type">qweb</field>
+        <field name="key">ts_battery.overview</field>
+        <field name="website_id" ref="ts_website.website_ts"/>
+        <field name="arch" type="xml">
+            <t t-name="ts_battery.overview">
+                <div class="tsb-ov" t-att-id="ov_id">
+                    <h2 class="h5" t-att-id="ov_id + '-h'">نمای کلی مجموعه</h2>
+                    <div class="ts-table-wrap">
+                        <table class="ts-table tsb-ov__table">
+                            <caption class="ts-sr">سطح هر عامل در همهٔ سنجه‌های این مجموعه</caption>
+                            <thead><tr><th scope="col">سنجه</th><th scope="col">عامل</th><th scope="col">سطح</th><th t-if="show_score" scope="col">نمره (۱ تا ۵)</th></tr></thead>
+                            <t t-foreach="sections" t-as="bs">
+                                <tbody>
+                                    <t t-if="bs['results']">
+                                        <tr t-foreach="bs['results']" t-as="r">
+                                            <th t-if="r_first" scope="rowgroup" t-att-rowspan="len(bs['results'])"><a t-att-href="'#' + bs['sec_id']" t-out="bs['inst'].ts_title()"/></th>
+                                            <td t-out="r.factor_id.name"/>
+                                            <td><span t-attf-class="ts-band ts-band--#{r.band}" t-out="r.band_fa()"/></td>
+                                            <td t-if="show_score" class="ts-num" t-out="r.score_fa()"/>
+                                        </tr>
+                                    </t>
+                                    <tr t-else="">
+                                        <th scope="row"><a t-att-href="'#' + bs['sec_id']" t-out="bs['inst'].ts_title()"/></th>
+                                        <td t-att-colspan="3 if show_score else 2" class="ts-hint">
+                                            <t t-if="bs['at'].state != 'done'">هنوز پاسخ داده نشده</t>
+                                            <t t-elif="bs['matrix']">گزارش جداگانه دارد</t>
+                                            <t t-else="">نتیجه در این گزارش نمایش داده نمی‌شود</t>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </t>
+                        </table>
+                    </div>
+                </div>
             </t>
         </field>
     </record>
@@ -160,7 +209,8 @@
                             <div class="ts-container ts-report-wrap">
                                 <div class="ts-report-actions ts-noprint">
                                     <a href="/my/assessments" class="ts-back">سنجه‌ها و نتیجه‌ها</a>
-                                    <button type="button" class="ts-btn ts-btn--outline ts-js-print">چاپ یا ذخیره به‌صورت PDF</button>
+                                    <!-- the PDF file is the one button (ts_brand adds it); browser printing is a quiet action (G6-PT5) -->
+                                    <button type="button" class="ts-btn ts-btn--quiet ts-js-print">چاپ همین صفحه</button>
                                 </div>
                                 <section t-if="submitted" class="ts-received ts-noprint" role="status" aria-labelledby="tsb-received-h">
                                     <h2 id="tsb-received-h" t-if="tu">پاسخ‌هایت ثبت شد</h2>
@@ -177,8 +227,8 @@
                                         </div>
                                         <div class="ts-doc__kind">گزارش مجموعهٔ سنجه‌ها</div>
                                     </header>
-                                    <h1 class="ts-doc__title" t-out="battery.name"/>
-                                    <p class="ts-doc__lead">نتیجهٔ <t t-out="a.user_id.partner_id.name"/> · <t t-out="when"/></p>
+                                    <h1 class="ts-doc__title" t-out="battery.ts_title()"/>
+                                    <p class="ts-doc__lead">نتیجهٔ <t t-out="a.user_id.partner_id.name"/><t t-call="ts_website.sep"/><t t-out="when"/></p>
                                     <dl class="ts-meta ts-doc__meta tsb-meta">
                                         <dt>به دعوت</dt><dd t-out="org"/>
                                         <t t-if="counselor"><dt>مشاور</dt><dd><bdi t-out="counselor"/></dd></t>
@@ -186,14 +236,16 @@
                                         <dt>شناسهٔ دعوت</dt><dd><bdi dir="ltr" class="ts-bdi" t-out="a.name"/></dd>
                                     </dl>
                                     <p class="tsb-note" role="note" t-out="limit_note"/>
+                                    <t t-call="ts_battery.overview" sections="sections" show_score="False" ov_id="'tsb-ov'"/>
                                     <nav class="tsb-jump tt-jump ts-noprint" id="tsb-jump" aria-label="سنجه‌های این مجموعه">
                                         <ol>
-                                            <li t-foreach="sections" t-as="bs"><a t-att-href="'#' + bs['sec_id']" t-out="bs['inst'].title"/>
-                                                <span t-if="bs['at'].state != 'done'" class="ts-hint"> · هنوز پاسخ داده نشده</span></li>
+                                            <li t-foreach="sections" t-as="bs"><a t-att-href="'#' + bs['sec_id']" t-out="bs['inst'].ts_title()"/>
+                                                <span t-if="bs['at'].state != 'done'" class="ts-hint"><t t-call="ts_website.sep"/>هنوز پاسخ داده نشده</span></li>
                                         </ol>
                                     </nav>
+                                    <!-- the first instrument stays open on the phone; the others start closed (G6-P9-1) -->
                                     <t t-foreach="sections" t-as="bs">
-                                        <t t-call="ts_talent.sec" sec_id="bs['sec_id']" title="bs['inst'].title" collapse="'phone'" cls="'tsb-sec'">
+                                        <t t-call="ts_talent.sec" sec_id="bs['sec_id']" title="bs['inst'].ts_title()" collapse="None if bs_first else 'phone'" cls="'tsb-sec'">
                                             <t t-if="bs['results']">
                                                 <t t-call="ts_assessment.report_blocks" results="bs['results']" blk_sum_id="bs['sec_id'] + '-sum'" blk_sub="True"/>
                                             </t>
@@ -205,10 +257,11 @@
                                     <section class="ts-doc__sec ts-noprint" id="tsb-who-sees">
                                         <h2>چه کسی این نتیجه را می‌بیند؟</h2>
                                         <t t-if="a.share_level != 'none'">
-                                            <p><strong t-out="a.workspace_id.name"/> — <t t-out="a.ts_level_word()"/>. پاسخ‌های خام شما را هیچ پنلی نمی‌بیند.</p>
-                                            <p><a t-attf-href="/my/sharing/#{a.id}/revoke">لغو اشتراک</a> · <a href="/my/sharing">مدیریت اشتراک‌ها</a></p>
+                                            <p><strong t-out="a.workspace_id.ts_public_name()"/> — <t t-out="a.ts_level_word()"/>، برای همهٔ سنجه‌های این مجموعه. پاسخ‌های خام <t t-if="tu">تو</t><t t-else="">شما</t> را هیچ پنلی نمی‌بیند.</p>
+                                            <p><a t-attf-href="/my/sharing/#{a.id}/revoke">قطع اشتراک‌گذاری با این پنل</a><t t-call="ts_website.sep"/><a href="/my/sharing">همهٔ اشتراک‌گذاری‌ها</a></p>
                                         </t>
-                                        <p t-else="">فقط شما. پنل فقط وضعیت انجام را می‌بیند، چون اشتراک نتیجه را نپذیرفته‌اید.</p>
+                                        <p t-elif="tu">فقط تو. پنل فقط وضعیت انجام را می‌بیند، چون اشتراک‌گذاری نتیجه را نپذیرفته‌ای.</p>
+                                        <p t-else="">فقط شما. پنل فقط وضعیت انجام را می‌بیند، چون اشتراک‌گذاری نتیجه را نپذیرفته‌اید.</p>
                                     </section>
                                     <section class="ts-doc__sec ts-doc__foot">
                                         <h2>محدودیت‌ها و گام بعدی</h2>
@@ -237,12 +290,13 @@
                         <t t-call="ts_panel.shell_frame">
                             <header class="tsp-head">
                                 <div>
-                                    <h1 class="tsp-head__title">مجموعهٔ <t t-out="battery.name"/> — <t t-out="client.name"/></h1>
-                                    <p class="tsp-head__help"><span class="ts-pill" t-out="kind"/> · <bdi t-out="jalali(when, with_time=False)"/> · <bdi><t t-out="fa(done)"/> از <t t-out="fa(total)"/> سنجه انجام شده</bdi></p>
+                                    <h1 class="tsp-head__title">مجموعهٔ <t t-out="battery.ts_title()"/> — <t t-out="client.name"/></h1>
+                                    <p class="tsp-head__help"><span class="ts-pill" t-out="kind"/><t t-call="ts_website.sep"/><bdi t-out="jalali(when, with_time=False)"/><t t-call="ts_website.sep"/><bdi><t t-out="fa(done)"/> از <t t-out="fa(total)"/> سنجه انجام شده</bdi></p>
                                 </div>
+                                <!-- the PDF file is the one button (ts_brand adds it after this form); printing is quiet (G6-PT5) -->
                                 <form t-if="level != 'status'" method="post" t-att-action="print_url" class="tsp-inline tsp-noprint">
                                     <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
-                                    <button type="submit" class="ts-btn ts-btn--outline">چاپ یا ذخیره به‌صورت PDF</button>
+                                    <button type="submit" class="ts-btn ts-btn--quiet">چاپ همین صفحه</button>
                                 </form>
                             </header>
                             <section class="ts-card" aria-labelledby="tsb-p-head">
@@ -254,23 +308,26 @@
                                 </dl>
                                 <p class="tsb-note" role="note" t-out="limit_note"/>
                             </section>
+                            <section t-if="level != 'status'" class="ts-card" aria-labelledby="tsb-pov-h">
+                                <t t-call="ts_battery.overview" sections="sections" show_score="level == 'clinical'" ov_id="'tsb-pov'"/>
+                            </section>
                             <t t-if="level == 'status'">
                                 <section class="ts-card">
                                     <p>این مجموعه برای نقش شما فقط با وضعیت انجام نمایش داده می‌شود، یا شرکت‌کننده نتیجه را به اشتراک نگذاشته است.</p>
                                     <ul class="tsb-status">
-                                        <li t-foreach="sections" t-as="bs"><t t-out="bs['inst'].title or bs['inst'].name"/> · <t t-if="bs['at'].state == 'done'">تکمیل‌شده</t><t t-else="">هنوز پاسخ داده نشده</t></li>
+                                        <li t-foreach="sections" t-as="bs"><t t-out="bs['inst'].ts_title()"/><t t-call="ts_website.sep"/><t t-if="bs['at'].state == 'done'">تکمیل‌شده</t><t t-else="">هنوز پاسخ داده نشده</t></li>
                                     </ul>
                                 </section>
                             </t>
                             <t t-else="">
                                 <nav class="ts-card tsb-jump tt-jump tsp-noprint" aria-label="سنجه‌های این مجموعه">
                                     <ol>
-                                        <li t-foreach="sections" t-as="bs"><a t-att-href="'#' + bs['sec_id']" t-out="bs['inst'].title or bs['inst'].name"/>
-                                            <span t-if="bs['at'].state != 'done'" class="ts-hint"> · هنوز پاسخ داده نشده</span></li>
+                                        <li t-foreach="sections" t-as="bs"><a t-att-href="'#' + bs['sec_id']" t-out="bs['inst'].ts_title()"/>
+                                            <span t-if="bs['at'].state != 'done'" class="ts-hint"><t t-call="ts_website.sep"/>هنوز پاسخ داده نشده</span></li>
                                     </ol>
                                 </nav>
                                 <t t-foreach="sections" t-as="bs">
-                                    <t t-call="ts_talent.sec" sec_id="bs['sec_id']" title="bs['inst'].title or bs['inst'].name" collapse="'phone'" cls="'tsb-sec ts-card'">
+                                    <t t-call="ts_talent.sec" sec_id="bs['sec_id']" title="bs['inst'].ts_title()" collapse="None if bs_first else 'phone'" cls="'tsb-sec ts-card'">
                                         <p t-if="bs['matrix'] and bs['at'].state == 'done'"><a t-att-href="result_url(bs['at'])" class="ts-btn ts-btn--outline ts-btn--sm">دیدن گزارش این سنجه</a></p>
                                         <p t-elif="bs['at'].state != 'done'" class="ts-hint">هنوز به این سنجه پاسخ داده نشده است.</p>
                                         <t t-else=""><t t-call="ts_panel.result_bands_body" level="bs['level']" results="bs['results']" blk_id="bs['sec_id']" blk_sub="True"/></t>

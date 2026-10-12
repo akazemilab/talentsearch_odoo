@@ -71,18 +71,18 @@ class TsPanelPortal(CustomerPortal):
         nxt = None
         if invites:
             inv = invites[0]
-            nxt = {'kind': 'invite', 'title': inv.instrument_id.title, 'org': inv.workspace_id.partner_id.name,
+            nxt = {'kind': 'invite', 'title': inv.instrument_id.title, 'org': inv.workspace_id.ts_public_name(),
                    'when': jalali(inv.create_date, with_time=False), 'deadline': jalali(datetime.combine(inv.deadline, time()), with_time=False) if inv.deadline else None,
                    'url': '/invite/%s' % inv.token, 'label': 'مشاهدهٔ دعوت'}
         elif going:
             a = going[0]
             prog = a.progress if a.state == 'in_progress' else 0
-            nxt = {'kind': 'resume', 'title': a.instrument_id.title, 'org': a.workspace_id.partner_id.name if a.workspace_id else None,
+            nxt = {'kind': 'resume', 'title': a.instrument_id.title, 'org': a.workspace_id.ts_public_name() if a.workspace_id else None,
                    'progress': prog, 'when': jalali(a.write_date, with_time=False), 'attempt_id': a.id,
                    'url': '/take/%s' % a.access_token, 'label': 'ادامهٔ پاسخ‌دهی' if prog else 'شروع'}
         elif done and done[0].submitted_at and (datetime.utcnow() - done[0].submitted_at).days <= 14:
             a = done[0]
-            nxt = {'kind': 'result', 'title': a.instrument_id.title, 'org': a.workspace_id.partner_id.name if a.workspace_id else None,
+            nxt = {'kind': 'result', 'title': a.instrument_id.title, 'org': a.workspace_id.ts_public_name() if a.workspace_id else None,
                    'when': jalali(a.submitted_at, with_time=False), 'url': '/my/assessments/%s' % a.id, 'label': 'دیدن نتیجه'}
         if nxt and nxt['kind'] == 'resume':
             going = going.filtered(lambda a: a.id != nxt['attempt_id'])     # one task, one button (UX audit G2 P1-1)
@@ -144,7 +144,7 @@ class TsPanelPortal(CustomerPortal):
             for a in at.ts_shares():
                 since = Consent.search([('assignment_id', '=', a.id), ('kind', '=', 'share')], order='id desc', limit=1)  # ts-scope-ok: own ledger
                 resp = a.client_id.responsible_id.user_id.name if a.client_id.responsible_id else False
-                shares.append({'a': a, 'aid': a.id, 'panel': a.workspace_id.name, 'resp': resp, 'level': a.ts_level_word(),
+                shares.append({'a': a, 'aid': a.id, 'panel': a.workspace_id.ts_public_name(), 'resp': resp, 'level': a.ts_level_word(),
                                'purpose': a.workspace_id.purpose, 'resp_word': RESP_WORD.get(a.workspace_id.purpose, 'کارشناس مسئول'),
                                'since': jalali(since.at or a.create_date, with_time=False), 'active': a.share_level != 'none',
                                'views': self._views(a) if a.share_level != 'none' else []})
@@ -168,12 +168,12 @@ class TsPanelPortal(CustomerPortal):
             if a.share_level == 'none':
                 return request.redirect('/my/sharing')
             return request.render('ts_panel.my_sharing_revoke', {
-                'a': a, 'panel': a.workspace_id.name, 'invited': a.invited_by_id != user, 'tu': _is_student(request.env, user),
+                'a': a, 'panel': a.workspace_id.ts_public_name(), 'invited': a.invited_by_id != user, 'tu': _is_student(request.env, user),
                 'title_text': a.attempt_id.instrument_id.title, 'back': post.get('back') if post.get('back') in ('report',) else '',
                 'page_name': 'ts_my_sharing'})
         try:
             a.action_revoke_share(user)
-            flash_ok('اشتراک با «%s» لغو شد؛ این پنل دیگر نتیجه را نمی‌بیند.' % a.workspace_id.name)
+            flash_ok('اشتراک‌گذاری با «%s» قطع شد؛ این پنل دیگر نتیجه را نمی‌بیند.' % a.workspace_id.ts_public_name())
         except UserError as e:
             flash_error(str(e.args[0] if e.args else e))
         return request.redirect('/my/assessments/%s' % a.attempt_id.id if post.get('back') == 'report' else '/my/sharing')

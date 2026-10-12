@@ -92,8 +92,8 @@ check('B02 purpose flags (no starter battery for schools)', by_code.get('BAT-CHI
       and by_code['BAT-WORK-1'].for_employment and all(b.for_clinical for b in starters)
       and not by_code['BAT-INTAKE-1'].for_employment and not by_code['BAT-INTAKE-1'].for_education)
 LIMIT = 'این مجموعه برای کمک به گفت‌وگوی مشاوره است، نه تشخیص.'
-check('B03 descriptions end with the limit sentence and follow the voice rules',
-      all((b.description or '').endswith(LIMIT) and '!' not in b.description and 'متأسفانه' not in b.description
+check('B03 descriptions no longer carry the limit sentence (said once per page, G6-PT9) and follow the voice rules',
+      all(b.description and LIMIT not in b.description and '!' not in b.description and 'متأسفانه' not in b.description
           for b in starters))
 stats = B._ts_load_starter()
 check('B04 starter loader is idempotent', stats.get('created') == 0 and stats.get('existing') == 6
@@ -335,7 +335,7 @@ check('G05 consent given once is copied to every sibling with the same values',
       set(rows.mapped('state')) == {'in_progress'} and all(r.consent_service and r.consent_research and r.consent_version == CONSENT_VERSION
                                                         and r.respondent_role == 'self' for r in rows),
       str(rows.mapped('state')))
-check('G05 CONSENT_VERSION is v3', CONSENT_VERSION.endswith('-v3') and CONSENT_VERSION.startswith('TS-CONSENT-'))
+check('G05 CONSENT_VERSION is v4', CONSENT_VERSION.endswith('-v4') and CONSENT_VERSION.startswith('TS-CONSENT-'))
 Rec = env['ts.consent.record']
 check('G05 the consent ledger keeps one service row per attempt',
       Rec.search_count([('attempt_id', 'in', rows.ids), ('kind', '=', 'service')]) == N)
@@ -344,7 +344,7 @@ check('G05 an assent row on the first attempt is copied to the siblings',
       Rec.search_count([('attempt_id', 'in', rows.ids), ('kind', '=', 'assent')]) == N)
 check('G06 state after consent is «in_progress»', ab.state == 'in_progress', ab.state)
 check('G06 player helpers: label, order, earlier open instrument',
-      rows[1].ts_battery_label() == 'مجموعهٔ %s · سنجهٔ ۲ از ۳' % run_b.name and rows[1].ts_battery_earlier_open() == first
+      rows[1].ts_battery_label() == 'مجموعهٔ %s، سنجهٔ ۲ از ۳' % run_b.name and rows[1].ts_battery_earlier_open() == first
       and first.ts_battery_next() == first and not first.ts_battery_earlier_open(), rows[1].ts_battery_label())
 finish(first)
 ab.invalidate_recordset()

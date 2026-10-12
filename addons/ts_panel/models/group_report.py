@@ -78,7 +78,7 @@ class TsGroupReport(models.AbstractModel):
         for inst in shared.instrument_id.sorted('name'):
             sh = shared.filtered(lambda a: a.instrument_id == inst)
             m = len(latest.filtered(lambda a: a.instrument_id == inst))
-            row = {'id': inst.id, 'name': inst.name, 'n': len(sh), 'm': m, 'ok': len(sh) >= k,
+            row = {'id': inst.id, 'name': inst.ts_title(), 'n': len(sh), 'm': m, 'ok': len(sh) >= k,
                    'imported': any(a.source == 'import' for a in sh), 'factors': [], 'talent': None}
             out['imported'] = out['imported'] or row['imported']
             if row['ok']:

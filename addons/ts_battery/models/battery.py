@@ -14,42 +14,51 @@ PURPOSE_FLAG = {'clinical': 'for_clinical', 'education': 'for_education', 'emplo
 _LIMIT = 'این مجموعه برای کمک به گفت‌وگوی مشاوره است، نه تشخیص.'
 # Starter batteries (docs/clinic/01_architecture.md 2.1). Instruments are created by the loader, not by xmlids,
 # so they are resolved by code in _ts_load_starter. Audiences checked against workbook_meta.json (all match).
+# UX audit 2026-10-12 (G6-PT9): descriptions no longer end with _LIMIT; the pages say the limit once.
 STARTER = [
     {'code': 'BAT-INTAKE-1', 'name': 'ارزیابی آغاز مشاوره', 'audience': 'adult', 'flags': ('for_clinical',),
      'description': 'برای جلسه‌های نخست با مراجع بزرگسال؛ تصویری کلی از آرامش روانی، بی‌تابی، رضایت از زندگی، '
-                    'نیازها و تعهد فردی می‌دهد و کمک می‌کند مسیر گفت‌وگو را انتخاب کنید. ' + _LIMIT,
+                    'نیازها و تعهد فردی می‌دهد و کمک می‌کند مسیر گفت‌وگو را انتخاب کنید.',
      'instruments': ['inventory_001', 'inventory_027', 'inventory_020', 'inventory_031', 'inventory_014']},
     {'code': 'BAT-DISTRESS-1', 'name': 'آشفتگی هیجانی و تعادل روانی', 'audience': 'adult', 'flags': ('for_clinical',),
      'description': 'برای مراجع بزرگسالی که از فشار، نگرانی یا بی‌قراری می‌گوید؛ بی‌تابی، پایایی، تعادل و سرزندگی '
-                    'را کنار هم نشان می‌دهد. ' + _LIMIT,
+                    'را کنار هم نشان می‌دهد.',
      'instruments': ['inventory_027', 'inventory_008', 'inventory_010', 'inventory_023']},
     {'code': 'BAT-LIFE-1', 'name': 'رضایت از زندگی و معنا', 'audience': 'adult', 'flags': ('for_clinical',),
      'description': 'برای مراجع بزرگسالی که از نارضایتی یا کم‌رنگ شدن معنا در زندگی می‌گوید؛ رضایت از زندگی، '
-                    'هدفمندی، ارجمندی و حمایت معنوی را می‌سنجد. ' + _LIMIT,
+                    'هدفمندی، ارجمندی و حمایت معنوی را می‌سنجد.',
      'instruments': ['inventory_020', 'inventory_033', 'inventory_002', 'inventory_016']},
     {'code': 'BAT-COUPLE-1', 'name': 'زوج و ازدواج', 'audience': 'adult', 'flags': ('for_clinical',),
      'description': 'برای مشاورهٔ پیش از ازدواج یا مشاورهٔ زوج؛ هر یک از دو نفر جداگانه دعوت می‌شود و رضایت زناشویی، '
-                    'خردمندی و خودگستری را پاسخ می‌دهد. ' + _LIMIT,
+                    'خردمندی و خودگستری را پاسخ می‌دهد.',
      'instruments': ['inventory_021', 'inventory_017', 'inventory_018']},
     {'code': 'BAT-CHILD-1', 'name': 'کودک: شخصیت و توانایی', 'audience': 'child', 'flags': ('for_clinical',),
      'description': 'برای والدی که دربارهٔ کودک خود مشورت می‌خواهد؛ والد یا مراقب دربارهٔ شخصیت و توانایی‌های کودک '
-                    'پاسخ می‌دهد. ' + _LIMIT,
+                    'پاسخ می‌دهد.',
      'instruments': ['inventory_025', 'inventory_003']},
     {'code': 'BAT-WORK-1', 'name': 'کار و مسیر شغلی', 'audience': 'adult', 'flags': ('for_clinical', 'for_employment'),
      'description': 'برای مشاورهٔ شغلی و انتخاب مسیر کاری بزرگسالان؛ رضایت شغلی، هوش موفق، تعهد فردی و وظیفه‌مندی '
-                    'را کنار هم می‌گذارد و در پنل استخدامی فقط یکی از ورودی‌های گفت‌وگوی شغلی است. ' + _LIMIT,
+                    'را کنار هم می‌گذارد و در پنل استخدامی فقط یکی از ورودی‌های گفت‌وگوی شغلی است.',
      'instruments': ['inventory_022', 'inventory_034', 'inventory_014', 'inventory_032']},
 ]
 
 
+def ts_strip_limit(text):
+    """A battery description without the trailing «… نه تشخیص» sentence (owner-edited texts may still carry it)."""
+    return (text or '').replace(_LIMIT, '').strip()
+
+
 # Owner decision 2026-10-11 (counseling wording): texts the starter batteries were created with before the rename.
 # `_ts_refresh_starter_texts` replaces a stored name/description only while it still equals one of these, so a text the
-# owner edited by hand is never overwritten and a second run changes nothing.
+# owner edited by hand is never overwritten and a second run changes nothing. 2026-10-12 (G6-PT9): every description that
+# still ends with _LIMIT is legacy too.
 STARTER_LEGACY = {
     'BAT-INTAKE-1': {'name': ['ارزیابی آغاز درمان']},
     'BAT-COUPLE-1': {'description': ['برای مشاورهٔ پیش از ازدواج یا زوج‌درمانی؛ هر یک از دو نفر جداگانه دعوت می‌شود و رضایت زناشویی، '
                                      'خردمندی و خودگستری را پاسخ می‌دهد. ' + _LIMIT]},
 }
+for _spec in STARTER:
+    STARTER_LEGACY.setdefault(_spec['code'], {}).setdefault('description', []).append(_spec['description'] + ' ' + _LIMIT)
 
 
 def est_minutes(items):
@@ -67,7 +76,7 @@ class TsBattery(models.Model):
     name = fields.Char('نام', required=True, tracking=True)
     code = fields.Char('کد', required=True, copy=False, index=True, tracking=True)
     sequence = fields.Integer(default=10)
-    description = fields.Text('شرح', help='برای چه کسی و چه زمانی؛ با «… برای کمک به گفت‌وگوی مشاوره است، نه تشخیص.» تمام شود.')
+    description = fields.Text('شرح', help='برای چه کسی و چه زمانی، در یک یا دو جمله. جملهٔ «… نه تشخیص» را ننویسید: صفحه‌ها آن را یک بار نشان می‌دهند.')
     audience = fields.Selection(AUDIENCES, 'مخاطب', required=True, default='adult', tracking=True)
     for_clinical = fields.Boolean('پنل مرکز مشاوره', default=True)
     for_education = fields.Boolean('پنل آموزشی')
@@ -95,6 +104,15 @@ class TsBattery(models.Model):
     def _compute_has_retired(self):
         for b in self:
             b.has_retired = any(s == 'retired' for s in b.line_ids.mapped('instrument_id.state'))
+
+    def ts_title(self):
+        """The name people see (same helper as ts.instrument.ts_title()): a battery has no separate title field."""
+        self.ensure_one()
+        return (self.name or '').strip()
+
+    def ts_display_title(self):
+        """Alias of ts_title() kept for older callers."""
+        return self.ts_title()
 
     def unlink(self):
         return super(TsBattery, self.with_context(ts_battery_unlink=True)).unlink()

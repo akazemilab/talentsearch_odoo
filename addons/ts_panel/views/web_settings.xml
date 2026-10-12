@@ -20,14 +20,14 @@
 
                             <section class="ts-card" id="tsp-profile" aria-labelledby="tsp-profile-h">
                                 <h2 id="tsp-profile-h" class="h5">مشخصات</h2>
-                                <form t-attf-action="/my/workspaces/#{ws.id}/settings/save" method="post" enctype="multipart/form-data" class="tsp-form" data-tsp-once="1">
+                                <form t-attf-action="/my/workspaces/#{ws.id}/settings/save" method="post" enctype="multipart/form-data" class="tsp-form" data-tsp-once="1" data-ts-dirty="مشخصات">
                                     <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
                                     <div class="tsp-field">
                                         <label class="tsp-field__label" for="tsp_name">نام پنل</label>
-                                        <p class="tsp-field__hint" id="tsp_name_h">نام در صفحهٔ دعوت و گزارش‌های شرکت‌کنندگان دیده می‌شود. ۲ تا ۱۰۰ نویسه.</p>
+                                        <p class="tsp-field__hint" id="tsp_name_h">این نام در پنل، صفحهٔ دعوت و گزارش‌های شرکت‌کنندگان دیده می‌شود. ۲ تا ۱۰۰ نویسه.</p>
                                         <input id="tsp_name" name="name" type="text" maxlength="100" required="required" t-att-value="ws.name" aria-describedby="tsp_name_h"/>
                                     </div>
-                                    <div class="tsp-field">
+                                    <div class="tsp-field" id="tsp-logo-field">
                                         <p t-if="has_logo" class="tsp-logo-now"><img t-att-src="image_data_uri(ws.partner_id.image_128)" alt="لوگوی فعلی" width="64" height="64"/>
                                             <span class="ts-hint">لوگوی فعلی؛ مگر فایل تازه‌ای انتخاب کنید یا آن را حذف کنید، همین می‌ماند.</span></p>
                                         <p t-if="has_logo" class="tsp-check"><label for="tsp_logo_rm"><input type="checkbox" id="tsp_logo_rm" name="remove_logo" value="1"/> حذف لوگو</label></p>
@@ -54,7 +54,15 @@
                                     <t t-if="terms_on"> · <t t-out="jalali(terms_on, with_time=False)"/></t>
                                 </p>
                                 <p t-else="">برای این پنل پذیرش آنلاین شرایط ثبت نشده است؛ یعنی پنل پیش از فرم پذیرش آنلاین یا به دست تیم استعدادیاب ساخته شده است. از شما کاری لازم نیست. اگر پرسشی دارید، <a t-attf-href="/contact?topic=support&amp;panel=#{ws.code}">به پشتیبانی پیام بدهید</a>.</p>
-                                <p t-if="terms_version and not terms_current" class="ts-notice ts-notice--warn">نسخهٔ تازه‌ای از شرایط منتشر شده است. <a href="/panel/terms">متن شرایط را بخوانید</a>.</p>
+                                <t t-if="terms_version and not terms_current">
+                                    <p class="ts-notice ts-notice--warn" id="tsp-terms-new">نسخهٔ تازه‌ای از شرایط استفاده منتشر شده است. <a href="/panel/terms">متن تازه را بخوانید</a> و اگر می‌پذیرید، پذیرش را ثبت کنید.</p>
+                                    <form t-attf-action="/my/workspaces/#{ws.id}/settings/terms" method="post" class="tsp-form" data-tsp-once="1">
+                                        <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                                        <input type="hidden" name="version" t-att-value="terms_latest"/>
+                                        <p class="tsp-check"><label for="tsp_terms_ok"><input type="checkbox" id="tsp_terms_ok" name="terms" value="1" required="required"/> نسخهٔ تازهٔ شرایط استفاده را خوانده‌ام و از طرف پنل می‌پذیرم.</label></p>
+                                        <p><button type="submit" class="ts-btn ts-btn--primary">ثبت پذیرش شرایط تازه</button></p>
+                                    </form>
+                                </t>
                                 <p><a href="/panel/terms">متن شرایط استفاده</a></p>
                             </section>
                         </t>

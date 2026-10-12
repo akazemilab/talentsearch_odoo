@@ -12,10 +12,11 @@
                 <t t-call="website.layout" additional_title="title">
                     <div id="wrap" class="ts-page">
                         <t t-call="ts_panel.shell_frame">
+                            <t t-set="pro_verified" t-value="member.verification_state == 'verified'"/>
                             <t t-set="role_notes" t-value="{
                                 'counselor': 'شما در این پنل دانش‌آموزانی را که مسئول آن‌ها هستید و صف «بدون کارشناس» را می‌بینید؛ گزارش‌ها در سطح مشاور نمایش داده می‌شوند و پاسخ‌های خام دیده نمی‌شوند.',
-                                'clinician': 'شما فقط شرکت‌کنندگانی را که مسئول آن‌ها هستید می‌بینید؛ گزارش کامل ویژهٔ مشاور، همراه با راهنمای مشاور، پس از تأیید صلاحیت حرفه‌ای شما نمایش داده می‌شود.',
-                                'clinic_director': 'شما همهٔ شرکت‌کنندگان این پنل را می‌بینید؛ گزارش کامل ویژهٔ مشاور پس از تأیید صلاحیت حرفه‌ای شما نمایش داده می‌شود.',
+                                'clinician': ('شما فقط مراجعانی را که مشاورشان هستید می‌بینید. صلاحیت حرفه‌ای شما تأیید شده است؛ گزارش ویژهٔ مشاور، همراه با راهنمای مشاور، برای مراجعان خودتان نمایش داده می‌شود.' if pro_verified else 'شما فقط مراجعانی را که مشاورشان هستید می‌بینید. گزارش ویژهٔ مشاور، همراه با راهنمای مشاور، پس از تأیید صلاحیت حرفه‌ای شما نمایش داده می‌شود؛ در انتظار تأیید تیم استعدادیاب.'),
+                                'clinic_director': ('شما همهٔ مراجعان این پنل را می‌بینید. صلاحیت حرفه‌ای شما تأیید شده است و گزارش ویژهٔ مشاور را می‌بینید.' if pro_verified else 'شما همهٔ مراجعان این پنل را می‌بینید. گزارش ویژهٔ مشاور پس از تأیید صلاحیت حرفه‌ای شما نمایش داده می‌شود؛ در انتظار تأیید تیم استعدادیاب.'),
                                 'reviewer': 'شما در این پنل فقط سطح (بازهٔ) هر عامل را می‌بینید؛ نمره، پاسخ و متن تفسیری نمایش داده نمی‌شود.',
                                 'hiring_manager': 'شما شرکت‌کنندگانی را که مسئول آن‌ها هستید می‌بینید و از نتیجه فقط سطح هر عامل نمایش داده می‌شود؛ نمره و پاسخ دیده نمی‌شود.',
                                 'hr_admin': 'شما همهٔ شرکت‌کنندگان این پنل را می‌بینید و از نتیجه فقط سطح هر عامل نمایش داده می‌شود؛ نمره و پاسخ دیده نمی‌شود.',
@@ -27,11 +28,12 @@
                             <t t-set="empty" t-value="manages and not total"/>
                             <header class="tsp-head">
                                 <div>
-                                    <h1 class="tsp-head__title">داشبورد</h1>
+                                    <h1 class="tsp-head__title">پیشخوان</h1>
                                     <p t-if="att or (tiles and not empty)" class="tsp-head__help">اول کارهای منتظر شما، بعد خلاصهٔ دوره. هر عدد شما را به فهرستی می‌برد که همان تعداد را نشان می‌دهد.</p>
                                 </div>
                                 <div class="tsp-head__actions">
-                                    <a t-if="can_invite" t-attf-href="/my/workspaces/#{ws.id}/invites/new?fresh=1" class="ts-btn ts-btn--primary">دعوت تازه</a>
+                                    <!-- first_run (set by ts_brand while a set-up list or card is shown): that list holds the one primary button -->
+                                    <a t-if="can_invite" t-attf-href="/my/workspaces/#{ws.id}/invites/new?fresh=1" t-attf-class="ts-btn #{'ts-btn--outline' if first_run else 'ts-btn--primary'}">دعوت تازه</a>
                                     <span t-attf-class="ts-pill #{'ts-pill--ok' if ws.state in ('pilot', 'active') and not gated else 'ts-pill--warn'}"><t t-out="'در انتظار تأیید' if gated else panel_state"/></span>
                                 </div>
                             </header>
@@ -52,11 +54,13 @@
                             </section>
 
                             <div t-if="empty and not gated" class="tsp-empty tsp-dash-empty">
-                                <h2 class="h5">این پنل هنوز دعوتی ندارد</h2>
-                                <p t-if="can_invite">از اینجا شرکت‌کنندگان را به سنجه دعوت می‌کنید و نتیجه‌هایی را که با پنل به اشتراک می‌گذارند می‌بینید. با «دعوت تازه» اولین دعوت را بفرستید.</p>
-                                <p t-else="">وقتی مالک یا هماهنگ‌کنندهٔ پنل دعوت بفرستد و شرکت‌کننده‌ای سنجه را تمام کند، اینجا و در «شرکت‌کنندگان» دیده می‌شود.</p>
+                                <!-- a member who sees only their own people sees only their own invitations: say so (G8-P8-2) -->
+                                <h2 t-if="member.has_perm('clients:read_all')" class="h5">این پنل هنوز دعوتی ندارد</h2>
+                                <h2 t-else="" class="h5">شما هنوز دعوتی نفرستاده‌اید</h2>
+                                <p t-if="can_invite">از اینجا <t t-out="people"/> را به سنجه دعوت می‌کنید و نتیجه‌هایی را که با پنل به اشتراک می‌گذارند می‌بینید. با «دعوت تازه» نخستین دعوت را بفرستید.</p>
+                                <p t-else="">وقتی مالک یا هماهنگ‌کنندهٔ پنل دعوت بفرستد و <t t-out="person_a"/> سنجه را تمام کند، اینجا و در «شرکت‌کنندگان» دیده می‌شود.</p>
                                 <p class="tsp-row-actions">
-                                    <a t-if="can_invite" t-attf-href="/my/workspaces/#{ws.id}/invites/new?fresh=1" class="ts-btn ts-btn--primary">دعوت تازه</a>
+                                    <a t-if="can_invite and not first_run" t-attf-href="/my/workspaces/#{ws.id}/invites/new?fresh=1" class="ts-btn ts-btn--primary">دعوت تازه</a>
                                     <a href="/help/roles" class="ts-btn ts-btn--quiet">نقش من چه چیزهایی را می‌بیند</a>
                                 </p>
                             </div>

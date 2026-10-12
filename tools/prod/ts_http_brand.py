@@ -7,7 +7,10 @@ title and bio; the participant's report and the counselor's panel result page sh
 the verified licence (hidden while unverified) and the footer line; the PDF routes answer application/pdf starting with
 %PDF for the participant, the responsible counselor and the (practising) owner, and 404 for a counselor of the same panel
 who is not responsible; /i/<code> and /j/<code> redirect to the invitation pages (404 on eot.ir and for an unknown code);
-no page title repeats the site name. Fixtures are committed on the clone (like the other HTTP suites); nothing is sent."""
+no page title repeats the site name. Clinic phase 6: the owner's dashboard shows «راه‌اندازی مرکز» with the right progress
+and buttons whose pages and anchors exist, a counselor never sees it, a counselor without a title gets the first-run card,
+«بعداً نشانم نده» / the restore button on /help/panel#center-setup work, and the help section is there.
+Fixtures are committed on the clone (like the other HTTP suites); nothing is sent."""
 import os, re, sys, importlib.util, urllib.error, urllib.request
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -39,12 +42,16 @@ ws = env['ts.workspace'].search([('partner_id', '=', org.id)], limit=1) or env['
     {'name': name, 'purpose': 'clinical', 'partner_id': org.id, 'escalation_contact_id': org.id})
 ws.write({'approved_on': '2026-01-01 00:00:00', 'public_name': False, 'sms_name': False, 'brand_color': False, 'contact_line': False})
 ws.state = 'pilot'
+org.image_1920 = False                               # set-up step 1 stays open (name without logo) for section 7
 env.company.sudo().write({'kv_enabled': False})      # nothing is sent by this suite (the SMS suites enable their fake gateway)
 def member(n, role, lic=None):
     u = user(n)
     m = env['ts.workspace.member'].with_context(active_test=False).search([('workspace_id', '=', ws.id), ('user_id', '=', u.id)]) \
         or env['ts.workspace.member'].create({'workspace_id': ws.id, 'user_id': u.id, 'role': role})
-    m.write({'active': True, 'role': role, 'title': False, 'report_bio': False, 'show_on_report': True})
+    m.write({'active': True, 'role': role, 'title': False, 'report_bio': False, 'show_on_report': True,
+             'ts_onb_hidden_on': False, 'ts_onb_card_hidden_on': False, 'ts_catalog_seen_on': False})
+    if m.catalog_restricted or m.restrict_instrument_ids or m.restrict_battery_ids:
+        m.write({'catalog_restricted': False, 'restrict_instrument_ids': [Command.clear()], 'restrict_battery_ids': [Command.clear()]})
     if lic:
         m.write({'license_number': lic, 'verification_state': 'verified'})
     return m
@@ -157,6 +164,8 @@ own, c1, c3, p1 = login('owner'), login('c1'), login('c3'), login('p1')
 st, body = get(own, W + '/settings')
 check('owner: settings page has «هویت مرکز در گزارش‌ها» with the header preview', st == 200 and 'هویت مرکز در گزارش‌ها' in body
       and 'data-tsbr-preview' in body and 'name="sms_name"' in body, str(st))
+check('owner: the logo is uploaded in the identity form (one form, multipart), not in «مشخصات»', body.count('name="logo"') == 1
+      and 'id="tsbr-logo"' in body and any('multipart/form-data' in f for f in re.findall(r'<form[^>]*/settings/brand"[^>]*>', body)))
 n0 = audit_count('brand.change')
 st, loc, _ = post(own, W + '/settings/brand', {'public_name': PUBLIC, 'sms_name': 'مرکز آرامش', 'brand_color': '#2A6F97',
                                                'contact_line': '۰۲۱-۸۸۸۸۸۸۸۸ · aramesh.example'})
@@ -202,9 +211,18 @@ check('participant report: institution, counselor with verified licence, footer 
 check('participant report: brand colour as the header rule, PDF button', '--tsbr-color: #2a6f97' in body
       and '/my/assessments/%s/pdf' % AT in body)
 check('participant report: the counselor\'s contact data never appears', 'ts.brand.c1.http@example.invalid' not in body)
+bad_img = [m for m in re.findall(r'src="data:image/([a-z+]+);base64,([A-Za-z0-9+/]{8})', body)
+           if (m[0] == 'png' and not m[1].startswith('iVBOR')) or (m[0] == 'jpeg' and not m[1].startswith('/9j/'))]
+check('participant report: every header image is a data URI whose bytes match its type (no broken logo/photo)', not bad_img, str(bad_img))
+check('participant report: the counselor is labelled «مشاور شما», the licence «(تأییدشده)», no photo -> monogram',
+      'مشاور شما' in body and '(تأییدشده)' in body and 'tsbr-mono' in body)
+check('participant report: one PDF button (the browser-print button beside it is hidden by brand.scss)',
+      body.count('tsbr-pdf') == 1)
 st, body = get(c1, W + '/clients/%s/r/%s' % (CL, AT))
 check('panel result page: the same header for the responsible counselor', st == 200 and PUBLIC in body and LIC in body
       and (W + '/clients/%s/r/%s/pdf' % (CL, AT)) in body, str(st))
+check('panel result page: «مشاور مسئول», one output button, the print form replaced', 'مشاور مسئول' in body
+      and body.count('tsbr-pdf') == 1 and '/print"' not in body)
 shell("m = env['ts.workspace.member'].browse(%s); m.verification_state = 'pending'; env.cr.commit()" % M1)
 st, body = get(p1, '/my/assessments/' + AT)
 check('an unverified licence is hidden from the report', st == 200 and PUBLIC in body and LIC not in body, str(st))
@@ -249,6 +267,76 @@ e = Client('www.eot.ir')
 check('eot.ir does not serve /i/ or /j/', e.req('/i/' + ICODE)[0] == 404 and e.req('/j/' + JCODE)[0] == 404)
 st, loc, _ = anon.req('/n/1')
 check('/n/<id> leads to the notice page (which checks the reader)', st == 302 and loc.endswith('/my/notifications/1'), loc)
+
+# ---------------------------------------------------------------- 7. set-up guide «راه‌اندازی مرکز» (clinic phase 6)
+def tsob_section(body):
+    m = re.search(r'<section[^>]*id="tsob".*?</section>', body, re.S)
+    return m.group(0) if m else ''
+
+
+def step_links(sec):
+    return [re.search(r'href="([^"]+)"', a).group(1).replace('&amp;', '&') for a in re.findall(r'<a [^>]*tsob-btn[^>]*>', sec)]
+
+
+st, body = get(own, W)
+sec = tsob_section(body)
+# free panel: 4 steps; counselors done (two clinicians), invitation done (fixtures), identity open (name without logo),
+# catalog open (two counselors, none decided)
+check('owner dashboard: «راه‌اندازی مرکز» with «۲ از ۴ انجام شده» and the help link', st == 200 and 'راه‌اندازی مرکز' in sec
+      and '۲ از ۴ انجام شده' in sec and 'href="/help/panel#center-setup"' in sec, str(st))
+check('owner dashboard: the generic checklist is replaced', 'گام‌های راه‌اندازی' not in body)
+check('owner dashboard: open steps always shown; the phone toggle folds only the done steps (aria-expanded + aria-controls)',
+      'id="tsob-open"' in sec and 'aria-controls="tsob-more"' in sec and 'aria-expanded=' in sec and 'id="tsob-more"' in sec)
+check('owner dashboard: the EOT team\'s part (panel approval, counselor licences) shown as status lines',
+      'تأیید پنل' in sec and 'پروانهٔ مشاوران' in sec)
+check('owner dashboard: one current step with the only primary button of the list', sec.count('tsob-step--current') == 1
+      and sec.count('ts-btn--primary') == 1, str(sec.count('ts-btn--primary')))
+links = step_links(sec)
+check('owner dashboard: one button per open step (identity -> name and logo section, catalog -> first counselor)',
+      W + '/settings#tsbr-org' in links and (W + '/members/%s#tsp-catalog' % M1) in links, str(links))
+bad = []
+for url in links:
+    path, _, frag = url.partition('#')
+    st2, page = get(own, path)
+    if st2 != 200 or (frag and ('id="%s"' % frag) not in page):
+        bad.append('%s -> %s' % (url, st2))
+check('every step button opens a page that has its anchor', links and not bad, str(bad))
+st, loc, _ = post(own, W + '/members/%s/catalog' % M1, {'catalog_mode': 'all'})
+sec = tsob_section(get(own, W)[1])
+check('saving a counselor\'s catalog unchanged counts; the button moves to the next counselor', '۱ از ۲' in sec
+      and (W + '/members/%s#tsp-catalog' % M3) in step_links(sec), str(step_links(sec)))
+st, loc, _ = post(own, W + '/members/%s/catalog' % M3, {'catalog_mode': 'all'})
+sec = tsob_section(get(own, W)[1])
+check('both counselors decided -> «۳ از ۴ انجام شده»', '۳ از ۴ انجام شده' in sec)
+st, body = get(c1, W)
+check('a counselor never sees the set-up checklist', st == 200 and 'id="tsob"' not in body and 'راه‌اندازی مرکز' not in body, str(st))
+check('a counselor with a title gets no first-run card', 'id="tsob-card"' not in body)
+st, body = get(c3, W)
+check('a counselor without a title gets the first-run card linking to their own identity section', st == 200
+      and 'هویت شما در گزارش‌ها را کامل کنید' in body and (W + '/members/%s#tsbr-member' % M3) in body, str(st))
+st, page = get(c3, W + '/members/' + M3)
+check('...and that section exists on their own member page', st == 200 and 'id="tsbr-member"' in page, str(st))
+st, loc, _ = post(c3, W + '/onboarding/card-hide', {})
+check('the counselor closes the card', st in (302, 303) and 'id="tsob-card"' not in get(c3, W)[1], str(st))
+st, loc, _ = post(c1, W + '/onboarding/nocap', {})
+check('a counselor cannot record «بدون سقف»', st == 403, str(st))
+st, loc, _ = post(own, W + '/onboarding/hide', {})
+check('«بعداً نشانم نده» hides the checklist for the owner', st in (302, 303) and 'id="tsob"' not in get(own, W)[1], str(st))
+st, body = get(own, '/help/panel')
+check('the help page offers the owner the restore button', st == 200 and ('action="%s/onboarding/show"' % W) in body, str(st))
+st, loc, _ = post(own, W + '/onboarding/show', {})
+check('«نمایش دوباره» brings it back', st in (302, 303) and 'id="tsob"' in get(own, W)[1], str(st))
+st, body = get(anon, '/help/panel')
+m7 = re.search(r'<article[^>]*id="center-setup".*?</article>', body, re.S)
+art = m7.group(0) if m7 else ''
+check('/help/panel has #center-setup, listed in its table of contents', st == 200 and art and 'href="#center-setup"' in body
+      and 'راهنمای راه‌اندازی مرکز مشاوره' in art, str(st))
+check('the section explains the six steps, the prepaid model and the invoices', all(w in art for w in (
+    'هویت مرکز در گزارش‌ها', 'دعوت مشاوران', 'سنجه‌های هر مشاور', 'سقف ماهانهٔ مشاوران', 'اعتبار پنل', 'نخستین دعوت',
+    'رزرو', 'کسر', 'آزاد', 'فاکتورهای شارژ اعتبار')))
+check('the section speaks counseling, no «!» or «متأسفانه»', not any(w in re.sub(r'<[^>]+>', ' ', art) for w in (
+    '!', 'متأسفانه', 'درمان', 'بالینی', 'کلینیک', 'بیمار', 'مؤسسه')))
+check('anonymous visitors get no restore button', 'onboarding/show' not in body)
 
 # ---------------------------------------------------------------- 6. titles never repeat the site name
 dup = []

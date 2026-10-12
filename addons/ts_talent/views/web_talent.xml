@@ -271,9 +271,9 @@
                                     <a t-elif="not report_frame" t-att-href="back_url or '/my/workspaces/%s/clients' % ws.id" class="ts-backlink">شرکت‌کنندگان</a>
                                     <form t-if="print_url" method="post" t-att-action="print_url" class="tt-inline-form">
                                         <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
-                                        <button type="submit" class="ts-btn ts-btn--outline">چاپ یا ذخیره به‌صورت PDF</button>
+                                        <button type="submit" class="ts-btn ts-btn--quiet">چاپ همین صفحه</button>
                                     </form>
-                                    <button t-else="" type="button" class="ts-btn ts-btn--outline ts-js-print">چاپ یا ذخیره به‌صورت PDF</button>
+                                    <button t-else="" type="button" class="ts-btn ts-btn--quiet ts-js-print">چاپ همین صفحه</button>
                                 </div>
                                 <div t-if="org_view and panel_actions" class="tt-actions ts-noprint" role="group" aria-label="کارهای این گزارش">
                                     <a t-foreach="panel_actions" t-as="pa" t-att-href="pa[1]" class="ts-btn ts-btn--outline ts-btn--sm" t-out="pa[0]"/>

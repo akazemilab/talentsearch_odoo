@@ -86,6 +86,12 @@
     .ts-muted { color: var(--color-neutral-400); }
     .ts-num { font-variant-numeric: tabular-nums; }
     .ts-sr, .tsp-sr { position: absolute; inline-size: 1px; block-size: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+    // Shared separator in meta lines (UX audit 2026-10-12, G6-PT1): a drawn dot, never the « · » glyph, which next to a
+    // Persian digit reads as zero («۲ · سنجه» looked like «۲۰ سنجه»). Markup: <t t-call="ts_website.sep"/>; screen readers
+    // hear a comma (the hidden «، »).
+    .ts-sep { display: inline-block; inline-size: 4px; block-size: 4px; border-radius: 50%; background: currentColor; opacity: .55;
+        vertical-align: middle; margin-inline: .55em; }
+    bdi[dir="ltr"] { white-space: nowrap; }   // report ids and codes (TSA-000147) never break at the hyphen
     .ts-ico { inline-size: 1.15em; block-size: 1.15em; flex: none; display: inline-block; vertical-align: -.2em; }
 
     // ---------- buttons: primary = accent border + accent-900 fill + accent-300 text; secondary = neutral border; quiet = text ----------
@@ -389,6 +395,8 @@
     .ts-quote p { margin: 0; font: 600 clamp(1.5rem, 3vw, 2.125rem)/1.5 var(--font-display); text-wrap: balance; }
     .ts-quote span { font-size: 15px; line-height: 1.8; color: var(--color-neutral-400); }
     .ts-notice { display: flex; gap: 10px; align-items: flex-start; padding: 14px 16px; margin-block: 12px; border-radius: var(--r-12); background: var(--color-neutral-900); box-shadow: 0 0 0 1px var(--color-neutral-800); color: var(--color-neutral-100); font-size: 14.5px; line-height: 1.85; border: 0; }
+    // a one-paragraph notice is running text: as a flex box its inline link became a narrow column of its own (2026-10-12)
+    p.ts-notice:not(:has(> svg)) { display: block; }
     .ts-notice > svg { inline-size: 20px; block-size: 20px; color: var(--color-accent-300); margin-block-start: 3px; flex: none; }
     .ts-notice p:last-child { margin: 0; }
     .ts-notice--warn { background: var(--status-warn-soft); box-shadow: 0 0 0 1px color-mix(in srgb, var(--status-warn) 30%, transparent); color: var(--status-warn); }
@@ -444,7 +452,7 @@
     .ts-f2 { background: var(--color-accent-600) !important; }
     .ts-f3 { background: var(--color-neutral-400) !important; }
     .ts-f4 { background: #8a84c4 !important; }
-    :root[data-theme='dark'] & .ts-f4 { background: #423e5d !important; }
+    @media screen { :root[data-theme='dark'] & .ts-f4 { background: #423e5d !important; } }
     .ts-matrix { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 0 32px; padding: 6px 20px; border-radius: var(--r-18); background: var(--color-surface); box-shadow: var(--shadow-sm); }
     .ts-matrix__ab { display: flex; flex-direction: column; gap: 8px; padding-block: 16px; border-block-end: 1px solid var(--color-neutral-900); }
     .ts-matrix__ab > strong { font: 500 16px var(--font-display); }

@@ -15,6 +15,24 @@ AUDIENCES = [
 # intermediate anchors complete the same five-point wording for all instruments.
 SCALE = [(1, 'بسیار کم'), (2, 'کم'), (3, 'متوسط'), (4, 'زیاد'), (5, 'بسیار زیاد')]
 SECONDS_PER_ITEM = 8
+_FA_DIGITS = str.maketrans('0123456789', '۰۱۲۳۴۵۶۷۸۹')
+# Spelling of a few source titles (نیم‌فاصله and joined words; UX audit G7-P2-8, owner decision 2026-10-12): applied to the
+# display `title` only. `name` (the book's name) and `slug` (URLs) keep the source spelling. Takes effect when titles are
+# recomputed (the loader calls _ts_refresh_titles on every load).
+TITLE_SPELLING = {
+    'فهرست ظرفیتهای شناختی': 'فهرست ظرفیت‌های شناختی',
+    'فهرست وظیفه مندی': 'فهرست وظیفه‌مندی',
+    'فهرست خود گستری': 'فهرست خودگستری',
+    'فهرست سر زندگی': 'فهرست سرزندگی',
+    'فهرست بیتابی': 'فهرست بی‌تابی',
+}
+# Older loads wrote «این سنجه 7 بُعد …» with Latin digits, «داوطلب» and «خلاصهٔ بازه‌ها» into intended_use; the loader
+# now writes the glossary words, and ts_intended_use() maps already stored texts at display time (no data migration).
+_USE_FIXES = [
+    (re.compile(r'این سنجه (\d+) بُعد را'), lambda m: 'این سنجه %s عامل را' % m.group(1).translate(_FA_DIGITS)),
+    (re.compile(r'رضایت داوطلب'), lambda m: 'رضایت شرکت‌کننده'),
+    (re.compile(r'به‌صورت خلاصهٔ بازه‌ها'), lambda m: 'به‌صورت سطح هر عامل'),
+]
 
 
 class TsInstrument(models.Model):
@@ -72,8 +90,27 @@ class TsInstrument(models.Model):
             twins = self.with_context(active_test=False).search([('name', '=like', base + '%'), ('id', '!=', rec._origin.id or 0)])
             dup = m and any(self._ts_base_title(t.name) == base for t in twins)
             n = m.group(1) if m else ''
-            rec.title = '%s (%s پرسش)' % (base, n.translate(str.maketrans('0123456789', '۰۱۲۳۴۵۶۷۸۹'))) if dup else base
+            shown = TITLE_SPELLING.get(base, base)
+            rec.title = '%s (%s پرسش)' % (shown, n.translate(str.maketrans('0123456789', '۰۱۲۳۴۵۶۷۸۹'))) if dup else shown
             rec.slug = re.sub(r'\s+', '-', base) + ('-%s' % n if dup else '')
+
+    def ts_title(self):
+        """The name people see everywhere (UX audit 2026-10-12): «فهرست پاکزیستی», never the source name with its
+        Latin item count «فهرست پاکزیستی - 20». Falls back to the cleaned name before `title` is computed."""
+        self.ensure_one()
+        return (self.title or self._ts_base_title(self.name) or self.name or '').strip()
+
+    def ts_display_title(self):
+        """Alias of ts_title() kept for older callers."""
+        return self.ts_title()
+
+    def ts_intended_use(self):
+        """intended_use as people read it: Persian digits and glossary words even in texts stored by older loads."""
+        self.ensure_one()
+        text = self.intended_use or ''
+        for rx, fn in _USE_FIXES:
+            text = rx.sub(fn, text)
+        return text
 
     def _ts_refresh_titles(self):
         insts = self.with_context(active_test=False).search([])
@@ -138,6 +175,15 @@ class TsInstrumentVersion(models.Model):
     validation_report = fields.Text('گزارش اعتبارسنجی', readonly=True)
     source_contract_xmlid = fields.Char(readonly=True)
     source_contract_id = fields.Integer(readonly=True)
+
+    def ts_version_label(self):
+        """The scoring version as participants read it: «۱٫۲» from «S09-V1.2-inventory_007» (G8-P10-6); the code itself
+        stays for staff and in a title attribute."""
+        self.ensure_one()
+        m = re.search(r'V?(\d+)\.(\d+)', self.contract_version or '')
+        if not m:
+            return (self.contract_version or '').translate(_FA_DIGITS)
+        return ('%s٫%s' % (m.group(1), m.group(2))).translate(_FA_DIGITS)
 
     @api.depends('instrument_id.code', 'contract_version')
     def _compute_name(self):

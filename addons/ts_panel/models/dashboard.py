@@ -137,15 +137,18 @@ class TsMemberDashboard(models.Model):
                 C.search_count(visible_domain(self) + [('state', '=', 'active'), ('responsible_id', '=', False)]),
                 base + '/clients?filter=unassigned')
         if self.has_perm('clients:assign'):
-            add('handover', 'درخواست واگذاری',
+            add('handover', 'درخواست سپردن',
                 C.search_count(visible_domain(self) + [('state', '=', 'active'), ('handover_to_id', '!=', False)]),
                 base + '/clients?filter=handover')
         if self.has_perm('members:invite'):
             add('invites', 'دعوت همکار در انتظار پذیرش',
                 env['ts.member.invite'].sudo().search_count([('workspace_id', '=', ws.id), ('state', '=', 'pending'),
                                                              ('expires_at', '>', fields.Datetime.now())]), base + '/members')
-        if self.has_perm('panel:settings') and ws.terms_version != TERMS_VERSION:
-            add('terms', 'شرایط استفاده تغییر کرده است', 1, base + '/settings')
+        # Only when there is something to do: the panel accepted an older version of the terms, and the settings page then
+        # offers «ثبت پذیرش شرایط تازه». A panel that never accepted online (made by the EOT team or before the online form)
+        # has nothing to accept there, so it is not flagged (UX audit G8-P1-1: a warning that can never clear).
+        if self.has_perm('panel:settings') and ws.terms_version and ws.terms_version != TERMS_VERSION:
+            add('terms', 'نسخهٔ تازهٔ شرایط استفاده منتظر پذیرش شماست', 1, base + '/settings#tsp-terms')
         return out
 
     # ------------------------------------------------------------------ 5.2 KPI tiles and the funnel
@@ -183,7 +186,7 @@ class TsMemberDashboard(models.Model):
                         'text': None, 'url': base + '/clients?filter=mine_open'})
         if self.has_perm('credits:read'):
             wallet = env['ts.wallet']._for_workspace(ws)
-            out.append({'key': 'usage', 'label': 'مصرف این دوره', 'n': wallet.units_since(period_start(days)),
+            out.append({'key': 'usage', 'label': 'سنجه‌های تکمیل‌شدهٔ این دوره', 'n': wallet.units_since(period_start(days)),
                         'text': 'رایگان در این فصل' if wallet._free_mode() else None, 'url': base + '/credits'})
         return out[:8]
 

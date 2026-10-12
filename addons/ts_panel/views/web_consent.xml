@@ -50,10 +50,11 @@
     </record>
 
     <!-- portal v3 (P2): who sees the result, from the real invitation (purpose + accepted share level), never a fixed sentence.
-         UX audit 2026-10-11: «تو» for students, «مشاور» instead of «مشاور مسئول» (glossary §9-4). -->
+         UX audit 2026-10-11: «تو» for students, «مشاور» instead of «مشاور مسئول» (glossary §9-4).
+         2026-10-12 (G6, CONSENT_VERSION v4): «حساب» (glossary §7), «اشتراک‌گذاری» (§6), «عامل» (§4). -->
     <template id="who_sees_line" name="Who sees this result (one line)">
         <t t-set="asg" t-value="attempt.ts_org_assignment()"/>
-        <t t-set="org" t-value="asg.workspace_id.partner_id.name if asg else ''"/>
+        <t t-set="org" t-value="asg.workspace_id.ts_public_name() if asg else ''"/>
         <t t-set="tu_w" t-value="attempt.ts_informal()"/>
         <span id="ts-who-sees-line" t-att-data-level="asg.share_level if asg else 'self'">
             <t t-if="asg and asg.share_level != 'none'">
@@ -62,16 +63,16 @@
                     <t t-else="">شما، و مشاورتان در <strong t-out="org"/> گزارش نتیجه را می‌بینید؛ پاسخ‌های خام را فقط خودتان می‌بینید.</t>
                 </t>
                 <t t-elif="asg.workspace_id.purpose == 'clinical'">شما، و فقط مشاور تأییدشدهٔ <strong t-out="org"/> گزارش کامل را همراه با راهنمای مشاور می‌بیند.</t>
-                <t t-else="">شما، و <strong t-out="org"/> فقط سطح هر بُعد (کم، متوسط یا زیاد) را می‌بیند؛ نه پاسخ‌ها، نه نمره‌ها، نه متن تفسیر.</t>
+                <t t-else="">شما، و <strong t-out="org"/> فقط سطح هر عامل (کم، متوسط یا زیاد) را می‌بیند؛ نه پاسخ‌ها، نه نمره‌ها، نه متن تفسیر.</t>
                 <span class="ts-hint" t-if="tu_w"> هر وقت بخواهی می‌توانی اشتراک‌گذاری را از صفحهٔ گزارش قطع کنی.</span>
                 <span class="ts-hint" t-else=""> هر وقت بخواهید می‌توانید اشتراک‌گذاری را از صفحهٔ گزارش قطع کنید.</span>
             </t>
             <t t-elif="asg">
-                <t t-if="tu_w">فقط تو. <strong t-out="org"/> فقط وضعیت انجام (شروع‌شده یا تکمیل‌شده) را می‌بیند، چون اشتراک نتیجه را نپذیرفته‌ای.</t>
-                <t t-else="">فقط شما. <strong t-out="org"/> فقط وضعیت انجام (شروع‌شده یا تکمیل‌شده) را می‌بیند، چون اشتراک نتیجه را نپذیرفته‌اید.</t>
+                <t t-if="tu_w">فقط تو. <strong t-out="org"/> فقط وضعیت انجام (شروع‌شده یا تکمیل‌شده) را می‌بیند، چون اشتراک‌گذاری نتیجه را نپذیرفته‌ای.</t>
+                <t t-else="">فقط شما. <strong t-out="org"/> فقط وضعیت انجام (شروع‌شده یا تکمیل‌شده) را می‌بیند، چون اشتراک‌گذاری نتیجه را نپذیرفته‌اید.</t>
             </t>
-            <t t-elif="tu_w">فقط تو، در حساب کاربری‌ات. بعداً اگر بخواهی، می‌توانی نتیجه را برای مشاورت بفرستی.</t>
-            <t t-else="">فقط شما، در حساب کاربری‌تان. بعداً اگر بخواهید، می‌توانید نتیجه را برای مشاورتان بفرستید.</t>
+            <t t-elif="tu_w">فقط تو، در حسابت. بعداً اگر بخواهی، می‌توانی نتیجه را برای مشاورت بفرستی.</t>
+            <t t-else="">فقط شما، در حسابتان. بعداً اگر بخواهید، می‌توانید نتیجه را برای مشاورتان بفرستید.</t>
         </span>
     </template>
 
@@ -86,7 +87,7 @@
             </xpath>
             <xpath expr="//p[hasclass('ts-lead')]" position="replace">
                 <t t-set="asg0" t-value="attempt.ts_org_assignment()"/>
-                <p class="ts-lead"><t t-if="asg0">به دعوت <strong t-out="asg0.workspace_id.partner_id.name"/>. </t>پیش از شروع، این موارد را بخوانید.</p>
+                <p class="ts-lead"><t t-if="asg0">به دعوت <strong t-out="asg0.workspace_id.ts_public_name()"/>. </t>پیش از شروع، این موارد را بخوانید.</p>
             </xpath>
         </field>
     </record>

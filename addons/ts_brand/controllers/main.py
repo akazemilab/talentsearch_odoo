@@ -35,7 +35,7 @@ from odoo.addons.ts_panel.controllers.reports import TsPanelReports
 from ..models.short import CODE_RE
 
 _logger = logging.getLogger(__name__)
-PDF_ERROR = 'ساختن فایل PDF الان ممکن نشد. چند دقیقه بعد دوباره امتحان کنید یا از دکمهٔ «چاپ» صفحهٔ گزارش استفاده کنید.'
+PDF_ERROR = 'ساختن فایل PDF الان ممکن نشد. چند دقیقه بعد دوباره امتحان کنید، یا صفحهٔ گزارش را باز کنید و از چاپ مرورگر «ذخیره به‌صورت PDF» را بزنید.'
 
 
 def _pdf(report_xmlid, res_id, data, filename, fallback_url=None):
@@ -158,8 +158,16 @@ class TsBrandLinks(http.Controller):
             return denied
         if not me.ts_brand_manager():
             return forbidden(me, 'brand:panel', 'settings')
+        ws = me.workspace_id
+        logo = request.httprequest.files.get('logo')
+        logo_bytes = logo.read(600 * 1024) if logo and logo.filename else None
+        remove_logo = bool(post.get('remove_logo')) and not logo_bytes
         try:
-            changed = me.workspace_id.ts_brand_save(me, post)
+            changed = ws.ts_brand_save(me, post)
+            if logo_bytes or (remove_logo and ws.ts_has_logo()):
+                # the logo moved into this form (UX audit G8-P2-2); ts_org keeps checking and auditing it (workspace.profile)
+                ws.ts_update_profile(logo_bytes=logo_bytes, remove_logo=remove_logo)
+                changed = list(changed) + ['logo']
         except (UserError, ValidationError) as e:
             flash_error(str(e.args[0] if e.args else e))
         else:

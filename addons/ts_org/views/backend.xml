@@ -122,7 +122,7 @@
         </field>
     </record>
     <record id="ts_ops_dashboard_action" model="ir.actions.act_window">
-        <field name="name">داشبورد عملیات</field>
+        <field name="name">پیشخوان عملیات</field>
         <field name="res_model">ts.attempt</field>
         <field name="view_mode">graph,pivot,list</field>
         <field name="view_ids" eval="[(5, 0, 0), (0, 0, {'view_mode': 'graph', 'view_id': ref('ts_attempt_view_graph_ops')}), (0, 0, {'view_mode': 'pivot', 'view_id': ref('ts_attempt_view_pivot_ops')})]"/>
@@ -155,7 +155,7 @@
 
     <menuitem id="menu_ts_org_assignments" name="دعوت‌های سازمانی" parent="ts_core.menu_ts_customers" action="ts_assignment_action" sequence="20" groups="ts_core.group_ts_manager"/>
     <menuitem id="menu_ts_org_verify" name="احراز صلاحیت حرفه‌ای" parent="ts_core.menu_ts_customers" action="ts_member_verify_action" sequence="30" groups="ts_core.group_ts_manager"/>
-    <menuitem id="menu_ts_ops_dashboard" name="داشبورد عملیات" parent="ts_assessment.menu_ts_assessments" action="ts_ops_dashboard_action" sequence="5" groups="ts_core.group_ts_manager"/>
+    <menuitem id="menu_ts_ops_dashboard" name="پیشخوان عملیات" parent="ts_assessment.menu_ts_assessments" action="ts_ops_dashboard_action" sequence="5" groups="ts_core.group_ts_manager"/>
     <!-- PLT-10: an upgrade only adds groups to a menu; set the manager group alone -->
     <record id="menu_ts_org_assignments" model="ir.ui.menu">
         <field name="group_ids" eval="[(6, 0, [ref('ts_core.group_ts_manager')])]"/>

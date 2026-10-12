@@ -5,7 +5,9 @@
          Website 4 only. Values come from ts.workspace.ts_brand_header() (python): brand = {name, contact, color, logo,
          counselor: {name, title, license (only when verified), photo, bio, signature} or None, footer}. -->
 
-    <!-- Report header. Params: brand (dict), kind (optional line under the header). -->
+    <!-- Report header. Params: brand (dict), kind (optional line under the header), tsbr_who (role label above the counselor:
+         «مشاور شما» on the participant's own report, «مشاور مسئول» on panel pages; default «مشاور»). No logo -> no image at
+         all (the settings preview alone draws an empty «لوگو» box); no photo -> a monogram circle. -->
     <record id="tpl_doc_head" model="ir.ui.view">
         <field name="name">TS brand: report header</field>
         <field name="type">qweb</field>
@@ -15,19 +17,25 @@
             <t t-name="ts_brand.doc_head">
                 <header class="ts-doc__head tsbr-head" t-att-style="('--tsbr-color: %s' % brand['color']) if brand.get('color') else None" data-tsbr-head="1">
                     <div class="tsbr-org">
-                        <img t-if="brand.get('logo')" t-att-src="brand['logo']" class="tsbr-logo" width="48" height="48" alt=""/>
+                        <t t-if="brand.get('preview')">
+                            <img t-att-src="brand.get('logo') or None" class="tsbr-logo" width="48" height="48" alt="" data-tsbr-out="logo" t-att-hidden="None if brand.get('logo') else 'hidden'"/>
+                            <span class="tsbr-logo tsbr-logo--empty" data-tsbr-out="logo-empty" t-att-hidden="'hidden' if brand.get('logo') else None">لوگو</span>
+                        </t>
+                        <img t-elif="brand.get('logo')" t-att-src="brand['logo']" class="tsbr-logo" width="48" height="48" alt=""/>
                         <div class="tsbr-org__text">
                             <strong class="tsbr-org__name" data-tsbr-out="name" t-out="brand['name']"/>
-                            <small class="tsbr-org__contact" data-tsbr-out="contact" t-att-hidden="None if brand.get('contact') else 'hidden'"><bdi t-out="brand.get('contact') or ''"/></small>
+                            <small class="tsbr-org__contact" t-att-hidden="None if brand.get('contact') else 'hidden'"><bdi data-tsbr-out="contact" t-att-dir="brand.get('contact_dir') or 'auto'" t-out="brand.get('contact') or ''"/></small>
                         </div>
                     </div>
                     <t t-set="tsbr_c" t-value="brand.get('counselor')"/>
-                    <div t-if="tsbr_c" class="tsbr-counselor">
+                    <div t-if="tsbr_c" t-attf-class="tsbr-counselor#{' tsbr-counselor--sample' if tsbr_c.get('sample') else ''}">
                         <img t-if="tsbr_c['photo']" t-att-src="tsbr_c['photo']" class="tsbr-photo" width="48" height="48" alt=""/>
+                        <span t-else="" class="tsbr-photo tsbr-mono" aria-hidden="true" t-out="tsbr_c.get('initial') or ''"/>
                         <div class="tsbr-counselor__text">
+                            <small class="tsbr-counselor__role" t-out="tsbr_who or 'مشاور'"/>
                             <strong><bdi t-out="tsbr_c['name']"/></strong>
                             <small t-if="tsbr_c['title']" t-out="tsbr_c['title']"/>
-                            <small t-if="tsbr_c['license']" class="tsbr-license">شمارهٔ پروانه: <bdi dir="ltr" t-out="tsbr_c['license']"/></small>
+                            <small t-if="tsbr_c['license']" class="tsbr-license">شمارهٔ پروانه: <bdi dir="ltr" t-out="tsbr_c['license']"/> (تأییدشده)</small>
                         </div>
                     </div>
                 </header>
@@ -54,7 +62,9 @@
         </field>
     </record>
 
-    <!-- Settings: the panel's identity on reports, with a live preview of the header (brand_preview.js; works without it). -->
+    <!-- Settings: the panel's identity on reports, with a live preview of the header (brand_preview.js; works without it).
+         One form for everything the header shows: name, logo (moved here from «مشخصات», UX audit G8-P2-2), contact line,
+         colour; the SMS name. Posts to /settings/brand (multipart). -->
     <record id="tpl_settings_brand" model="ir.ui.view">
         <field name="name">TS brand: settings section</field>
         <field name="type">qweb</field>
@@ -62,50 +72,73 @@
         <field name="website_id" ref="ts_website.website_ts"/>
         <field name="arch" type="xml">
             <t t-name="ts_brand.settings_brand">
-                <t t-set="tsbr_prev" t-value="ws.ts_brand_preview(member)"/>
+                <t t-set="tsbr_prev" t-value="ws.ts_brand_preview()"/>
+                <t t-set="tsbr_one" t-value="ws.ts_people_word(False)"/>
+                <t t-set="tsbr_logo_now" t-value="ws.ts_logo_uri(128)"/>
                 <section class="ts-card" id="tsbr-org" aria-labelledby="tsbr-org-h">
                     <h2 id="tsbr-org-h" class="h5">هویت مرکز در گزارش‌ها</h2>
-                    <p class="ts-hint">بالای گزارش هر شرکت‌کننده، در صفحه و در فایل PDF، نام و لوگوی مرکز و خط تماس آن می‌آید و در سوی دیگر، مشاور همان شرکت‌کننده. لوگو را در بخش «مشخصات» عوض کنید.</p>
-                    <form t-attf-action="/my/workspaces/#{ws.id}/settings/brand" method="post" class="tsp-form" data-tsp-once="1" data-tsbr-form="1">
+                    <p class="ts-hint">بالای گزارش هر <t t-out="tsbr_one"/>، در صفحه و در فایل PDF، نام و لوگوی مرکز و خط تماس آن می‌آید و در سوی دیگر، مشاور همان <t t-out="tsbr_one"/>.</p>
+                    <ul class="tsbr-names" aria-label="کدام نام کجا دیده می‌شود">
+                        <li><strong>نام پنل</strong> (بخش «مشخصات»): فقط داخل پنل، برای شما و همکاران.</li>
+                        <li><strong>نام مرکز در گزارش‌ها</strong>: هرجا <t t-out="tsbr_one"/> نام مرکز را می‌بیند، از سربرگ گزارش تا صفحهٔ دعوت.</li>
+                        <li><strong>نام کوتاه در پیامک</strong>: سطر اول پیامک‌های دعوت.</li>
+                    </ul>
+                    <form t-attf-action="/my/workspaces/#{ws.id}/settings/brand" method="post" enctype="multipart/form-data" class="tsp-form" data-tsp-once="1" data-tsbr-form="1" data-ts-dirty="هویت مرکز در گزارش‌ها">
                         <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
                         <div class="tsp-field">
                             <label class="tsp-field__label" for="tsbr_public">نام مرکز در گزارش‌ها</label>
                             <p class="tsp-field__hint" id="tsbr_public_h">اگر خالی بماند، نام پنل («<t t-out="ws.name"/>») نوشته می‌شود. حداکثر ۱۰۰ نویسه.</p>
-                            <input id="tsbr_public" name="public_name" type="text" maxlength="100" t-att-value="ws.public_name or ''" t-att-placeholder="ws.name" aria-describedby="tsbr_public_h" data-tsbr-bind="name"/>
+                            <input id="tsbr_public" name="public_name" type="text" maxlength="100" t-att-value="ws.public_name or ''" aria-describedby="tsbr_public_h" data-tsbr-bind="name"/>
+                        </div>
+                        <div class="tsp-field" id="tsbr-logo">
+                            <p t-if="tsbr_logo_now" class="tsp-logo-now"><img t-att-src="tsbr_logo_now" alt="لوگوی فعلی" width="64" height="64"/>
+                                <span class="ts-hint">لوگوی فعلی؛ مگر فایل تازه‌ای انتخاب کنید یا آن را حذف کنید، همین می‌ماند.</span></p>
+                            <p t-else="" class="ts-hint">هنوز لوگویی بارگذاری نشده است.</p>
+                            <p t-if="tsbr_logo_now" class="tsp-check"><label for="tsbr_logo_rm"><input type="checkbox" id="tsbr_logo_rm" name="remove_logo" value="1" data-tsbr-logo-rm="1"/> حذف لوگو</label></p>
+                            <t t-call="ts_website.filefield" ff_name.f="logo" ff_id.f="tsbr_logo" ff_label.f="لوگو" ff_accept.f="image/png,image/jpeg,image/webp" ff_hint.f="PNG، JPG یا WEBP، کمتر از ۵۰۰ کیلوبایت؛ با «ذخیرهٔ هویت مرکز» ذخیره می‌شود."/>
                         </div>
                         <div class="tsp-field">
                             <label class="tsp-field__label" for="tsbr_sms">نام کوتاه در پیامک</label>
-                            <p class="tsp-field__hint" id="tsbr_sms_h">سطر اول پیامک‌های دعوت؛ حداکثر ۱۸ نویسه تا پیامک یک‌بخشی بماند. اگر خالی بماند: «<t t-out="ws.ts_sms_sender()"/>».</p>
-                            <input id="tsbr_sms" name="sms_name" type="text" maxlength="18" t-att-value="ws.sms_name or ''" t-att-placeholder="ws.ts_sms_sender()" aria-describedby="tsbr_sms_h tsbr_sms_n" data-tsbr-count="18"/>
+                            <p class="tsp-field__hint" id="tsbr_sms_h">حداکثر ۱۸ نویسه تا پیامک یک‌بخشی بماند. اگر خالی بماند، این نوشته می‌شود: «<t t-out="ws.ts_sms_sender()"/>».</p>
+                            <input id="tsbr_sms" name="sms_name" type="text" maxlength="18" t-att-value="ws.sms_name or ''" aria-describedby="tsbr_sms_h tsbr_sms_n" data-tsbr-count="18"/>
                             <p class="tsp-field__hint tsbr-count" id="tsbr_sms_n" aria-live="polite"/>
                         </div>
                         <div class="tsp-field">
                             <label class="tsp-field__label" for="tsbr_contact">تلفن یا نشانی وب در گزارش‌ها</label>
-                            <p class="tsp-field__hint" id="tsbr_contact_h">یک خط، حداکثر ۸۰ نویسه؛ مثلاً «۰۲۱-۱۲۳۴۵۶۷۸ · example.ir».</p>
-                            <input id="tsbr_contact" name="contact_line" type="text" maxlength="80" t-att-value="ws.contact_line or ''" aria-describedby="tsbr_contact_h" data-tsbr-bind="contact"/>
+                            <p class="tsp-field__hint" id="tsbr_contact_h">یک خط، حداکثر ۸۰ نویسه؛ مثلاً <bdi dir="ltr">021-12345678 · example.ir</bdi>.</p>
+                            <input id="tsbr_contact" name="contact_line" type="text" dir="auto" maxlength="80" t-att-value="ws.contact_line or ''" aria-describedby="tsbr_contact_h" data-tsbr-bind="contact"/>
                         </div>
-                        <div class="tsp-field">
-                            <label class="tsp-field__label" for="tsbr_color">رنگ نشان مرکز</label>
-                            <p class="tsp-field__hint" id="tsbr_color_h">فقط برای خط باریک بالای سربرگ گزارش؛ به شکل #rrggbb. خالی یعنی رنگ استعدادیاب.</p>
+                        <fieldset class="tsp-field tsbr-colorset">
+                            <legend class="tsp-field__label">رنگ نشان مرکز</legend>
+                            <p class="tsp-field__hint" id="tsbr_color_h">فقط برای خط باریک بالای سربرگ گزارش. خالی یعنی رنگ استعدادیاب.</p>
                             <span class="tsbr-color">
-                                <input id="tsbr_color" name="brand_color" type="text" dir="ltr" class="ts-bdi" maxlength="7" pattern="#[0-9a-fA-F]{6}" placeholder="#5446a8" t-att-value="ws.brand_color or ''" aria-describedby="tsbr_color_h" data-tsbr-bind="color"/>
-                                <input type="color" class="tsbr-color__pick" t-att-value="ws.brand_color or '#5446a8'" aria-label="انتخاب رنگ" data-tsbr-pick="1" hidden="hidden"/>
+                                <span class="tsbr-color__pickwrap" data-tsbr-pickwrap="1" hidden="hidden">
+                                    <input type="color" id="tsbr_color_pick" class="tsbr-color__pick" t-att-value="ws.brand_color or '#5446a8'" data-tsbr-pick="1" aria-describedby="tsbr_color_h"/>
+                                    <label for="tsbr_color_pick" class="tsbr-color__picklabel">انتخاب رنگ</label>
+                                </span>
+                                <span class="tsbr-color__hex">
+                                    <label for="tsbr_color" class="tsbr-color__hexlabel">کد رنگ</label>
+                                    <input id="tsbr_color" name="brand_color" type="text" dir="ltr" class="ts-bdi" maxlength="7" pattern="#[0-9a-fA-F]{6}" t-att-value="ws.brand_color or ''" aria-describedby="tsbr_color_h tsbr_color_e" data-tsbr-bind="color"/>
+                                </span>
                             </span>
-                        </div>
+                            <p class="tsp-field__hint" id="tsbr_color_e">مثلاً <bdi dir="ltr">#5446a8</bdi></p>
+                        </fieldset>
                         <p><button type="submit" class="ts-btn ts-btn--primary">ذخیرهٔ هویت مرکز</button></p>
                     </form>
                     <div class="tsbr-preview" data-tsbr-preview="1" t-att-data-tsbr-default="ws.name">
                         <p class="tsbr-preview__label" id="tsbr_prev_h">پیش‌نمایش سربرگ گزارش</p>
                         <div class="tsbr-preview__doc" role="group" aria-labelledby="tsbr_prev_h">
-                            <t t-call="ts_brand.doc_head" brand="tsbr_prev"/>
+                            <t t-call="ts_brand.doc_head" brand="tsbr_prev" tsbr_who="'مشاور شما'"/>
                         </div>
+                        <p class="ts-hint tsbr-preview__note">سوی دیگر سربرگ، مشاور همان <t t-out="tsbr_one"/> می‌آید<t t-if="tsbr_prev['counselor'].get('sample')">؛ اینجا یک نمونه است</t><t t-else="">؛ اینجا <bdi t-out="tsbr_prev['counselor']['name']"/> به‌عنوان نمونه</t>. نام و عنوان هر مشاور را خودش در صفحهٔ عضو کامل می‌کند.</p>
                     </div>
                 </section>
             </t>
         </field>
     </record>
 
-    <!-- Member page: the member's own identity on reports; owner/admin/clinic director see title and «show on report». -->
+    <!-- Member page: the member's own identity on reports; owner/admin/clinic director see title and «show on report», with a
+         read-only view of the member's counselor block. Both see the counselor half of the header as it will print. -->
     <record id="tpl_member_brand" model="ir.ui.view">
         <field name="name">TS brand: member section</field>
         <field name="type">qweb</field>
@@ -117,41 +150,66 @@
                 <t t-set="tsbr_own" t-value="tsbr_on and m == member and m.active"/>
                 <t t-set="tsbr_mgr" t-value="tsbr_on and not tsbr_own and m.active and member.ts_brand_manager()"/>
                 <section t-if="tsbr_own or tsbr_mgr" class="ts-card" id="tsbr-member" aria-labelledby="tsbr-member-h">
+                    <t t-set="tsbr_many" t-value="ws.ts_people_word()"/>
+                    <t t-set="tsbr_block" t-value="m.ts_brand_block()"/>
+                    <t t-set="tsbr_photo" t-value="tsbr_own and m.ts_photo_uri()"/>
                     <h2 id="tsbr-member-h" class="h5"><t t-if="tsbr_own">هویت شما در گزارش‌ها</t><t t-else="">هویت این عضو در گزارش‌ها</t></h2>
-                    <p class="ts-hint">بالای گزارش شرکت‌کنندگانی که مشاورشان است: عکس، نام، عنوان و شمارهٔ پروانهٔ تأییدشده. هیچ شماره یا نشانی تماسی در گزارش نمی‌آید.</p>
-                    <form t-attf-action="/my/workspaces/#{ws.id}/members/#{m.id}/brand" method="post" enctype="multipart/form-data" class="tsp-form" data-tsp-once="1">
+                    <p t-if="tsbr_own" class="ts-hint">بالای گزارش <t t-out="tsbr_many"/>ی که مشاورشان هستید: عکس، نام، عنوان و شمارهٔ پروانهٔ تأییدشده؛ معرفی کوتاه و امضا در پایان گزارش. هیچ شماره یا نشانی تماسی در گزارش نمی‌آید.</p>
+                    <p t-else="" class="ts-hint">بالای گزارش <t t-out="tsbr_many"/>ی که این عضو مشاورشان است: عکس، نام، عنوان و شمارهٔ پروانهٔ تأییدشده. عکس، معرفی و امضا را خود عضو می‌گذارد.</p>
+                    <div class="tsbr-memprev" data-tsbr-mprev="1">
+                        <p class="tsbr-preview__label" id="tsbr_mprev_h">در سربرگ گزارش این‌طور دیده می‌شود</p>
+                        <div class="tsbr-preview__doc" role="group" aria-labelledby="tsbr_mprev_h">
+                            <div class="tsbr-head tsbr-head--solo">
+                                <div class="tsbr-counselor">
+                                    <img t-if="tsbr_block['photo']" t-att-src="tsbr_block['photo']" class="tsbr-photo" width="48" height="48" alt="" data-tsbr-mout="photo"/>
+                                    <span t-else="" class="tsbr-photo tsbr-mono" aria-hidden="true" data-tsbr-mout="mono" t-out="tsbr_block['initial']"/>
+                                    <div class="tsbr-counselor__text">
+                                        <small class="tsbr-counselor__role">مشاور شما</small>
+                                        <strong><bdi t-out="tsbr_block['name']"/></strong>
+                                        <small data-tsbr-mout="title" t-att-hidden="None if tsbr_block['title'] else 'hidden'" t-out="tsbr_block['title'] or ''"/>
+                                        <small t-if="tsbr_block['license']" class="tsbr-license">شمارهٔ پروانه: <bdi dir="ltr" t-out="tsbr_block['license']"/> (تأییدشده)</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <p t-if="not m.show_on_report" class="ts-hint">«در گزارش‌ها نمایش داده شود» خاموش است؛ گزارش‌ها این بخش را ندارند.</p>
+                    </div>
+                    <form t-attf-action="/my/workspaces/#{ws.id}/members/#{m.id}/brand" method="post" enctype="multipart/form-data" class="tsp-form" data-tsp-once="1" data-tsbr-mform="1" data-ts-dirty="هویت در گزارش‌ها">
                         <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
                         <div class="tsp-field">
-                            <label class="tsp-field__label" for="tsbr_title">عنوان حرفه‌ای</label>
-                            <p class="tsp-field__hint" id="tsbr_title_h">مثلاً «روان‌شناس و مشاور»؛ حداکثر ۴۰ نویسه.</p>
-                            <input id="tsbr_title" name="title" type="text" maxlength="40" t-att-value="m.title or ''" aria-describedby="tsbr_title_h"/>
+                            <label class="tsp-field__label" for="tsbr_title">عنوان حرفه‌ای <span class="tsbr-req">(پیشنهادی)</span></label>
+                            <p class="tsp-field__hint" id="tsbr_title_h">مهم‌ترین بخش سربرگ، زیر نام؛ مثلاً «روان‌شناس و مشاور». حداکثر ۴۰ نویسه.</p>
+                            <input id="tsbr_title" name="title" type="text" maxlength="40" t-att-value="m.title or ''" aria-describedby="tsbr_title_h" data-tsbr-mbind="title"/>
                         </div>
                         <t t-if="tsbr_own">
                             <div class="tsp-field">
-                                <label class="tsp-field__label" for="tsbr_bio">معرفی کوتاه</label>
+                                <label class="tsp-field__label" for="tsbr_bio">معرفی کوتاه <span class="tsbr-opt">(اختیاری)</span></label>
                                 <p class="tsp-field__hint" id="tsbr_bio_h">یک یا دو جمله در پایان گزارش، کنار امضا؛ حداکثر ۱۶۰ نویسه.</p>
                                 <textarea id="tsbr_bio" name="report_bio" maxlength="160" rows="2" aria-describedby="tsbr_bio_h" t-out="m.report_bio or ''"/>
                             </div>
                             <div class="tsp-field">
-                                <p t-if="m.user_id.partner_id.image_128" class="tsp-logo-now"><img t-att-src="image_data_uri(m.user_id.partner_id.image_128)" alt="عکس فعلی" width="64" height="64"/>
+                                <p t-if="tsbr_photo" class="tsp-logo-now"><img t-att-src="tsbr_photo" alt="عکس فعلی" width="64" height="64"/>
                                     <span class="ts-hint">عکس فعلی شما.</span></p>
-                                <p t-if="m.user_id.partner_id.image_128" class="tsp-check"><label for="tsbr_photo_rm"><input type="checkbox" id="tsbr_photo_rm" name="remove_photo" value="1"/> حذف عکس</label></p>
-                                <t t-call="ts_website.filefield" ff_name.f="photo" ff_id.f="tsbr_photo" ff_label.f="عکس" ff_accept.f="image/png,image/jpeg,image/webp" ff_hint.f="PNG، JPG یا WEBP، کمتر از ۵۱۲ کیلوبایت؛ همین عکس در حساب شما هم دیده می‌شود."/>
+                                <p t-else="" class="ts-hint">هنوز عکسی نگذاشته‌اید؛ تا آن وقت، حرف اول نامتان در دایره‌ای جای عکس می‌آید.</p>
+                                <p t-if="tsbr_photo" class="tsp-check"><label for="tsbr_photo_rm"><input type="checkbox" id="tsbr_photo_rm" name="remove_photo" value="1"/> حذف عکس</label></p>
+                                <t t-call="ts_website.filefield" ff_name.f="photo" ff_id.f="tsbr_photo" ff_label.f="عکس (اختیاری)" ff_accept.f="image/png,image/jpeg,image/webp" ff_hint.f="PNG، JPG یا WEBP، کمتر از ۵۰۰ کیلوبایت؛ همین عکس در حساب شما هم دیده می‌شود."/>
                             </div>
                             <div class="tsp-field">
                                 <p t-if="m.signature" class="tsp-logo-now"><img t-att-src="image_data_uri(m.signature)" alt="امضای فعلی" height="48"/>
                                     <span class="ts-hint">امضای فعلی.</span></p>
                                 <p t-if="m.signature" class="tsp-check"><label for="tsbr_sig_rm"><input type="checkbox" id="tsbr_sig_rm" name="remove_signature" value="1"/> حذف امضا</label></p>
-                                <t t-call="ts_website.filefield" ff_name.f="signature" ff_id.f="tsbr_sig" ff_label.f="تصویر امضا" ff_accept.f="image/png,image/jpeg" ff_hint.f="PNG یا JPG با زمینهٔ روشن، کمتر از ۳۰۰ کیلوبایت؛ پایان گزارش‌ها می‌آید."/>
+                                <t t-call="ts_website.filefield" ff_name.f="signature" ff_id.f="tsbr_sig" ff_label.f="تصویر امضا (اختیاری)" ff_accept.f="image/png,image/jpeg" ff_hint.f="PNG یا JPG با زمینهٔ روشن، کمتر از ۳۰۰ کیلوبایت؛ پایان گزارش‌ها می‌آید."/>
                             </div>
                         </t>
-                        <p class="tsp-check"><label for="tsbr_show"><input type="checkbox" id="tsbr_show" name="show_on_report" value="1" t-att-checked="'checked' if m.show_on_report else None"/> در گزارش‌ها نمایش داده شود</label></p>
+                        <p class="tsp-check"><label for="tsbr_show"><input type="checkbox" id="tsbr_show" name="show_on_report" value="1" t-att-checked="'checked' if m.show_on_report else None" aria-describedby="tsbr_show_h"/> در گزارش‌ها نمایش داده شود</label></p>
+                        <p class="tsp-field__hint" id="tsbr_show_h"><t t-if="tsbr_own">اگر تیک را بردارید، گزارش <t t-out="tsbr_many"/> شما بدون نام و پروانهٔ مشاور می‌آید.</t><t t-else="">اگر تیک را بردارید، گزارش <t t-out="tsbr_many"/> او بدون نام و پروانهٔ مشاور می‌آید.</t></p>
                         <dl class="ts-meta tsbr-lic">
                             <dt>شمارهٔ پروانه</dt>
-                            <dd t-if="m.license_number"><bdi dir="ltr" t-out="m.license_number"/> · <t t-if="m.verification_state == 'verified'">تأییدشده؛ در گزارش‌ها می‌آید</t><t t-else="">هنوز تأیید نشده؛ تا تأیید تیم استعدادیاب در گزارش نمی‌آید</t></dd>
+                            <dd t-if="m.license_number"><bdi dir="ltr" t-out="m.license_number"/><t t-call="ts_website.sep"/><t t-if="m.verification_state == 'verified'">تأییدشده؛ در گزارش‌ها می‌آید</t><t t-else="">هنوز تأیید نشده؛ تا تأیید تیم استعدادیاب در گزارش نمی‌آید</t></dd>
                             <dd t-else="">ثبت نشده</dd>
                         </dl>
-                        <p><button type="submit" class="ts-btn ts-btn--primary">ذخیره</button></p>
+                        <p class="ts-hint">شمارهٔ پروانه را تیم استعدادیاب بررسی و ثبت می‌کند. <a t-att-href="ws.ts_contact_url('support')">برای ثبت یا تغییر شمارهٔ پروانه به پشتیبانی پیام بدهید</a>.</p>
+                        <p><button type="submit" class="ts-btn ts-btn--primary">ذخیرهٔ هویت در گزارش‌ها</button></p>
                     </form>
                 </section>
             </t>

@@ -18,10 +18,26 @@
         .tsb-stats > li:first-child:nth-last-child(3) { grid-column: 1 / -1; }
     }
 
-    // dashboard line «اعتبار: … · رزروشده: …»: one link, amounts never split from «تومان»
+    // one-line total under the cards (.tsb-total is a ts_battery class): «کل اعتبار پنل: … = … قابل استفاده + … رزروشده»
+    .tsb-sum { margin-block: -4px 16px; font-size: var(--fs-0); color: var(--ink-2); }
+    .tsb-sum .tsb-amt { white-space: nowrap; }
+    .tsb-sum strong { color: var(--color-text); }
+
+    // top-up card: the way to more credit, always visible under the numbers
+    .tsb-topup { border-inline-start: 4px solid var(--color-accent-400); }
+    .tsb-topup__actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; margin: 12px 0 0; }
+    .tsb-topup__actions .ts-btn { min-block-size: var(--control-min); }
+    .tsb-topup__actions a[href^="tel:"] { display: inline-block; padding-block: 10px; }
+    .tsb-inv-note { display: block; margin-block-start: 4px; font-size: var(--fs-0); color: var(--ink-2); }
+
+    // dashboard line «موجودی قابل استفاده: … · رزروشده: …»: one underlined link (not colour alone), amounts never split from «تومان»
     .tsb-dash { margin-block: 8px 14px; }
-    .tsb-dash > a { display: inline-block; padding-block: 10px; line-height: 1.5; font-weight: 600; }
+    .tsb-dash > a { display: inline-block; padding-block: 10px; line-height: 1.5; font-weight: 600;
+                    text-decoration: underline; text-underline-offset: 3px; }
     .tsb-dash__part, .tsb-dash .tsb-amt { white-space: nowrap; }
+    .tsb-dash__more { font-weight: 400; }
+    .tsb-dash--low a { display: inline-block; padding-block: 10px; font-weight: 600; }
+    .tsb-capline { margin-block: -4px 12px; }
 
     // item prices (wizard, group invitations, battery cards): their own line under the item name
     .tsb-price { display: block; margin-block-start: 2px; font-size: var(--fs-0); color: var(--ink-2); }
@@ -29,14 +45,28 @@
     .tsp-radio:has(> .tsb-price) { flex-wrap: wrap; row-gap: 0; }
     .tsp-radio > .tsb-price { flex-basis: 100%; padding-inline-start: calc(20px + var(--space-2)); }
     .tsb-price--short { color: var(--status-warn); font-weight: 600; }
-    .tsp-radio:has(input:disabled), .tsb-card:has(input:disabled) { opacity: .7; cursor: not-allowed; }
+    // a disabled item fades its control and name only: the reason line keeps full contrast (it is the only explanation)
+    .tsp-radio:has(input:disabled), .tsb-card:has(input:disabled) { cursor: not-allowed; }
+    .tsp-radio:has(input:disabled) > :not(.tsb-price),
+    .tsb-card:has(input:disabled) > input,
+    .tsb-card:has(input:disabled) .tsb-card__body > :not(.tsb-price) { opacity: .7; }
+    .tsb-short a { font-weight: 600; }
+    .tsb-review-amt { display: block; font-size: var(--fs-3); }
+    .tsb-review-how { display: block; margin-block-start: 2px; font-size: var(--fs-0); color: var(--ink-2); }
     .tsb-review-cap { display: block; margin-block-start: 4px; color: var(--ink-2); }
 
     // money inputs are typed in Latin or Persian digits, left to right
-    .tsb-money { max-inline-size: 16rem; inline-size: 100%; font-family: var(--font-text); text-align: start; font-variant-numeric: tabular-nums; }
+    // same fill as every other form control (a grey fill read as disabled), never narrower than a 9-digit toman amount
+    .tsb-money { max-inline-size: 16rem; inline-size: 100%; font-family: var(--font-text); text-align: start; font-variant-numeric: tabular-nums;
+                 background-color: var(--color-surface); color: var(--color-text); border-color: var(--field-line); }
     .tsb-inline { display: flex; flex-wrap: nowrap; gap: 8px; align-items: center; }
-    .tsb-inline .tsb-money { flex: 1 1 6rem; min-inline-size: 0; min-block-size: 44px; }
-    .tsb-inline .ts-btn { flex: none; min-block-size: 44px; }
+    .tsb-inline .tsb-money { flex: 1 1 9rem; min-inline-size: 9rem; min-block-size: var(--control-min); }
+    .tsb-inline .ts-btn { flex: none; min-block-size: var(--control-min); }
+    @media (max-width: 575.98px) {
+        .tsb-inline { flex-wrap: wrap; }
+        .tsb-inline .tsb-money { flex: 1 1 100%; max-inline-size: none; min-inline-size: 0; }
+        .tsb-caps td[data-label] { inline-size: 100%; }
+    }
 
     // monthly cap bar (dashboard, own credits page, member page)
     .tsb-cap { margin-block: 10px 16px; }
@@ -46,6 +76,7 @@
     .tsb-cap__bar { block-size: 10px; border-radius: 999px; background: var(--color-neutral-800); overflow: hidden; }
     .tsb-cap__fill { display: block; block-size: 100%; border-radius: 999px; background: var(--color-accent-400); }
     .tsb-cap__fill--full { background: var(--status-warn); }
+    .tsb-cap__near { margin: 6px 0 0; font-size: var(--fs-0); font-weight: 600; color: var(--status-warn); }
 
     // price list: two columns at every width (name + kind, price)
     .tsb-prices th[scope=row] { font-weight: 600; }
@@ -53,10 +84,19 @@
     .tsb-prices td { white-space: nowrap; text-align: end; }
     .tsb-prices thead th:last-child { text-align: end; }
     .tsb-prices__free { margin-block: 10px 0; }
+    .tsb-prices__over { display: block; font-weight: 400; font-size: var(--fs-0); color: var(--status-warn); }
+
+    // invoice link: the link colour in both themes (it was grey like body text in dark mode)
+    .tsb-inv-link { color: var(--color-accent-300); text-decoration: underline; text-underline-offset: 3px;
+                    display: inline-block; padding-block: 10px; }
+
+    // the open-link floor under «بیشترین تعداد نفرات»
+    .tsb-open-floor { margin-block: -4px 12px; }
 
     // ledger: type with its reason underneath; on phones one compact two-line row per entry instead of a tall card
     .tsb-ledger__why { display: block; font-size: var(--fs-0); color: var(--muted); }
     .tsb-ledger__k { display: none; }
+    .tsb-ledger__note { font-size: var(--fs-0); font-weight: 400; color: var(--muted); }
     .tsb-ledger__amt { white-space: nowrap; }
     @media (max-width: 767.98px) {
         .tsp-table--cards.tsb-ledger tr { display: grid; grid-template-columns: minmax(0, 1fr) auto; column-gap: 12px; row-gap: 2px;

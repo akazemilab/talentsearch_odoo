@@ -22,7 +22,9 @@ L = {n: 'ts.bill.%s.http@example.invalid' % n for n in NAMES}
 pw = {u: ensure_user(u) for u in L.values()}
 FA = str.maketrans('۰۱۲۳۴۵۶۷۸۹', '0123456789')
 MONEY_WORDS = ('تومان', 'ریال', 'اعتبار')
-P1, P2, START = 1200000, 900000000, 3000000
+# Rial. P2 is a real top-of-range price (۲۵۰٬۰۰۰ تومان) that is still above START - P1 and the counselor's cap room
+# (G8-P4-2: the old 900,000,000 Rial showed «۹۰٬۰۰۰٬۰۰۰ تومان» in screenshots).
+P1, P2, START = 1200000, 2500000, 3000000
 
 code = r"""
 from odoo import fields
@@ -129,7 +131,7 @@ own, c1, p1 = login('owner'), login('c1'), login('p1')
 # ---------------------------------------------------------------- 1. the owner's credits page
 st, body = get(own, W + '/credits')
 check('owner: credits page with the three cards', st == 200 and 'موجودی قابل استفاده' in body and 'رزروشده برای دعوت‌های باز' in body
-      and 'مصرف این ماه' in body and toman(START) in body, str(st))
+      and 'کسرشده این ماه' in body and toman(START) in body, str(st))
 check('owner: price list with the instrument price', 'فهرست قیمت این پنل' in body and toman(P1) in body)
 check('owner: the invoice with its portal link and state', INV_NAME in body and ('/my/invoices/%s?access_token=' % INV) in body
       and 'در انتظار پرداخت' in body)
@@ -158,8 +160,8 @@ post(c1, W + '/invites/new', {'step': '1', 'new_name': 'مراجع آزمون ش
 st, body = get(c1, W + '/invites/new?step=2')
 t1, t2 = input_tag(body, I1), input_tag(body, I2)
 check('wizard step 2: each item card shows «هزینه: … تومان»', st == 200 and 'هزینه: ' in body and toman(P1) in body and toman(P2) in body, str(st))
-check('wizard step 2: the unaffordable item is disabled with «اعتبار کافی نیست»', 'disabled' in t2 and 'disabled' not in t1
-      and 'اعتبار کافی نیست' in body, '%s | %s' % (t1[:120], t2[:120]))
+check('wizard step 2: the unaffordable item is disabled with the limit that stops it', 'disabled' in t2 and 'disabled' not in t1
+      and ('اعتبار پنل برای این مورد کافی نیست' in body or 'از باقی‌ماندهٔ سقف ماهانهٔ شما' in body), '%s | %s' % (t1[:120], t2[:120]))
 post(c1, W + '/invites/new', {'step': '2', 'instrument_id': I1})
 post(c1, W + '/invites/new', {'step': '3', 'deadline': '', 'note': ''})
 st, body = get(c1, W + '/invites/new?step=4')
@@ -171,25 +173,24 @@ AID = m.group(1) if m else '0'
 out = shell("a = env['ts.assignment'].browse(%s); t = env['ts.wallet.txn'].search([('idem_key', '=', 'hold:%%d' %% a.id)]); print('HOLD', int(a.price_held), int(t.amount))" % AID)
 check('server: the price is held', ('HOLD %d %d' % (P1, -P1)) in out, out[-200:])
 
-# cap refusal shown as the page error
+# cap refusal shown as the page error, already at step 2 (the server refuses it again at creation: tests_billing H05)
 get(c1, W + '/invites/new?fresh=1')
 post(c1, W + '/invites/new', {'step': '1', 'new_name': 'مراجع دوم شارژ', 'new_phone': '', 'new_email': '', 'new_age': 'adult'})
-post(c1, W + '/invites/new', {'step': '2', 'instrument_id': I1})
-post(c1, W + '/invites/new', {'step': '3', 'deadline': '', 'note': ''})
-st, loc, _ = post(c1, W + '/invites/new', {'step': '4'})
-st, body = get(c1, path_of(loc) if loc else W + '/invites/new?step=4')
-check('cap refusal: the page shows «سقف ماهانهٔ شما پر شده است … با مدیر پنل صحبت کنید.»',
-      'سقف ماهانهٔ شما پر شده است' in body and 'با مدیر پنل صحبت کنید.' in body and '?new=1' not in (loc or ''), (loc or '')[:120])
+st, loc, _ = post(c1, W + '/invites/new', {'step': '2', 'instrument_id': I1})
+st, body = get(c1, path_of(loc) if loc else W + '/invites/new?step=2')
+check('cap refusal at step 2: «هزینهٔ این دعوت (…) از باقی‌ماندهٔ سقف ماهانهٔ شما (…) بیشتر است … از مالک یا …»',
+      'از باقی‌ماندهٔ سقف ماهانهٔ شما' in body and 'بخواهید سقف را بالا ببرد' in body and 'step=2' in (loc or ''), (loc or '')[:120])
 
-# insufficient refusal (the owner is not capped; the expensive item passes step 2 and is refused at creation)
+# insufficient refusal (the owner is not capped; the expensive item is refused at step 2 with the balance and the next step;
+# the creation-time refusal is tests_billing H01)
 get(own, W + '/invites/new?fresh=1')
 post(own, W + '/invites/new', {'step': '1', 'new_name': 'مراجع گران', 'new_phone': '', 'new_email': '', 'new_age': 'adult'})
-post(own, W + '/invites/new', {'step': '2', 'instrument_id': I2})
-post(own, W + '/invites/new', {'step': '3', 'deadline': '', 'note': ''})
-st, loc, _ = post(own, W + '/invites/new', {'step': '4'})
-st, body = get(own, path_of(loc) if loc else W + '/invites/new?step=4')
-check('insufficient refusal: «اعتبار پنل کافی نیست. موجودی: …، هزینهٔ این دعوت: ….»',
-      'اعتبار پنل کافی نیست. موجودی: %s، هزینهٔ این دعوت: %s.' % (toman(START - P1), toman(P2)) in body, (loc or '')[:120])
+st, loc, _ = post(own, W + '/invites/new', {'step': '2', 'instrument_id': I2})
+st, body = get(own, path_of(loc) if loc else W + '/invites/new?step=2')
+check('insufficient refusal: «اعتبار پنل برای این دعوت کافی نیست: موجودی قابل استفاده … است و هزینهٔ این دعوت ….»',
+      'اعتبار پنل برای این دعوت کافی نیست: موجودی قابل استفاده %s است و هزینهٔ این دعوت %s.' % (toman(START - P1), toman(P2)) in body
+      and 'step=2' in (loc or ''), (loc or '')[:120])
+check('owner: the top-up request link on the credits page', ('/contact?topic=credit&amp;panel=' in get(own, W + '/credits')[1]))
 
 # ---------------------------------------------------------------- 4. the participant never sees money words
 st, body = get(c1, W + '/invites/%s' % AID)

@@ -6,6 +6,7 @@ from odoo.addons.ts_org.controllers.main import TsOrg
 from odoo.addons.ts_org.models.panel import TERMS_VERSION
 
 from ..models.dashboard import PERIODS
+from ..models.text import people_word
 from .base import STATE_LABELS, flash_error, flash_ok, member_or_404, render_in_shell, require
 from .invites import STATE_ORDER, invite_count_by_state
 
@@ -84,13 +85,14 @@ class TsPanelWorkspace(TsOrg):
             return render_in_shell('ts_panel.state_page', member, 'home', title, state_title=title, state_text=text)
         days = int(period) if (period or '').isdigit() and int(period) in PERIODS else 30
         counts = invite_count_by_state(member) if member.can_act() and member.has_perm('invites:manage') else {k: 0 for k in STATE_ORDER}
-        return render_in_shell('ts_panel.dashboard', member, 'home', 'داشبورد',
+        return render_in_shell('ts_panel.dashboard', member, 'home', 'پیشخوان',
                                attention=member.dash_attention(), tiles=member.dash_tiles(days), funnel=member.dash_funnel(days),
                                workload=member.dash_workload(), checklist=member.dash_checklist(), days=days, periods=PERIODS,
                                is_new=is_new, total=sum(counts.values()), gated=ws.gated,
                                can_invite=member.can_act() and member.has_perm('invites:create'),
                                can_dismiss=member.has_perm('members:invite'),
-                               rejected=ws.rejected_on, rejection_note=ws.rejection_note)
+                               rejected=ws.rejected_on, rejection_note=ws.rejection_note,
+                               people=people_word(ws.purpose), person_a='مراجعی' if ws.purpose == 'clinical' else 'شرکت‌کننده‌ای')
 
 
 class TsPanelShell(http.Controller):
@@ -121,7 +123,7 @@ class TsPanelShell(http.Controller):
         return render_in_shell(
             'ts_panel.settings', member, 'settings', 'تنظیمات',
             can_terms=member.has_perm('panel:settings'),
-            terms_current=ws.terms_version == TERMS_VERSION, terms_version=ws.terms_version,
+            terms_current=ws.terms_version == TERMS_VERSION, terms_version=ws.terms_version, terms_latest=TERMS_VERSION,
             terms_on=ws.terms_accepted_on, contact=ws.data_contact_id.name,
             escalation=ws.escalation_contact_id.name if ws.purpose == 'clinical' else None,
             purpose_label=dict(ws._fields['purpose'].selection).get(ws.purpose),
@@ -144,3 +146,25 @@ class TsPanelShell(http.Controller):
         else:
             flash_ok('تغییرها ذخیره شد.')
         return request.redirect('/my/workspaces/%s/settings' % ws_id)
+
+    @http.route('/my/workspaces/<int:ws_id>/settings/terms', type='http', auth='user', website=True,
+                methods=['POST'], sitemap=False)
+    def settings_terms(self, ws_id, **post):
+        """The owner (panel:settings) accepts a newer version of the panel terms on the settings page; recorded exactly like
+        the acceptance on the create form (version, time, user, audit workspace.terms_accept). Only the version the page
+        showed is accepted, and only when the panel had accepted an older one (the case the dashboard flags)."""
+        member = member_or_404(ws_id)
+        denied = require(member, 'panel:settings', 'settings')
+        if denied:
+            return denied
+        ws = member.workspace_id
+        if post.get('terms') != '1' or post.get('version') != TERMS_VERSION:
+            flash_error('برای ثبت پذیرش، متن تازه را بخوانید و تیک پذیرش را بزنید.')
+        elif ws.terms_version and ws.terms_version != TERMS_VERSION:
+            old = ws.terms_version
+            ws.sudo().write({'terms_version': TERMS_VERSION, 'terms_accepted_on': fields.Datetime.now(),
+                             'terms_accepted_by_id': request.env.user.id})
+            request.env['ts.audit.event'].sudo().log('workspace.terms_accept', ws, workspace=ws, member=member,
+                                                     version=TERMS_VERSION, previous=old)
+            flash_ok('پذیرش نسخهٔ تازهٔ شرایط استفاده ثبت شد.')
+        return request.redirect('/my/workspaces/%s/settings#tsp-terms' % ws_id)

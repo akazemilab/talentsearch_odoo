@@ -40,27 +40,27 @@
                                             <li t-foreach="going" t-as="a">
                                                 <t t-set="fresh" t-value="a.state == 'consent' or not a.answered_count"/>
                                                 <div class="tsp-rows__text">
-                                                    <strong t-out="a.instrument_id.title"/>
-                                                    <span class="ts-hint"><t t-if="a.workspace_id">از طرف <t t-out="a.workspace_id.partner_id.name"/> · </t><t t-if="fresh"><t t-if="tu">هنوز شروع نکرده‌ای</t><t t-else="">هنوز شروع نکرده‌اید</t></t><t t-else=""><t t-out="fa(a.progress)"/>٪ پاسخ <t t-if="tu">داده‌ای</t><t t-else="">داده‌اید</t> · آخرین ذخیره <t t-out="a.jalali(a.write_date, False)"/></t></span>
+                                                    <strong t-out="a.instrument_id.ts_title()"/>
+                                                    <span class="ts-hint"><t t-if="a.workspace_id">به دعوت <t t-out="a.workspace_id.ts_public_name()"/><t t-call="ts_website.sep"/></t><t t-if="fresh"><t t-if="tu">هنوز شروع نکرده‌ای</t><t t-else="">هنوز شروع نکرده‌اید</t></t><t t-else=""><t t-out="fa(a.progress)"/>٪ پاسخ <t t-if="tu">داده‌ای</t><t t-else="">داده‌اید</t><t t-call="ts_website.sep"/>آخرین ذخیره <t t-out="a.jalali(a.write_date, False)"/></t></span>
                                                 </div>
-                                                <a t-attf-href="/take/#{a.access_token}" class="ts-btn ts-btn--primary ts-btn--sm"><t t-if="fresh">شروع</t><t t-else="">ادامه</t><span class="visually-hidden"> «<t t-out="a.instrument_id.title"/>»</span></a>
+                                                <a t-attf-href="/take/#{a.access_token}" class="ts-btn ts-btn--primary ts-btn--sm"><t t-if="fresh">شروع</t><t t-else="">ادامه</t><span class="visually-hidden"> «<t t-out="a.instrument_id.ts_title()"/>»</span></a>
                                             </li>
                                         </ul>
                                     </section>
                                     <section t-if="groups" class="ts-card ts-list-card" id="ts-list-results" aria-labelledby="ts-list-results-h">
                                         <h2 id="ts-list-results-h">نتیجه‌ها</h2>
                                         <div t-foreach="groups" t-as="g" class="ts-list-group" t-attf-id="ts-list-inst-#{g['inst'].id}">
-                                            <h3 t-out="g['inst'].title"/>
+                                            <h3 t-out="g['inst'].ts_title()"/>
                                             <p class="ts-hint" t-if="len(g['rows']) > 1"><t t-out="fa(len(g['rows']))"/> بار انجام شده؛ جدیدترین اول.</p>
                                             <ul class="tsp-list tsp-rows">
                                                 <li t-foreach="g['rows']" t-as="a">
                                                     <div class="tsp-rows__text">
-                                                        <strong><t t-out="a.jalali(a.submitted_at or a.create_date, False)"/><t t-if="a.subject_label"> · دربارهٔ <t t-out="a.subject_label"/></t></strong>
+                                                        <strong><t t-out="a.jalali(a.submitted_at or a.create_date, False)"/><t t-if="a.subject_label"><t t-call="ts_website.sep"/>دربارهٔ <t t-out="a.subject_label"/></t></strong>
                                                         <span class="ts-hint">
-                                                            <t t-if="a.state == 'done' and a.released">نتیجه آماده<t t-if="a.workspace_id"> · به دعوت <t t-out="a.workspace_id.partner_id.name"/></t></t>
+                                                            <t t-if="a.state == 'done' and a.released">نتیجه آماده<t t-if="a.workspace_id"><t t-call="ts_website.sep"/>به دعوت <t t-out="a.workspace_id.ts_public_name()"/></t></t>
                                                             <t t-elif="a.state == 'done'">نتیجه در دسترس نیست</t>
                                                             <t t-else="">محاسبه انجام نشد</t>
-                                                            <t t-if="g['mixed'] and a.version_id != g['rows'][0].version_id"> · <t t-if="tu">نسخهٔ دیگر؛ با هم مقایسه نکن</t><t t-else="">نسخهٔ دیگر؛ با هم مقایسه نکنید</t></t>
+                                                            <t t-if="g['mixed'] and a.version_id != g['rows'][0].version_id"><t t-call="ts_website.sep"/><t t-if="tu">نسخهٔ دیگر؛ با هم مقایسه نکن</t><t t-else="">نسخهٔ دیگر؛ با هم مقایسه نکنید</t></t>
                                                         </span>
                                                         <span class="ts-hint ts-list-share" t-if="a.state == 'done' and a.released">
                                                             <a href="/my/sharing"><t t-if="shares.get(a.id)">با «<t t-out="shares[a.id]"/>» به اشتراک گذاشته شده</t><t t-elif="tu">فقط تو می‌بینی</t><t t-else="">فقط شما می‌بینید</t></a>
@@ -73,7 +73,7 @@
                                         </div>
                                     </section>
                                 </t>
-                                <p><a href="/assessments?all=1"><t t-if="tu">سنجه‌های دیگری که می‌توانی انجام بدهی</t><t t-else="">سنجه‌های دیگری که می‌توانید انجام دهید</t></a></p>
+                                <p id="ts-list-catalog"><a href="/assessments?all=1"><t t-if="tu">سنجه‌های دیگری که می‌توانی انجام بدهی</t><t t-else="">سنجه‌های دیگری که می‌توانید انجام دهید</t></a></p>
                             </div>
                         </section>
                     </div>
@@ -89,13 +89,13 @@
         <field name="website_id" ref="ts_website.website_ts"/>
         <field name="arch" type="xml">
             <t t-name="ts_assessment.report">
-                <t t-call="website.layout" additional_title="'گزارش ' + inst.title">
+                <t t-call="website.layout" additional_title="'گزارش ' + inst.ts_title()">
                     <div id="wrap" class="ts-page">
                         <section class="ts-section ts-report-page">
                             <div class="ts-container ts-report-wrap">
                                 <div class="ts-report-actions ts-noprint">
                                     <a href="/my/assessments" class="ts-back">سنجه‌ها و نتیجه‌ها</a>
-                                    <button type="button" class="ts-btn ts-btn--outline ts-js-print">چاپ یا ذخیره به‌صورت PDF</button>
+                                    <button type="button" class="ts-btn ts-btn--quiet ts-js-print">چاپ همین صفحه</button>
                                 </div>
                                 <p t-if="submitted" class="ts-notice ts-noprint" role="status">پاسخ‌های شما ثبت شد و گزارش آماده است.</p>
                                 <article class="ts-doc">
@@ -106,8 +106,8 @@
                                         </div>
                                         <div class="ts-doc__kind">گزارش نتیجهٔ سنجه</div>
                                     </header>
-                                    <h1 class="ts-doc__title" t-out="inst.title"/>
-                                    <p class="ts-doc__lead">نتیجهٔ <t t-out="attempt.partner_id.name"/> در <t t-out="attempt.jalali(attempt.submitted_at, False)"/>. <t t-out="inst.intended_use"/></p>
+                                    <h1 class="ts-doc__title" t-out="inst.ts_title()"/>
+                                    <p class="ts-doc__lead">نتیجهٔ <t t-out="attempt.partner_id.name"/> در <t t-out="attempt.jalali(attempt.submitted_at, False)"/>. <t t-out="inst.ts_intended_use()"/></p>
                                     <div class="ts-doc__details tsp-collapse" data-tsp-collapse="1">
                                     <h2 class="h5">جزئیات گزارش</h2>
                                     <dl class="ts-meta ts-doc__meta">
@@ -116,7 +116,7 @@
                                         <dt>پاسخ‌دهنده</dt><dd t-out="dict(attempt._fields['respondent_role'].selection).get(attempt.respondent_role)"/>
                                         <dt>تاریخ تکمیل</dt><dd t-out="attempt.jalali(attempt.submitted_at)"/>
                                         <dt>شناسهٔ گزارش</dt><dd><bdi dir="ltr" class="ts-bdi" t-out="attempt.name"/></dd>
-                                        <dt>نسخه</dt><dd><bdi dir="ltr" class="ts-bdi"><t t-out="version.contract_version"/> · <t t-out="attempt.engine_version"/></bdi></dd>
+                                        <dt>نسخهٔ نمره‌گذاری</dt><dd><span t-att-title="'%s / %s' % (version.contract_version, attempt.engine_version)" t-out="version.ts_version_label()"/></dd>
                                         <dt>وضعیت</dt><dd>منتشرشده برای شرکت‌کننده؛ محتوای تفسیر تأییدشده</dd>
                                     </dl>
                                     </div>
@@ -125,12 +125,12 @@
 
                                     <section t-if="history" class="ts-doc__sec ts-noprint" id="ts-history">
                                         <h2>نتیجه‌های قبلی همین سنجه</h2>
-                                        <p class="ts-hint">هر نتیجه توصیف همان روز است. فقط نتیجه‌های همین نسخهٔ نمره‌گذاری (<bdi dir="ltr" class="ts-bdi" t-out="version.contract_version"/>) کنار هم خوانده می‌شوند؛ تغییر عدد به‌تنهایی به معنای بهتر یا بدتر شدن نیست.</p>
+                                        <p class="ts-hint">هر نتیجه توصیف همان روز است. فقط نتیجه‌های همین نسخهٔ نمره‌گذاری (<span t-att-title="version.contract_version" t-out="version.ts_version_label()"/>) کنار هم خوانده می‌شوند؛ تغییر عدد به‌تنهایی به معنای بهتر یا بدتر شدن نیست.</p>
                                         <ul class="tsp-list tsp-rows">
                                             <li t-foreach="history" t-as="h">
                                                 <div class="tsp-rows__text">
                                                     <strong t-out="h.jalali(h.submitted_at, False)"/>
-                                                    <span class="ts-hint"><t t-if="h.version_id == version">همین نسخهٔ نمره‌گذاری</t><t t-else="">نسخهٔ دیگر (<bdi dir="ltr" class="ts-bdi" t-out="h.version_id.contract_version"/>)؛ مقایسهٔ مستقیم معتبر نیست</t></span>
+                                                    <span class="ts-hint"><t t-if="h.version_id == version">همین نسخهٔ نمره‌گذاری</t><t t-else="">نسخهٔ دیگر (<span t-att-title="h.version_id.contract_version" t-out="h.version_id.ts_version_label()"/>)؛ مقایسهٔ مستقیم معتبر نیست</t></span>
                                                 </div>
                                                 <a t-attf-href="/my/assessments/#{h.id}" class="ts-btn ts-btn--outline ts-btn--sm">گزارش</a>
                                             </li>
@@ -141,7 +141,7 @@
                                         <h2>محدودیت‌ها و گام بعدی</h2>
                                         <p t-out="inst.limitations"/>
                                         <p>اگر نتیجه برایتان پرسش ایجاد کرده یا نگران‌تان کرده است، با یک متخصص مشورت کنید. استعدادیاب خدمت اورژانسی نیست؛ اگر حالتان خوب نیست، منتظر نمانید: اورژانس ۱۱۵.</p>
-                                        <p class="ts-hint">این گزارش متعلق به شماست. شناسهٔ گزارش <bdi dir="ltr" t-out="attempt.name"/> · اثر نتیجه <bdi dir="ltr" t-out="(attempt.output_hash or '')[:12]"/></p>
+                                        <p class="ts-hint">این گزارش متعلق به شماست. شناسهٔ گزارش <bdi dir="ltr" t-out="attempt.name"/><t t-call="ts_website.sep"/>اثر نتیجه <bdi dir="ltr" t-out="(attempt.output_hash or '')[:12]"/></p>
                                     </section>
                                 </article>
                             </div>
@@ -163,11 +163,11 @@
         <field name="arch" type="xml">
             <t t-name="ts_assessment.report_blocks">
                                     <section class="ts-doc__sec" t-att-id="blk_sum_id or 'ts-summary'">
-                                        <h3 t-if="blk_sub">خلاصهٔ نتایج</h3>
-                                        <h2 t-else="">خلاصهٔ نتایج</h2>
-                                        <p class="ts-hint">نمرهٔ هر بُعد میانگین پاسخ‌های شما روی مقیاس ۱ تا ۵ است (عبارت‌های معکوس پیش از میانگین‌گیری برگردانده می‌شوند). بازه‌ها: کم، متوسط و زیاد.</p>
+                                        <h3 t-if="blk_sub">خلاصهٔ نتیجه‌ها</h3>
+                                        <h2 t-else="">خلاصهٔ نتیجه‌ها</h2>
+                                        <p class="ts-hint">نمرهٔ هر عامل میانگین پاسخ‌های <t t-if="tu">تو</t><t t-else="">شما</t> از ۱ تا ۵ است. سطح‌ها: کم، متوسط و زیاد.<span class="ts-barnote"> نوار، جایگاه نمره را روی مقیاس نشان می‌دهد: ۱ در راست، ۵ در چپ؛ سه رنگ نوار همان سه سطح است.</span> <a t-if="results" t-att-href="'/assessments/%s#ts-how-scored' % results[:1].attempt_id.instrument_id.slug" class="ts-noprint">نمره چگونه حساب می‌شود</a></p>
                                         <table class="ts-table ts-summary">
-                                            <thead><tr><th scope="col">بُعد</th><th scope="col">نمره (۱ تا ۵)</th><th scope="col">بازه</th><th scope="col" class="ts-summary__bar">جایگاه روی مقیاس</th></tr></thead>
+                                            <thead><tr><th scope="col">عامل</th><th scope="col">نمره (۱ تا ۵)</th><th scope="col">سطح</th><th scope="col" class="ts-summary__bar">جایگاه روی مقیاس ۱ تا ۵</th></tr></thead>
                                             <tbody>
                                                 <t t-foreach="results" t-as="r">
                                                     <tr>
@@ -175,11 +175,15 @@
                                                         <td class="ts-num" t-out="r.score_fa()"/>
                                                         <td><span t-attf-class="ts-band ts-band--#{r.band}" t-out="r.band_fa()"/></td>
                                                         <td class="ts-summary__bar">
-                                                            <div class="ts-meter" role="img" t-att-aria-label="'نمره ' + r.score_fa() + ' از ۵، بازهٔ ' + r.band_fa()">
-                                                                <t t-foreach="r.factor_id.band_ids" t-as="b">
-                                                                    <span t-attf-class="ts-meter__seg ts-meter__seg--#{b.band}" t-attf-style="width: #{round(100.0 * (min(b.max_score, 5) - max(b.min_score, 1) + (0.01 if b.band != 'high' else 0)) / 4, 2)}%"/>
-                                                                </t>
-                                                                <span class="ts-meter__mark" t-attf-style="inset-inline-start: #{r.position_pct()}%"/>
+                                                            <div class="ts-meterbox" aria-hidden="true">
+                                                                <span class="ts-meter__end">۱</span>
+                                                                <div class="ts-meter">
+                                                                    <t t-foreach="r.factor_id.band_ids" t-as="b">
+                                                                        <span t-attf-class="ts-meter__seg ts-meter__seg--#{b.band}" t-attf-style="width: #{round(100.0 * (min(b.max_score, 5) - max(b.min_score, 1) + (0.01 if b.band != 'high' else 0)) / 4, 2)}%"/>
+                                                                    </t>
+                                                                    <span class="ts-meter__mark" t-attf-style="inset-inline-start: #{r.position_pct()}%"/>
+                                                                </div>
+                                                                <span class="ts-meter__end">۵</span>
                                                             </div>
                                                         </td>
                                                     </tr>
@@ -221,7 +225,7 @@
                         <section class="ts-section">
                             <div class="ts-container ts-narrow">
                                 <a href="/my/assessments" class="ts-back">سنجه‌ها و نتیجه‌ها</a>
-                                <h1 t-out="inst.title"/>
+                                <h1 t-out="inst.ts_title()"/>
                                 <div class="ts-card ts-card--soft" role="status">
                                     <h2 class="h4">این نتیجه در دسترس شما نیست</h2>
                                     <p t-if="attempt.source == 'import'">این نتیجه از سامانهٔ قبلی وارد شده و هنوز برای نمایش به شما آزاد نشده است. مرکزی که سنجش را اجرا کرده می‌تواند آن را آزاد کند.</p>

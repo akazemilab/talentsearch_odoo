@@ -46,11 +46,11 @@
                                 </p>
                                 <h2 class="tsp-next__title" t-out="next_action['title']"/>
                                 <p class="tsp-next__meta">
-                                    <t t-if="next_action.get('org')">از طرف <strong t-out="next_action['org']"/> · </t>
-                                    <t t-elif="next_action['kind'] == 'result'"><t t-if="tu">خودت انجامش دادی</t><t t-else="">خودتان انجامش دادید</t> · </t>
-                                    <t t-if="next_action['kind'] == 'invite'">دعوت در <t t-out="next_action['when']"/><t t-if="next_action.get('deadline')"> · مهلت تا <t t-out="next_action['deadline']"/></t></t>
+                                    <t t-if="next_action.get('org')">به دعوت <strong t-out="next_action['org']"/><t t-call="ts_website.sep"/></t>
+                                    <t t-elif="next_action['kind'] == 'result'"><t t-if="tu">خودت انجامش دادی</t><t t-else="">خودتان انجامش دادید</t><t t-call="ts_website.sep"/></t>
+                                    <t t-if="next_action['kind'] == 'invite'">دعوت در <t t-out="next_action['when']"/><t t-if="next_action.get('deadline')"><t t-call="ts_website.sep"/>مهلت تا <t t-out="next_action['deadline']"/></t></t>
                                     <!-- one state only: answered part of it, or not started yet (it read «half-finished» and «not started» together) -->
-                                    <t t-elif="next_action['kind'] == 'resume' and next_action['progress']"><t t-out="fa(next_action['progress'])"/>٪ پاسخ <t t-if="tu">داده‌ای</t><t t-else="">داده‌اید</t> · آخرین ذخیره <t t-out="next_action['when']"/></t>
+                                    <t t-elif="next_action['kind'] == 'resume' and next_action['progress']"><t t-out="fa(next_action['progress'])"/>٪ پاسخ <t t-if="tu">داده‌ای</t><t t-else="">داده‌اید</t><t t-call="ts_website.sep"/>آخرین ذخیره <t t-out="next_action['when']"/></t>
                                     <t t-elif="next_action['kind'] == 'resume'">هنوز به هیچ جمله‌ای پاسخ <t t-if="tu">نداده‌ای</t><t t-else="">نداده‌اید</t>؛ هر وقت <t t-if="tu">شروع کنی</t><t t-else="">شروع کنید</t>، پاسخ‌ها خودکار ذخیره می‌شوند.</t>
                                     <t t-else="">تکمیل در <t t-out="next_action['when']"/></t>
                                 </p>
@@ -74,7 +74,7 @@
                                     <li t-foreach="invites" t-as="inv">
                                         <div class="tsp-rows__text">
                                             <strong t-out="inv.instrument_id.title"/>
-                                            <span class="ts-hint">از طرف <t t-out="inv.workspace_id.partner_id.name"/> · <t t-out="jalali(inv.create_date, with_time=False)"/><t t-if="deadlines.get(inv.id)"> · مهلت تا <t t-out="deadlines[inv.id]"/></t></span>
+                                            <span class="ts-hint">به دعوت <t t-out="inv.workspace_id.ts_public_name()"/><t t-call="ts_website.sep"/><t t-out="jalali(inv.create_date, with_time=False)"/><t t-if="deadlines.get(inv.id)"><t t-call="ts_website.sep"/>مهلت تا <t t-out="deadlines[inv.id]"/></t></span>
                                         </div>
                                         <a t-attf-href="/invite/#{inv.token}" class="ts-btn ts-btn--outline ts-btn--sm">مشاهدهٔ دعوت</a>
                                     </li>
@@ -87,7 +87,7 @@
                                         <t t-set="started" t-value="a.state == 'in_progress' and a.progress"/>
                                         <div class="tsp-rows__text">
                                             <strong t-out="a.instrument_id.title"/>
-                                            <span class="ts-hint"><t t-if="a.workspace_id">از طرف <t t-out="a.workspace_id.partner_id.name"/> · </t><t t-if="started"><t t-out="fa(a.progress)"/>٪ انجام شده · </t><t t-else="">هنوز شروع نشده · </t>آخرین ذخیره <t t-out="jalali(a.write_date, with_time=False)"/></span>
+                                            <span class="ts-hint"><t t-if="a.workspace_id">به دعوت <t t-out="a.workspace_id.ts_public_name()"/><t t-call="ts_website.sep"/></t><t t-if="started"><t t-out="fa(a.progress)"/>٪ انجام شده<t t-call="ts_website.sep"/></t><t t-else="">هنوز شروع نشده<t t-call="ts_website.sep"/></t>آخرین ذخیره <t t-out="jalali(a.write_date, with_time=False)"/></span>
                                         </div>
                                         <a t-attf-href="/take/#{a.access_token}" class="ts-btn ts-btn--outline ts-btn--sm"><t t-if="started">ادامه</t><t t-else="">شروع</t></a>
                                     </li>
@@ -99,7 +99,7 @@
                                     <li t-foreach="done" t-as="a">
                                         <div class="tsp-rows__text">
                                             <strong t-out="a.instrument_id.title"/>
-                                            <span class="ts-hint"><t t-out="jalali(a.submitted_at, with_time=False)"/> · <t t-if="shared_n.get(a.id)">با <t t-out="fa(shared_n[a.id])"/> پنل به اشتراک گذاشته شده</t><t t-elif="tu">فقط تو می‌بینی</t><t t-else="">فقط شما می‌بینید</t></span>
+                                            <span class="ts-hint"><t t-out="jalali(a.submitted_at, with_time=False)"/><t t-call="ts_website.sep"/><t t-if="shared_n.get(a.id)">با <t t-out="fa(shared_n[a.id])"/> پنل به اشتراک گذاشته شده</t><t t-elif="tu">فقط تو می‌بینی</t><t t-else="">فقط شما می‌بینید</t></span>
                                         </div>
                                         <a t-attf-href="/my/assessments/#{a.id}" class="ts-btn ts-btn--outline ts-btn--sm">گزارش</a>
                                     </li>
@@ -171,7 +171,7 @@
                                 <ul class="tsp-links">
                                     <li><a href="/my/notifications">اعلان‌ها</a><span class="ts-hint">خبرهای تازهٔ حساب</span></li>
                                     <li><a href="/my/notifications/prefs">تنظیم اعلان‌ها</a><span class="ts-hint">چه خبری، از چه راهی</span></li>
-                                    <li><a href="/my/sharing">چه کسی نتیجه‌های من را می‌بیند</a><span class="ts-hint">اشتراک با پنل‌ها و لغو آن</span></li>
+                                    <li><a href="/my/sharing">چه کسی نتیجه‌های من را می‌بیند</a><span class="ts-hint">اشتراک‌گذاری با پنل‌ها و قطع آن</span></li>
                                     <li><a href="/my/privacy">داده‌های من</a><span class="ts-hint">دریافت نسخه یا درخواست حذف</span></li>
                                     <li><a href="/my/sessions">دستگاه‌های واردشده</a><span class="ts-hint">خروج از دستگاه‌های دیگر</span></li>
                                     <li><a href="/my/security">رمز عبور و امنیت</a><span class="ts-hint">تغییر رمز عبور</span></li>
@@ -477,7 +477,7 @@
                         <p t-if="not ws_act">هیچ پنلی این نتیجه را نمی‌بیند. فقط شما.</p>
                         <ul t-if="ws_act" class="ts-who-sees__list">
                             <li t-foreach="ws_act" t-as="s">
-                                <strong t-out="s.workspace_id.name"/> — <t t-out="s.ts_level_word()"/>
+                                <strong t-out="s.workspace_id.ts_public_name()"/> — <t t-out="s.ts_level_word()"/>
                                 <t t-if="s.invited_by_id == attempt.user_id"> (خودتان فرستادید)</t><t t-else=""> (به دعوت همین پنل)</t>
                                 · <a t-attf-href="/my/sharing/#{s.id}/revoke?back=report">لغو اشتراک</a>
                             </li>

@@ -23,6 +23,9 @@
     .tsp-shell__main > * { min-inline-size: 0; max-inline-size: 100%; }
     .tsp-shell__main input:not([type=checkbox]):not([type=radio]):not([type=hidden]):not([type=file]), .tsp-shell__main select { min-block-size: var(--control-min); }
     .tsp-shell__nav { display: grid; gap: 14px; padding: 16px 12px; border-radius: var(--r-18); background: color-mix(in oklab, var(--color-surface) 55%, var(--color-bg)); box-shadow: var(--shadow-sm); }
+    // invite wizard step 1: the legend of the «چه کسی» card sits inside the card, not on its border (2026-10-12)
+    .tsp-who > legend { float: inline-start; inline-size: 100%; margin-block-end: var(--space-2); padding: 0; }
+    .tsp-who > legend + * { clear: both; }
     .tsp-switch { display: grid; gap: 1px; padding: 8px 10px; background: var(--color-bg); border: 1px solid var(--color-neutral-800); border-radius: var(--r-8); }
     .tsp-switch__name { color: var(--color-text); font-size: 13.5px; font-weight: 500; overflow-wrap: anywhere; }
     .tsp-switch__meta { color: var(--color-neutral-400); font-size: var(--fs-0); display: flex; flex-wrap: wrap; align-items: center; gap: 2px 6px; }

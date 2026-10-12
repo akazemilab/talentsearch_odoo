@@ -26,7 +26,7 @@ class TsAssignment(models.Model):
         """Text of the invitation SMS (ts_battery names the battery instead; Phase 5 moves texts to sms.template)."""
         self.ensure_one()
         return _('«%(org)s» شما را به یک سنجش در استعدادیاب دعوت کرده است. پذیرش کاملاً اختیاری است:\n%(url)s',
-                 org=self.workspace_id.name, url=self.invite_url())
+                 org=self.workspace_id.ts_public_name(), url=self.invite_url())
 
     def _ts_send_invite_sms(self):
         self.ensure_one()

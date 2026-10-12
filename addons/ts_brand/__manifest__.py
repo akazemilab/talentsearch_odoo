@@ -2,7 +2,8 @@
     'name': 'Talent Search - Institution branding, PDF reports and SMS templates',
     'summary': 'Clinic phase 5 (docs/clinic/01_architecture.md sections 5 and 6): the counseling center and its counselor on '
                'every report (screen, print, PDF), on-demand PDF downloads that are never stored, native sms.template texts '
-               '(docs/clinic/05_sms_texts.md) with short links /i/<code> and /j/<code>',
+               '(docs/clinic/05_sms_texts.md) with short links /i/<code> and /j/<code>; clinic phase 6: the counseling-center '
+               'set-up checklist, the counselor first-run card and the help section «راهنمای راه‌اندازی مرکز مشاوره»',
     'version': '20.0.1.0.0',
     'category': 'Services/Talent Search',
     'author': 'EOT',
@@ -13,12 +14,13 @@
         'data/sms_templates.xml',
         'views/web_brand.xml',
         'views/web_brand_inherit.xml',
+        'views/web_onboarding.xml',
         'views/report_pdf.xml',
         'data/report.xml',
     ],
     'assets': {
         'ts_website.assets_ts': ['ts_brand/static/src/scss/brand.scss'],
-        'ts_website.assets_ts_js': ['ts_brand/static/src/js/brand_preview.js'],
+        'ts_website.assets_ts_js': ['ts_brand/static/src/js/brand_preview.js', 'ts_brand/static/src/js/onboarding.js'],
     },
     'installable': True,
 }

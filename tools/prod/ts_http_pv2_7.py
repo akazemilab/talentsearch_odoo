@@ -207,7 +207,7 @@ for path in ('/campaigns', '/campaigns/new'):
 # ---- open link
 st, loc, body = post(own, W + '/campaigns/new', [('kind', 'open_link'), ('name', 'پیوند کلاس'), ('instrument_id', inst_id), ('open_max', '2'),
                                                   ('open_days', '14'), ('step', 'review')])
-check('review of an open link shows the cap', st == 200 and 'سقف پیوستن' in body, str(st))
+check('review of an open link shows the cap', st == 200 and 'بیشترین تعداد نفرات' in body, str(st))
 st, loc, _ = post(own, W + '/campaigns/new', [('step', 'create')])
 oc = re.search(r'/campaigns/(\d+)', loc or '').group(1)
 st, body = get(own, W + '/campaigns/%s' % oc)

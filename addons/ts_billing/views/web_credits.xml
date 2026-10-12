@@ -14,28 +14,76 @@
                             <header class="tsp-head">
                                 <div>
                                     <h1 class="tsp-head__title">اعتبار و مصرف</h1>
-                                    <p class="tsp-head__help">هر دعوت هزینهٔ سنجه یا مجموعه را از اعتبار پنل رزرو می‌کند. با تکمیل، همان مبلغ کسر می‌شود؛ اگر دعوت لغو یا رد شود یا مهلتش بگذرد، رزرو آزاد می‌شود.</p>
+                                    <p class="tsp-head__help">هر دعوت هزینهٔ سنجه یا مجموعه را از موجودی قابل استفاده رزرو می‌کند. با تکمیل، همان مبلغ رزروشده کسر می‌شود؛ اگر دعوت لغو یا رد شود یا مهلتش بگذرد، رزرو آزاد می‌شود و به موجودی برمی‌گردد.</p>
                                 </div>
                             </header>
                             <ul class="tsp-stats tsb-stats" aria-label="خلاصهٔ اعتبار">
                                 <li class="tsb-stats__main"><div class="tsp-stat"><strong class="tsb-amt" t-out="toman(st['available'])"/><span>موجودی قابل استفاده</span><small>برای دعوت‌های تازه</small></div></li>
                                 <li><div class="tsp-stat"><strong class="tsb-amt" t-out="toman(st['held'])"/><span>رزروشده برای دعوت‌های باز</span><small>با تکمیل کسر و با لغو آزاد می‌شود</small></div></li>
-                                <li><div class="tsp-stat"><strong class="tsb-amt" t-out="toman(st['month'])"/><span>مصرف این ماه</span><small>کسرشده و رزروشده در ماه جاری</small></div></li>
+                                <li><div class="tsp-stat"><strong class="tsb-amt" t-out="toman(st['debited'])"/><span>کسرشده این ماه</span><small>بابت سنجه‌های تکمیل‌شده در ماه شمسی جاری</small></div></li>
                             </ul>
-                            <p t-if="threshold and st['available'] &lt; threshold" class="ts-notice ts-notice--warn" role="status">اعتبار پنل از آستانهٔ هشدار (<t t-out="toman(threshold)"/>) کمتر است. برای شارژ اعتبار با تیم استعدادیاب تماس بگیرید؛ فاکتور شارژ در همین صفحه دیده می‌شود.</p>
+                            <p class="tsb-sum" id="tsb-sum">کل اعتبار پنل: <strong class="tsb-amt" t-out="toman(st['total'])"/> = <span class="tsb-amt" t-out="toman(st['available'])"/> قابل استفاده + <span class="tsb-amt" t-out="toman(st['held'])"/> رزروشده</p>
+                            <p t-if="st['low']" class="ts-notice ts-notice--warn" role="status">موجودی قابل استفاده از آستانهٔ هشدار (<span class="tsb-amt" t-out="toman(threshold)"/>) کمتر است. <a href="#tsb-topup">شارژ اعتبار</a></p>
+
+                            <section class="ts-card tsb-topup" id="tsb-topup" aria-labelledby="tsb-topup-h">
+                                <h2 id="tsb-topup-h" class="h5">شارژ اعتبار</h2>
+                                <p>اعتبار پنل فقط با فاکتوری شارژ می‌شود که تیم استعدادیاب صادر می‌کند. مبلغ دلخواه را در درخواست بنویسید؛ فاکتور در همین صفحه می‌آید و پس از پرداخت، مبلغ آن به موجودی قابل استفاده اضافه می‌شود.</p>
+                                <p class="tsb-topup__actions">
+                                    <a class="ts-btn ts-btn--primary" t-att-href="ws.ts_topup_request_url()">درخواست شارژ اعتبار</a>
+                                    <span class="ts-hint">یا تلفن: <a href="tel:+982188174100"><bdi dir="ltr">۰۲۱-۸۸۱۷۴۱۰۰</bdi></a></span>
+                                </p>
+                            </section>
+
+                            <section class="ts-card" id="tsb-invoices" aria-labelledby="tsb-inv-h">
+                                <h2 id="tsb-inv-h" class="h5">فاکتورهای شارژ اعتبار</h2>
+                                <p t-if="not invoices" class="ts-hint">هنوز فاکتوری برای این پنل صادر نشده است.</p>
+                                <div t-if="invoices" class="ts-table-wrap">
+                                <table class="ts-table tsp-table tsp-table--cards" aria-labelledby="tsb-inv-h">
+                                    <thead><tr><th scope="col">شماره</th><th scope="col">تاریخ</th><th scope="col">مبلغ</th><th scope="col">وضعیت</th><th scope="col"><span class="tsp-sr">فاکتور</span></th></tr></thead>
+                                    <tbody>
+                                        <tr t-foreach="invoices" t-as="inv">
+                                            <th scope="row" data-label="شماره"><bdi dir="ltr" t-out="inv['name']"/></th>
+                                            <td data-label="تاریخ" t-out="inv['date']"/>
+                                            <td data-label="مبلغ" class="tsb-amt" t-out="toman(inv['amount'])"/>
+                                            <td data-label="وضعیت"><span t-if="inv['paid']" class="ts-pill ts-pill--ok">پرداخت‌شده</span><t t-else=""><span class="ts-pill ts-pill--warn">در انتظار پرداخت</span><small class="tsb-inv-note">پس از پرداخت به موجودی اضافه می‌شود</small></t></td>
+                                            <td><a class="tsb-inv-link" t-att-href="inv['url']">دیدن فاکتور <bdi dir="ltr" class="tsp-sr" t-out="inv['name']"/></a></td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                                </div>
+                            </section>
+
+                            <section class="ts-card" id="tsb-history" aria-labelledby="tsb-hist-h" data-tsp-collapse="1">
+                                <h2 id="tsb-hist-h" class="h5">تاریخچهٔ اعتبار</h2>
+                                <p t-if="not rows" class="ts-hint">هنوز ردیفی در دفتر اعتبار نیست.</p>
+                                <p t-if="rows" class="ts-hint">آخرین ردیف‌های دفتر اعتبار پنل، تازه‌ترین در بالا. رزرو با «−» و شارژ و آزادسازی رزرو با «+» آمده است. تکمیل هر سنجه مبلغ رزروشده‌اش را کسر می‌کند و موجودی قابل استفاده را تغییر نمی‌دهد.</p>
+                                <div t-if="rows" class="ts-table-wrap">
+                                <table class="ts-table tsp-table tsp-table--cards tsb-ledger" aria-labelledby="tsb-hist-h">
+                                    <thead><tr><th scope="col">تاریخ</th><th scope="col">نوع</th><th scope="col">مبلغ</th><th scope="col">موجودی قابل استفاده پس از آن</th></tr></thead>
+                                    <tbody>
+                                        <tr t-foreach="rows" t-as="r">
+                                            <th scope="row" data-label="تاریخ" t-out="r['date']"/>
+                                            <td data-label="نوع" class="tsb-ledger__type"><t t-out="r['label']"/><small t-if="r['why']" class="tsb-ledger__why" t-out="r['why']"/></td>
+                                            <td data-label="مبلغ" class="tsb-ledger__amt tsb-amt" t-out="r['amount']"/>
+                                            <td data-label="موجودی قابل استفاده پس از آن" class="tsb-ledger__bal tsb-amt"><span class="tsb-ledger__k">موجودی: </span><t t-out="r['balance']"/></td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                                </div>
+                            </section>
 
                             <section class="ts-card" id="tsb-usage" aria-labelledby="tsb-usage-h">
-                                <h2 id="tsb-usage-h" class="h5">مصرف این ماه به تفکیک مشاور</h2>
+                                <h2 id="tsb-usage-h" class="h5">تعهد این ماه به تفکیک عضو</h2>
+                                <p class="ts-hint">تعهد این ماه یعنی مبلغ رزروشده و کسرشدهٔ دعوت‌هایی که هر عضو در ماه شمسی جاری فرستاده است؛ سقف ماهانه با همین مبلغ سنجیده می‌شود.</p>
                                 <p t-if="not by_member" class="ts-hint">این ماه هنوز دعوتی با هزینه فرستاده نشده است.</p>
                                 <div t-if="by_member" class="ts-table-wrap">
-                                <table class="ts-table tsp-table tsp-table--cards">
-                                    <caption class="tsp-sr">مصرف این ماه به تفکیک مشاور</caption>
-                                    <thead><tr><th scope="col">عضو</th><th scope="col">دعوت‌ها</th><th scope="col">مبلغ</th></tr></thead>
+                                <table class="ts-table tsp-table tsp-table--cards" aria-labelledby="tsb-usage-h">
+                                    <thead><tr><th scope="col">عضو</th><th scope="col">دعوت‌ها</th><th scope="col">تعهد این ماه</th></tr></thead>
                                     <tbody>
                                         <tr t-foreach="by_member" t-as="row">
                                             <th scope="row" data-label="عضو"><bdi t-out="row[0].name"/></th>
                                             <td data-label="دعوت‌ها" t-out="fa(row[1])"/>
-                                            <td data-label="مبلغ" class="tsb-amt" t-out="toman(row[2])"/>
+                                            <td data-label="تعهد این ماه" class="tsb-amt" t-out="toman(row[2])"/>
                                         </tr>
                                     </tbody>
                                 </table>
@@ -44,17 +92,16 @@
 
                             <section t-if="capped" class="ts-card" id="tsb-caps" aria-labelledby="tsb-caps-h">
                                 <h2 id="tsb-caps-h" class="h5">سقف ماهانهٔ مشاوران</h2>
-                                <p class="ts-hint">سقف، هزینهٔ دعوت‌هایی است که هر مشاور در یک ماه شمسی می‌فرستد. ۰ یعنی بدون سقف. برای مالک، هماهنگ‌کننده و مدیران سقفی تعیین نمی‌شود.</p>
+                                <p class="ts-hint">سقف، بیشترین هزینهٔ دعوت‌هایی است که هر مشاور در یک ماه شمسی می‌فرستد. دعوتی که از سقف بگذرد ساخته نمی‌شود. دعوت لغوشده یا منقضی‌شده مبلغش را به سقف برمی‌گرداند. ۰ یعنی بدون سقف. <t t-out="ws.ts_credit_roles('و')"/> سقف ندارند.</p>
                                 <div class="ts-table-wrap">
-                                <table class="ts-table tsp-table tsp-table--cards">
-                                    <caption class="tsp-sr">سقف ماهانهٔ مشاوران</caption>
-                                    <thead><tr><th scope="col">عضو</th><th scope="col">مصرف این ماه</th><th scope="col">سقف (تومان)</th></tr></thead>
+                                <table class="ts-table tsp-table tsp-table--cards tsb-caps" aria-labelledby="tsb-caps-h">
+                                    <thead><tr><th scope="col">عضو</th><th scope="col">تعهد این ماه</th><th scope="col">سقف (تومان)</th></tr></thead>
                                     <tbody>
                                         <tr t-foreach="capped" t-as="cm">
                                             <th scope="row" data-label="عضو"><bdi t-out="cm.user_id.name"/></th>
-                                            <td data-label="مصرف این ماه" class="tsb-amt" t-out="toman(wallet.ts_month_spend(cm))"/>
+                                            <td data-label="تعهد این ماه" class="tsb-amt" t-out="toman(wallet.ts_month_spend(cm))"/>
                                             <td data-label="سقف (تومان)">
-                                                <form t-if="can_manage" t-attf-action="/my/workspaces/#{ws.id}/credits/cap" method="post" class="tsb-inline" data-tsp-once="1">
+                                                <form t-if="can_manage" t-attf-action="/my/workspaces/#{ws.id}/credits/cap" method="post" class="tsb-inline" data-tsp-once="1" t-att-data-ts-dirty="'سقف ماهانهٔ ' + (cm.user_id.name or '')">
                                                     <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
                                                     <input type="hidden" name="member_id" t-att-value="cm.id"/>
                                                     <label class="tsp-sr" t-attf-for="tsb_cap_#{cm.id}">سقف ماهانهٔ <t t-out="cm.user_id.name"/> به تومان</label>
@@ -72,11 +119,11 @@
 
                             <section t-if="can_manage" class="ts-card" id="tsb-alert" aria-labelledby="tsb-alert-h">
                                 <h2 id="tsb-alert-h" class="h5">هشدار کم شدن اعتبار</h2>
-                                <form t-attf-action="/my/workspaces/#{ws.id}/credits/threshold" method="post" class="tsp-form" data-tsp-once="1">
+                                <form t-attf-action="/my/workspaces/#{ws.id}/credits/threshold" method="post" class="tsp-form" data-tsp-once="1" data-ts-dirty="هشدار کم شدن اعتبار">
                                     <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
                                     <div class="tsp-field">
-                                        <label class="tsp-field__label" for="tsb_threshold">وقتی موجودی کمتر از این مبلغ شد خبرم کن (تومان)</label>
-                                        <p class="tsp-field__hint" id="tsb_threshold_h">در روز حداکثر یک اعلان به مالک و مدیران پنل می‌رسد. ۰ یعنی خاموش.</p>
+                                        <label class="tsp-field__label" for="tsb_threshold">وقتی موجودی قابل استفاده کمتر از این مبلغ شد خبرم کن (تومان)</label>
+                                        <p class="tsp-field__hint" id="tsb_threshold_h">در روز حداکثر یک اعلان به <t t-out="ws.ts_credit_roles('و')"/> می‌رسد. ۰ یعنی خاموش؛ اکنون: <strong><t t-if="threshold" t-out="toman(threshold)"/><t t-else="">خاموش</t></strong>.</p>
                                         <input id="tsb_threshold" type="text" name="threshold" inputmode="numeric" maxlength="16" class="form-control tsb-money" aria-describedby="tsb_threshold_h" t-att-value="ws.ts_fa_num(threshold // 10)"/>
                                     </div>
                                     <p><button type="submit" class="ts-btn ts-btn--primary">ذخیرهٔ آستانه</button></p>
@@ -84,48 +131,6 @@
                             </section>
 
                             <t t-call="ts_billing.price_list"/>
-
-                            <section class="ts-card" id="tsb-invoices" aria-labelledby="tsb-inv-h">
-                                <h2 id="tsb-inv-h" class="h5">فاکتورهای شارژ اعتبار</h2>
-                                <p t-if="not invoices" class="ts-hint">هنوز فاکتوری برای این پنل صادر نشده است. برای شارژ اعتبار با تیم استعدادیاب تماس بگیرید.</p>
-                                <div t-if="invoices" class="ts-table-wrap">
-                                <table class="ts-table tsp-table tsp-table--cards">
-                                    <caption class="tsp-sr">فاکتورها</caption>
-                                    <thead><tr><th scope="col">شماره</th><th scope="col">تاریخ</th><th scope="col">مبلغ</th><th scope="col">وضعیت</th><th scope="col"><span class="tsp-sr">فاکتور</span></th></tr></thead>
-                                    <tbody>
-                                        <tr t-foreach="invoices" t-as="inv">
-                                            <th scope="row" data-label="شماره"><bdi dir="ltr" t-out="inv['name']"/></th>
-                                            <td data-label="تاریخ" t-out="inv['date']"/>
-                                            <td data-label="مبلغ" class="tsb-amt" t-out="toman(inv['amount'])"/>
-                                            <td data-label="وضعیت"><span t-if="inv['paid']" class="ts-pill ts-pill--ok">پرداخت‌شده</span><span t-else="" class="ts-pill ts-pill--warn">در انتظار پرداخت</span></td>
-                                            <td><a class="tsb-inv-link" t-att-href="inv['url']">دیدن فاکتور <bdi dir="ltr" class="tsp-sr" t-out="inv['name']"/></a></td>
-                                        </tr>
-                                    </tbody>
-                                </table>
-                                </div>
-                            </section>
-
-                            <section class="ts-card" id="tsb-history" aria-labelledby="tsb-hist-h" data-tsp-collapse="1">
-                                <h2 id="tsb-hist-h" class="h5">تاریخچهٔ اعتبار</h2>
-                                <p t-if="not rows" class="ts-hint">هنوز ردیفی در دفتر اعتبار نیست.</p>
-                                <p t-if="rows" class="ts-hint">آخرین ردیف‌های دفتر اعتبار پنل، تازه‌ترین در بالا. رزرو و کسر با «−» و شارژ و آزادسازی با «+» آمده است.</p>
-                                <div t-if="rows" class="ts-table-wrap">
-                                <table class="ts-table tsp-table tsp-table--cards tsb-ledger">
-                                    <caption class="tsp-sr">تاریخچهٔ اعتبار</caption>
-                                    <thead><tr><th scope="col">تاریخ</th><th scope="col">نوع</th><th scope="col">مبلغ</th><th scope="col">موجودی پس از آن</th></tr></thead>
-                                    <tbody>
-                                        <tr t-foreach="rows" t-as="r">
-                                            <t t-set="r_type" t-value="type_labels.get(r.type, r.type)"/>
-                                            <t t-set="r_why" t-value="reason_labels.get(r.reason_code, '') if r.reason_code else ''"/>
-                                            <th scope="row" data-label="تاریخ" t-out="jalali(r.txn_date)"/>
-                                            <td data-label="نوع" class="tsb-ledger__type"><t t-out="r_type"/><small t-if="r_why and r_why != r_type" class="tsb-ledger__why" t-out="r_why"/></td>
-                                            <td data-label="مبلغ" class="tsb-ledger__amt tsb-amt" t-out="ws.ts_toman_signed(r.amount)"/>
-                                            <td data-label="موجودی پس از آن" class="tsb-ledger__bal tsb-amt"><span class="tsb-ledger__k">موجودی: </span><t t-out="toman(r.balance_after)"/></td>
-                                        </tr>
-                                    </tbody>
-                                </table>
-                                </div>
-                            </section>
                         </t>
                     </div>
                 </t>
@@ -147,12 +152,12 @@
                             <header class="tsp-head">
                                 <div>
                                     <h1 class="tsp-head__title">هزینهٔ دعوت‌های شما</h1>
-                                    <p class="tsp-head__help">هزینهٔ هر دعوت هنگام فرستادن رزرو و با تکمیل کسر می‌شود. موجودی پنل را مدیر پنل می‌بیند.</p>
+                                    <p class="tsp-head__help">هزینهٔ هر دعوت هنگام فرستادن رزرو و با تکمیل کسر می‌شود. موجودی پنل را <t t-out="ws.ts_credit_roles('و')"/> می‌بینند؛ برای شارژ اعتبار یا سقف بالاتر با <t t-out="ws.ts_credit_ask()"/> هماهنگ کنید.</p>
                                 </div>
                             </header>
-                            <ul class="tsp-stats tsb-stats" aria-label="مصرف شما">
-                                <li><div class="tsp-stat"><strong class="tsb-amt" t-out="toman(st['spent'])"/><span>مصرف این ماه</span><small>کسرشده و رزروشده برای دعوت‌های شما</small></div></li>
-                                <li><div class="tsp-stat"><strong class="tsb-amt"><t t-if="st['capped']" t-out="toman(st['cap'])"/><t t-else="">بدون سقف</t></strong><span>سقف ماهانه</span><small t-if="st['capped']">مدیر پنل تعیین می‌کند</small></div></li>
+                            <ul class="tsp-stats tsb-stats" aria-label="هزینهٔ دعوت‌های شما در این ماه">
+                                <li><div class="tsp-stat"><strong class="tsb-amt" t-out="toman(st['spent'])"/><span>تعهد این ماه</span><small>رزروشده و کسرشده برای دعوت‌های شما</small></div></li>
+                                <li><div class="tsp-stat"><strong class="tsb-amt"><t t-if="st['capped']" t-out="toman(st['cap'])"/><t t-else="">بدون سقف</t></strong><span>سقف ماهانه</span><small t-if="st['capped']"><t t-out="ws.ts_credit_ask()"/> تعیین می‌کند</small></div></li>
                                 <li t-if="st['capped']"><div class="tsp-stat"><strong class="tsb-amt" t-out="toman(st['cap_left'])"/><span>باقی‌مانده تا سقف</span><small>تا پایان ماه شمسی</small></div></li>
                             </ul>
                             <t t-if="st['capped']" t-call="ts_billing.cap_bar" bar_only="True"/>
@@ -164,7 +169,9 @@
         </field>
     </record>
 
-    <!-- Shared blocks. price_list params: prices [(kind, name, rial)] (priced only), free_n, toman. cap_bar params: st, toman, bar_only, cap_label. -->
+    <!-- Shared blocks. price_list params: prices [(kind, name, rial)] (priced only), free_n, toman, collapse_prices (closed card
+         with the count in its heading), cap_left (rial or None: rows above it are marked). cap_bar params: st, toman, bar_only,
+         cap_label, cap_who (True: the text speaks about «this member», not «you»). -->
     <record id="tpl_price_list" model="ir.ui.view">
         <field name="name">TS billing: price list</field>
         <field name="type">qweb</field>
@@ -172,17 +179,16 @@
         <field name="website_id" ref="ts_website.website_ts"/>
         <field name="arch" type="xml">
             <t t-name="ts_billing.price_list">
-                <section class="ts-card" id="tsb-prices" aria-labelledby="tsb-prices-h">
-                    <h2 id="tsb-prices-h" class="h5">فهرست قیمت این پنل</h2>
+                <section class="ts-card" id="tsb-prices" aria-labelledby="tsb-prices-h" t-att-data-tsp-collapse="'1' if (collapse_prices and prices) else None">
+                    <h2 id="tsb-prices-h" class="h5">فهرست قیمت این پنل<t t-if="prices"> (<t t-out="ws.ts_fa_num(len(prices))"/> مورد)</t></h2>
                     <p t-if="not prices and not free_n" class="ts-hint">هنوز سنجه یا مجموعه‌ای برای دعوت در اختیار شما نیست.</p>
                     <p t-elif="not prices" class="ts-hint">برای سنجه‌ها و مجموعه‌های این پنل هزینه‌ای تعیین نشده است؛ دعوت به آن‌ها از اعتبار پنل کم نمی‌کند.</p>
                     <div t-if="prices" class="ts-table-wrap">
-                    <table class="ts-table tsp-table tsb-prices">
-                        <caption class="tsp-sr">فهرست قیمت</caption>
+                    <table class="ts-table tsp-table tsb-prices" aria-labelledby="tsb-prices-h">
                         <thead><tr><th scope="col">سنجه یا مجموعه</th><th scope="col">هزینهٔ هر دعوت</th></tr></thead>
                         <tbody>
                             <tr t-foreach="prices" t-as="p">
-                                <th scope="row"><t t-out="p[1]"/><small class="tsb-prices__kind" t-out="p[0]"/></th>
+                                <th scope="row"><t t-out="p[1]"/><small class="tsb-prices__kind" t-out="p[0]"/><small t-if="cap_left is not None and p[2] &gt; cap_left" class="tsb-prices__over">بیشتر از باقی‌ماندهٔ سقف شما</small></th>
                                 <td class="tsb-amt" t-out="toman(p[2])"/>
                             </tr>
                         </tbody>
@@ -201,11 +207,12 @@
         <field name="arch" type="xml">
             <t t-name="ts_billing.cap_bar">
                 <div class="tsb-cap" role="group" t-att-aria-label="cap_label or 'سقف ماهانهٔ شما'">
-                    <p t-if="not bar_only" class="tsb-cap__text"><span>مصرف این ماه از سقف ماهانه:</span> <span class="tsb-amt" t-out="toman(st['spent'])"/> از <span class="tsb-amt" t-out="toman(st['cap'])"/></p>
-                    <div class="tsb-cap__bar" role="progressbar" aria-valuemin="0" aria-valuemax="100" t-att-aria-valuenow="st['cap_pct']" t-attf-aria-valuetext="#{st['cap_pct']} درصد از سقف ماهانه">
-                        <span t-attf-class="tsb-cap__fill #{'tsb-cap__fill--full' if st['cap_pct'] &gt;= 90 else ''}" t-attf-style="width: #{st['cap_pct']}%"/>
+                    <p t-if="not bar_only" class="tsb-cap__text"><span>تعهد این ماه از سقف ماهانه:</span> <span class="tsb-amt" t-out="toman(st['spent'])"/> از <span class="tsb-amt" t-out="toman(st['cap'])"/></p>
+                    <div class="tsb-cap__bar" role="progressbar" aria-valuemin="0" aria-valuemax="100" t-att-aria-valuenow="st['cap_pct']" t-att-aria-valuetext="'%s درصد از سقف ماهانه؛ %s از %s' % (ws.ts_fa_num(st['cap_pct']), toman(st['spent']), toman(st['cap']))">
+                        <span t-attf-class="tsb-cap__fill #{'tsb-cap__fill--full' if st['cap_near'] else ''}" t-attf-style="width: #{st['cap_pct']}%"/>
                     </div>
                     <p t-if="not bar_only" class="tsb-cap__left">باقی‌مانده تا سقف: <span class="tsb-amt" t-out="toman(st['cap_left'] or 0)"/></p>
+                    <p t-if="st['cap_near']" class="tsb-cap__near"><t t-if="cap_who">تا سقف ماهانهٔ این عضو</t><t t-else="">تا سقف ماهانهٔ شما</t> فقط <span class="tsb-amt" t-out="toman(st['cap_left'] or 0)"/> مانده است؛ دعوت گران‌تر از آن ساخته نمی‌شود.</p>
                 </div>
             </t>
         </field>

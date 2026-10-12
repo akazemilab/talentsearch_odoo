@@ -260,13 +260,13 @@
                                 <p t-if="error" class="ts-notice ts-notice--warn" role="alert" t-out="error"/>
                                 <div t-if="owned_by" class="ts-card ts-card--soft" role="status">
                                     <h2 class="h5">این نتیجه از قبل به یک پنل رسیده است</h2>
-                                    <p t-if="owned_by">این سنجه به دعوت پنل «<bdi t-out="owned_by.name"/>» انجام شده و همان پنل، طبق اجازه‌ای که داده‌اید، آن را می‌بیند. ارسال دوباره با کد پنل لازم نیست.</p>
+                                    <p t-if="owned_by">این سنجه به دعوت پنل «<bdi t-out="owned_by.ts_public_name()"/>» انجام شده و همان پنل، طبق اجازه‌ای که داده‌اید، آن را می‌بیند. ارسال دوباره با کد پنل لازم نیست.</p>
                                     <p><a href="/my/sharing" class="ts-btn ts-btn--outline">دیدن یا لغو اشتراک در «چه کسی می‌بیند»</a></p>
                                 </div>
                                 <t t-else="">
                                     <div t-if="shares" class="ts-notice" role="status">
                                         این نتیجه هم‌اکنون با این پنل‌ها به اشتراک گذاشته شده است:
-                                        <strong><bdi t-out="'، '.join(shares.mapped('workspace_id.name'))"/></strong>.
+                                        <strong><bdi t-out="'، '.join(w.ts_public_name() for w in shares.workspace_id)"/></strong>.
                                         <a href="/my/sharing">مدیریت اشتراک‌ها</a>
                                     </div>
                                     <form t-if="not ws" t-attf-action="/my/assessments/#{attempt.id}/share" method="get" class="ts-form">
@@ -278,7 +278,7 @@
                                     <form t-else="" t-attf-action="/my/assessments/#{attempt.id}/share/confirm" method="post" class="ts-form">
                                         <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
                                         <input type="hidden" name="code" t-att-value="ws.code"/>
-                                        <p>نتیجه برای پنل «<strong><bdi t-out="ws.name"/></strong>» ارسال شود؟</p>
+                                        <p>نتیجه برای پنل «<strong><bdi t-out="ws.ts_public_name()"/></strong>» ارسال شود؟</p>
                                         <button type="submit" class="ts-btn ts-btn--primary">بله، ارسال شود</button>
                                         <a t-attf-href="/my/assessments/#{attempt.id}/share" class="ts-btn ts-btn--outline">نه، کد دیگری وارد می‌کنم</a>
                                     </form>
