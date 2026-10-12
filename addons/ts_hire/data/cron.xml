@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="1">
+    <record id="cron_hire_retention" model="ir.cron">
+        <field name="name">استعدادیاب: پاک‌سازی داده‌های استخدامی پس از ۱۲ ماه</field>
+        <field name="model_id" ref="ts_org.model_ts_assignment"/>
+        <field name="state">code</field>
+        <field name="code">model._cron_hire_retention()</field>
+        <field name="interval_number">1</field>
+        <field name="interval_type">days</field>
+    </record>
+</odoo>

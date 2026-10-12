@@ -46,6 +46,8 @@ class TsOnetOccupation(models.Model):
     has_styles = fields.Boolean('دادهٔ سبک کاری', readonly=True)
     has_abilities = fields.Boolean('دادهٔ توانایی', readonly=True)
     search_text = fields.Char(compute='_compute_search_text', store=True, index=True)
+    shipped_title_fa = fields.Char(readonly=True, help='Persian title as last shipped (a different current title = edited by hand)')
+    shipped_desc_fa = fields.Text(readonly=True)
     active = fields.Boolean(default=True)
 
     _code_unique = models.Constraint('unique(code)', 'کد شغل باید یکتا باشد.')
@@ -93,30 +95,26 @@ class TsOnetOccupation(models.Model):
             return {'skipped': True}
         data = json.loads(raw.decode('utf-8'))
         _data.cache_clear()
-        prev = json.loads(ICP.get_str('ts_onet.shipped_titles') or '{}')
         existing = {o.code: o for o in self.with_context(active_test=False).search([])}
         stats = {'created': 0, 'updated': 0, 'kept_manual': 0}
-        shipped = {}
         for o in data['occupations']:
             prof = json.dumps({'styles': o['styles'], 'ab': o['ab'], 'clinic': o['clinic']}, ensure_ascii=False,
                               sort_keys=True, separators=(',', ':'))
             vals = {'title_en': o['en'], 'job_zone': o['jz'] or 0, 'profile_json': prof,
                     'has_styles': bool(o['styles']), 'has_abilities': bool(o['ab'])}
-            shipped[o['code']] = [o['fa'], o['desc']]
+            vals.update({'shipped_title_fa': o['fa'], 'shipped_desc_fa': o['desc']})
             rec = existing.get(o['code'])
             if not rec:
                 vals.update({'code': o['code'], 'title_fa': o['fa'], 'desc_fa': o['desc']})
                 self.create(vals)
                 stats['created'] += 1
                 continue
-            old = prev.get(o['code'])
-            if not old or [rec.title_fa, rec.desc_fa or ''] == [old[0], old[1]]:
+            if not rec.shipped_title_fa or (rec.title_fa == rec.shipped_title_fa and (rec.desc_fa or '') == (rec.shipped_desc_fa or '')):
                 vals.update({'title_fa': o['fa'], 'desc_fa': o['desc']})
             else:
                 stats['kept_manual'] += 1
             rec.write(vals)
             stats['updated'] += 1
-        ICP.set_str('ts_onet.shipped_titles', json.dumps(shipped, ensure_ascii=False))
         ICP.set_str('ts_onet.data_hash', digest)
         _logger.info('ts_onet catalogue load: %s', stats)
         return stats

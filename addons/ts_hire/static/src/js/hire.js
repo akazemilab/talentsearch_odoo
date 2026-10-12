@@ -2,6 +2,8 @@
 // HR positions: at most three «کلیدی» requirements, a requirement is either critical or dropped, and compare 2-3.
 (function () {
     'use strict';
+    if (document.readyState === 'loading') { document.addEventListener('DOMContentLoaded', main); } else { main(); }
+    function main() {
     var FA = '۰۱۲۳۴۵۶۷۸۹';
     function fa(n) { return String(n).replace(/[0-9]/g, function (d) { return FA[+d]; }); }
 
@@ -45,5 +47,6 @@
         };
         cmp.addEventListener('change', upd);
         upd();
+    }
     }
 }());

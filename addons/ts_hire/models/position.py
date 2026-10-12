@@ -31,7 +31,8 @@ POSITIVE = ('shortlist', 'interview', 'hire')
 GENDERS = [('female', 'زن'), ('male', 'مرد'), ('undisclosed', 'ترجیح می‌دهم نگویم')]
 AGE_BANDS = [('18-24', '۱۸ تا ۲۴'), ('25-34', '۲۵ تا ۳۴'), ('35-44', '۳۵ تا ۴۴'), ('45-54', '۴۵ تا ۵۴'),
              ('55+', '۵۵ و بیشتر'), ('undisclosed', 'ترجیح می‌دهم نگویم')]
-FAIR_MIN_GROUP = 5
+FAIR_MIN_GROUP = 10
+RETENTION_DAYS = 365
 MAX_CRITICAL = 3
 VALIDITY_FA = {
     'attention': 'به جمله‌های کنترلی دقت کافی نشد',
@@ -150,8 +151,10 @@ class TsHirePosition(models.Model):
 
     # ------------------------------------------------------------ fairness (four-fifths, decisions only)
     def ts_fairness(self):
-        """Selection rate (shortlist/interview/hire) by voluntary gender and age band. Groups below FAIR_MIN_GROUP are
-        not shown (privacy and noise); the rule flags a group whose rate is below 4/5 of the highest group."""
+        """Selection rate (shortlist/interview/hire) by voluntary gender and age band, for a CLOSED position only (a
+        live view would let a member learn one candidate's group by recording a decision and reloading). Groups below
+        FAIR_MIN_GROUP are not shown and exact sizes are never shown; the rule flags a group whose rate is below 4/5 of
+        the highest group."""
         self.ensure_one()
         decided = self.assignment_ids.sudo().filtered(lambda x: x.hire_decision and x.hire_decision != 'none')
         out = {}
@@ -169,7 +172,7 @@ class TsHirePosition(models.Model):
                 top = max(p / n for n, p in shown.values()) or 0
                 for g, (n, p) in sorted(shown.items()):
                     rate = p / n
-                    rows.append({'label': labels.get(g, g), 'n': n, 'rate': rate,
+                    rows.append({'label': labels.get(g, g), 'rate': rate,
                                  'ratio': (rate / top) if top else None, 'flag': bool(top and rate / top < 0.8)})
             out[field] = {'rows': rows, 'hidden': len(groups) - len(shown), 'decided': len(decided)}
         return out
@@ -219,10 +222,12 @@ class TsAssignmentHire(models.Model):
                         abilities[k] = v
                     flags += ['task:%s' % f for f in (t.task_flags or '').split(',') if f]
             ver = a.env['ts.assignment'].sudo().search([('verify_of_id', '=', a.id), ('state', '=', 'done')], limit=1)
-            if ver and abilities.get('Inductive Reasoning') is not None:
+            if ver and ver.user_id == a.user_id and abilities.get('Inductive Reasoning') is not None:
                 vt = ver.attempt_id.ts_abilities().get('Inductive Reasoning')
                 if vt is not None and abilities['Inductive Reasoning'] - vt > 30:
                     flags.append('task:verify_drop')
+            if a.hire_purged_at:
+                continue
             res = a.position_id.occupation_id.ts_jobfit(facets=facets or None, abilities=abilities or None,
                                                          overrides=a.position_id.ts_overrides()) if facets or abilities else None
             complete = bool(ats) and all(t.state == 'done' for t in ats)
@@ -286,6 +291,32 @@ class TsAssignmentHire(models.Model):
                 out.append(VALIDITY_FA.get(f, f))
         return sorted(set(out))
 
+    def action_accept(self, user, share):
+        if self.verify_of_id and self.verify_of_id.user_id and user != self.verify_of_id.user_id:
+            raise UserError('این آزمون برای داوطلب دیگری ساخته شده است.')
+        return super().action_accept(user, share)
+
+    # ------------------------------------------------------------ retention (promised on the invitation page)
+    hire_purged_at = fields.Datetime('پاک‌سازی داده‌های استخدامی', readonly=True, copy=False)
+
+    def _ts_hire_purge(self):
+        """12 months after the invitation: the employer loses access to the result (share off) and the HR-side data of
+        the position is cleared; the candidate's own report stays in their account."""
+        for a in self.sudo():
+            a.write({'share_level': 'none', 'jobfit_json': False, 'jobfit_band': False, 'jobfit_order': 0,
+                     'validity_flags': False, 'ts_gender': False, 'ts_age_band': False, 'decision_note': False,
+                     'hire_purged_at': fields.Datetime.now()})
+            self.env['ts.audit.event'].sudo().log('hire.purge', a, workspace=a.workspace_id)
+
+    @api.model
+    def _cron_hire_retention(self):
+        from datetime import timedelta
+        cut = fields.Datetime.now() - timedelta(days=RETENTION_DAYS)
+        rows = self.sudo().search([('position_id', '!=', False), ('hire_purged_at', '=', False), ('create_date', '<', cut)],
+                                  limit=500)
+        rows._ts_hire_purge()
+        return len(rows)
+
     def ts_set_decision(self, decision, note, user):
         self.ensure_one()
         if decision not in dict(DECISIONS):
@@ -324,8 +355,12 @@ class TsAttemptHire(models.Model):
             if res and was.get(at.id) != 'done' and at.state == 'done':
                 a = at.assignment_id if 'assignment_id' in at._fields else False
                 a = a or self.env['ts.assignment'].sudo().search([('attempt_id', '=', at.id)], limit=1)
-                if a and a.position_id:
-                    a._ts_hire_refresh()
-                if a and a.verify_of_id:
-                    a.verify_of_id._ts_hire_refresh()
+                try:
+                    with self.env.cr.savepoint():
+                        if a and a.position_id:
+                            a._ts_hire_refresh()
+                        if a and a.verify_of_id:
+                            a.verify_of_id._ts_hire_refresh()
+                except Exception:  # noqa: BLE001 - the candidate's submit must never fail because of the HR side
+                    _logger.exception('job fit refresh failed for attempt %s', at.id)
         return res

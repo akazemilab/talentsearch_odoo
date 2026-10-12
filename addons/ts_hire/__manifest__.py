@@ -15,6 +15,7 @@
         'views/web_hire_inherit.xml',
         'data/mail_templates.xml',
         'data/load.xml',
+        'data/cron.xml',
     ],
     'assets': {
         'ts_website.assets_ts': ['ts_hire/static/src/scss/hire.scss'],

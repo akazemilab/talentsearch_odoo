@@ -162,14 +162,15 @@ check('H27 decision stored with who and when', a.hire_decision == 'shortlist' an
 check('H28 invalid decision refused', raises(lambda: a.ts_set_decision('maybe', '', hr.user_id), UserError))
 fair = pos.ts_fairness()
 check('H29 fairness hides small groups', fair['ts_gender']['rows'] == [])
-for i in range(12):
+for i in range(20):
     u = puser()
     x = A.sudo().create({'workspace_id': emp.id, 'battery_id': pos.battery_id.id,
                          'instrument_id': pos.battery_id.ts_first_instrument().id, 'invitee_name': u.name, 'position_id': pos.id})
-    x.write({'ts_gender': 'female' if i < 6 else 'male', 'hire_decision': ('shortlist' if i < 1 else 'reject') if i < 6 else 'shortlist'})
+    x.write({'ts_gender': 'female' if i < 10 else 'male', 'hire_decision': ('shortlist' if i < 2 else 'reject') if i < 10 else 'shortlist'})
 fair = pos.ts_fairness()
 rows = {r['label']: r for r in fair['ts_gender']['rows']}
-check('H30 four-fifths rule flags the lower group', rows and rows['زن']['flag'] and not rows['مرد']['flag'], rows)
+check('H30 four-fifths rule flags the lower group, never shows group sizes',
+      rows and rows['زن']['flag'] and not rows['مرد']['flag'] and all('n' not in r for r in rows.values()), rows)
 v = a.ts_invite_verification(hr)
 check('H31 verification test invitation', v.instrument_id.code == 'TASK-VERIFY' and v.verify_of_id == a)
 check('H32 a second click reuses it', a.ts_invite_verification(hr) == v)
@@ -182,5 +183,31 @@ check('H33 invitation email renders with the link and the position', a.invite_ur
 check('H34 no active mail server on the clone -> nothing sent, error recorded',
       not a._ts_send_invite_email() and a.email_error, a.email_error)
 check('H35 HR batteries have products for billing', all(b.product_id for b in bs) if 'product_id' in B._fields else True)
+
+# ---------------------------------------------------------------- review fixes (2026-10-12)
+stranger = puser()
+check('H36 a verification test can only be accepted by the same candidate', raises(lambda: v.action_accept(stranger, share=True), UserError))
+c3 = puser()
+a3 = A.with_user(hr.user_id).sudo().create({'workspace_id': emp.id, 'battery_id': pos.battery_id.id,
+                                            'instrument_id': pos.battery_id.ts_first_instrument().id,
+                                            'invitee_name': c3.name, 'position_id': pos.id})
+a3.action_accept(c3, share=False)
+check('H37 a candidate who did not share is status-only for HR', a3.result_level(hr) in ('status', 'none'))
+env.cr.execute("UPDATE ts_assignment SET create_date = now() - interval '400 days' WHERE id = %s", [a.id])
+a.invalidate_recordset()
+n = A._cron_hire_retention()
+a.invalidate_recordset()
+check('H38 retention: after 12 months the employer loses the result and HR data is cleared',
+      n >= 1 and a.share_level == 'none' and not a.jobfit_json and a.hire_purged_at and a.result_level(hr) != 'summary')
+t4 = Inst.search([('code', '=', 'TASK-SPEED')])
+c4 = puser()
+a4 = A.sudo().create({'workspace_id': emp.id, 'instrument_id': t4.id, 'invitee_name': c4.name})
+at4 = a4.action_accept(c4, share=True)
+at4.give_consent()
+at4.ts_task_start(0)
+items4, keys4 = at4._ts_items(json.loads(at4.task_json), 0)
+at4.ts_task_finish(0, responses=[{'c': k, 'rt': 400, 't': 85000} for k in keys4[:30]])
+check('H39 a speed block claiming more time than passed is flagged', json.loads(at4.task_json)['blocks'][0]['meta'].get('timing') == 1)
+check('H40 the mail server is chosen by the sender domain only', A._ts_mail_server().from_filter in (False, 'sepehrtherapy.ir'))
 
 print('SUMMARY %d/%d passed' % (sum(1 for _, ok in results if ok), len(results)))

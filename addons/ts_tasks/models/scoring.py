@@ -149,6 +149,10 @@ def block_flags(block, keys, responses, meta):
         flags.append('focus')
     if meta.get('resumed', 0) >= 1:
         flags.append('resumed')
+    if meta.get('late'):
+        flags.append('late')
+    if meta.get('timing'):
+        flags.append('timing')
     if block in POWER and got:
         fast = sum(1 for r in got if (r.get('rt') or 0) < 2000)
         if fast / len(got) > 0.3 and len(got) >= 4:
@@ -165,7 +169,8 @@ def block_flags(block, keys, responses, meta):
 FLAG_FA = {
     'focus': 'چند بار از صفحهٔ آزمون خارج شد', 'resumed': 'صفحه در میانهٔ بخش دوباره باز شد',
     'fast': 'بسیاری از پاسخ‌ها کمتر از ۲ ثانیه داده شد', 'anticipation': 'واکنش‌های پیش از نمایش محرک',
-    'empty': 'به هیچ پرسشی پاسخ نداد', 'verify_drop': 'نتیجهٔ آزمون تأیید حضوری بسیار پایین‌تر بود',
+    'empty': 'به هیچ پرسشی پاسخ نداد', 'late': 'بخش سرعت دیرتر از زمانش فرستاده شد',
+    'timing': 'زمان‌های گزارش‌شده با زمان واقعی جور نبود', 'verify_drop': 'نتیجهٔ آزمون تأیید حضوری بسیار پایین‌تر بود',
 }
 
 

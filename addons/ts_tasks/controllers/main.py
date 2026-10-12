@@ -101,6 +101,8 @@ class TsTaskPlayer(TsBatteryPlayer):
     @http.route('/take/<string:token>/task/finish', type='http', auth='user', website=True, methods=['POST'], sitemap=False)
     def task_finish(self, token, i=None, responses=None, focus_lost=0, **kw):
         attempt = self._task(token)
+        if responses and len(responses) > 200000:
+            return request.make_json_response({'ok': False, 'error': 'too large'}, status=413)
         try:
             resp = json.loads(responses) if responses else None
             if resp is not None and not isinstance(resp, list):

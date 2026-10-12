@@ -65,6 +65,20 @@ def _row(me, a):
             'decision': DEC.get(a.hire_decision or 'none'), 'complete': a.ts_hire_complete}
 
 
+def _visible(me, p):
+    """The candidates of a position this member may see, as rows; order and counts never use what the member may not
+    see (a candidate who did not share is listed by state only and never counted in a band)."""
+    cands = p.assignment_ids.sudo().filtered(lambda a: a.state != 'withdrawn' and me.can_see(a))
+    rows = [_row(me, a) for a in cands]
+    order = {'done': 0, 'in_progress': 1, 'accepted': 2, 'invited': 3, 'declined': 4}
+    rows.sort(key=lambda r: (0, r['a'].jobfit_order or 99, -r['a'].id) if r['res']
+              else (1, order.get(r['a'].state, 5), -r['a'].id))
+    counts = {'invited': len(rows), 'done': sum(1 for r in rows if r['complete']),
+              'going': sum(1 for r in rows if r['a'].state in ('accepted', 'in_progress') and not r['complete']),
+              'strong': sum(1 for r in rows if r['band'] == 'strong')}
+    return rows, counts
+
+
 def _parse_people(text):
     """Lines of «نام، موبایل، ایمیل» (comma, Persian comma, tab or semicolon). -> (people, errors)"""
     people, errors = [], []
@@ -101,7 +115,7 @@ class TsHirePositions(http.Controller):
         P = request.env['ts.hire.position'].sudo()
         rows = P.search([('workspace_id', '=', ws_id)])
         return render_in_shell('ts_hire.positions', me, 'positions', 'موقعیت‌های شغلی', rows=rows,
-                               counts={p.id: p.ts_counts() for p in rows}, can_create=me.has_perm('invites:create'))
+                               counts={p.id: _visible(me, p)[1] for p in rows}, can_create=me.has_perm('invites:create'))
 
     # ------------------------------------------------------------------ new
     @http.route('/my/workspaces/<int:ws_id>/positions/new', type='http', auth='user', website=True, sitemap=False,
@@ -181,12 +195,11 @@ class TsHirePositions(http.Controller):
         if denied:
             return denied
         p = _position_or_404(me, pid)
-        cands = p.ts_sorted_candidates().filtered(lambda a: me.can_see(a))
-        rows = [_row(me, a) for a in cands]
+        rows, counts = _visible(me, p)
         from datetime import datetime, time
         from odoo.addons.ts_assessment.models.attempt import jalali
         deadline_fa = jalali(datetime.combine(p.deadline, time(12)), with_time=False) if p.deadline else ''
-        return render_in_shell('ts_hire.position', me, 'positions', p.name, p=p, rows=rows, counts=p.ts_counts(),
+        return render_in_shell('ts_hire.position', me, 'positions', p.name, p=p, rows=rows, counts=counts,
                                deadline_fa=deadline_fa,
                                can_invite=me.has_perm('invites:create') and p.state == 'open' and me.can_act(),
                                can_fair=me.has_perm('reports:group'), base=_base(ws_id, p.id),
@@ -197,9 +210,12 @@ class TsHirePositions(http.Controller):
                 sitemap=False, methods=['POST'])
     def position_state(self, ws_id, pid, **post):
         me = member_or_404(ws_id)
+        _employment_or_404(me)
         denied = require(me, 'invites:create', 'positions')
         if denied:
             return denied
+        if not me.can_act():
+            return forbidden(me, 'invites:create', 'positions')
         p = _position_or_404(me, pid)
         new = post.get('state')
         if new in ('open', 'closed') and new != p.state:
@@ -215,6 +231,7 @@ class TsHirePositions(http.Controller):
                 sitemap=False, methods=['POST'])
     def position_invite(self, ws_id, pid, **post):
         me = member_or_404(ws_id)
+        _employment_or_404(me)
         denied = require(me, 'invites:create', 'positions')
         if denied:
             return denied
@@ -245,7 +262,7 @@ class TsHirePositions(http.Controller):
         except ImportError:
             sms_ok = False
         A = request.env['ts.assignment'].sudo()
-        made, sent_sms, sent_email = 0, 0, 0
+        made, sent_sms, sent_email, to_mail = 0, 0, 0, []
         try:
             with request.env.cr.savepoint():
                 for x in people:
@@ -260,11 +277,14 @@ class TsHirePositions(http.Controller):
                     made += 1
                     if a.sms_sent_at if 'sms_sent_at' in a._fields else False:
                         sent_sms += 1
-                    if want_email and x['email'] and a._ts_send_invite_email():
-                        sent_email += 1
+                    if want_email and x['email']:
+                        to_mail.append(a)
         except (UserError, ValidationError) as e:
             flash_error(str(e.args[0] if e.args else e))
             return request.redirect(back + '#tsh-invite')
+        for a in to_mail:
+            if a._ts_send_invite_email():
+                sent_email += 1
         msg = '%s دعوت ساخته شد' % _fa(made)
         if want_sms:
             msg += '؛ پیامک: %s' % _fa(sent_sms)
@@ -299,9 +319,12 @@ class TsHirePositions(http.Controller):
                 website=True, sitemap=False, methods=['POST'])
     def candidate_decision(self, ws_id, pid, aid, **post):
         me = member_or_404(ws_id)
+        _employment_or_404(me)
         denied = require(me, 'invites:manage', 'positions')
         if denied:
             return denied
+        if not me.can_act():
+            return forbidden(me, 'invites:manage', 'positions')
         p = _position_or_404(me, pid)
         a = _candidate_or_404(me, p, aid)
         try:
@@ -315,9 +338,12 @@ class TsHirePositions(http.Controller):
                 website=True, sitemap=False, methods=['POST'])
     def candidate_verify(self, ws_id, pid, aid, **post):
         me = member_or_404(ws_id)
+        _employment_or_404(me)
         denied = require(me, 'invites:create', 'positions')
         if denied:
             return denied
+        if not me.can_act():
+            return forbidden(me, 'invites:create', 'positions')
         p = _position_or_404(me, pid)
         a = _candidate_or_404(me, p, aid)
         try:
@@ -331,9 +357,12 @@ class TsHirePositions(http.Controller):
                 website=True, sitemap=False, methods=['POST'])
     def candidate_remind(self, ws_id, pid, aid, **post):
         me = member_or_404(ws_id)
+        _employment_or_404(me)
         denied = require(me, 'invites:manage', 'positions')
         if denied:
             return denied
+        if not me.can_act():
+            return forbidden(me, 'invites:manage', 'positions')
         p = _position_or_404(me, pid)
         a = _candidate_or_404(me, p, aid)
         ok, msg = a.ts_manual_reminder(me) if hasattr(a, 'ts_manual_reminder') else (False, 'یادآوری در دسترس نیست.')
@@ -375,7 +404,8 @@ class TsHirePositions(http.Controller):
         if denied:
             return denied
         p = _position_or_404(me, pid)
-        return render_in_shell('ts_hire.fairness', me, 'positions', 'بررسی منصفانه بودن', p=p, fair=p.ts_fairness(),
+        return render_in_shell('ts_hire.fairness', me, 'positions', 'بررسی منصفانه بودن', p=p,
+                               fair=p.ts_fairness() if p.state == 'closed' else None,
                                back_url=_base(ws_id, p.id), back_label=p.name)
 
 

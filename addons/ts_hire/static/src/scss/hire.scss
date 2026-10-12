@@ -26,7 +26,7 @@
 .tsh-st--neutral { color: var(--color-neutral-400); }
 .tsh-crit { margin-inline-start: var(--space-2); font-size: var(--fs-0); }
 .tsh-flag { margin-inline-start: var(--space-2); font-size: var(--fs-0); }
-.tsh-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 18rem), 1fr)); gap: var(--space-4); margin-block-end: var(--space-4); }
+.tsh-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(18rem, 1fr)); gap: var(--space-4); margin-block-end: var(--space-4); }
 .tsh-grid > .ts-card { min-width: 0; }
 .tsh-list { margin: 0; padding-inline-start: 1.1rem; display: grid; gap: var(--space-2); line-height: 1.9; }
 .tsh-h--ok { color: var(--status-ok); }
@@ -49,3 +49,7 @@
 .tsh-ab--high { background: var(--status-ok-soft); color: var(--status-ok); }
 .tsh-ab--medium { background: var(--status-info-soft); color: var(--status-info); }
 .tsh-ab--low { background: var(--status-neutral-soft); color: var(--status-neutral); }
+.tsh-validity { margin-block-end: var(--space-4); display: grid; gap: var(--space-2); }
+.tsh-cmp-hit { display: inline-flex; align-items: center; justify-content: center; min-inline-size: var(--control-min); min-block-size: var(--control-min); cursor: pointer; }
+.tsh-cmp-hit input { inline-size: 1.4rem; block-size: 1.4rem; }
+.tsh-decisions .tsp-radio { min-block-size: var(--control-min); align-items: center; }

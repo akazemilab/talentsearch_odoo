@@ -106,7 +106,7 @@ check('the invitation is a battery invitation for the position (email not sent o
       tm and tm.group(3) == 'BAT-HR-SHORT' and tm.group(4) == 'True', out[-300:])
 TOKEN, AID = (tm.group(1), tm.group(2)) if tm else ('x', '0')
 st, body = get(rev, B + '/c/%s' % AID)
-check('a reviewer can open the candidate (status only before results)', st == 200 and 'پیوند دعوت' not in body or st == 200, str(st))
+check('a reviewer can open the candidate before results (status only, no band)', st == 200 and 'tsh-band--' not in body, str(st))
 
 # ---------------------------------------------------------------- 3. candidate side
 st, body = get(cand, '/invite/%s' % TOKEN)
@@ -169,5 +169,56 @@ check('a reviewer may read the fairness view (reports:group)', st == 200, str(st
 other = login('cand2')
 st, _ = get(other, B)
 check('a non-member gets 404 on the position', st == 404, str(st))
+st, _, _ = post(other, '/take/%s/task/start' % T2, {'i': '0'})
+check('another user cannot drive the candidate\'s task (404)', st == 404, str(st))
+# a finished candidate who did NOT share: no band, no place among the ranked, not counted
+out = shell(r'''
+import json
+p = env['ts.hire.position'].browse(%s)
+u = env['res.users'].search([('login', '=', '%s')])
+A = env['ts.assignment'].sudo()
+x = A.search([('position_id', '=', p.id), ('invitee_name', '=', 'داوطلب بی‌اشتراک')], limit=1) or A.create({
+    'workspace_id': p.workspace_id.id, 'battery_id': p.battery_id.id, 'position_id': p.id,
+    'instrument_id': p.battery_id.ts_first_instrument().id, 'invitee_name': 'داوطلب بی‌اشتراک'})
+if not x.user_id:
+    x.action_accept(u, share=False)
+for t in x.ts_battery_attempts():
+    if t.state == 'consent':
+        t.give_consent()
+    if t.state == 'in_progress' and t.version_id.mode != 'task':
+        for it in t.active_items():
+            t.save_answer(it.id, 5 if not it.reverse else 1)
+        t.action_submit()
+    elif t.state == 'in_progress':
+        st = json.loads(t.task_json or '{}') or t._ts_state()
+        for i in range(len(t.ts_task_spec()['blocks'])):
+            t.ts_task_start(i)
+            for idx, k in enumerate(t._ts_items(json.loads(t.task_json), i)[1]):
+                t.ts_task_answer(i, idx, k, 3000)
+            t.ts_task_finish(i)
+env.cr.commit()
+print('NOSHARE', x.id, x.jobfit_band or '-', x.share_level)
+''' % (PID, L['cand2']))
+ns = re.search(r'NOSHARE (\d+) (\S+) (\S+)', out)
+check('fixture: a finished non-sharing candidate with a computed band', ns and ns.group(2) != '-' and ns.group(3) == 'none', out[-300:])
+st, body = get(hr, B)
+NID = ns.group(1) if ns else '0'
+row = re.search(r'/c/%s".*?</tr>' % NID, body, re.S)
+check('the non-sharing candidate shows no band in the list', row and 'tsh-band--' not in row.group(0), str(bool(row)))
+pos_shared, pos_ns = body.find('/c/%s"' % AID), body.find('/c/%s"' % NID)
+check('the non-sharing candidate is listed after the ranked ones', 0 < pos_shared < pos_ns, (pos_shared, pos_ns))
+st, body = get(hr, B + '/c/%s' % NID)
+check('the non-sharing candidate page shows no fit', st == 200 and 'tsh-band--' not in body and 'اشتراک نتیجه را نپذیرفته' in body, str(st))
+st, body = get(hr, B + '/compare?ids=%s&ids=%s' % (AID, NID))
+check('compare ignores a candidate without a shared result', 'دو یا سه داوطلب' in body, str(st))
+out = shell("o = env['ts.assignment'].sudo().search([('position_id', '!=', %s), ('position_id', '!=', False)], limit=1); print('OTHER', o.id or 0)" % PID)
+oth = re.search(r'OTHER (\d+)', out)
+if oth and oth.group(1) != '0':
+    st, _ = get(hr, B + '/c/%s' % oth.group(1))
+    check('a candidate of another position or panel is 404', st == 404, str(st))
+eot = Client('eot.ir')
+eot.login(L['hr'], pw[L['hr']])
+st, _, _ = eot.req(W + '/positions')
+check('the HR routes do not answer on eot.ir', st == 404, str(st))
 
 summary()

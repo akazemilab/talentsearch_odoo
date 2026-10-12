@@ -4,6 +4,8 @@
 // The server keeps the keys and the deadline; this script only shows items and measures response times.
 (function () {
     'use strict';
+    if (document.readyState === 'loading') { document.addEventListener('DOMContentLoaded', main); } else { main(); }
+    function main() {
     var FA = '۰۱۲۳۴۵۶۷۸۹';
     function fa(n) { return String(n).replace(/[0-9]/g, function (d) { return FA[+d]; }); }
     function el(tag, cls, text) {
@@ -412,4 +414,5 @@
     }
 
     showDeviceCheck();
+    }
 }());

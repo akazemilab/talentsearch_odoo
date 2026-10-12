@@ -135,7 +135,7 @@
                                     <h2 class="h5">سبک‌های کاری <span class="ts-hint">(از پرسش‌نامهٔ شخصیت)</span></h2>
                                     <p t-if="not styles" class="ts-hint">برای این شغل دادهٔ سبک کاری در دسترس نیست؛ تناسب فقط از آزمون‌های توانایی می‌آید.</p>
                                     <div t-if="styles" class="ts-table-wrap">
-                                        <table class="ts-table tsp-table tsh-req">
+                                        <table class="ts-table tsp-table tsp-table--cards tsh-req">
                                             <thead><tr><th scope="col">سبک کاری</th><th scope="col">اهمیت برای این شغل</th><th scope="col">کلیدی</th><th scope="col">کنار گذاشتن</th></tr></thead>
                                             <tbody>
                                                 <tr t-foreach="styles" t-as="r">
@@ -151,7 +151,7 @@
                                 <section class="ts-card">
                                     <h2 class="h5">توانایی‌ها <span class="ts-hint">(از آزمون‌های زمان‌دار)</span></h2>
                                     <div t-if="abilities" class="ts-table-wrap">
-                                        <table class="ts-table tsp-table tsh-req">
+                                        <table class="ts-table tsp-table tsp-table--cards tsh-req">
                                             <thead><tr><th scope="col">توانایی</th><th scope="col">اهمیت</th><th scope="col">در ارزیابی <t t-out="dict(p._fields['battery_choice'].selection)[p.battery_choice]"/></th><th scope="col">کلیدی</th><th scope="col">کنار گذاشتن</th></tr></thead>
                                             <tbody>
                                                 <tr t-foreach="abilities" t-as="r">
@@ -247,7 +247,7 @@
                                             <thead><tr><th scope="col"><span class="tsp-sr">انتخاب برای مقایسه</span></th><th scope="col">داوطلب</th><th scope="col">تناسب شغلی</th><th scope="col">سبک کاری</th><th scope="col">توانایی</th><th scope="col">وضعیت</th><th scope="col">تصمیم</th></tr></thead>
                                             <tbody>
                                                 <tr t-foreach="rows" t-as="r">
-                                                    <td data-label="مقایسه"><input t-if="r['res']" type="checkbox" name="ids" t-att-value="r['a'].id" class="tsh-cmp" t-att-aria-label="'انتخاب %s برای مقایسه' % r['a'].invitee_name"/></td>
+                                                    <td data-label="مقایسه"><label t-if="r['res']" class="tsh-cmp-hit"><input type="checkbox" name="ids" t-att-value="r['a'].id" class="tsh-cmp" t-att-aria-label="'انتخاب %s برای مقایسه' % r['a'].invitee_name"/></label></td>
                                                     <th scope="row" data-label="داوطلب"><a t-attf-href="#{base}/c/#{r['a'].id}"><bdi t-out="r['a'].invitee_name"/></a>
                                                         <span t-if="r['flags']" class="ts-pill ts-pill--warn tsh-flag" title="نشانه‌های دقت پاسخ‌دهی؛ در صفحهٔ داوطلب">نیاز به دقت</span></th>
                                                     <td data-label="تناسب شغلی"><span t-if="r['band']" t-attf-class="tsh-band tsh-band--#{r['band']}" t-out="r['band_fa']"/><span t-elif="r['level'] == 'summary'" class="ts-hint">شواهد کافی نیست</span><span t-else="" class="ts-hint">—</span></td>
@@ -328,31 +328,32 @@
                                         <ul class="tsh-list"><li t-foreach="ex['watch']" t-as="x" t-out="x"/></ul>
                                     </section>
                                 </div>
-                                <section t-if="r['flags']" class="ts-notice ts-notice--warn" role="status">
-                                    <p><strong>نشانه‌های دقت پاسخ‌دهی:</strong> نتیجه را با احتیاط بیشتری بخوانید و در مصاحبه بررسی کنید. این نشانه‌ها به‌تنهایی دلیل رد نیست.</p>
-                                    <ul><li t-foreach="r['flags']" t-as="f" t-out="f"/></ul>
+                                <section t-if="r['flags']" class="ts-card ts-card--soft tsh-validity" role="status" aria-labelledby="tsh-val-h">
+                                    <h2 class="h6 tsh-h--warn" id="tsh-val-h">نشانه‌های دقت پاسخ‌دهی</h2>
+                                    <p>نتیجه را با احتیاط بیشتری بخوانید و در مصاحبه بررسی کنید. این نشانه‌ها به‌تنهایی دلیل رد نیست.</p>
+                                    <ul class="tsh-list"><li t-foreach="r['flags']" t-as="f" t-out="f"/></ul>
                                 </section>
                                 <section class="ts-card" t-if="res['ws']">
                                     <h2 class="h5">سبک‌های کاری <span t-attf-class="tsh-dot tsh-dot--#{res['ws']['band']}" t-out="{'strong': 'زیاد', 'moderate': 'متوسط', 'limited': 'کم'}[res['ws']['band']]"/></h2>
                                     <p class="ts-hint">«نقطهٔ قوت نسبی» یعنی این ویژگی در داوطلب از دیگر ویژگی‌هایش پررنگ‌تر است؛ مقایسه با دیگر داوطلبان نیست.</p>
-                                    <div class="ts-table-wrap"><table class="ts-table tsp-table tsh-req">
+                                    <div class="ts-table-wrap"><table class="ts-table tsp-table tsp-table--cards tsh-req">
                                         <thead><tr><th scope="col">نیاز شغل</th><th scope="col">اهمیت</th><th scope="col">در داوطلب</th></tr></thead>
                                         <tbody><tr t-foreach="res['ws']['rows']" t-as="x">
-                                            <th scope="row"><t t-out="x['fa']"/><span t-if="x['critical']" class="ts-pill ts-pill--info tsh-crit">کلیدی</span></th>
-                                            <td t-out="x['importance_fa']"/>
-                                            <td><span t-attf-class="tsh-st tsh-st--#{x['status']}" t-out="st_labels[x['status']]"/></td>
+                                            <th scope="row" data-label="نیاز شغل"><t t-out="x['fa']"/><span t-if="x['critical']" class="ts-pill ts-pill--info tsh-crit">کلیدی</span></th>
+                                            <td data-label="اهمیت" t-out="x['importance_fa']"/>
+                                            <td data-label="در داوطلب"><span t-attf-class="tsh-st tsh-st--#{x['status']}" t-out="st_labels[x['status']]"/></td>
                                         </tr></tbody>
                                     </table></div>
                                 </section>
                                 <section class="ts-card">
                                     <h2 class="h5">توانایی‌ها <span t-if="res['ab']['band']" t-attf-class="tsh-dot tsh-dot--#{res['ab']['band']}" t-out="{'strong': 'زیاد', 'moderate': 'متوسط', 'limited': 'کم'}[res['ab']['band']]"/></h2>
                                     <p t-if="not res['ab']['rows']" class="ts-hint">آزمون‌های توانایی هنوز تمام نشده یا برای این شغل سنجیده نمی‌شود.</p>
-                                    <div t-if="res['ab']['rows']" class="ts-table-wrap"><table class="ts-table tsp-table tsh-req">
+                                    <div t-if="res['ab']['rows']" class="ts-table-wrap"><table class="ts-table tsp-table tsp-table--cards tsh-req">
                                         <thead><tr><th scope="col">نیاز شغل</th><th scope="col">اهمیت</th><th scope="col">در داوطلب</th></tr></thead>
                                         <tbody><tr t-foreach="res['ab']['rows']" t-as="x">
-                                            <th scope="row"><t t-out="x['fa']"/><span t-if="x['critical']" class="ts-pill ts-pill--info tsh-crit">کلیدی</span></th>
-                                            <td t-out="x['importance_fa']"/>
-                                            <td><span t-attf-class="tsh-st tsh-st--#{x['status']}" t-out="st_labels[x['status']]"/></td>
+                                            <th scope="row" data-label="نیاز شغل"><t t-out="x['fa']"/><span t-if="x['critical']" class="ts-pill ts-pill--info tsh-crit">کلیدی</span></th>
+                                            <td data-label="اهمیت" t-out="x['importance_fa']"/>
+                                            <td data-label="در داوطلب"><span t-attf-class="tsh-st tsh-st--#{x['status']}" t-out="st_labels[x['status']]"/></td>
                                         </tr></tbody>
                                     </table></div>
                                     <p t-if="ex['unmeasured']" class="ts-hint">توانایی‌های مهمِ سنجیده‌نشده: <t t-out="'، '.join(ex['unmeasured'])"/>. این‌ها را در مصاحبه یا کار نمونه ببینید.</p>
@@ -399,7 +400,7 @@
                             <section class="tsh-method" aria-labelledby="tsh-method-h">
                                 <h2 class="h6" id="tsh-method-h">روش و محدودیت‌ها</h2>
                                 <p class="ts-hint">تناسب از دو بخش می‌آید: سبک‌های کاری (پرسش‌نامهٔ شخصیت، مقایسهٔ ویژگی‌های هر داوطلب با خودش) و توانایی‌ها (آزمون‌های زمان‌دار، مقایسه با سطح لازم برای این شغل در میان مشاغل). بازه‌ها هنوز با عملکرد شغلی در ایران اعتبارسنجی نشده‌اند و نمرهٔ برش نیستند.</p>
-                                <p class="ts-hint">مدل <bdi dir="ltr" t-out="model"/>. <t t-out="credit"/></p>
+                                <p class="ts-hint" t-att-data-model="model" t-out="credit"/>
                             </section>
                         </t>
                     </div>
@@ -466,19 +467,19 @@
                             <header class="tsp-head">
                                 <div>
                                     <h1 class="tsp-head__title">بررسی منصفانه بودن</h1>
-                                    <p class="tsp-head__help">نرخ انتخاب (فهرست کوتاه، مصاحبه یا استخدام) در گروه‌های جنسیت و سن، بر پایهٔ تصمیم‌های ثبت‌شده برای «<bdi t-out="p.name"/>». پاسخ داوطلبان به این دو پرسش اختیاری است و هیچ‌وقت برای یک فرد نمایش داده نمی‌شود.</p>
+                                    <p class="tsp-head__help">نرخ انتخاب (فهرست کوتاه، مصاحبه یا استخدام) در گروه‌های جنسیت و سن، بر پایهٔ تصمیم‌های ثبت‌شده برای «<bdi t-out="p.name"/>». پاسخ داوطلبان به این دو پرسش اختیاری است و برای هیچ فردی نمایش داده نمی‌شود؛ اندازهٔ گروه‌ها هم نمایش داده نمی‌شود.</p>
                                 </div>
                             </header>
-                            <t t-foreach="[('ts_gender', 'جنسیت'), ('ts_age_band', 'گروه سنی')]" t-as="g">
+                            <p t-if="not fair" class="ts-card tsh-empty">برای حفظ حریم داوطلبان، این بررسی پس از بستن موقعیت نمایش داده می‌شود و فقط گروه‌های ده‌نفره یا بزرگ‌تر را نشان می‌دهد. وقتی تصمیم‌ها نهایی شد، موقعیت را ببندید.</p>
+                            <t t-if="fair" t-foreach="[('ts_gender', 'جنسیت'), ('ts_age_band', 'گروه سنی')]" t-as="g">
                                 <t t-set="f" t-value="fair[g[0]]"/>
                                 <section class="ts-card">
                                     <h2 class="h5" t-out="g[1]"/>
-                                    <p t-if="not f['rows']" class="ts-hint">هنوز داده کافی نیست: دست‌کم دو گروه با پنج نفر یا بیشتر که برایشان تصمیم ثبت شده باشد. (<t t-out="fa(f['decided'])"/> تصمیم ثبت شده.)</p>
+                                    <p t-if="not f['rows']" class="ts-hint">داده کافی نیست: دست‌کم دو گروه با ده نفر یا بیشتر که برایشان تصمیم ثبت شده باشد.</p>
                                     <div t-if="f['rows']" class="ts-table-wrap"><table class="ts-table tsp-table">
-                                        <thead><tr><th scope="col">گروه</th><th scope="col">تعداد</th><th scope="col">نرخ انتخاب</th><th scope="col">نسبت به بالاترین گروه</th></tr></thead>
+                                        <thead><tr><th scope="col">گروه</th><th scope="col">نرخ انتخاب</th><th scope="col">نسبت به بالاترین گروه</th></tr></thead>
                                         <tbody><tr t-foreach="f['rows']" t-as="x">
                                             <th scope="row" t-out="x['label']"/>
-                                            <td class="ts-num" t-out="fa(x['n'])"/>
                                             <td class="ts-num" t-out="fa(int(round(100 * x['rate'])))+'٪'"/>
                                             <td><span class="ts-num" t-out="fa(int(round(100 * x['ratio'])))+'٪'"/><span t-if="x['flag']" class="ts-pill ts-pill--warn"> کمتر از ۸۰٪</span></td>
                                         </tr></tbody>

@@ -50,8 +50,14 @@ class TsAssignmentMail(models.Model):
         return '%s/my/workspaces/%s' % (base, self.workspace_id.id)
 
     # -------------------------------------------------- sending
+    def _ts_mail_server(self):
+        """The outgoing server whose from_filter matches the sender's domain (Liara, sepehrtherapy.ir); never another."""
+        sender = _icp(self.env, 'ts_hire.email_from', DEFAULT_FROM)
+        domain = sender.split('@')[-1].strip(' >').lower()
+        return self.env['ir.mail_server'].sudo().search([('from_filter', '=', domain)], limit=1)
+
     def _ts_email_enabled(self):
-        return _icp(self.env, 'ts_hire.email_enabled', '1') == '1' and bool(self.env['ir.mail_server'].sudo().search_count([]))
+        return _icp(self.env, 'ts_hire.email_enabled', '1') == '1' and bool(self._ts_mail_server())
 
     def _ts_send_template(self, xmlid, email_to=None):
         self.ensure_one()
@@ -65,7 +71,7 @@ class TsAssignmentMail(models.Model):
             with self.env.cr.savepoint():
                 tpl.sudo().send_mail(self.id, force_send=True, raise_exception=True, email_values={
                     'email_from': _icp(self.env, 'ts_hire.email_from', DEFAULT_FROM), 'email_to': to,
-                    'auto_delete': True})
+                    'mail_server_id': self._ts_mail_server().id, 'auto_delete': True})
             return True, ''
         except Exception as e:  # noqa: BLE001 - delivery problems are reported to the panel, never raised
             _logger.warning('email %s failed for assignment %s: %s', xmlid, self.id, type(e).__name__)

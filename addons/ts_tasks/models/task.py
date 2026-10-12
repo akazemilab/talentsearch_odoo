@@ -340,8 +340,13 @@ class TsAttemptTask(models.Model):
                               'inc': not b_items[idx].get('congruent', True)})   # from our items, not the client
             clean += [None] * (n_keys - len(clean))
             sb['resp'] = clean
+            elapsed = _now() - sb['started']
+            claimed = max([int(r.get('t') or 0) for r in (responses or []) if isinstance(r, dict)] or [0]) / 1000.0
+            answered = sum(1 for r in clean if r)
             if late:
                 sb['meta']['late'] = 1
+            if claimed > elapsed + 5 or (answered and elapsed < answered * 0.15):
+                sb['meta']['timing'] = 1       # the browser reports more time than passed, or impossibly fast trials
         sb['meta']['focus_lost'] = sb['meta'].get('focus_lost', 0) + max(0, min(50, int(focus_lost or 0)))
         sb['done'] = True
         sb['finished'] = _now()
