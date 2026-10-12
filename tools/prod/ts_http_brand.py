@@ -40,8 +40,8 @@ name = 'پنل آزمون هویت وب'
 org = env['res.partner'].search([('name', '=', name)], limit=1) or env['res.partner'].create({'name': name, 'is_company': True})
 ws = env['ts.workspace'].search([('partner_id', '=', org.id)], limit=1) or env['ts.workspace'].create(
     {'name': name, 'purpose': 'clinical', 'partner_id': org.id, 'escalation_contact_id': org.id})
-ws.write({'approved_on': '2026-01-01 00:00:00', 'public_name': False, 'sms_name': False, 'brand_color': False, 'contact_line': False})
-ws.state = 'pilot'
+ws.write({'public_name': False, 'sms_name': False, 'brand_color': False, 'contact_line': False})
+ws.state = 'active'
 org.image_1920 = False                               # set-up step 1 stays open (name without logo) for section 7
 env.company.sudo().write({'kv_enabled': False})      # nothing is sent by this suite (the SMS suites enable their fake gateway)
 def member(n, role, lic=None):

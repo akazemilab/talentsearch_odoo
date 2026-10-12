@@ -50,7 +50,7 @@ for u in env['res.users'].sudo().search([('login', '=', '@PHONE@')]):
     u.partner_id.sudo().write({'ts_phone': False}); u.sudo().write({'active': False, 'login': 'old.' + str(u.id)})
 inst = env['ts.instrument'].search([('state', '=', 'published'), ('purpose', '=', 'employment')], limit=1)
 org = env['res.partner'].search([('name', '=', 'سازمان ثبت‌نام HTTP')], limit=1) or env['res.partner'].create({'name': 'سازمان ثبت‌نام HTTP', 'is_company': True})
-ws = env['ts.workspace'].search([('partner_id', '=', org.id)], limit=1) or env['ts.workspace'].create({'approved_on': '2026-01-01 00:00:00', 'name': 'سازمان ثبت‌نام HTTP', 'purpose': 'employment', 'partner_id': org.id})
+ws = env['ts.workspace'].search([('partner_id', '=', org.id)], limit=1) or env['ts.workspace'].create({'name': 'سازمان ثبت‌نام HTTP', 'purpose': 'employment', 'partner_id': org.id})
 ws.state = 'active'
 A = env['ts.assignment']
 a = A.create({'workspace_id': ws.id, 'instrument_id': inst.id, 'invitee_name': 'دعوت‌شدهٔ HTTP'})
@@ -77,7 +77,8 @@ def bypass_cooldown():
 
 c = Client(TS)
 st, _, page = c.req('/signup')
-check('signup page 200 with phone field', st == 200 and 'name="phone"' in page and 'ورود یا ثبت‌نام با موبایل' in page, str(st))
+check('signup page 200 with phone field (S-AUTH, onb1)', st == 200 and 'name="phone"' in page and 'ورود یا ثبت‌نام' in page
+      and 'autocomplete="tel"' in page and 'inputmode="numeric"' in page, str(st))
 st, _, _ = Client('www.eot.ir').req('/signup')
 check('eot.ir has no /signup', st == 404, str(st))
 st, loc, _ = c.req('/signup/send', {'csrf_token': c.csrf(page), 'phone': '123', 'next': '/my'})
@@ -91,17 +92,15 @@ check('a six-digit code was sent through the (fake) Kavenegar', bool(code))
 st, loc, _ = c.req('/signup/verify', {'csrf_token': c.csrf(page), 'code': '000000' if code != '000000' else '111111', 'next': '/my'})
 check('wrong code -> msg=wrong', 'msg=wrong' in loc, loc)
 st, loc, _ = c.req('/signup/verify', {'csrf_token': c.csrf(page), 'code': code, 'next': '/my'})
-check('right code from a new number -> name step (no account yet)', 'step=name' in loc, loc)
-st, _, page = c.req('/signup?step=name&next=/my')
-check('name step page', st == 200 and 'name="name"' in page)
-st, loc, _ = c.req('/signup/name', {'csrf_token': c.csrf(page), 'name': 'ا', 'next': '/my'})
-check('one-letter name refused', 'msg=noname' in loc, loc)
-st, loc, _ = c.req('/signup/name', {'csrf_token': c.csrf(page), 'name': NAME, 'next': '/my'})
-check('name submitted -> account created and signed in', st in (302, 303), '%s %s' % (st, loc))
+check('right code from a new number -> account made at once, no name step (onb1)', st in (302, 303) and loc.endswith('/my') and 'step=name' not in loc, loc)
 st, _, page = c.req('/my/account')
-check('/my/account is signed in and shows the name (S15)', st == 200 and NAME in page, str(st))
-info = shell("u=env['res.users'].search([('login','=','%s')]); print('U', len(u), u.partner_id.ts_phone, u.share, bool(u.partner_id.ts_phone_verified_at), u.partner_id.ts_sms_results, env['ts.audit.event'].search_count([('event_type','=','account.signup_phone')]))" % PHONE)
-check('portal user with verified phone, SMS-results opt-in off, audit written', re.search(r"U 1 %s True True False [1-9]" % PHONE, info) is not None, info.strip()[-80:])
+check('/my/account is signed in and does not show the number as a name', st == 200 and 'id="acc-name"' in page
+      and '0912 777 0001' not in page, str(st))
+info = shell("u=env['res.users'].search([('login','=','%s')]); print('U', len(u), u.partner_id.ts_phone, u.share, bool(u.partner_id.ts_phone_verified_at), u.partner_id.ts_sms_results, u.partner_id.ts_name_unknown, env['ts.audit.event'].search_count([('event_type','=','account.signup_phone')]))" % PHONE)
+check('portal user with verified phone, name unknown, SMS-results opt-in off, audit written', re.search(r"U 1 %s True True False True [1-9]" % PHONE, info) is not None, info.strip()[-80:])
+st, loc, _ = c.req('/my/account/name', {'csrf_token': c.csrf(page), 'name': NAME})
+info = shell("u=env['res.users'].search([('login','=','%s')]); print('K', u.name == %r, u.partner_id.ts_name_unknown)" % (PHONE, NAME))
+check('a name given on the account page ends «name unknown»', 'K True False' in info, info.strip()[-40:])
 st, loc, _ = c.req('/signup')
 check('signed-in visitor is sent on', st in (302, 303), str(st))
 
@@ -134,7 +133,7 @@ env.cr.commit(); print('TOK2', a.token)
 """)
 tok2 = re.search(r'TOK2 (\S+)', a2).group(1)
 st, _, page = c3.req('/invite/%s' % tok2)
-check('fresh invite offers mobile sign-in with next=/invite/…', st == 200 and '/signup?next=/invite/%s' % tok2 in page and 'ادامه با شمارهٔ موبایل' in page, str(st))
+check('fresh invite offers mobile sign-in with next=/invite/…', st == 200 and '/signup?next=/invite/%s' % tok2 in page and 'ورود یا ثبت‌نام با موبایل' in page, str(st))
 # rate limit through the real endpoint
 for i in range(6):
     bypass_cooldown()

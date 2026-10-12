@@ -17,7 +17,7 @@ pw = {u: ensure_user(u) for u in (OWN, ADM, CNS, OUT, SOLO)}
 code = r'''
 org = env['res.partner'].search([('name', '=', 'پنل S1 HTTP')], limit=1) or env['res.partner'].create({'name': 'پنل S1 HTTP', 'is_company': True})
 ws = env['ts.workspace'].search([('partner_id', '=', org.id)], limit=1) or env['ts.workspace'].create({'name': 'پنل S1 HTTP', 'purpose': 'education', 'partner_id': org.id})
-ws.write({'approved_on': '2026-01-01 00:00:00'}); ws.state = 'pilot'
+ws.state = 'active'
 M = env['ts.workspace.member']
 for login, role in ((OWN, 'owner'), (ADM, 'admin'), (CNS, 'counselor')):
     u = env['res.users'].search([('login', '=', login)])

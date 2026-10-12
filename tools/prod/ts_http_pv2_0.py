@@ -18,7 +18,7 @@ inst = env['ts.instrument'].search([('code', '=', 'TALENT-INV-15')])
 v = inst.current_version_id
 org = env['res.partner'].search([('name', '=', 'مؤسسهٔ S0 HTTP')], limit=1) or env['res.partner'].create({'name': 'مؤسسهٔ S0 HTTP', 'is_company': True})
 ws = env['ts.workspace'].search([('partner_id', '=', org.id)], limit=1) or env['ts.workspace'].create({'name': 'مؤسسهٔ S0 HTTP', 'purpose': 'education', 'partner_id': org.id})
-ws.write({'approved_on': '2026-01-01 00:00:00'}); ws.state = 'pilot'
+ws.state = 'active'
 cu = env['res.users'].search([('login', '=', %r)])
 stu = env['res.users'].search([('login', '=', %r)])
 solo = env['res.users'].search([('login', '=', %r)])

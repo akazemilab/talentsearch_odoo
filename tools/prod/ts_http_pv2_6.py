@@ -59,8 +59,7 @@ def panel(name, purpose, approved=True):
     org.write({'is_company': True})
     ws = env['ts.workspace'].search([('partner_id', '=', org.id)], limit=1) or env['ts.workspace'].create(
         {'name': name, 'purpose': purpose, 'partner_id': org.id})
-    ws.write({'approved_on': '2026-01-01 00:00:00' if approved else False})
-    ws.state = 'pilot'
+    ws.state = 'active'
     return ws
 def member(ws, n, role):
     u = user(n)
@@ -286,10 +285,10 @@ st, loc, _ = own.req(W + '/invite', {'csrf_token': own.csrf(page), 'invitee_name
 st2, body = get(own, path_of(loc))
 check('an old error code becomes a message on the dashboard', 'error=form' in loc and 'نام و سنجه را کامل کنید' in body, loc)
 
-# ---- gated panel and rate limit
+# ---- a brand-new panel (onb1: no approval) and the rate limit
 G_ = '/my/workspaces/%s' % G
 st, body = get(gown, G_ + '/invites/new?fresh=1')
-check('a panel waiting for approval shows the pending text instead of the wizard', st == 200 and 'پس از تأیید' in body and 'name="new_name"' not in body, str(st))
+check('a brand-new employment panel opens the wizard at once (no approval)', st == 200 and 'پس از تأیید' not in body and 'name="new_name"' in body, str(st))
 shell("env['ir.config_parameter'].sudo().set_str('ts_panel.invites_per_hour', '2'); env.cr.commit()")
 loc, _ = wizard(own, ('new', 'حدنصاب یک', ''))
 loc, _ = wizard(own, ('new', 'حدنصاب دو', ''))

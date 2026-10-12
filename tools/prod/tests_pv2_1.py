@@ -105,16 +105,14 @@ def puser(tag=None):
 W, M, A = env['ts.workspace'], env['ts.workspace.member'], env['ts.assignment']
 
 
-def panel(purpose, approved=True, state='pilot'):
+def panel(purpose, approved=True, state='active'):
     org = env['res.partner'].create({'name': 'پنل آزمون S1 ' + purpose, 'is_company': True})
     org.write({'is_company': True})
     vals = {'name': org.name, 'purpose': purpose, 'partner_id': org.id}
     if purpose == 'clinical':
         vals['escalation_contact_id'] = org.id
     ws = W.create(vals)
-    if approved:
-        ws.write({'approved_on': '2026-01-01 00:00:00'})
-    ws.state = state
+    ws.state = state      # onb1: no approval step any more (`approved` kept for old callers)
     return ws
 
 
@@ -160,15 +158,16 @@ check('P04 closed panel: only panel:view (+ owner export within 90 days when clo
 
 ws_g = panel('employment', approved=False)
 o_g = member(ws_g, 'owner'); h_g = member(ws_g, 'hr_admin')
-check('P05 gated panel: invitations and import refused, the rest unchanged',
-      ws_g.gated and not (o_g.perms() & {'invites:create', 'invites:bulk', 'clients:import'})
-      and 'members:invite' in o_g.perms() and 'clients:read_all' in h_g.perms())
+check('P05 no approval (onb1): a new employment panel invites and imports at once',
+      ws_g.state == 'active' and 'invites:create' in o_g.perms() and 'members:invite' in o_g.perms()
+      and 'clients:read_all' in h_g.perms() and not hasattr(ws_g, 'gated'))
 
 clin = panels['clinical']
 cl_un = member(clin, 'clinician', verified=False)
 cd_un = member(clin, 'clinic_director', verified=False)
-check('P06 unverified clinician and clinic_director: only panel:view and help:view',
-      cl_un.perms() == {'panel:view', 'help:view'} and cd_un.perms() == {'panel:view', 'help:view'})
+check('P06 licence is a badge (onb1): unverified clinician and clinic_director have the full role permissions',
+      cl_un.perms() == member(clin, 'clinician').perms() and cd_un.perms() == member(clin, 'clinic_director').perms()
+      and 'results:clinical' in cl_un.perms() and cl_un.can_act())
 cl_un.write({'license_number': 'T-x', 'verification_state': 'verified'})
 check('P06 verified clinician gets the table', set(cl_un.perms()) == set(ROLE_PERMS[('clinician', 'clinical')]))
 check('P06 an unverified clinician cannot act (404 today)', not cd_un.can_act() and cl_un.can_act())
@@ -221,7 +220,7 @@ solo.write({'license_number': 'T-solo', 'verification_state': 'verified'})
 a_solo = done_assignment(ws_solo, mental, solo, resp=solo)
 check('P07 verified solo psychologist sees clinical on the own client', a_solo.result_level(solo) == 'clinical')
 solo.verification_state = 'pending'
-check('P07 unverified solo psychologist sees only status', a_solo.result_level(solo) == 'status')
+check('P07 unverified solo psychologist sees clinical too (licence is a badge, onb1)', a_solo.result_level(solo) == 'clinical')
 solo.verification_state = 'verified'
 own_c = member(clin, 'owner')
 a_c = done_assignment(clin, mental, own_c)

@@ -98,7 +98,7 @@ check('members cannot be responsible across panels', raises(lambda: a_priv.write
 # ---- emergency access (clinical panel, platform manager, time-boxed, audited)
 E = env['ts.emergency.access']
 org_c = env['res.partner'].create({'name': 'کلینیک اضطراری', 'is_company': True})
-w_c = W.create({'approved_on': '2026-01-01 00:00:00', 'name': 'کلینیک اضطراری', 'purpose': 'clinical', 'partner_id': org_c.id,
+w_c = W.create({'name': 'کلینیک اضطراری', 'purpose': 'clinical', 'partner_id': org_c.id,
                 'escalation_contact_id': org_c.id})
 w_c.write({'state': 'active'})
 u_dir = puser('dir')

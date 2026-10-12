@@ -2,7 +2,7 @@
 #   ... odoo-bin shell -d eot_tsNN < tools/prod/clinic_seed_sepehr.py
 # Needs ts_battery installed. Idempotent: a second run creates nothing and prints the same counts.
 # Owner decision 2026-10-11 ("the institute manages its own institute", "don't send anything from here"): by default this
-# creates ONLY the institution partner, the panel (granted catalog, approved) and the owner member. The owner then invites
+# creates ONLY the institution partner, the panel (granted catalog, active) and the owner member. The owner then invites
 # the counselors from the panel and chooses each counselor's instruments and batteries on the member page. Colleague
 # invitations are prepared here only with TS_SEPEHR_INVITES=1 (and even then nothing is sent: the links are shareable).
 # Env (pass through `sudo -u odoo env VAR=... odoo-bin shell`):
@@ -72,7 +72,7 @@ catalog_insts = bats.mapped('line_ids.instrument_id') | singles
 W = su['ts.workspace']
 ws = W.search([('partner_id', '=', org.id), ('purpose', '=', 'clinical')], limit=1)
 if not ws:
-    ws = W.create({'name': NAME, 'purpose': 'clinical', 'partner_id': org.id, 'state': 'pilot',
+    ws = W.create({'name': NAME, 'purpose': 'clinical', 'partner_id': org.id, 'state': 'active',
                    'escalation_contact_id': org.id, 'data_contact_id': org.id})
     created['workspace'] = 1
 vals = {}
@@ -85,12 +85,10 @@ if bats - ws.catalog_battery_ids:
 if not ws.escalation_contact_id:
     vals['escalation_contact_id'] = org.id
 if ws.state == 'draft':
-    vals['state'] = 'pilot'
+    vals['state'] = 'active'
 if vals:
     ws.write(vals)
-if ws.gated:
-    ws.action_approve()       # superuser is in ts_core.group_ts_manager (group data adds base.user_root)
-assert not ws.gated and ws.state in ('pilot', 'active'), 'workspace not approved / not running'
+assert ws.state == 'active', 'workspace not running'      # onb1: panels need no approval
 
 # ------------------------------------------------------------------ 4. owner
 login = os.environ.get('TS_SEPEHR_OWNER_LOGIN')
@@ -153,8 +151,8 @@ for (cname, role), raw in zip(COUNSELORS, phones):
 pending = I.search_count([('workspace_id', '=', ws.id), ('state', '=', 'pending')])
 print('SEPEHR invites=%s created=%s existing_invites=%d renewed_invites=%d' % (
     'prepared' if WANT_INVITES else 'off (TS_SEPEHR_INVITES=1 to prepare)', created, skipped, renewed))
-print('SEPEHR workspace mode=%s gated=%s state=%s batteries=%d instruments=%d members=%d pending_invites=%d' % (
-    ws.catalog_mode, ws.gated, ws.state, len(ws.catalog_battery_ids), len(ws.catalog_instrument_ids),
+print('SEPEHR workspace mode=%s state=%s batteries=%d instruments=%d members=%d pending_invites=%d' % (
+    ws.catalog_mode, ws.state, len(ws.catalog_battery_ids), len(ws.catalog_instrument_ids),
     len(ws.member_ids.filtered('active')), pending))
 print('SEPEHR owner allowed: instruments=%d batteries=%d' % (len(owner.allowed_instruments()), len(owner.allowed_batteries())))
 SEPEHR_RESULT = {'workspace': ws, 'owner': owner, 'created': created, 'invites_on': WANT_INVITES}

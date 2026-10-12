@@ -42,9 +42,9 @@ org = env['res.partner'].search([('name', '=', name)], limit=1) or env['res.part
 org.write({'is_company': True})
 ws = env['ts.workspace'].search([('partner_id', '=', org.id)], limit=1) or env['ts.workspace'].create(
     {'name': name, 'purpose': 'clinical', 'partner_id': org.id, 'escalation_contact_id': org.id})
-ws.write({'approved_on': '2026-01-01 00:00:00', 'catalog_mode': 'granted',
+ws.write({'catalog_mode': 'granted',
           'catalog_battery_ids': [Command.set((bat | intake).ids)]})
-ws.state = 'pilot'
+ws.state = 'active'
 def member(n, role):
     u = user(n)
     m = env['ts.workspace.member'].with_context(active_test=False).search([('workspace_id', '=', ws.id), ('user_id', '=', u.id)]) \

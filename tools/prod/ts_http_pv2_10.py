@@ -55,7 +55,7 @@ L = %r
 def user(n): return env['res.users'].search([('login', '=', L[n])])
 org = env['res.partner'].search([('name', '=', 'پنل S10')], limit=1) or env['res.partner'].create({'name': 'پنل S10', 'is_company': True})
 ws = env['ts.workspace'].search([('partner_id', '=', org.id)], limit=1) or env['ts.workspace'].create({'name': 'پنل S10', 'purpose': 'education', 'partner_id': org.id})
-ws.write({'approved_on': '2026-01-01 00:00:00'}); ws.state = 'pilot'
+ws.state = 'active'
 for n, role in (('owner', 'owner'), ('c1', 'counselor')):
     if not env['ts.workspace.member'].search([('workspace_id', '=', ws.id), ('user_id', '=', user(n).id)]):
         m = env['ts.workspace.member'].create({'workspace_id': ws.id, 'user_id': user(n).id, 'role': role})
@@ -65,9 +65,9 @@ cr = env.cr
 cr.execute("delete from ts_notification where user_id in %%s", [tuple(user(n).id for n in L)])
 cr.execute("delete from ts_notify_pref where user_id in %%s", [tuple(user(n).id for n in L)])
 N = env['ts.notification'].sudo()
-N._notify(user('owner'), 'panel_approved', '/my/workspaces/%%d' %% ws.id, ws)
+N._notify(user('owner'), 'panel_suspended', '/my/workspaces/%%d' %% ws.id, ws)
 N._notify(user('owner'), 'panel_suspended', '//evil.example/x', ws)
-N._notify(user('c1'), 'panel_approved', '/my/workspaces/%%d' %% ws.id, ws)
+N._notify(user('c1'), 'panel_suspended', '/my/workspaces/%%d' %% ws.id, ws)
 env.cr.commit()
 print('IDS', ws.id, N.search([('user_id', '=', user('owner').id)], order='id')[0].id, N.search([('user_id', '=', user('owner').id)], order='id')[1].id, N.search([('user_id', '=', user('c1').id)])[0].id)
 """ % L
@@ -141,24 +141,24 @@ check('...but leaves the others\' rows as they were', q("select read_at is null 
 
 # ---- preferences
 st, body = get(own, '/my/notifications/prefs')
-check('the preferences page lists the event types, one h1', st == 200 and body.count('<h1') == 1 and 'app_panel_approved' in body, str(st))
+check('the preferences page lists the event types, one h1', st == 200 and body.count('<h1') == 1 and 'app_panel_suspended' in body, str(st))
 st, body = get(part, '/my/notifications/prefs')
-check('a participant sees no staff-only types', st == 200 and 'app_panel_approved' not in body and 'app_invite' in body, str(st))
-st, loc, _ = post(own, '/my/notifications/prefs', {'app_panel_approved': '1'})
+check('a participant sees no staff-only types', st == 200 and 'app_panel_suspended' not in body and 'app_invite' in body, str(st))
+st, loc, _ = post(own, '/my/notifications/prefs', {'app_member_joined': '1'})
 check('saving preferences redirects back', st in (302, 303) and (loc or '').endswith('/my/notifications/prefs'))
 check('an unticked type is stored as off', q("select in_app from ts_notify_pref where user_id = (select id from res_users where login = '%s') and type = 'panel_suspended'" % L['owner']) == '[(False,)]')
 n0 = q("select count(*) from ts_notification where user_id = (select id from res_users where login = '%s')" % L['owner'])
 shell("""
 u = env['res.users'].search([('login', '=', %r)]); ws = env['ts.workspace'].browse(%s)
 env['ts.notification'].sudo()._notify(u, 'panel_suspended', '/x', ws)
-env['ts.notification'].sudo()._notify(u, 'panel_approved', '/x', ws)
+env['ts.notification'].sudo()._notify(u, 'member_joined', '/x', ws)
 env.cr.commit()
 """ % (L['owner'], WS))
 n1 = q("select count(*) from ts_notification where user_id = (select id from res_users where login = '%s')" % L['owner'])
 check('a type switched off creates no row, a type left on does', int(re.findall(r'\d+', n1)[0]) == int(re.findall(r'\d+', n0)[0]) + 1, '%s -> %s' % (n0, n1))
-st, loc, _ = post(own, '/my/notifications/prefs', {'app_panel_approved': '1', 'sms_panel_approved': '1'})
-check('an SMS tick without a verified mobile is not stored', q("select sms from ts_notify_pref where user_id = (select id from res_users where login = '%s') and type = 'panel_approved'" % L['owner']) in ('[(False,)]', '[(None,)]'))
-check('saving without CSRF is rejected', own.req('/my/notifications/prefs', [('app_panel_approved', '1')])[0] in (400, 403))
+st, loc, _ = post(own, '/my/notifications/prefs', {'app_panel_suspended': '1', 'sms_panel_suspended': '1'})
+check('an SMS tick without a verified mobile is not stored', q("select sms from ts_notify_pref where user_id = (select id from res_users where login = '%s') and type = 'panel_suspended'" % L['owner']) in ('[(False,)]', '[(None,)]'))
+check('saving without CSRF is rejected', own.req('/my/notifications/prefs', [('app_panel_suspended', '1')])[0] in (400, 403))
 
 # ---- the manual reminder button
 st, loc, _ = post(own, W + '/invites/0/remind')

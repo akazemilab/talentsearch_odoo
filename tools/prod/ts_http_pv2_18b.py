@@ -20,9 +20,8 @@ def user(n): return env['res.users'].search([('login', '=', L[n])])
 org = env['res.partner'].search([('name', '=', 'S18b http')], limit=1) or env['res.partner'].create({'name': 'S18b http', 'is_company': True})
 org.write({'is_company': True})
 ws = env['ts.workspace'].search([('partner_id', '=', org.id)], limit=1) or env['ts.workspace'].create({'name': 'S18b http', 'purpose': 'education', 'partner_id': org.id})
-ws.write({'approved_on': '2026-01-01 00:00:00'})
 if ws.state in ('draft', 'closed'):
-    ws.write({'state': 'pilot'})
+    ws.write({'state': 'active'})
 u = user('staff')
 env['ts.workspace.member'].search([('workspace_id', '=', ws.id), ('user_id', '=', u.id)]) or env['ts.workspace.member'].create(
     {'workspace_id': ws.id, 'user_id': u.id, 'role': 'owner'})
@@ -96,8 +95,8 @@ st, loc, _ = c.req('/my')
 check('a person who is no panel member keeps the session', st == 200 or (st in (302, 303) and 'login' not in (loc or '')), '%s %s' % (st, loc))
 shell("env['ir.config_parameter'].sudo().set_float('ts_panel.staff_idle_hours', 8.0); env.cr.commit()")
 
-# ---- SMS risk notice
+# ---- the e-mail way stays reachable from the mobile sign-in (onb1)
 st, body = get(Client(TS), '/signup')
-check('the sign-up page carries the SMS risk notice', st == 200 and 'ts-sms-risk' in body, st)
+check('the sign-in page offers the e-mail way quietly', st == 200 and 'با ایمیل ثبت‌نام کرده بودید؟' in body and '/web/login?email=1' in body, st)
 
 summary()

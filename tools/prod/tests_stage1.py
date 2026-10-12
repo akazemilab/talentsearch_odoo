@@ -55,15 +55,15 @@ check('role must match purpose (clinician in employment refused)',
       raises(lambda: M.create({'workspace_id': ws_emp.id, 'user_id': u_out.id, 'role': 'clinician'}), ValidationError))
 check('internal users cannot be customer members',
       raises(lambda: M.create({'workspace_id': ws_emp.id, 'user_id': env.ref('base.user_admin').id, 'role': 'hr_admin'}), ValidationError))
-check('clinician starts unverified', M.search([('user_id', '=', u_cli.id)]).verification_state == 'pending')
+check('a clinician with a licence number starts with the badge unverified (onb1: badge, not a gate)', M.search([('user_id', '=', u_cli.id)]).verification_state == 'pending')
 check('clinical workspace cannot go live without escalation owner',
-      raises(lambda: ws_cli.write({'state': 'pilot'}), ValidationError))
+      raises(lambda: ws_cli.write({'state': 'active'}), ValidationError))
 ws_edu = W.create({'name': 'TS test education', 'purpose': 'education', 'partner_id': org1.id})
-ws_gate = W.create({'name': 'TS test gated', 'purpose': 'employment', 'partner_id': org1.id})
-check('gated purpose cannot be activated before approval', ws_gate.gated and raises(lambda: ws_gate.write({'state': 'active'}), ValidationError))
-check('gated purpose may run in limited pilot mode', not raises(lambda: ws_gate.write({'state': 'pilot'}), ValidationError))
-check('education needs no approval', not ws_edu.gated and not raises(lambda: ws_edu.write({'state': 'active'}), ValidationError))
-ws_emp.write({'state': 'pilot'})
+ws_gate = W.create({'name': 'TS test employment', 'purpose': 'employment', 'partner_id': org1.id})
+check('employment needs no approval (onb1)', not raises(lambda: ws_gate.write({'state': 'active'}), ValidationError))
+check('there is no pilot state any more', 'pilot' not in dict(W._fields['state'].selection))
+check('education needs no approval', not raises(lambda: ws_edu.write({'state': 'active'}), ValidationError))
+ws_emp.write({'state': 'active'})
 check('purpose locked after draft', raises(lambda: ws_emp.write({'purpose': 'clinical'}), UserError))
 
 vis_emp = W.with_user(u_emp).search([])

@@ -24,7 +24,7 @@ def user(n): return env['res.users'].search([('login', '=', L[n])])
 org = env['res.partner'].search([('name', '=', 'پنل S12 وب')], limit=1) or env['res.partner'].create({'name': 'پنل S12 وب', 'is_company': True})
 org.write({'is_company': True})
 ws = env['ts.workspace'].search([('partner_id', '=', org.id)], limit=1) or env['ts.workspace'].create({'name': 'پنل S12 وب', 'purpose': 'education', 'partner_id': org.id})
-ws.write({'approved_on': '2026-01-01 00:00:00', 'onboarding_dismissed_on': False}); ws.state = 'pilot'
+ws.write({'onboarding_dismissed_on': False}); ws.state = 'active'
 mem = {}
 for n, role in (('owner', 'owner'), ('c1', 'counselor'), ('c2', 'counselor')):
     m = env['ts.workspace.member'].search([('workspace_id', '=', ws.id), ('user_id', '=', user(n).id)]) or env['ts.workspace.member'].create(

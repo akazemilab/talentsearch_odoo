@@ -22,7 +22,7 @@ def panel(name, purpose):
     org.write({'is_company': True})
     ws = env['ts.workspace'].search([('partner_id', '=', org.id)], limit=1) or env['ts.workspace'].create(
         {'name': name, 'purpose': purpose, 'partner_id': org.id, 'escalation_contact_id': org.id if purpose == 'clinical' else False})
-    ws.write({'approved_on': '2026-01-01 00:00:00'}); ws.state = 'pilot'
+    ws.state = 'active'
     return ws
 def member(ws, n, role):
     u = user(n)
@@ -139,7 +139,7 @@ check('and settings is 403', u.req('/my/workspaces/%s/settings' % C)[0] == 403)
 shell("w = env['ts.workspace'].browse(%s); w.state = 'suspended'; env.cr.commit()" % B)
 st, _, page = pages[('hr', B)][0].req('/my/workspaces/%s' % B)
 check('suspended panel shows its notice page', st == 200 and 'موقتاً معلق' in page and menu(page) == ['پیشخوان', 'راهنما'], '%s %s' % (st, menu(page)))
-shell("w = env['ts.workspace'].browse(%s); w.state = 'pilot'; env.cr.commit()" % B)
+shell("w = env['ts.workspace'].browse(%s); w.state = 'active'; env.cr.commit()" % B)
 
 # strangers
 o = login('outsider')

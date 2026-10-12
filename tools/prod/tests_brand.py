@@ -60,8 +60,7 @@ def panel(purpose='clinical', name=None):
     if purpose == 'clinical':
         vals['escalation_contact_id'] = org.id
     ws = W.create(vals)
-    ws.write({'approved_on': '2026-01-01 00:00:00'})
-    ws.state = 'pilot' if purpose == 'clinical' else 'active'
+    ws.state = 'active'
     return ws
 
 
@@ -266,7 +265,7 @@ body = row._ts_sms_body()
 rules('result_ready_staff', body)
 check('result_ready_staff: the notice\'s own /n/ link', body.endswith('/n/%s' % row.id) and 'نتیجهٔ تازه در پنل شما' in body, body)
 check('result_ready_staff: new in-app title', row.title == 'نتیجهٔ تازه در پنل شما', row.title)
-for t, word in (('panel_approved', 'تأیید شد'), ('panel_rejected', 'تأیید نشد'), ('panel_suspended', 'معلق شد')):
+for t, word in (('panel_suspended', 'موقتاً متوقف شد'),):
     r = N._notify(own.user_id, t, '/my/workspaces/%s' % ws.id, ws)
     body = r._ts_sms_body()
     rules(t, body)
@@ -294,11 +293,14 @@ po = env['ts.phone.otp'].sudo().create({'user_id': pu.id, 'phone': '09127770953'
                                         'expires_at': fields.Datetime.now()})
 body = env['ts.phone.otp']._ts_otp_body('123456', '09127770953')
 rules('otp_phone', body, otp=True)
-check('otp_phone: the approved text', body == 'استعدادیاب\nکد تأیید: 123456 (۵ دقیقه)\nبه کسی ندهید.', body)
+host = env['ts.phone.otp']._ts_otp_host()
+check('otp_phone: the approved text, the WebOTP line last (onb1)',
+      body == 'استعدادیاب\nکد تأیید شماره: 123456\nاین کد را به کسی ندهید.\n@%s #123456' % host and len(body) <= 140, body)
 env['ts.signup.otp'].sudo().create({'phone': '09127770954', 'salt': 'x', 'code_hash': 'y', 'expires_at': fields.Datetime.now()})
 body = env['ts.phone.otp'].with_context(ts_otp_kind='signup')._ts_otp_body('654321', '09127770954')
 rules('otp_signup', body, otp=True)
-check('otp_signup: from its own template', '654321' in body and body.startswith('استعدادیاب'), body)
+check('otp_signup: from its own template, «کد ورود», WebOTP line «@host #code» last, Latin digits, <= 140 characters',
+      body == 'استعدادیاب\nکد ورود: 654321\nاین کد را به کسی ندهید.\n@%s #654321' % host and len(body) <= 140, body)
 
 # ================================================================ 6. fallbacks (missing, empty, broken template)
 class _Undo(Exception):
@@ -486,11 +488,10 @@ oinst = oc1.allowed_instruments().filtered(lambda i: i.audience == 'adult' and i
 A.create({'workspace_id': ob.id, 'instrument_id': oinst.id, 'invitee_name': 'مراجع آزمون راه‌اندازی', 'invited_by_id': oo.user_id.id})
 check('O61 invite: one invitation -> done', ostep(oo, 'invite')['done'])
 check('O62 every step done -> the checklist is gone', oo.ts_onb_checklist() is None and oa.ts_onb_checklist() is None)
-og = panel('clinical', name='مرکز مشاوره در انتظار آزمون')
-og.approved_on = False
+og = panel('clinical', name='مرکز مشاوره تازه آزمون')
 ogo = member(og, 'owner')
 s6g = ostep(ogo, 'invite')
-check('O63 invite: a panel awaiting approval says so and offers no button', og.gated and not s6g['url'] and 'تأیید' in (s6g['note'] or ''),
+check('O63 invite: a brand-new panel offers «دعوت تازه» at once (no approval, onb1)', bool(s6g['url']) and not s6g.get('note'),
       str(s6g))
 
 # hide / restore, per member
@@ -506,9 +507,9 @@ check('O73 hidden: the generic checklist does not come back, and the help page s
 oo.ts_onb_set_hidden(oo, False)
 check('O74 «نمایش دوباره» restores it', oo.ts_onb_checklist() is not None and not oo.ts_onb_hidden_on)
 st_ = {x['key']: x for x in oo.ts_onb_checklist()['status']}
-check('O75 the two EOT-team conditions are status lines with a support link when waiting',
-      st_['approval']['ok'] and st_['licences']['value'].endswith('تأییدشده') and oo.ts_onb_checklist()['total'] == 6
-      and all(x['url'] is None or x['url'].startswith('/contact?topic=support&panel=') for x in st_.values()), str(st_))
+check('O75 no approval line any more; the licence badges are an information line without a link (onb1)',
+      'approval' not in st_ and st_['licences']['value'].endswith('مشاور') and oo.ts_onb_checklist()['total'] == 6
+      and all(x['url'] is None for x in st_.values()), str(st_))
 ob.partner_id.image_1920 = ologo
 
 # counselor first-run card

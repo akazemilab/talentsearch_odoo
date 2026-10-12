@@ -60,8 +60,7 @@ def panel(purpose, mode='purpose'):
     if purpose == 'clinical':
         vals['escalation_contact_id'] = org.id
     ws = W.create(vals)
-    ws.write({'approved_on': '2026-01-01 00:00:00'})
-    ws.state = 'pilot'
+    ws.state = 'active'
     return ws
 
 
@@ -442,7 +441,7 @@ try:
         seed_ws = res.get('workspace')
         check('G15 the seed by default creates the panel and the owner, and NO colleague invitation',
               seed_ws and res.get('owner') and res['created'].get('invites') == 0 and not res.get('invites_on')
-              and I.search_count([]) == inv0 and seed_ws.catalog_mode == 'granted' and not seed_ws.gated,
+              and I.search_count([]) == inv0 and seed_ws.catalog_mode == 'granted' and seed_ws.state == 'active',
               str(res.get('created')))
 except Exception as e:
     check('G15 the seed by default creates the panel and the owner, and NO colleague invitation', False, repr(e)[:200])

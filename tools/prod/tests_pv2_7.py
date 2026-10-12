@@ -47,9 +47,7 @@ def panel(purpose, approved=True):
     org = env['res.partner'].create({'name': 'پنل آزمون S7', 'is_company': True})
     org.write({'is_company': True})
     ws = W.create({'name': org.name, 'purpose': purpose, 'partner_id': org.id})
-    if approved:
-        ws.write({'approved_on': '2026-01-01 00:00:00'})
-    ws.state = 'pilot'
+    ws.state = 'active'   # onb1: no approval step (`approved` kept for old callers)
     return ws
 
 
@@ -158,14 +156,15 @@ u5 = puser()
 l_client = client('قفل', user_id=u5.id, source='import')
 check('P20: an account tied to a locked client cannot join', raises(lambda: op2.ts_join(u5, 'قفل')))
 
-# ---- gated panel
-gws = panel('employment', approved=False)
+# ---- suspended panel (onb1: suspend replaces approval)
+gws = panel('employment')
 gowner = member(gws, 'hr_admin')
 ginst = gowner.allowed_instruments()[:1]
-gc = K.create({'workspace_id': gws.id, 'name': 'در انتظار', 'instrument_id': ginst.id, 'kind': 'open_link', 'created_by_id': gowner.id, 'open_max': 3})
-check('a gated panel cannot take joins', raises(lambda: gc.ts_join(puser(), 'سازمانی')))
+gc = K.create({'workspace_id': gws.id, 'name': 'متوقف', 'instrument_id': ginst.id, 'kind': 'open_link', 'created_by_id': gowner.id, 'open_max': 3})
 gl = K.create({'workspace_id': gws.id, 'name': 'گروهی', 'instrument_id': ginst.id, 'kind': 'list', 'created_by_id': gowner.id})
-check('a gated panel cannot launch a list campaign', raises(lambda: gl.ts_launch(C.create({'workspace_id': gws.id, 'name': 'ز'}))))
+gws.state = 'suspended'
+check('a suspended panel cannot take joins', raises(lambda: gc.ts_join(puser(), 'سازمانی')))
+check('a suspended panel cannot launch a list campaign', raises(lambda: gl.ts_launch(C.create({'workspace_id': gws.id, 'name': 'ز'}))))
 
 # ---- other panel's clients are ignored
 other = panel('education')

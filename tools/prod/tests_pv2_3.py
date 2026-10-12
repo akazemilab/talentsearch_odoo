@@ -47,8 +47,7 @@ def panel(purpose):
     org.write({'is_company': True})
     ws = W.create({'name': org.name, 'purpose': purpose, 'partner_id': org.id,
                    'escalation_contact_id': org.id if purpose == 'clinical' else False})
-    ws.write({'approved_on': '2026-01-01 00:00:00'})
-    ws.state = 'pilot'
+    ws.state = 'active'
     return ws
 
 

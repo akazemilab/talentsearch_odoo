@@ -49,12 +49,11 @@ st, loc, _ = own.req('/my/workspaces/new/create', {'csrf_token': csrf, 'name': '
 check('organization panel created -> dashboard', st in (302, 303) and '/my/workspaces/' in loc and 'new=1' in loc, loc)
 ws_id = re.search(r'/my/workspaces/(\d+)', loc).group(1)
 st, _, page = lib.follow(own, loc)
-check('pending banner shown', st == 200 and 'در انتظار تأیید' in page)
-check('checklist shown', 'گام‌های راه‌اندازی' in page and 'پس از تأیید' in page)
-check('participant invite form hidden while pending', 'id="ts-invite"' not in page)
+check('a new organization panel is active at once: no approval banner (onb1)', st == 200 and 'در انتظار تأیید' not in page
+      and 'پایلوت' not in page)
+check('checklist shown, without «(پس از تأیید)»', 'گام‌های راه‌اندازی' in page and 'پس از تأیید' not in page)
 st, _, legacy = own.req('/my/workspaces/%s/legacy' % ws_id)   # the dashboard has no forms (S6); the old page still does
-st, loc2, _ = own.req('/my/workspaces/%s/invite' % ws_id, {'csrf_token': own.csrf(legacy), 'invitee_name': 'x', 'instrument_id': '1'})
-check('participant invite POST refused while pending', 'error=' in loc2, loc2)
+check('participant invite form available at once', 'id="ts-invite"' in legacy and 'id="ts-pending"' not in legacy)
 
 # colleague invite
 st, loc2, _ = own.req('/my/workspaces/%s/members/invite' % ws_id, {'csrf_token': own.csrf(legacy), 'role': 'hr_admin', 'phone': '۰۹۱۲۶۶۶۰۰۰۲'})
@@ -111,13 +110,10 @@ check('person with two panels gets a panel switcher', 'تغییر پنل' in sp 
 st, _, tp = anon.req('/panel/terms')
 check('terms explain what happens when a specialist leaves', 'وقتی عضوی از پنل می‌رود' in tp and 'دسترسی اضطراری' in tp)
 
-# platform approval lifts the gate
-shell("ws=env['ts.workspace'].browse(%s)\nws.action_approve()\nenv.cr.commit()\nprint('OK')\n" % ws_id)
-st, _, pg = own.req('/my/workspaces/' + ws_id + '/legacy')
-check('after approval banner is gone and invite form appears', 'id="ts-pending"' not in pg and 'id="ts-invite"' in pg)
+# the super admin's suspend (replaces approval)
 shell("ws=env['ts.workspace'].browse(%s)\nws.action_suspend()\nenv.cr.commit()\nprint('OK')\n" % ws_id)
 st, _, pg = own.req('/my/workspaces')
-check('suspended panel is marked on the list', st == 200 and 'تعلیق شده' in pg)
+check('suspended panel is marked on the list', st == 200 and 'موقتاً متوقف شده' in pg)
 st, _, _ = own.req('/my/workspaces/' + ws_id + '/legacy')
 check('suspended panel dashboard is closed', st == 404)
 

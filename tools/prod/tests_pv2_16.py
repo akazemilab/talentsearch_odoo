@@ -24,8 +24,7 @@ def puser():
 org = env['res.partner'].create({'name': 'S16 school', 'is_company': True})
 org.write({'is_company': True})
 ws = W.create({'name': 'S16 school', 'purpose': 'education', 'partner_id': org.id})
-ws.write({'approved_on': '2026-01-01 00:00:00'})
-ws.state = 'pilot'
+ws.state = 'active'
 owner = M.create({'workspace_id': ws.id, 'user_id': puser().id, 'role': 'owner'})
 couns = M.create({'workspace_id': ws.id, 'user_id': puser().id, 'role': 'counselor', 'license_number': 'T-1',
                   'verification_state': 'verified'})
