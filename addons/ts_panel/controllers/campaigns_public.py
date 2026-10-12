@@ -20,7 +20,7 @@ class TsPanelCampaignJoin(TsOrg):
     def _campaign(self, token):
         _ts_site_or_404()
         c = request.env['ts.campaign'].sudo().search([('open_token', '=', token), ('kind', '=', 'open_link')], limit=1)   # ts-scope-ok: the secret token is the key of a public link
-        if not c or c.workspace_id.state not in ('pilot', 'active'):
+        if not c or c.workspace_id.state != 'active':
             raise request.not_found()
         return c
 

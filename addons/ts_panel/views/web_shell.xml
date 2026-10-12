@@ -10,7 +10,7 @@
         <field name="arch" type="xml">
             <t t-name="ts_panel.shell_frame">
                 <!-- Context from controllers/base.py render_in_shell: ws, member, menu, role_label, role_scope, role_help_url,
-                     panel_state, panel_gated, gated_note, flash_ok, flash_err, and optional back_url / back_label (the parent
+                     panel_state, flash_ok, flash_err, and optional back_url / back_label (the parent
                      page: rendered above the page heading as «→ back_label», audit PAT-3). -->
                 <t t-set="tabs" t-value="[m for m in menu if m['key'] in ('home', 'clients', 'invites', 'reports')][:4]"/>
                 <section class="ts-section tsp-section">
@@ -29,7 +29,7 @@
                                     <span aria-hidden="true">·</span>
                                     <a class="tsp-role" t-att-href="role_help_url or '/help/roles'" title="آنچه این نقش می‌بیند و انجام می‌دهد">نقش شما: <t t-out="role_label"/></a>
                                 </span>
-                                <span t-if="panel_gated" class="ts-pill ts-pill--warn" t-out="panel_state"/>
+                                <span t-if="ws.state != 'active'" class="ts-pill ts-pill--warn" t-out="panel_state"/>
                                 <p t-if="role_scope" class="tsp-switch__scope" t-out="role_scope"/>
                                 <a href="/my/workspaces" class="tsp-switch__link" aria-label="تغییر پنل">تغییر پنل</a>
                             </div>
@@ -51,7 +51,7 @@
                             <div class="tsp-topbar">
                                 <div class="tsp-topbar__ws">
                                     <strong t-out="ws.name"/>
-                                    <span class="ts-hint"><bdi class="ts-bdi" dir="ltr" t-out="ws.code"/> · <a class="tsp-role" t-att-href="role_help_url or '/help/roles'">نقش شما: <t t-out="role_label"/></a><t t-if="panel_gated"> · <t t-out="panel_state"/></t></span>
+                                    <span class="ts-hint"><bdi class="ts-bdi" dir="ltr" t-out="ws.code"/> · <a class="tsp-role" t-att-href="role_help_url or '/help/roles'">نقش شما: <t t-out="role_label"/></a><t t-if="ws.state != 'active'"> · <t t-out="panel_state"/></t></span>
                                 </div>
                                 <button type="button" class="tsp-nav__toggle" aria-expanded="false" aria-controls="tsp-rail" data-tsp-open="1">
                                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
@@ -61,8 +61,6 @@
                             <a t-if="back_url" t-att-href="back_url" class="ts-backlink tsp-back" t-out="back_label or 'بازگشت'"/>
                             <p t-if="flash_ok" class="tsp-flash tsp-flash--ok" role="status" t-out="flash_ok"/>
                             <p t-if="flash_err" class="tsp-flash tsp-flash--danger" role="alert" t-out="flash_err"/>
-                            <!-- the dashboard shows its own, longer gated notice -->
-                            <p t-if="gated_note" class="ts-notice ts-notice--warn tsp-gated" role="status" t-out="gated_note"/>
                             <t t-out="0"/>
                         </div>
                     </div>
@@ -104,7 +102,7 @@
         </field>
     </record>
 
-    <!-- A panel that cannot work yet (draft, suspended, closed) or an account awaiting verification -->
+    <!-- A panel that cannot work (draft, suspended, closed) -->
     <record id="tpl_state_page" model="ir.ui.view">
         <field name="name">TS panel: state page</field>
         <field name="type">qweb</field>

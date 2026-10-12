@@ -48,10 +48,6 @@ class TsPanelCampaigns(http.Controller):
     # ------------------------------------------------------------------ guard
     def _guard(self, ws_id):
         me = member_or_404(ws_id)
-        if me.can_act() and me.can_invite() and not me.can_invite_participants():
-            return me, render_in_shell('ts_panel.state_page', me, 'campaigns', 'دعوت گروهی هنوز ممکن نیست',
-                                       state_title='دعوت گروهی پس از تأیید پنل ممکن می‌شود',
-                                       state_text='پنل شما در انتظار تأیید مالک پلتفرم است. تا آن زمان می‌توانید شرکت‌کنندگان را ثبت و گروه‌بندی کنید.')
         denied = require(me, 'invites:bulk', 'campaigns')
         if denied:
             return me, denied
@@ -223,6 +219,7 @@ class TsPanelCampaigns(http.Controller):
                 if len(to_invite) > MAX_LIST or recent + len(to_invite) > limit:
                     flash_error('در یک ساعت بیش از %s دعوت نمی‌توان ساخت؛ گروه کوچک‌تری انتخاب کنید یا کمی بعد دوباره امتحان کنید.' % _fa(limit))
                     return request.redirect(back + '?keep=1')
+                me.workspace_id.ts_check_invite_quota(len(to_invite))   # new-panel limit (onb1), before anything is made
                 minors = to_invite.filtered(lambda c: c.ts_needs_guardian())
                 if minors and not (post or {}).get('guardian_ok'):
                     flash_error('برای شرکت‌کنندگان زیر ۱۸ سال باید تأیید کنید که رضایت ولی یا سرپرست قانونی را گرفته‌اید.')

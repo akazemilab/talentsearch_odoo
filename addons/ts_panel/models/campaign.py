@@ -131,12 +131,13 @@ class TsCampaign(models.Model):
         self.ensure_one()
         if self.kind != 'list' or self.state != 'open':
             raise UserError('این دعوت گروهی دیگر باز نیست.')
-        if self.workspace_id.gated:
-            raise UserError('دعوت شرکت‌کننده پس از تأیید پنل ممکن می‌شود.')
+        if self.workspace_id.state != 'active':
+            raise UserError('این پنل فعال نیست یا موقتاً متوقف شده است؛ دعوت تازه ممکن نیست.')
         clients = clients.sudo().filtered(lambda c: c.workspace_id == self.workspace_id)
         # the lock on the campaign row keeps a double click from creating the batch twice
         self.env.cr.execute('SELECT id FROM ts_campaign WHERE id = %s FOR UPDATE', [self.id])
         to_invite, skipped = self.ts_targets(clients, self.workspace_id.id, self.instrument_id.id)
+        self.workspace_id.ts_check_invite_quota(len(to_invite))     # new-panel limit: refuse the whole batch, never half
         A = self.env['ts.assignment'].sudo()
         by = self.created_by_id.user_id.id if self.created_by_id else self.env.uid
         created = A.browse()
@@ -159,7 +160,7 @@ class TsCampaign(models.Model):
         C = self.env['ts.panel.client'].sudo()
         ws = self.workspace_id
         name = (name or '').strip()
-        if ws.gated:
+        if ws.state != 'active':
             raise UserError(JOIN_MSG['closed'])
         if not 2 <= len(name) <= 120:
             raise UserError('نام را بین ۲ تا ۱۲۰ نویسه بنویسید.')

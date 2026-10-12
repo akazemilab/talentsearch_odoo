@@ -40,11 +40,9 @@ class TsWorkspaceMember(models.Model):
         return ev.create_date if ev else False
 
     def ts_state_key(self):
-        """active | awaiting | inactive (the vocabulary of 08_design_system.md section 3)."""
+        """active | inactive (08_design_system.md section 3; «awaiting» verification is gone since onb1)."""
         self.ensure_one()
-        if not self.active:
-            return 'inactive'
-        return 'awaiting' if self._ts_unverified_pro() else 'active'
+        return 'active' if self.active else 'inactive'
 
     # ------------------------------------------------------------------ changes by an owner
     def _ts_check_manager(self, by, perm='members:manage'):
@@ -85,17 +83,14 @@ class TsWorkspaceMember(models.Model):
         self.sudo().write({'active': True})
 
     def ts_set_practising(self, by, flag, license_number=None):
-        """MEM-7: an owner who also sees clients. In a clinical panel this needs the licence number and starts
-        verification (the verification state is computed from the role and this flag)."""
+        """MEM-7: an owner who also sees clients. The licence number is optional (onb1: a badge, checked by the EOT
+        team; a changed number starts unverified)."""
         self.ensure_one()
         if by != self or self.role != 'owner':
             raise UserError('فقط مالک می‌تواند این گزینه را برای خودش تغییر دهد.')
         vals = {'owner_practices': bool(flag)}
-        if flag and self.workspace_id.purpose == 'clinical':
-            lic = (license_number or self.license_number or '').strip()[:60]
-            if not lic:
-                raise UserError('برای دیدن گزارش ویژهٔ مشاور، شمارهٔ پروانه یا نظام روان‌شناسی و مشاوره لازم است.')
-            vals['license_number'] = lic
+        if license_number is not None and self.workspace_id.purpose == 'clinical':
+            vals['license_number'] = (license_number or '').strip()[:60] or False
         self.sudo().write(vals)
         self.env['ts.audit.event'].sudo().log('member.practice', self, workspace=self.workspace_id,
                                               practising=bool(flag))

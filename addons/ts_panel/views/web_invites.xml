@@ -96,6 +96,7 @@
                                 <li t-foreach="steps" t-as="s" t-attf-class="tsp-steps__item #{'is-on' if s[0] == step else ''}" t-att-aria-current="'step' if s[0] == step else None"><span class="ts-num" t-out="fa(s[0])"/>. <t t-out="s[1]"/></li>
                             </ol>
                             <p class="tsp-steps-text" aria-hidden="true">گام <t t-out="fa(step)"/> از ۴ · <t t-out="dict(steps)[step]"/></p>
+                            <p t-if="quota_note" class="ts-notice" role="note" t-out="quota_note"/>
 
                             <!-- 1: who. The two ways to answer «چه کسی» come first as a pair; JS shows the chosen one only (without JS both
                                  cards stay visible, each with its own «ادامه»). -->

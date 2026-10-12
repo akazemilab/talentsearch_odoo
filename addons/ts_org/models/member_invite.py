@@ -80,7 +80,7 @@ class TsMemberInvite(models.Model):
             return self.state
         if self.expires_at < fields.Datetime.now():
             return 'expired'
-        if self.workspace_id.state not in ('pilot', 'active'):
+        if self.workspace_id.state != 'active':
             return 'suspended'
         return 'ok'
 
@@ -102,8 +102,7 @@ class TsMemberInvite(models.Model):
             raise UserError('با حساب کاربری خود وارد شوید.')
         if not self.matches(user):
             raise UserError('این دعوت برای شمارهٔ موبایل یا ایمیل دیگری صادر شده است.')
-        if self.role in ('clinician', 'clinic_director') and not (license_number or '').strip():
-            raise UserError('شمارهٔ پروانه یا نظام روان‌شناسی و مشاوره لازم است.')
+        # the licence number is optional (onb1): the member adds or edits it later on his own profile, as a badge
         M = self.env['ts.workspace.member'].sudo()
         if M.search_count([('workspace_id', '=', self.workspace_id.id), ('user_id', '=', user.id), ('active', '=', True)]):
             raise UserError('شما هم‌اکنون عضو فعال این پنل هستید؛ نقش را مالک پنل تغییر می‌دهد.')

@@ -7,10 +7,8 @@ PURPOSES = [
     ('education', 'دانشگاه و مدرسه'),
     ('benefits', 'رفاه کارکنان'),
 ]
-# Organizations, clinics and benefit programs are reviewed by the platform owner before the first real
-# participant can be invited (the panel may already be set up and colleagues invited). Education
-# (schools, counseling centers) is active immediately.
-GATED_PURPOSES = {'employment', 'clinical', 'benefits'}
+# Owner decision 2026-10-12 (onb1): no panel waits for approval. Every panel is active when it is created; misuse is
+# handled after the fact (new-panel invite limit, super-admin suspend, the «پنل‌های تازه» back-office list, audit log).
 
 ROLES_BY_PURPOSE = {
     'employment': {'owner', 'admin', 'hr_admin', 'hiring_manager', 'reviewer'},
@@ -47,18 +45,15 @@ class TsWorkspace(models.Model):
                                  domain=[('is_company', '=', True)])
     state = fields.Selection([
         ('draft', 'پیش‌نویس'),
-        ('pilot', 'پایلوت'),
         ('active', 'فعال'),
-        ('suspended', 'معلق'),
+        ('suspended', 'متوقف'),
         ('closed', 'بسته'),
     ], 'وضعیت', default='draft', required=True, tracking=True)
-    gated = fields.Boolean('نیازمند تأیید', compute='_compute_gated', store=True,
-                           help='هدف‌های دانشگاه/مدرسه و رفاه کارکنان تا تأیید مالک پلتفرم غیرفعال می‌مانند.')
-    approved_by_id = fields.Many2one('res.users', 'تأییدکنندهٔ مالک پلتفرم', readonly=True, copy=False)
-    approved_on = fields.Datetime('تاریخ تأیید', readonly=True, copy=False)
-    approval_note = fields.Char('یادداشت تأیید', copy=False)
-    rejected_on = fields.Datetime('تاریخ رد', readonly=True, copy=False)
-    rejection_note = fields.Char('دلیل رد (برای مالک پنل نمایش داده می‌شود)', copy=False)
+    self_service = fields.Boolean('ساخته‌شده از سلف‌سرویس', readonly=True, copy=False,
+                                  help='پنلی که مشتری خودش در /panel ساخته است؛ در هفتهٔ اول سقف روزانهٔ دعوت دارد.')
+    suspend_note = fields.Char('دلیل توقف (داخلی)', copy=False,
+                               help='فقط برای تیم استعدادیاب؛ به مالک پنل نشان داده نمی‌شود.')
+    suspended_on = fields.Datetime('تاریخ توقف', readonly=True, copy=False)
     terms_version = fields.Char('نسخهٔ شرایط پذیرفته‌شده', readonly=True, copy=False)
     terms_accepted_on = fields.Datetime('تاریخ پذیرش شرایط', readonly=True, copy=False)
     terms_accepted_by_id = fields.Many2one('res.users', 'پذیرنده‌ی شرایط', readonly=True, copy=False)
@@ -84,55 +79,26 @@ class TsWorkspace(models.Model):
         for ws in self:
             ws.owner_user_id = ws.member_ids.filtered(lambda m: m.active and m.role == 'owner')[:1].user_id
 
-    @api.depends('purpose', 'approved_on')
-    def _compute_gated(self):
-        for ws in self:
-            ws.gated = ws.purpose in GATED_PURPOSES and not ws.approved_on
-
-    def action_approve(self):
-        """Platform-owner approval that lifts the gate on one education/benefits
-        workspace (rights, consent and operations reviewed for that customer)."""
-        if not self.env.user.has_group('ts_core.group_ts_manager'):
-            raise UserError('فقط مدیر پلتفرم می‌تواند پنل را تأیید کند.')
-        for ws in self:
-            if ws.purpose not in GATED_PURPOSES:
-                raise UserError('این پنل نیاز به تأیید ندارد.')
-            if ws.approved_on:
-                continue
-            ws.write({'approved_by_id': self.env.uid, 'approved_on': fields.Datetime.now(),
-                      'rejected_on': False, 'rejection_note': False})
-            self.env['ts.audit.event'].log('workspace.approve', ws, workspace=ws, purpose=ws.purpose)
-
     def _check_manager(self):
         if not self.env.user.has_group('ts_core.group_ts_manager'):
             raise UserError('فقط مدیر پلتفرم می‌تواند این کار را انجام دهد.')
 
-    def action_reject(self):
-        """Platform owner declines a pending panel; the note is shown to the panel owner."""
-        self._check_manager()
-        for ws in self:
-            if not ws.gated:
-                raise UserError('این پنل در انتظار تأیید نیست.')
-            if not ws.rejection_note:
-                raise UserError('دلیل رد را در فیلد «دلیل رد» بنویسید.')
-            ws.rejected_on = fields.Datetime.now()
-            self.env['ts.audit.event'].log('workspace.reject', ws, workspace=ws, purpose=ws.purpose,
-                                           has_note=True)
-
     def action_suspend(self):
+        """Super admin stops a panel after misuse (owner decision 2026-10-12 replaces approval with this): members see
+        a «stopped» page, no invitation or new attempt can start; participants keep their own results."""
         self._check_manager()
         for ws in self:
-            if ws.state not in ('pilot', 'active'):
-                raise UserError('فقط فضای پایلوت یا فعال معلق می‌شود.')
-            ws.write({'state': 'suspended'})
-            self.env['ts.audit.event'].log('workspace.suspend', ws, workspace=ws, has_note=bool(ws.approval_note))
+            if ws.state != 'active':
+                raise UserError('فقط پنل فعال متوقف می‌شود.')
+            ws.write({'state': 'suspended', 'suspended_on': fields.Datetime.now()})
+            self.env['ts.audit.event'].log('workspace.suspend', ws, workspace=ws, has_note=bool(ws.suspend_note))
 
     def action_resume(self):
         self._check_manager()
         for ws in self:
             if ws.state != 'suspended':
-                raise UserError('این پنل معلق نیست.')
-            ws.write({'state': 'pilot'})
+                raise UserError('این پنل متوقف نیست.')
+            ws.write({'state': 'active', 'suspended_on': False})
             self.env['ts.audit.event'].log('workspace.resume', ws, workspace=ws)
 
     def _compute_member_count(self):
@@ -163,9 +129,7 @@ class TsWorkspace(models.Model):
     @api.constrains('state', 'purpose', 'escalation_contact_id')
     def _check_activation(self):
         for ws in self:
-            if ws.state in ('pilot', 'active'):
-                if ws.gated and ws.state == 'active':
-                    raise ValidationError('این نوع پنل هنوز تأیید نشده و قابل فعال‌سازی نیست.')
+            if ws.state == 'active':
                 if ws.purpose == 'clinical' and not ws.escalation_contact_id:
                     raise ValidationError('پنل مرکز مشاوره بدون مسئول پیگیری فوری فعال نمی‌شود.')
 
@@ -187,33 +151,25 @@ class TsWorkspaceMember(models.Model):
     user_id = fields.Many2one('res.users', 'کاربر', required=True, index=True, ondelete='restrict')
     role = fields.Selection(ROLES, 'نقش', required=True)
     active = fields.Boolean(default=True)
-    # Professional verification (blueprint journey B1): clinicians unlock
-    # clinical instruments only once an operator records the verification.
+    # Licence = a BADGE (owner decision 2026-10-12, onb1): the member enters it on his own profile; the super admin's
+    # check adds «پروانهٔ تأییدشده» on the profile and reports. It never gates access. Editing the number resets the badge.
     license_number = fields.Char('شمارهٔ پروانه یا نظام روان‌شناسی و مشاوره')
     verification_state = fields.Selection([
-        ('not_required', 'لازم نیست'),
-        ('pending', 'در انتظار بررسی'),
-        ('verified', 'تأیید شده'),
-        ('rejected', 'رد شده'),
-    ], 'وضعیت احراز صلاحیت', compute='_compute_verification_state', store=True, readonly=False)
+        ('not_required', 'بدون شمارهٔ پروانه'),
+        ('pending', 'ثبت‌شده، هنوز تأیید نشده'),
+        ('verified', 'پروانهٔ تأییدشده'),
+        ('rejected', 'تأیید نشد'),
+    ], 'نشان پروانه', default='not_required', required=True, readonly=True)
     verified_by_id = fields.Many2one('res.users', 'تأییدکننده', readonly=True)
     verified_on = fields.Datetime('تاریخ تأیید', readonly=True)
     owner_practices = fields.Boolean(
         'مالک خودش هم کارشناس است', help='مالکی که خودش شرکت‌کنندگان را می‌بیند (مشاور یا روان‌شناس مستقل). '
-        'در پنل مرکز مشاوره، دیدن گزارش ویژهٔ مشاور منوط به تأیید صلاحیت است.')
+        'مالک مرکز مشاوره که خودش مشاوره نمی‌دهد، برای حفظ حریم مراجعان فقط وضعیت دعوت‌ها را می‌بیند.')
     deactivated_on = fields.Datetime('تاریخ غیرفعال‌سازی', readonly=True)
     deactivated_by_id = fields.Many2one('res.users', 'غیرفعال‌کننده', readonly=True)
 
     # one active membership per person per panel (the same person may hold roles in other panels)
     _one_active_member = models.UniqueIndex('(workspace_id, user_id) WHERE active IS TRUE')
-
-    @api.depends('role', 'owner_practices', 'purpose')
-    def _compute_verification_state(self):
-        for m in self:
-            if not m.verification_state or m.verification_state == 'not_required':
-                needs = m.role in ('clinician', 'clinic_director', 'counselor') or (
-                    m.role == 'owner' and m.owner_practices and m.purpose == 'clinical')
-                m.verification_state = 'pending' if needs else 'not_required'
 
     @api.constrains('role', 'workspace_id')
     def _check_role_matches_purpose(self):
@@ -228,18 +184,40 @@ class TsWorkspaceMember(models.Model):
                 raise ValidationError('اعضای سازمان مشتری باید کاربر پرتال باشند، نه کاربر داخلی.')
 
     def action_verify(self):
+        """Super admin checked the licence number: the member gets the «پروانهٔ تأییدشده» badge (no access changes)."""
         if not self.env.user.has_group('ts_core.group_ts_manager'):
-            raise UserError('فقط مدیر پلتفرم می‌تواند صلاحیت را تأیید کند.')
+            raise UserError('فقط مدیر پلتفرم می‌تواند پروانه را تأیید کند.')
         for m in self:
             if not m.license_number:
                 raise UserError('شماره پروانه ثبت نشده است.')
-            m.write({'verification_state': 'verified', 'verified_by_id': self.env.uid,
-                     'verified_on': fields.Datetime.now()})
+            m.with_context(ts_licence_badge=True).write({
+                'verification_state': 'verified', 'verified_by_id': self.env.uid, 'verified_on': fields.Datetime.now()})
             self.env['ts.audit.event'].log('member.verify', m, workspace=m.workspace_id,
                                            user=m.user_id.id, role=m.role)
 
+    def action_unverify(self):
+        """Super admin could not confirm the number: the badge is not shown (access unchanged)."""
+        if not self.env.user.has_group('ts_core.group_ts_manager'):
+            raise UserError('فقط مدیر پلتفرم می‌تواند نشان پروانه را تغییر دهد.')
+        for m in self:
+            m.with_context(ts_licence_badge=True).write({
+                'verification_state': 'rejected' if m.license_number else 'not_required',
+                'verified_by_id': self.env.uid, 'verified_on': fields.Datetime.now()})
+            self.env['ts.audit.event'].log('member.unverify', m, workspace=m.workspace_id, user=m.user_id.id, role=m.role)
+
+    @staticmethod
+    def _ts_licence_vals(vals):
+        """A new or edited licence number starts unverified; an empty one carries no badge."""
+        if 'license_number' in vals:
+            lic = (vals.get('license_number') or '').strip()[:60]
+            vals = dict(vals, license_number=lic or False)
+            if 'verification_state' not in vals:
+                vals.update(verification_state='pending' if lic else 'not_required', verified_by_id=False, verified_on=False)
+        return vals
+
     @api.model_create_multi
     def create(self, vals_list):
+        vals_list = [self._ts_licence_vals(v) for v in vals_list]
         records = super().create(vals_list)
         for m in records:
             self.env['ts.audit.event'].log('member.add', m, workspace=m.workspace_id, user=m.user_id.id, role=m.role)
@@ -253,6 +231,15 @@ class TsWorkspaceMember(models.Model):
         return super().unlink()
 
     def write(self, vals):
+        if 'license_number' in vals and not self.env.context.get('ts_licence_badge'):
+            new = (vals.get('license_number') or '').strip()[:60] or False
+            changed = self.filtered(lambda m: (m.license_number or False) != new)
+            if changed and changed != self:
+                (self - changed).write({k: v for k, v in vals.items() if k != 'license_number'})
+                return changed.write(vals)
+            vals = self._ts_licence_vals(vals) if changed else {k: v for k, v in vals.items() if k != 'license_number'}
+            if not vals:
+                return True
         if vals.get('active') is False and 'deactivated_on' not in vals:
             vals = dict(vals, deactivated_on=fields.Datetime.now(), deactivated_by_id=self.env.uid)
         elif vals.get('active') is True:

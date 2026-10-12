@@ -12,7 +12,7 @@ from .instrument import BANDS
 # battery and lists its instruments (ts_battery adds that block); the same consent is recorded on every instrument of it
 # v4 (1405-07-20, UX audit 2026-10-12 G6): «در حسابم» / «در حسابتان» (glossary §7), a battery shows one battery-level
 # limitation instead of the first instrument's, «نه تشخیص» once, who-sees wording «اشتراک‌گذاری» and «عامل»
-CONSENT_VERSION = 'TS-CONSENT-1405-07-20-v4'
+CONSENT_VERSION = 'TS-CONSENT-1405-07-20-v5'   # v5 (onb1): «مشاوران همین مرکز» (the licence no longer gates results)
 BAND_FA = dict(BANDS)
 BAND_WORDS = {'Low': 'کم', 'Medium': 'متوسط', 'High': 'زیاد'}
 PERSIAN_DIGITS = str.maketrans('0123456789', '۰۱۲۳۴۵۶۷۸۹')

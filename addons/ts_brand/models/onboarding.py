@@ -59,7 +59,7 @@ class TsMemberOnboarding(models.Model):
         self.ensure_one()
         m = self.sudo()
         ws = m.workspace_id
-        if not (m.active and m.role in ONB_ROLES and ws.purpose == 'clinical' and ws.state in ('pilot', 'active')):
+        if not (m.active and m.role in ONB_ROLES and ws.purpose == 'clinical' and ws.state == 'active'):
             return False
         if not m.can_act():
             return False
@@ -168,8 +168,7 @@ class TsMemberOnboarding(models.Model):
         invited = env['ts.assignment'].sudo().search_count([('workspace_id', '=', ws.id), ('channel', '!=', 'self_share')])
         can6 = me.can_act() and me.has_perm('invites:create')
         add('invite', 'نخستین دعوت', 'مراجع پیوند دعوت را می‌گیرد؛ پس از تکمیل، گزارش او در پنل دیده می‌شود.', invited,
-            url=(base + '/invites/new?fresh=1') if (can6 and not ws.gated) else None, btn='دعوت تازه',
-            note='پس از تأیید پنل، دعوت فرستاده می‌شود.' if ws.gated else None)
+            url=(base + '/invites/new?fresh=1') if can6 else None, btn='دعوت تازه')
 
         # numbering (the help section uses the same order) and the one current step: the first open, required step that
         # has something to press. Only that step gets the primary button.
@@ -180,21 +179,18 @@ class TsMemberOnboarding(models.Model):
         return steps
 
     def ts_onb_status(self):
-        """The two set-up conditions the EOT team controls, shown under the progress as status lines (not tasks):
-        [{key, label, value, ok, url, link}]. The link opens the contact form with the panel code filled in."""
+        """Information lines under the progress (not tasks, nothing waits on them since onb1): the licence badges of the
+        counselors. [{key, label, value, ok, url, link}]"""
         self.ensure_one()
         ws = self.sudo().workspace_id
-        ask = ws.ts_contact_url('support')
-        out = [{'key': 'approval', 'label': 'تأیید پنل', 'ok': not ws.gated,
-                'value': 'انجام شد' if not ws.gated else 'در انتظار تیم استعدادیاب',
-                'url': None if not ws.gated else ask, 'link': 'پیگیری تأیید پنل'}]
+        out = []
         staff = self.env['ts.workspace.member'].sudo().search(
             [('workspace_id', '=', ws.id), ('active', '=', True), ('role', 'in', list(STAFF_ROLES))])
         if staff:
             ok_n = len(staff.filtered(lambda m: m.verification_state == 'verified'))
-            out.append({'key': 'licences', 'label': 'پروانهٔ مشاوران', 'ok': ok_n == len(staff),
-                        'value': '%s از %s تأییدشده' % (ws.ts_fa_num(ok_n), ws.ts_fa_num(len(staff))),
-                        'url': None if ok_n == len(staff) else ask, 'link': 'پیگیری تأیید پروانه'})
+            out.append({'key': 'licences', 'label': 'نشان «پروانهٔ تأییدشده»', 'ok': ok_n == len(staff),
+                        'value': '%s از %s مشاور' % (ws.ts_fa_num(ok_n), ws.ts_fa_num(len(staff))),
+                        'url': None, 'link': None})
         return out
 
     def ts_onb_checklist(self):
@@ -225,7 +221,7 @@ class TsMemberOnboarding(models.Model):
         self.ensure_one()
         m = self.sudo()
         ws = m.workspace_id
-        return bool(m.active and m.role == 'clinician' and ws.purpose == 'clinical' and ws.state in ('pilot', 'active')
+        return bool(m.active and m.role == 'clinician' and ws.purpose == 'clinical' and ws.state == 'active'
                     and ws.ts_brand_enabled() and not clean_line(m.title) and not m.ts_onb_card_hidden_on)
 
     def ts_onb_card_hide(self, by):

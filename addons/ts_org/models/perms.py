@@ -83,16 +83,8 @@ def roles_with(perm, purpose=None):
     return {r for r in ALL_ROLES for p in purposes if role_has(r, p, perm)}
 
 
-GATED_REFUSED = frozenset({'invites:create', 'invites:bulk', 'clients:import'})
-
-
 class TsWorkspaceMember(models.Model):
     _inherit = 'ts.workspace.member'
-
-    def _ts_unverified_pro(self):
-        """A clinician or clinic director whose professional verification is not recorded (A5)."""
-        self.ensure_one()
-        return self.role in ('clinician', 'clinic_director') and self.verification_state != 'verified'
 
     def perms(self):
         """Effective permission set after the attribute conditions A1-A5b of the matrix."""
@@ -109,13 +101,9 @@ class TsWorkspaceMember(models.Model):
         if ws.state == 'draft':                                               # A3
             return frozenset({'panel:view'} | ({'panel:settings'} if self.role == 'owner' else set()))
         perms = set(ROLE_PERMS.get((self.role, ws.purpose), frozenset()))
-        if ws.gated:                                                          # A4
-            perms -= GATED_REFUSED
-        if self._ts_unverified_pro():                                         # A5
-            return frozenset({'panel:view', 'help:view'})
-        if self.role == 'owner' and ws.purpose == 'clinical':                 # A5b
-            if not (self.owner_practices and self.verification_state == 'verified'):
-                perms.discard('results:clinical')
+        # A4 (approval gate) and A5 (licence gate) were removed in onb1: the licence is a badge only.
+        if self.role == 'owner' and ws.purpose == 'clinical' and not self.owner_practices:   # A5b: client privacy
+            perms.discard('results:clinical')
         return frozenset(perms)
 
     def has_perm(self, perm):

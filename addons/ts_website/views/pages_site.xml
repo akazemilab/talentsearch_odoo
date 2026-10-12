@@ -275,8 +275,8 @@
                                     <div class="ts-card">
                                         <span class="ts-card__icon"><t t-call="ts_website.icon" ico.f="buildings"/></span>
                                         <h3>سازمان یا مرکز مشاوره هستید؟</h3>
-                                        <p class="ts-card__body">پنل سازمان‌ها و مراکز مشاوره در حال پایلوت است.</p>
-                                        <a class="ts-card__link" href="/contact?topic=partner">با ما تماس بگیرید<t t-call="ts_website.icon" ico.f="arrow-left"/></a>
+                                        <p class="ts-card__body">پنل خود را همین حالا رایگان بسازید؛ همان لحظه فعال است و منتظر تأیید کسی نمی‌مانید.</p>
+                                        <a class="ts-card__link" href="/panel">ساخت پنل<t t-call="ts_website.icon" ico.f="arrow-left"/></a>
                                     </div>
                                     <div class="ts-card">
                                         <span class="ts-card__icon"><t t-call="ts_website.icon" ico.f="question"/></span>
@@ -369,7 +369,7 @@
         <field name="website_id" ref="website_ts"/>
         <field name="arch" type="xml">
             <t t-name="ts_website.page_assessments">
-                <t t-set="start_href" t-value="start_url or '/web/login?redirect=/assessments'"/>
+                <t t-set="start_href" t-value="start_url or '/signup?next=/assessments'"/>
                 <t t-set="abil" t-value="['تحلیلی', 'تجربی', 'تحصیلی', 'نوسودمندی', 'وظیفه‌مندی']"/>
                 <t t-set="tops" t-value="[86, 70, 80, 84, 80]"/>
                 <t t-set="sample" t-value="[('برنامه‌نویسی', [86, 60, 73, 46, 80], 69), ('پزشکی', [66, 70, 80, 40, 76], 66), ('معماری', [60, 64, 53, 84, 58], 64), ('روان‌شناسی', [72, 52, 66, 56, 70], 63)]"/>
@@ -384,7 +384,7 @@
                                     <div class="ts-hero__meta"><span>۲ تا ۸ زمینه</span><span>۱۵ جمله برای هر زمینه</span><span>حدود ۱ دقیقه برای هر زمینه</span></div>
                                     <div class="ts-hero__actions">
                                         <a t-att-href="start_href" class="ts-btn ts-btn--primary ts-btn--lg">شروع سنجه<t t-call="ts_website.icon" ico.f="arrow-left"/></a>
-                                        <a t-if="request.env.user._is_public()" href="/web/login?redirect=/my/assessments" class="ts-btn ts-btn--quiet ts-btn--lg">ورود</a>
+                                        <a t-if="request.env.user._is_public()" href="/signup?next=/my/assessments" class="ts-btn ts-btn--quiet ts-btn--lg">ورود</a>
                                         <a t-else="" href="/my/assessments" class="ts-btn ts-btn--quiet ts-btn--lg">سنجه‌ها و نتیجه‌ها</a>
                                     </div>
                                 </div>

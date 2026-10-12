@@ -23,11 +23,6 @@ class TsPanelImports(http.Controller):
 
     def _guard(self, ws_id):
         me = member_or_404(ws_id)
-        ws = me.workspace_id
-        if me.can_act() and ws.gated and 'clients:import' in ROLE_PERMS.get((me.role, ws.purpose), ()):
-            return me, render_in_shell('ts_panel.state_page', me, 'import', 'ورود از فایل هنوز ممکن نیست',
-                                       state_title='ورود از فایل پس از تأیید پنل ممکن می‌شود',
-                                       state_text='پنل شما در انتظار تأیید مالک پلتفرم است. تا آن زمان می‌توانید شرکت‌کنندگان را یکی‌یکی ثبت کنید.')
         denied = require(me, 'clients:import', 'import')
         if denied:
             return me, denied

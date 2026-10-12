@@ -45,7 +45,7 @@ class TsWorkspaceLifecycle(models.Model):
         self.ensure_one()
         if by.workspace_id != self or by.role != 'owner' or not by.active or not by.has_perm('panel:close'):
             raise UserError('فقط مالک پنل می‌تواند آن را ببندد.')
-        if self.state not in ('pilot', 'active', 'suspended'):
+        if self.state not in ('active', 'suspended'):
             raise UserError('این پنل را نمی‌توان بست.')
         self.sudo().write({'state': 'closed', 'closed_on': fields.Datetime.now()})
         self.env['ts.audit.event'].sudo().log('panel.close', self, workspace=self, member=by)

@@ -154,8 +154,8 @@
                     <t t-set="tsbr_block" t-value="m.ts_brand_block()"/>
                     <t t-set="tsbr_photo" t-value="tsbr_own and m.ts_photo_uri()"/>
                     <h2 id="tsbr-member-h" class="h5"><t t-if="tsbr_own">هویت شما در گزارش‌ها</t><t t-else="">هویت این عضو در گزارش‌ها</t></h2>
-                    <p t-if="tsbr_own" class="ts-hint">بالای گزارش <t t-out="tsbr_many"/>ی که مشاورشان هستید: عکس، نام، عنوان و شمارهٔ پروانهٔ تأییدشده؛ معرفی کوتاه و امضا در پایان گزارش. هیچ شماره یا نشانی تماسی در گزارش نمی‌آید.</p>
-                    <p t-else="" class="ts-hint">بالای گزارش <t t-out="tsbr_many"/>ی که این عضو مشاورشان است: عکس، نام، عنوان و شمارهٔ پروانهٔ تأییدشده. عکس، معرفی و امضا را خود عضو می‌گذارد.</p>
+                    <p t-if="tsbr_own" class="ts-hint">بالای گزارش <t t-out="tsbr_many"/>ی که مشاورشان هستید: عکس، نام، عنوان و شمارهٔ پروانه (اگر تأیید شده باشد)؛ معرفی کوتاه و امضا در پایان گزارش. هیچ شماره یا نشانی تماسی در گزارش نمی‌آید.</p>
+                    <p t-else="" class="ts-hint">بالای گزارش <t t-out="tsbr_many"/>ی که این عضو مشاورشان است: عکس، نام، عنوان و شمارهٔ پروانه (اگر تأیید شده باشد). عکس، معرفی و امضا را خود عضو می‌گذارد.</p>
                     <div class="tsbr-memprev" data-tsbr-mprev="1">
                         <p class="tsbr-preview__label" id="tsbr_mprev_h">در سربرگ گزارش این‌طور دیده می‌شود</p>
                         <div class="tsbr-preview__doc" role="group" aria-labelledby="tsbr_mprev_h">
@@ -203,12 +203,17 @@
                         </t>
                         <p class="tsp-check"><label for="tsbr_show"><input type="checkbox" id="tsbr_show" name="show_on_report" value="1" t-att-checked="'checked' if m.show_on_report else None" aria-describedby="tsbr_show_h"/> در گزارش‌ها نمایش داده شود</label></p>
                         <p class="tsp-field__hint" id="tsbr_show_h"><t t-if="tsbr_own">اگر تیک را بردارید، گزارش <t t-out="tsbr_many"/> شما بدون نام و پروانهٔ مشاور می‌آید.</t><t t-else="">اگر تیک را بردارید، گزارش <t t-out="tsbr_many"/> او بدون نام و پروانهٔ مشاور می‌آید.</t></p>
-                        <dl class="ts-meta tsbr-lic">
-                            <dt>شمارهٔ پروانه</dt>
-                            <dd t-if="m.license_number"><bdi dir="ltr" t-out="m.license_number"/><t t-call="ts_website.sep"/><t t-if="m.verification_state == 'verified'">تأییدشده؛ در گزارش‌ها می‌آید</t><t t-else="">هنوز تأیید نشده؛ تا تأیید تیم استعدادیاب در گزارش نمی‌آید</t></dd>
-                            <dd t-else="">ثبت نشده</dd>
+                        <div t-if="tsbr_own" class="tsp-field">
+                            <label class="tsp-field__label" for="tsbr_lic">شمارهٔ پروانه یا نظام روان‌شناسی و مشاوره <span class="tsbr-opt">(اختیاری)</span></label>
+                            <p class="tsp-field__hint" id="tsbr_lic_h">تیم استعدادیاب شماره را بررسی می‌کند و پس از آن نشان «پروانهٔ تأییدشده» کنار نامتان و شماره در گزارش‌ها می‌آید. کار شما با پنل منتظر این بررسی نمی‌ماند. اگر شماره را تغییر دهید، بررسی از نو انجام می‌شود.</p>
+                            <input id="tsbr_lic" name="license_number" type="text" maxlength="60" dir="ltr" inputmode="text" autocomplete="off" t-att-value="m.license_number or ''" aria-describedby="tsbr_lic_h tsbr_lic_state"/>
+                        </div>
+                        <dl class="ts-meta tsbr-lic" id="tsbr_lic_state">
+                            <dt>نشان پروانه</dt>
+                            <dd t-if="m.verification_state == 'verified'"><span class="ts-pill ts-pill--ok">پروانهٔ تأییدشده</span> <bdi dir="ltr" t-out="m.license_number"/>؛ در گزارش‌ها می‌آید</dd>
+                            <dd t-elif="m.license_number"><bdi dir="ltr" t-out="m.license_number"/><t t-call="ts_website.sep"/>هنوز بررسی نشده؛ پس از بررسی در گزارش‌ها می‌آید</dd>
+                            <dd t-else="">شماره‌ای ثبت نشده</dd>
                         </dl>
-                        <p class="ts-hint">شمارهٔ پروانه را تیم استعدادیاب بررسی و ثبت می‌کند. <a t-att-href="ws.ts_contact_url('support')">برای ثبت یا تغییر شمارهٔ پروانه به پشتیبانی پیام بدهید</a>.</p>
                         <p><button type="submit" class="ts-btn ts-btn--primary">ذخیرهٔ هویت در گزارش‌ها</button></p>
                     </form>
                 </section>

@@ -384,7 +384,7 @@ class TsPanelClients(http.Controller):
         denied = require(me, 'clients:write', 'clients')
         if denied:
             return denied
-        if not me.can_act() or me.workspace_id.state not in ('pilot', 'active'):
+        if not me.can_act() or me.workspace_id.state != 'active':
             return forbidden(me, 'clients:write', 'clients')
         if request.httprequest.method == 'GET':
             return self._form(me, None, {'age_group': 'minor' if me.workspace_id.purpose == 'education' else 'unknown'})

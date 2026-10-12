@@ -128,7 +128,7 @@
         <field name="view_ids" eval="[(5, 0, 0), (0, 0, {'view_mode': 'graph', 'view_id': ref('ts_attempt_view_graph_ops')}), (0, 0, {'view_mode': 'pivot', 'view_id': ref('ts_attempt_view_pivot_ops')})]"/>
     </record>
 
-    <!-- Professional verification queue (blueprint journey B1). -->
+    <!-- Licence badges (onb1): the list of numbers members entered; verifying adds the badge, it never gates access. -->
     <record id="ts_member_view_list_verify" model="ir.ui.view">
         <field name="name">ts.workspace.member.list.verify</field>
         <field name="model">ts.workspace.member</field>
@@ -138,23 +138,24 @@
                 <field name="user_id"/>
                 <field name="role"/>
                 <field name="license_number"/>
-                <field name="verification_state" widget="badge" decoration-success="verification_state == 'verified'" decoration-warning="verification_state == 'pending'"/>
+                <field name="verification_state" widget="badge" decoration-success="verification_state == 'verified'" decoration-info="verification_state == 'pending'" decoration-danger="verification_state == 'rejected'"/>
                 <field name="verified_by_id"/>
                 <field name="verified_on"/>
-                <button name="action_verify" type="object" string="تأیید صلاحیت" invisible="verification_state == 'verified'" groups="ts_core.group_ts_manager"/>
+                <button name="action_verify" type="object" string="تأیید پروانه" invisible="verification_state not in ('pending', 'rejected')" groups="ts_core.group_ts_manager"/>
+                <button name="action_unverify" type="object" string="تأیید نشد" invisible="verification_state != 'pending'" groups="ts_core.group_ts_manager"/>
             </list>
         </field>
     </record>
     <record id="ts_member_verify_action" model="ir.actions.act_window">
-        <field name="name">احراز صلاحیت حرفه‌ای</field>
+        <field name="name">نشان پروانهٔ اعضا</field>
         <field name="res_model">ts.workspace.member</field>
         <field name="view_mode">list,form</field>
-        <field name="domain">[('role', 'in', ('clinician', 'clinic_director', 'counselor'))]</field>
+        <field name="domain">[('license_number', '!=', False)]</field>
         <field name="view_id" ref="ts_member_view_list_verify"/>
     </record>
 
     <menuitem id="menu_ts_org_assignments" name="دعوت‌های سازمانی" parent="ts_core.menu_ts_customers" action="ts_assignment_action" sequence="20" groups="ts_core.group_ts_manager"/>
-    <menuitem id="menu_ts_org_verify" name="احراز صلاحیت حرفه‌ای" parent="ts_core.menu_ts_customers" action="ts_member_verify_action" sequence="30" groups="ts_core.group_ts_manager"/>
+    <menuitem id="menu_ts_org_verify" name="نشان پروانهٔ اعضا" parent="ts_core.menu_ts_customers" action="ts_member_verify_action" sequence="30" groups="ts_core.group_ts_manager"/>
     <menuitem id="menu_ts_ops_dashboard" name="پیشخوان عملیات" parent="ts_assessment.menu_ts_assessments" action="ts_ops_dashboard_action" sequence="5" groups="ts_core.group_ts_manager"/>
     <!-- PLT-10: an upgrade only adds groups to a menu; set the manager group alone -->
     <record id="menu_ts_org_assignments" model="ir.ui.menu">

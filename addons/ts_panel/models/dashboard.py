@@ -124,9 +124,6 @@ class TsMemberDashboard(models.Model):
             if n:
                 out.append({'key': key, 'label': label, 'n': n, 'url': url})
 
-        # Kept for other callers; the dashboard template skips it because the shell shows the gated notice on every page.
-        add('gated', 'پنل در انتظار تأیید تیم استعدادیاب است', 1 if ws.gated else 0, '/help/panel')
-        add('verify', 'احراز صلاحیت حرفه‌ای شما در حال بررسی است', 1 if self._ts_unverified_pro() else 0, '/help/panel')
         if self.can_act() and self.has_perm('invites:manage'):
             dom = assignment_domain(self)
             add('unseen', 'نتیجهٔ آماده‌ای که هنوز باز نکرده‌اید', len(unseen_ids(env, self, dom)), base + '/invites/unseen')
@@ -241,7 +238,7 @@ class TsMemberDashboard(models.Model):
             ('راه ارتباط با پنل', bool(ws.partner_id.phone or ws.partner_id.email), base + '/settings'),
             ('دعوت اولین همکار' + (' (برای کار تک‌نفره لازم نیست)' if solo else ''), bool(others) or bool(solo), base + '/members'),
             ('ثبت اولین شرکت‌کننده', bool(env['ts.panel.client'].sudo().search_count([('workspace_id', '=', ws.id)])), base + '/clients'),
-            ('دعوت اولین شرکت‌کننده' + (' (پس از تأیید)' if ws.gated else ''), bool(S.search_count([('workspace_id', '=', ws.id)])), base + '/invites/new?fresh=1'),
+            ('دعوت اولین شرکت‌کننده', bool(S.search_count([('workspace_id', '=', ws.id)])), base + '/invites/new?fresh=1'),
             ('اولین نتیجهٔ تکمیل‌شده', bool(S.search_count([('workspace_id', '=', ws.id), ('state', '=', 'done')])), base + '/invites'),
         ]
         return [] if all(s[1] for s in steps) else steps

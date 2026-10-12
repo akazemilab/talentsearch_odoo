@@ -4,10 +4,10 @@ from datetime import timedelta
 from odoo import api, fields, models
 from odoo.exceptions import UserError
 
-from odoo.addons.ts_core.models.workspace import GATED_PURPOSES as GATED, ROLES_BY_PURPOSE
+from odoo.addons.ts_core.models.workspace import ROLES_BY_PURPOSE
 
-TERMS_VERSION = 'panel-terms-1405-07-v3'
-TERMS_LABEL = 'نسخهٔ ۳، از ۱۹ مهر ۱۴۰۵'   # shown with the code; change both together (UX audit G1-P2-2)
+TERMS_VERSION = 'panel-terms-1405-07-v4'          # v4 (onb1): no approval; first-week invitation limit; suspension
+TERMS_LABEL = 'نسخهٔ ۴، از ۲۰ مهر ۱۴۰۵'   # shown with the code; change both together (UX audit G1-P2-2)
 MAX_PANELS_PER_DAY = 3
 # what the person picks -> workspace purpose
 KINDS = {'school': 'education', 'org': 'employment', 'clinic': 'clinical'}
@@ -54,8 +54,8 @@ class TsWorkspace(models.Model):
     @api.model
     def ts_panel_create(self, user, name, kind, solo_as=None, terms=False, escalation_ok=False,
                        license_number=None):
-        """Self-service panel: the person becomes owner. Education is active at once; organizations and
-        clinics start in the limited «pending approval» mode (panel + colleagues, no real participants)."""
+        """Self-service panel: the person becomes owner and the panel is active at once, whatever its kind (owner decision
+        2026-10-12: no approval). New panels have a daily invitation limit for their first week (ts_org.assignment)."""
         name = ' '.join((name or '').split())
         if not (2 <= len(name) <= 100):
             raise UserError('نام پنل باید بین ۲ تا ۱۰۰ نویسه باشد.')
@@ -81,7 +81,7 @@ class TsWorkspace(models.Model):
         me = user.partner_id
         ws = S.create({
             'name': name, 'purpose': purpose, 'partner_id': partner.id,
-            'state': 'pilot' if purpose in GATED else 'active',
+            'state': 'active', 'self_service': True,
             'data_contact_id': me.id,
             'escalation_contact_id': me.id if purpose == 'clinical' else False,
             'terms_version': TERMS_VERSION, 'terms_accepted_on': fields.Datetime.now(),
@@ -95,18 +95,10 @@ class TsWorkspace(models.Model):
         audit.log('workspace.self_create', ws, workspace=ws, purpose=purpose, kind=kind)
         audit.log('workspace.terms_accept', ws, workspace=ws, version=TERMS_VERSION,
                   clinical_escalation=bool(purpose == 'clinical'))
-        if ws.gated:
-            ws._notify_review()
+        # after-the-fact record for the back office (list «پنل‌های تازه (۷ روز)»); a log note, so nobody is emailed
+        ws.sudo().message_post(body='پنل از سلف‌سرویس ساخته شد (%s) و از همین لحظه فعال است.' % PURPOSE_LABELS.get(purpose, purpose),
+                               message_type='comment', subtype_xmlid='mail.mt_note')
         return ws
-
-    def _notify_review(self):
-        group = self.env.ref('ts_core.group_ts_manager')
-        managers = self.env['res.users'].sudo().search([('group_ids', 'in', group.id), ('share', '=', False)])
-        for ws in self:
-            ws.message_post(
-                body='پنل تازه «%s» (%s) ساخته شد و در انتظار تأیید است.' % (
-                    ws.name, dict(ws._fields['purpose'].selection).get(ws.purpose)),
-                partner_ids=managers.partner_id.ids, message_type='notification', subtype_xmlid='mail.mt_comment')
 
     def ts_update_profile(self, name=None, logo_bytes=None, remove_logo=False):
         self.ensure_one()

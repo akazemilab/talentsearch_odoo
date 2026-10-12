@@ -45,8 +45,7 @@
                                             </dl>
                                             <p t-if="r['unseen']" class="ts-org-card__new"><strong t-out="fa(r['unseen'])"/> نتیجهٔ تازه که هنوز باز نکرده‌اید</p>
                                             <a t-if="r['usable']" t-attf-href="/my/workspaces/#{r['ws'].id}" class="ts-btn ts-btn--primary ts-org-card__go">ورود به پنل <span class="visually-hidden" t-out="r['ws'].name"/></a>
-                                            <p t-elif="r['ws'].state == 'suspended'" class="ts-notice ts-notice--warn">این پنل تعلیق شده است.</p>
-                                            <p t-elif="r['member'].verification_state == 'pending'" class="ts-notice ts-notice--warn">احراز صلاحیت حرفه‌ای شما در حال بررسی است.</p>
+                                            <p t-elif="r['ws'].state == 'suspended'" class="ts-notice ts-notice--warn">این پنل موقتاً متوقف شده است.</p>
                                             <p t-else="" class="ts-notice ts-notice--warn">این پنل هنوز فعال نشده است.</p>
                                         </article>
                                     </t>
@@ -83,7 +82,7 @@
                                     <h1 t-out="ws.name"/>
                                     <p t-if="ws.purpose == 'employment'">این پنل فقط وضعیت دعوت و، در صورت رضایت شرکت‌کننده، سطح هر عامل را می‌بیند. پاسخ‌ها و متن‌های تفسیری هرگز نمایش داده نمی‌شوند.</p>
                                     <p t-elif="ws.purpose == 'education'">مشاور مدرسه گزارش شرکت‌کنندگان را می‌بیند؛ پاسخ‌های خام هرگز نمایش داده نمی‌شوند. نتیجه‌های واردشده از نرم‌افزار قبلی فقط برای اعضای همین پنل دیده می‌شوند و برای خود شرکت‌کننده منتشر نشده‌اند.</p>
-                                    <p t-elif="ws.purpose == 'clinical'">گزارش کامل، از جمله راهنمای مشاور، فقط به مشاور تأییدشدهٔ همین پنل و فقط با رضایت شرکت‌کننده نمایش داده می‌شود.</p>
+                                    <p t-elif="ws.purpose == 'clinical'">گزارش کامل، از جمله راهنمای مشاور، فقط به مشاوران همین مرکز و فقط با رضایت شرکت‌کننده نمایش داده می‌شود.</p>
                                 </div>
 
                                 <p t-if="created" class="ts-notice" role="status">
@@ -92,14 +91,8 @@
                                 </p>
                                 <p t-if="error == 'form'" class="ts-notice ts-notice--warn" role="alert">نام شرکت‌کننده و سنجه را انتخاب کنید.</p>
                                 <p t-if="error == 'rule'" class="ts-notice ts-notice--warn" role="alert">این دعوت با قواعد این پنل سازگار نیست.</p>
-                                <p t-if="error == 'pending'" class="ts-notice ts-notice--warn" role="alert">تا تأیید پنل، دعوت شرکت‌کنندهٔ واقعی ممکن نیست.</p>
                                 <p t-if="flash" class="ts-notice ts-notice--warn" role="alert" t-out="flash"/>
                                 <p t-if="is_new" class="ts-notice" role="status">پنل ساخته شد.</p>
-                                <section t-if="ws.gated" class="ts-notice ts-notice--warn" id="ts-pending" role="status">
-                                    <strong>پنل در انتظار تأیید است.</strong>
-                                    <t t-if="ws.state == 'pilot'"> می‌توانید پنل را کامل کنید و همکارانتان را دعوت کنید؛ دعوت شرکت‌کنندهٔ واقعی و دریافت نتیجه پس از تأیید تیم استعدادیاب باز می‌شود.</t>
-                                    <t t-if="ws.rejected_on"><br/>درخواست رد شد<t t-if="ws.rejection_note">: <span t-out="ws.rejection_note"/></t>. می‌توانید اطلاعات پنل را اصلاح کنید و با پشتیبانی تماس بگیرید.</t>
-                                </section>
                                 <section t-if="checklist" class="ts-card ts-card--soft" id="ts-checklist">
                                     <h2 class="h5">گام‌های راه‌اندازی</h2>
                                     <ol class="ts-checklist">
@@ -308,7 +301,7 @@
                                     <section t-if="a.state == 'done' and level == 'none'" class="ts-doc__sec">
                                         <h2>نتیجه</h2>
                                         <p t-if="a.share_level == 'none'">شرکت‌کننده سنجه را کامل کرده اما نتیجه را با این پنل به اشتراک نگذاشته است.</p>
-                                        <p t-elif="ws.purpose == 'clinical'">گزارش ویژهٔ مشاور فقط برای مشاور تأییدشدهٔ این پنل نمایش داده می‌شود.</p>
+                                        <p t-elif="ws.purpose == 'clinical'">گزارش ویژهٔ مشاور فقط برای مشاوران همین مرکز نمایش داده می‌شود.</p>
                                         <p t-else="">نقش شما امکان مشاهدهٔ نتیجه را ندارد.</p>
                                     </section>
 
@@ -424,7 +417,7 @@
                                                 <input type="checkbox" name="share" value="1" checked="checked" aria-describedby="ts_share_note"/>
                                                 <span t-if="ws.purpose == 'education'">اجازه می‌دهم مدرسه و مشاورم گزارش نتیجه‌ام را در پنل «<bdi t-out="ws.ts_public_name()"/>» ببینند.</span>
                                                 <span t-elif="ws.purpose == 'employment'">اجازه می‌دهم سطح هر عامل با پنل «<bdi t-out="ws.ts_public_name()"/>» به اشتراک گذاشته شود.</span>
-                                                <span t-else="">اجازه می‌دهم گزارش کامل با مشاور تأییدشدهٔ پنل «<bdi t-out="ws.ts_public_name()"/>» به اشتراک گذاشته شود.</span>
+                                                <span t-else="">اجازه می‌دهم گزارش کامل با مشاوران «<bdi t-out="ws.ts_public_name()"/>» به اشتراک گذاشته شود.</span>
                                             </label>
                                             <p id="ts_share_note" class="ts-hint"><t t-if="student">اگر تیک را برداری هم می‌توانی سنجه را انجام بدهی؛ آن وقت نتیجه فقط برای خودت می‌ماند.</t><t t-else="">اگر تیک را بردارید هم می‌توانید سنجه را انجام دهید؛ آن وقت نتیجه فقط برای خودتان می‌ماند.</t></p>
                                             <button type="submit" class="ts-btn ts-btn--primary">پذیرفتن دعوت و ادامه</button>
@@ -479,7 +472,7 @@
                     </ul>
                     <ul class="ts-list-check" t-else="">
                         <li>مرکز مشاوره وضعیت دعوت را می‌بیند.</li>
-                        <li>اگر اجازه دهید، گزارش کامل همراه با راهنمای مشاور فقط به مشاور تأییدشدهٔ این مرکز مشاوره نمایش داده می‌شود.</li>
+                        <li>اگر اجازه دهید، گزارش کامل همراه با راهنمای مشاور فقط به مشاوران همین مرکز مشاوره نمایش داده می‌شود.</li>
                         <li>هر زمان بخواهید می‌توانید اشتراک‌گذاری را از صفحهٔ گزارش قطع کنید.</li>
                     </ul>
                 </div>
@@ -521,7 +514,7 @@
                     <p t-else="">این سنجه به دعوت <strong t-out="ts_share.workspace_id.ts_public_name()"/> انجام شد.</p>
                     <p>
                         <t t-if="ts_share.share_level == 'summary'">پنل فقط سطح هر زمینه یا عامل را می‌بیند.</t>
-                        <t t-elif="ts_share.share_level == 'clinical'">گزارش کامل برای مشاور تأییدشدهٔ این مرکز مشاوره قابل مشاهده است.</t>
+                        <t t-elif="ts_share.share_level == 'clinical'">گزارش کامل برای مشاوران همین مرکز مشاوره قابل مشاهده است.</t>
                         <t t-else="">نتیجه با پنل به اشتراک گذاشته نشده است.</t>
                     </p>
                     <form t-if="ts_share.share_level != 'none'" t-attf-action="/my/assessments/#{attempt.id}/unshare" method="post" class="ts-confirm">

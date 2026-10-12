@@ -386,17 +386,6 @@ class TsWorkspaceNotify(models.Model):
             for m in ws.sudo().member_ids.filtered(lambda m: m.active and m.role == 'owner'):
                 N._notify(m.user_id, type_, '/my/workspaces/%s' % ws.id, ws)
 
-    def action_approve(self):
-        pending = self.filtered(lambda w: not w.approved_on)
-        res = super().action_approve()
-        pending.filtered('approved_on')._ts_tell_owners('panel_approved')
-        return res
-
-    def action_reject(self):
-        res = super().action_reject()
-        self._ts_tell_owners('panel_rejected')
-        return res
-
     def action_suspend(self):
         res = super().action_suspend()
         self._ts_tell_owners('panel_suspended')

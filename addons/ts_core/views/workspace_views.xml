@@ -9,9 +9,8 @@
                 <field name="name"/>
                 <field name="partner_id"/>
                 <field name="purpose"/>
-                <field name="state" widget="badge" decoration-success="state == 'active'" decoration-info="state == 'pilot'" decoration-warning="state == 'suspended'"/>
+                <field name="state" widget="badge" decoration-success="state == 'active'" decoration-warning="state == 'suspended'"/>
                 <field name="member_count" string="اعضا"/>
-                <field name="gated" optional="hide"/>
                 <field name="owner_user_id" optional="show"/>
                 <field name="create_date" string="تاریخ ساخت" optional="show"/>
                 <field name="terms_accepted_on" optional="hide"/>
@@ -24,18 +23,17 @@
         <field name="arch" type="xml">
             <form>
                 <header>
-                    <button name="action_approve" type="object" string="تأیید مالک پلتفرم" class="btn-primary" invisible="not gated" groups="ts_core.group_ts_manager"/>
-                    <button name="action_reject" type="object" string="رد با دلیل" invisible="not gated" groups="ts_core.group_ts_manager"/>
-                    <button name="action_suspend" type="object" string="تعلیق" invisible="state not in ('pilot', 'active')" groups="ts_core.group_ts_manager"/>
-                    <button name="action_resume" type="object" string="رفع تعلیق" invisible="state != 'suspended'" groups="ts_core.group_ts_manager"/>
-                    <field name="state" widget="statusbar" options="{'clickable': '1'}" statusbar_visible="draft,pilot,active"/>
+                    <button name="action_suspend" type="object" string="توقف موقت پنل" invisible="state != 'active'" groups="ts_core.group_ts_manager"
+                            confirm="پنل متوقف شود؟ اعضا دیگر دعوت نمی‌فرستند و دعوت تازه‌ای پذیرفته نمی‌شود؛ شرکت‌کنندگان نتیجهٔ خود را همچنان می‌بینند."/>
+                    <button name="action_resume" type="object" string="ادامهٔ کار پنل" invisible="state != 'suspended'" groups="ts_core.group_ts_manager"/>
+                    <field name="state" widget="statusbar" statusbar_visible="active,suspended,closed"/>
                 </header>
                 <sheet>
                     <div class="oe_button_box" name="button_box">
                         <button name="action_view_audit" type="object" class="oe_stat_button" icon="fa-list" string="ممیزی" groups="ts_core.group_ts_user"/>
                     </div>
-                    <div class="alert alert-warning" role="alert" invisible="not gated">
-                        این پنل (سازمان، مرکز مشاوره یا رفاه کارکنان) در انتظار تأیید مالک پلتفرم است؛ تا آن زمان مالک می‌تواند پنل را تنظیم و همکار دعوت کند ولی شرکت‌کنندهٔ واقعی دعوت نمی‌شود.
+                    <div class="alert alert-warning" role="alert" invisible="state != 'suspended'">
+                        این پنل متوقف است: اعضا فقط صفحهٔ «پنل موقتاً متوقف شده است» را می‌بینند و دعوت یا پاسخ‌دهی تازه شروع نمی‌شود. شرکت‌کنندگان نتیجهٔ خود را همچنان می‌بینند.
                     </div>
                     <div class="oe_title">
                         <label for="name"/>
@@ -46,17 +44,15 @@
                         <group>
                             <field name="partner_id"/>
                             <field name="purpose" readonly="state != 'draft'"/>
-                            <field name="gated" invisible="1"/>
-                            <field name="approval_note"/>
-                            <field name="rejection_note" invisible="not gated"/>
-                            <field name="rejected_on" invisible="not rejected_on"/>
-                            <field name="approved_on" invisible="not approved_on"/>
+                            <field name="suspend_note"/>
+                            <field name="suspended_on" invisible="not suspended_on"/>
+                            <field name="create_date" string="تاریخ ساخت" readonly="1"/>
                             <field name="terms_accepted_on" invisible="not terms_accepted_on"/>
                             <field name="terms_version" invisible="not terms_version"/>
                         </group>
                         <group>
                             <field name="data_contact_id"/>
-                            <field name="escalation_contact_id" invisible="purpose != 'clinical'" required="purpose == 'clinical' and state in ('pilot', 'active')"/>
+                            <field name="escalation_contact_id" invisible="purpose != 'clinical'" required="purpose == 'clinical' and state == 'active'"/>
                             <field name="company_id" groups="base.group_multi_company"/>
                         </group>
                     </group>
@@ -67,9 +63,10 @@
                                     <field name="user_id" domain="[('share', '=', True)]"/>
                                     <field name="role"/>
                                     <field name="license_number"/>
-                                    <field name="verification_state" readonly="1" widget="badge" decoration-success="verification_state == 'verified'" decoration-warning="verification_state == 'pending'" decoration-danger="verification_state == 'rejected'"/>
+                                    <field name="verification_state" readonly="1" widget="badge" decoration-success="verification_state == 'verified'" decoration-info="verification_state == 'pending'" decoration-danger="verification_state == 'rejected'"/>
                                     <field name="active" widget="boolean_toggle"/>
-                                    <button name="action_verify" type="object" string="تأیید صلاحیت" icon="fa-check" invisible="verification_state != 'pending'" groups="ts_core.group_ts_manager"/>
+                                    <button name="action_verify" type="object" string="تأیید پروانه" icon="fa-check" invisible="verification_state not in ('pending', 'rejected')" groups="ts_core.group_ts_manager"/>
+                                    <button name="action_unverify" type="object" string="پروانه تأیید نشد" icon="fa-times" invisible="verification_state != 'pending'" groups="ts_core.group_ts_manager"/>
                                 </list>
                             </field>
                         </page>
@@ -92,7 +89,8 @@
                 <filter name="employment" string="استخدام" domain="[('purpose', '=', 'employment')]"/>
                 <filter name="clinical" string="مشاوره" domain="[('purpose', '=', 'clinical')]"/>
                 <separator/>
-                <filter name="live" string="پایلوت یا فعال" domain="[('state', 'in', ('pilot', 'active'))]"/>
+                <filter name="live" string="فعال" domain="[('state', '=', 'active')]"/>
+                <filter name="new7" string="پنل‌های تازه (۷ روز)" domain="[('create_date', '&gt;=', (context_today() - relativedelta(days=7)).strftime('%Y-%m-%d'))]"/>
                 <group>
                     <filter name="by_purpose" string="هدف" context="{'group_by': 'purpose'}"/>
                     <filter name="by_state" string="وضعیت" context="{'group_by': 'state'}"/>
@@ -109,10 +107,17 @@
             <p>برای هر سازمان مشتری و هر هدف (استخدام یا مشاوره) یک پنل جدا بسازید.</p>
         </field>
     </record>
+    <!-- After-the-fact view of new panels (replaces the approval queue, owner decision 2026-10-12). The xml id is kept so
+         the back-office list of ts_panel stays attached. -->
     <record id="ts_workspace_pending_action" model="ir.actions.act_window">
-        <field name="name">پنل‌های در انتظار تأیید</field>
+        <field name="name">پنل‌های تازه (۷ روز)</field>
         <field name="res_model">ts.workspace</field>
         <field name="view_mode">list,form</field>
-        <field name="domain">[('gated', '=', True), ('state', 'in', ('draft', 'pilot'))]</field>
+        <field name="domain">[]</field>
+        <field name="context">{'search_default_new7': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">در هفت روز گذشته پنل تازه‌ای ساخته نشده است</p>
+            <p>هر پنل از لحظهٔ ساخت فعال است. اگر پنلی را مناسب ندیدید، در فرم آن «توقف موقت پنل» را بزنید.</p>
+        </field>
     </record>
 </odoo>
