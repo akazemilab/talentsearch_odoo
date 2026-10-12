@@ -315,10 +315,8 @@ class TsOrg(http.Controller):
             attempt = a.action_accept(request.env.user, share=post.get('share') == '1')
         except UserError:
             raise request.not_found()
-        # onb1: an account made by mobile code has no name yet; the inviter already knows it (S-AUTH, no name step)
-        partner = request.env.user.partner_id.sudo()
-        if partner.ts_name_unknown and 2 <= len((a.invitee_name or '').strip()) <= 80:
-            partner.write({'name': a.invitee_name.strip()})
+        # onb1: the name the panel typed stays on this invitation (invitee_name) for the panel's eyes only; it is never
+        # copied into the account, whose own name is given by the person on «/my/account» or where others see it
         return request.redirect('/take/%s' % attempt.access_token)
 
     @http.route('/invite/<string:token>/decline', type='http', auth='user', website=True,

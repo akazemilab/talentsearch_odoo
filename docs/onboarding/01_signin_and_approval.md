@@ -24,14 +24,18 @@ the back office have no limit. Forms show one calm line with Persian digits («�
 members see «این پنل موقتاً متوقف شده است…» instead of the panel; no invitation, campaign, import or colleague
 invitation can be made; an open invitation shows «این دعوت فعلاً در دسترس نیست» and cannot start a new attempt;
 participants keep their own results; owners get an in-app notice (SMS only if they opted in). Audit:
-`workspace.suspend` / `workspace.resume`.
+`workspace.suspend` / `workspace.resume`. A suspended or closed panel sends nothing else: no automatic or manual
+reminder, no staff SMS (except the suspension notice), no HR e-mail, no invitation SMS, no result-ready SMS.
 
 **Migration** (`ts_core` 20.0.2.0.0, pre-migrate): every `pilot` panel becomes `active` with one audit row
 (`workspace.state`, `{"from": "pilot"}`), draft/suspended/closed panels are untouched (live: workspace 7 → active,
-workspace 2 stays closed); members `pending` without a licence number → `not_required`. Post-migrate marks panels with
-an audit `workspace.self_create` as self-service. Idempotent.
+workspace 2 stays closed); members `pending` without a licence number → `not_required`, a number with no state →
+`pending`. Post-migrate marks panels with an audit `workspace.self_create` as self-service and lists owners of
+counseling centers who already counsel for a licence review. Idempotent.
 
-**Licence badge.** Optional at join (clinician, clinic director, practising owner). The member edits his own number on
+**Licence badge.** Optional at join (clinician, clinic director). An owner who ticks «در این مرکز مشاوره می‌کنم» and a
+solo psychologist give a number (self-declared; it opens full reports at once, unverified) and the panel appears in the
+back-office list «مالک مشاور شد (بررسی پروانه)» with an audit row. The member edits his own number on
 his identity page (Persian digits normalised); any change resets the badge to «ثبت‌شده، هنوز تأیید نشده». The super
 admin's «تأیید پروانه» sets «پروانهٔ تأییدشده» (who, when); «تأیید نشد» only hides the badge. Reports print the number
 only when verified. The badge never gates work; the separate «verify» waiting page is gone. A5b stays: the owner of a
@@ -58,16 +62,26 @@ Panel terms v4 (`panel-terms-1405-07-v4`), consent text v5 (`TS-CONSENT-1405-07-
 - **No name step.** A new number gets an account straight after the code; `name` holds the formatted number for the
   back office and `ts_name_unknown` is set. The site never shows the number as a name (`ts_known_name()`); the name is
   asked where others see it: panel creation, joining a panel, sharing with a counselor («نام شما»), the account page.
-  Accepting a participant invitation takes the name the panel wrote.
+  Accepting a participant invitation never copies the panel-typed name into the account: the panel keeps seeing its
+  own `invitee_name` / participant record, reports for staff use that, and the account's name is set only by the person.
+  A member is never created for an account without a name.
 - **Session length.** Portal sign-in by code on website 4: ticked → 30-day cookie (`Max-Age=2592000`, renewed when
   Odoo re-issues it; the session file survives the 7-day clean-up up to 30 days); unticked → browser-session cookie.
+  The long cookie needs the flag AND a portal account AND talentsearch.ir (`cookie_mode`); every password sign-in and
+  every sign-out clears the flag; the session id is rotated at the code sign-in (Odoo's `finalize`, tested).
   E-mail sign-in, eot.ir and internal users keep Odoo's own cookie and lifetime.
-- **Accounts.** One number, one account: `/my/phone` refuses a number another account holds («… با پشتیبانی تماس
-  بگیرید تا دو حساب یکی شود.»). An e-mail account without a mobile is offered once on «/my» to link one. A number held
+- **Accounts.** One number, one account: `/my/phone` never reveals that another account holds a number — the send
+  answers exactly as for any number (cooldown and limits first), no SMS goes out, and every code is refused with the
+  neutral «این کد پذیرفته نشد…». An e-mail account without a mobile is offered once on «/my» to link one. A number held
   by an internal (staff) account is never signed in by code: «این شماره به حساب کارکنان وصل است؛ از ورود با ایمیل
   استفاده کنید.» An inactive account says so.
 - **Limits.** Unchanged per-number and per-IP hourly limits and the 60 s cooldown; 5 tries per code; a new code does not
-  reset the count; 10 wrong codes for one number lock it for 15 minutes (`ts.signup.lock`), even for the right code.
+  reset the count; 10 wrong codes for one number from one address lock it for that address for 15 minutes; 30 wrong
+  codes for one number within 24 hours from anywhere lock it everywhere for 1 hour (`ts.signup.lock`).
+- **Return paths.** One validator (`ts_core/safe_url.py`) for every `next` / `redirect` on talentsearch.ir; the page
+  script only navigates to a path that passes the same rules.
+- **E-mail sign-up.** `/web/signup` (GET and POST) makes no account on talentsearch.ir except for Odoo signup tokens
+  and `/join/…` e-mail invitations.
 
 ## Deviations and notes
 

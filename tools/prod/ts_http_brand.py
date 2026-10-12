@@ -214,8 +214,8 @@ check('participant report: the counselor\'s contact data never appears', 'ts.bra
 bad_img = [m for m in re.findall(r'src="data:image/([a-z+]+);base64,([A-Za-z0-9+/]{8})', body)
            if (m[0] == 'png' and not m[1].startswith('iVBOR')) or (m[0] == 'jpeg' and not m[1].startswith('/9j/'))]
 check('participant report: every header image is a data URI whose bytes match its type (no broken logo/photo)', not bad_img, str(bad_img))
-check('participant report: the counselor is labelled «مشاور شما», the licence «(تأییدشده)», no photo -> monogram',
-      'مشاور شما' in body and '(تأییدشده)' in body and 'tsbr-mono' in body)
+check('participant report: the counselor is labelled «مشاور شما», the licence with the «پروانهٔ تأییدشده» badge, no photo -> monogram',
+      'مشاور شما' in body and 'پروانهٔ تأییدشده' in body and 'tsbr-mono' in body)
 check('participant report: one PDF button (the browser-print button beside it is hidden by brand.scss)',
       body.count('tsbr-pdf') == 1)
 st, body = get(c1, W + '/clients/%s/r/%s' % (CL, AT))

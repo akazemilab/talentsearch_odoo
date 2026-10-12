@@ -93,6 +93,16 @@
                 if (phoneIn.select) { phoneIn.select(); }
             }
         }
+        // the server already validated the path (ts_core.safe_url); the page navigates only to a same-site path that
+        // passes the same rules again, never to anything that could become another host
+        function samePath(p) {
+            p = String(p || '');
+            if (p.charAt(0) !== '/' || /^\/[\/\\]/.test(p) || /^\/%(2f|5c|09)/i.test(p)) { return '/my'; }
+            for (var i = 0; i < p.length; i += 1) {
+                if (p.charCodeAt(i) < 0x21 || p.charAt(i) === '\\') { return '/my'; }
+            }
+            return p;
+        }
 
         function post(form, extra) {
             var fd = new FormData(form);
@@ -136,7 +146,7 @@
             busy = true;
             invalid(codeIn, false);
             post(codeForm, { code: c }).then(function (data) {
-                if (data.ok && data.redirect) { stopOtp(); window.location.assign(data.redirect); return; }
+                if (data.ok && data.redirect) { stopOtp(); window.location.assign(samePath(data.redirect)); return; }
                 busy = false;
                 say(data.msg, data.tone);
                 if (data.state === 'phone') { toState('phone'); return; }

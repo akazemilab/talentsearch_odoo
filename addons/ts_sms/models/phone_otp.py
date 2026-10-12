@@ -30,6 +30,8 @@ class TsPhoneOtp(models.Model):
     expires_at = fields.Datetime(required=True)
     attempts = fields.Integer()
     used = fields.Boolean()
+    # onb1 risk review: a number another account holds gets a row like any other but no SMS; every code is then wrong
+    blocked = fields.Boolean()
 
     @staticmethod
     def _hash(salt, code):
@@ -37,13 +39,13 @@ class TsPhoneOtp(models.Model):
 
     @api.model
     def request_code(self, user, phone_raw):
-        """Return (ok, reason). reason in: format, taken, cooldown, limit, disabled, send."""
+        """Return (ok, reason). reason in: format, cooldown, limit, disabled, send. A number that belongs to another
+        account is never revealed here: the answer is the same as a normal send, nothing is sent, and the code step
+        refuses every code with the neutral «wrong» text (one number, one account)."""
         company = self.env.company.sudo()
         phone = iran_mobile(phone_raw)
         if not phone:
             return False, 'format'
-        if self.env['res.users'].ts_phone_owner(phone, exclude=user):
-            return False, 'taken'       # onb1: one number, one account (no second account gets this number)
         if not (company.kv_enabled and company.ts_sms_otp):
             return False, 'disabled'
         now = fields.Datetime.now()
@@ -57,6 +59,10 @@ class TsPhoneOtp(models.Model):
             return False, 'limit'
         code = '%06d' % secrets.randbelow(10 ** 6)
         salt = secrets.token_hex(8)
+        if self.env['res.users'].ts_phone_owner(phone, exclude=user):
+            S.create({'user_id': user.id, 'phone': phone, 'salt': salt, 'code_hash': self._hash(salt, secrets.token_hex(16)),
+                      'expires_at': now + timedelta(minutes=TTL_MIN), 'blocked': True})
+            return True, None
         rec = S.create({'user_id': user.id, 'phone': phone, 'salt': salt, 'code_hash': self._hash(salt, code),
                         'expires_at': now + timedelta(minutes=TTL_MIN)})
         if not self._send_code(company, phone, code):
@@ -117,7 +123,7 @@ class TsPhoneOtp(models.Model):
             return False, 'attempts', None
         rec.attempts += 1
         good = hmac.compare_digest(rec.code_hash, self._hash(rec.salt, clean_code(code)))
-        if not good:
+        if not good or rec.blocked:
             return False, 'wrong', None
         rec.used = True
         return True, None, rec.phone

@@ -127,8 +127,8 @@
                                     <tbody>
                                         <tr t-foreach="workload" t-as="w">
                                             <th scope="row" data-label="عضو"><bdi t-out="w[0].user_id.name"/></th>
-                                            <td data-label="شرکت‌کنندگان" class="ts-num" t-out="fa(w[1])"/>
-                                            <td data-label="دعوت‌های باز" class="ts-num" t-out="fa(w[2])"/>
+                                            <td data-label="شرکت‌کنندگان" class="ts-num" t-out="fa(str(w[1] or 0))"/>
+                                            <td data-label="دعوت‌های باز" class="ts-num" t-out="fa(str(w[2] or 0))"/>
                                         </tr>
                                     </tbody>
                                 </table>

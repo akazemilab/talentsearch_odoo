@@ -526,7 +526,7 @@
                             <div class="ts-container">
                                 <div class="ts-plans">
                                     <div class="ts-plan ts-plan--free">
-                                        <div class="ts-plan__top"><h3>پنل مدرسه</h3></div>
+                                        <div class="ts-plan__top"><h2>پنل مدرسه</h2></div>
                                         <span class="ts-plan__price">رایگان</span>
                                         <span class="ts-plan__for">برای مدرسه‌ها و مراکز مشاوره</span>
                                         <ul>
@@ -538,7 +538,7 @@
                                         <div class="ts-plan__foot"><a href="/panel" class="ts-btn ts-btn--primary ts-btn--lg">ساخت پنل رایگان<t t-call="ts_website.icon" ico.f="arrow-left"/></a></div>
                                     </div>
                                     <div class="ts-plan ts-plan--pro">
-                                        <div class="ts-plan__top"><h3>همیار تفسیر</h3><span class="ts-soon">به‌زودی</span></div>
+                                        <div class="ts-plan__top"><h2>همیار تفسیر</h2><span class="ts-soon">به‌زودی</span></div>
                                         <span class="ts-plan__price">حرفه‌ای</span>
                                         <span class="ts-plan__for">برای مشاورانی که نتیجه را تفسیر می‌کنند</span>
                                         <ul>
@@ -628,7 +628,7 @@
                                         </div>
                                     </form>
                                     <div class="ts-aside">
-                                        <h3>راه‌های دیگر</h3>
+                                        <h2>راه‌های دیگر</h2>
                                         <div class="ts-aside__row"><span>ایمیل</span><a href="mailto:info@eot.ir"><bdi dir="ltr">info@eot.ir</bdi></a></div>
                                         <div class="ts-aside__row"><span>تلفن</span><a href="tel:+982188174100">۰۲۱-۸۸۱۷۴۱۰۰</a></div>
                                         <div class="ts-aside__note"><t t-call="ts_website.icon" ico.f="first-aid"/>استعدادیاب خدمت اورژانسی نیست. در شرایط اضطراری با ۱۱۵ تماس بگیرید.</div>

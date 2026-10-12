@@ -19,7 +19,8 @@ MESSAGES = {
     'send': ('warn', 'ارسال پیامک انجام نشد. کمی بعد دوباره تلاش کنید.'),
     'disabled': ('warn', 'تأیید شمارهٔ موبایل هنوز فعال نشده است.'),
     'verified': ('ok', 'شمارهٔ موبایل شما تأیید شد.'),
-    'wrong': ('warn', 'کد درست نیست.'),
+    # neutral on purpose: also the answer for a number another account holds (no SMS goes there, onb1 risk review)
+    'wrong': ('warn', 'این کد پذیرفته نشد. اگر پیامکی به این شماره نرسیده است، شماره را بررسی کنید یا با پشتیبانی تماس بگیرید.'),
     'expired': ('warn', 'مهلت کد تمام شده است؛ کد تازه بخواهید.'),
     'attempts': ('warn', 'تعداد تلاش‌ها بیش از حد بود؛ کد تازه بخواهید.'),
     'none': ('warn', 'ابتدا کد بخواهید.'),

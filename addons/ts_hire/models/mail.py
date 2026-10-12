@@ -64,6 +64,9 @@ class TsAssignmentMail(models.Model):
         tpl = self.env.ref(xmlid, raise_if_not_found=False)
         if not tpl or not self._ts_email_enabled():
             return False, 'ایمیل فعال نیست'
+        if self.workspace_id and self.workspace_id.state != 'active':
+            # onb1 risk review: a suspended or closed panel emails nobody (invitation, reminder, «finished» notice)
+            return False, 'پنل فعال نیست'
         to = email_to or (self.invitee_email or '').strip()
         if not to or '@' not in to:
             return False, 'نشانی ایمیل وارد نشده است'

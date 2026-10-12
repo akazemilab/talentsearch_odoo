@@ -98,10 +98,11 @@
                                     <t t-call="ts_website.icon" ico.f="user"/>
                                     <span>حساب</span>
                                 </a>
-                                <a href="/web/session/logout?redirect=/" rel="nofollow" title="خروج">
-                                    <t t-call="ts_website.icon" ico.f="sign-out"/>
-                                    <span>خروج</span>
-                                </a>
+                                <!-- Odoo 20 signs out by POST only (a GET link answered 405) -->
+                                <form action="/web/session/logout?redirect=/" method="post" class="ts-appnav__out">
+                                    <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                                    <button type="submit" title="خروج"><t t-call="ts_website.icon" ico.f="sign-out"/><span>خروج</span></button>
+                                </form>
                             </nav>
                             <button t-if="ts_mode != 'marketing'" type="button" t-attf-class="ts-iconbtn ts-theme #{'' if ts_mode == 'app' else 'ts-theme--end'}" aria-label="تغییر حالت روشن و تیره" title="حالت روشن یا تیره">
                                 <span class="ts-theme__moon"><t t-call="ts_website.icon" ico.f="moon"/></span>

@@ -254,17 +254,24 @@ check('J03 a short code -> «کد ۶ رقمی است.» inline, still on the cod
 wrong = '000000' if code != '000000' else '111111'
 st, h, j = ajax(c1, '/signup/verify', {'csrf_token': tok, 'code': wrong, 'next': '/invite/' + TOK_INV})
 check('J04 a wrong code -> «این کد درست نیست. دوباره امتحان کنید.»', not j.get('ok') and j.get('msg') == 'این کد درست نیست. دوباره امتحان کنید.', str(j)[:160])
+sid_before = [k.value for k in c1.jar if k.name == 'session_id']
 st, h, j = ajax(c1, '/signup/verify', {'csrf_token': tok, 'code': fa(code[:3]) + ' ' + fa(code[3:]), 'next': '/invite/' + TOK_INV})
 ck = session_cookie(h)
 check('J05 the right code in Persian digits signs in and returns to next (no name step)',
       j.get('ok') and j.get('redirect') == '/invite/' + TOK_INV, str(j)[:160])
 check('J06 «this is my personal device» -> the session cookie lasts 30 days (Max-Age=2592000)',
       len(ck) == 1 and 'Max-Age=2592000' in ck[0] and 'HttpOnly' in ck[0], str(ck)[:200])
+check('J06b the session id changes at the mobile sign-in (no fixation)',
+      bool(sid_before) and len(ck) == 1 and ck[0].split(';')[0] != 'session_id=' + sid_before[0], '%s' % bool(sid_before))
 st, _, page = c1.req('/invite/' + TOK_INV)
 st, loc, _ = c1.req('/invite/%s/accept' % TOK_INV, {'csrf_token': c1.csrf(page), 'share': '1'})
-info = shell("u = env['res.users'].search([('login', '=', '%s')]); print('N', u.partner_id.ts_name_unknown, u.name == %r)" % (PH['new'], INVITEE))
-check('J07 a new mobile account accepting an invitation takes the name the panel wrote (no name step)',
-      st in (302, 303) and '/take/' in loc and 'N False True' in info, '%s %s' % (loc, info.strip()[-30:]))
+info = shell("u = env['res.users'].search([('login', '=', '%s')]); a = env['ts.assignment'].search([('token', '=', '%s')]); "
+             "print('N', u.partner_id.ts_name_unknown, u.name == %r, a.client_id.name == %r)" % (PH['new'], TOK_INV, INVITEE, INVITEE))
+check('J07 accepting an invitation keeps the name the panel wrote on the invitation only: the panel sees it, the account '
+      'stays without a name until the person gives one',
+      st in (302, 303) and '/take/' in loc and 'N True False True' in info, '%s %s' % (loc, info.strip()[-30:]))
+st, body = get(c1, '/my/account')
+check('J07b the person\'s own pages never show the formatted mobile as a name', st == 200 and '0912 777 8801' not in body, str(st))
 
 c2 = Client(TS)
 tok = start(c2)
@@ -352,7 +359,15 @@ st, body = get(cm, '/my')
 check('M02 ...and not again', st == 200 and 'id="ts-home-phone"' not in body, str(st))
 st, _, page = cm.req('/my/phone')
 st, loc, _ = cm.req('/my/phone/send', {'csrf_token': cm.csrf(page), 'phone': fa(PH['new'])})
-check('M03 a number another account holds is refused before any SMS', 'msg=taken' in loc and last_code(PH['new'])[0] == code, loc)
+check('M03 a number another account holds: the same answer as a normal send (nothing to enumerate), and no SMS goes there',
+      'msg=sent' in loc and 'pending=1' in loc and last_code(PH['new'])[0] == code, loc)
+st, _, page = cm.req('/my/phone?pending=1')
+st, loc, _ = cm.req('/my/phone/verify', {'csrf_token': cm.csrf(page), 'code': '123456'})
+st, body = get(cm, path_of(loc))
+check('M03b ...and any code is refused with the neutral text', 'msg=wrong' in loc and 'این کد پذیرفته نشد' in body, loc)
+shell("env.cr.execute(\"update ts_phone_otp set create_date = create_date - interval '2 hours' where user_id = "
+      "(select id from res_users where login = '%s')\"); env.cr.commit()" % L['mail'])
+st, _, page = cm.req('/my/phone')
 st, loc, _ = cm.req('/my/phone/send', {'csrf_token': cm.csrf(page), 'phone': fa(PH['mail'])})
 code_m, body_m = last_code(PH['mail'])
 check('M04 the linking code is sent (its SMS ends with the WebOTP line too)', 'msg=sent' in loc and bool(code_m)
@@ -400,11 +415,39 @@ check('L02 a changed number drops the badge (registered, not yet checked) withou
       st == 200 and 'ts-pill--ok">پروانهٔ تأییدشده' not in body and 'ثبت‌شده، هنوز بررسی نشده' in body, str(st))
 shell("m = env['ts.workspace.member'].browse(%s); m.write({'license_number': 'NZ-77'}); m.action_verify(); env.cr.commit()" % MCL)
 
-# ================================================================ 7. SMS switched off: the e-mail sign-in is the way in
+# ================================================================ 7. return paths, e-mail sign-up, sign-out (risk review)
+rp = Client(TS)
+EVIL = ['/\t/evil.example', '/%09/evil.example', '//evil.example', '/\\evil.example', '/%2F/evil.example', '/%5C/evil.example',
+        '/\n/evil.example', 'https://evil.example']
+pages = [rp.req('/signup?next=' + urllib.parse.quote(e, safe=''))[2] for e in EVIL] + \
+        [rp.req('/web/login?redirect=' + urllib.parse.quote(e, safe=''))[2] for e in EVIL]
+check('R01 a return path that could lead to another site (tab, newline, encoded, backslash, //) becomes /my',
+      all('name="next" value="/my"' in p and 'evil.example' not in p for p in pages), sum(1 for p in pages if 'evil.example' in p))
+sp = Client(TS)
+_, _, p = sp.req('/signup')
+st, loc, _ = sp.req('/web/signup', {'csrf_token': sp.csrf(p), 'login': 'onb1.signup@example.invalid', 'name': 'ثبت‌نام ایمیلی',
+                                    'password': 'Onb1-pass-91!', 'confirm_password': 'Onb1-pass-91!'})
+n = shell("print('S', env['res.users'].with_context(active_test=False).search_count([('login', '=', 'onb1.signup@example.invalid')]))")
+check('R02 POST /web/signup on talentsearch.ir makes no e-mail account (only tokens and /join/ invitations may)',
+      st in (302, 303) and path_of(loc).startswith('/signup') and 'S 0' in n, '%s %s %s' % (st, loc, n.strip()[-5:]))
+_, _, p = c1.req('/my/account')
+st, h, _ = raw(c1, '/web/session/logout', {'csrf_token': c1.csrf(p), 'redirect': '/'})        # POST in Odoo 20
+ck = session_cookie(h)
+check('R03 sign-out (a POST form in the header, as Odoo 20 needs) ends the 30-day choice: the next cookie is Odoo\'s own',
+      'class="ts-appnav__out"' in p and st in (302, 303) and c1.req('/my')[0] in (302, 303)
+      and all('Max-Age=2592000' not in c for c in ck), '%s %s' % (st, str(ck)[:160]))
+_, _, p = c1.req('/web/login?email=1')
+st, h, _ = raw(c1, '/web/login', {'csrf_token': c1.csrf(p), 'login': L['mail'], 'password': pw[L['mail']], 'redirect': '/my'})
+ck = session_cookie(h)
+check('R04 a password sign-in in the same browser never inherits the 30-day cookie',
+      st in (302, 303) and len(ck) == 1 and 'Max-Age=2592000' not in ck[0], str(ck)[:160])
+
+# ================================================================ 8. SMS switched off: the e-mail sign-in is the way in
 shell("env.company.sudo().ts_sms_otp = False; env.cr.commit()")
 st, _, page = Client(TS).req('/web/login')
-check('X01 with mobile sign-in off, /web/login on talentsearch.ir is the e-mail sign-in (never a page without a form)',
-      st == 200 and 'name="password"' in page and 'id="tsa_phone"' not in page and Client(TS).req('/web/signup')[0] != 302, str(st))
+check('X01 with mobile sign-in off, /web/login on talentsearch.ir is the e-mail sign-in (never a page without a form); '
+      'e-mail sign-up stays closed',
+      st == 200 and 'name="password"' in page and 'id="tsa_phone"' not in page and Client(TS).req('/web/signup')[0] in (302, 303), str(st))
 shell("env.company.sudo().ts_sms_otp = True; env.cr.commit()")
 srv.shutdown()
 summary()

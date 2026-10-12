@@ -88,7 +88,7 @@ check('solo needs a valid work type', raises(lambda: W.ts_panel_create(u4, 'TSP 
 ws4 = W.ts_panel_create(u4, 'TSP مستقل', 'solo', solo_as='counselor', terms=True)
 check('solo counselor = one-person education panel', ws4.purpose == 'education' and ws4.state == 'active' and ws4.member_count == 1)
 W.ts_panel_create(u4, 'TSP مستقل ۲', 'solo', solo_as='hr', terms=True)
-W.ts_panel_create(u4, 'TSP مستقل ۳', 'solo', solo_as='psychologist', terms=True, escalation_ok=True)
+W.ts_panel_create(u4, 'TSP مستقل ۳', 'solo', solo_as='psychologist', terms=True, escalation_ok=True, license_number='PSY-4')
 check('more than 3 panels a day by one person refused', raises(lambda: W.ts_panel_create(u4, 'TSP چهارم', 'school', terms=True)))
 pub = env['res.users'].browse(env.ref('base.public_user').id)
 check('public visitor cannot create a panel', raises(lambda: W.ts_panel_create(pub, 'TSP عمومی', 'school', terms=True)))

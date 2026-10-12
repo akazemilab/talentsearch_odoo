@@ -1,7 +1,7 @@
 {
     'name': 'Talent Search - SMS',
     'summary': 'Invitation SMS, result-ready notice and mobile-number OTP verification (website 2) on top of ts_kavenegar',
-    'version': '20.0.2.0.0',
+    'version': '20.0.2.0.1',
     'category': 'Services/Talent Search',
     'author': 'EOT',
     'license': 'LGPL-3',

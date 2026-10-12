@@ -182,7 +182,8 @@
                                     <li><a href="/my/security">رمز عبور و امنیت</a><span class="ts-hint">تغییر رمز عبور</span></li>
                                     <li><a href="/help">راهنما و پرسش‌های رایج</a><span class="ts-hint">روند کار و حقوق کاربران</span></li>
                                     <li><a href="/contact?topic=support">تماس با پشتیبانی</a><span class="ts-hint">پاسخ در ساعت کاری؛ در شرایط اضطراری با اورژانس <bdi dir="ltr">۱۱۵</bdi> تماس بگیرید</span></li>
-                                    <li><a href="/web/session/logout?redirect=/" rel="nofollow">خروج از حساب</a></li>
+                                    <li><form action="/web/session/logout?redirect=/" method="post"><input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                                        <button type="submit" class="ts-btn ts-btn--quiet ts-btn--sm">خروج از حساب</button></form></li>
                                 </ul>
                             </nav>
                         </section>

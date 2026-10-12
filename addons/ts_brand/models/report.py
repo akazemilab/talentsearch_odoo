@@ -50,12 +50,15 @@ def _talent(attempt, org_view):
 
 
 def _who(at, mode):
-    """The person's name as the reader knows it: the panel's participant record for staff, the account name for the person."""
+    """The person's name as the reader knows it: for staff the panel's own record of the participant (client, else the
+    name the panel typed on the invitation); for the person the account's own name. Never the formatted mobile that a
+    mobile-only account carries until its owner gives a name (onb1)."""
     at = at.sudo()
     client = at.client_id if 'client_id' in at._fields else False
-    if mode == 'panel' and client:
-        return client.name or ''
-    return at.person_id.name if 'person_id' in at._fields and at.person_id else (at.partner_id.name or '')
+    if mode == 'panel':
+        a = at.assignment_id if 'assignment_id' in at._fields else False
+        return (client.name if client else '') or (a.invitee_name if a else '') or ''
+    return at.person_id.name if 'person_id' in at._fields and at.person_id else (at.partner_id.ts_known_name() if at.partner_id else '')
 
 
 def _section(at, mode, level):
@@ -111,7 +114,7 @@ class ReportBatteryPdf(models.AbstractModel):
             'sections': [_section(t, mode, level) for t in rows], 'single': False, 'brand': a.ts_brand_header(),
             'fa': fa_digits, 'kind': 'گزارش مجموعهٔ سنجه‌ها' if mode == 'self' else KIND.get(level, ''),
             'title': a.battery_id.name, 'who': (a.client_id.name if mode == 'panel' and a.client_id else '')
-            or a.user_id.partner_id.name or a.invitee_name or '',
+            or (a.invitee_name if mode == 'panel' else a.user_id.partner_id.ts_known_name()) or a.invitee_name or '',
             'when': rows[:1].jalali(last, False) if rows else '', 'ref': a.name, 'done': done, 'total': total,
             'limitations': 'هر سنجه تصویری از پاسخ‌ها در همان روز است و به‌تنهایی مبنای تصمیم نیست.',
             'font_faces': _font_faces(),

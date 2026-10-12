@@ -292,7 +292,7 @@ class TsWorkspaceBrand(models.Model):
                                              'logo': False, 'footer': FOOTER_LINE})
         sample = self.ts_brand_sample_member()
         h['counselor'] = sample.ts_brand_block() if sample else {
-            'name': 'نام مشاور', 'title': 'عنوان حرفه‌ای', 'license': '…', 'photo': False, 'initial': '', 'bio': '',
+            'name': 'نام مشاور', 'title': 'عنوان حرفه‌ای', 'license': False, 'photo': False, 'initial': '', 'bio': '',
             'signature': False, 'sample': True}
         h['preview'] = True
         return h

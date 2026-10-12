@@ -33,6 +33,8 @@ class TsAssignment(models.Model):
         company = (self.company_id or self.env.company).sudo()
         if not (self.invitee_phone and self.sms_consent and company.kv_enabled and company.ts_sms_invite):
             return False
+        if self.workspace_id and self.workspace_id.state != 'active':
+            return False          # onb1 risk review: a suspended or closed panel sends no invitation SMS
         phone = iran_mobile(self.invitee_phone)
         if not phone:
             self.sms_error = 'شمارهٔ موبایل معتبر نیست'

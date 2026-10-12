@@ -83,7 +83,7 @@ class TsPanel(http.Controller):
                 sitemap=False)
     def create(self, **post):
         _ts_site_or_404()
-        vals = {k: (post.get(k) or '')[:120] for k in ('name', 'kind', 'solo_as', 'own_name')}
+        vals = {k: (post.get(k) or '')[:120] for k in ('name', 'kind', 'solo_as', 'own_name', 'license_number')}
         try:
             with request.env.cr.savepoint():
                 _take_own_name(post)

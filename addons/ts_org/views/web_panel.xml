@@ -130,9 +130,9 @@
                                         </select>
                                     </div>
                                     <div class="ts-reveal" data-ts-show="kind=solo;solo_as=psychologist">
-                                        <label for="ts_p_lic">شمارهٔ پروانه یا نظام روان‌شناسی و مشاوره (اختیاری)</label>
-                                        <input id="ts_p_lic" name="license_number" type="text" maxlength="60" dir="ltr" aria-describedby="ts_p_lic_h"/>
-                                        <p id="ts_p_lic_h" class="ts-hint">می‌توانید بعداً هم در «هویت شما در گزارش‌ها» بنویسید. پس از بررسی تیم استعدادیاب، نشان «پروانهٔ تأییدشده» کنار نامتان می‌آید؛ کار با پنل منتظر آن نمی‌ماند.</p>
+                                        <label for="ts_p_lic">شمارهٔ پروانه یا نظام روان‌شناسی و مشاوره</label>
+                                        <input id="ts_p_lic" name="license_number" type="text" maxlength="60" dir="ltr" aria-describedby="ts_p_lic_h" t-att-value="vals.get('license_number') or None"/>
+                                        <p id="ts_p_lic_h" class="ts-hint">روان‌شناس مستقل گزارش کامل مراجعانش را می‌بیند، پس این شماره لازم است. کار با پنل منتظر بررسی آن نمی‌ماند؛ پس از بررسی تیم استعدادیاب، نشان «پروانهٔ تأییدشده» کنار نامتان می‌آید.</p>
                                     </div>
                                     <div class="ts-reveal" data-ts-show="kind=clinic|solo">
                                         <label class="ts-check"><input type="checkbox" name="escalation_ok" value="1"/><span>می‌پذیرم که پیگیری فوری نشانه‌های خطر با من است (برای پنل مرکز مشاوره).</span></label>
@@ -228,7 +228,9 @@
                                         </p>
                                     </t>
                                     <t t-elif="not fits">
-                                        <p class="ts-notice ts-notice--warn" role="alert">با حساب «<bdi t-out="user_name"/>» وارد شده‌اید. این دعوت برای شمارهٔ موبایل یا ایمیل دیگری (<bdi dir="ltr" t-out="bound_to"/>) صادر شده است. با حسابی که دعوت برایش صادر شده وارد شوید. <a t-attf-href="/web/session/logout?redirect=/join/#{inv.token}">خروج از این حساب</a></p>
+                                        <p class="ts-notice ts-notice--warn" role="alert">با حساب «<bdi t-out="user_name"/>» وارد شده‌اید. این دعوت برای شمارهٔ موبایل یا ایمیل دیگری (<bdi dir="ltr" t-out="bound_to"/>) صادر شده است. با حسابی که دعوت برایش صادر شده وارد شوید.</p>
+                                        <form t-attf-action="/web/session/logout?redirect=/join/#{inv.token}" method="post"><input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                                            <button type="submit" class="ts-btn ts-btn--outline">خروج از این حساب</button></form>
                                     </t>
                                     <form t-else="" t-attf-action="/join/#{inv.token}/accept" method="post" class="ts-form">
                                         <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>

@@ -165,6 +165,9 @@ class TsWorkspaceMember(models.Model):
     owner_practices = fields.Boolean(
         'مالک خودش هم کارشناس است', help='مالکی که خودش شرکت‌کنندگان را می‌بیند (مشاور یا روان‌شناس مستقل). '
         'مالک مرکز مشاوره که خودش مشاوره نمی‌دهد، برای حفظ حریم مراجعان فقط وضعیت دعوت‌ها را می‌بیند.')
+    # onb1 risk review: when an owner of a counseling center started to counsel (and so sees full reports); the back
+    # office reviews these after the fact in «مالک مشاور شد (بررسی پروانه)»
+    practising_since = fields.Datetime('مشاوره از', readonly=True)
     deactivated_on = fields.Datetime('تاریخ غیرفعال‌سازی', readonly=True)
     deactivated_by_id = fields.Many2one('res.users', 'غیرفعال‌کننده', readonly=True)
 
@@ -218,6 +221,11 @@ class TsWorkspaceMember(models.Model):
     @api.model_create_multi
     def create(self, vals_list):
         vals_list = [self._ts_licence_vals(v) for v in vals_list]
+        # a member is seen by colleagues by name: an account made by mobile code gives its name first (onb1)
+        Users = self.env['res.users'].sudo()
+        for v in vals_list:
+            if v.get('user_id') and Users.browse(v['user_id']).partner_id.ts_name_unknown:
+                raise UserError('پیش از پیوستن به پنل، نام و نام خانوادگی خود را بنویسید؛ همکاران شما را با این نام می‌بینند.')
         records = super().create(vals_list)
         for m in records:
             self.env['ts.audit.event'].log('member.add', m, workspace=m.workspace_id, user=m.user_id.id, role=m.role)

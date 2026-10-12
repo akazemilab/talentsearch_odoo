@@ -83,17 +83,32 @@ class TsWorkspaceMember(models.Model):
         self.sudo().write({'active': True})
 
     def ts_set_practising(self, by, flag, license_number=None):
-        """MEM-7: an owner who also sees clients. The licence number is optional (onb1: a badge, checked by the EOT
-        team; a changed number starts unverified)."""
+        """MEM-7: an owner who also sees clients. In a counseling center this opens the full reports, so (onb1 risk
+        review) it needs a licence number, self-declared: the badge stays «ثبت‌شده، هنوز تأیید نشده» until the super
+        admin checks it, and the panel shows up in the back-office list «مالک مشاور شد (بررسی پروانه)»."""
         self.ensure_one()
         if by != self or self.role != 'owner':
             raise UserError('فقط مالک می‌تواند این گزینه را برای خودش تغییر دهد.')
+        clinical = self.workspace_id.purpose == 'clinical'
         vals = {'owner_practices': bool(flag)}
-        if license_number is not None and self.workspace_id.purpose == 'clinical':
+        if license_number is not None and clinical:
             vals['license_number'] = (license_number or '').strip()[:60] or False
+        lic = vals.get('license_number', self.license_number) if clinical else False
+        if flag and clinical and not lic:
+            raise UserError('برای مشاوره در این مرکز، شمارهٔ پروانه یا نظام روان‌شناسی و مشاوره‌تان را بنویسید. '
+                            'کار شما منتظر بررسی آن نمی‌ماند؛ نشان «پروانهٔ تأییدشده» پس از بررسی تیم استعدادیاب می‌آید.')
+        started = bool(flag) and not self.owner_practices
+        if started and clinical:
+            vals['practising_since'] = fields.Datetime.now()
+        elif not flag:
+            vals['practising_since'] = False
         self.sudo().write(vals)
         self.env['ts.audit.event'].sudo().log('member.practice', self, workspace=self.workspace_id,
-                                              practising=bool(flag))
+                                              practising=bool(flag), licence_self_declared=bool(lic))
+        if started and clinical:
+            self.workspace_id.sudo().message_post(
+                body='مالک این مرکز اعلام کرد خودش هم مشاوره می‌کند و گزارش کامل مراجعان را می‌بیند (شمارهٔ پروانه هنوز بررسی نشده است).',
+                message_type='comment', subtype_xmlid='mail.mt_note')
 
     # ------------------------------------------------------------------ responsibility lives on the client
     @api.model

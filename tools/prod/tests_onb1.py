@@ -88,7 +88,7 @@ check('A04 live workspace 7 (clinical, waited for approval) is active; workspace
 owner_u = puser()
 kinds = {}
 for kind, extra in (('school', {}), ('org', {}), ('clinic', {'escalation_ok': True}),
-                    ('solo', {'solo_as': 'psychologist', 'escalation_ok': True}), ('solo', {'solo_as': 'hr'})):
+                    ('solo', {'solo_as': 'psychologist', 'escalation_ok': True, 'license_number': 'PSY-77'}), ('solo', {'solo_as': 'hr'})):
     u = puser()
     ws = W.ts_panel_create(u, 'پنل onb1 %s %s' % (kind, extra.get('solo_as', '')), kind, terms=True, **extra)
     kinds[(kind, extra.get('solo_as'))] = (ws, M.search([('workspace_id', '=', ws.id)]))
@@ -189,6 +189,35 @@ ws_s.action_resume()
 check('C07 resume returns the panel to active and the invitation can be accepted again',
       ws_s.state == 'active' and not ws_s.suspended_on and inv_s.action_accept(part, share=True))
 
+# a suspended panel sends nothing (risk review): automatic or manual reminders, staff SMS, HR e-mail, invitation SMS
+from odoo.addons.ts_panel.models import notify as nt
+inv_r = A.create({'workspace_id': ws_s.id, 'instrument_id': edu_inst.id, 'invitee_name': 'یادآوری onb1'})
+env.cr.execute("UPDATE ts_assignment SET create_date = now() - interval '10 days' WHERE id = %s", [inv_r.id])
+inv_r.invalidate_recordset(['create_date'])
+today = env['ts.notification']._tehran_now().date()
+due_active = inv_r._ts_reminder_due(today)
+ws_s.action_suspend()
+inv_r.sudo().write({'invitee_phone': '09127779941', 'sms_consent': True})
+check('C08 an open invitation of a suspended panel is never due for the automatic reminder', due_active and not inv_r._ts_reminder_due(today))
+check('C09 no reminder by the cron path or by hand', inv_r._ts_do_reminder() == set() and inv_r.reminder_count == 0
+      and inv_r.ts_manual_reminder(own_s)[0] is False)
+env.company.sudo().write({'kv_enabled': True, 'ts_sms_staff': True, 'ts_sms_invite': True})
+own_s.user_id.partner_id.write({'ts_phone': '09127779942', 'ts_phone_verified_at': fields.Datetime.now()})
+calls, NN = [], env['ts.notification'].sudo()
+with patch.object(nt.TsNotification, '_send_sms', lambda self, *a, **k: calls.append(a) or True), \
+        patch.object(nt.TsNotification, '_quiet_now', lambda self, now=None: False):
+    for t in ('result_ready_staff', 'panel_suspended'):
+        NN.create({'user_id': own_s.user_id.id, 'workspace_id': ws_s.id, 'type': t, 'title': t})._sms_leg()
+check('C10 staff SMS of a suspended panel: none, except the notice of the suspension itself', len(calls) == 1, len(calls))
+with patch.object(type(inv_r), '_ts_email_enabled', lambda self: True):
+    hire = inv_r._ts_send_template('ts_hire.mail_reminder', email_to='onb1@example.invalid')
+check('C11 no HR e-mail from a suspended panel', hire == (False, 'پنل فعال نیست'), hire)
+sent = []
+with patch.object(type(env['sms.sms']), 'send', lambda self, *a, **k: sent.append(1)):
+    sms_ok = inv_r._ts_send_invite_sms()
+check('C12 no invitation SMS from a suspended panel', sms_ok is False and not sent)
+ws_s.action_resume()
+
 # ================================================================ D. licence badge
 wcl = bo_panel('clinical', 'مرکز onb1 پروانه')
 cl = member(wcl, 'clinician')
@@ -227,8 +256,21 @@ check('D11 joining as a clinician needs no licence number', mj.role == 'clinicia
 own_np = member(wcl, 'owner')
 check('D12 A5b kept: a counseling-center owner who does not counsel never gets the full report',
       not own_np.has_perm('results:clinical') and own_np.has_perm('invites:create'))
-own_np.ts_set_practising(own_np, True)
-check('D13 an owner who counsels gets it at once, without a licence check', own_np.has_perm('results:clinical'))
+check('D13 an owner who says «I counsel here» must give a licence number (self-declared, risk review)',
+      raises(lambda: own_np.ts_set_practising(own_np, True), UserError, 'شمارهٔ پروانه') and not own_np.owner_practices)
+own_np.ts_set_practising(own_np, True, 'NZ-555')
+listed = M.search([('role', '=', 'owner'), ('owner_practices', '=', True), ('workspace_id.purpose', '=', 'clinical')])
+check('D14 with the number: full reports at once, badge unverified, audit row, listed «مالک مشاور شد (بررسی پروانه)»',
+      own_np.has_perm('results:clinical') and own_np.verification_state == 'pending' and own_np.practising_since
+      and AUD.search_count([('event_type', '=', 'member.practice'), ('res_id', '=', own_np.id)]) >= 1 and own_np in listed
+      and env.ref('ts_org.ts_member_practising_action').name == 'مالک مشاور شد (بررسی پروانه)')
+check('D15 a solo psychologist panel needs the number too',
+      raises(lambda: W.ts_panel_create(puser(), 'پنل onb1 روان‌شناس', 'solo', solo_as='psychologist', terms=True,
+                                       escalation_ok=True), UserError, 'شمارهٔ پروانه'))
+nn = puser()
+nn.partner_id.write({'ts_name_unknown': True})
+check('D16 an account without a name cannot become a member (colleagues see members by name)',
+      raises(lambda: M.create({'workspace_id': wcl.id, 'user_id': nn.id, 'role': 'clinician'}), UserError, 'نام'))
 
 # ================================================================ E. S-AUTH (models)
 from odoo.addons.ts_sms.models import signup_otp as so
@@ -247,24 +289,45 @@ def code_row(phone, code='123456'):
     return OTP.create({'phone': phone, 'salt': 's', 'code_hash': so._h('s', code), 'expires_at': fields.Datetime.now() + timedelta(minutes=5)})
 
 
+IP_A, IP_B = '203.0.113.7', '198.51.100.9'
+Lock = env['ts.signup.lock'].sudo()
+lock_row = lambda phone, ip: Lock.search([('phone', '=', phone), ('ip_hash', '=', '*' if ip == '*' else Lock._key(ip))])
 r1 = code_row(PH)
-check('E03 a code shorter than six digits is «short» and costs no attempt', OTP.verify_code(PH, '12345') == (False, 'short') and r1.attempts == 0)
+check('E03 a code shorter than six digits is «short» and costs no attempt', OTP.verify_code(PH, '12345', IP_A) == (False, 'short') and r1.attempts == 0)
 for _ in range(5):
-    OTP.verify_code(PH, '000000')
-lock = env['ts.signup.lock'].sudo().search([('phone', '=', PH)])
-check('E04 wrong codes are counted per number', lock.wrong == 5 and r1.attempts == 5)
-check('E05 the sixth try on the same code is refused (5 per code, as before)', OTP.verify_code(PH, '123456') == (False, 'attempts'))
+    OTP.verify_code(PH, '000000', IP_A)
+check('E04 wrong codes are counted per number and address, and per number for the day',
+      lock_row(PH, IP_A).wrong == 5 and lock_row(PH, '*').wrong == 5 and r1.attempts == 5)
+check('E05 the sixth try on the same code is refused (5 per code, as before)', OTP.verify_code(PH, '123456', IP_A) == (False, 'attempts'))
 r2 = code_row(PH)
-check('E06 a new code does not reset the wrong-code count', lock.wrong == 5)
-outs = [OTP.verify_code(PH, '000000') for _ in range(5)]
-check('E07 the 10th wrong code locks the number for 15 minutes', outs[-1] == (False, 'locked') and lock.locked_until
-      and 14 * 60 < (lock.locked_until - fields.Datetime.now()).total_seconds() <= 15 * 60, outs)
+check('E06 a new code does not reset the wrong-code count', lock_row(PH, IP_A).wrong == 5)
+outs = [OTP.verify_code(PH, '000000', IP_A) for _ in range(5)]
+la = lock_row(PH, IP_A)
+check('E07 the 10th wrong code from one address locks the number there for 15 minutes', outs[-1] == (False, 'locked') and la.locked_until
+      and 14 * 60 < (la.locked_until - fields.Datetime.now()).total_seconds() <= 15 * 60, outs)
 r3 = code_row(PH, '654321')
-check('E08 while locked even the right code is refused, and no new code is sent',
-      OTP.verify_code(PH, '654321') == (False, 'locked') and OTP.request_code(PH, '127.0.0.1') == (False, 'locked', PH))
-lock.locked_until = fields.Datetime.now() - timedelta(seconds=1)
-check('E09 after the lock the right code works and the count is cleared', OTP.verify_code(PH, '۶۵۴ ۳۲۱') == (True, None) and lock.wrong == 0)
-code_row('09127779902')
+check('E08 from that address even the right code is refused, and no new code is sent',
+      OTP.verify_code(PH, '654321', IP_A) == (False, 'locked') and OTP.request_code(PH, IP_A) == (False, 'locked', PH))
+check('E08b a stranger cannot lock the owner out: the right code still works from another address',
+      OTP.verify_code(PH, '654321', IP_B) == (True, None))
+la.locked_until = fields.Datetime.now() - timedelta(seconds=1)
+code_row(PH, '765432')
+check('E09 after the lock the right code works there too and that count is cleared', OTP.verify_code(PH, '۷۶۵ ۴۳۲', IP_A) == (True, None) and la.wrong == 0)
+PG, outs = '09127779905', []
+for i in range(30):
+    if i % 5 == 0:
+        code_row(PG, '999999')
+    outs.append(OTP.verify_code(PG, '000000', '10.0.0.%d' % (i // 9))[1])
+g = lock_row(PG, '*')
+code_row(PG, '999999')
+check('E09c 30 wrong codes within a day, from any addresses, lock the number everywhere for 1 hour',
+      outs[-1] == 'locked' and 'locked' not in outs[:-1] and g.locked_until
+      and 59 * 60 < (g.locked_until - fields.Datetime.now()).total_seconds() <= 60 * 60
+      and OTP.verify_code(PG, '999999', '10.9.9.9') == (False, 'locked'), outs[-3:])
+r10 = code_row('09127779902')
+# create_date is the start of this (long) test transaction: stamp the row with the wall clock, as a real request would
+env.cr.execute("UPDATE ts_signup_otp SET create_date = clock_timestamp() AT TIME ZONE 'UTC' WHERE id = %s", [r10.id])
+r10.invalidate_recordset(['create_date'])
 check('E10 the resend countdown follows the server cooldown (about 60 s)', 55 <= OTP.seconds_to_resend('09127779902') <= 60)
 check('E11 a number never asked has no countdown', OTP.seconds_to_resend('09127779903') == 0)
 
@@ -281,8 +344,13 @@ check('E14 the fallback text (no template) keeps the WebOTP line', fb.split('\n'
 ua, ub = puser('09127779911'), puser()
 Owner = env['res.users']
 check('E15 the owner of a number is found by verified mobile and by login', Owner.ts_phone_owner('09127779911') == ua)
-check('E16 /my/phone refuses a number another account holds (before any SMS)',
-      env['ts.phone.otp'].request_code(ub, '۰۹۱۲۷۷۷۹۹۱۱') == (False, 'taken'))
+r16 = env['ts.phone.otp'].request_code(ub, '۰۹۱۲۷۷۷۹۹۱۱')
+blk = env['ts.phone.otp'].sudo().search([('user_id', '=', ub.id)], limit=1)
+check('E16 /my/phone never reveals that another account holds a number: same answer as a send, no SMS, every code refused',
+      r16 == (True, None) and blk.blocked and blk.phone == '09127779911'
+      and env['ts.phone.otp'].verify_code(ub, '123456') == (False, 'wrong', None), r16)
+check('E16b the cooldown applies first, as for any number',
+      env['ts.phone.otp'].request_code(ub, '09127779911') == (False, 'cooldown'))
 PO = env['ts.phone.otp'].sudo()
 PO.create({'user_id': ub.id, 'phone': '09127779912', 'salt': 'x', 'code_hash': PO._hash('x', '246810'),
            'expires_at': fields.Datetime.now() + timedelta(minutes=5)})
@@ -320,5 +388,39 @@ left = sorted(os.listdir(os.path.join(tmp, 'ab')))
 check('E22 session clean-up: a 10-day-old «personal device» session stays; plain, browser-only and >30-day ones go',
       left == ['old_long', 'young'], left)
 check('E23 the 30-day cookie length is 2592000 s', tsih.LONG_SESSION_S == 2592000)
+
+
+class _Sess(dict):
+    def __init__(self, uid, **kw):
+        super().__init__(**kw)
+        self.uid = uid
+
+
+pu, ts_site, eot_site = puser(), env.ref('ts_website.website_ts'), env['website'].browse(1)
+check('E24 the 30-day cookie only for a portal account on talentsearch.ir that chose it (not for staff, not on eot.ir)',
+      tsih.cookie_mode(_Sess(pu.id, ts_session_mode='long'), pu, ts_site) == 'long'
+      and tsih.cookie_mode(_Sess(pu.id, ts_session_mode='browser'), pu, ts_site) == 'browser'
+      and tsih.cookie_mode(_Sess(pu.id, ts_session_mode='long'), pu, eot_site) is None
+      and tsih.cookie_mode(_Sess(2, ts_session_mode='long'), env.ref('base.user_admin'), ts_site) is None
+      and tsih.cookie_mode(_Sess(pu.id), pu, ts_site) is None and tsih.cookie_mode(_Sess(None, ts_session_mode='long'), None, ts_site) is None)
+
+# ================================================================ S. return paths (risk review): one validator
+from odoo.addons.ts_core.safe_url import local_path
+from odoo.addons.ts_sms.controllers.signup import safe_next
+BAD = ['//evil.com', '/\\evil.com', '/%09/evil.com', '/%2F/evil.com', '/%2f%2fevil.com', '/%5C/evil.com', '/%5c/evil.com',
+       '/\t/evil.com', '/\n/evil.com', ' //evil.com', '\t//evil.com', '/%0a/evil.com', '/%0d%0a//evil.com', 'https://evil.com',
+       'HTTPS://evil.com', 'javascript:alert(1)', '//', 'evil.com', '/my\\x', '', None, '/\x00x', '/ x', '/%5C%5Cevil.com']
+GOOD = ['/my', '/my/workspaces/3?tab=1', '/invite/abc-123', '/assessments/%D9%81%D9%87%D8%B1%D8%B3%D8%AA', '/signup?next=/my']
+check('S01 a return path is refused when it could lead elsewhere (tab, newline, encoded, backslash, scheme, //)',
+      all(local_path(b) == '/my' and safe_next(b) == '/my' for b in BAD), [b for b in BAD if local_path(b) != '/my'])
+check('S02 ordinary paths of the site are kept', all(local_path(g) == g for g in GOOD), [g for g in GOOD if local_path(g) != g])
+
+# migration: a member with a number but no state at all becomes «registered, not yet checked»
+env.cr.execute("ALTER TABLE ts_workspace_member ALTER COLUMN verification_state DROP NOT NULL")
+mm = member(wcl, 'clinician')
+env.cr.execute("UPDATE ts_workspace_member SET verification_state = NULL, license_number = 'NZ-9' WHERE id = %s", [mm.id])
+pre.migrate(env.cr, '20.0.1.1.0')
+env.invalidate_all()
+check('M05 migration: a licence number without a state becomes «ثبت‌شده، هنوز تأیید نشده»', mm.verification_state == 'pending')
 
 print('SUMMARY %d/%d passed' % (sum(1 for _, ok in results if ok), len(results)))

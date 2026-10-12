@@ -217,7 +217,9 @@ class TsMemberDashboard(models.Model):
             r = a.client_id.responsible_id.id
             opens[r] = opens.get(r, 0) + 1
         members = env['ts.workspace.member'].sudo().search([('workspace_id', '=', self.workspace_id.id), ('active', '=', True)])
-        return [(m, clients.get(m.id, 0), opens.get(m.id, 0)) for m in members if m.has_perm('clients:be_responsible')]
+        rows = [(m, clients.get(m.id, 0), opens.get(m.id, 0)) for m in members if m.has_perm('clients:be_responsible')]
+        # nothing assigned to anyone yet: no card of zeros (a Persian zero reads like a bullet; screenshot review)
+        return rows if any(r[1] or r[2] for r in rows) else []
 
     # ------------------------------------------------------------------ DSH-3 onboarding checklist (owner)
     def dash_checklist(self):

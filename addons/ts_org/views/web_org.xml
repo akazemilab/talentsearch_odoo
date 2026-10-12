@@ -389,7 +389,9 @@
                                             این دعوت برای «<bdi t-out="(a.invitee_name or '').strip()"/>» است.
                                             <t t-if="student">اگر این دعوت مال تو نیست، از حساب خارج شو و با حساب درست وارد شو.</t>
                                             <t t-else="">اگر این دعوت برای شما نیست، از حساب خارج شوید و با حساب درست وارد شوید.</t>
-                                            <a t-att-href="logout_url">خروج از این حساب</a>
+                                            <!-- Odoo 20 signs out by POST only -->
+                                            <form t-att-action="logout_url" method="post" class="d-inline"><input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                                                <button type="submit" class="ts-btn ts-btn--quiet ts-btn--sm">خروج از این حساب</button></form>
                                         </t>
                                     </div>
                                     <dl class="ts-meta">

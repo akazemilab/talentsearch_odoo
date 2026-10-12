@@ -25,3 +25,7 @@ def migrate(cr, version):
                   WHERE (verification_state IS NULL OR verification_state = 'pending')
                     AND COALESCE(TRIM(license_number), '') = ''""")
     _logger.info('ts_core 20.0.2.0.0: %d member(s) without a licence number set to no badge', cr.rowcount)
+    # a member with a number but no state at all (the field becomes required): registered, not yet checked
+    cr.execute("""UPDATE ts_workspace_member SET verification_state = 'pending'
+                  WHERE verification_state IS NULL AND COALESCE(TRIM(license_number), '') != ''""")
+    _logger.info('ts_core 20.0.2.0.0: %d member(s) with a licence number and no state set to unverified', cr.rowcount)

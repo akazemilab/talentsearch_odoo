@@ -11,11 +11,13 @@ from urllib.parse import quote
 
 from odoo import fields, http
 from odoo.addons.auth_signup.controllers.main import AuthSignupHome
+from odoo.addons.website.controllers.main import WebsiteSession
 from odoo.http import request
 from odoo.http.session import authenticate
 
 from odoo.addons.ts_assessment.controllers.main import _ts_site_or_404
 from odoo.addons.ts_assessment.models.attempt import fa_digits
+from odoo.addons.ts_core.safe_url import local_path
 
 from ..models.res_partner import fmt_mobile
 from .main import MESSAGES
@@ -39,11 +41,8 @@ HELP_AFTER_RESENDS = 2
 
 
 def safe_next(value):
-    """Only a local path; anything else (other hosts, protocol-relative, backslashes) falls back to /my."""
-    v = (value or '').strip()
-    if v.startswith('/') and not v.startswith('//') and '\\' not in v and '\n' not in v and '\r' not in v:
-        return v[:300]
-    return '/my'
+    """Only a local path (the one shared validator, ts_core.safe_url); anything else falls back to /my."""
+    return local_path(value, '/my')
 
 
 def signin_url(nxt):
@@ -171,7 +170,7 @@ class TsSignup(http.Controller):
         phone = request.session.get('ts_signup_phone')
         if not phone:
             return self._reply(False, 'phone', 'none', nxt)
-        ok, reason = request.env['ts.signup.otp'].verify_code(phone, code)
+        ok, reason = request.env['ts.signup.otp'].verify_code(phone, code, request.httprequest.remote_addr)
         if not ok:
             return self._reply(False, 'code', reason, nxt)
         owners = request.env['res.users'].ts_phone_owner(phone)
@@ -214,6 +213,11 @@ class TsAuthSiteHome(AuthSignupHome):
 
     @http.route()
     def web_login(self, redirect=None, **kw):
+        if _ts_site() and redirect:
+            redirect = local_path(redirect, None)       # the one return-path validator on talentsearch.ir
+        if request.httprequest.method == 'POST':
+            # a password sign-in never inherits the 30-day choice of an earlier mobile sign-in in this browser
+            request.session.pop('ts_session_mode', None)
         # only while mobile codes can be sent: with SMS switched off the stock e-mail sign-in stays the way in
         if (request.httprequest.method == 'GET' and not request.session.uid and _ts_site() and _enabled()
                 and not kw.get('email') and not kw.get('login') and not kw.get('error')):
@@ -226,11 +230,27 @@ class TsAuthSiteHome(AuthSignupHome):
             return response
         return super().web_login(redirect=redirect, **kw)
 
+    @staticmethod
+    def _signup_allowed(kw):
+        """E-mail sign-up on talentsearch.ir: only an Odoo signup token (reset / invitation) or a colleague invitation
+        bound to an e-mail address (/join/...); everyone else signs up with the mobile code."""
+        if kw.get('token'):
+            return True
+        back = local_path(kw.get('redirect'), '')
+        return back.startswith('/join/')
+
     @http.route()
     def web_auth_signup(self, *args, **kw):
-        # e-mail sign-up stays only for a colleague invitation bound to an e-mail address (/join/...) and for Odoo's
-        # own signup tokens; everyone else signs up with the mobile code
-        if request.httprequest.method == 'GET' and _ts_site() and _enabled() and not kw.get('token') \
-                and not (kw.get('redirect') or '').startswith('/join/'):
-            return request.redirect(signin_url(kw.get('redirect')))
+        # GET and POST alike: no e-mail account is made on talentsearch.ir outside the two cases above
+        if _ts_site() and not self._signup_allowed(kw):
+            return request.redirect(signin_url(kw.get('redirect')), 303)
         return super().web_auth_signup(*args, **kw)
+
+
+class TsAuthSession(WebsiteSession):
+    """Sign-out: Odoo clears the whole session (the 30-day choice goes with it); said here once more explicitly."""
+
+    @http.route()
+    def logout(self, *args, **kw):
+        request.session.pop('ts_session_mode', None)
+        return super().logout(*args, **kw)

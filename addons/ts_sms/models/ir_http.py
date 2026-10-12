@@ -10,6 +10,7 @@ code only rewrites the session cookie of a session that carries that key, and th
 import glob
 import json
 import os
+import logging
 import time
 from contextlib import suppress
 
@@ -19,6 +20,7 @@ from odoo import api, models
 from odoo.http import request
 from odoo.http.session import get_session_max_inactivity, session_store
 
+_logger = logging.getLogger(__name__)
 LONG_SESSION_S = 30 * 24 * 3600
 
 
@@ -31,6 +33,17 @@ def _is_long_session(path):
     return data.get('ts_session_mode') == 'long' and bool(data.get('uid'))
 
 
+def cookie_mode(session, user, website):
+    """'long' | 'browser' | None: the cookie a mobile sign-in asked for, and only for a portal account on talentsearch.ir
+    (risk review: the session flag alone is not enough). None = Odoo's own cookie, untouched."""
+    mode = session.get('ts_session_mode') if session.uid else None
+    if mode not in ('long', 'browser'):
+        return None
+    if not (user and user.share and website and website._ts_is_current()):
+        return None
+    return mode
+
+
 class IrHttp(models.AbstractModel):
     _inherit = 'ir.http'
 
@@ -39,12 +52,18 @@ class IrHttp(models.AbstractModel):
         super()._post_dispatch(response)
         try:
             sess = request.session
-            mode = sess.get('ts_session_mode') if sess.uid else None
+            if not sess.get('ts_session_mode') or not sess.uid:
+                return
             headers = getattr(response, 'headers', None)
-            if mode not in ('long', 'browser') or headers is None:
+            if headers is None:
                 return
             cookies = headers.getlist('Set-Cookie')
             if not any(c.startswith('session_id=') for c in cookies):
+                return          # only when Odoo (re)issues the session cookie
+            # the website of this request (context website_id), else the one whose domain is this request's host
+            website = cls._ts_request_website()
+            mode = cookie_mode(sess, request.env['res.users'].sudo().browse(sess.uid), website)
+            if not mode:
                 return
             keep = [c for c in cookies if not c.startswith('session_id=')]
             headers.remove('Set-Cookie')
@@ -53,7 +72,21 @@ class IrHttp(models.AbstractModel):
             headers.add('Set-Cookie', dump_cookie('session_id', sess.sid, path='/', httponly=True,
                                                   max_age=LONG_SESSION_S if mode == 'long' else None))
         except Exception:     # never break a response over the cookie length
+            _logger.exception('talentsearch session cookie not adjusted')
             return
+
+    @classmethod
+    def _ts_request_website(cls):
+        from urllib.parse import urlsplit
+        site = request.env.website
+        if site:
+            return site
+        host = (request.httprequest.host or '').split(':')[0].lower()
+        for w in request.env['website'].sudo().search([('domain', '!=', False)]):
+            d = w.domain if '://' in w.domain else 'https://' + w.domain
+            if (urlsplit(d).hostname or '').lower() == host:
+                return w
+        return None
 
     @api.autovacuum
     def _gc_sessions(self):

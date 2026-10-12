@@ -69,6 +69,11 @@ class TsWorkspace(models.Model):
             raise UserError('برای ساخت پنل باید شرایط استفاده را بپذیرید.')
         if purpose == 'clinical' and not escalation_ok:
             raise UserError('برای پنل مرکز مشاوره باید مسئولیت پیگیری فوری را بپذیرید.')
+        lic = (license_number or '').strip()[:60] or False
+        if kind == 'solo' and purpose == 'clinical' and not lic:
+            # a psychologist working alone sees full reports at once: a self-declared number is required (risk review)
+            raise UserError('برای پنل روان‌شناس مستقل، شمارهٔ پروانه یا نظام روان‌شناسی و مشاوره‌تان را بنویسید؛ '
+                            'کار شما منتظر بررسی آن نمی‌ماند.')
         if not user.share or user._is_public():
             raise UserError('برای ساخت پنل وارد حساب خود شوید.')
         S = self.sudo()
@@ -87,10 +92,11 @@ class TsWorkspace(models.Model):
             'terms_version': TERMS_VERSION, 'terms_accepted_on': fields.Datetime.now(),
             'terms_accepted_by_id': user.id,
         })
-        lic = (license_number or '').strip()[:60] or False
+        solo_clinical = kind == 'solo' and purpose == 'clinical'
         self.env['ts.workspace.member'].sudo().create({
             'workspace_id': ws.id, 'user_id': user.id, 'role': 'owner',
-            'owner_practices': kind == 'solo', 'license_number': lic if kind == 'solo' else False})
+            'owner_practices': kind == 'solo', 'license_number': lic if kind == 'solo' else False,
+            'practising_since': fields.Datetime.now() if solo_clinical else False})
         audit = self.env['ts.audit.event'].sudo()
         audit.log('workspace.self_create', ws, workspace=ws, purpose=purpose, kind=kind)
         audit.log('workspace.terms_accept', ws, workspace=ws, version=TERMS_VERSION,

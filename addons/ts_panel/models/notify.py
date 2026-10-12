@@ -21,6 +21,9 @@ TEHRAN = ZoneInfo('Asia/Tehran')
 UTC = ZoneInfo('UTC')
 OPEN_STATES = ('invited', 'opened', 'accepted', 'in_progress')
 MAX_REMINDERS = 3
+# onb1 risk review: a panel that is not active (suspended or closed) sends nothing to participants or staff, except the
+# notice that tells its members about that state
+INACTIVE_OK_TYPES = ('panel_suspended', 'panel_closed')
 
 
 class _Fill(dict):
@@ -105,6 +108,8 @@ class TsNotification(models.Model):
         """Send, queue or skip the SMS of one row (staff types only)."""
         for row in self:
             user = row.user_id
+            if row.workspace_id and row.workspace_id.state != 'active' and row.type not in INACTIVE_OK_TYPES:
+                continue
             company = (row.workspace_id.company_id or user.company_id).sudo()
             phone = self._phone_of(user)
             if not (company.kv_enabled and company.ts_sms_staff and phone and row.type in SMS_STAFF_TYPES):
@@ -268,6 +273,8 @@ class TsAssignmentNotify(models.Model):
         self.ensure_one()
         if self.state not in OPEN_STATES or self.reminder_count or self.withdrawn or self.declined:
             return False
+        if self.workspace_id.state != 'active':
+            return False
         if self.client_id.contact_locked:
             return False
         if self.campaign_id and (self.campaign_id.state == 'closed' or not self.campaign_id.remind):
@@ -291,6 +298,8 @@ class TsAssignmentNotify(models.Model):
         """Send the reminder of one invitation by every allowed channel. -> set of channels used."""
         self.ensure_one()
         used = set()
+        if self.workspace_id.state != 'active':
+            return used
         c = self.client_id
         if c and c.contact_locked:
             return used
@@ -342,6 +351,8 @@ class TsAssignmentNotify(models.Model):
         N = self.env['ts.notification']
         if self.state not in OPEN_STATES:
             return False, 'این دعوت دیگر باز نیست.'
+        if self.workspace_id.state != 'active':
+            return False, 'این پنل فعال نیست یا موقتاً متوقف شده است؛ یادآوری فرستاده نمی‌شود.'
         if self.reminder_count >= MAX_REMINDERS:
             return False, 'برای هر دعوت حداکثر ۳ یادآوری فرستاده می‌شود.'
         if self.last_reminder_at and self.last_reminder_at > fields.Datetime.now() - timedelta(hours=24):

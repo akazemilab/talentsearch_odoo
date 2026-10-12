@@ -51,8 +51,8 @@
                                     <label class="tsp-check"><input type="checkbox" name="practises" value="1" t-att-checked="'checked' if m.owner_practices else None" aria-describedby="tsp_prac_h"/> خودم هم مسئول <t t-out="'مراجعان' if clinical else 'شرکت‌کنندگان'"/> هستم</label>
                                     <p t-if="clinical" class="tsp-field__hint" id="tsp_prac_h">مالکی که خودش مشاوره نمی‌دهد، برای حفظ حریم مراجعان فقط وضعیت دعوت‌ها را می‌بیند. اگر روشنش کنید، گزارش مراجعانی را که مشاورشان هستید، با اجازهٔ آن‌ها، می‌خوانید.</p>
                                     <div t-if="clinical" class="tsp-field">
-                                        <label class="tsp-field__label" for="tsp_lic">شمارهٔ پروانه یا نظام روان‌شناسی و مشاوره (اختیاری)</label>
-                                        <p class="tsp-field__hint" id="tsp_lic_h">پس از بررسی تیم استعدادیاب، نشان «پروانهٔ تأییدشده» کنار نامتان و شماره در گزارش‌ها می‌آید؛ کار شما منتظر آن نمی‌ماند.</p>
+                                        <label class="tsp-field__label" for="tsp_lic">شمارهٔ پروانه یا نظام روان‌شناسی و مشاوره (برای مشاوره در مرکز لازم است)</label>
+                                        <p class="tsp-field__hint" id="tsp_lic_h">کار شما منتظر بررسی آن نمی‌ماند؛ پس از بررسی تیم استعدادیاب، نشان «پروانهٔ تأییدشده» کنار نامتان و شماره در گزارش‌ها می‌آید.</p>
                                         <input id="tsp_lic" name="license_number" type="text" dir="ltr" maxlength="60" t-att-value="m.license_number" aria-describedby="tsp_lic_h"/>
                                     </div>
                                     <p><button type="submit" class="ts-btn ts-btn--outline">ذخیره</button></p>

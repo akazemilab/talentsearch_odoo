@@ -35,7 +35,7 @@
                             <small class="tsbr-counselor__role" t-out="tsbr_who or 'مشاور'"/>
                             <strong><bdi t-out="tsbr_c['name']"/></strong>
                             <small t-if="tsbr_c['title']" t-out="tsbr_c['title']"/>
-                            <small t-if="tsbr_c['license']" class="tsbr-license">شمارهٔ پروانه: <bdi dir="ltr" t-out="tsbr_c['license']"/> (تأییدشده)</small>
+                            <small t-if="tsbr_c['license']" class="tsbr-license"><span class="ts-pill ts-pill--ok">پروانهٔ تأییدشده</span> <bdi dir="ltr" t-out="tsbr_c['license']"/></small>
                         </div>
                     </div>
                 </header>
@@ -167,7 +167,7 @@
                                         <small class="tsbr-counselor__role">مشاور شما</small>
                                         <strong><bdi t-out="tsbr_block['name']"/></strong>
                                         <small data-tsbr-mout="title" t-att-hidden="None if tsbr_block['title'] else 'hidden'" t-out="tsbr_block['title'] or ''"/>
-                                        <small t-if="tsbr_block['license']" class="tsbr-license">شمارهٔ پروانه: <bdi dir="ltr" t-out="tsbr_block['license']"/> (تأییدشده)</small>
+                                        <small t-if="tsbr_block['license']" class="tsbr-license"><span class="ts-pill ts-pill--ok">پروانهٔ تأییدشده</span> <bdi dir="ltr" t-out="tsbr_block['license']"/></small>
                                     </div>
                                 </div>
                             </div>

@@ -32,7 +32,7 @@
                                     <thead><tr><th scope="col">نام</th><th scope="col">نقش</th><th scope="col">وضعیت</th><th scope="col">شرکت‌کنندگان</th><th scope="col">آخرین فعالیت</th><th scope="col"><span class="tsp-sr">عملیات</span></th></tr></thead>
                                     <tbody>
                                         <tr t-foreach="rows" t-as="r">
-                                            <th scope="row" data-label="نام"><bdi t-out="r['name']"/><span t-if="r['self']" class="ts-hint"> (شما)</span></th>
+                                            <th scope="row" data-label="نام"><bdi t-out="r['name']"/><span t-if="r['self']" class="ts-hint"> (شما)</span><t t-if="r['m'].verification_state == 'verified'"> <span class="ts-pill ts-pill--ok">پروانهٔ تأییدشده</span></t></th>
                                             <td data-label="نقش" t-out="r['role']"/>
                                             <td data-label="وضعیت"><span t-attf-class="ts-pill #{r['pill']}" t-out="r['state']"/></td>
                                             <td data-label="شرکت‌کنندگان" class="ts-num" t-out="fa(r['clients'])"/>
@@ -94,7 +94,7 @@
                                         <input id="tsp_email" name="email" type="email" dir="ltr" inputmode="email" autocomplete="off" maxlength="200" t-att-value="vals.get('email')"/>
                                     </div>
                                     <p><button type="submit" class="ts-btn ts-btn--primary">ساخت پیوند دعوت</button></p>
-                                    <p class="ts-hint">دعوت مالک دیگر نیاز به تأیید دوبارهٔ هویت شما دارد.</p>
+                                    <p class="ts-hint">برای دعوت مالک دیگر، یک بار دیگر رمز عبور یا کد پیامکی خود را وارد می‌کنید.</p>
                                 </form>
                             </section>
                         </t>

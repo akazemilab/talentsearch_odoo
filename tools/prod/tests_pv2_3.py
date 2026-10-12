@@ -109,8 +109,8 @@ check('counselor cannot deactivate others', raises(lambda: c2.ts_deactivate(c2))
 # --- practising owner
 cl = panel('clinical')
 co = member(cl, 'owner')
-check('an owner who counsels needs no licence number (onb1: the licence is a badge)',
-      not raises(lambda: co.ts_set_practising(co, True)) and co.owner_practices)
+check('an owner of a counseling center who counsels gives a licence number (self-declared, onb1 risk review)',
+      raises(lambda: co.ts_set_practising(co, True)) and not co.owner_practices)
 co.ts_set_practising(co, True, 'N-123')
 check('with a licence it is saved', co.owner_practices and co.license_number == 'N-123')
 check('only the owner for themselves', raises(lambda: co.ts_set_practising(member(cl, 'admin'), True)))
