@@ -58,7 +58,8 @@ _PLACEHOLDER_SUMS = []
 
 def image_kind(data):
     """The real type of image bytes, sniffed from the content (never from a file name or a stored mime type)."""
-    head = (data or b'')[:16]
+    data = data if isinstance(data, (bytes, bytearray)) else b''
+    head = data[:16]
     if head.startswith(b'\x89PNG'):
         return 'png'
     if head.startswith(b'\xff\xd8\xff'):
@@ -67,8 +68,8 @@ def image_kind(data):
         return 'gif'
     if head[:4] == b'RIFF' and head[8:12] == b'WEBP':
         return 'webp'
-    text = (data or b'')[:512].lstrip(b'\xef\xbb\xbf \t\r\n')
-    if text.startswith(b'<') and b'<svg' in (data or b'')[:2048].lower():
+    text = data[:512].lstrip(b'\xef\xbb\xbf \t\r\n')
+    if text.startswith(b'<') and b'<svg' in data[:2048].lower():
         return 'svg'
     return None
 
@@ -79,6 +80,16 @@ def _raw_image(value):
         return b''
     if isinstance(value, str):
         value = value.encode()
+    elif not isinstance(value, bytes):
+        # Odoo 20 returns lazy binary values (BinaryBytes / BinaryValueAttachment): not sliceable, but they expose the
+        # buffer protocol (base64.b64decode accepted them before), so bytes() gives the stored content.
+        try:
+            value = bytes(value)
+        except Exception:
+            try:
+                value = memoryview(value).tobytes()
+            except Exception:
+                return b''
     if image_kind(value):
         return value
     try:
