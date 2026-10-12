@@ -21,7 +21,6 @@
         <field name="model">ts.attempt</field>
         <field name="report_type">qweb-pdf</field>
         <field name="report_name">ts_brand.attempt_pdf</field>
-        <field name="report_file">ts_brand.attempt_pdf</field>
         <field name="paperformat_id" ref="paperformat_a4_report"/>
         <field name="attachment_use" eval="False"/>
     </record>
@@ -31,7 +30,6 @@
         <field name="model">ts.assignment</field>
         <field name="report_type">qweb-pdf</field>
         <field name="report_name">ts_brand.battery_pdf</field>
-        <field name="report_file">ts_brand.battery_pdf</field>
         <field name="paperformat_id" ref="paperformat_a4_report"/>
         <field name="attachment_use" eval="False"/>
     </record>
