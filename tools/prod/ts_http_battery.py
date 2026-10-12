@@ -122,7 +122,7 @@ post(c1, W + '/invites/new', {'step': '1', 'new_name': 'مراجع آزمون م
 st, body = get(c1, W + '/invites/new?step=2')
 check('wizard step 2 offers the granted battery card (a member without single instruments gets no «یک سنجه» choice)',
       st == 200 and 'name="item_kind" value="battery"' in body and 'value="single"' not in body
-      and ('name="battery_id" value="%s"' % BAT) in body and ('name="battery_id" value="%s"' % INTAKE) not in body and 'سنجه ·' in body, str(st))
+      and ('name="battery_id" value="%s"' % BAT) in body and ('name="battery_id" value="%s"' % INTAKE) not in body and 'سنجه، ' in body, str(st))
 st, loc, _ = post(c1, W + '/invites/new', {'step': '2', 'item_kind': 'battery', 'battery_id': INTAKE})
 check('a battery outside the counselor\'s list is refused at step 2', st in (302, 303) and 'step=2' in loc, loc)
 st, loc, _ = post(c1, W + '/invites/new', {'step': '2', 'item_kind': 'battery', 'battery_id': BAT})
