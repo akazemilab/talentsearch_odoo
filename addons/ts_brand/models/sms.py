@@ -9,6 +9,7 @@ battery minutes, then the deadline are dropped, then the template's `<xmlid>_sho
 the `ts_sms_*` fields below (non-stored, context-dependent); none of them is a participant's name or a result word (rule 1).
 """
 import logging
+import sys
 import math
 from datetime import datetime
 from zoneinfo import ZoneInfo
@@ -115,7 +116,8 @@ class TsBrand(models.AbstractModel):
                     body = clean_body(self._sms_render_once(short, record.with_context(ts_sms_drop=DROPS[-1]), values),
                                       latin_ok=latin_ok)
         except Exception:
-            _logger.exception('ts_brand: SMS template %s could not be rendered; the fallback text is used', xmlid)
+            _logger.warning('ts_brand: SMS template %s could not be rendered (%s); the fallback text is used', xmlid,
+                            str(sys.exc_info()[1])[:200])
             return fb()
         if not body:
             return fb()
