@@ -183,6 +183,19 @@ Caps are advisory for the institution admin and owner (no cap applies to them).
   `result.print`. Precondition to verify in Phase 5 on a clone: wkhtmltopdf renders Persian with the embedded fonts
   (17 qweb-pdf reports exist in the DB, so the binary is expected to be present).
 
+- Phase 5 as built (2026-10-12, module `ts_brand`, depends `ts_billing`): + `ts.workspace.sms_name` (≤ 18, SMS line 1),
+  `ts.workspace.member.cap_alert_month`. Settings «هویت مرکز در گزارش‌ها» = permission panel:profile (owner, clinic director;
+  `admin` has no settings page, unchanged) with a live header preview; member page «هویت شما در گزارش‌ها» (the member:
+  title, bio, photo ≤ 512 KB = the user's image, signature ≤ 300 KB, show_on_report; owner/admin/clinic director: title and
+  show_on_report of any member; a counselor without members:read opens only their own member page). Audit `brand.change`.
+  Header only for clinical/education panels; counselor = responsible member, else the inviting member; licence only when
+  verified; never contact data. Brand colour = the 4 px rule. Footer «تهیه‌شده با استعدادیاب (از خانوادهٔ هیجان اندیشه)».
+  PDF: `ts_brand.action_attempt_pdf` / `action_battery_pdf` (no attachment), routes `/my/assessments/<id>/pdf`,
+  `/my/assessments/battery/<id>/pdf`, `W/clients/<c>/r/<id>/pdf`, `W/clients/<c>/b/<id>/pdf` (result_level; 'status' -> 404),
+  audit `result.print` kind pdf. Fonts: only WOFF2 exists in ts_website/static/fonts and wkhtmltopdf's WebKit cannot read it;
+  the PDF falls back to the system stack 'Vazirmatn', 'Tahoma', 'DejaVu Sans' (a TTF dropped beside the WOFF2 is used first).
+  Check on a clone with `ts_http_brand.py` (embedded font names are printed).
+
 ## 6. SMS via native templates
 `sms.template` records (xmlids in `ts_sms`), model-bound, rendered with Odoo's inline templating; `ts_sms` looks each up
 by xmlid and falls back to the current hard-coded text when missing or empty: `invite_single`, `invite_battery`,
@@ -192,6 +205,8 @@ item count/minutes. Body limits: ≤ 70 Persian characters for one SMS part wher
 existing `/invite/<token>` form. Texts written by `ts-ux-writer`, approved by the owner, editable later in the back
 office (Settings → SMS templates). Sender name is the Kavenegar line (cannot be per institution); the first words of
 the body name the institution.
+Phase 5 as built: templates live in `ts_brand` (not `ts_sms`), see `05_sms_texts.md` section 4 (short links `/i/`, `/j/`,
+`/n/`, rule 6 in code, fallbacks).
 
 ## 7. Security, privacy, audit
 - No change to attempt/answer/result ACLs or to `result_level()`. Battery views call it per attempt.

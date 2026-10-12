@@ -91,6 +91,7 @@ EVENTS = {
     'workspace.create': ('settings', 'پنل ساخته شد'),
     'workspace.self_create': ('settings', '{who} پنل را ساخت'),
     'workspace.profile': ('settings', '{who} مشخصات پنل را تغییر داد'),
+    'brand.change': ('settings', '{who} هویت مرکز یا مشاور در گزارش‌ها را تغییر داد'),     # clinic phase 5 (ts_brand)
     'workspace.state': ('settings', 'وضعیت پنل تغییر کرد'),
     'workspace.approve': ('settings', 'پنل تأیید شد'),
     'workspace.reject': ('settings', 'پنل تأیید نشد'),

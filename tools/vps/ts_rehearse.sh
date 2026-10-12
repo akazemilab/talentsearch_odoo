@@ -67,6 +67,7 @@ has ts_org && NOCOMMIT+=(tests_org.py tests_org_resp.py tests_panel.py tests_edg
 has ts_panel && NOCOMMIT+=(tests_pv2_0.py tests_pv2_1.py tests_pv2_2.py tests_pv2_3.py tests_pv2_4.py tests_pv2_5.py tests_pv2_6.py tests_pv2_7.py tests_pv2_8.py tests_pv2_9.py tests_pv2_10.py tests_pv2_11.py tests_pv2_12.py tests_pv2_13.py tests_pv2_14.py tests_pv2_15.py tests_pv2_16.py tests_pv2_17.py tests_pv2_18.py tests_pv2_18b.py)
 has ts_battery && NOCOMMIT+=(tests_battery.py)   # HTTP companion: ts_http_battery.py (runs with the committing suites below)
 has ts_billing && NOCOMMIT+=(tests_billing.py)   # clinic phase 4; HTTP companion: ts_http_billing.py (below)
+has ts_brand && NOCOMMIT+=(tests_brand.py)       # clinic phase 5; HTTP companion: ts_http_brand.py (below)
 for f in "${NOCOMMIT[@]}"; do
   [ -f $REPO_DIR/tools/prod/$f ] || continue
   grep -q "cr.commit" $REPO_DIR/tools/prod/$f && { echo "!! $f commits; it cannot run beside the guard"; continue; }
@@ -135,6 +136,7 @@ fi
 has ts_battery && { echo "=== $(date +%T) http clinic phase 3 (battery run)"; http ts_http_battery.py; }
 # clinic phase 4 (prepaid billing): commits its panel, prices and an unpaid top-up invoice on the clone
 has ts_billing && { echo "=== $(date +%T) http clinic phase 4 (prepaid billing)"; http ts_http_billing.py; }
+has ts_brand && { echo "=== $(date +%T) http clinic phase 5 (branding, PDF, SMS templates, short links)"; http ts_http_brand.py; }
 if has ts_kavenegar; then
   echo "=== $(date +%T) kavenegar tests (fake API, commits)"; orm tests_kavenegar.py
   echo "=== $(date +%T) kavenegar webhooks (http)"; http ts_http_kv.py

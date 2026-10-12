@@ -6,12 +6,12 @@ TYPES = [
     ('invite', 'دعوت تازه'),
     ('reminder', 'یادآوری دعوت'),
     ('result_ready_participant', 'نتیجهٔ شما آماده است'),
-    ('result_ready_staff', 'نتیجهٔ یک شرکت‌کننده آماده است'),
+    ('result_ready_staff', 'نتیجهٔ تازه در پنل شما'),             # clinic phase 5 (docs/clinic/05_sms_texts.md section 3)
     ('shared_with_panel', 'نتیجه با پنل به اشتراک گذاشته شد'),
     ('share_revoked', 'اشتراک یک نتیجه لغو شد'),
     ('panel_approved', 'پنل تأیید شد'),
     ('panel_rejected', 'پنل تأیید نشد'),
-    ('panel_suspended', 'پنل تعلیق شد'),
+    ('panel_suspended', 'پنل معلق شد'),
     ('member_joined', 'عضو تازه به پنل پیوست'),
     ('client_handover_request', 'درخواست واگذاری شرکت‌کننده'),
     ('export_ready', 'فایل خروجی آماده است'),
@@ -21,11 +21,13 @@ TYPES = [
     ('panel_closed', 'پنل بسته شد'),
     ('data_request_update', 'وضعیت درخواست داده‌های شما تغییر کرد'),
     ('low_balance', 'اعتبار پنل کم شده است'),      # clinic phase 4 (ts_billing); the row title names the panel and the amount
+    ('cap_reached', 'سقف ماهانهٔ دعوت شما پر شد'),   # clinic phase 5 (ts_brand): a counselor's invitation refused for the cap
+    ('member_invite', 'دعوت به همکاری در یک پنل'),   # clinic phase 5: reserved; the colleague invite sends nothing today
 ]
 TITLES = dict(TYPES)
 
 # Types whose SMS leg is controlled by the staff switch and the person's own opt-in (preferences page).
-SMS_STAFF_TYPES = ('result_ready_staff', 'panel_approved', 'panel_rejected', 'panel_suspended', 'low_balance')
+SMS_STAFF_TYPES = ('result_ready_staff', 'panel_approved', 'panel_rejected', 'panel_suspended', 'low_balance', 'cap_reached')
 
 SMS_BODIES = {
     'result_ready_staff': 'در استعدادیاب نتیجهٔ یکی از شرکت‌کنندگان پنل شما آماده است. برای دیدن آن وارد پنل شوید:\n%(url)s',
@@ -33,8 +35,10 @@ SMS_BODIES = {
     'panel_rejected': 'درخواست پنل شما در استعدادیاب تأیید نشد. جزئیات را در پنل ببینید:\n%(url)s',
     'panel_suspended': 'پنل شما در استعدادیاب تعلیق شد. جزئیات را در پنل ببینید:\n%(url)s',
     'reminder': 'یادآوری: دعوت شما به یک سنجش در استعدادیاب هنوز باز است. پذیرش کاملاً اختیاری است:\n%(url)s',
-    # clinic phase 4: not in SMS_STAFF_TYPES yet (Phase 5 may reword and switch it on); keys: panel, amount, url
+    # Fallbacks only: with ts_brand installed every body comes from its sms.template (docs/clinic/05_sms_texts.md).
+    # low_balance / cap_reached keys: panel, amount, url (a missing key renders empty, see notify._Fill)
     'low_balance': 'اعتبار پنل «%(panel)s» در استعدادیاب به %(amount)s رسید. برای ادامهٔ دعوت‌ها اعتبار را شارژ کنید:\n%(url)s',
+    'cap_reached': 'سقف ماهانهٔ دعوت شما در پنل «%(panel)s» پر شد: %(amount)s\n%(url)s',
 }
 
 PREF_LABELS = {
@@ -56,4 +60,6 @@ PREF_LABELS = {
     'panel_closed': 'بسته‌شدن پنل',
     'data_request_update': 'درخواست داده‌های من',
     'low_balance': 'کم شدن اعتبار پنل',
+    'cap_reached': 'پر شدن سقف ماهانهٔ دعوت من',
+    'member_invite': 'دعوت به همکاری در یک پنل',
 }

@@ -32,7 +32,8 @@
                 <xpath expr="//head/*[1]" position="before">
                     <t t-if="not title and not additional_title and main_object and main_object._name == 'ir.ui.view'">
                         <t t-set="additional_title" t-value="website.ts_fallback_title(request.httprequest.path)"/>
-                        <t t-if="not additional_title"><t t-set="additional_title" t-value="'استعدادیاب'"/></t>
+                        <!-- no row for this path: the site name alone (an additional_title equal to it read «استعدادیاب | استعدادیاب») -->
+                        <t t-if="not additional_title"><t t-set="title" t-value="website.name"/></t>
                     </t>
                 </xpath>
                 <xpath expr="//a[hasclass('o_skip_to_content')]" position="replace">

@@ -22,8 +22,7 @@ class TsAttempt(models.Model):
         partner = self.sudo().partner_id
         if not (company.kv_enabled and company.ts_sms_result and partner.ts_phone and partner.ts_sms_results):
             return False
-        base = (self.env.ref('ts_website.website_ts').domain or '').rstrip('/')
-        body = _('نتیجهٔ سنجهٔ شما در استعدادیاب آماده است. برای دیدن آن وارد حساب خود شوید:\n%s/my/assessments', base)
+        body = self._ts_result_sms_body()
         try:
             with self.env.cr.savepoint():
                 sms = self.env['sms.sms'].sudo().with_company(company).create(
@@ -33,3 +32,9 @@ class TsAttempt(models.Model):
             _logger.exception('result SMS failed for attempt %s', self.id)
             return False
         return True
+
+    def _ts_result_sms_body(self):
+        """Text of the result-ready SMS (a link, never result content). ts_brand renders it from an sms.template."""
+        self.ensure_one()
+        base = (self.env.ref('ts_website.website_ts').domain or '').rstrip('/')
+        return _('نتیجهٔ سنجهٔ شما در استعدادیاب آماده است. برای دیدن آن وارد حساب خود شوید:\n%s/my/assessments', base)

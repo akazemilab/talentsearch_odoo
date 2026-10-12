@@ -196,7 +196,7 @@ check('SMS without the attestation is refused with a message', st in (302, 303) 
 ok = bad + [('attest', '1'), ('remind', '1')]
 st, loc, body = post(own, W + '/campaigns/new', ok)
 st, loc, _ = post(own, W + '/campaigns/new', [('step', 'create')])
-check('SMS campaign sent exactly one message to the one client with a phone', len(SMS) == 1 and '/invite/' in SMS[0]['message'] and SMS[0]['receptor'] == '09125552222', str(SMS)[:200])
+check('SMS campaign sent exactly one message to the one client with a phone', len(SMS) == 1 and ('/invite/' in SMS[0]['message'] or '/i/' in SMS[0]['message']) and SMS[0]['receptor'] == '09125552222', str(SMS)[:200])
 check('the invitation records the consent and the sms channel', count("ts_assignment where workspace_id = %s and sms_consent and remind_ok and channel = 'sms'" % A) == '[(1,)]')
 
 # ---- gated panel

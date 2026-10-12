@@ -42,6 +42,7 @@ class CreditRefused(UserError):
         env['ts.audit.event'].sudo().log('credit.refused', self.ts_workspace, workspace=self.ts_workspace,
                                          member=self.ts_member or None, outcome='denied', kind=self.ts_kind,
                                          amount=self.ts_amount)
+        env['ts.wallet'].sudo()._ts_on_refused(self)
 
 
 class TsWallet(models.Model):
@@ -53,6 +54,11 @@ class TsWallet(models.Model):
                                     help='وقتی اعتبار قابل استفاده از این مبلغ کمتر شود، به مدیران پنل اعلان می‌رسد. ۰ = خاموش.')
     held = fields.Monetary('رزروشده', compute='_compute_held', currency_field='currency_id')
     billing_mode = fields.Selection(related='workspace_id.billing_mode')
+
+    @api.model
+    def _ts_on_refused(self, err):
+        """Hook after a refusal was audited (ts_brand: the cap_reached notice to the counselor). Never raises."""
+        return None
 
     def _compute_held(self):
         for w in self:

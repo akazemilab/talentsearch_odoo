@@ -1,0 +1,153 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Clinic phase 5: the institution / counselor header in the report pages of other modules, the PDF buttons, the settings
+         and member sections and the shell link. Website 4 only. Each xpath names an anchor of its parent's own arch.
+         `tsbr` = attempt/assignment.ts_brand_header(): False for a self-taken attempt outside a panel and for employment /
+         benefits panels, so those pages keep today's header. -->
+
+    <!-- ===================================================== participant: one instrument (ts_assessment.report) -->
+    <record id="report_brand_assessment" model="ir.ui.view">
+        <field name="name">ts_brand.report.assessment</field>
+        <field name="inherit_id" ref="ts_assessment.tpl_report"/>
+        <field name="website_id" ref="ts_website.website_ts"/>
+        <field name="priority">45</field>
+        <field name="arch" type="xml">
+            <xpath expr="//div[hasclass('ts-report-actions')]" position="inside">
+                <a t-attf-href="/my/assessments/#{attempt.id}/pdf" class="ts-btn ts-btn--outline tsbr-pdf">دریافت فایل PDF</a>
+            </xpath>
+            <xpath expr="//article[hasclass('ts-doc')]/header[hasclass('ts-doc__head')]" position="before">
+                <t t-set="tsbr" t-value="attempt.ts_brand_header()"/>
+                <t t-if="tsbr" t-call="ts_brand.doc_head" brand="tsbr" kind.f="گزارش نتیجهٔ سنجه"/>
+            </xpath>
+            <xpath expr="//article[hasclass('ts-doc')]/header[hasclass('ts-doc__head')]" position="attributes">
+                <attribute name="t-if">not tsbr</attribute>
+            </xpath>
+            <xpath expr="//article[hasclass('ts-doc')]/section[hasclass('ts-doc__foot')]" position="after">
+                <t t-if="tsbr" t-call="ts_brand.doc_foot" brand="tsbr"/>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- ===================================================== participant and panel: talent report (ts_talent.report) -->
+    <record id="report_brand_talent" model="ir.ui.view">
+        <field name="name">ts_brand.report.talent</field>
+        <field name="inherit_id" ref="ts_talent.tpl_report"/>
+        <field name="website_id" ref="ts_website.website_ts"/>
+        <field name="priority">45</field>
+        <field name="arch" type="xml">
+            <xpath expr="//div[hasclass('ts-report-actions')]" position="inside">
+                <a t-att-href="(print_url[:-6] + '/pdf') if (org_view and print_url) else '/my/assessments/%s/pdf' % attempt.id" class="ts-btn ts-btn--outline tsbr-pdf">دریافت فایل PDF</a>
+            </xpath>
+            <xpath expr="//article[hasclass('tt-report')]/header[hasclass('ts-doc__head')]" position="before">
+                <t t-set="tsbr" t-value="attempt.ts_brand_header()"/>
+                <t t-if="tsbr" t-call="ts_brand.doc_head" brand="tsbr" kind.f="گزارش فهرست تعاملی استعداد"/>
+            </xpath>
+            <xpath expr="//article[hasclass('tt-report')]/header[hasclass('ts-doc__head')]" position="attributes">
+                <attribute name="t-if">not tsbr</attribute>
+            </xpath>
+            <xpath expr="//article[hasclass('tt-report')]/section[hasclass('tt-foot')]" position="after">
+                <t t-if="tsbr" t-call="ts_brand.doc_foot" brand="tsbr"/>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- ===================================================== participant: battery (ts_battery.my_battery) -->
+    <record id="report_brand_my_battery" model="ir.ui.view">
+        <field name="name">ts_brand.report.my_battery</field>
+        <field name="inherit_id" ref="ts_battery.tpl_my_battery"/>
+        <field name="website_id" ref="ts_website.website_ts"/>
+        <field name="arch" type="xml">
+            <xpath expr="//div[hasclass('ts-report-actions')]" position="inside">
+                <a t-attf-href="/my/assessments/battery/#{a.id}/pdf" class="ts-btn ts-btn--outline tsbr-pdf">دریافت فایل PDF</a>
+            </xpath>
+            <xpath expr="//article[hasclass('tsb-doc')]/header[hasclass('ts-doc__head')]" position="before">
+                <t t-set="tsbr" t-value="a.ts_brand_header()"/>
+                <t t-if="tsbr" t-call="ts_brand.doc_head" brand="tsbr" kind.f="گزارش مجموعهٔ سنجه‌ها"/>
+            </xpath>
+            <xpath expr="//article[hasclass('tsb-doc')]/header[hasclass('ts-doc__head')]" position="attributes">
+                <attribute name="t-if">not tsbr</attribute>
+            </xpath>
+            <xpath expr="//article[hasclass('tsb-doc')]/section[hasclass('ts-doc__foot')]" position="after">
+                <t t-if="tsbr" t-call="ts_brand.doc_foot" brand="tsbr"/>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- ===================================================== panel: one result by level (ts_panel.result_bands) -->
+    <record id="report_brand_result_bands" model="ir.ui.view">
+        <field name="name">ts_brand.report.result_bands</field>
+        <field name="inherit_id" ref="ts_panel.tpl_result_bands"/>
+        <field name="website_id" ref="ts_website.website_ts"/>
+        <field name="arch" type="xml">
+            <xpath expr="//form[@t-att-action='print_url']" position="after">
+                <a t-if="level != 'status'" t-att-href="print_url[:-6] + '/pdf'" class="ts-btn ts-btn--outline tsp-noprint tsbr-pdf">دریافت فایل PDF</a>
+            </xpath>
+            <xpath expr="//t[@t-call='ts_panel.result_bands_body']" position="before">
+                <t t-set="tsbr" t-value="attempt.ts_brand_header()"/>
+                <section t-if="tsbr" class="ts-card tsbr-card"><t t-call="ts_brand.doc_head" brand="tsbr" kind="kind"/></section>
+            </xpath>
+            <xpath expr="//t[@t-call='ts_panel.result_bands_body']" position="after">
+                <section t-if="tsbr and level != 'status'" class="ts-card tsbr-card"><t t-call="ts_brand.doc_foot" brand="tsbr"/></section>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- ===================================================== panel: battery (ts_battery.panel_battery) -->
+    <record id="report_brand_panel_battery" model="ir.ui.view">
+        <field name="name">ts_brand.report.panel_battery</field>
+        <field name="inherit_id" ref="ts_battery.tpl_panel_battery"/>
+        <field name="website_id" ref="ts_website.website_ts"/>
+        <field name="arch" type="xml">
+            <xpath expr="//form[@t-att-action='print_url']" position="after">
+                <a t-if="level != 'status'" t-att-href="print_url[:-6] + '/pdf'" class="ts-btn ts-btn--outline tsp-noprint tsbr-pdf">دریافت فایل PDF</a>
+            </xpath>
+            <xpath expr="//section[@aria-labelledby='tsb-p-head']" position="before">
+                <t t-set="tsbr" t-value="a.ts_brand_header()"/>
+                <section t-if="tsbr" class="ts-card tsbr-card"><t t-call="ts_brand.doc_head" brand="tsbr" kind="kind"/></section>
+            </xpath>
+            <xpath expr="//t[@t-call='ts_panel.shell_frame']" position="inside">
+                <section t-if="tsbr and level != 'status'" class="ts-card tsbr-card"><t t-call="ts_brand.doc_foot" brand="tsbr"/></section>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- ===================================================== settings: «هویت مرکز در گزارش‌ها» (owner / clinic director) -->
+    <record id="settings_brand_section" model="ir.ui.view">
+        <field name="name">ts_brand.settings.brand</field>
+        <field name="inherit_id" ref="ts_panel.tpl_settings"/>
+        <field name="website_id" ref="ts_website.website_ts"/>
+        <field name="arch" type="xml">
+            <xpath expr="//section[@id='tsp-profile']" position="after">
+                <t t-if="ws.ts_brand_enabled() and member.ts_brand_manager()" t-call="ts_brand.settings_brand"/>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- ===================================================== member page: «هویت شما در گزارش‌ها» -->
+    <record id="member_brand_section" model="ir.ui.view">
+        <field name="name">ts_brand.member.brand</field>
+        <field name="inherit_id" ref="ts_panel.tpl_member"/>
+        <field name="website_id" ref="ts_website.website_ts"/>
+        <field name="arch" type="xml">
+            <xpath expr="//section[hasclass('ts-card')][dl[hasclass('ts-meta')]]" position="after">
+                <t t-call="ts_brand.member_brand"/>
+            </xpath>
+            <!-- a counselor opening their own page has no members list to go back to -->
+            <xpath expr="//a[hasclass('ts-back')]" position="attributes">
+                <attribute name="t-if">not own_only</attribute>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- ===================================================== shell: every member reaches their own section -->
+    <record id="shell_brand_link" model="ir.ui.view">
+        <field name="name">ts_brand.shell.link</field>
+        <field name="inherit_id" ref="ts_panel.tpl_shell_frame"/>
+        <field name="website_id" ref="ts_website.website_ts"/>
+        <field name="arch" type="xml">
+            <xpath expr="//div[hasclass('tsp-switch')]/a[hasclass('tsp-switch__link')]" position="before">
+                <a t-if="ws.ts_brand_enabled() and member.active" t-attf-href="/my/workspaces/#{ws.id}/members/#{member.id}#tsbr-member" class="tsp-switch__link tsbr-self-link">هویت من در گزارش‌ها</a>
+            </xpath>
+        </field>
+    </record>
+</odoo>

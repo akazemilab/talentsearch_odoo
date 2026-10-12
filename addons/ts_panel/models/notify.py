@@ -23,6 +23,13 @@ OPEN_STATES = ('invited', 'opened', 'accepted', 'in_progress')
 MAX_REMINDERS = 3
 
 
+class _Fill(dict):
+    """%-format mapping that leaves an unknown key empty (an SMS body never fails on a missing value)."""
+
+    def __missing__(self, key):
+        return ''
+
+
 def _cfg(env, key, default):
     return env['ir.config_parameter'].sudo().get_int('ts_panel.' + key, default) or default
 
@@ -110,10 +117,15 @@ class TsNotification(models.Model):
             if sent_today >= _cfg(self.env, 'sms_per_day', 5):
                 row.sms_state = 'skipped'
                 continue
-            ok = self._send_sms(company, phone, SMS_BODIES[row.type] % {'url': row._abs_url()}, user.partner_id.id)
+            ok = self._send_sms(company, phone, row._ts_sms_body(), user.partner_id.id)
             row.write({'sms_state': 'sent' if ok else 'failed', 'sms_at': fields.Datetime.now()})
             self.env['ts.audit.event'].sudo().log('notify.send', row, workspace=row.workspace_id, channel='sms', type=row.type,
                                                   outcome='ok' if ok else 'error')
+
+    def _ts_sms_body(self):
+        """Text of the SMS leg of one row (staff types). ts_brand renders it from an sms.template with a short link."""
+        self.ensure_one()
+        return SMS_BODIES[self.type] % _Fill(url=self._abs_url(), panel=self.workspace_id.name or '', amount='')
 
     def _abs_url(self):
         self.ensure_one()
@@ -296,12 +308,17 @@ class TsAssignmentNotify(models.Model):
             same_day = self.sudo().search_count([('invitee_phone', '=', phone), ('last_reminder_at', '>=', day)])
             if number and same_day < _cfg(self.env, 'sms_per_day', 5):
                 company = (self.company_id or self.env.company).sudo()
-                body = SMS_BODIES['reminder'] % {'url': self.invite_url()}
+                body = self._ts_reminder_sms_body()
                 if N._send_sms(company, number, body):
                     used.add('sms')
         self.write({'reminder_count': self.reminder_count + 1, 'last_reminder_at': fields.Datetime.now()})
         self.env['ts.audit.event'].sudo().log('notify.reminder', self, workspace=self.workspace_id, channels=sorted(used))
         return used
+
+    def _ts_reminder_sms_body(self):
+        """Text of the reminder SMS. ts_brand renders it from an sms.template with the short link."""
+        self.ensure_one()
+        return SMS_BODIES['reminder'] % {'url': self.invite_url()}
 
     @api.model
     def _cron_reminders(self):

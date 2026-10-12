@@ -116,7 +116,8 @@ print('STATE', a.state)
 env.cr.commit()
 """ % PART)
 check('attempt submitted', 'STATE done' in out, out[-200:])
-res = [r for r in REQS if r[0] == 'sms/send' and 'نتیجهٔ سنجهٔ شما' in r[1].get('message', '')]
+# ts_brand (clinic phase 5) sends «نتیجهٔ شما آماده است»; without it the older text «نتیجهٔ سنجهٔ شما …» is the fallback
+res = [r for r in REQS if r[0] == 'sms/send' and re.search('نتیجهٔ (سنجهٔ )?(شما|تو)', r[1].get('message', ''))]
 check('result-ready SMS sent once', len(res) == 1, str(len(res)))
 msg = res[0][1]['message'] if res else ''
 check('result SMS has link to /my/assessments and no scores', '/my/assessments' in msg and not re.search(r'نمره|امتیاز|٪|%', msg), msg)
@@ -146,7 +147,8 @@ st, loc, _ = hr.req('/my/workspaces/%s/invite' % ws_id, {'csrf_token': hr.csrf(p
                                                        'invitee_phone': '+98 912 333 5555', 'sms_consent': '1'})
 inv = [r for r in REQS if r[0] == 'sms/send'][n:]
 check('consented invite -> exactly one SMS', len(inv) == 1 and inv[0][1]['receptor'] == '09123335555', str(len(inv)))
-check('invite SMS carries invite link, no test content', inv and '/invite/' in inv[0][1]['message'] and 'فضای آزمون پیامک' in inv[0][1]['message'])
+check('invite SMS carries invite link, no test content', inv and re.search(r'/(invite/[0-9a-f]{32}|i/[a-z0-9]{8})$', inv[0][1]['message'])
+      and 'فضای آزمون پیامک' in inv[0][1]['message'] and 'رضا آزمون' not in inv[0][1]['message'], inv and inv[0][1]['message'])
 st, _, page = lib.follow(hr, loc)
 check('dashboard confirms SMS sent', 'پیامک دعوت ارسال شد' in page)
 st, loc, _ = hr.req('/my/workspaces/%s/invite' % ws_id, {'csrf_token': hr.csrf(page), 'invitee_name': 'بدون پیامک', 'instrument_id': inst_id})

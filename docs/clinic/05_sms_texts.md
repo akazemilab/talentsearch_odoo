@@ -1,7 +1,8 @@
 # استعدادیاب: final SMS texts (Phase 5, 2026-10-12)
 
 Written by `ts-ux-writer` for `docs/clinic/01_architecture.md` §6 (SMS via native `sms.template`). Owner approves;
-the implementer creates one `sms.template` per key (xmlids in `ts_sms`) and maps the variables. Voice and terms:
+the implementer creates one `sms.template` per key and maps the variables. **As built (Phase 5):** module `ts_brand`,
+xmlids `ts_brand.sms_<key>` (+ `sms_low_balance_short`), rendered by `ts.brand.sms_render()`; see section 4. Voice and terms:
 `docs/ux_writing/voice.md`, `docs/ux_writing/glossary.md`. Code is not edited by this document.
 
 ## 0. How the numbers were counted
@@ -33,7 +34,7 @@ the implementer creates one `sms.template` per key (xmlids in `ts_sms`) and maps
 | 4 | reminder (no deadline) | institution | 68 | **1** | 19 + 34 | 17 / 81 |
 | 5 | result_ready_client | «استعدادیاب» | 66 | **1** | 32 + 34 | — |
 | 6 | result_ready_staff | «استعدادیاب» | 68 | **1** | 34 + 34 | — |
-| 7 | low_balance | «استعدادیاب» | 129 | 2 | 65 + 34 | panel name ≤ 20 in 2 parts |
+| 7 | low_balance | «استعدادیاب» | 136 (133 with the built `/n/<id>` link) | 2 (else the short text) | 72 + 34 | panel name ≤ 13–16 in 2 parts |
 | 8 | cap_reached | «استعدادیاب» | 112 | 2 | 50 + 34 | panel name ≤ 37 in 2 parts |
 | 9 | member_invite | institution | 116 | 2 | 57 + 34 | 33 (role ≤ 10) / 26 (role 17) |
 | 10 | panel_approved / rejected / suspended | «استعدادیاب» | 62 / 63 / 61 | **1** | 28 / 29 / 27 + 34 | — |
@@ -209,13 +210,14 @@ Bound model: `ts.wallet`. Replaces `SMS_BODIES['low_balance']` (and should match
 
 ```
 استعدادیاب
-اعتبار «{{ object.workspace_id.name }}» به {{ object.ts_sms_available }} رسید. برای ادامهٔ دعوت‌ها اعتبار بخرید.
+اعتبار «{{ object.workspace_id.name }}» به {{ object.ts_sms_available }} رسید. برای ادامهٔ دعوت‌ها اعتبار را شارژ کنید.
 {{ object.ts_sms_link }}
 ```
 
-Rendered: استعدادیاب⏎اعتبار «مرکز مشاوره آوا» به ۱٬۲۵۰٬۰۰۰ تومان رسید. برای ادامهٔ دعوت‌ها اعتبار بخرید.⏎{link} —
-129 characters, 2 parts. Fallback when the rendered text exceeds 134 (panel name over ~20 characters):
-«اعتبار پنل شما به {{ amount }} رسید. برای ادامهٔ دعوت‌ها اعتبار بخرید.» (119 with the sample amount).
+Rendered: استعدادیاب⏎اعتبار «مرکز مشاوره آوا» به ۱٬۲۵۰٬۰۰۰ تومان رسید. برای ادامهٔ دعوت‌ها اعتبار را شارژ کنید.⏎{link} —
+136 characters with a 34-character link (133 with the notice link `/n/<id>` the code uses), 2 parts. Fallback when the rendered
+text exceeds 134 (a longer panel name): «اعتبار پنل شما به {{ amount }} رسید. برای ادامهٔ دعوت‌ها اعتبار را شارژ کنید.»
+(126 with the sample amount; template `ts_brand.sms_low_balance_short`).
 
 | variable | meaning |
 |---|---|
@@ -224,10 +226,9 @@ Rendered: استعدادیاب⏎اعتبار «مرکز مشاوره آوا» �
 | `object.ts_sms_link` | short link to `/my/workspaces/<id>/credits` |
 
 Rationale: money and a blocked workflow are worth two parts, and the message is rare (at most once per 24 h per
-wallet). It names the amount, the consequence and the action. «اعتبار بخرید» follows the glossary (§8 forbids «شارژ»);
-the credits page still says «شارژ اعتبار» in several places, so the page and the SMS should be aligned in the same copy
-pass (owner picks «خرید اعتبار» or «افزایش اعتبار»; «اعتبار را افزایش دهید» costs 9 more characters and pushes the
-sample to 3 parts).
+wallet). It names the amount, the consequence and the action. **Wording decision (owner, 2026-10-12): top-up is «شارژ
+اعتبار» everywhere** (credits page, invoices, ledger type, this SMS); the earlier proposal «اعتبار بخرید» is replaced by
+«اعتبار را شارژ کنید», the same sentence as the in-app row (`LOW_TEXT` in `ts_billing/models/wallet.py`).
 
 In-app title: «اعتبار پنل کم شده است» (unchanged; the row text keeps naming the panel and the amount)
 
@@ -380,3 +381,24 @@ Rules the implementer must enforce (in code and in a test that renders every tem
     08:00 Asia/Tehran (held until 08:00); OTP and a fresh invitation go at once.
 11. **Edits in the back office** (Settings → SMS templates) must keep rules 1–6; the template form should show the
     rendered length and part count of a sample, so an editor sees when a change adds a part.
+
+## 4. As built (Phase 5, `ts_brand`)
+
+- Templates: `ts_brand/data/sms_templates.xml` (noupdate="0": the repository is the source of the texts). Rendering:
+  `env['ts.brand'].sms_render(xmlid, record, values)`; a missing, empty or failing template falls back to the calling
+  module's older hard-coded text, always with the short link.
+- Links: `/i/<code>` (invitation, 8 × [a-z0-9], `ts.assignment.short_code`), `/j/<code>` (colleague invitation,
+  `ts.member.invite.short_code`), `/n/<id>` (a staff notice: result_ready_staff, panel_*, low_balance, cap_reached; the page
+  behind it checks the reader). result_ready_client links `https://talentsearch.ir/my/assessments` (38 characters; still one
+  part: 70 with «شما»). No SMS ever carries `/invite/<token>` or `/join/<token>`.
+- Rule 6 is code: over 134 characters the counselor clause, then the battery minutes, then the deadline are dropped, then the
+  `<xmlid>_short` sibling is used (low_balance: «اعتبار پنل شما»; cap_reached: the same sentence with the panel's short SMS
+  name); the invite_battery minutes clause is written as a condition so it can be dropped (the
+  rendered text is the approved one). Rule 3: Latin digits become Persian outside the link (OTP keeps the code).
+- Rule 7: `ts.workspace.sms_name` (≤ 18) on the panel settings page; empty = the public name cut at a word boundary.
+- member_invite: template and body exist (`ts.member.invite.ts_member_invite_sms_body()`); nothing sends it yet (no send
+  button; the colleague link is shared by the panel itself).
+- cap_reached: sent once per member per Jalali month after a cap refusal commits (in-app always; SMS by the usual staff
+  rules: switch `ts_sms_staff`, the person's opt-in, verified mobile, quiet hours).
+- Not built: rule 11's sample length on the back-office template form (a generic sms.template view from a ts module trips
+  the eot.ir guard); `tests_brand.py` renders every template with long real values instead.

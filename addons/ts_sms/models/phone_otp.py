@@ -76,7 +76,7 @@ class TsPhoneOtp(models.Model):
                     'kv_status': int(e.get('status') or 1), 'status_text': e.get('statustext'),
                     'cost': float(e.get('cost') or 0)}])
                 return True
-            body = _('کد تأیید استعدادیاب: %s\nاین کد را به کسی ندهید.', code)
+            body = self._ts_otp_body(code, phone)
             sms = self.env['sms.sms'].sudo().create({'number': phone, 'body': body, 'sms_type': 'alert', 'kv_secret': True})
             sms.send(unlink_sent=False, raise_exception=False)
             ok = sms.state in ('process', 'pending', 'sent')
@@ -84,6 +84,11 @@ class TsPhoneOtp(models.Model):
             return ok
         except Exception:
             return False
+
+    @api.model
+    def _ts_otp_body(self, code, phone=None):
+        """Text of the plain-SMS code (no Kavenegar lookup template). ts_brand renders it from an sms.template."""
+        return _('کد تأیید استعدادیاب: %s\nاین کد را به کسی ندهید.', code)
 
     @api.model
     def verify_code(self, user, code):

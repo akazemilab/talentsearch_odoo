@@ -181,7 +181,11 @@ AID = m.group(1) if m else '0'
 st, page = get(own, W + '/invites/' + AID + '?new=1')
 tok = re.search(r'value="https://talentsearch\.ir/invite/([0-9a-f]{32})"', page)
 check('the page shows the link, a copy button, the QR image and the state', st == 200 and bool(tok) and 'data-tsp-copy' in page and '/qr.png' in page and 'دعوت‌شده' in page)
-check('the SMS went out exactly once and carries the link', len(SMS) == n0 + 1 and tok and tok.group(1) in SMS[-1]['message'] and SMS[-1]['receptor'] == '09125551111', str(len(SMS) - n0))
+# with ts_brand (clinic phase 5) the SMS carries the short link /i/<code> of this invitation instead of the token
+sc = re.search(r"\('([a-z0-9]{8})',\)", q("select short_code from ts_assignment where id = %s" % AID))   # no column without ts_brand
+check('the SMS went out exactly once and carries the link', len(SMS) == n0 + 1 and tok
+      and (tok.group(1) in SMS[-1]['message'] or bool(sc and SMS[-1]['message'].endswith('/i/' + sc.group(1))))
+      and SMS[-1]['receptor'] == '09125551111', str(len(SMS) - n0))
 check('the page says the SMS was sent', 'پیامک دعوت ارسال شد' in page)
 st, ctype, png = raw(own, W + '/invites/%s/qr.png' % AID)
 check('the QR answers 200 as a PNG', st == 200 and ctype.startswith('image/png') and png[:4] == b'\x89PNG' and len(png) > 300, '%s %s %s' % (st, ctype, len(png)))

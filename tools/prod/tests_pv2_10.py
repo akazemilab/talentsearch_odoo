@@ -119,7 +119,7 @@ with patch.object(nt.TsNotification, '_send_sms', fake_send), patch.object(nt.Ts
     company.ts_sms_staff = True
     r = N._notify(staff, 'panel_approved', '/p', emp)
     check('switch on + opt-in + verified mobile: one SMS with a link and no name', len(calls) == 1 and calls[0][0] == '09123334411'
-          and '/p' in calls[0][1] and staff.name not in calls[0][1] and r.sms_state == 'sent')
+          and ('/p' in calls[0][1] or calls[0][1].endswith('/n/%s' % r.id)) and staff.name not in calls[0][1] and r.sms_state == 'sent')
     check('the send is audited without recipient data', env['ts.audit.event'].search_count([('event_type', '=', 'notify.send'), ('res_id', '=', r.id)]) == 1
           and '0912' not in (env['ts.audit.event'].search([('event_type', '=', 'notify.send'), ('res_id', '=', r.id)]).detail or ''))
     nophone = puser()
@@ -275,7 +275,7 @@ with patch.object(nt.TsNotification, '_send_sms', fake_send), patch.object(nt.Ts
     company.ts_sms_reminder = True
     p2 = inv_(C.create({'workspace_id': w4.id, 'name': 'پیامکی دو', 'phone': '09127776656'}), sms_consent=True, remind_ok=True, invitee_phone='09127776656', deadline=today + timedelta(days=1))
     check('INV-8: switch on + consent + remind_ok -> one SMS to the invitee', p2._ts_do_reminder() == {'sms'} and len(calls) == 1 and calls[0][0] == '09127776656'
-          and 'invite' in calls[0][1] and p2.client_id.name not in calls[0][1])
+          and ('invite' in calls[0][1] or '/i/' in calls[0][1]) and p2.client_id.name not in calls[0][1])   # /i/<code>: ts_brand
     p3 = inv_(C.create({'workspace_id': w4.id, 'name': 'قدیمی', 'phone': '09127776657'}), sms_consent=True, invitee_phone='09127776657', deadline=today + timedelta(days=1))
     calls.clear()
     check('P20: an invitation without remind_ok (older than the wizard) never gets the SMS', p3._ts_do_reminder() == set() and not calls)

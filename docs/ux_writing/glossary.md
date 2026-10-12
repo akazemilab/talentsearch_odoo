@@ -106,7 +106,7 @@ B Odoo backend staff, ALL everyone.
 | Term | Meaning | Use for | Never use | Audience | Evidence |
 |---|---|---|---|---|---|
 | پیشخوان | panel home page | nav item, page title | «داشبورد» | E C H | «داشبورد» ۸. «پیشخوان» is what Persian WordPress users know; verify the Farhangestan entry before the copy pass. Low risk either way; pick once. |
-| اعتبار و مصرف / اعتبار | prepaid credit and usage | credits section only | «کیف پول»، «شارژ»، «اعتبار» for validity (§5) | E C H | «اعتبار» ۲۳. |
+| اعتبار و مصرف / اعتبار؛ **شارژ اعتبار** (top-up) | prepaid credit and usage; adding credit by invoice | credits section, invoices, SMS low_balance («اعتبار را شارژ کنید») | «کیف پول»، «شارژ» alone, «خرید اعتبار»/«افزایش اعتبار» for top-up, «اعتبار» for validity (§5) | E C H | «اعتبار» ۲۳. Owner decision 2026-10-12: top-up is «شارژ اعتبار» everywhere (clinic phase 5). |
 | خروجی (noun) / «دریافت فایل» (button) | data export | section «خروجی‌ها»، button «دریافت فایل»، job names «خروجی نتیجه‌ها» | «برون‌بری» | E C H | «خروجی» ۲۴، «برون‌بری» ۴ (job kinds), «دریافت فایل» ۳. |
 | ورود از فایل | import | section and button | «درون‌ریزی»، «ایمپورت»؛ «واردشده» is fine as a filter label | E C H | «ورود از فایل» ۶، «واردشده» ۱۸. |
 | ادغام | merge duplicate participants | action | «یکی کردن» | E C H | «ادغام» ۱۰. |

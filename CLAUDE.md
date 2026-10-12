@@ -131,6 +131,14 @@ Factor codes are not globally unique (factor_073, factor_098): key by (inventory
   Kavenegar server); `ts_rehearse` runs them when `ts_kavenegar` / `ts_sms` are in the module list. Real sends are never made
   by tests; the first real send happens only after the owner enters the key and says so.
 - Pitfall: `dict.setdefault` does not replace an existing None value (default sender was skipped); use `get(k) or default`.
+- Clinic phase 5 (`ts_brand`, top of the stack): every SMS body comes from `sms.template` xmlids `ts_brand.sms_*` through
+  `env['ts.brand'].sms_render()` (fallback = the older hard-coded text, with the short link). SMS links are `/i/<code>`,
+  `/j/<code>`, `/n/<notice id>`; never `/invite/<token>`. Hooks the lower modules expose for it: `_ts_invite_sms_body`,
+  `_ts_reminder_sms_body`, `ts.notification._ts_sms_body`, `ts.attempt._ts_result_sms_body`, `ts.phone.otp._ts_otp_body`,
+  `ts.wallet._ts_on_refused`. A notice sent from a refusal path runs in `cr.postcommit` (the refusal's savepoint rolls back).
+- PDF reports: QWeb templates with `website_id` = website 4 render inside `_render_qweb_pdf` only from a website-4 request
+  (the key is resolved with the request's website); wkhtmltopdf has no WOFF2, no flex, no logical properties, no WEBP:
+  tables, PNG data URIs, system font stack. `ir.actions.report` without `attachment` = never stored.
 
 
 ## Going live on a domain (learned 2026-09-29, talentsearch.ir)

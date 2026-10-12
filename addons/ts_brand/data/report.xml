@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- PDF reports (docs/clinic/01_architecture.md section 5): generated on demand by ts_brand's download routes, never
+         stored: no `attachment` expression, so nothing is saved as ir.attachment. No binding: the back office print menu
+         does not offer them (the access decision lives in the website routes). -->
+    <record id="paperformat_a4_report" model="report.paperformat">
+        <field name="name">استعدادیاب A4</field>
+        <field name="format">A4</field>
+        <field name="orientation">Portrait</field>
+        <field name="margin_top">38</field>
+        <field name="margin_bottom">20</field>
+        <field name="margin_left">14</field>
+        <field name="margin_right">14</field>
+        <field name="header_line" eval="False"/>
+        <field name="header_spacing">32</field>
+        <field name="dpi">96</field>
+    </record>
+
+    <record id="action_attempt_pdf" model="ir.actions.report">
+        <field name="name">گزارش نتیجهٔ سنجه (PDF)</field>
+        <field name="model">ts.attempt</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">ts_brand.attempt_pdf</field>
+        <field name="report_file">ts_brand.attempt_pdf</field>
+        <field name="paperformat_id" ref="paperformat_a4_report"/>
+        <field name="attachment_use" eval="False"/>
+        <field name="attachment" eval="False"/>
+    </record>
+
+    <record id="action_battery_pdf" model="ir.actions.report">
+        <field name="name">گزارش مجموعهٔ سنجه‌ها (PDF)</field>
+        <field name="model">ts.assignment</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">ts_brand.battery_pdf</field>
+        <field name="report_file">ts_brand.battery_pdf</field>
+        <field name="paperformat_id" ref="paperformat_a4_report"/>
+        <field name="attachment_use" eval="False"/>
+        <field name="attachment" eval="False"/>
+    </record>
+</odoo>

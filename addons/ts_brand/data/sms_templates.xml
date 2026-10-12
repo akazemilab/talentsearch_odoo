@@ -1,0 +1,141 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Clinic phase 5: the approved SMS texts of docs/clinic/05_sms_texts.md, one native sms.template per key, rendered by
+         ts.brand.sms_render() (inline template). noupdate="0": the texts follow the repository; edit them here, not in the
+         back office, or the next upgrade puts the approved text back. Bodies have no indentation and nothing after the link;
+         empty lines from an empty clause are dropped at send time. The battery minutes clause is written as a condition so
+         the 2-part rule can drop it (the rendered text is the approved one). -->
+    <data noupdate="0">
+        <record id="sms_invite_single" model="sms.template">
+            <field name="name">استعدادیاب: دعوت به یک سنجه</field>
+            <field name="model_id" ref="ts_org.model_ts_assignment"/>
+            <field name="body">{{ object.ts_sms_org }}
+{{ (object.ts_sms_counselor + ' یک سنجه برایتان فرستاده‌اند') if object.ts_sms_counselor else 'یک سنجه برای شما' }}{{ ('، مهلت تا ' + object.ts_sms_deadline) if object.ts_sms_deadline else '' }}
+{{ object.ts_sms_link }}</field>
+        </record>
+
+        <record id="sms_invite_battery" model="sms.template">
+            <field name="name">استعدادیاب: دعوت به یک مجموعه</field>
+            <field name="model_id" ref="ts_org.model_ts_assignment"/>
+            <field name="body">{{ object.ts_sms_org }}
+{{ (object.ts_sms_counselor + ' ' + object.ts_sms_count + ' سنجه برایتان فرستاده‌اند') if object.ts_sms_counselor else (object.ts_sms_count + ' سنجه برای شما') }}{{ ('، حدود ' + object.ts_sms_minutes + ' دقیقه') if object.ts_sms_minutes else '' }}{{ ('، مهلت تا ' + object.ts_sms_deadline) if object.ts_sms_deadline else '' }}
+{{ object.ts_sms_link }}</field>
+        </record>
+
+        <record id="sms_invite_student" model="sms.template">
+            <field name="name">استعدادیاب: دعوت دانش‌آموز (تو)</field>
+            <field name="model_id" ref="ts_org.model_ts_assignment"/>
+            <field name="body">{{ object.ts_sms_org }}
+{{ (object.ts_sms_counselor + ' ' + (object.ts_sms_count + ' سنجه' if object.battery_id else 'یک سنجه') + ' برایت فرستاده‌اند') if object.ts_sms_counselor else ((object.ts_sms_count + ' سنجه' if object.battery_id else 'یک سنجه') + ' برای تو') }}{{ ('، حدود ' + object.ts_sms_minutes + ' دقیقه') if (object.battery_id and object.ts_sms_minutes) else '' }}{{ ('، مهلت تا ' + object.ts_sms_deadline) if object.ts_sms_deadline else '' }}
+{{ object.ts_sms_link }}</field>
+        </record>
+
+        <record id="sms_reminder" model="sms.template">
+            <field name="name">استعدادیاب: یادآوری دعوت</field>
+            <field name="model_id" ref="ts_org.model_ts_assignment"/>
+            <field name="body">{{ object.ts_sms_org }}
+{{ ('مهلت دعوت تا ' + object.ts_sms_deadline) if object.ts_sms_deadline else 'دعوت هنوز باز است' }}
+{{ object.ts_sms_link }}</field>
+        </record>
+
+        <record id="sms_result_ready_client" model="sms.template">
+            <field name="name">استعدادیاب: نتیجهٔ شرکت‌کننده آماده است</field>
+            <field name="model_id" ref="ts_assessment.model_ts_attempt"/>
+            <field name="body">استعدادیاب
+نتیجهٔ {{ object.ts_sms_you }} آماده است
+{{ object.ts_sms_link }}</field>
+        </record>
+
+        <record id="sms_result_ready_staff" model="sms.template">
+            <field name="name">استعدادیاب: نتیجهٔ تازه در پنل</field>
+            <field name="model_id" ref="ts_panel.model_ts_notification"/>
+            <field name="body">استعدادیاب
+نتیجهٔ تازه در پنل شما
+{{ object.ts_sms_link }}</field>
+        </record>
+
+        <record id="sms_low_balance" model="sms.template">
+            <field name="name">استعدادیاب: اعتبار پنل کم شده است</field>
+            <field name="model_id" ref="ts_panel.model_ts_wallet"/>
+            <field name="body">استعدادیاب
+اعتبار «{{ object.workspace_id.name }}» به {{ object.ts_sms_available }} رسید. برای ادامهٔ دعوت‌ها اعتبار را شارژ کنید.
+{{ object.ts_sms_link }}</field>
+        </record>
+
+        <!-- used by sms_render when sms_low_balance renders longer than 2 parts (a long panel name), rule 6 -->
+        <record id="sms_low_balance_short" model="sms.template">
+            <field name="name">استعدادیاب: اعتبار پنل کم شده است (کوتاه)</field>
+            <field name="model_id" ref="ts_panel.model_ts_wallet"/>
+            <field name="body">استعدادیاب
+اعتبار پنل شما به {{ object.ts_sms_available }} رسید. برای ادامهٔ دعوت‌ها اعتبار را شارژ کنید.
+{{ object.ts_sms_link }}</field>
+        </record>
+
+        <record id="sms_cap_reached" model="sms.template">
+            <field name="name">استعدادیاب: سقف ماهانهٔ دعوت پر شد</field>
+            <field name="model_id" ref="ts_core.model_ts_workspace_member"/>
+            <field name="body">استعدادیاب
+سقف ماهانهٔ دعوت شما در پنل «{{ object.workspace_id.name }}» پر شد: {{ object.ts_sms_cap }}
+{{ object.ts_sms_link }}</field>
+        </record>
+
+        <!-- used when sms_cap_reached renders longer than 2 parts: the same sentence with the panel's short SMS name -->
+        <record id="sms_cap_reached_short" model="sms.template">
+            <field name="name">استعدادیاب: سقف ماهانهٔ دعوت پر شد (کوتاه)</field>
+            <field name="model_id" ref="ts_core.model_ts_workspace_member"/>
+            <field name="body">استعدادیاب
+سقف ماهانهٔ دعوت شما در پنل «{{ object.ts_sms_panel_short }}» پر شد: {{ object.ts_sms_cap }}
+{{ object.ts_sms_link }}</field>
+        </record>
+
+        <record id="sms_member_invite" model="sms.template">
+            <field name="name">استعدادیاب: دعوت همکار به پنل</field>
+            <field name="model_id" ref="ts_org.model_ts_member_invite"/>
+            <field name="body">{{ object.ts_sms_org }}
+شما را با نقش «{{ object.ts_sms_role }}» به پنل ما در استعدادیاب دعوت کرده‌ایم.
+{{ object.ts_sms_link }}</field>
+        </record>
+
+        <record id="sms_panel_approved" model="sms.template">
+            <field name="name">استعدادیاب: پنل تأیید شد</field>
+            <field name="model_id" ref="ts_core.model_ts_workspace"/>
+            <field name="body">استعدادیاب
+پنل شما تأیید شد
+{{ object.ts_sms_link }}</field>
+        </record>
+
+        <record id="sms_panel_rejected" model="sms.template">
+            <field name="name">استعدادیاب: پنل تأیید نشد</field>
+            <field name="model_id" ref="ts_core.model_ts_workspace"/>
+            <field name="body">استعدادیاب
+پنل شما تأیید نشد
+{{ object.ts_sms_link }}</field>
+        </record>
+
+        <record id="sms_panel_suspended" model="sms.template">
+            <field name="name">استعدادیاب: پنل معلق شد</field>
+            <field name="model_id" ref="ts_core.model_ts_workspace"/>
+            <field name="body">استعدادیاب
+پنل شما معلق شد
+{{ object.ts_sms_link }}</field>
+        </record>
+
+        <!-- OTP: no record is read; the code and the minutes come in the render context (ctx). Plain-SMS path only: with an
+             approved Kavenegar lookup template (Settings -> SMS) the lookup is used, as before. -->
+        <record id="sms_otp_signup" model="sms.template">
+            <field name="name">استعدادیاب: کد ورود با موبایل</field>
+            <field name="model_id" ref="ts_sms.model_ts_signup_otp"/>
+            <field name="body">استعدادیاب
+کد تأیید: {{ ctx.get('code') }} ({{ ctx.get('minutes') }} دقیقه)
+به کسی ندهید.</field>
+        </record>
+
+        <record id="sms_otp_phone" model="sms.template">
+            <field name="name">استعدادیاب: کد تأیید شمارهٔ موبایل</field>
+            <field name="model_id" ref="ts_sms.model_ts_phone_otp"/>
+            <field name="body">استعدادیاب
+کد تأیید: {{ ctx.get('code') }} ({{ ctx.get('minutes') }} دقیقه)
+به کسی ندهید.</field>
+        </record>
+    </data>
+</odoo>

@@ -1,4 +1,5 @@
 import logging
+import re
 
 from odoo import api, fields, models
 from odoo.fields import Domain
@@ -15,26 +16,72 @@ TS_MENU = [
     ('هزینه و پرسش‌ها', '/pricing', 30),
     ('تماس', '/contact', 40),
 ]
-# Persian page names by path prefix (most specific first), used by ts_fallback_title.
+# Persian page names by path (first match wins; most specific first), used by ts_fallback_title. Every route of website 4
+# that can render without its own title has a row, so <title> never falls back to the bare site name twice
+# («استعدادیاب | استعدادیاب», clinic phase 5). Patterns are anchored; `(/.*)?$` = the path and everything below it.
+_W = r'^/my/workspaces/\d+'
 TS_TITLES = [
-    ('/my/notifications/prefs', 'ترجیح‌های اعلان'),
-    ('/my/notifications', 'اعلان‌ها'),
-    ('/my/reauth', 'تأیید هویت'),
-    ('/my/sessions', 'دستگاه‌های واردشده'),
-    ('/my/privacy', 'حریم خصوصی'),
-    ('/my/sharing', 'چه کسی می‌بیند'),
-    ('/my/account', 'حساب'),
-    ('/my/phone', 'شمارهٔ موبایل'),
-    ('/my/assessments', 'سنجه‌ها و نتیجه‌ها'),
-    ('/my/workspaces', 'پنل'),
-    ('/my', 'حساب'),
-    ('/help/roles', 'نقش‌ها و دسترسی‌ها'),
-    ('/help', 'راهنما'),
-    ('/take', 'پاسخ به سنجه'),
-    ('/invite', 'دعوت'),
-    ('/join', 'دعوت همکار'),
-    ('/c', 'دعوت گروهی'),
+    (r'^/my/notifications/prefs$', 'ترجیح‌های اعلان'),
+    (r'^/my/notifications(/.*)?$', 'اعلان‌ها'),
+    (r'^/my/reauth(/.*)?$', 'تأیید هویت'),
+    (r'^/my/sessions(/.*)?$', 'دستگاه‌های واردشده'),
+    (r'^/my/privacy(/.*)?$', 'حریم خصوصی'),
+    (r'^/my/sharing(/.*)?$', 'چه کسی می‌بیند'),
+    (r'^/my/account(/.*)?$', 'حساب'),
+    (r'^/my/phone(/.*)?$', 'شمارهٔ موبایل'),
+    (r'^/my/assessments/battery/\d+(/.*)?$', 'نتیجهٔ مجموعه'),
+    (r'^/my/assessments/\d+/share(/.*)?$', 'ارسال نتیجه برای مشاور'),
+    (r'^/my/assessments/\d+(/.*)?$', 'گزارش نتیجه'),
+    (r'^/my/assessments(/.*)?$', 'سنجه‌ها و نتیجه‌ها'),
+    (r'^/my/workspaces/new(/.*)?$', 'ساخت پنل'),
+    (_W + r'/clients/\d+/r/\d+(/.*)?$', 'نتیجه'),
+    (_W + r'/clients/\d+/b/\d+(/.*)?$', 'نتیجهٔ مجموعه'),
+    (_W + r'/clients/merge(/.*)?$', 'یکی‌کردن پرونده‌ها'),
+    (_W + r'/clients/new$', 'شرکت‌کنندهٔ تازه'),
+    (_W + r'/clients(/.*)?$', 'شرکت‌کنندگان'),
+    (_W + r'/invites/new(/.*)?$', 'دعوت تازه'),
+    (_W + r'/invites(/.*)?$', 'دعوت‌ها'),
+    (_W + r'/invite$', 'دعوت تازه'),
+    (_W + r'/campaigns(/.*)?$', 'دعوت گروهی'),
+    (_W + r'/groups(/.*)?$', 'گروه‌ها'),
+    (_W + r'/import(/.*)?$', 'ورود از فایل'),
+    (_W + r'/(exports|jobs)(/.*)?$', 'خروجی‌ها'),
+    (_W + r'/reports/group(/.*)?$', 'گزارش گروهی'),
+    (_W + r'/reports(/.*)?$', 'گزارش‌ها'),
+    (_W + r'/credits(/.*)?$', 'اعتبار و مصرف'),
+    (_W + r'/members(/.*)?$', 'اعضا و نقش‌ها'),
+    (_W + r'/audit(/.*)?$', 'دفتر ممیزی'),
+    (_W + r'/settings(/.*)?$', 'تنظیمات'),
+    (_W + r'(/home)?/?$', 'داشبورد'),
+    (_W + r'(/.*)?$', 'پنل'),
+    (r'^/my/workspaces/?$', 'پنل‌های من'),
+    (r'^/my(/.*)?$', 'حساب'),
+    (r'^/help/roles(/.*)?$', 'نقش‌ها و دسترسی‌ها'),
+    (r'^/help/panel(/.*)?$', 'راهنمای پنل'),
+    (r'^/help(/.*)?$', 'راهنما'),
+    (r'^/take/[^/]+/next$', 'سنجهٔ بعدی'),
+    (r'^/take(/.*)?$', 'پاسخ به سنجه'),
+    (r'^/(invite|i)(/.*)?$', 'دعوت'),
+    (r'^/(join|j)(/.*)?$', 'دعوت همکار'),
+    (r'^/c(/.*)?$', 'دعوت گروهی'),
+    (r'^/signup(/.*)?$', 'ورود با شمارهٔ موبایل'),
+    (r'^/panel/terms$', 'شرایط استفادهٔ پنل'),
+    (r'^/panel(/.*)?$', 'پنل برای مدرسه، سازمان یا مرکز مشاوره'),
+    (r'^/web/login(/.*)?$', 'ورود'),
+    (r'^/web/signup(/.*)?$', 'ثبت‌نام'),
+    (r'^/web/reset_password(/.*)?$', 'بازیابی رمز عبور'),
+    (r'^/assessments/[^/]+/start$', 'شروع سنجه'),
+    (r'^/assessments(/.*)?$', 'سنجه‌ها'),
+    (r'^/entekhab-reshteh(/.*)?$', 'انتخاب رشته'),
+    (r'^/schools(/.*)?$', 'برای مدارس و مشاوران'),
+    (r'^/pricing(/.*)?$', 'هزینه و پرسش‌ها'),
+    (r'^/contact(/.*)?$', 'تماس'),
+    (r'^/privacy(/.*)?$', 'حریم خصوصی'),
+    (r'^/how-it-works(/.*)?$', 'سنجه‌ها چگونه کار می‌کنند'),
+    (r'^/evidence(/.*)?$', 'پشتوانهٔ علمی'),
+    (r'^/consent-policy(/.*)?$', 'سیاست رضایت'),
 ]
+_TS_TITLE_RES = [(re.compile(p), name) for p, name in TS_TITLES]
 
 
 class Website(models.Model):
@@ -51,9 +98,11 @@ class Website(models.Model):
     def ts_fallback_title(self, path):
         """Persian page name for a page rendered without additional_title (else the English view name leaks into
         <title>, audit G4 PT5). '' when the path is unknown."""
-        path = path or ''
-        for prefix, name in TS_TITLES:
-            if path == prefix or path.startswith(prefix + '/'):
+        path = (path or '').split('?', 1)[0]
+        if len(path) > 1:
+            path = path.rstrip('/')
+        for rx, name in _TS_TITLE_RES:
+            if rx.match(path):
                 return name
         return ''
 

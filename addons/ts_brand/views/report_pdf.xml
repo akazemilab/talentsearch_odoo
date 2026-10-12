@@ -1,0 +1,200 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- PDF of one result / one battery (ir.actions.report ts_brand.action_attempt_pdf / action_battery_pdf). Values from
+         report.ts_brand.attempt_pdf / battery_pdf (models/report.py): mode ('self' | 'panel'), level, sections, brand, kind,
+         title, who, when, ref, limitations, font_faces. The result blocks are the screen's own templates
+         (ts_assessment.report_blocks for the participant, ts_panel.result_bands_body by level for the panel); this file adds
+         the print stylesheet, the running header (institution + counselor, or the plain استعدادیاب line) and the footer.
+         wkhtmltopdf's WebKit is old: layout with tables, no flex, no logical properties; images are PNG data URIs. -->
+
+    <record id="tpl_pdf_style" model="ir.ui.view">
+        <field name="name">TS brand: PDF stylesheet</field>
+        <field name="type">qweb</field>
+        <field name="key">ts_brand.pdf_style</field>
+        <field name="website_id" ref="ts_website.website_ts"/>
+        <field name="arch" type="xml">
+            <t t-name="ts_brand.pdf_style">
+                <style t-if="font_faces" t-out="font_faces"/>
+                <style>
+                    .ts-pdf, .ts-pdf * { font-family: 'Vazirmatn FD', 'Vazirmatn', 'Tahoma', 'DejaVu Sans', sans-serif !important; }
+                    .ts-pdf { direction: rtl; text-align: right; color: #1f2130; font-size: 11pt; line-height: 1.75; }
+                    .ts-pdf h1 { font-size: 17pt; font-weight: bold; margin: 2px 0 6px; }
+                    .ts-pdf h2 { font-size: 13pt; font-weight: bold; margin: 14px 0 6px; padding-bottom: 3px; border-bottom: 1px solid #dfe2ee; }
+                    .ts-pdf h3 { font-size: 11.5pt; font-weight: bold; margin: 10px 0 4px; }
+                    .ts-pdf h4, .ts-pdf .h5, .ts-pdf .h6 { font-size: 11pt; font-weight: bold; margin: 8px 0 4px; }
+                    .ts-pdf p { margin: 0 0 6px; }
+                    .ts-pdf a { color: #1f2130; text-decoration: none; }
+                    .ts-pdf table { width: 100%; border-collapse: collapse; }
+                    .ts-pdf .ts-table th, .ts-pdf .ts-table td, .ts-pdf .tsp-table th, .ts-pdf .tsp-table td, .ts-pdf .tsp-tt th, .ts-pdf .tsp-tt td { border: 1px solid #dfe2ee; padding: 4px 6px; text-align: right; vertical-align: top; }
+                    .ts-pdf thead th { background: #f4f5fb; }
+                    .ts-pdf .ts-summary__bar, .ts-pdf .tsp-sr, .ts-pdf .ts-noprint, .ts-pdf .tsp-noprint { display: none !important; }
+                    .ts-pdf .ts-band { padding: 0 6px; border: 1px solid #c9c4ef; border-radius: 8px; white-space: nowrap; }
+                    .ts-pdf .ts-hint, .ts-pdf .tsp-hint { color: #595d6c; font-size: 9.5pt; }
+                    .ts-pdf .ts-card, .ts-pdf .ts-factor, .ts-pdf .tsp-sec { page-break-inside: avoid; }
+                    .ts-pdf .ts-card { border: 1px solid #dfe2ee; border-radius: 6px; padding: 4px 10px; margin: 8px 0; }
+                    .ts-pdf .ts-factor__head { overflow: hidden; }
+                    .ts-pdf .ts-factor__score { color: #595d6c; }
+                    .ts-pdf .tsp-kind { color: #595d6c; font-size: 10pt; margin: 0; }
+                    .ts-pdf .tsp-meta td { padding: 2px 0; font-size: 10pt; }
+                    .ts-pdf .tsp-meta td.k { color: #595d6c; width: 22%; }
+                    .ts-pdf .tsp-h { padding-top: 6px; }
+                    .ts-pdf .tsp-h td { vertical-align: middle; }
+                    .ts-pdf .tsp-h img { vertical-align: middle; }
+                    .ts-pdf .tsp-h .org { font-size: 12.5pt; font-weight: bold; }
+                    .ts-pdf .tsp-h small { display: block; color: #595d6c; font-size: 9pt; }
+                    .ts-pdf .tsp-h .end { text-align: left; }
+                    .ts-pdf .tsp-h .end-in { display: inline-block; text-align: right; }
+                    .ts-pdf .tsp-logo { width: 46px; height: 46px; margin-left: 8px; }
+                    .ts-pdf .tsp-photo { width: 46px; height: 46px; border-radius: 23px; margin-left: 8px; }
+                    .ts-pdf .tsp-rule { height: 4px; margin-bottom: 6px; }
+                    .ts-pdf .tsp-sign { margin-top: 14px; page-break-inside: avoid; }
+                    .ts-pdf .tsp-sign img { height: 52px; }
+                    .ts-pdf .tsp-foot td { font-size: 8.5pt; color: #595d6c; border-top: 1px solid #dfe2ee; padding-top: 3px; }
+                    .ts-pdf .tsp-foot .pg { text-align: left; direction: ltr; }
+                </style>
+            </t>
+        </field>
+    </record>
+
+    <!-- Running header: institution (start) and counselor (end), else the plain product line. -->
+    <record id="tpl_pdf_head" model="ir.ui.view">
+        <field name="name">TS brand: PDF header</field>
+        <field name="type">qweb</field>
+        <field name="key">ts_brand.pdf_head</field>
+        <field name="website_id" ref="ts_website.website_ts"/>
+        <field name="arch" type="xml">
+            <t t-name="ts_brand.pdf_head">
+                <div t-if="brand" class="tsp-h">
+                    <div class="tsp-rule" t-attf-style="background: #{brand.get('color') or '#6a5cc4'};"/>
+                    <table><tr>
+                        <td>
+                            <img t-if="brand.get('logo')" t-att-src="brand['logo']" class="tsp-logo" alt=""/>
+                            <span class="org" t-out="brand['name']"/>
+                            <small t-if="brand.get('contact')" t-out="brand['contact']"/>
+                        </td>
+                        <td t-if="brand.get('counselor')" class="end">
+                            <span class="end-in">
+                                <img t-if="brand['counselor']['photo']" t-att-src="brand['counselor']['photo']" class="tsp-photo" alt=""/>
+                                <strong t-out="brand['counselor']['name']"/>
+                                <small t-if="brand['counselor']['title']" t-out="brand['counselor']['title']"/>
+                                <small t-if="brand['counselor']['license']">شمارهٔ پروانه: <span dir="ltr" t-out="brand['counselor']['license']"/></small>
+                            </span>
+                        </td>
+                    </tr></table>
+                </div>
+                <div t-else="" class="tsp-h">
+                    <div class="tsp-rule" style="background: #6a5cc4;"/>
+                    <span class="org">استعدادیاب</span>
+                    <small>از خانوادهٔ هیجان اندیشه</small>
+                </div>
+            </t>
+        </field>
+    </record>
+
+    <!-- Talent (matrix) section: the plain summary and the full table, never the raw answers. Param: tal. -->
+    <record id="tpl_pdf_talent" model="ir.ui.view">
+        <field name="name">TS brand: PDF talent section</field>
+        <field name="type">qweb</field>
+        <field name="key">ts_brand.pdf_talent</field>
+        <field name="website_id" ref="ts_website.website_ts"/>
+        <field name="arch" type="xml">
+            <t t-name="ts_brand.pdf_talent">
+                <p t-foreach="tal['summary']" t-as="sm" t-out="sm"/>
+                <p class="ts-hint">نمره‌ها از ۲۰ تا ۱۰۰ است و فقط زمینه‌ها و توانایی‌های همین شخص با هم مقایسه می‌شوند، نه با دیگران.</p>
+                <table class="tsp-tt">
+                    <thead><tr>
+                        <th>توانایی</th>
+                        <th t-foreach="tal['fields']" t-as="f" t-out="f['label']"/>
+                        <th>میانگین</th>
+                    </tr></thead>
+                    <tbody>
+                        <tr t-foreach="tal['rows']" t-as="r">
+                            <th t-out="r['name']"/>
+                            <td t-foreach="r['vals']" t-as="v" t-out="tal['fmt'](v)"/>
+                            <td t-out="tal['fmt'](r['mean'])"/>
+                        </tr>
+                    </tbody>
+                </table>
+            </t>
+        </field>
+    </record>
+
+    <!-- The document: header, article, footer (Odoo moves div.header / div.footer into wkhtmltopdf's running parts). -->
+    <record id="tpl_pdf_document" model="ir.ui.view">
+        <field name="name">TS brand: PDF document</field>
+        <field name="type">qweb</field>
+        <field name="key">ts_brand.pdf_document</field>
+        <field name="website_id" ref="ts_website.website_ts"/>
+        <field name="arch" type="xml">
+            <t t-name="ts_brand.pdf_document">
+                <t t-call="web.html_container">
+                    <t t-foreach="docs" t-as="doc">
+                        <div class="header ts-pdf" dir="rtl">
+                            <t t-call="ts_brand.pdf_style"/>
+                            <t t-call="ts_brand.pdf_head"/>
+                        </div>
+                        <div class="article ts-pdf" dir="rtl" t-att-data-oe-model="doc._name" t-att-data-oe-id="doc.id">
+                            <t t-call="ts_brand.pdf_style"/>
+                            <p class="tsp-kind" t-out="kind"/>
+                            <h1 t-out="title"/>
+                            <table class="tsp-meta">
+                                <tr t-if="who"><td class="k">شرکت‌کننده</td><td t-out="who"/></tr>
+                                <tr t-if="when"><td class="k">تاریخ</td><td t-out="when"/></tr>
+                                <tr t-if="not single"><td class="k">سنجه‌های انجام‌شده</td><td><t t-out="fa(done)"/> از <t t-out="fa(total)"/></td></tr>
+                                <tr><td class="k">شناسهٔ گزارش</td><td><span dir="ltr" t-out="ref"/></td></tr>
+                            </table>
+                            <t t-foreach="sections" t-as="sec">
+                                <section class="tsp-sec">
+                                    <h2 t-if="not single" t-out="sec['inst'].title or sec['inst'].name"/>
+                                    <p t-if="not sec['done']" class="tsp-hint">هنوز به این سنجه پاسخ داده نشده است.</p>
+                                    <t t-elif="sec['talent']"><t t-call="ts_brand.pdf_talent" tal="sec['talent']"/></t>
+                                    <t t-elif="mode == 'self' and sec['results']"><t t-call="ts_assessment.report_blocks" results="sec['results']" blk_sum_id="'s%s' % sec['at'].id" blk_sub="not single"/></t>
+                                    <t t-elif="mode == 'panel' and sec['results']"><t t-call="ts_panel.result_bands_body" level="sec['level']" results="sec['results']" blk_id="'s%s' % sec['at'].id" blk_sub="not single"/></t>
+                                    <p t-else="" class="tsp-hint">نتیجهٔ این سنجه در این گزارش نمایش داده نمی‌شود.</p>
+                                </section>
+                            </t>
+                            <section class="tsp-sec">
+                                <h2>محدودیت‌ها</h2>
+                                <p t-out="limitations"/>
+                                <p t-if="mode == 'self'">اگر نتیجه برایتان پرسش ایجاد کرده یا نگران‌تان کرده است، با یک متخصص مشورت کنید. استعدادیاب خدمت اورژانسی نیست؛ اگر حالتان خوب نیست، منتظر نمانید: اورژانس ۱۱۵.</p>
+                                <p t-else="" class="ts-hint">این فایل برای جلسهٔ مشاوره است و دریافت آن در دفتر ممیزی پنل ثبت شده است.</p>
+                            </section>
+                            <t t-set="tsbr_c" t-value="brand and brand.get('counselor')"/>
+                            <section t-if="tsbr_c and (tsbr_c['bio'] or tsbr_c['signature'])" class="tsp-sign">
+                                <p t-if="tsbr_c['bio']"><strong t-out="tsbr_c['name']"/>: <t t-out="tsbr_c['bio']"/></p>
+                                <img t-if="tsbr_c['signature']" t-att-src="tsbr_c['signature']" alt="امضای مشاور"/>
+                            </section>
+                        </div>
+                        <div class="footer ts-pdf" dir="rtl">
+                            <t t-call="ts_brand.pdf_style"/>
+                            <table class="tsp-foot"><tr>
+                                <td>تهیه‌شده با استعدادیاب (از خانوادهٔ هیجان اندیشه)</td>
+                                <td class="pg"><span class="page"/> / <span class="topage"/></td>
+                            </tr></table>
+                        </div>
+                    </t>
+                </t>
+            </t>
+        </field>
+    </record>
+
+    <record id="tpl_attempt_pdf" model="ir.ui.view">
+        <field name="name">TS brand: PDF of one result</field>
+        <field name="type">qweb</field>
+        <field name="key">ts_brand.attempt_pdf</field>
+        <field name="website_id" ref="ts_website.website_ts"/>
+        <field name="arch" type="xml">
+            <t t-name="ts_brand.attempt_pdf"><t t-call="ts_brand.pdf_document"/></t>
+        </field>
+    </record>
+
+    <record id="tpl_battery_pdf" model="ir.ui.view">
+        <field name="name">TS brand: PDF of one battery</field>
+        <field name="type">qweb</field>
+        <field name="key">ts_brand.battery_pdf</field>
+        <field name="website_id" ref="ts_website.website_ts"/>
+        <field name="arch" type="xml">
+            <t t-name="ts_brand.battery_pdf"><t t-call="ts_brand.pdf_document"/></t>
+        </field>
+    </record>
+</odoo>

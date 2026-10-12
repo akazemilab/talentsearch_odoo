@@ -1,0 +1,31 @@
+// Clinic phase 5: institution / counselor header of reports (screen and print), settings preview. Website 4 bundle only.
+#wrapwrap {
+    .tsbr-head {
+        display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-3, 12px);
+        border-top: 4px solid var(--tsbr-color, var(--color-accent, #6a5cc4));
+        padding-top: var(--space-3, 12px);
+    }
+    .tsbr-org, .tsbr-counselor { display: flex; align-items: center; gap: var(--space-2, 8px); min-width: 0; }
+    .tsbr-org__text, .tsbr-counselor__text { display: flex; flex-direction: column; min-width: 0; }
+    .tsbr-org__name { font-size: 1.05rem; }
+    .tsbr-org__contact, .tsbr-counselor__text small { color: var(--color-neutral-400, #595d6c); font-size: .85rem; }
+    .tsbr-logo { width: 48px; height: 48px; object-fit: contain; border-radius: var(--r-8, 8px); background: var(--color-surface, #fff); }
+    .tsbr-photo { width: 48px; height: 48px; object-fit: cover; border-radius: 50%; }
+    .tsbr-kind { margin: var(--space-2, 8px) 0 0; color: var(--color-neutral-400, #595d6c); font-size: .9rem; }
+    .tsbr-card { padding-block: var(--space-3, 12px); }
+    .tsbr-sign { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-3, 12px); margin-top: var(--space-4, 16px); }
+    .tsbr-sign__img { max-height: 56px; width: auto; }
+    .tsbr-foot { color: var(--color-neutral-400, #595d6c); font-size: .85rem; margin: var(--space-3, 12px) 0 0; }
+    .tsbr-pdf { margin-inline-start: var(--space-2, 8px); }
+    .tsbr-preview { margin-top: var(--space-4, 16px); }
+    .tsbr-preview__label { font-size: .85rem; color: var(--color-neutral-400, #595d6c); margin: 0 0 var(--space-2, 8px); }
+    .tsbr-preview__doc { border: 1px dashed var(--color-neutral-600, #9a9fb3); border-radius: var(--r-8, 8px); padding: var(--space-3, 12px); background: var(--color-surface, #fdfdff); }
+    .tsbr-color { display: inline-flex; align-items: center; gap: var(--space-2, 8px); }
+    .tsbr-color input[type="text"] { max-width: 9rem; }
+    .tsbr-color__pick { width: 44px; height: 44px; padding: 0; border: 0; background: none; }
+    .tsbr-lic { margin-top: var(--space-2, 8px); }
+}
+@media print {
+    #wrapwrap .tsbr-head { break-inside: avoid; }
+    #wrapwrap .tsbr-pdf, #wrapwrap .tsbr-self-link { display: none !important; }
+}
