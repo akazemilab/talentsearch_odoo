@@ -68,7 +68,11 @@
     .ts-review__title { font-size: var(--fs-5, 1.5rem); }
     .ts-step { margin: 0 0 4px; font-size: var(--fs-0, .85rem); font-weight: 600; color: var(--color-neutral-400); }
     // the sticky bottom bar must never hide the focused question (WCAG 2.4.11)
-    @media (max-width: 767.98px) { html:has(.ts-player) { scroll-padding-block-end: 150px; } }
+    @media (max-width: 767.98px) {
+        html:has(.ts-player) { scroll-padding-block-end: 150px; }
+        .ts-player .ts-opt input { scroll-margin-block: 110px 150px; }
+        .ts-player .ts-qlist { padding-block-end: 16px; }
+    }
 
     // age question and guardian confirmation on consent pages (G1-P12-2, PT-5): one 44 px row per option
     .ts-age { border: 0; padding: 0; margin: 0 0 6px; min-inline-size: 0; display: grid; gap: 4px; }
@@ -120,7 +124,11 @@
     .ts-num { font-weight: 600; font-variant-numeric: tabular-nums; }
     .ts-summary td { font-size: .95rem; }
     .ts-summary__bar { width: 38%; }
-    @media (max-width: 575px) { .ts-summary__bar { display: none; } }
+    @media (max-width: 575px) { .ts-summary__bar, .ts-barnote { display: none; } }
+    // the bar with its two end labels (G6-P9-4): «۱» at the start (right), «۵» at the end; aria-hidden, the numbers are in the table
+    .ts-meterbox { display: flex; align-items: center; gap: 6px; }
+    .ts-meterbox .ts-meter { flex: 1 1 auto; }
+    .ts-meter__end { flex: none; font-size: var(--fs-0, .8125rem); color: var(--color-neutral-400); font-variant-numeric: tabular-nums; }
     .ts-band { display: inline-block; min-width: 56px; text-align: center; padding: 2px 10px; border-radius: 999px; font-weight: 500; font-size: .85rem; }
     .ts-band--low { background: var(--color-neutral-900); color: var(--color-neutral-300); }
     .ts-band--medium { background: var(--color-accent-900); color: var(--color-accent-200); box-shadow: 0 0 0 1px var(--color-accent-700); }
@@ -148,6 +156,7 @@
     #wrapwrap .tsp-collapse__btn::after { display: none; }
     #wrapwrap .ts-factor { break-inside: avoid-page; }
     #wrapwrap .ts-summary__bar { display: table-cell !important; }
+    #wrapwrap .ts-barnote { display: inline !important; }
     #wrapwrap a { color: inherit; text-decoration: none; }
     #wrapwrap .ts-band, #wrapwrap .ts-meter__seg, #wrapwrap .ts-meter__mark, #wrapwrap .ts-doc__head { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
 }

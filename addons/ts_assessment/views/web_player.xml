@@ -12,18 +12,18 @@
                         <section class="ts-section">
                             <div class="ts-container ts-narrow">
                                 <span class="ts-hero__kicker" t-out="inst.category"/>
-                                <h1 t-out="inst.title"/>
+                                <h1 t-out="inst.ts_title()"/>
                                 <p class="ts-lead">پیش از شروع، این موارد را بخوانید.</p>
                                 <dl class="ts-meta ts-meta--card">
                                     <dt>هدف</dt><dd t-out="inst.intended_use"/>
                                     <dt>زمان تقریبی</dt><dd>حدود <t t-out="fa(inst.duration_minutes)"/> دقیقه، <t t-out="fa(inst.active_item_count)"/> پرسش</dd>
                                     <dt>پاسخ‌دهنده</dt><dd t-out="dict(inst._fields['audience'].selection).get(inst.audience)"/>
-                                    <dt>چه کسی نتیجه را می‌بیند</dt><dd>فقط شما، در حساب کاربری‌تان. نتیجه با هیچ کارفرما یا مرکزی به اشتراک گذاشته نمی‌شود.</dd>
+                                    <dt>چه کسی نتیجه را می‌بیند</dt><dd>فقط شما، در حسابتان. نتیجه با هیچ کارفرما یا مرکزی به اشتراک گذاشته نمی‌شود.</dd>
                                     <dt>ذخیره و ادامه</dt><dd>پاسخ‌ها خودکار ذخیره می‌شوند؛ هر وقت خواستید می‌توانید از همان‌جا ادامه دهید.</dd>
                                     <dt>محدودیت</dt><dd t-out="inst.limitations"/>
                                     <dt>پیش از ارسال</dt><dd>پیش از ارسال، پاسخ‌ها را مرور می‌کنید. پس از ارسال، پاسخ‌ها قفل می‌شوند.</dd>
                                     <dt>انصراف</dt><dd>هر وقت بخواهید می‌توانید دست نگه دارید. برای پس گرفتن رضایت یا پاک کردن داده‌ها به صفحهٔ <a href="/my/privacy">حریم خصوصی</a> بروید.</dd>
-                                    <dt>پشتیبانی</dt><dd><a href="/contact?topic=support">تماس با پشتیبانی</a> · اگر حالتان خوب نیست، منتظر نمانید: اورژانس ۱۱۵.</dd>
+                                    <dt>پشتیبانی</dt><dd><a href="/contact?topic=support">تماس با پشتیبانی</a><t t-call="ts_website.sep"/>اگر حالتان خوب نیست، منتظر نمانید: اورژانس ۱۱۵.</dd>
                                 </dl>
                                 <form t-attf-action="/take/#{attempt.access_token}/consent" method="post" class="ts-form">
                                     <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
@@ -32,7 +32,7 @@
                                         <t t-else="">برای شروع، رضایت برای انجام سنجه لازم است.</t>
                                     </p>
                                     <label class="ts-check"><input type="checkbox" name="consent_service" value="1" required="required"/>
-                                        <span>متن بالا را خواندم و برای پاسخ‌دهی و ذخیرهٔ نتیجه در حساب کاربری‌ام رضایت می‌دهم. <span class="ts-hint">(الزامی)</span></span></label>
+                                        <span>متن بالا را خواندم و برای پاسخ‌دهی و ذخیرهٔ نتیجه در حسابم رضایت می‌دهم. <span class="ts-hint">(الزامی)</span></span></label>
                                     <label class="ts-check"><input type="checkbox" name="consent_research" value="1"/>
                                         <span>اجازه می‌دهم پاسخ‌هایم بدون نام و به‌صورت تجمیعی برای بهبود سنجه‌ها استفاده شود. <span class="ts-hint">(اختیاری)</span></span></label>
                                     <t t-if="inst.audience in ('child', 'adolescent')">
@@ -45,7 +45,7 @@
                                             <input id="subject_label" type="text" name="subject_label" dir="auto" maxlength="80"/>
                                         </div>
                                     </t>
-                                    <p class="ts-hint">نسخهٔ متن رضایت: <bdi dir="ltr" class="ts-bdi" t-out="consent_version"/> · <a href="/privacy">سیاست حریم خصوصی</a></p>
+                                    <p class="ts-hint">نسخهٔ متن رضایت: <bdi dir="ltr" class="ts-bdi" t-out="consent_version"/><t t-call="ts_website.sep"/><a href="/privacy">سیاست حریم خصوصی</a></p>
                                     <div><button type="submit" class="ts-btn ts-btn--primary">شروع پاسخ‌دهی</button></div>
                                 </form>
                             </div>
@@ -65,16 +65,16 @@
             <t t-name="ts_assessment.player">
                 <!-- the header «ذخیره و خروج» submits this page's form, so unsaved choices are posted too (UX audit G2-P11-3) -->
                 <t t-set="ts_exit_form" t-value="'ts-qform'"/>
-                <t t-call="website.layout" additional_title="inst.title">
+                <t t-call="website.layout" additional_title="inst.ts_title()">
                     <div id="wrap" class="ts-page">
                         <section class="ts-section ts-player" t-att-data-token="attempt.access_token" t-att-data-total="total">
                             <div class="ts-container ts-narrow">
                                 <div class="ts-player__head">
-                                    <h1 class="ts-player__title" t-out="inst.title"/>
+                                    <h1 class="ts-player__title" t-out="inst.ts_title()"/>
                                     <div class="ts-progress" role="progressbar" aria-label="پیشرفت پاسخ‌دهی" t-att-aria-valuenow="answered" aria-valuemin="0" t-att-aria-valuemax="total">
                                         <div class="ts-progress__bar" t-attf-style="width: #{int(100.0 * answered / total) if total else 0}%"/>
                                     </div>
-                                    <p class="ts-progress__text"><span class="ts-js-answered" t-out="fa(answered)"/> از <t t-out="fa(total)"/> پرسش پاسخ داده شده · صفحهٔ <t t-out="fa(page)"/> از <t t-out="fa(n_pages)"/>
+                                    <p class="ts-progress__text"><span class="ts-js-answered" t-out="fa(answered)"/> از <t t-out="fa(total)"/> پرسش پاسخ داده شده<t t-if="n_pages &gt; 1"><t t-call="ts_website.sep"/>صفحهٔ <t t-out="fa(page)"/> از <t t-out="fa(n_pages)"/></t>
                                         <span class="ts-save-state" aria-live="polite"/></p>
                                 </div>
                                 <p class="ts-scale-help" t-if="inst.audience == 'child'">هر جمله را بخوانید و بگویید چقدر دربارهٔ کودک درست است.</p>
@@ -106,7 +106,7 @@
                                         <button t-if="page &gt; 1" type="submit" name="go" value="prev" class="ts-btn ts-btn--outline">صفحهٔ قبل</button>
                                         <button t-if="page &lt; n_pages" type="submit" name="go" value="next" class="ts-btn ts-btn--primary">صفحهٔ بعد</button>
                                         <button t-else="" type="submit" name="go" value="review" class="ts-btn ts-btn--primary">مرور و ارسال</button>
-                                        <button type="submit" name="go" value="exit" class="ts-btn ts-btn--quiet" formnovalidate="formnovalidate">ذخیره و خروج</button>
+                                        <!-- «ذخیره و خروج» lives in the page header only (it submits this form; G6-P13-2) -->
                                     </div>
                                 </form>
                             </div>
@@ -128,7 +128,7 @@
                     <div id="wrap" class="ts-page">
                         <section class="ts-section">
                             <div class="ts-container ts-narrow">
-                                <span class="ts-hero__kicker" t-out="inst.title"/>
+                                <span class="ts-hero__kicker" t-out="inst.ts_title()"/>
                                 <h1 class="ts-review__title">مرور پاسخ‌ها پیش از ارسال</h1>
                                 <p class="ts-lead"><t t-out="fa(answered)"/> از <t t-out="fa(total)"/> پرسش پاسخ داده شده است.</p>
                                 <t t-if="missing">
@@ -175,7 +175,7 @@
                             <div class="ts-container ts-narrow">
                                 <h1>محاسبهٔ نتیجه انجام نشد</h1>
                                 <p>پاسخ‌های شما ذخیره شده است، اما محاسبهٔ نتیجه با خطا روبه‌رو شد و هیچ نمره‌ای نمایش داده نمی‌شود. همکاران ما موضوع را بررسی می‌کنند.</p>
-                                <p>شناسهٔ پیگیری: <bdi dir="ltr" t-out="attempt.name"/> · <a href="/contact?topic=support">تماس با پشتیبانی</a></p>
+                                <p>شناسهٔ پیگیری: <bdi dir="ltr" t-out="attempt.name"/><t t-call="ts_website.sep"/><a href="/contact?topic=support">تماس با پشتیبانی</a></p>
                             </div>
                         </section>
                     </div>

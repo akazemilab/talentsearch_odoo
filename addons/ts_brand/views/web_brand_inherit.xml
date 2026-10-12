@@ -17,7 +17,7 @@
             </xpath>
             <xpath expr="//article[hasclass('ts-doc')]/header[hasclass('ts-doc__head')]" position="before">
                 <t t-set="tsbr" t-value="attempt.ts_brand_header()"/>
-                <t t-if="tsbr" t-call="ts_brand.doc_head" brand="tsbr" kind.f="گزارش نتیجهٔ سنجه"/>
+                <t t-if="tsbr" t-call="ts_brand.doc_head" brand="tsbr" kind.f="گزارش نتیجهٔ سنجه" tsbr_who.f="مشاور شما"/>
             </xpath>
             <xpath expr="//article[hasclass('ts-doc')]/header[hasclass('ts-doc__head')]" position="attributes">
                 <attribute name="t-if">not tsbr</attribute>
@@ -40,7 +40,7 @@
             </xpath>
             <xpath expr="//article[hasclass('tt-report')]/header[hasclass('ts-doc__head')]" position="before">
                 <t t-set="tsbr" t-value="attempt.ts_brand_header()"/>
-                <t t-if="tsbr" t-call="ts_brand.doc_head" brand="tsbr" kind.f="گزارش فهرست تعاملی استعداد"/>
+                <t t-if="tsbr" t-call="ts_brand.doc_head" brand="tsbr" kind.f="گزارش فهرست تعاملی استعداد" tsbr_who="'مشاور مسئول' if org_view else 'مشاور شما'"/>
             </xpath>
             <xpath expr="//article[hasclass('tt-report')]/header[hasclass('ts-doc__head')]" position="attributes">
                 <attribute name="t-if">not tsbr</attribute>
@@ -62,7 +62,7 @@
             </xpath>
             <xpath expr="//article[hasclass('tsb-doc')]/header[hasclass('ts-doc__head')]" position="before">
                 <t t-set="tsbr" t-value="a.ts_brand_header()"/>
-                <t t-if="tsbr" t-call="ts_brand.doc_head" brand="tsbr" kind.f="گزارش مجموعهٔ سنجه‌ها"/>
+                <t t-if="tsbr" t-call="ts_brand.doc_head" brand="tsbr" kind.f="گزارش مجموعهٔ سنجه‌ها" tsbr_who.f="مشاور شما"/>
             </xpath>
             <xpath expr="//article[hasclass('tsb-doc')]/header[hasclass('ts-doc__head')]" position="attributes">
                 <attribute name="t-if">not tsbr</attribute>
@@ -79,14 +79,17 @@
         <field name="inherit_id" ref="ts_panel.tpl_result_bands"/>
         <field name="website_id" ref="ts_website.website_ts"/>
         <field name="arch" type="xml">
-            <xpath expr="//form[@t-att-action='print_url']" position="after">
+            <!-- one output button (UX audit G8-PT-4): the PDF route renders the letterhead file, or falls back to this page in
+                 print mode when the server has no PDF engine; both are audited result.print like the old print form -->
+            <xpath expr="//form[@t-att-action='print_url']" position="replace">
                 <a t-if="level != 'status'" t-att-href="print_url[:-6] + '/pdf'" class="ts-btn ts-btn--outline tsp-noprint tsbr-pdf">دریافت فایل PDF</a>
             </xpath>
             <xpath expr="//t[@t-call='ts_panel.result_bands_body']" position="before">
                 <t t-set="tsbr" t-value="attempt.ts_brand_header()"/>
-                <section t-if="tsbr" class="ts-card tsbr-card"><t t-call="ts_brand.doc_head" brand="tsbr" kind="kind"/></section>
+                <section t-if="tsbr" class="ts-card tsbr-card"><t t-call="ts_brand.doc_head" brand="tsbr" kind="False" tsbr_who.f="مشاور مسئول"/></section>
             </xpath>
-            <xpath expr="//t[@t-call='ts_panel.result_bands_body']" position="after">
+            <!-- the closing (bio, signature, product line) ends the document, after «محدودیت‌ها» -->
+            <xpath expr="//t[@t-call='ts_panel.result_bands_body']/following-sibling::t[1]" position="after">
                 <section t-if="tsbr and level != 'status'" class="ts-card tsbr-card"><t t-call="ts_brand.doc_foot" brand="tsbr"/></section>
             </xpath>
         </field>
@@ -98,12 +101,12 @@
         <field name="inherit_id" ref="ts_battery.tpl_panel_battery"/>
         <field name="website_id" ref="ts_website.website_ts"/>
         <field name="arch" type="xml">
-            <xpath expr="//form[@t-att-action='print_url']" position="after">
+            <xpath expr="//form[@t-att-action='print_url']" position="replace">
                 <a t-if="level != 'status'" t-att-href="print_url[:-6] + '/pdf'" class="ts-btn ts-btn--outline tsp-noprint tsbr-pdf">دریافت فایل PDF</a>
             </xpath>
             <xpath expr="//section[@aria-labelledby='tsb-p-head']" position="before">
                 <t t-set="tsbr" t-value="a.ts_brand_header()"/>
-                <section t-if="tsbr" class="ts-card tsbr-card"><t t-call="ts_brand.doc_head" brand="tsbr" kind="kind"/></section>
+                <section t-if="tsbr" class="ts-card tsbr-card"><t t-call="ts_brand.doc_head" brand="tsbr" kind="False" tsbr_who.f="مشاور مسئول"/></section>
             </xpath>
             <xpath expr="//t[@t-call='ts_panel.shell_frame']" position="inside">
                 <section t-if="tsbr and level != 'status'" class="ts-card tsbr-card"><t t-call="ts_brand.doc_foot" brand="tsbr"/></section>
@@ -117,8 +120,21 @@
         <field name="inherit_id" ref="ts_panel.tpl_settings"/>
         <field name="website_id" ref="ts_website.website_ts"/>
         <field name="arch" type="xml">
+            <xpath expr="//section[@id='tsp-profile']" position="before">
+                <t t-set="tsbr_settings" t-value="ws.ts_brand_enabled() and member.ts_brand_manager()"/>
+            </xpath>
+            <!-- the logo moves into «هویت مرکز در گزارش‌ها» (one form for everything the report header shows, G8-P2-2) -->
+            <xpath expr="//div[@id='tsp-logo-field']" position="attributes">
+                <attribute name="t-if">not tsbr_settings</attribute>
+            </xpath>
+            <xpath expr="//p[@id='tsp_name_h']" position="attributes">
+                <attribute name="t-if">not tsbr_settings</attribute>
+            </xpath>
+            <xpath expr="//p[@id='tsp_name_h']" position="after">
+                <p t-if="tsbr_settings" class="tsp-field__hint" id="tsp_name_h">نام پنل فقط داخل پنل دیده می‌شود؛ نام و لوگویی که <t t-out="ws.ts_people_word()"/> می‌بینند در بخش «هویت مرکز در گزارش‌ها» است. ۲ تا ۱۰۰ نویسه.</p>
+            </xpath>
             <xpath expr="//section[@id='tsp-profile']" position="after">
-                <t t-if="ws.ts_brand_enabled() and member.ts_brand_manager()" t-call="ts_brand.settings_brand"/>
+                <t t-if="tsbr_settings" t-call="ts_brand.settings_brand"/>
             </xpath>
         </field>
     </record>
@@ -136,6 +152,9 @@
             <xpath expr="//a[hasclass('ts-back')]" position="attributes">
                 <attribute name="t-if">not own_only</attribute>
             </xpath>
+            <xpath expr="//a[hasclass('ts-back')]" position="after">
+                <a t-if="own_only" t-attf-href="/my/workspaces/#{ws.id}" class="ts-back">پیشخوان</a>
+            </xpath>
         </field>
     </record>
 
@@ -146,7 +165,7 @@
         <field name="website_id" ref="ts_website.website_ts"/>
         <field name="arch" type="xml">
             <xpath expr="//div[hasclass('tsp-switch')]/a[hasclass('tsp-switch__link')]" position="before">
-                <a t-if="ws.ts_brand_enabled() and member.active" t-attf-href="/my/workspaces/#{ws.id}/members/#{member.id}#tsbr-member" class="tsp-switch__link tsbr-self-link" aria-label="هویت من در گزارش‌ها">هویت من در گزارش‌ها</a>
+                <a t-if="ws.ts_brand_enabled() and member.active" t-attf-href="/my/workspaces/#{ws.id}/members/#{member.id}#tsbr-member" class="tsp-switch__link tsbr-self-link">هویت شما در گزارش‌ها</a>
             </xpath>
         </field>
     </record>

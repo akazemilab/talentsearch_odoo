@@ -31,7 +31,7 @@ class TsBrandOnboarding(http.Controller):
         me = member_or_404(ws_id)
         if me.ts_onb_applies(ignore_hidden=True):
             me.ts_onb_set_hidden(me, False)
-            flash_ok('فهرست راه‌اندازی دوباره در «داشبورد» دیده می‌شود.')
+            flash_ok('فهرست راه‌اندازی دوباره در «پیشخوان» دیده می‌شود.')
         return self._home(ws_id, '#tsob')
 
     @http.route('/my/workspaces/<int:ws_id>/onboarding/nocap', type='http', auth='user', website=True, methods=['POST'],
@@ -67,10 +67,16 @@ class TsBrandHelp(TsPanelHelp):
         if qc is None:
             return res
         qc['checked'] = HELP_CHECKED
-        hidden = []
-        if not request.env.user._is_public():
+        hidden, ws_one = [], None
+        public = request.env.user._is_public()
+        if not public:
             mine = request.env['ts.workspace.member'].sudo().search(  # the caller's own memberships, found by user
-                [('user_id', '=', request.env.user.id), ('active', '=', True), ('ts_onb_hidden_on', '!=', False)])
-            hidden = [m for m in mine if m.ts_onb_applies(ignore_hidden=True)]
+                [('user_id', '=', request.env.user.id), ('active', '=', True)])
+            hidden = [m for m in mine if m.ts_onb_hidden_on and m.ts_onb_applies(ignore_hidden=True)]
+            centers = mine.filtered(lambda m: m.workspace_id.purpose == 'clinical' and m.workspace_id.state in ('pilot', 'active'))
+            if len(centers.workspace_id) == 1:
+                ws_one = centers.workspace_id      # place names in #center-setup become links into this panel
         qc['tsob_hidden'] = hidden
+        qc['tsob_ws'] = ws_one
+        qc['tsob_public'] = public
         return res

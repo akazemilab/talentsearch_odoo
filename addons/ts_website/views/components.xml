@@ -29,7 +29,12 @@
             the mobile number, the e-mail account as a quiet text link (not three equal buttons).
               <t t-call="ts_website.auth_choices" phone_url="urls['phone_url']" login_url="urls['login_url']"
                  signup_url="urls.get('signup_url')"/>
-            only.f="phone" / only.f="email" (or only="expr"): show just the method a colleague invite is bound to. -->
+            only.f="phone" / only.f="email" (or only="expr"): show just the method a colleague invite is bound to.
+
+         4. ts_website.sep - separator between parts of a meta line (UX audit 2026-10-12, G6-PT1):
+              <t t-out="when"/><t t-call="ts_website.sep"/><t t-out="fa(n)"/> سنجه
+            A drawn dot (.ts-sep), never the « · » glyph: next to a Persian digit the middle dot reads as zero
+            («۲ · سنجه» looked like «۲۰ سنجه»). Screen readers hear «، ». In a long headline put counts on their own line. -->
     <record id="tpl_jdate" model="ir.ui.view">
         <field name="name">TS: Solar Hijri date field</field>
         <field name="type">qweb</field>
@@ -41,13 +46,23 @@
                 <div class="ts-jdate" data-ts-jdate="1">
                     <label t-att-for="jd_id" class="ts-jdate__label"><t t-out="jd_label"/><span t-if="jd_required" class="ts-sr"> (لازم)</span></label>
                     <input type="text" class="ts-input ts-jdate__input" t-att-id="jd_id" t-att-name="'%s_jalali' % jd_name" t-att-value="jd_shown"
-                           inputmode="numeric" autocomplete="off" placeholder="۱۴۰۵/۰۷/۲۰" dir="ltr" maxlength="12"
+                           inputmode="numeric" autocomplete="off" dir="ltr" maxlength="12"
                            t-att-required="'required' if jd_required else None" t-att-aria-describedby="'%s_hint %s_out' % (jd_id, jd_id)"/>
                     <input type="hidden" class="ts-jdate__iso" t-att-name="jd_name" t-att-value="jd_value or ''"/>
-                    <p class="ts-hint ts-jdate__hint" t-att-id="'%s_hint' % jd_id"><t t-if="jd_hint"><t t-out="jd_hint"/> · </t>سال/ماه/روز خورشیدی، مثل ۱۴۰۵/۰۷/۲۰</p>
+                    <p class="ts-hint ts-jdate__hint" t-att-id="'%s_hint' % jd_id"><t t-if="jd_hint"><t t-out="jd_hint"/><t t-call="ts_website.sep"/></t>سال/ماه/روز خورشیدی، مثل ۱۴۰۵/۰۷/۲۰</p>
                     <p class="ts-jdate__out" t-att-id="'%s_out' % jd_id" aria-live="polite"><t t-if="jd_value" t-out="website.ts_jalali_str(jd_value, True)"/></p>
                 </div>
             </t>
+        </field>
+    </record>
+
+    <record id="tpl_sep" model="ir.ui.view">
+        <field name="name">TS: meta-line separator</field>
+        <field name="type">qweb</field>
+        <field name="key">ts_website.sep</field>
+        <field name="website_id" ref="website_ts"/>
+        <field name="arch" type="xml">
+            <t t-name="ts_website.sep"><span class="ts-sep"><span class="ts-sr">، </span></span></t>
         </field>
     </record>
 
@@ -91,7 +106,7 @@
                         <a t-att-href="phone_url" class="ts-btn ts-btn--primary ts-btn--lg ts-btn--block">ادامه با شمارهٔ موبایل</a>
                         <p t-if="login_url and not only" class="ts-authchoice__alt">
                             <a t-att-href="login_url">حساب ایمیلی دارم</a>
-                            <t t-if="signup_url"> · <a t-att-href="signup_url">ثبت‌نام با ایمیل</a></t>
+                            <t t-if="signup_url"><t t-call="ts_website.sep"/><a t-att-href="signup_url">ثبت‌نام با ایمیل</a></t>
                         </p>
                     </t>
                     <t t-elif="not only">

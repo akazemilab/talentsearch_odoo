@@ -27,6 +27,14 @@
                 <dd t-if="bat_info">حدود <t t-out="fa(bat_info['minutes'])"/> دقیقه برای همهٔ مجموعه، <t t-out="fa(bat_info['items'])"/> پرسش</dd>
                 <dd t-else="">حدود <t t-out="fa(inst.duration_minutes)"/> دقیقه، <t t-out="fa(inst.active_item_count)"/> پرسش</dd>
             </xpath>
+            <!-- one battery-level limitation, not the first instrument's (CONSENT_VERSION v4, G6-P12-1) -->
+            <xpath expr="//dt[text()='محدودیت']/following-sibling::dd[1]" position="replace">
+                <t t-if="bat_info">
+                    <dd t-if="attempt.ts_informal()">نتیجه توصیف پاسخ‌های تو در همین سنجه‌هاست، نه تشخیص. برای تصمیم‌های مهم با مشاورت گفت‌وگو کن.</dd>
+                    <dd t-else="">نتیجه توصیف پاسخ‌های شما در همین سنجه‌هاست، نه تشخیص. برای تصمیم‌های مهم با مشاورتان گفت‌وگو کنید.</dd>
+                </t>
+                <dd t-else="" t-out="inst.limitations"/>
+            </xpath>
         </field>
     </record>
     <record id="consent_battery_talent" model="ir.ui.view">
@@ -42,7 +50,7 @@
         </field>
     </record>
 
-    <!-- ===================================================== player: «مجموعهٔ X · سنجهٔ ۲ از ۵» -->
+    <!-- ===================================================== player: «مجموعهٔ X، سنجهٔ ۲ از ۵» -->
     <record id="player_battery_label" model="ir.ui.view">
         <field name="name">ts_battery.player.label</field>
         <field name="inherit_id" ref="ts_assessment.tpl_player"/>
@@ -91,7 +99,8 @@
                 <li t-foreach="batteries_going or []" t-as="br" class="tsb-row">
                     <div class="tsp-rows__text">
                         <strong>مجموعهٔ <t t-out="br['name']"/></strong>
-                        <span class="ts-hint">از طرف <t t-out="br['org']"/> · <t t-out="fa(br['done'])"/> از <t t-out="fa(br['total'])"/> سنجه انجام شده</span>
+                        <span class="ts-hint">به دعوت <t t-out="br['org']"/></span>
+                        <span class="ts-hint tsb-progress"><t t-out="fa(br['done'])"/> از <t t-out="fa(br['total'])"/> سنجه انجام شده</span>
                     </div>
                     <a t-att-href="br['url']" class="ts-btn ts-btn--primary ts-btn--sm"><t t-if="br['fresh'] and not br['done']">شروع</t><t t-else="">ادامه</t><span class="visually-hidden"> «مجموعهٔ <t t-out="br['name']"/>»</span></a>
                 </li>
@@ -106,12 +115,16 @@
                         <li t-foreach="batteries_done" t-as="br" class="tsb-row">
                             <div class="tsp-rows__text">
                                 <strong>مجموعهٔ <t t-out="br['name']"/></strong>
-                                <span class="ts-hint"><t t-out="br['when']"/> · به دعوت <t t-out="br['org']"/> · <t t-out="fa(br['total'])"/> سنجه · <t t-if="br['shared']">با پنل به اشتراک گذاشته شده</t><t t-elif="tu">فقط تو می‌بینی</t><t t-else="">فقط شما می‌بینید</t></span>
+                                <span class="ts-hint"><t t-out="br['when']"/><t t-call="ts_website.sep"/>به دعوت <t t-out="br['org']"/><t t-call="ts_website.sep"/><t t-out="fa(br['total'])"/> سنجه<t t-call="ts_website.sep"/><t t-if="br['shared']">با پنل به اشتراک گذاشته شده</t><t t-elif="tu">فقط تو می‌بینی</t><t t-else="">فقط شما می‌بینید</t></span>
                             </div>
                             <a t-att-href="br['url']" class="ts-btn ts-btn--outline ts-btn--sm">گزارش مجموعه<span class="visually-hidden"> «<t t-out="br['name']"/>»</span></a>
                         </li>
                     </ul>
                 </div>
+            </xpath>
+            <!-- an unfinished invited battery is the task: no catalog link pulling away from it (G6-P15-2) -->
+            <xpath expr="//p[@id='ts-list-catalog']" position="attributes">
+                <attribute name="t-if">not batteries_going</attribute>
             </xpath>
         </field>
     </record>
@@ -131,7 +144,7 @@
                 <t t-elif="next_action['kind'] == 'resume' and next_action.get('battery')"><t t-if="next_action['progress']">یک مجموعهٔ نیمه‌تمام</t><t t-else="">یک مجموعه منتظر</t> <t t-if="tu and next_action['progress']">داری</t><t t-elif="next_action['progress']">دارید</t><t t-elif="tu">توست</t><t t-else="">شماست</t></t>
             </xpath>
             <xpath expr="//p[hasclass('tsp-next__meta')]/t[@t-elif=&quot;next_action['kind'] == 'resume' and next_action['progress']&quot;]" position="before">
-                <t t-elif="next_action['kind'] == 'resume' and next_action.get('battery') and next_action['progress']">سنجهٔ بعدی: <t t-out="next_action['battery_next']"/> · آخرین ذخیره <t t-out="next_action['when']"/></t>
+                <t t-elif="next_action['kind'] == 'resume' and next_action.get('battery') and next_action['progress']">سنجهٔ بعدی: <t t-out="next_action['battery_next']"/><t t-call="ts_website.sep"/><t t-out="next_action['battery_progress']"/><t t-call="ts_website.sep"/>آخرین ذخیره <t t-out="next_action['when']"/></t>
             </xpath>
             <xpath expr="//div[@id='ts-home-results']" position="attributes">
                 <attribute name="t-if">done or done_batteries</attribute>
@@ -140,7 +153,7 @@
                 <li t-foreach="done_batteries or []" t-as="br" class="tsb-row">
                     <div class="tsp-rows__text">
                         <strong>مجموعهٔ <t t-out="br['name']"/></strong>
-                        <span class="ts-hint"><t t-out="br['when']"/> · <t t-if="br['shared']">با پنل به اشتراک گذاشته شده</t><t t-elif="tu">فقط تو می‌بینی</t><t t-else="">فقط شما می‌بینید</t></span>
+                        <span class="ts-hint"><t t-out="br['when']"/><t t-call="ts_website.sep"/><t t-if="br['shared']">با پنل به اشتراک گذاشته شده</t><t t-elif="tu">فقط تو می‌بینی</t><t t-else="">فقط شما می‌بینید</t></span>
                     </div>
                     <a t-att-href="br['url']" class="ts-btn ts-btn--outline ts-btn--sm">گزارش مجموعه</a>
                 </li>
@@ -157,6 +170,11 @@
         <field name="inherit_id" ref="ts_org.tpl_invite"/>
         <field name="website_id" ref="ts_website.website_ts"/>
         <field name="arch" type="xml">
+            <!-- the tab title names the battery (G6-P11-5) -->
+            <xpath expr="//t[@t-call='website.layout']" position="attributes">
+                <attribute name="additional_title.f"/>
+                <attribute name="additional_title">('دعوت به مجموعهٔ ' + a.battery_id.name) if a.battery_id else 'دعوت به سنجه'</attribute>
+            </xpath>
             <xpath expr="//div[hasclass('ts-section__head')]/p[hasclass('ts-tag')]" position="replace">
                 <p class="ts-tag"><t t-if="a.battery_id">دعوت به مجموعهٔ سنجه‌ها</t><t t-else="">دعوت به سنجه</t></p>
             </xpath>
@@ -169,17 +187,23 @@
                 <p t-elif="a.battery_id"><strong t-out="ws.partner_id.name"/> شما را به پاسخ‌دادن به سنجه‌های این مجموعه دعوت کرده است.</p>
                 <p t-elif="student"><strong t-out="ws.partner_id.name"/> تو را به پاسخ‌دادن به این سنجه دعوت کرده است.</p>
             </xpath>
+            <!-- the sharing tick stays ticked (owner decision 2026-10-12); for a battery it says that one tick covers every
+                 instrument's report (G6-P11-1) -->
             <xpath expr="//p[@id='ts_share_note']" position="replace">
-                <p id="ts_share_note" class="ts-hint"><t t-if="student">اگر تیک را برداری هم می‌توانی <t t-if="a.battery_id">به سنجه‌های مجموعه پاسخ بدهی</t><t t-else="">سنجه را انجام بدهی</t>؛ آن وقت نتیجه فقط برای خودت می‌ماند.</t><t t-else="">اگر تیک را بردارید هم می‌توانید <t t-if="a.battery_id">به سنجه‌های مجموعه پاسخ دهید</t><t t-else="">سنجه را انجام دهید</t>؛ آن وقت نتیجه فقط برای خودتان می‌ماند.</t></p>
+                <p id="ts_share_note" class="ts-hint"><t t-if="a.battery_id"><t t-if="student">این تیک برای گزارش همهٔ سنجه‌های این مجموعه است. </t><t t-else="">این تیک برای گزارش همهٔ سنجه‌های این مجموعه است<t t-if="ws.purpose == 'clinical'">، همراه با راهنمای مشاور</t>. </t></t><t t-if="student">اگر تیک را برداری هم می‌توانی <t t-if="a.battery_id">به سنجه‌های مجموعه پاسخ بدهی</t><t t-else="">سنجه را انجام بدهی</t>؛ آن وقت نتیجه فقط برای خودت می‌ماند.</t><t t-else="">اگر تیک را بردارید هم می‌توانید <t t-if="a.battery_id">به سنجه‌های مجموعه پاسخ دهید</t><t t-else="">سنجه را انجام دهید</t>؛ آن وقت نتیجه فقط برای خودتان می‌ماند.</t></p>
+            </xpath>
+            <xpath expr="//form[hasclass('ts-form')]/button[@type='submit']" position="replace">
+                <button type="submit" class="ts-btn ts-btn--primary"><t t-if="a.battery_id">پذیرفتن دعوت و ادامه</t><t t-else="">پذیرش و ادامه</t></button>
             </xpath>
             <xpath expr="//div[hasclass('ts-section__head')]" position="after">
                 <div t-if="a.battery_id" class="ts-card tsb-invite" id="tsb-invite">
                     <t t-set="bat_card" t-value="a.battery_id.ts_card()"/>
                     <p t-if="bat_card['description']" t-out="bat_card['description']"/>
-                    <p><strong>سنجه‌های این مجموعه</strong> (یکی پس از دیگری، با یک بار رضایت):</p>
+                    <p><strong>سنجه‌های این مجموعه</strong> (یکی پس از دیگری، با یک بار موافقت برای همه):</p>
                     <ol class="tsb-list">
-                        <li t-foreach="bat_card['lines']" t-as="ln"><span t-out="ln['name']"/> <span class="ts-hint">· <t t-out="fa(ln['items'])"/> پرسش</span></li>
+                        <li t-foreach="bat_card['lines']" t-as="ln"><span t-out="ln['name']"/><t t-call="ts_website.sep"/><span class="ts-hint"><t t-out="fa(ln['items'])"/> پرسش</span></li>
                     </ol>
+                    <p class="ts-hint">این مجموعه برای کمک به گفت‌وگوی مشاوره است، نه تشخیص.</p>
                 </div>
             </xpath>
             <xpath expr="//dt[text()='تعداد پرسش']/following-sibling::dd[1]" position="replace">
@@ -212,13 +236,14 @@
             <xpath expr="//tr[@t-foreach='assignments']/th" position="replace">
                 <th scope="row" data-label="سنجه">
                     <t t-if="a.battery_id">مجموعهٔ <t t-out="a.battery_id.name"/> <span class="ts-hint">(<t t-out="fa(a.ts_battery_progress()[0])"/> از <t t-out="fa(a.ts_battery_progress()[1])"/> سنجه)</span></t>
-                    <t t-else="" t-out="a.instrument_id.name"/>
+                    <t t-else="" t-out="a.instrument_id.ts_title()"/>
                 </th>
             </xpath>
             <xpath expr="//tr[@t-foreach='assignments']/td[last()]" position="replace">
                 <td>
-                    <t t-if="a.battery_id"><a t-if="a.attempt_ids.filtered(lambda t: t.state == 'done') and level(a) != 'none'" t-attf-href="/my/workspaces/#{ws.id}/clients/#{c.id}/b/#{a.id}">نتیجهٔ مجموعه</a></t>
-                    <a t-elif="a.state == 'done' and level(a) != 'none'" t-attf-href="/my/workspaces/#{ws.id}/clients/#{c.id}/r/#{a.attempt_id.id}">نتیجه</a>
+                    <!-- 44 px buttons, not one-line text links (G6-P6-4) -->
+                    <t t-if="a.battery_id"><a t-if="a.attempt_ids.filtered(lambda t: t.state == 'done') and level(a) != 'none'" t-attf-href="/my/workspaces/#{ws.id}/clients/#{c.id}/b/#{a.id}" class="ts-btn ts-btn--outline ts-btn--sm tsb-rowbtn">نتیجهٔ مجموعه</a></t>
+                    <a t-elif="a.state == 'done' and level(a) != 'none'" t-attf-href="/my/workspaces/#{ws.id}/clients/#{c.id}/r/#{a.attempt_id.id}" class="ts-btn ts-btn--outline ts-btn--sm tsb-rowbtn">نتیجه</a>
                 </td>
             </xpath>
         </field>
@@ -241,6 +266,17 @@
             <xpath expr="//p[hasclass('tsp-head__help')]/t[@t-out='a.instrument_id.name']" position="attributes">
                 <attribute name="t-out">a.ts_item_name()</attribute>
             </xpath>
+            <!-- how far the battery is (G6-P8-2) -->
+            <xpath expr="//p[hasclass('tsp-head__help')]/t[@t-out='a.ts_item_name()']" position="after">
+                <t t-if="a.battery_id"><t t-call="ts_website.sep"/><t t-out="a.ts_battery_progress_text()"/></t>
+            </xpath>
+            <!-- a partly done battery: an outline button that says which part (G6-P8-1; the controller sets result only
+                 when at least one instrument is done) -->
+            <xpath expr="//a[@t-att-href='result']" position="attributes">
+                <attribute name="class"/>
+                <attribute name="t-attf-class">ts-btn #{'ts-btn--outline' if result_partial else 'ts-btn--primary'}</attribute>
+                <attribute name="t-out">result_label or 'دیدن نتیجه'</attribute>
+            </xpath>
         </field>
     </record>
 
@@ -251,10 +287,14 @@
         <field name="website_id" ref="ts_website.website_ts"/>
         <field name="arch" type="xml">
             <xpath expr="//p[hasclass('tsp-head__help')][contains(text(), 'در چهار گام')]" position="replace">
-                <p class="tsp-head__help">در چهار گام: <t t-out="'، '.join(label for k, label in steps[:3])"/> و <t t-out="steps[3][1]"/>. چیزی پیش از گام آخر ارسال نمی‌شود.</p>
+                <!-- the step list below already names the steps (G6-P4-2) -->
+                <p class="tsp-head__help">چیزی پیش از گام آخر ارسال نمی‌شود.</p>
             </xpath>
             <xpath expr="//form[@t-if=&quot;step == '2'&quot;]/fieldset" position="attributes">
                 <attribute name="t-if">not batteries</attribute>
+            </xpath>
+            <xpath expr="//form[@t-if=&quot;step == '2'&quot;]/fieldset" position="before">
+                <p t-if="cat_note and not batteries" class="ts-hint tsb-catnote" t-out="cat_note"/>
             </xpath>
             <xpath expr="//form[@t-if=&quot;step == '2'&quot;]/fieldset" position="after">
                 <t t-if="batteries" t-call="ts_battery.item_picker" pick_inst_id="inst.id if (inst and not bat) else 0"/>
@@ -265,7 +305,7 @@
             </xpath>
             <xpath expr="//dd[@t-out='inst.name']" position="replace">
                 <dd t-if="bat"><t t-out="bat.name"/> (<t t-out="fa(len(bat.line_ids))"/> سنجه، حدود <t t-out="fa(bat.est_minutes)"/> دقیقه)</dd>
-                <dd t-else="" t-out="inst.name"/>
+                <dd t-else="" t-out="inst.ts_title()"/>
             </xpath>
         </field>
     </record>
@@ -278,6 +318,9 @@
         <field name="arch" type="xml">
             <xpath expr="//fieldset[legend[text()='سنجه']]" position="attributes">
                 <attribute name="t-if">not batteries</attribute>
+            </xpath>
+            <xpath expr="//fieldset[legend[text()='سنجه']]" position="before">
+                <p t-if="cat_note and not batteries" class="ts-hint tsb-catnote" t-out="cat_note"/>
             </xpath>
             <xpath expr="//fieldset[legend[text()='سنجه']]" position="after">
                 <t t-if="batteries" t-call="ts_battery.item_picker" pick_inst_id="draft.get('instrument_id') if not draft.get('battery_id') else 0"/>
@@ -295,7 +338,7 @@
             </xpath>
             <xpath expr="//dd[@t-out='inst.name']" position="replace">
                 <dd t-if="bat"><t t-out="bat.name"/> (<t t-out="fa(len(bat.line_ids))"/> سنجه)</dd>
-                <dd t-else="" t-out="inst.name"/>
+                <dd t-else="" t-out="inst.ts_title()"/>
             </xpath>
         </field>
     </record>
@@ -317,6 +360,10 @@
             <xpath expr="//p[hasclass('tsp-head__help')]/t[@t-out='c.instrument_id.name']" position="attributes">
                 <attribute name="t-out">c.ts_item_name()</attribute>
             </xpath>
+            <!-- what the client is asked for (G6-P3-2) -->
+            <xpath expr="//p[hasclass('tsp-head__help')]" position="after">
+                <p t-if="c.battery_id" class="tsp-head__help tsb-facts" t-out="c.battery_id.ts_facts()"/>
+            </xpath>
         </field>
     </record>
     <record id="campaign_join_battery" model="ir.ui.view">
@@ -324,6 +371,10 @@
         <field name="inherit_id" ref="ts_panel.tpl_campaign_join"/>
         <field name="website_id" ref="ts_website.website_ts"/>
         <field name="arch" type="xml">
+            <xpath expr="//t[@t-call='website.layout']" position="attributes">
+                <attribute name="additional_title.f"/>
+                <attribute name="additional_title">('دعوت به مجموعهٔ ' + c.battery_id.name) if c.battery_id else 'دعوت به سنجه'</attribute>
+            </xpath>
             <xpath expr="//h1[@t-out='inst.title']" position="replace">
                 <h1 t-if="c.battery_id">مجموعهٔ <t t-out="c.battery_id.name"/></h1>
                 <h1 t-else="" t-out="inst.title"/>

@@ -86,6 +86,11 @@
     .ts-muted { color: var(--color-neutral-400); }
     .ts-num { font-variant-numeric: tabular-nums; }
     .ts-sr, .tsp-sr { position: absolute; inline-size: 1px; block-size: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+    // Shared separator in meta lines (UX audit 2026-10-12, G6-PT1): a drawn dot, never the « · » glyph, which next to a
+    // Persian digit reads as zero («۲ · سنجه» looked like «۲۰ سنجه»). Markup: <t t-call="ts_website.sep"/>; screen readers
+    // hear a comma (the hidden «، »).
+    .ts-sep { display: inline-block; inline-size: 4px; block-size: 4px; border-radius: 50%; background: currentColor; opacity: .55;
+        vertical-align: middle; margin-inline: .55em; }
     .ts-ico { inline-size: 1.15em; block-size: 1.15em; flex: none; display: inline-block; vertical-align: -.2em; }
 
     // ---------- buttons: primary = accent border + accent-900 fill + accent-300 text; secondary = neutral border; quiet = text ----------

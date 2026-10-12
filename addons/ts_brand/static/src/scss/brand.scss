@@ -24,9 +24,43 @@
     .tsbr-color input[type="text"] { max-width: 9rem; }
     .tsbr-color__pick { width: 44px; height: 44px; padding: 0; border: 0; background: none; }
     .tsbr-lic { margin-top: var(--space-2, 8px); }
+    // no photo: a monogram circle (first letter of the name), never a broken or stand-in picture (UX audit G8-PT-1)
+    .tsbr-mono {
+        display: inline-flex; align-items: center; justify-content: center; flex: none;
+        background: var(--color-accent-900); color: var(--color-accent-200); font-family: var(--font-display); font-size: var(--fs-4); font-weight: 600;
+    }
+    .tsbr-logo--empty {
+        display: inline-flex; align-items: center; justify-content: center; flex: none; border: 1px dashed var(--color-neutral-600);
+        color: var(--color-neutral-400); font-size: var(--fs-0); background: transparent;
+    }
+    .tsbr-logo[hidden], .tsbr-logo--empty[hidden], .tsbr-org__contact[hidden] { display: none; }
+    .tsbr-counselor__role { color: var(--color-neutral-400); font-size: var(--fs-0); }
+    .tsbr-counselor--sample { opacity: .75; }
+    .tsbr-names { margin: 0 0 var(--space-3, 12px); padding-inline-start: var(--space-4, 16px); color: var(--color-neutral-300); font-size: var(--fs-1); }
+    .tsbr-names li + li { margin-block-start: var(--space-1, 4px); }
+    .tsbr-preview__note { margin: var(--space-2, 8px) 0 0; }
+    .tsbr-memprev { margin-block: var(--space-2, 8px) var(--space-4, 16px); }
+    .tsbr-head--solo { border-top: 0; padding-top: 0; }
+    .tsbr-req, .tsbr-opt { color: var(--color-neutral-400); font-weight: 400; font-size: var(--fs-0); }
+    // colour: the swatch is the main control (visible label), the #rrggbb code is the secondary one
+    .tsbr-colorset { border: 0; padding: 0; margin: 0; min-inline-size: 0; }
+    .tsbr-colorset legend { float: none; inline-size: auto; padding: 0; }
+    .tsbr-color { flex-wrap: wrap; gap: var(--space-3, 12px); }
+    .tsbr-color__pickwrap, .tsbr-color__hex { display: inline-flex; align-items: center; gap: var(--space-2, 8px); }
+    .tsbr-color__pickwrap[hidden] { display: none; }
+    .tsbr-color__picklabel, .tsbr-color__hexlabel { font-size: var(--fs-1); color: var(--color-text); }
+    .tsbr-color__pick { border-radius: var(--r-8); cursor: pointer; }
+    .tsbr-color__pick:focus-visible { outline: 2px solid var(--color-accent-400); outline-offset: 2px; }
+    // codes typed in an LTR field keep Latin digits (the FD font would draw «#۲a۶f۹۷», G8-P2-5)
+    .tsp-field input[type="text"][dir="ltr"], .tsbr-color input[type="text"] { font-family: Vazirmatn, var(--font-text); }
 }
+// One output button on a report (UX audit G8-PT-4): where «دریافت فایل PDF» is offered, the browser-print button of the
+// lower module beside it is not (the PDF route falls back to print mode when the server has no PDF engine).
+#wrapwrap .ts-report-actions:has(.tsbr-pdf) .ts-js-print,
+#wrapwrap .ts-report-actions:has(.tsbr-pdf) .tt-inline-form { display: none; }
 @media print {
     #wrapwrap .tsbr-head { break-inside: avoid; }
+    #wrapwrap .tsbr-mono { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
     #wrapwrap .tsbr-pdf, #wrapwrap .tsbr-self-link { display: none !important; }
 }
 
@@ -51,7 +85,20 @@
         border-block-end: 2px solid var(--color-neutral-400); transform: rotate(45deg); transition: transform .15s;
     }
     .tsob__toggle[aria-expanded="true"]::after { transform: rotate(-135deg); }
-    .tsob__toggle[hidden], .tsob__list[hidden] { display: none; }
+    .tsob__toggle[hidden], .tsob__list[hidden], .tsob__more[hidden] { display: none; }
+    .tsob__more { display: grid; gap: var(--space-3); }
+    .tsob__list--done { padding-block-start: var(--space-2); }
+    .tsob__status { display: grid; gap: var(--space-1); padding: var(--space-2) var(--space-3); border-radius: var(--r-8); background: var(--color-neutral-900); }
+    .tsob__status p { margin: 0; }
+    .tsob__status-intro { color: var(--color-neutral-300); font-size: var(--fs-0); }
+    .tsob-stat { display: flex; flex-wrap: wrap; align-items: center; gap: 0 var(--space-2); font-size: var(--fs-1); }
+    .tsob-stat strong { font-weight: 500; }
+    .tsob-stat--ok strong { color: var(--status-ok); }
+    .tsob-stat--wait strong { color: var(--status-warn); }
+    .tsob-stat__link { display: inline-flex; align-items: center; min-block-size: var(--control-min); color: var(--color-accent-300); }
+    .tsob-step--current { padding-inline-start: var(--space-3); border-inline-start: 3px solid var(--color-accent-500); border-radius: var(--r-8); }
+    .tsob-step--current .tsob-step__ico { border-color: var(--color-accent-500); }
+    .tsob-tag--now { background: var(--color-accent-900); color: var(--color-accent-200); }
     .tsob__list { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--space-3); }
     .tsob-step { display: flex; align-items: flex-start; gap: var(--space-3); padding-block: var(--space-3) 0; border-block-start: 1px solid var(--color-neutral-800); }
     .tsob-step:first-child { border-block-start: 0; padding-block-start: 0; }

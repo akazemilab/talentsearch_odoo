@@ -8,6 +8,7 @@
 // - file pickers (ts_website.filefield and every bare <input type=file>): Persian button «انتخاب فایل» + live file name
 // - Solar Hijri date fields (ts_website.jdate): Jalali <-> Gregorian conversion (below, no library), fills the hidden
 //   ISO field, confirms the date in words («۲۰ مهر ۱۴۰۵») or says what is wrong
+// - forms marked data-ts-dirty="<card name>": unsaved changes are named before another form is saved or the page is left
 (function () {
     'use strict';
     var KEY = 'ts-site-theme';
@@ -236,11 +237,44 @@
         });
     }
 
+    // Several independent save forms on one page (UX audit 2026-10-12, G6-P1-1): a form marked
+    // data-ts-dirty="<card name>" remembers that it was changed; saving ANOTHER form, or leaving the page, first asks,
+    // naming the card whose changes would be lost. Without JavaScript every form simply saves its own card.
+    function initDirty() {
+        var forms = Array.prototype.slice.call(document.querySelectorAll('form[data-ts-dirty]'));
+        if (!forms.length) { return; }
+        var leaving = false;
+        function dirtyOthers(except) {
+            return forms.filter(function (f) { return f !== except && f.dataset.tsChanged === '1'; });
+        }
+        forms.forEach(function (f) {
+            function mark() { f.dataset.tsChanged = '1'; }
+            f.addEventListener('input', mark);
+            f.addEventListener('change', mark);
+        });
+        document.addEventListener('submit', function (ev) {
+            var form = ev.target;
+            var others = dirtyOthers(form);
+            if (others.length) {
+                var names = others.map(function (f) { return '«' + f.getAttribute('data-ts-dirty') + '»'; }).join('، ');
+                var ok = window.confirm('تغییرهای ' + names + ' هنوز ذخیره نشده و با این کار از دست می‌رود. ادامه می‌دهید؟');
+                if (!ok) { ev.preventDefault(); return; }
+            }
+            leaving = true;
+        });
+        window.addEventListener('beforeunload', function (ev) {
+            if (leaving || !dirtyOthers(null).length) { return; }
+            ev.preventDefault();
+            ev.returnValue = '';
+        });
+    }
+
     function init() {
         openFromHash();
         initScrollers();
         initFiles();
         initDates();
+        initDirty();
     }
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', init);

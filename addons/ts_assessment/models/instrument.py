@@ -75,6 +75,12 @@ class TsInstrument(models.Model):
             rec.title = '%s (%s پرسش)' % (base, n.translate(str.maketrans('0123456789', '۰۱۲۳۴۵۶۷۸۹'))) if dup else base
             rec.slug = re.sub(r'\s+', '-', base) + ('-%s' % n if dup else '')
 
+    def ts_title(self):
+        """The name people see everywhere (UX audit 2026-10-12): «فهرست پاکزیستی», never the source name with its
+        Latin item count «فهرست پاکزیستی - 20». Falls back to the cleaned name before `title` is computed."""
+        self.ensure_one()
+        return self.title or self._ts_base_title(self.name) or self.name or ''
+
     def _ts_refresh_titles(self):
         insts = self.with_context(active_test=False).search([])
         self.env.add_to_compute(self._fields['title'], insts)

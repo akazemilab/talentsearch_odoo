@@ -12,6 +12,7 @@ from odoo import api, fields, models
 from odoo.exceptions import UserError, ValidationError
 
 from .catalog import BATTERY_NOT_IN_CATALOG
+from .battery import ts_strip_limit
 
 PERSIAN_DIGITS = str.maketrans('0123456789', '۰۱۲۳۴۵۶۷۸۹')
 
@@ -131,9 +132,17 @@ class TsAssignmentBattery(models.Model):
         return len(rows.filtered(lambda t: t.state == 'done')), total
 
     def ts_item_name(self):
-        """What was invited, in words: the battery name or the instrument name."""
+        """What was invited, in words: the battery name or the instrument's display title."""
         self.ensure_one()
-        return ('مجموعهٔ %s' % self.battery_id.name) if self.battery_id else self.instrument_id.name
+        return ('مجموعهٔ %s' % self.battery_id.name) if self.battery_id else self.instrument_id.ts_title()
+
+    def ts_battery_progress_text(self):
+        """«۱ از ۲ سنجه انجام شده» ('' for a single invitation)."""
+        self.ensure_one()
+        if not self.battery_id:
+            return ''
+        done, total = self.ts_battery_progress()
+        return '%s از %s سنجه انجام شده' % (fa(done), fa(total))
 
     # ------------------------------------------------------------------ invitation SMS names the battery
     def _ts_invite_sms_body(self):
@@ -156,13 +165,21 @@ class TsBatteryRunHelpers(models.Model):
         return self.ts_lines()[:1].instrument_id
 
     def ts_card(self):
-        """Facts of a battery card (wizard, consent, invitation page): instruments with item counts and minutes."""
+        """Facts of a battery card (wizard, consent, invitation page): instruments with item counts and minutes.
+        The description is shown without the «… نه تشخیص» sentence: the pages say the limit once (UX audit G6-PT9)."""
         self.ensure_one()
         b = self.sudo()
-        lines = [{'name': l.instrument_id.title or l.instrument_id.name, 'items': l.instrument_id.active_item_count or 0,
+        lines = [{'name': l.instrument_id.ts_title(), 'items': l.instrument_id.active_item_count or 0,
                   'minutes': l.instrument_id.duration_minutes or 0} for l in b.ts_lines()]
-        return {'name': b.name, 'description': b.description or '', 'count': len(lines), 'items': b.item_count,
+        return {'name': b.name, 'description': ts_strip_limit(b.description), 'count': len(lines), 'items': b.item_count,
                 'minutes': b.est_minutes, 'lines': lines}
+
+    def ts_facts(self):
+        """One line for a panel page: «۲ سنجه، ۱۳ پرسش، حدود ۵ دقیقه: فهرست پاکزیستی، فهرست تعهد فردی»."""
+        self.ensure_one()
+        c = self.ts_card()
+        return '%s سنجه، %s پرسش، حدود %s دقیقه: %s' % (fa(c['count']), fa(c['items']), fa(c['minutes']),
+                                                       '، '.join(ln['name'] for ln in c['lines']))
 
 
 class TsCampaignBattery(models.Model):
@@ -197,7 +214,7 @@ class TsCampaignBattery(models.Model):
 
     def ts_item_name(self):
         self.ensure_one()
-        return ('مجموعهٔ %s' % self.battery_id.name) if self.battery_id else self.instrument_id.name
+        return ('مجموعهٔ %s' % self.battery_id.name) if self.battery_id else self.instrument_id.ts_title()
 
 
 class TsAttemptBattery(models.Model):
@@ -240,12 +257,13 @@ class TsAttemptBattery(models.Model):
         return sib[:sib.ids.index(self.id)].filtered(lambda t: t.state != 'done')[:1]
 
     def ts_battery_label(self):
-        """Player header: «مجموعهٔ X · سنجهٔ ۲ از ۵» (empty for a single attempt)."""
+        """Player header: «مجموعهٔ X، سنجهٔ ۲ از ۵» (empty for a single attempt). A comma, never « · »: the middle dot
+        next to a Persian digit reads as zero (UX audit G6-PT1)."""
         self.ensure_one()
         b = self.ts_battery()
         if not b:
             return ''
-        return 'مجموعهٔ %s · سنجهٔ %s از %s' % (b.name, fa(self.ts_battery_index()), fa(len(self.ts_battery_siblings())))
+        return 'مجموعهٔ %s، سنجهٔ %s از %s' % (b.name, fa(self.ts_battery_index()), fa(len(self.ts_battery_siblings())))
 
     def ts_battery_info(self):
         """Consent page of the first attempt: the battery card, or None for a single attempt / a sibling."""
@@ -253,7 +271,9 @@ class TsAttemptBattery(models.Model):
         b = self.ts_battery()
         if not b or self.ts_battery_first() != self:
             return None
-        return b.ts_card()
+        card = b.ts_card()
+        card['shared'] = self.sudo().assignment_id.share_level not in (False, 'none')
+        return card
 
     # ------------------------------------------------------------------ consent once, recorded per attempt
     def give_consent(self, research=False, role='self', subject=None):

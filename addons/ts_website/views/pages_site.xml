@@ -584,7 +584,7 @@
         <field name="arch" type="xml">
             <t t-name="ts_website.page_contact">
                 <t t-set="q" t-value="request.params"/>
-                <t t-set="topic" t-value="q.get('topic') if q.get('topic') in ('demo', 'pro', 'question', 'support', 'partner') else 'demo'"/>
+                <t t-set="topic" t-value="q.get('topic') if q.get('topic') in ('demo', 'pro', 'question', 'support', 'partner', 'credit') else 'demo'"/>
                 <t t-call="website.layout" additional_title.f="تماس">
                     <div id="wrap" class="ts-page">
                         <section class="ts-hero">
@@ -609,6 +609,7 @@
                                                 <option value="question" t-att-selected="topic == 'question' or None">پرسش</option>
                                                 <option value="support" t-att-selected="topic == 'support' or None">پشتیبانی</option>
                                                 <option value="partner" t-att-selected="topic == 'partner' or None">سازمان یا مرکز مشاوره هستم</option>
+                                                <option value="credit" t-att-selected="topic == 'credit' or None">شارژ اعتبار پنل</option>
                                             </select>
                                         </div>
                                         <div class="ts-form__row">
@@ -616,7 +617,7 @@
                                             <div><label for="ts-contact">ایمیل یا موبایل</label><input id="ts-contact" type="text" name="contact" dir="ltr" required="required" maxlength="160" autocomplete="email" inputmode="email"/></div>
                                             <div><label for="ts-org">مدرسه یا مرکز (اختیاری)</label><input id="ts-org" type="text" name="company" maxlength="160" autocomplete="organization"/></div>
                                         </div>
-                                        <div><label for="ts-msg">پیام</label><textarea id="ts-msg" name="message" rows="4" maxlength="3000"/></div>
+                                        <div><label for="ts-msg">پیام</label><textarea id="ts-msg" name="message" rows="4" maxlength="3000" t-out="(q.get('message') or (('درخواست شارژ اعتبار پنل. کد پنل: %s' % q.get('panel')) if (topic == 'credit' and q.get('panel')) else ''))[:500]"/></div>
                                         <label class="ts-check"><input type="checkbox" name="consent_contact" value="1" required="required"/><span>برای پاسخ به همین پیام با من تماس بگیرید.</span></label>
                                         <p t-if="q.get('error')" class="ts-form__error" role="alert"><t t-call="ts_website.icon" ico.f="warning-circle"/>نام و راه تماس را بنویسید و گزینهٔ تماس را علامت بزنید.</p>
                                         <div class="ts-form__foot">
@@ -654,7 +655,7 @@
                                 <div class="ts-hero__words">
                                     <span class="ts-hero__kicker">حریم خصوصی</span>
                                     <h1>دادهٔ شما، تصمیم شما.</h1>
-                                    <p class="ts-hero__lead">نسخهٔ ۱ · از ۷ مهر ۱۴۰۵</p>
+                                    <p class="ts-hero__lead">نسخهٔ ۱<t t-call="ts_website.sep"/>از ۷ مهر ۱۴۰۵</p>
                                 </div>
                             </div>
                         </section>

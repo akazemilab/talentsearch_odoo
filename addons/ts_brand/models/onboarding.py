@@ -85,8 +85,9 @@ class TsMemberOnboarding(models.Model):
         return bool(m.catalog_restricted or m.restrict_instrument_ids or m.restrict_battery_ids or m.ts_catalog_seen_on)
 
     def ts_onb_steps(self):
-        """[{key, label, why, state ('done' | 'way' | 'open'), done, optional, url, btn, note, nocap}] for this member's
-        panel, whatever the member's role (the caller decides whether to show them)."""
+        """[{key, n, label, why, state ('done' | 'way' | 'open'), done, optional, current, url, btn, note, nocap}] for this
+        member's panel, whatever the member's role (the caller decides whether to show them). Order (UX audit G8-P1-4: the
+        real dependency chain): identity, counselors, credit, catalog, caps (optional), first invitation."""
         self.ensure_one()
         me = self.sudo()
         ws = me.workspace_id
@@ -101,15 +102,15 @@ class TsMemberOnboarding(models.Model):
                           'url': None if done else url, 'btn': btn, 'note': note if (keep_note or not done) else None,
                           'nocap': nocap and not done})
 
-        # 1. identity on reports: the public name (ts_brand) and the logo (= the institution partner's image)
-        has_name = bool(clean_line(ws.public_name))
-        has_logo = bool(ws.partner_id.image_1920)
+        # 1. identity on reports: the name the client sees (ts_public_name(): the report name, else the panel name) and a
+        #    real logo (= the institution partner's image, Odoo's stand-in picture does not count). The logo field lives in
+        #    the identity section of the settings page, so the button always opens that section.
+        has_name = bool(ws.ts_public_name())
+        has_logo = ws.ts_has_logo()
         can1 = me.has_perm('panel:profile') and me.ts_brand_manager()
         missing = [t for t, ok in (('نام مرکز در گزارش‌ها', has_name), ('لوگو', has_logo)) if not ok]
         add('identity', 'هویت مرکز در گزارش‌ها', 'نام و لوگوی مرکز بالای گزارش هر مراجع، در صفحه و در فایل PDF، می‌آید.',
-            has_name and has_logo,
-            url=(base + '/settings' + ('#tsbr-org' if not has_name else '#tsp-profile')) if can1 else None,
-            btn='تکمیل هویت مرکز',
+            has_name and has_logo, url=(base + '/settings#tsbr-org') if can1 else None, btn='تکمیل هویت مرکز',
             note=('مانده: %s.' % ' و '.join(missing)) if can1 else NOT_YOURS)
 
         # 2. counselors: an active clinician or clinic director (roles that never include the owner); a pending colleague
@@ -124,7 +125,17 @@ class TsMemberOnboarding(models.Model):
         add('counselors', 'دعوت مشاوران', 'مشاوران با حساب خودشان مراجعان را دعوت می‌کنند و گزارش ویژهٔ مشاور را می‌بینند.',
             staff, url=(base + '/members#tsp-invite') if can2 else None, btn='دعوت همکار', note=note2, way=bool(pending))
 
-        # 3. each counselor's catalog. RULE (explainable in one sentence on the help page): done when the panel has exactly
+        if prepaid:
+            # 3. credit: the panel can hold the price of an invitation. Credit is added only by an invoice the EOT team
+            #    issues, so the button asks for it (contact form, topic «شارژ اعتبار پنل», panel code filled in).
+            available = env['ts.wallet']._for_workspace(ws).ts_available()
+            balance = 'موجودی: %s.' % ws.ts_toman(available)
+            add('credit', 'اعتبار پنل', 'هر دعوت هزینهٔ خود را از اعتبار پنل رزرو می‌کند؛ بدون اعتبار، دعوت فرستاده نمی‌شود.',
+                available > 0, url=ws.ts_contact_url('credit') if me.has_perm('credits:read') else None, btn='درخواست شارژ اعتبار',
+                note=balance if available > 0 else balance + ' شارژ اعتبار با فاکتوری است که تیم استعدادیاب صادر می‌کند.',
+                keep_note=True)
+
+        # 4. each counselor's catalog. RULE (explainable in one sentence on the help page): done when the panel has exactly
         #    one active counselor (role clinician; there is nothing to divide, the panel catalog is theirs), or when every
         #    active counselor has a catalog decision on record: a restriction (catalog_restricted or a non-empty list), or
         #    the catalog form of their member page saved at least once (ts_catalog_seen_on, set by ts_set_catalog even when
@@ -144,7 +155,7 @@ class TsMemberOnboarding(models.Model):
             btn='تعیین سنجه‌های مشاور', note=note3)
 
         if prepaid:
-            # 4. monthly caps (optional): any cap set on a capped role, or «بدون سقف بماند» recorded once
+            # 5. monthly caps (optional): any cap set on a capped role, or «بدون سقف بماند» recorded once
             capped = env['ts.workspace.member'].sudo().search_count(
                 [('workspace_id', '=', ws.id), ('active', '=', True), ('role', 'in', list(CAPPED_ROLES)), ('monthly_cap', '>', 0)])
             can4 = me.has_perm('credits:manage')
@@ -153,19 +164,38 @@ class TsMemberOnboarding(models.Model):
                 btn='تعیین سقف', note=(None if clin else 'پس از پیوستن نخستین مشاور.') if can4 else NOT_YOURS,
                 optional=True, nocap=can4)
 
-            # 5. credit: the panel can hold the price of an invitation
-            available = env['ts.wallet']._for_workspace(ws).ts_available()
-            add('credit', 'اعتبار پنل', 'هر دعوت هزینهٔ خود را از اعتبار پنل رزرو می‌کند؛ بدون اعتبار، دعوت فرستاده نمی‌شود.',
-                available > 0, url=base + '/credits' if me.has_perm('credits:read') else None, btn='اعتبار و فاکتورها',
-                note='موجودی: %s.' % ws.ts_toman(available), keep_note=True)
-
         # 6. the first invitation of a participant (a self-shared result is not an invitation)
         invited = env['ts.assignment'].sudo().search_count([('workspace_id', '=', ws.id), ('channel', '!=', 'self_share')])
         can6 = me.can_act() and me.has_perm('invites:create')
         add('invite', 'نخستین دعوت', 'مراجع پیوند دعوت را می‌گیرد؛ پس از تکمیل، گزارش او در پنل دیده می‌شود.', invited,
-            url=(base + '/invites/new?fresh=1') if can6 else None, btn='دعوت تازه',
+            url=(base + '/invites/new?fresh=1') if (can6 and not ws.gated) else None, btn='دعوت تازه',
             note='پس از تأیید پنل، دعوت فرستاده می‌شود.' if ws.gated else None)
+
+        # numbering (the help section uses the same order) and the one current step: the first open, required step that
+        # has something to press. Only that step gets the primary button.
+        current = next((s for s in steps if s['state'] == 'open' and not s['optional'] and s['url']), None)
+        for i, s in enumerate(steps, 1):
+            s['n'] = i
+            s['current'] = s is current
         return steps
+
+    def ts_onb_status(self):
+        """The two set-up conditions the EOT team controls, shown under the progress as status lines (not tasks):
+        [{key, label, value, ok, url, link}]. The link opens the contact form with the panel code filled in."""
+        self.ensure_one()
+        ws = self.sudo().workspace_id
+        ask = ws.ts_contact_url('support')
+        out = [{'key': 'approval', 'label': 'تأیید پنل', 'ok': not ws.gated,
+                'value': 'انجام شد' if not ws.gated else 'در انتظار تیم استعدادیاب',
+                'url': None if not ws.gated else ask, 'link': 'پیگیری تأیید پنل'}]
+        staff = self.env['ts.workspace.member'].sudo().search(
+            [('workspace_id', '=', ws.id), ('active', '=', True), ('role', 'in', list(STAFF_ROLES))])
+        if staff:
+            ok_n = len(staff.filtered(lambda m: m.verification_state == 'verified'))
+            out.append({'key': 'licences', 'label': 'پروانهٔ مشاوران', 'ok': ok_n == len(staff),
+                        'value': '%s از %s تأییدشده' % (ws.ts_fa_num(ok_n), ws.ts_fa_num(len(staff))),
+                        'url': None if ok_n == len(staff) else ask, 'link': 'پیگیری تأیید پروانه'})
+        return out
 
     def ts_onb_checklist(self):
         """What the dashboard shows: None (not for this member, hidden, or every step done) or
@@ -177,7 +207,9 @@ class TsMemberOnboarding(models.Model):
         done_n = sum(1 for s in steps if s['done'])
         if done_n == len(steps):
             return None
-        return {'steps': steps, 'done_n': done_n, 'total': len(steps), 'open_n': len(steps) - done_n, 'help_url': HELP_URL}
+        return {'steps': steps, 'done_n': done_n, 'total': len(steps), 'open_n': len(steps) - done_n, 'help_url': HELP_URL,
+                'open': [s for s in steps if not s['done']], 'done': [s for s in steps if s['done']],
+                'status': self.ts_onb_status()}
 
     def ts_onb_set_hidden(self, by, hidden):
         """«بعداً نشانم نده» / «نمایش دوباره»: each member decides for themselves only."""

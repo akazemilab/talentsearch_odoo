@@ -12,6 +12,35 @@ SEP = '٬'      # Arabic thousands separator «٬»
 # Roles whose invitations a monthly cap can limit (never owner/admin/clinic_director/hr_admin).
 CAPPED_ROLES = ('clinician', 'counselor', 'hiring_manager', 'reviewer')
 
+# Who holds credits:read / credits:manage, by panel purpose (role labels of the glossary §3; «مدیر پنل» is not a role).
+_CREDIT_ROLES = {
+    'clinical': ('مالک', 'هماهنگ‌کننده', 'مدیر مرکز مشاوره'),
+    'employment': ('مالک', 'هماهنگ‌کننده', 'مدیر منابع انسانی'),
+    'benefits': ('مالک', 'هماهنگ‌کننده', 'مدیر منابع انسانی'),
+}
+_CREDIT_ASK = {'clinical': 'مالک یا مدیر مرکز مشاوره', 'employment': 'مالک یا مدیر منابع انسانی',
+               'benefits': 'مالک یا مدیر منابع انسانی'}
+
+
+def credit_roles(purpose, conj='و'):
+    """«مالک، هماهنگ‌کننده و مدیر مرکز مشاوره» (conj «و» or «یا»): every role that manages the panel's credit."""
+    roles = _CREDIT_ROLES.get(purpose, ('مالک', 'هماهنگ‌کنندهٔ پنل'))
+    return '%s %s %s' % ('، '.join(roles[:-1]), conj, roles[-1])
+
+
+def credit_ask(purpose):
+    """Whom a counselor asks for a top-up or a higher cap: «مالک یا مدیر مرکز مشاوره»."""
+    return _CREDIT_ASK.get(purpose, 'مالک یا هماهنگ‌کنندهٔ پنل')
+
+
+def item_title(rec):
+    """Display name of an instrument or battery: ts_display_title() when the catalog offers it, else the catalog title."""
+    if not rec:
+        return ''
+    if hasattr(rec, 'ts_display_title'):
+        return rec.ts_display_title()
+    return ('title' in rec._fields and rec.title) or rec.name
+
 
 def rial_int(x):
     """Round a Rial value to an integer (half away from zero)."""
@@ -35,6 +64,11 @@ def fa_num(n):
 def fmt_toman(rial):
     """Rial -> «۱٬۲۰۰٬۰۰۰ تومان». Prices are multiples of 10 Rial; anything else is rounded to the nearest toman."""
     return '%s تومان' % fa_num(rial_int(rial_int(rial) / 10.0))
+
+
+def toman_num(rial):
+    """Rial -> «۱۲۰٬۰۰۰» (toman, no unit)."""
+    return fa_num(rial_int(rial_int(rial) / 10.0))
 
 
 def jalali_month_bounds(now=None):

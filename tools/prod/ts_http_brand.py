@@ -163,6 +163,8 @@ own, c1, c3, p1 = login('owner'), login('c1'), login('c3'), login('p1')
 st, body = get(own, W + '/settings')
 check('owner: settings page has «هویت مرکز در گزارش‌ها» with the header preview', st == 200 and 'هویت مرکز در گزارش‌ها' in body
       and 'data-tsbr-preview' in body and 'name="sms_name"' in body, str(st))
+check('owner: the logo is uploaded in the identity form (one form, multipart), not in «مشخصات»', body.count('name="logo"') == 1
+      and 'id="tsbr-logo"' in body and any('multipart/form-data' in f for f in re.findall(r'<form[^>]*/settings/brand"[^>]*>', body)))
 n0 = audit_count('brand.change')
 st, loc, _ = post(own, W + '/settings/brand', {'public_name': PUBLIC, 'sms_name': 'مرکز آرامش', 'brand_color': '#2A6F97',
                                                'contact_line': '۰۲۱-۸۸۸۸۸۸۸۸ · aramesh.example'})
@@ -208,9 +210,18 @@ check('participant report: institution, counselor with verified licence, footer 
 check('participant report: brand colour as the header rule, PDF button', '--tsbr-color: #2a6f97' in body
       and '/my/assessments/%s/pdf' % AT in body)
 check('participant report: the counselor\'s contact data never appears', 'ts.brand.c1.http@example.invalid' not in body)
+bad_img = [m for m in re.findall(r'src="data:image/([a-z+]+);base64,([A-Za-z0-9+/]{8})', body)
+           if (m[0] == 'png' and not m[1].startswith('iVBOR')) or (m[0] == 'jpeg' and not m[1].startswith('/9j/'))]
+check('participant report: every header image is a data URI whose bytes match its type (no broken logo/photo)', not bad_img, str(bad_img))
+check('participant report: the counselor is labelled «مشاور شما», the licence «(تأییدشده)», no photo -> monogram',
+      'مشاور شما' in body and '(تأییدشده)' in body and 'tsbr-mono' in body)
+check('participant report: one PDF button (the browser-print button beside it is hidden by brand.scss)',
+      body.count('tsbr-pdf') == 1)
 st, body = get(c1, W + '/clients/%s/r/%s' % (CL, AT))
 check('panel result page: the same header for the responsible counselor', st == 200 and PUBLIC in body and LIC in body
       and (W + '/clients/%s/r/%s/pdf' % (CL, AT)) in body, str(st))
+check('panel result page: «مشاور مسئول», one output button, the print form replaced', 'مشاور مسئول' in body
+      and body.count('tsbr-pdf') == 1 and '/print"' not in body)
 shell("m = env['ts.workspace.member'].browse(%s); m.verification_state = 'pending'; env.cr.commit()" % M1)
 st, body = get(p1, '/my/assessments/' + AT)
 check('an unverified licence is hidden from the report', st == 200 and PUBLIC in body and LIC not in body, str(st))
@@ -273,11 +284,15 @@ sec = tsob_section(body)
 check('owner dashboard: «راه‌اندازی مرکز» with «۲ از ۴ انجام شده» and the help link', st == 200 and 'راه‌اندازی مرکز' in sec
       and '۲ از ۴ انجام شده' in sec and 'href="/help/panel#center-setup"' in sec, str(st))
 check('owner dashboard: the generic checklist is replaced', 'گام‌های راه‌اندازی' not in body)
-check('owner dashboard: the phone toggle button names its list (aria-expanded + aria-controls)',
-      'aria-controls="tsob-list"' in sec and 'aria-expanded=' in sec and 'id="tsob-list"' in sec)
+check('owner dashboard: open steps always shown; the phone toggle folds only the done steps (aria-expanded + aria-controls)',
+      'id="tsob-open"' in sec and 'aria-controls="tsob-more"' in sec and 'aria-expanded=' in sec and 'id="tsob-more"' in sec)
+check('owner dashboard: the EOT team\'s part (panel approval, counselor licences) shown as status lines',
+      'تأیید پنل' in sec and 'پروانهٔ مشاوران' in sec)
+check('owner dashboard: one current step with the only primary button of the list', sec.count('tsob-step--current') == 1
+      and sec.count('ts-btn--primary') == 1, str(sec.count('ts-btn--primary')))
 links = step_links(sec)
-check('owner dashboard: one button per open step (identity -> logo, catalog -> first counselor)',
-      W + '/settings#tsp-profile' in links and (W + '/members/%s#tsp-catalog' % M1) in links, str(links))
+check('owner dashboard: one button per open step (identity -> name and logo section, catalog -> first counselor)',
+      W + '/settings#tsbr-org' in links and (W + '/members/%s#tsp-catalog' % M1) in links, str(links))
 bad = []
 for url in links:
     path, _, frag = url.partition('#')

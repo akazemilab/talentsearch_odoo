@@ -81,7 +81,7 @@ for (n, w), items in want.items():
     pages[(n, w)] = (c, page)
     check('%s: dashboard opens' % n, st == 200 and 'Traceback' not in page, str(st))
     check('%s: menu has exactly the items of its permissions, help last' % n, core_menu(page) == items, str(menu(page)))
-    check('%s: one h1, Persian title with panel name' % n, page.count('<h1') == 1 and re.search(r'<title>[^<]*داشبورد[^<]*پنل S2', page) is not None)
+    check('%s: one h1, Persian title with panel name' % n, page.count('<h1') == 1 and re.search(r'<title>[^<]*پیشخوان[^<]*پنل S2', page) is not None)
 
 # tiles
 c, page = pages[('owner', A)]

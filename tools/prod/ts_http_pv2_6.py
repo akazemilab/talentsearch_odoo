@@ -163,7 +163,7 @@ st, body = get(own, W + '/invites')
 check('owner opens the invitation list: one h1, chips with counts, empty text', st == 200 and body.count('<h1') == 1 and 'tsp-chip' in body, str(st))
 st, body = get(own, W)
 check('the panel address is the dashboard with a new-invitation button and tiles into the list',
-      st == 200 and 'داشبورد' in body and '/invites/new' in body and (('/my/workspaces/%s/invites?state=opened' % A) in body or 'tsp-dash-empty' in body), str(st))
+      st == 200 and 'پیشخوان' in body and '/invites/new' in body and (('/my/workspaces/%s/invites?state=opened' % A) in body or 'tsp-dash-empty' in body), str(st))
 check('W/home still answers (it redirects here)', get(own, W + '/home')[0] == 200)
 st, body = get(own, W + '/legacy')
 check('the old page lives on at W/legacy with its notice', st == 200 and 'رفتن به داشبورد' in body)

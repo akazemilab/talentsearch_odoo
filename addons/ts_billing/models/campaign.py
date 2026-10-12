@@ -7,10 +7,10 @@
 from odoo import api, models
 from odoo.exceptions import UserError
 
-from ..tools import fa_num, fmt_toman
-from .wallet import INSUFFICIENT, CreditRefused
+from ..tools import credit_ask, fa_num, fmt_toman
+from .wallet import INSUFFICIENT_BATCH, INSUFFICIENT_BATCH_ASK, CreditRefused
 
-OPEN_LINK_FLOOR = 'برای پیوند باز دست‌کم اعتبار %s لازم است (%s استفاده).'
+OPEN_LINK_FLOOR = 'برای پیوند باز دست‌کم %s اعتبار لازم است (هزینهٔ %s نفر).'
 JOIN_FULL = 'ظرفیت این پیوند پر شده است. با مرکز مشاوره تماس بگیرید.'
 
 
@@ -57,8 +57,12 @@ class TsCampaignBilling(models.Model):
             total = price * len(to_invite)
             available = self.env['ts.wallet']._for_workspace(ws).ts_available()
             if total and available < total:
-                err = CreditRefused(INSUFFICIENT % (fmt_toman(available), fmt_toman(total)), 'insufficient', ws, total,
-                                    self.created_by_id)
+                creator = self.created_by_id
+                if creator and not creator.sudo().has_perm('credits:read'):
+                    text = INSUFFICIENT_BATCH_ASK % credit_ask(ws.purpose)
+                else:
+                    text = INSUFFICIENT_BATCH % (fa_num(len(to_invite)), fmt_toman(price), fmt_toman(total), fmt_toman(available))
+                err = CreditRefused(text, 'insufficient', ws, total, creator)
                 err.ts_log(self.env)
                 self._ts_drop_if_empty()
                 raise err

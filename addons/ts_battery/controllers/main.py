@@ -25,6 +25,7 @@ from odoo.addons.ts_panel.controllers.portal import TsPanelPortal
 from odoo.addons.ts_panel.controllers.reports import LEVEL_KIND
 from odoo.addons.ts_talent.controllers.main import TsTalent
 
+from ..models.battery import est_minutes
 from ..models.catalog import BATTERY_NOT_IN_CATALOG
 
 LIMIT_NOTE = 'این مجموعه برای کمک به گفت‌وگوی مشاوره است، نه تشخیص.'
@@ -112,10 +113,15 @@ class TsBatteryPlayer(TsTalent):
         sib = attempt.ts_battery_siblings()
         inst = nxt.instrument_id
         matrix = bool(nxt.ts_is_matrix()) if hasattr(nxt, 'ts_is_matrix') else False
+        # what is left of the whole battery (G6-P14-2); item counts only when no talent inventory (fields, not items) is left
+        rest = sib.filtered(lambda t: t.state != 'done')
+        rest_matrix = any(hasattr(t, 'ts_is_matrix') and t.ts_is_matrix() for t in rest)
+        rest_items = 0 if rest_matrix else sum(rest.mapped('instrument_id.active_item_count'))
         return request.render('ts_battery.transition', {
             'attempt': attempt, 'battery': b, 'n_done': attempt.ts_battery_index(), 'total': len(sib),
             'done_count': len(sib.filtered(lambda t: t.state == 'done')), 'nxt': nxt, 'inst': inst, 'matrix': matrix,
             'items': inst.active_item_count or 0, 'minutes': inst.duration_minutes or 0,
+            'rest_count': len(rest), 'rest_items': rest_items, 'rest_minutes': est_minutes(rest_items),
             'tu': attempt.ts_informal(), 'fa': fa_digits, 'page_name': 'ts_assessments'})
 
     # ------------------------------------------------------------------ /my/assessments: a battery is one row
@@ -242,9 +248,11 @@ class TsBatteryPortal(TsPanelPortal):
                 pct = int(round(100.0 * done / total)) if total else 0
                 if not pct and cur.state == 'in_progress' and cur.answered_count:
                     pct = 1
-                nxt.update(title='مجموعهٔ %s · %s از %s سنجه انجام شده' % (a.battery_id.name, fa_digits(done), fa_digits(total)),
+                # the headline is the battery name only; the progress is part of the meta line (G6-P16-1)
+                nxt.update(title='مجموعهٔ %s' % a.battery_id.name,
+                           battery_progress='%s از %s سنجه انجام شده' % (fa_digits(done), fa_digits(total)),
                            url='/take/%s' % cur.access_token, progress=pct, attempt_id=cur.id, battery=True,
-                           battery_next=cur.instrument_id.title or cur.instrument_id.name)
+                           battery_next=cur.instrument_id.ts_title())
                 qc['going'] = qc['going'].filtered(lambda x: x.sudo().assignment_id != a)
         elif nxt and nxt.get('kind') == 'result' and first_done:
             a = first_done.sudo().assignment_id
@@ -274,6 +282,16 @@ class TsBatteryPortal(TsPanelPortal):
 
 
 # ====================================================================== panel: a member's catalog (catalog:assign)
+def _names_line(names, shown=3):
+    """«فقط «الف»، «ب»، «ج» و ۲ مورد دیگر»; '' for no names."""
+    if not names:
+        return ''
+    line = 'فقط ' + '، '.join('«%s»' % n for n in names[:shown])
+    if len(names) > shown:
+        line += ' و %s مورد دیگر' % fa_digits(len(names) - shown)
+    return line
+
+
 class TsBatteryMembers(TsPanelMembers):
 
     @http.route()
@@ -288,9 +306,12 @@ class TsBatteryMembers(TsPanelMembers):
         if can:
             ws = me.workspace_id
             restricted = bool(m.catalog_restricted or m.restrict_instrument_ids or m.restrict_battery_ids)
+            bats = m.allowed_batteries() if restricted else request.env['ts.battery'].browse()
+            insts = m.allowed_instruments() if restricted else request.env['ts.instrument'].browse()
             qc.update(panel_insts=ws.ts_catalog_instruments(), panel_bats=ws.ts_catalog_batteries(),
-                      cat_restricted=restricted, cat_insts=set(m.allowed_instruments().ids) if restricted else set(),
-                      cat_bats=set(m.allowed_batteries().ids) if restricted else set())
+                      cat_restricted=restricted, cat_insts=set(insts.ids), cat_bats=set(bats.ids),
+                      # «اکنون: فقط «X»، «Y» و ۲ مورد دیگر» (G6-P1-3): batteries first, then single instruments
+                      cat_now=_names_line([b.name for b in bats.sudo()] + [i.ts_title() for i in insts.sudo()]))
         return res
 
     @http.route('/my/workspaces/<int:ws_id>/members/<int:mid>/catalog', type='http', auth='user', website=True,
@@ -334,13 +355,21 @@ def _wants_battery(post):
     return post.get('item_kind') == 'battery' or (bool(post.get('battery_id')) and not post.get('instrument_id'))
 
 
+def _catalog_note(me):
+    """A member whose catalog was narrowed by the panel learns why the list is short (G6-P5-1); '' otherwise."""
+    if not (me.catalog_restricted or me.restrict_instrument_ids or me.restrict_battery_ids):
+        return ''
+    who = 'مدیر مرکز' if me.workspace_id.purpose == 'clinical' else 'مالک یا هماهنگ‌کنندهٔ پنل'
+    return '%s این موارد را برای شما فعال کرده است؛ برای مورد دیگر با او هماهنگ کنید.' % who
+
+
 def _picker_ctx(me, d):
     bats = me.allowed_batteries()
     bat = bats.filtered(lambda b: b.id == d.get('battery_id'))[:1] if d.get('battery_id') else bats.browse()
     # a member without single instruments (catalog restricted to batteries) gets the battery choice directly
     only_bats = bool(bats) and not me.allowed_instruments()
     return {'batteries': bats, 'bat': bat, 'bat_cards': {b.id: b.ts_card() for b in bats},
-            'item_kind': 'battery' if (bat or only_bats) else 'single'}
+            'item_kind': 'battery' if (bat or only_bats) else 'single', 'cat_note': _catalog_note(me)}
 
 
 class TsBatteryInvites(TsPanelInvites):
@@ -395,11 +424,24 @@ class TsBatteryInvites(TsPanelInvites):
 
     @http.route()
     def invite(self, ws_id, aid, **kw):
+        """A battery invitation shows its result button only when at least one instrument is done; a partly done
+        battery says which part (G6-P8-1). Who may open it is unchanged (the base sets `result` only when allowed)."""
         res = super().invite(ws_id, aid, **kw)
         qc = getattr(res, 'qcontext', None)
-        if qc and qc.get('a') and qc['a'].battery_id and qc.get('result'):
+        if qc is None:
+            return res
+        qc.setdefault('result_label', None)
+        qc.setdefault('result_partial', False)
+        if qc.get('a') and qc['a'].battery_id and qc.get('result'):
             a = qc['a']
-            qc['result'] = panel_battery_url(ws_id, a.client_id.id, a.id)
+            done, total = a.ts_battery_progress()
+            if not done:
+                qc['result'] = None
+            else:
+                qc['result'] = panel_battery_url(ws_id, a.client_id.id, a.id)
+                if done < total:
+                    qc['result_partial'] = True
+                    qc['result_label'] = 'دیدن نتیجهٔ بخش انجام‌شده (%s از %s)' % (fa_digits(done), fa_digits(total))
         return res
 
 

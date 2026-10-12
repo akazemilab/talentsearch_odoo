@@ -13,15 +13,24 @@ from datetime import timedelta
 from odoo import api, fields, models
 from odoo.exceptions import UserError
 
-from ..tools import CAPPED_ROLES, fmt_toman, jalali_month_bounds, rial_int
+from ..tools import CAPPED_ROLES, credit_ask, credit_roles, fmt_toman, jalali_month_bounds, rial_int
 
 _logger = logging.getLogger(__name__)
 
 NEW_TYPES = [('hold', 'رزرو اعتبار'), ('release', 'آزادسازی رزرو'), ('topup', 'شارژ اعتبار')]
 NEW_REASONS = [('invite', 'دعوت'), ('expiry', 'پایان مهلت دعوت'), ('withdraw', 'لغو دعوت'), ('decline', 'رد دعوت'),
                ('topup', 'فاکتور شارژ'), ('topup_reversal', 'برگشت فاکتور شارژ'), ('insufficient', 'اعتبار ناکافی')]
-INSUFFICIENT = 'اعتبار پنل کافی نیست. موجودی: %s، هزینهٔ این دعوت: %s.'
-CAP_FULL = 'سقف ماهانهٔ شما پر شده است (%s از %s). با مدیر پنل صحبت کنید.'
+# Refusal texts (wording only; the decisions are in ts_hold / ts_launch). Amounts of the panel balance are shown only to
+# members with credits:read; everybody else is told whom to ask (UX audit G7-P12-1, G7-P4-2, G7-PAT-4).
+INSUFFICIENT = ('اعتبار پنل برای این دعوت کافی نیست: موجودی قابل استفاده %s است و هزینهٔ این دعوت %s. '
+                'اعتبار را شارژ کنید یا سنجه یا مجموعهٔ دیگری برگزینید.')
+INSUFFICIENT_ASK = 'اعتبار پنل برای این دعوت کافی نیست. به %s خبر دهید تا اعتبار را شارژ کند.'
+INSUFFICIENT_BATCH = ('اعتبار پنل برای این دعوت گروهی کافی نیست: %s نفر، هر نفر %s، روی هم %s لازم است و موجودی قابل '
+                      'استفاده %s است. اعتبار را شارژ کنید یا گروه کوچک‌تری انتخاب کنید.')
+INSUFFICIENT_BATCH_ASK = 'اعتبار پنل برای این دعوت گروهی کافی نیست. به %s خبر دهید تا اعتبار را شارژ کند.'
+CAP_OVER = ('هزینهٔ این دعوت (%s) از باقی‌ماندهٔ سقف ماهانهٔ شما (%s) بیشتر است. سنجه یا مجموعهٔ دیگری برگزینید '
+            'یا از %s بخواهید سقف را بالا ببرد.')
+CAP_FULL = CAP_OVER     # older name
 LOW_TEXT = 'اعتبار پنل «%s» به %s رسید. برای ادامهٔ دعوت‌ها اعتبار را شارژ کنید.'
 # spend of a member in a month: a hold spends, a release or refund gives back, a debit_usage converts a released hold
 SPEND_SQL = "CASE WHEN t.type IN ('hold', 'release', 'debit_usage', 'refund') THEN -t.amount ELSE 0 END"
@@ -51,7 +60,8 @@ class TsWallet(models.Model):
     currency_id = fields.Many2one('res.currency', related='workspace_id.company_id.currency_id', string='ارز')
     balance = fields.Monetary('موجودی', compute='_compute_totals', store=True, currency_field='currency_id')
     low_threshold = fields.Monetary('آستانهٔ هشدار', default=0, currency_field='currency_id',
-                                    help='وقتی اعتبار قابل استفاده از این مبلغ کمتر شود، به مدیران پنل اعلان می‌رسد. ۰ = خاموش.')
+                                    help='وقتی موجودی قابل استفاده از این مبلغ کمتر شود، به اعضایی که «اعتبار و مصرف» را می‌بینند '
+                                         '(مالک، هماهنگ‌کننده، مدیر مرکز مشاوره یا مدیر منابع انسانی) اعلان می‌رسد. ۰ = خاموش.')
     held = fields.Monetary('رزروشده', compute='_compute_held', currency_field='currency_id')
     billing_mode = fields.Selection(related='workspace_id.billing_mode')
 
@@ -97,6 +107,27 @@ class TsWallet(models.Model):
             args.append(member.user_id.id)
         self.env.cr.execute(sql, args)
         return rial_int(self.env.cr.fetchone()[0])
+
+    def ts_month_debited(self):
+        """«کسرشده این ماه»: what completions actually took from the panel in the current Jalali month (debit rows; a refund
+        of a voided attempt gives its amount back). Holds that are still open are not in it (they are «رزروشده»)."""
+        self.ensure_one()
+        start, end = jalali_month_bounds()
+        self.env.flush_all()
+        self.env.cr.execute("SELECT COALESCE(SUM(amount), 0) FROM ts_wallet_txn WHERE wallet_id = %s AND type IN ('debit_usage', 'refund') "
+                            "AND txn_date >= %s AND txn_date < %s", [self.id, start, end])
+        return -rial_int(self.env.cr.fetchone()[0])
+
+    @api.model
+    def ts_refusal_insufficient(self, ws, available, price, member=None):
+        """Text of an insufficient-credit refusal for `member` (None = a member who may see the balance)."""
+        if member is not None and not member.sudo().has_perm('credits:read'):
+            return INSUFFICIENT_ASK % credit_ask(ws.purpose)
+        return INSUFFICIENT % (fmt_toman(available), fmt_toman(price))
+
+    @api.model
+    def ts_refusal_cap(self, ws, price, left):
+        return CAP_OVER % (fmt_toman(price), fmt_toman(max(left, 0)), credit_ask(ws.purpose))
 
     def ts_month_by_member(self):
         """[(user, invitations held this month, spend)] for the per-counselor table, highest spend first."""
@@ -163,12 +194,13 @@ class TsWallet(models.Model):
             return False
         available = self.ts_available()
         if available < price:
-            raise CreditRefused(INSUFFICIENT % (fmt_toman(available), fmt_toman(price)), 'insufficient', ws, price, member)
+            raise CreditRefused(self.ts_refusal_insufficient(ws, available, price, member or None), 'insufficient', ws,
+                                price, member)
         if member and member.role in CAPPED_ROLES and member.monthly_cap > 0:
             committed = self.ts_month_spend(member)
             cap = rial_int(member.monthly_cap)
             if committed + price > cap:
-                raise CreditRefused(CAP_FULL % (fmt_toman(committed), fmt_toman(cap)), 'cap', ws, price, member)
+                raise CreditRefused(self.ts_refusal_cap(ws, price, cap - committed), 'cap', ws, price, member)
         row = self._post('hold', -price, 0, 'hold:%d' % assignment.id, 'invite', assignment=assignment, free=False)
         assignment.sudo().write({'price_held': price, 'priced_product_id': product.id if product else False})
         self.env['ts.audit.event'].sudo().log('credit.hold', assignment, workspace=ws, member=member or None, amount=price,
@@ -250,7 +282,7 @@ class TsWallet(models.Model):
         """Owner side of the credits page (credits:manage). Rial, multiple of 10, 0 = off."""
         self.ensure_one()
         if not by.has_perm('credits:manage') or by.workspace_id != self.workspace_id:
-            raise UserError('آستانهٔ هشدار را مالک، هماهنگ‌کننده یا مدیر پنل تعیین می‌کند.')
+            raise UserError('آستانهٔ هشدار را %s تعیین می‌کند.' % credit_roles(self.workspace_id.purpose, 'یا'))
         amount = rial_int(amount)
         if amount < 0 or amount % 10:
             raise UserError('آستانه را به ریال و مضربی از ۱۰ بنویسید؛ ۰ یعنی خاموش.')

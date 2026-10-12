@@ -60,6 +60,21 @@ def _fa(n):
     return fa_digits(n)
 
 
+def item_name(rec):
+    """Display name of an instrument (or battery) in the panel pickers: the catalog helper when it exists, else the catalog
+    title; never the internal name with its Latin item count (UX audit G7-PAT-1)."""
+    if not rec:
+        return ''
+    if hasattr(rec, 'ts_display_title'):
+        return rec.ts_display_title()
+    return ('title' in rec._fields and rec.title) or rec.name
+
+
+def sorted_items(records):
+    """Pickers list items by their display name (G7-PAT-2), not in catalog order."""
+    return records.sorted(lambda r: (item_name(r) or '').replace('\u200c', ' '))
+
+
 def sms_available(ws):
     company = (ws.company_id or request.env.company).sudo()
     return bool(company.kv_enabled and company.ts_sms_invite)
@@ -170,10 +185,12 @@ class TsPanelInvites(http.Controller):
             recent = request.env['ts.panel.client'].sudo().search(   # ts-scope-ok: visible_domain() starts with the panel
                 visible_domain(me) + [('state', '=', 'active')], order='last_activity_at desc, id desc', limit=12
             ).filtered(lambda c: not c.contact_locked)[:10]
-        vals = dict(step=step, draft=d, client=client, inst=inst, instruments=me.allowed_instruments(),
+        vals = dict(step=step, draft=d, client=client, inst=inst, instruments=sorted_items(me.allowed_instruments()),
                     sms_ok=sms_available(me.workspace_id), steps=[('1', 'چه کسی'), ('2', 'کدام سنجه'), ('3', 'تنظیمات'), ('4', 'مرور')],
                     recent=recent, age=AGE, age_default='minor' if me.workspace_id.purpose == 'education' else 'unknown',
-                    cancel_url='/my/workspaces/%s/invites' % ws_id)
+                    cancel_url='/my/workspaces/%s/invites' % ws_id, item_name=item_name,
+                    # step 1 opens on «افزودن شرکت‌کنندهٔ تازه» when the panel has nobody to pick yet, or the draft is a new person
+                    pick_default='new' if (step == '1' and (d.get('new_name') or not recent)) else 'existing')
         vals.update(extra)
         return vals
 

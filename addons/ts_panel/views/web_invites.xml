@@ -97,9 +97,15 @@
                             </ol>
                             <p class="tsp-steps-text" aria-hidden="true">گام <t t-out="fa(step)"/> از ۴ · <t t-out="dict(steps)[step]"/></p>
 
-                            <!-- 1: who -->
+                            <!-- 1: who. The two ways to answer «چه کسی» come first as a pair; JS shows the chosen one only (without JS both
+                                 cards stay visible, each with its own «ادامه»). -->
                             <t t-if="step == '1'">
-                                <section class="ts-card" aria-labelledby="tsp-w1a">
+                                <fieldset class="ts-card tsp-field tsp-who" data-tsp-who="1" hidden="hidden">
+                                    <legend class="tsp-field__label">دعوت برای چه کسی است؟</legend>
+                                    <label class="tsp-radio"><input type="radio" name="who" value="existing" t-att-checked="'checked' if (client or searched or pick_default != 'new') else None"/><span>شرکت‌کنندهٔ موجود</span></label>
+                                    <label class="tsp-radio"><input type="radio" name="who" value="new" t-att-checked="'checked' if (not client and not searched and pick_default == 'new') else None"/><span>افزودن شرکت‌کنندهٔ تازه</span></label>
+                                </fieldset>
+                                <section class="ts-card" aria-labelledby="tsp-w1a" id="tsp-w-old" data-ts-show="who=existing">
                                     <h2 id="tsp-w1a" class="h5">شرکت‌کنندهٔ موجود</h2>
                                     <div t-if="client" class="ts-notice" role="status">
                                         انتخاب‌شده: <strong><bdi t-out="client.name"/></strong>
@@ -119,7 +125,7 @@
                                         <button type="submit" class="ts-btn ts-btn--outline">جست‌وجو</button>
                                     </form>
                                     <t t-set="pick" t-value="found if searched else recent"/>
-                                    <p t-if="searched and not found" class="tsp-empty">کسی پیدا نشد. می‌توانید او را در بخش «فرد تازه» بنویسید.</p>
+                                    <p t-if="searched and not found" class="tsp-empty">کسی پیدا نشد. می‌توانید او را با «افزودن شرکت‌کنندهٔ تازه» بنویسید.</p>
                                     <form t-if="pick" t-attf-action="/my/workspaces/#{ws.id}/invites/new" method="post" data-tsp-once="1" class="tsp-form">
                                         <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
                                         <input type="hidden" name="step" value="1"/>
@@ -133,8 +139,8 @@
                                         </div>
                                     </form>
                                 </section>
-                                <section class="ts-card" aria-labelledby="tsp-w1b">
-                                    <h2 id="tsp-w1b" class="h5"><button type="button" class="tsp-disclose" aria-expanded="false" aria-controls="tsp-w-new" hidden="hidden" data-tsp-disclose="tsp-w-new">یا فرد تازه بنویسید</button><span class="tsp-disclose-nojs">فرد تازه</span></h2>
+                                <section class="ts-card" aria-labelledby="tsp-w1b" id="tsp-w-newcard" data-ts-show="who=new">
+                                    <h2 id="tsp-w1b" class="h5">افزودن شرکت‌کنندهٔ تازه</h2>
                                     <form id="tsp-w-new" t-attf-action="/my/workspaces/#{ws.id}/invites/new" method="post" class="tsp-form" data-tsp-once="1">
                                         <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
                                         <input type="hidden" name="step" value="1"/>
@@ -147,7 +153,7 @@
                                         <label class="tsp-field"><span class="tsp-field__label">ایمیل (اختیاری)</span><input type="email" name="new_email" maxlength="200" dir="ltr" class="form-control" autocomplete="off"/></label>
                                         <p class="ts-hint">اگر موبایل یا ایمیل با یکی از شرکت‌کنندگان فعلی یکی باشد، دعوت برای همان شرکت‌کننده ثبت می‌شود.</p>
                                         <div class="tsp-actions">
-                                            <button type="submit" class="ts-btn ts-btn--outline">ادامه با فرد تازه</button>
+                                            <button type="submit" class="ts-btn ts-btn--primary">ادامه</button>
                                             <a t-att-href="cancel_url" class="ts-btn ts-btn--quiet tsp-actions__end">انصراف</a>
                                         </div>
                                     </form>
@@ -155,13 +161,18 @@
                             </t>
 
                             <!-- 2: instrument -->
-                            <form t-if="step == '2'" t-attf-action="/my/workspaces/#{ws.id}/invites/new" method="post" class="tsp-form ts-card" data-tsp-once="1">
+                            <form t-if="step == '2'" t-attf-action="/my/workspaces/#{ws.id}/invites/new" method="post" class="tsp-form ts-card" data-tsp-once="1" id="tsp-w-item">
                                 <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
                                 <input type="hidden" name="step" value="2"/>
-                                <p t-if="client" class="ts-hint">شرکت‌کننده: <strong><bdi t-out="client.name"/></strong></p>
+                                <p class="ts-hint tsp-w-for">برای: <strong><bdi t-out="client.name if client else draft.get('new_name')"/></strong> · <a t-attf-href="/my/workspaces/#{ws.id}/invites/new?step=1">تغییر</a></p>
+                                <div class="tsp-field tsp-pickfilter" data-tsp-pickfilter="tsp-w-item" hidden="hidden">
+                                    <label class="tsp-field__label" for="tsp_pick_q">جست‌وجو در سنجه‌ها</label>
+                                    <input id="tsp_pick_q" type="search" class="form-control" autocomplete="off" aria-controls="tsp-w-item" aria-describedby="tsp_pick_n"/>
+                                    <p id="tsp_pick_n" class="tsp-field__hint" role="status"></p>
+                                </div>
                                 <fieldset class="tsp-field">
                                     <legend class="tsp-field__label">سنجه</legend>
-                                    <label t-foreach="instruments" t-as="i" class="tsp-radio"><input type="radio" name="instrument_id" t-att-value="i.id" required="required" t-att-checked="'checked' if (inst == i or len(instruments) == 1) else None"/><span t-out="i.name"/></label>
+                                    <label t-foreach="instruments" t-as="i" class="tsp-radio"><input type="radio" name="instrument_id" t-att-value="i.id" required="required" t-att-checked="'checked' if (inst == i or len(instruments) == 1) else None"/><span t-out="item_name(i)"/></label>
                                 </fieldset>
                                 <div class="tsp-actions">
                                     <a t-attf-href="/my/workspaces/#{ws.id}/invites/new?step=1" class="ts-btn ts-btn--quiet tsp-prev">قبلی</a>
@@ -315,7 +326,10 @@
          data-tsp-disclose  button that opens/closes the element whose id it names (aria-expanded)
          data-tsp-bulkbar   bulk-action box shown only once a row checkbox (name=sel) is ticked; inside it, an element
                             with data-tsp-for="a,b" is shown only while the select name=bulk has one of those values
-         data-tsp-print     print button (window.print) -->
+         data-tsp-print     print button (window.print)
+         data-tsp-who       the «existing / new participant» pair of the wizard: shown only with JS (reveal_js shows the chosen card)
+         data-tsp-pickfilter a filter box above a long item list (the id of its form): hides the items whose name does not match,
+                            keeps the checked one at the top and visible, says how many are shown; Enter never submits the form -->
     <record id="tpl_daily_js" model="ir.ui.view">
         <field name="name">TS panel: daily-work page helpers</field>
         <field name="type">qweb</field>
@@ -373,6 +387,47 @@
         all('[data-tsp-print]').forEach(function (btn) {
             btn.hidden = false;
             btn.addEventListener('click', function () { window.print(); });
+        });
+        all('[data-tsp-who]').forEach(function (box) {
+            box.hidden = false;
+            box.addEventListener('change', function () {
+                var on = box.querySelector('input:checked');
+                var card = on ? document.querySelector('[data-ts-show="who=' + on.value + '"]') : null;
+                var f = card ? card.querySelector('input[type=search], input[type=text], input[type=radio]') : null;
+                if (f) { setTimeout(function () { f.focus(); }, 0); }
+            });
+        });
+        all('[data-tsp-pickfilter]').forEach(function (box) {
+            var form = document.getElementById(box.getAttribute('data-tsp-pickfilter'));
+            var q = box.querySelector('input[type=search]');
+            var say = box.querySelector('[role=status]');
+            if (!form || !q) { return; }
+            var items = all('input[name=instrument_id], input[name=battery_id]', form).map(function (i) { return i.closest('label'); })
+                .filter(function (l) { return !!l; });
+            if (items.length &lt; 7) { return; }
+            box.hidden = false;
+            items.forEach(function (l) {      // the chosen item first in its list, so it stays in sight
+                var i = l.querySelector('input');
+                if (i.checked) { var legend = l.parentNode.querySelector('legend'); l.parentNode.insertBefore(l, legend ? legend.nextSibling : l.parentNode.firstChild); }
+            });
+            function norm(t) {
+                return (t || '').replace(/ي/g, 'ی').replace(/ك/g, 'ک').replace(/\u200c/g, ' ').replace(/\s+/g, ' ').trim().toLowerCase();
+            }
+            function fa(n) { return n.toLocaleString('fa-IR'); }
+            function update() {
+                var want = norm(q.value), shown = 0, total = 0;
+                items.forEach(function (l) {
+                    var fs = l.closest('fieldset');
+                    var live = !(fs &amp;&amp; fs.hidden);
+                    var ok = !want || norm(l.textContent).indexOf(want) !== -1 || l.querySelector('input').checked;
+                    l.hidden = !ok;
+                    if (live) { total += 1; if (ok) { shown += 1; } }
+                });
+                say.textContent = want ? (fa(shown) + ' مورد از ' + fa(total)) : '';
+            }
+            q.addEventListener('input', update);
+            q.addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); } });
+            form.addEventListener('change', update);
         });
     }
     if (document.readyState === 'loading') { document.addEventListener('DOMContentLoaded', run); } else { run(); }

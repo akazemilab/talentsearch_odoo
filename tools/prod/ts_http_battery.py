@@ -99,12 +99,12 @@ own, c1, c2, p1 = login('owner'), login('c1'), login('c2'), login('p1')
 
 # ---------------------------------------------------------------- 1. the owner grants c1 one battery on the member page
 st, body = get(own, W + '/members/%s' % M1)
-check('owner sees the catalog section on the counselor\'s page', st == 200 and 'سنجه‌ها و مجموعه‌های مجاز برای این مشاور' in body
+check('owner sees the catalog section on the counselor\'s page', st == 200 and 'سنجه‌ها و مجموعه‌های مجاز برای این عضو' in body
       and 'name="battery_ids"' in body and 'همهٔ موارد پنل' in body, str(st))
 st, loc, _ = post(own, W + '/members/%s/catalog' % M1, [('catalog_mode', 'list'), ('battery_ids', BAT)])
 check('saving the checklist redirects back to the member page', st in (302, 303) and ('/members/%s' % M1) in loc, loc)
 st, body = get(own, W + '/members/%s' % M1)
-check('the page now says one battery and no single instrument', st == 200 and '۱ مجموعه انتخاب‌شده، بدون سنجهٔ تکی' in body)
+check('the page now names the one allowed battery', st == 200 and 'فقط «آزمون وب»' in body)
 out = shell("m = env['ts.workspace.member'].browse(%s); print('CAT', int(m.catalog_restricted), sorted(m.allowed_batteries().ids), len(m.allowed_instruments()),"
             " env['ts.audit.event'].search_count([('event_type', '=', 'catalog.change'), ('res_model', '=', 'ts.workspace.member'), ('res_id', '=', m.id)]))" % M1)
 cat = re.search(r'CAT (\d) \[([\d, ]*)\] (\d+) (\d+)', out)
@@ -155,7 +155,7 @@ IDS = [p[0] for p in pairs]
 st, body = get(p1, '/take/' + T[0])
 check('ONE consent page: names the battery, lists every instrument with the total time',
       st == 200 and 'consent_service' in body and 'این دعوت یک مجموعه است' in body and all(t in body for t in INST_TITLES)
-      and 'روی هم' in body and 'TS-CONSENT-1405-07-19-v3' in body, str(st))
+      and 'روی هم' in body and 'TS-CONSENT-1405-07-20-v4' in body, str(st))
 st, loc, _ = p1.req('/take/' + T[1])
 check('a sibling never shows its own consent page (redirect to the first)', st in (302, 303) and T[0] in loc, '%s %s' % (st, loc))
 post(p1, '/take/%s/consent' % T[0], {'consent_service': '1'})
@@ -208,7 +208,7 @@ check('battery result page: header, one section per instrument, jump links, coll
       st == 200 and body.count('tt-sec tsb-sec') == int(NLINES) and 'tsb-jump' in body and 'aria-expanded' in body
       and 'data-collapse="phone"' in body and all(t in body for t in INST_TITLES), str(st))
 check('the battery page reuses the report blocks (summary, bands, texts) and says «نه تشخیص»',
-      'خلاصهٔ نتایج' in body and 'ts-band' in body and 'برای کمک به گفت‌وگوی مشاوره است، نه تشخیص' in body)
+      'خلاصهٔ نتیجه‌ها' in body and 'ts-band' in body and 'برای کمک به گفت‌وگوی مشاوره است، نه تشخیص' in body and 'نمای کلی مجموعه' in body)
 check('the battery page shows the counseling center and has a print button', 'پنل آزمون مجموعه وب' in body and 'ts-js-print' in body)
 st, body = get(p1, '/my/assessments')
 check('/my/assessments lists the finished battery as one row linking to its page', ('/my/assessments/battery/%s' % AID) in body)

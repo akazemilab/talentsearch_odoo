@@ -166,6 +166,22 @@ self_at = env['ts.attempt'].create({'user_id': pu.id, 'instrument_id': inst.id, 
 check('H06 a self-taken attempt outside a panel keeps the plain header', self_at.ts_brand_header() is False)
 wemp = panel('employment')
 check('H07 an employment panel has no institution header', wemp.ts_brand_header() is False)
+# header images (UX audit G8-PT-1): the mime type comes from the bytes; stand-ins and non-images draw no <img> at all
+from odoo.addons.ts_brand.models.brand import png_data_uri, has_image
+b64png = base64.b64encode(png)
+svg_logo = b'<svg xmlns="http://www.w3.org/2000/svg" width="10" height="10"><rect width="10" height="10" fill="#2a6f97"/></svg>'
+svg_avatar = (b"<?xml version='1.0' encoding='UTF-8' ?><svg height='180' width='180' xmlns='http://www.w3.org/2000/svg'>"
+              b"<rect fill='hsl(210, 50%, 45%)' height='180' width='180'/><text fill='#ffffff' x='90' y='125'>S</text></svg>")
+uri = png_data_uri(b64png)
+check('H08 a PNG becomes a PNG data URI whose bytes really are PNG', uri and uri.startswith('data:image/png;base64,')
+      and base64.b64decode(uri.split(',', 1)[1])[:4] == b'\x89PNG', str(uri)[:40])
+check('H09 raw bytes (not base64) are read too', (png_data_uri(png) or '').startswith('data:image/png;base64,iVBOR'))
+check('H10 an SVG logo is sent as image/svg+xml, never labelled PNG',
+      (png_data_uri(base64.b64encode(svg_logo)) or '').startswith('data:image/svg+xml;base64,'))
+check('H11 Odoo\'s letter avatar and non-image bytes give no image', png_data_uri(base64.b64encode(svg_avatar)) is False
+      and png_data_uri(base64.b64encode(b'not an image')) is False and not has_image(base64.b64encode(svg_avatar)))
+check('H12 no photo -> the counselor block carries a monogram letter, no photo URI',
+      at.ts_brand_header()['counselor']['photo'] is False and at.ts_brand_header()['counselor']['initial'] != '')
 
 # ================================================================ 3. PDF report values (level decides, never more)
 vals_c = env['report.ts_brand.attempt_pdf']._get_report_values(at.ids, {'mode': 'panel', 'level': 'clinical'})
@@ -374,7 +390,7 @@ check('O01 a free counseling-center panel has four steps (no caps, no credit)', 
 ob.billing_mode = 'prepaid'            # the shell env is the superuser (billing_mode is a platform-manager field)
 keys = [s['key'] for s in oo.ts_onb_steps()]
 check('O02 a prepaid panel has the six steps in order; only the caps step is optional',
-      keys == ['identity', 'counselors', 'catalog', 'caps', 'credit', 'invite']
+      keys == ['identity', 'counselors', 'credit', 'catalog', 'caps', 'invite']
       and [s['key'] for s in oo.ts_onb_steps() if s['optional']] == ['caps'], str(keys))
 ck = oo.ts_onb_checklist()
 check('O03 the owner sees «0 of 6» with the help link', ck and ck['done_n'] == 0 and ck['total'] == 6 and ck['help_url'] == HELP_URL
@@ -387,11 +403,16 @@ check('O06 every open step carries a one-line why', all(s['why'] and '\n' not in
 
 # step 1: public name + logo (= the institution partner's image)
 s1 = ostep(oo, 'identity')
-check('O10 identity: open, the button goes to the identity section first', not s1['done'] and s1['url'].endswith('/settings#tsbr-org'), s1['url'])
+check('O10 identity: open, the button goes to the identity section (name and logo live there)', not s1['done']
+      and s1['url'].endswith('/settings#tsbr-org'), s1['url'])
+check('O10b identity: the panel name counts as the name (the report falls back to it); only the logo is missing',
+      'لوگو' in (s1['note'] or '') and 'نام مرکز' not in (s1['note'] or ''), str(s1['note']))
+check('O10c the first open required step is the one current step', s1['current'] and s1['n'] == 1
+      and sum(1 for s in oo.ts_onb_steps() if s['current']) == 1)
 ob.ts_brand_save(oo, {'public_name': 'مرکز مشاوره راه‌اندازی'})
 s1 = ostep(oo, 'identity')
-check('O11 identity: a name without a logo is not enough; the button goes to the logo', not s1['done']
-      and s1['url'].endswith('/settings#tsp-profile') and 'لوگو' in (s1['note'] or ''), str(s1))
+check('O11 identity: a name without a logo is not enough; the button goes to the identity section', not s1['done']
+      and s1['url'].endswith('/settings#tsbr-org') and 'لوگو' in (s1['note'] or ''), str(s1))
 ob.partner_id.image_1920 = base64.b64encode(png).decode()
 check('O12 identity: name and logo -> done (no button left)', ostep(oo, 'identity')['done'] and not ostep(oo, 'identity')['url'])
 ob.public_name = False
@@ -450,8 +471,8 @@ check('O45 caps: «بدون سقف بماند» -> done, recorded once and audit
 
 # step 5 (prepaid): available credit > 0, the balance is shown
 s5 = ostep(oo, 'credit')
-check('O50 credit: 0 -> open, the balance shown, button to the credits page', not s5['done'] and 'موجودی' in s5['note']
-      and s5['url'].endswith('/credits'), str(s5))
+check('O50 credit: 0 -> open, the balance and the invoice rule shown, button asks the team for a top-up', not s5['done']
+      and 'موجودی' in s5['note'] and 'فاکتور' in s5['note'] and ('/contact?topic=credit&panel=%s' % ob.code) in s5['url'], str(s5))
 owal = env['ts.wallet']._for_workspace(ob)
 owal.ts_grant(200000000, 'manual')
 s5 = ostep(oo, 'credit')
@@ -472,7 +493,8 @@ check('O63 invite: a panel awaiting approval says so and offers no button', og.g
       str(s6g))
 
 # hide / restore, per member
-ob.public_name = False                              # one step open again
+ologo = ob.partner_id.image_1920
+ob.partner_id.image_1920 = False                    # one step open again (no logo)
 check('O70 an open step brings the checklist back', oo.ts_onb_checklist() and oo.ts_onb_checklist()['done_n'] == 5)
 check('O71 a member cannot hide another member\'s checklist', raises(lambda: oo.ts_onb_set_hidden(oa, True), UserError))
 oo.ts_onb_set_hidden(oo, True)
@@ -482,7 +504,11 @@ check('O73 hidden: the generic checklist does not come back, and the help page s
       oo.dash_checklist() == [] and oo.ts_onb_applies(ignore_hidden=True))
 oo.ts_onb_set_hidden(oo, False)
 check('O74 «نمایش دوباره» restores it', oo.ts_onb_checklist() is not None and not oo.ts_onb_hidden_on)
-ob.public_name = 'مرکز مشاوره راه‌اندازی'
+st_ = {x['key']: x for x in oo.ts_onb_checklist()['status']}
+check('O75 the two EOT-team conditions are status lines with a support link when waiting',
+      st_['approval']['ok'] and st_['licences']['value'].endswith('تأییدشده') and oo.ts_onb_checklist()['total'] == 6
+      and all(x['url'] is None or x['url'].startswith('/contact?topic=support&panel=') for x in st_.values()), str(st_))
+ob.partner_id.image_1920 = ologo
 
 # counselor first-run card
 check('O80 card: a counselor without a title gets it; the owner and the admin never', oc2.ts_onb_card() and not oo.ts_onb_card()

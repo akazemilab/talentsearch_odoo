@@ -8,8 +8,10 @@
     // transition page
     .tsb-title { font-size: 1.5rem; margin-block: 10px 6px; }
     .tsb-dots { display: flex; gap: 8px; list-style: none; padding: 0; margin: 12px 0 4px; }
-    .tsb-dots__i { inline-size: 28px; block-size: 6px; border-radius: 999px; background: var(--color-neutral-800); }
-    .tsb-dots__i.is-done { background: var(--color-accent-400); }
+    // not-done dots: an outline with >= 3:1 against the page (G6-P14-1, WCAG 1.4.11); done dots are filled
+    .tsb-dots__i { inline-size: 28px; block-size: 8px; border-radius: 999px; background: transparent; border: 1px solid var(--field-line); }
+    .tsb-dots__i.is-done { background: var(--color-accent-400); border-color: var(--color-accent-400); }
+    .tsb-rest { margin-block-start: 4px; }
     .tsb-next { margin-block: 18px; }
     // the label is small and muted, the instrument name carries the card (it read the other way round)
     .tsb-next h2.tsb-next__k { margin: 0; font-size: .9rem; font-weight: 500; line-height: 1.6; color: var(--muted); font-family: var(--font-text); }
@@ -38,6 +40,21 @@
 
     // member page
     .tsb-now { margin-block: 6px 12px; }
+    // invitation forms: why the list is short, the limit said once under «مجموعه»
+    .tsb-catnote { margin-block: 0 10px; }
+    .tsb-limit { margin-block: 0 4px; }
+    // panel participant page: result links are 44 px buttons (G6-P6-4)
+    .tsb-rowbtn { min-block-size: 44px; display: inline-flex; align-items: center; }
+    // panel campaign page: what the battery asks of the client
+    .tsb-facts { margin-block-start: 2px; }
+
+    // overview: «سنجه / عامل / سطح» for every instrument (G6-PT2)
+    .tsb-ov { margin-block: 14px 18px; }
+    .tsb-ov h2 { margin-block-end: 8px; }
+    .tsb-ov__table th[scope='rowgroup'], .tsb-ov__table th[scope='row'] { font-weight: 600; vertical-align: top; }
+    .tsb-ov__table tbody + tbody { border-block-start: 2px solid var(--line-strong); }
+    .tsb-ov__table th a { display: inline-flex; align-items: center; min-block-size: 44px; }
+    @media (max-width: 575.98px) { .tsb-ov__table th, .tsb-ov__table td { padding: 8px 10px; font-size: .9rem; } }
 
     // battery report (participant and panel)
     .tsb-note { border-inline-start: 4px solid var(--color-accent-400); padding: 8px 12px; margin-block: 12px; background: var(--color-surface); border-radius: var(--r-12); }
@@ -68,4 +85,5 @@
     #wrapwrap .tsb-sec { break-inside: auto; box-shadow: none; }
     #wrapwrap .tsb-sec + .tsb-sec { break-before: page; }
     #wrapwrap .tsb-note { background: #fff; border-color: #999; }
+    #wrapwrap .tsb-ov__table th a { min-block-size: 0; }
 }

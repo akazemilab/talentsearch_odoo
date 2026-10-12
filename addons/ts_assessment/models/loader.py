@@ -5,7 +5,7 @@ import logging
 from odoo import api, fields, models
 from odoo.tools.misc import file_path
 
-from .attempt import split_interpretation
+from .attempt import DEF_HEADING, split_interpretation
 
 _logger = logging.getLogger(__name__)
 
@@ -167,7 +167,7 @@ class TsInstrumentLoader(models.Model):
             definition = ''
             if f['bands']:
                 for head, body in split_interpretation(f['bands'][0]['client']):
-                    if head == 'این بُعد چه چیزی را توصیف می‌کند':
+                    if head == DEF_HEADING:
                         definition = body
                         break
             fac = Factor.create({'version_id': version.id, 'code': f['code'], 'name': f['name'], 'sequence': seq,

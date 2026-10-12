@@ -243,5 +243,5 @@ class TsAssessment(http.Controller):
         return request.render('ts_assessment.report', {
             'attempt': attempt, 'inst': attempt.instrument_id, 'version': attempt.version_id,
             'results': attempt.result_rows(), 'fa': fa_digits, 'submitted': kw.get('submitted'),
-            'history': history, 'page_name': 'ts_assessments',
+            'history': history, 'page_name': 'ts_assessments', 'tu': attempt.ts_informal(),
         })

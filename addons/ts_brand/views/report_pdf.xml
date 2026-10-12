@@ -46,6 +46,7 @@
                     .ts-pdf .tsp-h .end-in { display: inline-block; text-align: right; }
                     .ts-pdf .tsp-logo { width: 46px; height: 46px; margin-left: 8px; }
                     .ts-pdf .tsp-photo { width: 46px; height: 46px; border-radius: 23px; margin-left: 8px; }
+                    .ts-pdf .tsp-mono { display: inline-block; width: 46px; height: 46px; line-height: 46px; border-radius: 23px; margin-left: 8px; text-align: center; vertical-align: middle; background: #efedfd; color: #433790; font-size: 16pt; font-weight: bold; }
                     .ts-pdf .tsp-rule { height: 4px; margin-bottom: 6px; }
                     .ts-pdf .tsp-sign { margin-top: 14px; page-break-inside: avoid; }
                     .ts-pdf .tsp-sign img { height: 52px; }
@@ -70,14 +71,17 @@
                         <td>
                             <img t-if="brand.get('logo')" t-att-src="brand['logo']" class="tsp-logo" alt=""/>
                             <span class="org" t-out="brand['name']"/>
-                            <small t-if="brand.get('contact')" t-out="brand['contact']"/>
+                            <small t-if="brand.get('contact')"><span t-att-dir="brand.get('contact_dir') or 'ltr'" t-out="brand['contact']"/></small>
                         </td>
                         <td t-if="brand.get('counselor')" class="end">
+                            <t t-set="pc" t-value="brand['counselor']"/>
                             <span class="end-in">
-                                <img t-if="brand['counselor']['photo']" t-att-src="brand['counselor']['photo']" class="tsp-photo" alt=""/>
-                                <strong t-out="brand['counselor']['name']"/>
-                                <small t-if="brand['counselor']['title']" t-out="brand['counselor']['title']"/>
-                                <small t-if="brand['counselor']['license']">شمارهٔ پروانه: <span dir="ltr" t-out="brand['counselor']['license']"/></small>
+                                <img t-if="pc['photo']" t-att-src="pc['photo']" class="tsp-photo" alt=""/>
+                                <span t-elif="pc.get('initial')" class="tsp-mono" t-out="pc['initial']"/>
+                                <small class="role" t-out="'مشاور شما' if mode == 'self' else 'مشاور مسئول'"/>
+                                <strong t-out="pc['name']"/>
+                                <small t-if="pc['title']" t-out="pc['title']"/>
+                                <small t-if="pc['license']">شمارهٔ پروانه: <span dir="ltr" t-out="pc['license']"/> (تأییدشده)</small>
                             </span>
                         </td>
                     </tr></table>

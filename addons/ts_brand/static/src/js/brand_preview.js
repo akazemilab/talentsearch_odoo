@@ -1,10 +1,11 @@
 /** @odoo-module ignore **/
-// Clinic phase 5: live preview of the report header on the panel settings page, the character count of the SMS name and
-// the colour picker beside the #rrggbb field. The form works without this file (the server validates everything).
+// Clinic phase 5: live preview of the report header on the panel settings page (name, contact line, colour, the logo file
+// just chosen), the character count of the SMS name and the colour swatch beside the #rrggbb field; on the member page, the
+// title in the counselor preview. The forms work without this file (the server validates everything).
 (function () {
     'use strict';
 
-    function init() {
+    function settings() {
         var form = document.querySelector('form[data-tsbr-form]');
         var preview = document.querySelector('[data-tsbr-preview]');
         if (!form || !preview) { return; }
@@ -23,7 +24,11 @@
                     if (n) { n.textContent = v || fallbackName; }
                 } else if (key === 'contact') {
                     var c = out('contact');
-                    if (c) { c.textContent = v; c.hidden = !v; }
+                    if (c) {
+                        c.textContent = v;
+                        c.setAttribute('dir', /[\u0600-\u06ff]/.test(v.replace(/[\u06f0-\u06f9]/g, '')) ? 'rtl' : 'ltr');
+                        if (c.parentNode) { c.parentNode.hidden = !v; }
+                    }
                 } else if (key === 'color' && head) {
                     if (hex.test(v)) { head.style.setProperty('--tsbr-color', v); } else if (!v) { head.style.removeProperty('--tsbr-color'); }
                 }
@@ -31,13 +36,40 @@
             input.addEventListener('input', sync);
         });
 
+        // the logo file just chosen, shown in the preview before it is saved (never uploaded by this script)
+        var logoIn = form.querySelector('input[type="file"][name="logo"]');
+        var logoImg = out('logo');
+        var logoEmpty = out('logo-empty');
+        var logoRm = form.querySelector('[data-tsbr-logo-rm]');
+        var savedSrc = logoImg ? logoImg.getAttribute('src') : null;
+        var objUrl = null;
+        function showLogo(src) {
+            if (!logoImg) { return; }
+            if (src) { logoImg.src = src; } else { logoImg.removeAttribute('src'); }
+            logoImg.hidden = !src;
+            if (logoEmpty) { logoEmpty.hidden = !!src; }
+        }
+        function syncLogo() {
+            var f = logoIn && logoIn.files && logoIn.files[0];
+            if (objUrl) { URL.revokeObjectURL(objUrl); objUrl = null; }
+            if (f && /^image\//.test(f.type) && window.URL && URL.createObjectURL) {
+                objUrl = URL.createObjectURL(f);
+                showLogo(objUrl);
+            } else {
+                showLogo(logoRm && logoRm.checked ? null : savedSrc);
+            }
+        }
+        if (logoIn) { logoIn.addEventListener('change', syncLogo); }
+        if (logoRm) { logoRm.addEventListener('change', syncLogo); }
+
+        var wrap = form.querySelector('[data-tsbr-pickwrap]');
         var pick = form.querySelector('[data-tsbr-pick]');
         var colorText = form.querySelector('[data-tsbr-bind="color"]');
-        if (pick && colorText) {
-            pick.hidden = false;
+        if (wrap && pick && colorText) {
+            wrap.hidden = false;
             pick.addEventListener('input', function () {
                 colorText.value = pick.value;
-                colorText.dispatchEvent(new Event('input'));
+                colorText.dispatchEvent(new Event('input', {bubbles: true}));
             });
             colorText.addEventListener('input', function () {
                 if (hex.test(colorText.value.trim())) { pick.value = colorText.value.trim().toLowerCase(); }
@@ -58,6 +90,23 @@
             count();
         });
     }
+
+    function member() {
+        var form = document.querySelector('form[data-tsbr-mform]');
+        var prev = document.querySelector('[data-tsbr-mprev]');
+        if (!form || !prev) { return; }
+        var title = form.querySelector('[data-tsbr-mbind="title"]');
+        var outTitle = prev.querySelector('[data-tsbr-mout="title"]');
+        if (title && outTitle) {
+            title.addEventListener('input', function () {
+                var v = (title.value || '').trim();
+                outTitle.textContent = v;
+                outTitle.hidden = !v;
+            });
+        }
+    }
+
+    function init() { settings(); member(); }
 
     if (document.readyState === 'loading') { document.addEventListener('DOMContentLoaded', init); } else { init(); }
 })();

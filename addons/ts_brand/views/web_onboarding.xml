@@ -4,7 +4,10 @@
          from member.ts_onb_checklist() / member.ts_onb_card(); every button points at an existing page that keeps its own
          permission check. Each xpath names an anchor of its parent's own arch. -->
 
-    <!-- «راه‌اندازی مرکز»: owner / admin / clinic director of a counseling-center panel. Context: member, ws, fa. -->
+    <!-- «راه‌اندازی مرکز»: owner / admin / clinic director of a counseling-center panel. Context: member, ws, fa; optional
+         tsob (member.ts_onb_checklist(), set once by the dashboard inherit below). Layout (UX audit G8-P1-2..4): the two
+         conditions the EOT team controls as status lines, the open steps always visible with one current step (primary
+         button), the done steps and «بعداً نشانم نده» in a part that folds on a phone (onboarding.js; open without JS). -->
     <record id="tpl_onboarding_checklist" model="ir.ui.view">
         <field name="name">TS brand: center set-up checklist</field>
         <field name="type">qweb</field>
@@ -12,7 +15,7 @@
         <field name="website_id" ref="ts_website.website_ts"/>
         <field name="arch" type="xml">
             <t t-name="ts_brand.onboarding_checklist">
-                <t t-set="tsob" t-value="member.ts_onb_checklist()"/>
+                <t t-if="tsob is None"><t t-set="tsob" t-value="member.ts_onb_checklist()"/></t>
                 <section t-if="tsob" class="ts-card tsob" id="tsob" aria-labelledby="tsob-h" data-tsob="1">
                     <div class="tsob__head">
                         <h2 id="tsob-h" class="h5">راه‌اندازی مرکز</h2>
@@ -20,41 +23,67 @@
                     </div>
                     <p class="tsob__progress" id="tsob-progress"><strong><t t-out="fa(tsob['done_n'])"/> از <t t-out="fa(tsob['total'])"/> انجام شده</strong></p>
                     <span class="tsob__bar" aria-hidden="true"><span class="tsob__fill" t-attf-style="inline-size: #{round(100.0 * tsob['done_n'] / tsob['total'])}%"></span></span>
-                    <button type="button" class="tsob__toggle" aria-expanded="true" aria-controls="tsob-list" data-tsob-toggle="1" hidden="hidden">گام‌ها (<t t-out="fa(tsob['open_n'])"/> گام مانده)</button>
-                    <ol class="tsob__list" id="tsob-list" aria-describedby="tsob-progress">
-                        <li t-foreach="tsob['steps']" t-as="s" t-attf-class="tsob-step tsob-step--#{s['state']}" t-att-data-tsob-step="s['key']">
-                            <span class="tsob-step__ico" aria-hidden="true"></span>
-                            <div class="tsob-step__body">
-                                <p class="tsob-step__title">
-                                    <strong t-out="s['label']"/>
-                                    <span t-if="s['optional']" class="tsob-tag">اختیاری</span>
-                                    <span t-if="s['state'] == 'done'" class="tsob-tag tsob-tag--ok">انجام شد</span>
-                                    <span t-elif="s['state'] == 'way'" class="tsob-tag tsob-tag--way">در راه</span>
-                                    <span t-else="" class="tsp-sr">مانده</span>
-                                </p>
-                                <p t-if="not s['done']" class="tsob-step__why" t-out="s['why']"/>
-                                <p t-if="s['note']" class="tsob-step__note" t-out="s['note']"/>
-                                <div t-if="s['url'] or s['nocap']" class="tsob-step__actions">
-                                    <a t-if="s['url']" t-att-href="s['url']" class="ts-btn ts-btn--outline tsob-btn" t-out="s['btn']"/>
-                                    <form t-if="s['nocap']" t-attf-action="/my/workspaces/#{ws.id}/onboarding/nocap" method="post" data-tsp-once="1">
-                                        <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
-                                        <button type="submit" class="ts-btn ts-btn--quiet tsob-btn">بدون سقف بماند</button>
-                                    </form>
-                                </div>
-                            </div>
-                        </li>
+                    <div class="tsob__status" role="group" aria-label="کارهای تیم استعدادیاب">
+                        <p class="tsob__status-intro">این دو کار با تیم استعدادیاب است:</p>
+                        <p t-foreach="tsob['status']" t-as="st" t-attf-class="tsob-stat tsob-stat--#{'ok' if st['ok'] else 'wait'}">
+                            <span class="tsob-stat__label" t-out="st['label']"/>: <strong t-out="st['value']"/>
+                            <a t-if="st['url']" t-att-href="st['url']" class="tsob-stat__link" t-out="st['link']"/>
+                        </p>
+                    </div>
+                    <ol class="tsob__list" id="tsob-open" aria-describedby="tsob-progress">
+                        <t t-foreach="tsob['open']" t-as="s"><t t-call="ts_brand.onboarding_step"/></t>
                     </ol>
-                    <form t-attf-action="/my/workspaces/#{ws.id}/onboarding/hide" method="post" class="tsob__hide" data-tsp-once="1">
-                        <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
-                        <button type="submit" class="ts-btn ts-btn--quiet tsob-btn" aria-describedby="tsob-hide-h">بعداً نشانم نده</button>
-                        <span class="ts-hint" id="tsob-hide-h">فقط برای شما پنهان می‌شود؛ از راهنمای پنل دوباره نمایانش کنید.</span>
-                    </form>
+                    <button t-if="tsob['done']" type="button" class="tsob__toggle" aria-expanded="true" aria-controls="tsob-more" data-tsob-toggle="1" hidden="hidden">گام‌های انجام‌شده (<t t-out="fa(tsob['done_n'])"/>)</button>
+                    <div class="tsob__more" id="tsob-more">
+                        <ol t-if="tsob['done']" class="tsob__list tsob__list--done" aria-label="گام‌های انجام‌شده">
+                            <t t-foreach="tsob['done']" t-as="s"><t t-call="ts_brand.onboarding_step"/></t>
+                        </ol>
+                        <form t-attf-action="/my/workspaces/#{ws.id}/onboarding/hide" method="post" class="tsob__hide" data-tsp-once="1">
+                            <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                            <button type="submit" class="ts-btn ts-btn--quiet tsob-btn" aria-describedby="tsob-hide-h">بعداً نشانم نده</button>
+                            <span class="ts-hint" id="tsob-hide-h">فقط برای شما پنهان می‌شود؛ از راهنمای پنل دوباره نمایانش کنید.</span>
+                        </form>
+                    </div>
                 </section>
             </t>
         </field>
     </record>
 
-    <!-- First-run card of a counselor whose report identity is empty (no title). Context: member, ws. -->
+    <!-- One step of the checklist. Context: s (a step of ts_onb_steps()), ws, fa. -->
+    <record id="tpl_onboarding_step" model="ir.ui.view">
+        <field name="name">TS brand: center set-up step</field>
+        <field name="type">qweb</field>
+        <field name="key">ts_brand.onboarding_step</field>
+        <field name="website_id" ref="ts_website.website_ts"/>
+        <field name="arch" type="xml">
+            <t t-name="ts_brand.onboarding_step">
+                <li t-attf-class="tsob-step tsob-step--#{s['state']}#{' tsob-step--current' if s['current'] else ''}" t-att-data-tsob-step="s['key']" t-att-aria-current="'step' if s['current'] else None">
+                    <span class="tsob-step__ico" aria-hidden="true"></span>
+                    <div class="tsob-step__body">
+                        <p class="tsob-step__title">
+                            <strong><t t-out="fa(s['n'])"/>. <t t-out="s['label']"/></strong>
+                            <span t-if="s['current']" class="tsob-tag tsob-tag--now">گام بعدی</span>
+                            <span t-if="s['optional']" class="tsob-tag">اختیاری</span>
+                            <span t-if="s['state'] == 'done'" class="tsob-tag tsob-tag--ok">انجام شد</span>
+                            <span t-elif="s['state'] == 'way'" class="tsob-tag tsob-tag--way">در راه</span>
+                            <span t-else="" class="tsp-sr">مانده</span>
+                        </p>
+                        <p t-if="not s['done']" class="tsob-step__why" t-out="s['why']"/>
+                        <p t-if="s['note']" class="tsob-step__note" t-out="s['note']"/>
+                        <div t-if="s['url'] or s['nocap']" class="tsob-step__actions">
+                            <a t-if="s['url']" t-att-href="s['url']" t-attf-class="ts-btn #{'ts-btn--primary' if s['current'] else 'ts-btn--outline'} tsob-btn" t-out="s['btn']"/>
+                            <form t-if="s['nocap']" t-attf-action="/my/workspaces/#{ws.id}/onboarding/nocap" method="post" data-tsp-once="1">
+                                <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                                <button type="submit" class="ts-btn ts-btn--quiet tsob-btn">بدون سقف بماند</button>
+                            </form>
+                        </div>
+                    </div>
+                </li>
+            </t>
+        </field>
+    </record>
+
+    <!-- First-run card of a counselor whose report identity is empty (no title). Context: member, ws; optional tsob_card. -->
     <record id="tpl_onboarding_card" model="ir.ui.view">
         <field name="name">TS brand: counselor first-run card</field>
         <field name="type">qweb</field>
@@ -62,11 +91,12 @@
         <field name="website_id" ref="ts_website.website_ts"/>
         <field name="arch" type="xml">
             <t t-name="ts_brand.onboarding_card">
-                <section t-if="member.ts_onb_card()" class="ts-card tsob-card" id="tsob-card" aria-labelledby="tsob-card-h">
+                <t t-if="tsob_card is None"><t t-set="tsob_card" t-value="member.ts_onb_card()"/></t>
+                <section t-if="tsob_card" class="ts-card tsob-card" id="tsob-card" aria-labelledby="tsob-card-h">
                     <h2 id="tsob-card-h" class="h5">هویت شما در گزارش‌ها را کامل کنید</h2>
-                    <p>عنوان حرفه‌ای، عکس و معرفی کوتاه شما بالای گزارش مراجعانی می‌آید که مشاورشان هستید. شماره یا نشانی تماس شما در گزارش نمی‌آید.</p>
+                    <p>عنوان حرفه‌ای و عکس شما بالای گزارش مراجعانی می‌آید که مشاورشان هستید و معرفی کوتاهتان در پایان آن. شماره یا نشانی تماس شما در گزارش نمی‌آید.</p>
                     <div class="tsob-step__actions">
-                        <a t-attf-href="/my/workspaces/#{ws.id}/members/#{member.id}#tsbr-member" class="ts-btn ts-btn--primary tsob-btn">تکمیل هویت من</a>
+                        <a t-attf-href="/my/workspaces/#{ws.id}/members/#{member.id}#tsbr-member" class="ts-btn ts-btn--primary tsob-btn">تکمیل هویت</a>
                         <form t-attf-action="/my/workspaces/#{ws.id}/onboarding/card-hide" method="post" data-tsp-once="1">
                             <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
                             <button type="submit" class="ts-btn ts-btn--quiet tsob-btn">بعداً نشانم نده</button>
@@ -77,12 +107,19 @@
         </field>
     </record>
 
-    <!-- ===================================================== dashboard: checklist and card above the empty state -->
+    <!-- ===================================================== dashboard: checklist and card above the empty state. Both are
+         computed once, before the page header, so the header can drop its primary «دعوت تازه» while they are shown
+         (first_run: one primary button on the page, UX audit G8-P8-3). -->
     <record id="dashboard_onboarding" model="ir.ui.view">
         <field name="name">ts_brand.dashboard.onboarding</field>
         <field name="inherit_id" ref="ts_panel.tpl_dashboard"/>
         <field name="website_id" ref="ts_website.website_ts"/>
         <field name="arch" type="xml">
+            <xpath expr="//header[hasclass('tsp-head')]" position="before">
+                <t t-set="tsob" t-value="member.ts_onb_checklist()"/>
+                <t t-set="tsob_card" t-value="member.ts_onb_card()"/>
+                <t t-set="first_run" t-value="bool(tsob or tsob_card)"/>
+            </xpath>
             <xpath expr="//div[hasclass('tsp-dash-empty')]" position="before">
                 <t t-call="ts_brand.onboarding_checklist"/>
                 <t t-call="ts_brand.onboarding_card"/>
@@ -113,26 +150,36 @@
             </xpath>
             <xpath expr="//article[@id='credits']" position="after">
                 <article class="ts-card tsob-help" id="center-setup">
+                    <!-- hb: the reader's own counseling-center panel (signed-in member of exactly one), so each place name
+                         is a link; otherwise plain text. Place names are the panel navigation labels, verbatim. -->
+                    <t t-set="hb" t-value="('/my/workspaces/%s' % tsob_ws.id) if tsob_ws else ''"/>
                     <h2>راهنمای راه‌اندازی مرکز مشاوره</h2>
-                    <p>پنل مرکز مشاوره را خود مرکز اداره می‌کند. مالک پنل، هماهنگ‌کننده و مدیر مرکز مشاوره در «داشبورد» فهرست «راه‌اندازی مرکز» را می‌بینند. هر گام از روی اطلاعات خود پنل سنجیده می‌شود، نه با تیک دستی، و وقتی همهٔ گام‌ها انجام شود فهرست کنار می‌رود.</p>
+                    <p>پنل مرکز مشاوره را خود مرکز اداره می‌کند. مالک پنل، هماهنگ‌کنندهٔ پنل (همکاری که مالک کار اداره را به او سپرده است) و مدیر مرکز مشاوره در «پیشخوان»، یعنی صفحهٔ اول پنل، فهرست «راه‌اندازی مرکز» را می‌بینند. هر گام از روی اطلاعات خود پنل سنجیده می‌شود، نه با تیک دستی، و وقتی همهٔ گام‌ها انجام شود فهرست کنار می‌رود.</p>
+                    <h3 id="center-setup-team">پیش از گام‌ها: دو کار با تیم استعدادیاب</h3>
+                    <p><strong>تأیید پنل.</strong> پنل مرکز مشاوره «در انتظار تأیید» ساخته می‌شود. گام‌ها را می‌توانید همین حالا انجام دهید، اما دعوت مراجع پس از تأیید تیم استعدادیاب فرستاده می‌شود. وضعیت تأیید بالای فهرست «راه‌اندازی مرکز» دیده می‌شود.</p>
+                    <p id="center-setup-licence"><strong>پروانهٔ مشاوران.</strong> هر مشاور هنگام پذیرفتن دعوت همکار، شمارهٔ پروانه یا نظام روان‌شناسی و مشاورهٔ خود را می‌نویسد و تیم استعدادیاب آن را بررسی می‌کند. مشاور گزارش ویژهٔ مشاور را پس از تأیید شمارهٔ پروانه‌اش می‌بیند. تا تأیید، سربرگ گزارش‌ها بدون شمارهٔ پروانه است. برای تغییر یک شماره هم به تیم استعدادیاب پیام بدهید.</p>
+                    <p>برای پیگیری هر کدام از این دو،
+                        <a t-if="tsob_ws" t-att-href="tsob_ws.ts_contact_url('support')">به پشتیبانی پیام بدهید</a><t t-else=""><a href="/contact?topic=support">به پشتیبانی پیام بدهید</a> و کد پنل را بنویسید</t>.</p>
                     <h3 id="center-setup-identity">۱. هویت مرکز در گزارش‌ها</h3>
-                    <p>در «تنظیمات»، بخش «هویت مرکز در گزارش‌ها»، نام مرکز را بنویسید و در بخش «مشخصات» لوگوی مرکز را بارگذاری کنید. این دو بالای گزارش هر مراجع، در صفحه و در فایل PDF، می‌آیند. گام وقتی انجام شده است که نام و لوگو هر دو ثبت شده باشند.</p>
+                    <p>در <a t-if="hb" t-att-href="hb + '/settings#tsbr-org'">«تنظیمات»</a><t t-else="">«تنظیمات»</t>، بخش «هویت مرکز در گزارش‌ها»، نام مرکز و لوگو را ثبت کنید. این دو بالای گزارش هر مراجع، در صفحه و در فایل PDF، می‌آیند. اگر نام مرکز را ننویسید، نام پنل به کار می‌رود؛ پس گام وقتی انجام شده است که لوگو هم بارگذاری شده باشد.</p>
                     <h3 id="center-setup-counselors">۲. دعوت مشاوران</h3>
-                    <p>در «اعضا»، بخش «دعوت همکار»، مشاوران مرکز را با شمارهٔ موبایلشان دعوت کنید و پیوند دعوت را برایشان بفرستید. دعوتی که هنوز پذیرفته نشده «در راه» است. گام وقتی انجام شده است که دست‌کم یک مشاور مرکز یا مدیر مرکز مشاوره عضو فعال پنل باشد. هر مشاور گزارش ویژهٔ مشاور را پس از تأیید شمارهٔ پروانه‌اش می‌بیند.</p>
-                    <h3 id="center-setup-catalog">۳. سنجه‌های هر مشاور</h3>
-                    <p>در صفحهٔ هر مشاور، بخش «سنجه‌ها و مجموعه‌های مجاز»، تعیین می‌کنید او به کدام موارد دعوت کند؛ پیش‌فرض، همهٔ موارد پنل است. اگر پنل یک مشاور دارد، این گام خودبه‌خود انجام شده است. اگر چند مشاور دارد، گام وقتی انجام می‌شود که برای هر مشاور یا فهرست محدودی ثبت شده باشد یا فرم او دست‌کم یک بار ذخیره شده باشد، حتی با همان «همهٔ موارد پنل».</p>
-                    <h3 id="center-setup-caps">۴. سقف ماهانهٔ مشاوران (اختیاری)</h3>
-                    <p>در «اعتبار و مصرف» برای هر مشاور سقفی به تومان می‌گذارید؛ دعوتی که از سقفِ ماه شمسی بگذرد فرستاده نمی‌شود. برای مالک، هماهنگ‌کننده و مدیر مرکز مشاوره سقفی نیست. اگر سقف نمی‌خواهید، در فهرست راه‌اندازی «بدون سقف بماند» را بزنید. این گام فقط در پنل پیش‌پرداخت دیده می‌شود.</p>
-                    <h3 id="center-setup-credit">۵. اعتبار پنل</h3>
-                    <p>در پنل پیش‌پرداخت، دعوت فقط وقتی فرستاده می‌شود که اعتبار پنل به اندازهٔ هزینهٔ آن باشد. گام با موجودی بیشتر از صفر انجام می‌شود و موجودی همیشه در «اعتبار و مصرف» دیده می‌شود.</p>
+                    <p>در <a t-if="hb" t-att-href="hb + '/members#tsp-invite'">«اعضا و نقش‌ها»</a><t t-else="">«اعضا و نقش‌ها»</t>، بخش «دعوت همکار»، مشاوران مرکز را با شمارهٔ موبایلشان دعوت کنید و پیوند دعوت را برایشان بفرستید. دعوتی که هنوز پذیرفته نشده «در راه» است. گام وقتی انجام شده است که دست‌کم یک مشاور مرکز یا مدیر مرکز مشاوره عضو فعال پنل باشد.</p>
+                    <h3 id="center-setup-credit">۳. اعتبار پنل</h3>
+                    <p>در پنل پیش‌پرداخت، اعتبار را پیش از دعوت شارژ می‌کنید و هر دعوت فقط وقتی فرستاده می‌شود که اعتبار پنل به اندازهٔ هزینهٔ آن باشد. شارژ اعتبار با فاکتوری است که تیم استعدادیاب صادر می‌کند؛ از دکمهٔ «درخواست شارژ اعتبار» در فهرست راه‌اندازی یا <a t-if="tsob_ws" t-att-href="tsob_ws.ts_contact_url('credit')">همین پیوند</a><a t-else="" href="/contact?topic=credit">همین پیوند</a> درخواست بدهید. گام با موجودی بیشتر از صفر انجام می‌شود و موجودی همیشه در <a t-if="hb" t-att-href="hb + '/credits'">«اعتبار و مصرف»</a><t t-else="">«اعتبار و مصرف»</t> دیده می‌شود.</p>
+                    <h3 id="center-setup-catalog">۴. سنجه‌های هر مشاور</h3>
+                    <p>در صفحهٔ هر مشاور در «اعضا و نقش‌ها»، بخش «سنجه‌ها و مجموعه‌های مجاز»، تعیین می‌کنید او به کدام موارد دعوت کند؛ پیش‌فرض، همهٔ موارد پنل است. اگر پنل یک مشاور دارد، این گام خودبه‌خود انجام شده است. اگر چند مشاور دارد، گام وقتی انجام می‌شود که برای هر مشاور یا فهرست محدودی ثبت شده باشد یا فرم او دست‌کم یک بار ذخیره شده باشد، حتی با همان «همهٔ موارد پنل».</p>
+                    <h3 id="center-setup-caps">۵. سقف ماهانهٔ مشاوران (اختیاری)</h3>
+                    <p>در <a t-if="hb" t-att-href="hb + '/credits#tsb-caps'">«اعتبار و مصرف»</a><t t-else="">«اعتبار و مصرف»</t> برای هر مشاور سقفی به تومان می‌گذارید؛ دعوتی که از سقفِ ماه شمسی بگذرد فرستاده نمی‌شود. برای مالک، هماهنگ‌کننده و مدیر مرکز مشاوره سقفی نیست. اگر سقف نمی‌خواهید، در فهرست راه‌اندازی «بدون سقف بماند» را بزنید.</p>
                     <h3 id="center-setup-invite">۶. نخستین دعوت</h3>
-                    <p>با «دعوت تازه» مراجع و سنجه یا مجموعه را انتخاب می‌کنید و پیوند دعوت را برای مراجع می‌فرستید. تا تیم استعدادیاب پنل را تأیید نکرده است، دعوت فرستاده نمی‌شود.</p>
+                    <p>با <a t-if="hb" t-att-href="hb + '/invites/new?fresh=1'">«دعوت تازه»</a><t t-else="">«دعوت تازه»</t> مراجع و سنجه یا مجموعه را انتخاب می‌کنید و پیوند دعوت را برای مراجع می‌فرستید. تا تیم استعدادیاب پنل را تأیید نکرده است، دعوت فرستاده نمی‌شود.</p>
+                    <p class="ts-hint">گام‌های ۳ و ۵ فقط در پنل پیش‌پرداخت دیده می‌شوند؛ در پنل رایگان فهرست چهار گام دارد و شماره‌ها به همین ترتیب جلو می‌آیند.</p>
                     <h3 id="center-setup-prepaid">اعتبار پیش‌پرداخت چطور کار می‌کند</h3>
                     <p>با فرستادن هر دعوت، هزینهٔ سنجه یا مجموعه از اعتبار پنل رزرو می‌شود. وقتی مراجع کار را تکمیل کند، همان مبلغ کسر می‌شود؛ هزینهٔ یک مجموعه با تکمیل نخستین سنجهٔ آن کسر می‌شود. اگر مهلت دعوت تمام شود یا دعوت لغو یا رد شود، رزرو آزاد می‌شود و به موجودی برمی‌گردد. پیش از فرستادن هر دعوت، سقف ماهانهٔ مشاوری که آن را می‌فرستد هم بررسی می‌شود.</p>
                     <h3 id="center-setup-invoices">فاکتورها</h3>
                     <p>شارژ اعتبار با فاکتوری انجام می‌شود که تیم استعدادیاب به نام مرکز صادر می‌کند. مالک، هماهنگ‌کننده و مدیر مرکز مشاوره فاکتورها را با تاریخ، مبلغ و وضعیت پرداخت در «اعتبار و مصرف»، بخش «فاکتورهای شارژ اعتبار»، می‌بینند و نسخهٔ قابل چاپ هر فاکتور از همان‌جا باز می‌شود. مبلغ فاکتور پس از ثبت پرداخت به اعتبار پنل افزوده می‌شود.</p>
+                    <p t-if="tsob_public" class="tsob-help__start">برای ساخت پنل مرکز مشاوره، <a href="/my/workspaces/new?kind=clinic">پنل مرکز مشاوره بسازید</a>؛ ساخت پنل رایگان است و پس از تأیید تیم استعدادیاب می‌توانید مراجعان را دعوت کنید.</p>
                     <div t-if="tsob_hidden" class="tsob-help__restore">
-                        <p>فهرست «راه‌اندازی مرکز» را در «داشبورد» پنهان کرده‌اید. هر وقت بخواهید، دوباره نمایانش کنید:</p>
+                        <p>فهرست «راه‌اندازی مرکز» را در «پیشخوان» پنهان کرده‌اید. هر وقت بخواهید، دوباره نمایانش کنید:</p>
                         <form t-foreach="tsob_hidden" t-as="hm" t-attf-action="/my/workspaces/#{hm.workspace_id.id}/onboarding/show" method="post" data-tsp-once="1">
                             <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
                             <button type="submit" class="ts-btn ts-btn--outline tsob-btn">نمایش دوبارهٔ فهرست در پنل «<t t-out="hm.workspace_id.name"/>»</button>
