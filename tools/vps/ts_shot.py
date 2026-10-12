@@ -12,7 +12,7 @@ status, horizontal overflow, elements wider than the viewport, small tap targets
 English UI words (body and <title>), missing/duplicate h1, inputs without a label, text contrast
 below 4.5:1 (3:1 for large text), console errors, and for report pages the print layout.
 Exit code 1 if any page has a problem. Screenshots stay in /root/ts-jobs/shots/."""
-import json, os, re, subprocess, sys
+import json, os, re, subprocess, sys, time
 from playwright.sync_api import sync_playwright
 
 args = sys.argv[1:]
@@ -190,7 +190,19 @@ def audit(p, login, paths):
         for w in WIDTHS:
             errors.clear()
             page.set_viewport_size({'width': w, 'height': 900})
-            r = nav(page, path)
+            r = None
+            for attempt in (1, 2):           # one retry: a transient socket error must not end the whole matrix
+                try:
+                    r = nav(page, path)
+                    break
+                except Exception as e:
+                    if attempt == 2:
+                        print('!! %-4s %-40s navigation failed: %s' % (w, path[:40], str(e).splitlines()[0][:120]), flush=True)
+                    else:
+                        time.sleep(3)
+            else:
+                bad += 1
+                continue
             m = page.evaluate(JS)
             body = m.pop('text')
             en = sorted(set(EN.findall(body)))
