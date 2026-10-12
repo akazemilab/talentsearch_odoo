@@ -364,7 +364,10 @@ notes = env['ts.notification'].search([('user_id', '=', pu_r.id), ('type', '=', 
 check('G08 the participant is told once, with the battery page', len(notes) - N0 == 1 and (notes[:1].url or '').endswith('/my/assessments/battery/%s' % ab.id),
       str([(n.url) for n in notes]))
 check('G08 every instrument is visible at the clinician\'s level once done', all(r.ts_result_level(cl_r) == 'clinical' for r in rows))
-check('G08 the SMS invitation text names the battery', run_b.name in ab._ts_invite_sms_body() and first_inst.name not in ab._ts_invite_sms_body())
+_sms_b = ab._ts_invite_sms_body()
+# clinic phase 5 (docs/clinic/05_sms_texts.md): no assessment or battery name in an SMS (lock-screen privacy); a short link
+check('G08 the SMS invitation names neither the battery nor its assessments and carries the short link',
+      run_b.name not in _sms_b and first_inst.name not in _sms_b and '/i/' in _sms_b, _sms_b[:120])
 
 # expiry: an accepted battery never expires mid-way; an unaccepted one does
 ab2 = invite_battery(dir_r, run_b, 'مراجع دوم')
