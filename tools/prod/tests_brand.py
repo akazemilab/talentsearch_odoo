@@ -1,6 +1,9 @@
 # Clinic phase 5 (ts_brand): branding fields and permissions, report header values, PDF report values, SMS templates with
 # their rules (docs/clinic/05_sms_texts.md «قواعد»), fallbacks, short codes, the cap notice, the title fallback.
+# Clinic phase 6 (section 9): the counseling-center set-up checklist «راه‌اندازی مرکز» (each step's done rule, hide /
+# restore per member) and the counselor first-run card.
 # Run ONLY on an eot_ts* clone via odoo-bin shell. Never commits (rolls back at the end); savepoints inside.
+import base64
 import re
 
 from odoo import fields
@@ -353,6 +356,145 @@ paths = ['/my/workspaces/%s' % ws.id, '/my/workspaces/%s/members/3' % ws.id, '/m
          '/my/workspaces/new', '/take/x/next', '/my/workspaces', '/web/login']
 miss = [p for p in paths if not site.ts_fallback_title(p) or site.ts_fallback_title(p) == site.name]
 check('T01 every panel and account path has its own Persian title', not miss, str(miss))
+
+# ================================================================ 9. set-up guide «راه‌اندازی مرکز» (clinic phase 6)
+from odoo.addons.ts_brand.models.onboarding import HELP_URL, NOT_YOURS
+ob = panel('clinical', name='مرکز مشاوره راه‌اندازی آزمون')
+oo = member(ob, 'owner')
+oa = member(ob, 'admin')
+
+
+def ostep(m, key):
+    return next((s for s in m.ts_onb_steps() if s['key'] == key), None)
+
+
+keys = [s['key'] for s in oo.ts_onb_steps()]
+check('O01 a free counseling-center panel has four steps (no caps, no credit)', keys == ['identity', 'counselors', 'catalog', 'invite'],
+      str(keys))
+ob.billing_mode = 'prepaid'            # the shell env is the superuser (billing_mode is a platform-manager field)
+keys = [s['key'] for s in oo.ts_onb_steps()]
+check('O02 a prepaid panel has the six steps in order; only the caps step is optional',
+      keys == ['identity', 'counselors', 'catalog', 'caps', 'credit', 'invite']
+      and [s['key'] for s in oo.ts_onb_steps() if s['optional']] == ['caps'], str(keys))
+ck = oo.ts_onb_checklist()
+check('O03 the owner sees «0 of 6» with the help link', ck and ck['done_n'] == 0 and ck['total'] == 6 and ck['help_url'] == HELP_URL
+      and HELP_URL == '/help/panel#center-setup', str(ck and (ck['done_n'], ck['total'])))
+check('O04 the admin sees it too; an education owner and an employment owner do not',
+      oa.ts_onb_checklist() and eo.ts_onb_checklist() is None and member(panel('employment'), 'owner').ts_onb_checklist() is None)
+check('O05 ts_panel\'s generic checklist gives way in a counseling-center panel only',
+      oo.dash_checklist() == [] and eo.ts_onb_applies() is False)
+check('O06 every open step carries a one-line why', all(s['why'] and '\n' not in s['why'] for s in oo.ts_onb_steps()))
+
+# step 1: public name + logo (= the institution partner's image)
+s1 = ostep(oo, 'identity')
+check('O10 identity: open, the button goes to the identity section first', not s1['done'] and s1['url'].endswith('/settings#tsbr-org'), s1['url'])
+ob.ts_brand_save(oo, {'public_name': 'مرکز مشاوره راه‌اندازی'})
+s1 = ostep(oo, 'identity')
+check('O11 identity: a name without a logo is not enough; the button goes to the logo', not s1['done']
+      and s1['url'].endswith('/settings#tsp-profile') and 'لوگو' in (s1['note'] or ''), str(s1))
+ob.partner_id.image_1920 = base64.b64encode(png).decode()
+check('O12 identity: name and logo -> done (no button left)', ostep(oo, 'identity')['done'] and not ostep(oo, 'identity')['url'])
+ob.public_name = False
+s1a = ostep(oa, 'identity')
+check('O13 identity: the admin (no settings page) gets no button but who does it', not s1a['url'] and s1a['note'] == NOT_YOURS)
+ob.public_name = 'مرکز مشاوره راه‌اندازی'
+
+# step 2: an active clinician / clinic director; a pending colleague invitation is «در راه»
+s2 = ostep(oo, 'counselors')
+check('O20 counselors: open with a button to the colleague invitation form', s2['state'] == 'open' and s2['url'].endswith('/members#tsp-invite'))
+env['ts.member.invite'].ts_create(oo, 'clinician', phone_raw='09127770955')
+s2 = ostep(oo, 'counselors')
+check('O21 counselors: a pending invitation is «در راه», not done', s2['state'] == 'way' and not s2['done'] and '۱' in (s2['note'] or ''), str(s2))
+oc1 = member(ob, 'clinician')
+check('O22 counselors: an active clinician -> done', ostep(oo, 'counselors')['done'])
+oc1.active = False
+check('O23 counselors: an inactive one does not count', not ostep(oo, 'counselors')['done'])
+oc1.active = True
+
+# step 3: the catalog of each counselor (rule in models/onboarding.py)
+check('O30 catalog: one counselor -> done (nothing to divide)', ostep(oo, 'catalog')['done'])
+oc2 = member(ob, 'clinician')
+s3 = ostep(oo, 'catalog')
+check('O31 catalog: two undecided counselors -> open, the button opens the first one\'s catalog section',
+      not s3['done'] and s3['url'].endswith('/members/%d#tsp-catalog' % oc1.id) and '۰ از ۲' in s3['note'], str(s3))
+changed = oc1.ts_set_catalog(oo, False)
+s3 = ostep(oo, 'catalog')
+check('O32 catalog: saving «همهٔ موارد پنل» unchanged counts as a decision; the button moves to the next counselor',
+      changed is False and oc1.ts_catalog_seen_on and not s3['done'] and s3['url'].endswith('/members/%d#tsp-catalog' % oc2.id)
+      and '۱ از ۲' in s3['note'], str(s3))
+cinst = ob.ts_catalog_instruments()[:1]
+oc2.ts_set_catalog(oo, True, cinst.ids)
+check('O33 catalog: every counselor decided (one restricted) -> done', ostep(oo, 'catalog')['done'])
+oc3 = member(ob, 'clinician')
+oc3.write({'catalog_restricted': True, 'restrict_instrument_ids': [Command.set(cinst.ids)]})
+check('O34 catalog: a restriction set elsewhere (back office) is a decision too', ostep(oo, 'catalog')['done'])
+check('O35 catalog: a clinician cannot save a colleague\'s catalog, and a refused save marks nothing',
+      raises(lambda: oc3.ts_set_catalog(oc1, False), UserError) and not oc3.ts_catalog_seen_on)
+
+ck = oo.ts_onb_checklist()
+check('O40 progress: identity, counselors and catalog done -> «3 of 6»', ck and ck['done_n'] == 3 and ck['total'] == 6,
+      str(ck and ck['done_n']))
+
+# step 4 (optional): any cap, or «بدون سقف بماند» once
+s4 = ostep(oo, 'caps')
+check('O41 caps: open, button to the caps table, the «بدون سقف» choice offered', not s4['done'] and s4['url'].endswith('/credits#tsb-caps')
+      and s4['nocap'], str(s4))
+oc1.ts_set_cap(oo, 10000000)
+check('O42 caps: a cap on one counselor -> done', ostep(oo, 'caps')['done'] and not ostep(oo, 'caps')['nocap'])
+oc1.ts_set_cap(oo, 0)
+check('O43 caps: the cap removed -> open again', not ostep(oo, 'caps')['done'])
+check('O44 caps: a counselor cannot record «بدون سقف»', raises(lambda: ob.ts_onb_mark_nocap(oc1), UserError))
+n0 = Audit.search_count([('event_type', '=', 'onboarding.nocap'), ('workspace_id', '=', ob.id)])
+check('O45 caps: «بدون سقف بماند» -> done, recorded once and audited', ob.ts_onb_mark_nocap(oa) is True and ob.ts_onb_mark_nocap(oo) is False
+      and ostep(oo, 'caps')['done'] and Audit.search_count([('event_type', '=', 'onboarding.nocap'), ('workspace_id', '=', ob.id)]) == n0 + 1)
+
+# step 5 (prepaid): available credit > 0, the balance is shown
+s5 = ostep(oo, 'credit')
+check('O50 credit: 0 -> open, the balance shown, button to the credits page', not s5['done'] and 'موجودی' in s5['note']
+      and s5['url'].endswith('/credits'), str(s5))
+owal = env['ts.wallet']._for_workspace(ob)
+owal.ts_grant(200000000, 'manual')
+s5 = ostep(oo, 'credit')
+check('O51 credit: a positive balance -> done, the balance still shown', s5['done'] and '۲۰٬۰۰۰٬۰۰۰ تومان' in s5['note'], str(s5))
+
+# step 6: at least one invitation (a self-shared result is not one)
+s6 = ostep(oo, 'invite')
+check('O60 invite: open with «دعوت تازه»', not s6['done'] and s6['url'].endswith('/invites/new?fresh=1'))
+oinst = oc1.allowed_instruments().filtered(lambda i: i.audience == 'adult' and i.code != 'TALENT-INV-15')[:1] or inst
+A.create({'workspace_id': ob.id, 'instrument_id': oinst.id, 'invitee_name': 'مراجع آزمون راه‌اندازی', 'invited_by_id': oo.user_id.id})
+check('O61 invite: one invitation -> done', ostep(oo, 'invite')['done'])
+check('O62 every step done -> the checklist is gone', oo.ts_onb_checklist() is None and oa.ts_onb_checklist() is None)
+og = panel('clinical', name='مرکز مشاوره در انتظار آزمون')
+og.approved_on = False
+ogo = member(og, 'owner')
+s6g = ostep(ogo, 'invite')
+check('O63 invite: a panel awaiting approval says so and offers no button', og.gated and not s6g['url'] and 'تأیید' in (s6g['note'] or ''),
+      str(s6g))
+
+# hide / restore, per member
+ob.public_name = False                              # one step open again
+check('O70 an open step brings the checklist back', oo.ts_onb_checklist() and oo.ts_onb_checklist()['done_n'] == 5)
+check('O71 a member cannot hide another member\'s checklist', raises(lambda: oo.ts_onb_set_hidden(oa, True), UserError))
+oo.ts_onb_set_hidden(oo, True)
+check('O72 «بعداً نشانم نده» hides it for that member only (the admin still sees it)',
+      oo.ts_onb_checklist() is None and oo.ts_onb_hidden_on and oa.ts_onb_checklist() is not None)
+check('O73 hidden: the generic checklist does not come back, and the help page still offers the restore',
+      oo.dash_checklist() == [] and oo.ts_onb_applies(ignore_hidden=True))
+oo.ts_onb_set_hidden(oo, False)
+check('O74 «نمایش دوباره» restores it', oo.ts_onb_checklist() is not None and not oo.ts_onb_hidden_on)
+ob.public_name = 'مرکز مشاوره راه‌اندازی'
+
+# counselor first-run card
+check('O80 card: a counselor without a title gets it; the owner and the admin never', oc2.ts_onb_card() and not oo.ts_onb_card()
+      and not oa.ts_onb_card())
+oc2.ts_brand_save(oc2, {'title': 'مشاور خانواده'})
+check('O81 card: gone once a title is saved', not oc2.ts_onb_card())
+ocu = member(ob, 'clinician', verified=False)
+check('O82 card: a counselor waiting for verification gets it too (shown on the state page)', ocu.ts_onb_card())
+check('O83 card: only the counselor closes it', raises(lambda: ocu.ts_onb_card_hide(oc1), UserError))
+ocu.ts_onb_card_hide(ocu)
+check('O84 card: closed -> gone', not ocu.ts_onb_card() and ocu.ts_onb_card_hidden_on)
+check('O85 card: never in an education panel', member(wedu, 'counselor').ts_onb_card() is False)
 
 print('SUMMARY %d/%d passed' % (sum(ok for _, ok in results), len(results)))
 env.cr.rollback()

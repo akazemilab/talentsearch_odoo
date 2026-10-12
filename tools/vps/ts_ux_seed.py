@@ -308,5 +308,107 @@ else:
                    QW + '/invites/new?step=2',
                    post_(QW + '/invites/new', step=2, item_kind='single', instrument_id=qi1.id),
                    QW + '/invites/new?step=4']
+
+# ---------------------------------------------------------------- counseling-center set-up guide (clinic phase 6, 2026-10-12)
+# A dedicated prepaid counseling-center panel «مرکز مشاورهٔ نمونهٔ آرامش» (fictional): owner, counselor c1 with a title, a
+# photo and a verified licence, counselor c2 verified without a title (first-run card), participant p1 with a finished
+# attempt (responsible c1) taken while the panel was still free, a PNG logo. Every run puts the checklist back in the same
+# partly-done state «۳ از ۶ انجام شده»: identity, counselors and first invitation done; each counselor's catalog, the caps
+# (optional) and the credit (balance 0) open. Upserts only.
+import base64 as _b64, io as _io
+
+
+def ux_png(kind):
+    from PIL import Image, ImageDraw
+    im = Image.new('RGBA', (256, 256), (0, 0, 0, 0))
+    d = ImageDraw.Draw(im)
+    if kind == 'logo':
+        try:
+            d.rounded_rectangle((16, 16, 240, 240), radius=48, fill=(42, 111, 151, 255))
+        except AttributeError:
+            d.rectangle((16, 16, 240, 240), fill=(42, 111, 151, 255))
+        d.ellipse((76, 76, 180, 180), outline=(253, 253, 255, 255), width=14)
+    else:
+        d.ellipse((0, 0, 255, 255), fill=(201, 205, 221, 255))
+        d.ellipse((88, 44, 168, 124), fill=(117, 121, 140, 255))
+        d.pieslice((40, 140, 216, 316), 180, 360, fill=(117, 121, 140, 255))
+    buf = _io.BytesIO()
+    im.save(buf, 'PNG')
+    return _b64.b64encode(buf.getvalue()).decode()
+
+
+CK = lambda k: L('center.%s' % k)
+CNAME = 'مرکز مشاورهٔ نمونهٔ آرامش'
+
+
+def center_panel():
+    org = env['res.partner'].search([('name', '=', CNAME), ('is_company', '=', True)], limit=1) or env['res.partner'].create(
+        {'name': CNAME, 'is_company': True})
+    ws = env['ts.workspace'].search([('partner_id', '=', org.id)], limit=1) or env['ts.workspace'].create(
+        {'name': CNAME, 'purpose': 'clinical', 'partner_id': org.id, 'escalation_contact_id': org.id})
+    if not ws.approved_on:
+        ws.write({'approved_on': '2026-01-01 00:00:00'})
+    if ws.state != 'pilot':
+        ws.state = 'pilot'
+    ws.write({'public_name': 'مرکز مشاورهٔ آرامش', 'contact_line': '۰۲۱-۸۸۰۰۰۰۰۰ · aramesh.example', 'brand_color': '#2a6f97',
+              'ts_onb_nocap_on': False})
+    if not org.image_1920:
+        org.image_1920 = ux_png('logo')
+    return ws
+
+
+def center_member(ws, k, name, role, **vals):
+    u = user('center.%s' % k, name)
+    mm = M.with_context(active_test=False).search([('workspace_id', '=', ws.id), ('user_id', '=', u.id)], limit=1) or M.create(
+        {'workspace_id': ws.id, 'user_id': u.id, 'role': role})
+    base = {'active': True, 'ts_onb_hidden_on': False, 'ts_onb_card_hidden_on': False, 'ts_catalog_seen_on': False}
+    if role == 'clinician':
+        base['monthly_cap'] = 0
+    mm.write(dict(base, **vals))
+    if mm.catalog_restricted or mm.restrict_instrument_ids or mm.restrict_battery_ids:
+        mm.write({'catalog_restricted': False, 'restrict_instrument_ids': [(5, 0, 0)], 'restrict_battery_ids': [(5, 0, 0)]})
+    return mm
+
+
+def center_seed():
+    ws = center_panel()
+    mo = center_member(ws, 'owner', 'فرزانه آزمایشی', 'owner')
+    c1 = center_member(ws, 'c1', 'سارا آزمایشی', 'clinician', title='روان‌شناس و مشاور',
+                       report_bio='مشاور نوجوان و خانواده', license_number='LIC-UX-1001', verification_state='verified')
+    c2 = center_member(ws, 'c2', 'کاوه آزمایشی', 'clinician', title=False, license_number='LIC-UX-1002',
+                       verification_state='verified')
+    if not c1.user_id.partner_id.image_1920:
+        c1.user_id.partner_id.image_1920 = ux_png('photo')
+    p1 = user('center.p1', 'مراجع آزمایشی آرامش')
+    a = A.search([('workspace_id', '=', ws.id), ('user_id', '=', p1.id), ('state', '=', 'done')], order='id desc', limit=1)
+    if not a:
+        if ws.billing_mode != 'free':
+            ws.billing_mode = 'free'          # the sample invitation is taken while the panel is free (no credit needed)
+        cinst = c1.allowed_instruments().filtered(lambda i: i.audience == 'adult' and i.code != 'TALENT-INV-15') \
+            .sorted(lambda i: (i.active_item_count, i.id))[:1]
+        a = A.create({'workspace_id': ws.id, 'instrument_id': cinst.id, 'invitee_name': p1.name, 'invited_by_id': c1.user_id.id,
+                      'responsible_id': c1.id})
+        at = a.action_accept(p1, True)
+        if at.state == 'consent':
+            at.give_consent(research=False, role='self')
+        for it in at.active_items():
+            at.save_answer(it.id, 1 + it.id % 5)
+        at.action_submit()
+    if a.responsible_id != c1:
+        a.responsible_id = c1
+    if ws.billing_mode != 'prepaid':
+        ws.billing_mode = 'prepaid'           # steps 4 and 5 appear; the balance stays 0 (step 5 open)
+    return {'ws': ws, 'mo': mo, 'c1': c1, 'c2': c2, 'a': a}
+step('center', center_seed)
+if 'center' in R:
+    cs = R['center']
+    CW = '/my/workspaces/%s' % cs['ws'].id
+    cat, ccl = cs['a'].attempt_id, cs['a'].client_id
+    m[CK('owner')] = [CW, CW + '/settings', CW + '/members/%s' % cs['c1'].id, CW + '/credits', '/help/panel#center-setup']
+    m[CK('c1')] = [CW + '/members/%s' % cs['c1'].id] + ([CW + '/clients/%s/r/%s' % (ccl.id, cat.id)] if ccl and cat else [])
+    m[CK('c2')] = [CW, CW + '/members/%s' % cs['c2'].id]
+    if cat:
+        m[CK('p1')] = ['/my/assessments/%s' % cat.id]
+    pub.append('/help/panel#center-setup')
 json.dump(m, open('/tmp/ux_matrix.json', 'w'))
 print('UXMATRIX', ' '.join('%s=%d' % ((k or 'public').split('@')[0], len(v)) for k, v in m.items()), 'total', sum(len(v) for v in m.values()))
