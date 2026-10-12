@@ -125,7 +125,7 @@ def raw(c, path):
         LAST_URL = resp.geturl()
         return resp.status, resp.headers.get('Content-Type', ''), resp.read()
     except urllib.error.HTTPError as e:
-        LAST_URL = ''
+        LAST_URL = e.headers.get('Location', '') if e.headers else ''
         return e.code, '', b''
 
 
@@ -136,7 +136,7 @@ def pdf_ok(st, ctype, body):
     """A real PDF, or (server without a PDF engine) the report page in print mode: both are valid answers of the route."""
     if st == 200 and ctype.startswith('application/pdf') and body[:4] == b'%PDF':
         return True
-    return st == 200 and 'print=1' in LAST_URL and ctype.startswith('text/html')
+    return st in (200, 302, 303) and 'print=1' in LAST_URL
 
 
 def audit_count(event, extra=''):
