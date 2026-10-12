@@ -141,7 +141,7 @@ def shot_name(path):
     return re.sub(r'[^a-z0-9]+', '_', path.lower()).strip('_') or 'home'
 
 
-def nav(page, path):
+def _nav(page, path):
     """Open one matrix entry. An #anchor is not part of the navigation (a fragment-only change does not reload the page, so
     the dark pass used to capture the light page, G8-P5-3): load the page, then scroll the anchor into view."""
     if path.startswith('POSTSHOT '):
@@ -154,6 +154,24 @@ def nav(page, path):
     if frag:
         page.evaluate("f => { const e = document.getElementById(f); if (e) { e.scrollIntoView({block: 'start'}); } }", frag)
     return r
+
+
+def tunnel():
+    subprocess.run('ssh -fN -o ExitOnForwardFailure=yes -L %s:127.0.0.1:%s eot-odoo-prod 2>/dev/null || true' % (LOCAL, PORT), shell=True)
+
+
+def nav(page, path, tries=3):
+    """_nav with retries: a reset ssh tunnel (ERR_CONNECTION_RESET / SOCKET_NOT_CONNECTED) is re-opened and the page loaded
+    again; after the last try the error is printed and None returned, so one bad page never ends the whole matrix."""
+    for i in range(1, tries + 1):
+        try:
+            return _nav(page, path)
+        except Exception as e:
+            if i == tries:
+                print('!! navigation failed %-40s %s' % (path[:40], str(e).splitlines()[0][:120]), flush=True)
+                return None
+            time.sleep(3 * i)
+            tunnel()
 
 
 def audit(p, login, paths):
@@ -169,14 +187,23 @@ def audit(p, login, paths):
     page.on('console', lambda m: errors.append(m.text[:160]) if m.type == 'error' else None)
     page.on('pageerror', lambda e: errors.append(str(e)[:160]))
     if login:
-        page.goto(BASE + '/web/login', timeout=90000)
-        page.fill('input[name=login]', login); page.fill('input[name=password]', password)
-        # wait for the POST navigation itself: networkidle alone could return before it started, and the next goto then
-        # aborted the sign-in (flaky «sign-in failed» for a random login, 2026-10-11)
-        with page.expect_navigation(timeout=90000):
-            page.click('form[action="/web/login"] button[type=submit]')
-        page.wait_for_load_state('networkidle', timeout=90000)
-        ok = '/web/login' not in page.url
+        ok = False
+        for _try in (1, 2):                  # a reset tunnel during the sign-in once left a whole user on the login page
+            try:
+                nav(page, '/web/login')
+                page.fill('input[name=login]', login); page.fill('input[name=password]', password)
+                # wait for the POST navigation itself: networkidle alone could return before it started, and the next goto
+                # then aborted the sign-in (flaky «sign-in failed» for a random login, 2026-10-11)
+                with page.expect_navigation(timeout=90000):
+                    page.click('form[action="/web/login"] button[type=submit]')
+                page.wait_for_load_state('networkidle', timeout=90000)
+                ok = '/web/login' not in page.url
+            except Exception:
+                ok = False
+            if ok:
+                break
+            time.sleep(3)
+            tunnel()
         print(('signed in as %s' % login.split('@')[0]) if ok else '!! sign-in failed for %s' % login.split('@')[0], flush=True)
         bad += 0 if ok else 1
     for path in paths:
