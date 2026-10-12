@@ -415,10 +415,11 @@ check('O11 identity: a name without a logo is not enough; the button goes to the
       and s1['url'].endswith('/settings#tsbr-org') and 'لوگو' in (s1['note'] or ''), str(s1))
 ob.partner_id.image_1920 = base64.b64encode(png).decode()
 check('O12 identity: name and logo -> done (no button left)', ostep(oo, 'identity')['done'] and not ostep(oo, 'identity')['url'])
-ob.public_name = False
+ob.partner_id.image_1920 = False         # the panel name counts as the name (O10b): only a missing logo leaves the step open
 s1a = ostep(oa, 'identity')
-check('O13 identity: the admin (no settings page) gets no button but who does it', not s1a['url'] and s1a['note'] == NOT_YOURS)
-ob.public_name = 'مرکز مشاوره راه‌اندازی'
+check('O13 identity: the admin (no settings page) gets no button but who does it', not s1a['url'] and s1a['note'] == NOT_YOURS,
+      str(s1a))
+ob.partner_id.image_1920 = base64.b64encode(png).decode()
 
 # step 2: an active clinician / clinic director; a pending colleague invitation is «در راه»
 s2 = ostep(oo, 'counselors')
