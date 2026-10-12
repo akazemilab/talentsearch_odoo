@@ -308,5 +308,52 @@ else:
                    QW + '/invites/new?step=2',
                    post_(QW + '/invites/new', step=2, item_kind='single', instrument_id=qi1.id),
                    QW + '/invites/new?step=4']
+
+# ---------------------------------------------------------------- HR hiring pages (ts_hire, 2026-10-12)
+# On the fixtures of tools/prod/ts_http_hire.py (employment panel «شرکت آزمون استخدام وب», hr_admin hr, candidates).
+# Adds one open invitation for cand2 with the questionnaire done, so the task player and the invitation page are shot.
+HL = lambda n: 'ts.hire.%s.http@example.invalid' % n
+horg = env['res.partner'].search([('name', '=', 'شرکت آزمون استخدام وب')], limit=1)
+HWS = env['ts.workspace'].search([('partner_id', '=', horg.id)], limit=1) if horg else env['ts.workspace']
+if not HWS or 'ts.hire.position' not in env:
+    print('SEED-SKIP hire: run tools/prod/ts_http_hire.py on this clone first')
+else:
+    HW = '/my/workspaces/%s' % HWS.id
+    hp = env['ts.hire.position'].sudo().search([('workspace_id', '=', HWS.id), ('state', '=', 'open')], limit=1)
+    ha = hp.assignment_ids.filtered(lambda x: x.ts_hire_complete)[:1] if hp else env['ts.assignment']
+    c2 = U.search([('login', '=', HL('cand2'))], limit=1)
+
+    def hire_pending():
+        old = hp.assignment_ids.filtered(lambda x: x.invitee_name == 'داوطلب دوم آزمایشی')[:1]
+        if old:
+            return old
+        return A.create({'workspace_id': HWS.id, 'battery_id': hp.battery_id.id, 'position_id': hp.id,
+                         'instrument_id': hp.battery_id.ts_first_instrument().id, 'invitee_name': 'داوطلب دوم آزمایشی'})
+    def hire_task():
+        x = A.search([('workspace_id', '=', HWS.id), ('invitee_name', '=', 'داوطلب سوم آزمایشی')], limit=1) or A.create(
+            {'workspace_id': HWS.id, 'battery_id': hp.battery_id.id, 'position_id': hp.id,
+             'instrument_id': hp.battery_id.ts_first_instrument().id, 'invitee_name': 'داوطلب سوم آزمایشی'})
+        if not x.user_id:
+            x.action_accept(c2, share=True)
+        q = x.ts_battery_attempts()[0]
+        if q.state == 'consent':
+            q.give_consent()
+        if q.state == 'in_progress':
+            for it in q.active_items():
+                q.save_answer(it.id, 3 if it.factor_id.code != 'ATTN' else 1)
+            q.action_submit()
+        return x
+    if hp:
+        step('hire_pending', hire_pending)
+        if c2:
+            step('hire_task', hire_task)
+        P = HW + '/positions/%s' % hp.id
+        m[HL('hr')] = [HW + '/positions', HW + '/positions/new?q=حسابدار', P, P + '/profile', P + '/fairness'] + \
+            ([P + '/c/%s' % ha.id] if ha else []) + ([P + '/c/%s' % R['hire_pending'].id] if R.get('hire_pending') else [])
+        if ha and ha.user_id:
+            m[HL('cand')] = ['/my/assessments/battery/%s' % ha.id]
+        if R.get('hire_task') and c2:
+            t = R['hire_task'].ts_battery_attempts()[1:2]
+            m[HL('cand2')] = ['/invite/%s' % R['hire_pending'].token] + (['/take/%s' % t.access_token] if t else [])
 json.dump(m, open('/tmp/ux_matrix.json', 'w'))
 print('UXMATRIX', ' '.join('%s=%d' % ((k or 'public').split('@')[0], len(v)) for k, v in m.items()), 'total', sum(len(v) for v in m.values()))
