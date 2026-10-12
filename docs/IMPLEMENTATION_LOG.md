@@ -364,3 +364,11 @@ Data step (owner-only, NOT in code): approve workspace 1, set pilot, add the cou
 - Persian product name «استعدادیاب» (website record, CRM team/tag, sequences renamed on upgrade).
 - Live bug fixed: /web/signup 500 (layout title fallback set main_object=None; seo_object needs it). Known cosmetic: fallback title reads «استعدادیاب | استعدادیاب» on pages without a title.
 - ts_check: inherited t-elif inserted before a t-elif is valid.
+
+## clinic4 — prepaid billing on native Odoo (2026-10-12, LIVE)
+
+- Ship clinic4 (commit d0d52a9): install ts_billing, upgrade all ts modules. Rehearsal eot_ts81: guard UNCHANGED, portal UNCHANGED, 0 unexpected (63 suites, 2152 checks). Ship OK, eot.ir UNCHANGED (1049 pages). Backup /var/backups/odoo/eot_main_pre_ts_clinic4_20261012-0335.dump.
+- Live effects: company 1 currency USD -> IRR (rounding 1, audit billing.currency_switch; 0 journal entries existed), 40 service products (one per published instrument/battery, list price 0, category «استعدادیاب / سنجه‌ها»), top-up product «اعتبار پیش‌پرداخت استعدادیاب». Every panel stays `billing_mode='free'` (Sepehr included) until the super admin switches it in the back office.
+- Design: docs/clinic/04_billing_brief.md (contract) + 04_billing_stages.md (plan written from another session). Ledger Monetary in Rial; types hold/release/topup; keys hold:<asg>, release:<asg>, usage:<attempt>, topup:<move>, topup-rev:<credit note>; cap spend = -SUM(hold, release, debit_usage, refund) per Jalali month; prices via the partner's explicit pricelist (specific_property_product_pricelist) rounded to 10 Rial; top-up hooks on write, register-payment wizard, payment post, move post, reversal + daily cron; credits page per role; tests tests_billing (87) + ts_http_billing (27).
+- Reviewer (Fable) changes: low-balance check also after a hold; no explicit decimal_places write on IRR. Fixes during rehearsal: low_balance added to SMS_STAFF_TYPES; pv2_11 follows per-panel billing; C03 currency test only on a clone without journal entries; fixture names without the forbidden money words; money inputs RTL.
+- Live to do by the owner: set prices on the products (ریال, multiples of 10), optionally a pricelist for Sepehr, switch Sepehr to prepaid, issue the first top-up invoice and register its payment.
