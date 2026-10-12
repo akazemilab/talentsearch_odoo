@@ -228,7 +228,7 @@
                                         <div class="ts-doc__kind">گزارش مجموعهٔ سنجه‌ها</div>
                                     </header>
                                     <h1 class="ts-doc__title" t-out="battery.ts_title()"/>
-                                    <p class="ts-doc__lead">نتیجهٔ <t t-out="a.user_id.partner_id.name"/><t t-call="ts_website.sep"/><t t-out="when"/></p>
+                                    <p class="ts-doc__lead">نتیجهٔ <t t-out="a.user_id.partner_id.ts_known_name() or 'شما'"/><t t-call="ts_website.sep"/><t t-out="when"/></p>
                                     <dl class="ts-meta ts-doc__meta tsb-meta">
                                         <dt>به دعوت</dt><dd t-out="org"/>
                                         <t t-if="counselor"><dt>مشاور</dt><dd><bdi t-out="counselor"/></dd></t>

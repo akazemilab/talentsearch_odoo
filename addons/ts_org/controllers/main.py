@@ -53,14 +53,12 @@ def _counts(assignments):
     return {k: len(assignments.filtered(lambda a, k=k: a.state == k)) for k in keys}
 
 
-# State pill of a panel card (glossary §2: «در انتظار تأیید» while gated, «فعال» after approval).
-PANEL_PILL = {'active': ('فعال', 'ts-pill--ok'), 'pilot': ('فعال', 'ts-pill--ok'), 'draft': ('پیش‌نویس', 'ts-pill--neutral'),
-              'suspended': ('معلق', 'ts-pill--warn'), 'closed': ('بسته', 'ts-pill--neutral')}
+# State pill of a panel card (glossary §2). No approval state since onb1: a panel is active from the start.
+PANEL_PILL = {'active': ('فعال', 'ts-pill--ok'), 'draft': ('پیش‌نویس', 'ts-pill--neutral'),
+              'suspended': ('متوقف', 'ts-pill--warn'), 'closed': ('بسته', 'ts-pill--neutral')}
 
 
 def _panel_pill(ws):
-    if ws.gated and ws.state == 'pilot':
-        return ('در انتظار تأیید', 'ts-pill--warn')
     return PANEL_PILL.get(ws.state, (ws.state, 'ts-pill--neutral'))
 
 
@@ -82,6 +80,8 @@ INVITE_MSG = {
     'used': ('این دعوت قبلاً استفاده شده است', 'این پیوند با یک حساب دیگر پذیرفته شده است. اگر اشتباهی رخ داده، از دعوت‌کننده بخواهید دعوت تازه بفرستد.'),
     'declined': ('این دعوت رد شده است', 'برای شرکت در سنجه از دعوت‌کننده بخواهید دعوت تازه بفرستد.'),
     'withdrawn': ('این دعوت دیگر فعال نیست', 'دعوت‌کننده آن را لغو کرده است. برای اطلاعات بیشتر با او تماس بگیرید.'),
+    'paused': ('این دعوت فعلاً در دسترس نیست', 'پنلی که این دعوت را فرستاده موقتاً متوقف شده است و پاسخ‌دهی تازه شروع نمی‌شود. '
+               'نتیجهٔ سنجه‌هایی که پیش‌تر تمام کرده‌اید در «سنجه‌های من» برایتان می‌ماند.'),
 }
 
 
@@ -161,7 +161,7 @@ class TsOrg(http.Controller):
             ('پنل ساخته شد', True, None),
             ('نام و لوگوی پنل', bool(ws.partner_id.image_1920), '#ts-settings'),
             ('دعوت اولین همکار', bool(others), '#ts-members'),
-            ('دعوت اولین شرکت‌کننده' + (' (پس از تأیید)' if ws.gated else ''), bool(first), '#ts-invite'),
+            ('دعوت اولین شرکت‌کننده', bool(first), '#ts-invite'),
         ]
 
     @http.route('/my/workspaces/<int:ws_id>/invite', type='http', auth='user', website=True,
@@ -172,7 +172,7 @@ class TsOrg(http.Controller):
         if not member.can_invite():
             raise request.not_found()
         if not member.can_invite_participants():
-            return request.redirect('/my/workspaces/%s?error=pending' % ws_id)
+            raise request.not_found()
         name = (post.get('invitee_name') or '').strip()
         inst_id = post.get('instrument_id') or ''
         allowed = member.allowed_instruments()
@@ -268,16 +268,18 @@ class TsOrg(http.Controller):
         return {'login_url': '/web/login?redirect=%s' % redirect, 'signup_url': '/web/signup?redirect=%s' % redirect,
                 'phone_url': None}
 
-    def _invite(self, token):
+    def _invite(self, token, paused_ok=False):
+        """The invitation of a running panel. With paused_ok the invitation of a suspended panel is returned too, so
+        its page can say so (accepting stays impossible)."""
         a = request.env['ts.assignment'].sudo().search([('token', '=', token)], limit=1)
-        if not a or a.workspace_id.state not in ('pilot', 'active'):
+        if not a or a.workspace_id.state not in (('active', 'suspended') if paused_ok else ('active',)):
             raise request.not_found()
         return a
 
     @http.route('/invite/<string:token>', type='http', auth='public', website=True, sitemap=False)
     def invite_page(self, token, **kw):
         _ts_site_or_404()
-        a = self._invite(token)
+        a = self._invite(token, paused_ok=True)
         user = request.env.user
         if a.user_id and not user._is_public() and a.user_id != user:
             raise request.not_found()
@@ -285,10 +287,11 @@ class TsOrg(http.Controller):
             return request.redirect('/take/%s' % a.attempt_id.access_token)
         if a.state == 'done' and a.user_id == user:
             return request.redirect('/my/assessments/%s' % a.attempt_id.id)
-        inv_state = a.invite_state()
+        inv_state = 'paused' if a.workspace_id.state == 'suspended' else a.invite_state()
         public = user._is_public()
         mismatch = False
-        if not public and not a.user_id:
+        known = '' if public else user.partner_id.ts_known_name()
+        if known and not a.user_id:
             # signed in with an account whose name differs from the invitee: say so before accepting (G2-P12-1)
             def norm(x):
                 return ' '.join((x or '').replace('ي', 'ی').replace('ك', 'ک').replace('\u200c', ' ').split()).lower()
@@ -297,7 +300,7 @@ class TsOrg(http.Controller):
             'a': a, 'inst': a.instrument_id, 'ws': a.workspace_id, 'public': public,
             'fa': fa_digits, **self._auth_urls('/invite/%s' % token),
             'inv_state': inv_state if not (inv_state == 'used' and a.user_id == user) else 'ok',
-            'inv_msg': INVITE_MSG, 'user_name': '' if public else (user.name or '').strip(), 'mismatch': mismatch,
+            'inv_msg': INVITE_MSG, 'user_name': known, 'mismatch': mismatch,
             'logout_url': '/web/session/logout?redirect=%s' % quote('/invite/%s' % token),
             'ask_decline': kw.get('decline') == '1' and not public,
             'student': a.workspace_id.purpose == 'education',
@@ -312,6 +315,10 @@ class TsOrg(http.Controller):
             attempt = a.action_accept(request.env.user, share=post.get('share') == '1')
         except UserError:
             raise request.not_found()
+        # onb1: an account made by mobile code has no name yet; the inviter already knows it (S-AUTH, no name step)
+        partner = request.env.user.partner_id.sudo()
+        if partner.ts_name_unknown and 2 <= len((a.invitee_name or '').strip()) <= 80:
+            partner.write({'name': a.invitee_name.strip()})
         return request.redirect('/take/%s' % attempt.access_token)
 
     @http.route('/invite/<string:token>/decline', type='http', auth='user', website=True,

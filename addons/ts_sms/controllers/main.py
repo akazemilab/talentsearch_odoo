@@ -25,6 +25,9 @@ MESSAGES = {
     'none': ('warn', 'ابتدا کد بخواهید.'),
     'saved': ('ok', 'تنظیمات ذخیره شد.'),
     'removed': ('ok', 'شمارهٔ موبایل حذف شد.'),
+    'taken': ('warn', 'این شماره به حساب دیگری در استعدادیاب وصل است. اگر آن حساب هم مال شماست، با پشتیبانی تماس بگیرید تا دو حساب یکی شود.'),
+    'short': ('warn', 'کد ۶ رقمی است.'),
+    'locked': ('warn', 'چند بار کد نادرست وارد شد. برای امنیت حساب، ۱۵ دقیقهٔ دیگر دوباره امتحان کنید.'),
 }
 
 
@@ -56,9 +59,12 @@ class TsSmsController(TsOrg):
         return resp
 
     def _auth_urls(self, path):
+        """S-AUTH (onb1): the mobile sign-in is the way in; email stays as the quiet second link, e-mail sign-up is gone."""
         urls = super()._auth_urls(path)
         if _enabled():
             urls['phone_url'] = '/signup?next=%s' % quote(path, safe='/')
+            urls['login_url'] = '/web/login?redirect=%s&email=1' % quote(path, safe='/')
+            urls['signup_url'] = None
         return urls
 
     def _phone_values(self, msg=None, pending=False):
@@ -89,7 +95,9 @@ class TsSmsController(TsOrg):
         _ts_site_or_404()
         ok, reason, phone = request.env['ts.phone.otp'].verify_code(request.env.user, code)
         if not ok:
-            return request.redirect('/my/phone?msg=%s%s' % (reason, '&pending=1' if reason == 'wrong' else ''))
+            return request.redirect('/my/phone?msg=%s%s' % (reason, '&pending=1' if reason in ('wrong', 'short') else ''))
+        if request.env['res.users'].ts_phone_owner(phone, exclude=request.env.user):
+            return request.redirect('/my/phone?msg=taken')
         request.env.user.partner_id.sudo().write({
             'ts_phone': phone, 'ts_phone_verified_at': fields.Datetime.now(), 'ts_sms_results': True})
         return request.redirect('/my/phone?msg=verified')
@@ -113,7 +121,10 @@ class TsSmsController(TsOrg):
 class TsSmsPanelController(TsPanel):
 
     def _auth_urls(self, path):
+        """Colleague invitations: mobile first; an invitation bound to an e-mail still offers e-mail sign-in and sign-up
+        (/web/signup stays open for /join/ return paths, see controllers/signup.py)."""
         urls = super()._auth_urls(path)
         if _enabled():
             urls['phone_url'] = '/signup?next=%s' % quote(path, safe='/')
+            urls['login_url'] = '/web/login?redirect=%s&email=1' % quote(path, safe='/')
         return urls

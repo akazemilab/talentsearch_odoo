@@ -60,7 +60,7 @@ class TsAssessment(http.Controller):
         talent = insts.filtered(lambda i: i.code == 'TALENT-INV-15')[:1]
         start_url = '/assessments/%s/start' % quote(talent.slug) if talent else False
         if start_url and request.env.user._is_public():
-            start_url = '/web/login?redirect=%s' % quote(start_url)
+            start_url = '/signup?next=%s' % quote(start_url, safe='/')   # S-AUTH (onb1): one sign-in, by mobile
         return request.render('ts_website.page_assessments', {
             'start_url': start_url, 'catalog_count': len(insts) - len(talent),
         })

@@ -21,6 +21,22 @@ def mask_identity(phone, email):
         return user[:1] + '…@' + dom
     return ''
 
+def _need_name():
+    """An account made by mobile code alone has no name yet; forms where others will see the person ask for it."""
+    return bool(request.env.user.partner_id.sudo().ts_name_unknown)
+
+
+def _take_own_name(post):
+    """Store «نام شما» from a form when the account has no name yet. Raises UserError on a missing or bad name."""
+    if not _need_name():
+        return
+    name = ' '.join((post.get('own_name') or '').split())
+    if not 2 <= len(name) <= 80:
+        raise UserError('نام و نام خانوادگی خود را بنویسید (۲ تا ۸۰ نویسه)؛ همکاران و مراجعان این نام را می‌بینند.')
+    request.env.user.sudo().write({'name': name})
+    request.env['ts.audit.event'].sudo().log('account.name')
+
+
 def _flash(msg=None):
     if msg:
         request.session['ts_flash'] = msg
@@ -61,21 +77,23 @@ class TsPanel(http.Controller):
         if request.env.user._is_public():
             return request.redirect(self._login_url('/my/workspaces/new' + ('?kind=' + kind if kind else '')))
         return request.render('ts_org.panel_new', {
-            'error': _flash(), 'vals': {'kind': kind}, 'page_name': 'ts_panel'})
+            'error': _flash(), 'vals': {'kind': kind}, 'page_name': 'ts_panel', 'need_name': _need_name()})
 
     @http.route('/my/workspaces/new/create', type='http', auth='user', website=True, methods=['POST'],
                 sitemap=False)
     def create(self, **post):
         _ts_site_or_404()
-        vals = {k: (post.get(k) or '')[:120] for k in ('name', 'kind', 'solo_as')}
+        vals = {k: (post.get(k) or '')[:120] for k in ('name', 'kind', 'solo_as', 'own_name')}
         try:
+            with request.env.cr.savepoint():
+                _take_own_name(post)
             ws = request.env['ts.workspace'].ts_panel_create(
                 request.env.user, post.get('name'), post.get('kind'), solo_as=post.get('solo_as'),
                 terms=bool(post.get('terms')), escalation_ok=bool(post.get('escalation_ok')),
                 license_number=post.get('license_number'))
         except (UserError, ValidationError) as e:
             return request.render('ts_org.panel_new', {
-                'error': str(e.args[0] if e.args else e), 'vals': vals, 'page_name': 'ts_panel'})
+                'error': str(e.args[0] if e.args else e), 'vals': vals, 'page_name': 'ts_panel', 'need_name': _need_name()})
         return request.redirect('/my/workspaces/%s?new=1' % ws.id)
 
     # --------------------------------------------------------------- settings
@@ -138,7 +156,7 @@ class TsPanel(http.Controller):
             'urls': self._auth_urls('/join/' + token), 'error': _flash(), 'page_name': 'ts_panel',
             'bound_to': mask_identity(inv.phone, inv.email), 'by_phone': bool(inv.phone),
             'inviter': inv.invited_by_id.sudo().name or '', 'expires_fa': jalali(inv.expires_at, with_time=False),
-            'user_name': (user.name or '').strip() if signed else ''})
+            'user_name': user.partner_id.ts_known_name() if signed else '', 'need_name': signed and _need_name()})
 
     @http.route('/join/<string:token>/accept', type='http', auth='user', website=True, methods=['POST'],
                 sitemap=False)
@@ -146,6 +164,7 @@ class TsPanel(http.Controller):
         _ts_site_or_404()
         inv = self._invite(token)
         try:
+            _take_own_name(post)
             m = inv.action_accept(request.env.user, license_number=post.get('license_number'))
         except (UserError, ValidationError) as e:
             _flash(str(e.args[0] if e.args else e))
@@ -169,18 +188,18 @@ class TsPanel(http.Controller):
             # invited or imported results already belong to their panel; ts_share_attempt() would refuse (G2-P4-1)
             return request.render('ts_org.share_form', {
                 'attempt': at, 'ws': None, 'code': '', 'error': error, 'page_name': 'ts_assessments',
-                'owned_by': at.workspace_id.sudo(), 'shares': None})
+                'owned_by': at.workspace_id.sudo(), 'shares': None, 'need_name': _need_name()})
         if code:
             code = code.strip().upper()[:30]
             ws = request.env['ts.workspace'].sudo().search([
-                ('code', '=', code), ('purpose', '=', 'education'), ('state', 'in', ('pilot', 'active'))], limit=1)
-            if not ws or ws.gated:
+                ('code', '=', code), ('purpose', '=', 'education'), ('state', '=', 'active')], limit=1)
+            if not ws:
                 ws, error = None, 'پنلی با این کد پیدا نشد. کد را از مشاور خود بپرسید.'
         shares = request.env['ts.assignment'].sudo().search(
             [('attempt_id', '=', at.id), ('user_id', '=', request.env.user.id), ('share_level', '!=', 'none')])
         return request.render('ts_org.share_form', {
             'attempt': at, 'ws': ws, 'code': code or '', 'error': error, 'page_name': 'ts_assessments',
-            'owned_by': None, 'shares': shares})
+            'owned_by': None, 'shares': shares, 'need_name': _need_name()})
 
     @http.route('/my/assessments/<int:attempt_id>/share/confirm', type='http', auth='user', website=True,
                 methods=['POST'], sitemap=False)
@@ -188,6 +207,7 @@ class TsPanel(http.Controller):
         _ts_site_or_404()
         at = self._own_attempt(attempt_id)
         try:
+            _take_own_name(post)
             request.env['ts.assignment'].ts_share_attempt(at, post.get('code'), request.env.user)
         except (UserError, ValidationError) as e:
             _flash(str(e.args[0] if e.args else e))

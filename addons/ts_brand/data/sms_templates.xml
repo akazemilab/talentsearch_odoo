@@ -96,46 +96,35 @@
 {{ object.ts_sms_link }}</field>
         </record>
 
-        <record id="sms_panel_approved" model="sms.template">
-            <field name="name">استعدادیاب: پنل تأیید شد</field>
-            <field name="model_id" ref="ts_core.model_ts_workspace"/>
-            <field name="body">استعدادیاب
-پنل شما تأیید شد
-{{ object.ts_sms_link }}</field>
-        </record>
-
-        <record id="sms_panel_rejected" model="sms.template">
-            <field name="name">استعدادیاب: پنل تأیید نشد</field>
-            <field name="model_id" ref="ts_core.model_ts_workspace"/>
-            <field name="body">استعدادیاب
-پنل شما تأیید نشد
-{{ object.ts_sms_link }}</field>
-        </record>
-
+        <!-- onb1: panels need no approval any more, so the «approved» / «not approved» texts were removed. -->
         <record id="sms_panel_suspended" model="sms.template">
-            <field name="name">استعدادیاب: پنل معلق شد</field>
+            <field name="name">استعدادیاب: پنل موقتاً متوقف شد</field>
             <field name="model_id" ref="ts_core.model_ts_workspace"/>
             <field name="body">استعدادیاب
-پنل شما معلق شد
+پنل شما موقتاً متوقف شد
 {{ object.ts_sms_link }}</field>
         </record>
 
-        <!-- OTP: no record is read; the code and the minutes come in the render context (ctx). Plain-SMS path only: with an
-             approved Kavenegar lookup template (Settings -> SMS) the lookup is used, as before. -->
+        <!-- OTP: no record is read; the code and the site host come in the render context (ctx). The last line is the
+             origin-bound one-time-code line (WebOTP / iOS autofill: «@host #code», Latin digits, the whole text well under
+             140 characters). Plain-SMS path only: with an approved Kavenegar lookup template (Settings -> SMS) the lookup is
+             used instead, and that template must end with the same line (docs/onboarding/01_signin_and_approval.md). -->
         <record id="sms_otp_signup" model="sms.template">
             <field name="name">استعدادیاب: کد ورود با موبایل</field>
             <field name="model_id" ref="ts_sms.model_ts_signup_otp"/>
             <field name="body">استعدادیاب
-کد تأیید: {{ ctx.get('code') }} ({{ ctx.get('minutes') }} دقیقه)
-به کسی ندهید.</field>
+کد ورود: {{ ctx.get('code') }}
+این کد را به کسی ندهید.
+@{{ ctx.get('host') }} #{{ ctx.get('code') }}</field>
         </record>
 
         <record id="sms_otp_phone" model="sms.template">
             <field name="name">استعدادیاب: کد تأیید شمارهٔ موبایل</field>
             <field name="model_id" ref="ts_sms.model_ts_phone_otp"/>
             <field name="body">استعدادیاب
-کد تأیید: {{ ctx.get('code') }} ({{ ctx.get('minutes') }} دقیقه)
-به کسی ندهید.</field>
+کد تأیید شماره: {{ ctx.get('code') }}
+این کد را به کسی ندهید.
+@{{ ctx.get('host') }} #{{ ctx.get('code') }}</field>
         </record>
     </data>
 </odoo>

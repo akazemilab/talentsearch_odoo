@@ -37,11 +37,13 @@ class TsPhoneOtp(models.Model):
 
     @api.model
     def request_code(self, user, phone_raw):
-        """Return (ok, reason). reason in: format, cooldown, limit, disabled, send."""
+        """Return (ok, reason). reason in: format, taken, cooldown, limit, disabled, send."""
         company = self.env.company.sudo()
         phone = iran_mobile(phone_raw)
         if not phone:
             return False, 'format'
+        if self.env['res.users'].ts_phone_owner(phone, exclude=user):
+            return False, 'taken'       # onb1: one number, one account (no second account gets this number)
         if not (company.kv_enabled and company.ts_sms_otp):
             return False, 'disabled'
         now = fields.Datetime.now()
@@ -86,13 +88,25 @@ class TsPhoneOtp(models.Model):
             return False
 
     @api.model
+    def _ts_otp_host(self):
+        """The host of talentsearch.ir for the WebOTP line «@host #code» (the browser checks it against the page)."""
+        from urllib.parse import urlsplit
+        site = self.env.ref('ts_website.website_ts', raise_if_not_found=False)
+        host = urlsplit(site.domain if '://' in (site.domain or '') else 'https://%s' % (site.domain or '')).hostname if site else None
+        return (host or 'talentsearch.ir').lower()
+
+    @api.model
     def _ts_otp_body(self, code, phone=None):
-        """Text of the plain-SMS code (no Kavenegar lookup template). ts_brand renders it from an sms.template."""
-        return _('کد تأیید استعدادیاب: %s\nاین کد را به کسی ندهید.', code)
+        """Text of the plain-SMS code (no Kavenegar lookup template). ts_brand renders it from an sms.template. The last
+        line is the WebOTP / iOS one-time-code line."""
+        return 'استعدادیاب\nکد ورود: %s\nاین کد را به کسی ندهید.\n@%s #%s' % (code, self._ts_otp_host(), code)
 
     @api.model
     def verify_code(self, user, code):
-        """Return (ok, reason, phone). reason: none, expired, wrong, attempts."""
+        """Return (ok, reason, phone). reason: short, none, expired, wrong, attempts."""
+        from .signup_otp import clean_code
+        if len(clean_code(code)) != 6:
+            return False, 'short', None
         S = self.sudo()
         rec = S.search([('user_id', '=', user.id), ('used', '=', False)], limit=1)
         if not rec:
@@ -102,7 +116,7 @@ class TsPhoneOtp(models.Model):
         if rec.attempts >= MAX_ATTEMPTS:
             return False, 'attempts', None
         rec.attempts += 1
-        good = hmac.compare_digest(rec.code_hash, self._hash(rec.salt, (code or '').strip()))
+        good = hmac.compare_digest(rec.code_hash, self._hash(rec.salt, clean_code(code)))
         if not good:
             return False, 'wrong', None
         rec.used = True

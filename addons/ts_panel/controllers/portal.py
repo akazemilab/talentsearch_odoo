@@ -86,7 +86,14 @@ class TsPanelPortal(CustomerPortal):
                    'when': jalali(a.submitted_at, with_time=False), 'url': '/my/assessments/%s' % a.id, 'label': 'دیدن نتیجه'}
         if nxt and nxt['kind'] == 'resume':
             going = going.filtered(lambda a: a.id != nxt['attempt_id'])     # one task, one button (UX audit G2 P1-1)
+        # onb1: an account that signs in by email and has no verified mobile is offered, once, to link one, so a later
+        # mobile sign-in finds this account instead of making a second one
+        partner = user.partner_id.sudo()
+        phone_offer = bool(user.share and not partner.ts_phone and not partner.ts_phone_offer_seen)
+        if phone_offer:
+            partner.ts_phone_offer_seen = True
         return request.render('ts_panel.my_home', {
+            'phone_offer': phone_offer,
             'tu': _is_student(env, user), 'invites': invites, 'going': going, 'done': done, 'shared_n': shared_n, 'memberships': memberships, 'unread': unread,
             'next_action': nxt, 'deadlines': {i.id: jalali(datetime.combine(i.deadline, time()), with_time=False) for i in invites if i.deadline},
             'fa': fa_digits, 'jalali': jalali, 'page_name': 'ts_my_home'})

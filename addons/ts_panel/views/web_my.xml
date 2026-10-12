@@ -33,6 +33,11 @@
                         <section class="tsp-section container" style="max-width:860px">
                             <h1 class="tsp-head__title">کارهای من</h1>
                             <t t-call="ts_panel.my_nav" active.f="home"/>
+                            <section t-if="phone_offer" class="ts-card ts-card--soft" id="ts-home-phone" aria-labelledby="ts-home-phone-h">
+                                <h2 id="ts-home-phone-h" class="h5">شمارهٔ موبایل را به حسابتان وصل کنید</h2>
+                                <p><t t-if="tu">از این به بعد با یک کد پیامکی هم وارد می‌شوی و حساب دومی برایت ساخته نمی‌شود.</t><t t-else="">از این به بعد با یک کد پیامکی هم وارد می‌شوید و حساب دومی برایتان ساخته نمی‌شود.</t></p>
+                                <p class="tsp-row-actions"><a href="/my/phone" class="ts-btn ts-btn--primary">وصل‌کردن موبایل</a></p>
+                            </section>
                             <!-- the header bell already shows the count on wide screens; on a phone its badge is tiny -->
                             <p t-if="unread" class="tsp-flash tsp-only-narrow" role="status">
                                 <a href="/my/notifications"><t t-out="fa(unread)"/> اعلان تازه <t t-if="tu">داری</t><t t-else="">دارید</t>.</a>
@@ -151,7 +156,7 @@
                                 <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
                                 <label for="acc-name"><strong>نام</strong></label>
                                 <p class="ts-hint" id="acc-name-h"><t t-if="tu">نام و نام خانوادگی‌ات را همان‌طور بنویس که مدرسه می‌شناسد؛ این نام در گزارش و برای پنل‌هایی که نتیجه را می‌بینند نمایش داده می‌شود.</t><t t-else="">نام و نام خانوادگی خود را همان‌طور بنویسید که پنل‌ها شما را می‌شناسند؛ این نام در گزارش‌ها و برای پنل‌هایی که نتیجه را می‌بینند نمایش داده می‌شود.</t></p>
-                                <input id="acc-name" name="name" type="text" class="form-control" maxlength="80" required="required" t-att-value="user.name" autocomplete="name" aria-describedby="acc-name-h"/>
+                                <input id="acc-name" name="name" type="text" class="form-control" maxlength="80" required="required" t-att-value="user.partner_id.ts_known_name() or None" autocomplete="name" aria-describedby="acc-name-h"/>
                                 <button type="submit" class="ts-btn ts-btn--primary">ذخیرهٔ نام</button>
                             </form>
                             <div class="ts-card" id="acc-contact">

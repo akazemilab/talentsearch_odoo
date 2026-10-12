@@ -1,0 +1,23 @@
+// S-AUTH (onb1): the sign-in card. Builds on .ts-auth / .ts-auth__card (ts_website) so the email page and this one match.
+.tsa {
+    .tsa-step[hidden], .tsa-resend[hidden], .tsa-help[hidden] { display: none; }
+    .tsa-num { font-size: 20px; letter-spacing: .06em; text-align: center; min-block-size: 52px; }
+    .tsa-code { letter-spacing: .4em; font-variant-numeric: tabular-nums; }
+    .tsa-num::placeholder { letter-spacing: .04em; color: var(--color-neutral-500); }
+    .tsa-sent { margin: 0; line-height: 1.9; }
+    .tsa-sent__num { font-weight: 600; white-space: nowrap; }
+    .tsa-edit { display: inline-flex; align-items: center; min-block-size: 44px; margin-inline-start: 6px; }
+    .tsa-personal { margin-block-start: 2px; }
+    .tsa-personal__hint { margin-block-start: -6px; }
+    .tsa-terms { margin: 0; text-align: center; }
+    .tsa-terms a { display: inline-flex; align-items: center; min-block-size: 44px; }
+    .tsa-resend { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 8px; margin: 0; }
+    .tsa-resend .tsa-count { margin: 0; min-block-size: 44px; display: inline-flex; align-items: center; }
+    .tsa-resend__btn { min-block-size: 44px; }
+    .tsa-resend__btn[hidden], .tsa-count[hidden] { display: none; }
+    .tsa-help { border-radius: var(--r-12); background: var(--color-neutral-900); padding: 4px 14px; }
+    .tsa-help summary { min-block-size: 44px; display: flex; align-items: center; cursor: pointer; font-weight: 500; }
+    .tsa-help ul { margin: 0 0 10px; padding-inline-start: 18px; line-height: 1.9; font-size: var(--fs-1); }
+    .ts-auth__alt { margin: 0; text-align: center; }
+    .ts-auth__alt a { display: inline-flex; align-items: center; min-block-size: 44px; color: var(--color-neutral-300); }
+}
