@@ -516,7 +516,7 @@
     .ts-formsplit { display: grid; gap: 32px; align-items: start; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); }
     .ts-formcard { display: flex; flex-direction: column; gap: 14px; padding: 22px; border-radius: var(--r-18); background: var(--color-surface); box-shadow: var(--shadow-sm); max-inline-size: none; }
     .ts-aside { display: flex; flex-direction: column; gap: 12px; padding: 22px; border-radius: var(--r-18); background: color-mix(in oklab, var(--color-surface) 50%, var(--color-bg)); box-shadow: var(--shadow-sm); }
-    .ts-aside h3 { font-size: 18px; font-weight: 500; }
+    .ts-aside h2, .ts-aside h3 { font-size: 18px; font-weight: 500; }
     .ts-aside__row { display: flex; justify-content: space-between; gap: 10px; padding-block: 8px; border-block-end: 1px solid var(--color-neutral-900); font-size: 13.5px; color: var(--color-neutral-400); }
     .ts-aside__row bdi, .ts-aside__row a { font-size: 14px; font-weight: 500; color: var(--color-text); text-decoration: none; }
     .ts-aside__note { display: flex; gap: 8px; font-size: 13px; line-height: 1.8; color: var(--color-neutral-300); }

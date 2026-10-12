@@ -628,7 +628,7 @@
                                         </div>
                                     </form>
                                     <div class="ts-aside">
-                                        <h3>راه‌های دیگر</h3>
+                                        <h2>راه‌های دیگر</h2>
                                         <div class="ts-aside__row"><span>ایمیل</span><a href="mailto:info@eot.ir"><bdi dir="ltr">info@eot.ir</bdi></a></div>
                                         <div class="ts-aside__row"><span>تلفن</span><a href="tel:+982188174100">۰۲۱-۸۸۱۷۴۱۰۰</a></div>
                                         <div class="ts-aside__note"><t t-call="ts_website.icon" ico.f="first-aid"/>استعدادیاب خدمت اورژانسی نیست. در شرایط اضطراری با ۱۱۵ تماس بگیرید.</div>

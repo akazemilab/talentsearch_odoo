@@ -71,7 +71,7 @@ JS = r"""() => {
   out.h1 = document.querySelectorAll('h1').length;
   out.title = document.title;
   out.text = document.body.innerText;
-  let ascii = 0; for (const el of document.querySelectorAll('#wrap *:not(bdi):not(code):not(script):not(style)')) { for (const n of el.childNodes) { if (n.nodeType === 3 && !n.parentElement.closest('bdi, code')) { ascii += (n.textContent.match(/[0-9]/g) || []).length; } } }
+  let ascii = 0; for (const el of document.querySelectorAll('#wrap *:not(bdi):not(code):not(script):not(style):not(textarea)')) { for (const n of el.childNodes) { if (n.nodeType === 3 && !n.parentElement.closest('bdi, code')) { ascii += (n.textContent.match(/[0-9]/g) || []).length; } } }
   out.ascii = ascii;
   out.dir = document.documentElement.dir || getComputedStyle(document.body).direction;
   // inputs without a visible or aria label (checklist 2)
