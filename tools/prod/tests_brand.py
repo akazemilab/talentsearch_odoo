@@ -493,8 +493,8 @@ s6g = ostep(ogo, 'invite')
 check('O63 invite: a panel awaiting approval says so and offers no button', og.gated and not s6g['url'] and 'تأیید' in (s6g['note'] or ''),
       str(s6g))
 
+# hide / restore, per member
 ologo = base64.b64encode(png).decode()            # Odoo 20 binary values are lazy: keep a copy, not the attachment
-ologo = ob.partner_id.image_1920
 ob.partner_id.image_1920 = False                    # one step open again (no logo)
 check('O70 an open step brings the checklist back', oo.ts_onb_checklist() and oo.ts_onb_checklist()['done_n'] == 5)
 check('O71 a member cannot hide another member\'s checklist', raises(lambda: oo.ts_onb_set_hidden(oa, True), UserError))
