@@ -177,7 +177,8 @@ class TsInstrumentHexaco(models.Model):
             'locked': True, 'factor_ids': factor_cmds})
         fid = {f.code: f.id for f in ver.factor_ids}
         self.env['ts.instrument.item'].sudo().with_context(ts_loader=True).create([
-            {'version_id': ver.id, 'factor_id': fid[f], 'sequence': s, 'text': t, 'reverse': r} for s, f, t, r in items])
+            {'version_id': ver.id, 'factor_id': fid[f], 'sequence': s, 'source_question_id': s, 'text': t, 'reverse': r,
+             'source_xmlid': 'ipip_hexaco_%d' % s} for s, f, t, r in items])
         ver._validate_contract()
         inst.write({'current_version_id': ver.id, 'approved_at': fields.Datetime.now(),
                     'approved_by_id': self.env.ref('base.user_root').id,
