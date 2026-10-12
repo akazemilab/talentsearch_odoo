@@ -93,6 +93,7 @@ JS = r"""() => {
     const r = el.getBoundingClientRect();
     if (!t || !r.width || !r.height) continue;
     const cs = getComputedStyle(el); if (cs.visibility === 'hidden' || cs.opacity === '0') continue;
+    if (el.closest('.ts-sr, .tsp-sr, .sr-only, .visually-hidden') || (r.width <= 1 && r.height <= 1)) continue;   // screen-reader-only text
     seen++;
     const fg = parse(cs.color); if (!fg) continue;
     const bg = bgOf(el); if (!bg) continue;   // gradient or image behind the text: cannot be computed, skip
