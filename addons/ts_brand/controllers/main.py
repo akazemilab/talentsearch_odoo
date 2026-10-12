@@ -38,12 +38,19 @@ _logger = logging.getLogger(__name__)
 PDF_ERROR = 'ساختن فایل PDF الان ممکن نشد. چند دقیقه بعد دوباره امتحان کنید یا از دکمهٔ «چاپ» صفحهٔ گزارش استفاده کنید.'
 
 
-def _pdf(report_xmlid, res_id, data, filename):
-    """Render one PDF and answer it as a download (no attachment is created: the reports have no `attachment` expression)."""
+def _pdf(report_xmlid, res_id, data, filename, fallback_url=None):
+    """Render one PDF and answer it as a download (no attachment is created: the reports have no `attachment` expression).
+    When the server has no PDF engine (wkhtmltopdf is not installed on eot-odoo-prod) or rendering fails, the reader is sent
+    to the report page in print mode (`?print=1`: the browser's print dialog, where «ذخیره به‌صورت PDF» is one choice)."""
     try:
         pdf, _kind = request.env['ir.actions.report'].sudo()._render_qweb_pdf(report_xmlid, [res_id], data=data)
-    except Exception:
-        _logger.exception('ts_brand: PDF %s for %s failed', report_xmlid, res_id)
+    except Exception as e:      # noqa: BLE001
+        if 'pdf engine' in str(e).lower():
+            _logger.info('ts_brand: no PDF engine on this server; %s falls back to print mode', report_xmlid)
+        else:
+            _logger.exception('ts_brand: PDF %s for %s failed', report_xmlid, res_id)
+        if fallback_url:
+            return request.redirect(fallback_url + ('&' if '?' in fallback_url else '?') + 'print=1', code=303, local=True)
         return request.make_response(PDF_ERROR, headers=[('Content-Type', 'text/plain; charset=utf-8')], status=503)
     return request.make_response(pdf, headers=[
         ('Content-Type', 'application/pdf'), ('Content-Length', str(len(pdf))),
@@ -89,9 +96,10 @@ class TsBrandLinks(http.Controller):
         at = _my_attempt(attempt_id=attempt_id)
         if at.state != 'done' or not at.released:
             raise request.not_found()
-        resp = _pdf('ts_brand.action_attempt_pdf', at.id, {'mode': 'self'}, 'estedadyab-%s.pdf' % _safe_name(at.name))
-        if resp.status_code == 200:
-            request.env['ts.audit.event'].sudo().log('result.print', at, kind='pdf')
+        resp = _pdf('ts_brand.action_attempt_pdf', at.id, {'mode': 'self'}, 'estedadyab-%s.pdf' % _safe_name(at.name),
+                    fallback_url='/my/assessments/%d' % at.id)
+        if resp.status_code in (200, 303):
+            request.env['ts.audit.event'].sudo().log('result.print', at, kind='pdf' if resp.status_code == 200 else 'print')
         return resp
 
     @http.route('/my/assessments/battery/<int:assignment_id>/pdf', type='http', auth='user', website=True, methods=['GET'],
@@ -102,10 +110,11 @@ class TsBrandLinks(http.Controller):
             ('id', '=', int(assignment_id)), ('user_id', '=', request.env.user.id), ('battery_id', '!=', False)], limit=1)
         if not a or not a.ts_battery_attempts().filtered(lambda t: t.state == 'done' and t.released):
             raise request.not_found()
-        resp = _pdf('ts_brand.action_battery_pdf', a.id, {'mode': 'self'}, 'estedadyab-%s.pdf' % _safe_name(a.name))
-        if resp.status_code == 200:
-            request.env['ts.audit.event'].sudo().log('result.print', a, workspace=a.workspace_id, kind='pdf',
-                                                     battery=a.battery_id.code)
+        resp = _pdf('ts_brand.action_battery_pdf', a.id, {'mode': 'self'}, 'estedadyab-%s.pdf' % _safe_name(a.name),
+                    fallback_url='/my/assessments/battery/%d' % a.id)
+        if resp.status_code in (200, 303):
+            request.env['ts.audit.event'].sudo().log('result.print', a, workspace=a.workspace_id,
+                                                     kind='pdf' if resp.status_code == 200 else 'print', battery=a.battery_id.code)
         return resp
 
     # ------------------------------------------------------------------ panel PDFs (result_level, like the screen)
@@ -117,10 +126,11 @@ class TsBrandLinks(http.Controller):
             deny(me, 'result_level_status', attempt=at.id)
             raise request.not_found()
         resp = _pdf('ts_brand.action_attempt_pdf', at.id, {'mode': 'panel', 'level': level},
-                    'estedadyab-%s.pdf' % _safe_name(at.name))
-        if resp.status_code == 200:
+                    'estedadyab-%s.pdf' % _safe_name(at.name),
+                    fallback_url='/my/workspaces/%d/clients/%d/r/%d' % (me.workspace_id.id, client.id, at.id))
+        if resp.status_code in (200, 303):
             request.env['ts.audit.event'].sudo().log('result.print', at, workspace=me.workspace_id, member=me, level=level,
-                                                     kind='pdf')
+                                                     kind='pdf' if resp.status_code == 200 else 'print')
         return resp
 
     @http.route('/my/workspaces/<int:ws_id>/clients/<int:cid>/b/<int:aid>/pdf', type='http', auth='user', website=True,
@@ -131,10 +141,11 @@ class TsBrandLinks(http.Controller):
             deny(me, 'result_level_status', assignment=a.id)
             raise request.not_found()
         resp = _pdf('ts_brand.action_battery_pdf', a.id, {'mode': 'panel', 'level': level},
-                    'estedadyab-%s.pdf' % _safe_name(a.name))
-        if resp.status_code == 200:
+                    'estedadyab-%s.pdf' % _safe_name(a.name),
+                    fallback_url='/my/workspaces/%d/clients/%d/b/%d' % (me.workspace_id.id, client.id, a.id))
+        if resp.status_code in (200, 303):
             request.env['ts.audit.event'].sudo().log('result.print', a, workspace=me.workspace_id, member=me, level=level,
-                                                     kind='pdf', battery=a.battery_id.code)
+                                                     kind='pdf' if resp.status_code == 200 else 'print', battery=a.battery_id.code)
         return resp
 
     # ------------------------------------------------------------------ settings: the panel's identity on reports

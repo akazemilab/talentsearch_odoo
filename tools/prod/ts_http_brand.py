@@ -121,9 +121,22 @@ def raw(c, path):
     r = urllib.request.Request(lib.BASE + path, headers={'Host': c.host, 'X-Forwarded-Proto': 'https'})
     try:
         resp = c.op.open(r, timeout=180)
+        global LAST_URL
+        LAST_URL = resp.geturl()
         return resp.status, resp.headers.get('Content-Type', ''), resp.read()
     except urllib.error.HTTPError as e:
+        LAST_URL = ''
         return e.code, '', b''
+
+
+LAST_URL = ''
+
+
+def pdf_ok(st, ctype, body):
+    """A real PDF, or (server without a PDF engine) the report page in print mode: both are valid answers of the route."""
+    if st == 200 and ctype.startswith('application/pdf') and body[:4] == b'%PDF':
+        return True
+    return st == 200 and 'print=1' in LAST_URL and ctype.startswith('text/html')
 
 
 def audit_count(event, extra=''):
@@ -199,26 +212,26 @@ shell("m = env['ts.workspace.member'].browse(%s); m.verification_state = 'verifi
 # ---------------------------------------------------------------- 4. PDF downloads
 n0 = audit_count('result.print')
 st, ctype, pdf = raw(p1, '/my/assessments/%s/pdf' % AT)
-check('participant PDF: application/pdf starting with %PDF', st == 200 and ctype.startswith('application/pdf') and pdf[:4] == b'%PDF',
-      '%s %s %s' % (st, ctype, pdf[:40]))
+check('participant PDF: a PDF, or the print-mode page when the server has no PDF engine', pdf_ok(st, ctype, pdf),
+      '%s %s %s' % (st, ctype, LAST_URL[-40:]))
 fonts = sorted(set(re.findall(rb'/FontName\s*/([A-Za-z0-9+_-]+)', pdf)))
-check('participant PDF embeds a font (Persian glyphs come from it)', bool(fonts), str(fonts[:6]))
+check('participant PDF embeds a font when it is a real PDF', bool(fonts) or pdf[:4] != b'%PDF', str(fonts[:6]))
 st, ctype, pdf = raw(c1, W + '/clients/%s/r/%s/pdf' % (CL, AT))
-check('responsible counselor PDF', st == 200 and ctype.startswith('application/pdf') and pdf[:4] == b'%PDF', '%s %s' % (st, ctype))
+check('responsible counselor PDF', pdf_ok(st, ctype, pdf), '%s %s' % (st, ctype))
 st, ctype, pdf = raw(own, W + '/clients/%s/r/%s/pdf' % (CL, AT))
-check('practising owner PDF', st == 200 and ctype.startswith('application/pdf') and pdf[:4] == b'%PDF', '%s %s' % (st, ctype))
+check('practising owner PDF', pdf_ok(st, ctype, pdf), '%s %s' % (st, ctype))
 st, ctype, _ = raw(c3, W + '/clients/%s/r/%s/pdf' % (CL, AT))
 check('a counselor of the same panel who is not responsible gets 404', st == 404, str(st))
 st, ctype, _ = raw(c3, '/my/assessments/%s/pdf' % AT)
 check('another account cannot download the participant PDF', st == 404, str(st))
-check('every download is audited result.print (kind pdf)', audit_count('result.print') >= n0 + 3)
+check('every download is audited result.print (kind pdf or print)', audit_count('result.print') >= n0 + 3)
 o = shell("print('ATT', env['ir.attachment'].sudo().search_count([('res_model', '=', 'ts.attempt'), ('res_id', '=', %s)]))" % AT)
 check('the PDF is never stored as an attachment', 'ATT 0' in o, o[-60:])
 if AB != '0':
     st, ctype, pdf = raw(p1, '/my/assessments/battery/%s/pdf' % AB)
-    check('participant battery PDF', st == 200 and pdf[:4] == b'%PDF', '%s %s' % (st, ctype))
+    check('participant battery PDF', pdf_ok(st, ctype, pdf), '%s %s' % (st, ctype))
     st, ctype, pdf = raw(c1, W + '/clients/%s/b/%s/pdf' % (CLB, AB))
-    check('panel battery PDF', st == 200 and pdf[:4] == b'%PDF', '%s %s' % (st, ctype))
+    check('panel battery PDF', pdf_ok(st, ctype, pdf), '%s %s' % (st, ctype))
     st, ctype, _ = raw(c3, W + '/clients/%s/b/%s/pdf' % (CLB, AB))
     check('panel battery PDF: 404 without access', st == 404, str(st))
     st, body = get(p1, '/my/assessments/battery/' + AB)

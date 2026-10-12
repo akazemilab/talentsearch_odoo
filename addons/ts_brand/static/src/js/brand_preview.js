@@ -61,3 +61,16 @@
 
     if (document.readyState === 'loading') { document.addEventListener('DOMContentLoaded', init); } else { init(); }
 })();
+
+/* Print mode for participant report pages (fallback of the PDF download when the server has no PDF engine):
+   /my/assessments/<id>?print=1 and /my/assessments/battery/<id>?print=1 open the browser print dialog once.
+   Panel pages already do this through data-tsp-autoprint (ts_panel/static/src/js/panel.js). */
+(function () {
+    'use strict';
+    function go() {
+        if (!/^\/my\/assessments\//.test(location.pathname) || !/[?&]print=1/.test(location.search)) { return; }
+        if (document.querySelector('[data-tsp-autoprint]')) { return; }
+        setTimeout(function () { window.print(); }, 300);
+    }
+    if (document.readyState === 'loading') { document.addEventListener('DOMContentLoaded', go); } else { go(); }
+})();
