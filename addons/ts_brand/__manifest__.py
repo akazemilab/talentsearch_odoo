@@ -11,10 +11,10 @@
     'post_init_hook': 'post_init_hook',
     'data': [
         'data/sms_templates.xml',
-        'data/report.xml',
         'views/web_brand.xml',
         'views/web_brand_inherit.xml',
         'views/report_pdf.xml',
+        'data/report.xml',
     ],
     'assets': {
         'ts_website.assets_ts': ['ts_brand/static/src/scss/brand.scss'],

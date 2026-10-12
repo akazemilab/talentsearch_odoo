@@ -24,7 +24,6 @@
         <field name="report_file">ts_brand.attempt_pdf</field>
         <field name="paperformat_id" ref="paperformat_a4_report"/>
         <field name="attachment_use" eval="False"/>
-        <field name="attachment" eval="False"/>
     </record>
 
     <record id="action_battery_pdf" model="ir.actions.report">
@@ -35,6 +34,5 @@
         <field name="report_file">ts_brand.battery_pdf</field>
         <field name="paperformat_id" ref="paperformat_a4_report"/>
         <field name="attachment_use" eval="False"/>
-        <field name="attachment" eval="False"/>
     </record>
 </odoo>
