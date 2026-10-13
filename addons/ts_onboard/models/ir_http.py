@@ -28,7 +28,7 @@ from urllib.parse import quote
 
 import werkzeug.exceptions
 
-from odoo import models
+from odoo import api, models
 from odoo.http import request
 from odoo.http.session import logout as session_logout
 
@@ -138,6 +138,19 @@ class IrHttpScope(models.AbstractModel):
             sess[KNOWN_KEY] = scope['phone']
         nxt = local_path(hr.full_path.rstrip('?'), '/my')
         werkzeug.exceptions.abort(request.redirect('/signup?next=%s' % quote(nxt, safe='/'), code=303, local=True))
+
+    @api.model
+    def get_frontend_session_info(self):
+        """A page of a session scoped to one invitation never starts the website bus: without `bus_info` the bus
+        service does not open /websocket at all (no connection attempt, no reconnect loop, no 303 on /websocket)."""
+        info = super().get_frontend_session_info()
+        try:
+            if request and request.session.get(SCOPE_KEY):
+                info.pop('bus_info', None)
+                info.pop('websocket_worker_version', None)
+        except Exception:        # noqa: BLE001 - the page renders either way
+            _logger.exception('ts_onboard: bus info not removed')
+        return info
 
     @classmethod
     def _post_dispatch(cls, response):

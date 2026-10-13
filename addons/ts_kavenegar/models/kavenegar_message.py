@@ -1,4 +1,5 @@
 import logging
+import re
 from datetime import datetime, timedelta
 
 from odoo import api, fields, models, _
@@ -8,6 +9,15 @@ from ..tools.kavenegar import (FINAL_STATUSES, KavenegarError, STATUS_TEXT, STAT
                                normalize_receptor, sms_parts)
 
 _logger = logging.getLogger(__name__)
+# the delivery secret of a Talent Search invitation link (ts_onboard): /i/<code>/<secret> and ?d=<secret>
+_LINK_SECRET_RE = re.compile(r'(/i/[a-z0-9]{8,12}/)[A-Za-z0-9_-]{22,64}|([?&]d=)[A-Za-z0-9_-]{22,64}')
+
+
+def mask_link_secrets(body):
+    """The body as it may be kept in the log: an invitation link's delivery secret becomes ***."""
+    if not body:
+        return body or ''
+    return _LINK_SECRET_RE.sub(lambda m: (m.group(1) or m.group(2)) + '***', body)
 
 
 def _ts(value):
@@ -212,10 +222,12 @@ class KavenegarMessage(models.Model):
             if existing:
                 existing._kv_apply_status(status, vals['status_text'], {'cost': vals['cost']})
             else:
+                # an imported outbox row may be an invitation SMS whose sent-log row is missing: its link secret is
+                # never kept (the length counts the message as sent)
                 body = e.get('message') or ''
                 chars, parts = sms_parts(body)
                 self._kv_log_sent([dict(vals, company_id=company.id, direction='out', kind='sms', messageid=mid,
-                                        receptor=str(e.get('receptor') or ''), sender=e.get('sender'), body=body,
+                                        receptor=str(e.get('receptor') or ''), sender=e.get('sender'), body=mask_link_secrets(body),
                                         message_date=_ts(e.get('date')), characters=chars, parts=parts)])
             n += 1
         return n

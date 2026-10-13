@@ -421,4 +421,53 @@ check('L01 a visitor who is not signed in declines without tying the invitation 
       ad.declined and ad.state == 'declined' and not ad.user_id)
 check('L02 an accepted invitation cannot be declined anonymously', raises(lambda: aq.action_decline(pub), UserError))
 
+# ================================================================ Z. closing items of the re-review
+from odoo.addons.ts_onboard.controllers import flow as _flow
+check('Z01 eot.ir activity also covers leads, helpdesk tickets, survey answers and forum posts (each only when installed)',
+      {'crm.lead', 'helpdesk.ticket', 'survey.user_input', 'forum.post'} <= {m for m, _f in _flow.EOT_ACTIVITY}
+      and not eot_activity(un), [m for m in ('crm.lead', 'helpdesk.ticket', 'survey.user_input', 'forum.post') if m in env])
+
+
+def _activity_after(make):
+    """eot_activity(un) after `make()` inside a savepoint that is rolled back."""
+    seen = []
+    try:
+        with env.cr.savepoint():
+            make()
+            env.flush_all()
+            seen.append(eot_activity(un))
+            raise UserError('roll back')
+    except UserError:
+        pass
+    return seen[0] if seen else None
+
+
+msg_out = _activity_after(lambda: env['mail.message'].sudo().create({
+    'model': 'res.partner', 'res_id': un.partner_id.id, 'body': 'onb2', 'message_type': 'comment', 'author_id': un.partner_id.id}))
+msg_ts = _activity_after(lambda: env['mail.message'].sudo().create({
+    'model': 'ts.assignment', 'res_id': a1.id, 'body': 'onb2', 'message_type': 'comment', 'author_id': un.partner_id.id}))
+msg_note = _activity_after(lambda: env['mail.message'].sudo().create({
+    'model': 'res.partner', 'res_id': un.partner_id.id, 'body': 'onb2', 'message_type': 'notification', 'author_id': un.partner_id.id}))
+check('Z02 a message the person wrote on a record outside Talent Search is eot.ir activity; one on a Talent Search record '
+      'or a system note is not', msg_out is True and msg_ts is False and msg_note is False, (msg_out, msg_ts, msg_note))
+if 'crm.lead' in env:
+    lead = _activity_after(lambda: env['crm.lead'].sudo().create({'name': 'onb2 lead', 'partner_id': un.partner_id.id}))
+    check('Z03 an eot.ir lead of the account is activity', lead is True, lead)
+with patch.object(type(env['mail.message']), 'search', lambda *a, **k: (_ for _ in ()).throw(RuntimeError('db'))):
+    failed = eot_activity(un)
+check('Z04 a check that cannot run counts as activity (fail closed)', failed is True)
+R.ts_hit('test:onb2:lock', 5, 60)
+env.cr.execute("SELECT count(*) FROM pg_locks WHERE locktype = 'advisory' AND pid = pg_backend_pid() AND granted")
+check('Z05 a rate hit holds a transaction-scoped advisory lock on its key (no overshoot under concurrency, no second cursor)',
+      env.cr.fetchone()[0] >= 1)
+env.cr.execute("DELETE FROM ts_rate_hit WHERE key = 'test:onb2:lock'")
+KM = env['kavenegar.message'].sudo()
+mid1, mid2 = 'onb2-import-%d-1' % a1.id, 'onb2-import-%d-2' % a1.id
+KM._kv_import_outbox(env.company, [
+    {'messageid': mid1, 'status': 10, 'receptor': PH['k'], 'message': 'دعوت\nhttps://talentsearch.ir/i/abcdabcdabcd/' + 'Zq_-' * 6},
+    {'messageid': mid2, 'status': 10, 'receptor': PH['k'], 'message': 'دعوت https://talentsearch.ir/invite/%s?d=%s' % ('f' * 32, 'Yq_-' * 6)}])
+b1, b2 = KM.search([('messageid', '=', mid1)]).body or '', KM.search([('messageid', '=', mid2)]).body or ''
+check('Z06 an outbox row imported without a sent-log row never keeps an invitation link secret (/i/<code>/*** and d=***)',
+      'Zq_-' not in b1 and '/i/abcdabcdabcd/***' in b1 and 'Yq_-' not in b2 and '?d=***' in b2, (b1[-30:], b2[-30:]))
+
 print('SUMMARY %d/%d passed' % (sum(1 for _, ok in results if ok), len(results)))

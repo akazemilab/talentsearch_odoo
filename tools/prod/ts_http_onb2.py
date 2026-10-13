@@ -62,7 +62,8 @@ def client(host=TS):
 
 FA = str.maketrans('0123456789', '۰۱۲۳۴۵۶۷۸۹')
 PH = {'sms': '09126654391', 'manual': '09126654392', 'mis': '09126654393', 'other': '09126654394', 'guest': '09126654395',
-      'guest2': '09126654396', 'gate': '09126654397', 'dev': '09126654398', 'emq': '09126654399', 'emr': '09126654380'}
+      'guest2': '09126654396', 'gate': '09126654397', 'dev': '09126654398', 'emq': '09126654399', 'emr': '09126654380',
+      'hr': '09126654379'}
 EMAIL = 'ts.onb2.cand.http@example.invalid'
 EMAIL2 = 'ts.onb2.cand2.http@example.invalid'
 L = {n: 'ts.onb2.%s.http@example.invalid' % n for n in ('other', 'minor')}
@@ -162,6 +163,10 @@ def pinv(name):
         'note': 'ارزیابی برای موقعیت «%%s»' %% pos.name})
 t_emp = pinv('داوطلب onb2')
 t_emp._ts_mark_delivered('sms', phone=PH['guest2'])
+# a candidate invited by SMS (its link carries the secret): the scoped session drives the timed tasks of the battery
+t_hr = A.with_user(hrm.user_id).sudo().create({'workspace_id': org.id, 'battery_id': pos.battery_id.id, 'position_id': pos.id,
+    'instrument_id': pos.battery_id.ts_first_instrument().id, 'invitee_name': 'داوطلب زمان‌دار onb2',
+    'invited_by_id': hrm.user_id.id, 'invitee_phone': PH['hr'], 'sms_consent': True})
 t_fair = pinv('داوطلب پایان onb2')
 cand = env['res.users'].search([('login', '=', L['other'])])
 t_fair.action_accept(cand, share=True)
@@ -172,6 +177,7 @@ env.cr.commit()
 print('TOK', t_sms.token, t_sms2.token, t_email.token, t_manual.token, t_link.token, t_mis.token, t_dec.token, t_minor.token,
       t_child or '-', t_emp.token, t_fair.id, t_sms.short_code, t_fair.state)
 print('TOK2', t_email2.token, t_dev.token, t_dev.short_code, dl(t_email), dl(t_email2), t_sms.delivered_via, t_dev.delivered_via)
+print('TOK3', t_hr.token, '|'.join(t.access_token for t in t_fair.ts_battery_attempts()))
 st = env['ts.instrument'].sudo().ts_starter()
 print('STARTER', st.slug, st.code, st.active_item_count, st.duration_minutes)
 """ % (L, PH, EMAIL, EMAIL2, FAKE_PORT))
@@ -197,6 +203,10 @@ def sms_link(phone):
 
 SHORT_S, DLV_S = sms_link(PH['sms'])
 SHORT_D, DLV_D = sms_link(PH['dev'])
+SHORT_H, DLV_H = sms_link(PH['hr'])
+m3 = re.search(r'TOK3 (\S+) (\S+)', out)
+T_HR, FAIR_TOKS = m3.groups() if m3 else ('x', 'x|x')
+FAIR_TASK = FAIR_TOKS.split('|')[-1]
 
 
 def raw(c, path, data=None, headers=None):
@@ -629,6 +639,69 @@ info = q("a = env['ts.assignment'].sudo().browse(%s); print('FAIR', a.ts_gender 
 check('H03 «رد شدن» stores nothing and the questions are not asked again', 'FAIR - True' in info and st == 303, info.strip()[-30:])
 st, page = get(oc2, '/my/assessments/battery/%s' % FAIR_ID)
 check('H04 the feedback page opens directly afterwards', st == 200 and 'name="ts_gender"' not in page, str(st))
+
+# ================================================================ 8b. a scoped session drives an HR battery with timed tasks
+
+
+def csrf_any(page):
+    m_ = re.search(r'name="csrf_token" value="([^"]+)"', page) or re.search(r'csrf_token["\']?\s*:\s*["\']([^"\']+)', page)
+    return m_.group(1) if m_ else ''
+
+
+hc = client()
+st, h, _ = raw(hc, '/i/%s/%s' % (SHORT_H, DLV_H))
+st, page = get(hc, path_of(h.get('Location', '')))
+st, h, _ = raw(hc, '/invite/%s/accept' % T_HR, {'csrf_token': hc.csrf(page), 'welcome': '1', 'share': '1', 'personal': '1',
+                                                  'd': DLV_H})
+loc = h.get('Location', '')
+info = q("a = env['ts.assignment'].sudo().search([('token', '=', '%s')]); "
+         "print('HRT', '|'.join(t.access_token for t in a.ts_battery_attempts()), a.id)" % T_HR)
+mh = re.search(r'HRT (\S+) (\d+)', info)
+H1, H2 = (mh.group(1).split('|') + ['x', 'x'])[:2] if mh else ('x', 'x')
+HAID = mh.group(2) if mh else '0'
+check('T01 the candidate\'s own SMS link: one tap, a session scoped to this invitation, straight to its first part',
+      st == 303 and ('/take/%s' % H1) in loc, '%s %s' % (st, loc))
+st, h, page = raw(hc, '/take/%s' % H1)
+check('T00 a scoped page never starts the website bus (no bus_info in the session info: no /websocket, no reconnect loop)',
+      st == 200 and 'ts-qform' in page and 'bus_info' not in page, str(st))
+st_n, normal = get(oc2, '/my')
+check('T00b ...while an ordinary signed-in page carries it (the check above is not vacuous)', st_n == 200 and 'bus_info' in normal,
+      str(st_n))
+items = re.findall(r'name="q_(\d+)"', page)
+st, h, j = ajax(hc, '/take/%s/answer' % H1, {'csrf_token': hc.csrf(page), 'item': items[0] if items else '0', 'value': '3'})
+check('T02 a Likert answer (the autosave POST) in the scoped session', st == 200 and j.get('ok'), '%s %s' % (st, str(j)[:80]))
+ids = shell("t = env['ts.attempt'].sudo().search([('access_token', '=', '%s')]); print('ITEMS', ','.join(str(i.id) for i in t.active_items()))" % H1)
+hi = re.search(r'ITEMS ([\d,]+)', ids)
+hids = hi.group(1).split(',') if hi else []
+for k in range(0, len(hids), 5):
+    hc.req('/take/%s/page' % H1, [('csrf_token', hc.csrf(page)), ('page', str(k // 5 + 1)), ('go', 'next')]
+           + [('q_%s' % i, '3') for i in hids[k:k + 5]])
+st, page = get(hc, '/take/%s/review' % H1)
+st, loc, _ = hc.req('/take/%s/submit' % H1, {'csrf_token': hc.csrf(page)})
+check('T03 the questionnaire part is sent in the scoped session and the battery moves on', st in (302, 303)
+      and ('/next' in loc or '/take/' in loc), loc)
+st, page = get(hc, '/take/%s' % H2)
+tcsrf = csrf_any(page)
+check('T04 the timed-task player opens in the scoped session', st == 200 and 'tst-player' in page and tcsrf, str(st))
+codes, fin = [], {}
+for i in range(3):
+    st, _h, rb = raw(hc, '/take/%s/task/start' % H2, {'csrf_token': tcsrf, 'i': str(i)})
+    j = json.loads(rb) if st == 200 else {}
+    codes.append(st)
+    for idx in range(len(j.get('items', []))):
+        st, _h, _rb = raw(hc, '/take/%s/task/answer' % H2, {'csrf_token': tcsrf, 'i': str(i), 'idx': str(idx), 'c': '0', 'rt': '3500'})
+        codes.append(st)
+    st, _h, rb = raw(hc, '/take/%s/task/finish' % H2, {'csrf_token': tcsrf, 'i': str(i), 'focus_lost': '0'})
+    codes.append(st)
+    fin = json.loads(rb) if st == 200 else {}
+check('T05 /take/<t>/task/start, /answer and /finish succeed in the scoped session; the last block returns the battery result',
+      all(c in (200, 409) for c in codes) and (fin.get('url') or '').startswith('/my/assessments/battery/%s' % HAID),
+      '%s %s' % (sorted(set(codes)), str(fin)[:80]))
+st, _h, _rb = raw(hc, '/take/%s/task/start' % FAIR_TASK, {'csrf_token': tcsrf, 'i': '0'})
+check('T06 another person\'s task token from the scoped session: refused (403)', st in (403, 404), str(st))
+st, _, ypage = yc.req('/my')
+st2, _h, _rb = raw(yc, '/take/%s/task/start' % H2, {'csrf_token': csrf_any(ypage), 'i': '0'})
+check('T07 ...and another signed-in account cannot drive this candidate\'s task (403/404)', st2 in (403, 404), str(st2))
 
 # ================================================================ 9. short links: rate limit
 shell("env['ir.config_parameter'].sudo().set_str('ts_onboard.short_per_minute', '5'); env['ts.rate.hit'].sudo().search([]).unlink(); env.cr.commit()")

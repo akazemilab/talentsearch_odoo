@@ -25,10 +25,16 @@ PENDING_KEY = 'ts_invite_pending'
 PENDING_TTL_S = 30 * 60
 MINOR_VERSION = 'TS-MINOR-1405-07-22-v3'     # onb2: the guardian tick and the child's own button on one screen
 FRESH_MINUTES = 60                           # «made moments ago» (risk review HIGH 2)
-# activity on eot.ir (website 1) by the account's partner: an account with any of these is never signed in without a code
+# activity on eot.ir (website 1) by the account's partner (or, for create_uid, by the account itself): an account with any
+# of these is never signed in without a code. A model that is not installed is skipped; a check that fails counts.
 EOT_ACTIVITY = (('sale.order', 'partner_id'), ('account.move', 'partner_id'), ('payment.transaction', 'partner_id'),
                 ('event.registration', 'partner_id'), ('slide.channel.partner', 'partner_id'),
-                ('website.visitor', 'partner_id'))
+                ('website.visitor', 'partner_id'), ('crm.lead', 'partner_id'), ('helpdesk.ticket', 'partner_id'),
+                ('survey.user_input', 'partner_id'), ('forum.post', 'create_uid'))
+# a message the person wrote or was sent on a record outside Talent Search (portal chatter, e-mail, eot.ir discussions)
+PERSON_MESSAGES = ('comment', 'email', 'email_outgoing')
+TS_MODEL_PREFIX = 'ts.'
+MESSAGE_SCAN = 200
 
 
 def minor_needs(a):
@@ -71,8 +77,9 @@ def first_open(a):
 
 # ---------------------------------------------------------------------- whose account may be signed in without a code
 def eot_activity(user):
-    """Any trace of the account on eot.ir (website 1): orders, invoices, payments, events, courses, visits, or an account
-    bound to another website. Fails closed: a check that cannot run counts as activity."""
+    """Any trace of the account on eot.ir (website 1): orders, invoices, payments, events, courses, visits, leads,
+    helpdesk tickets, survey answers, forum posts, messages on records outside Talent Search, or an account bound to
+    another website. Fails closed: a check that cannot run counts as activity."""
     env = user.env
     u = user.sudo()
     site = env.ref('ts_website.website_ts', raise_if_not_found=False)
@@ -86,11 +93,17 @@ def eot_activity(user):
             M = env[model].sudo().with_context(active_test=False)
             if field not in M._fields:
                 continue
-            dom = [(field, 'child_of', p.id)]
+            dom = [(field, '=', u.id)] if field == 'create_uid' else [(field, 'child_of', p.id)]
             if model == 'website.visitor' and site:
                 dom.append(('website_id', '!=', site.id))
             if M.search_count(dom, limit=1):
                 return True
+        if 'mail.message' in env:
+            msgs = env['mail.message'].sudo().search([('author_id', 'child_of', p.id),
+                                                      ('message_type', 'in', PERSON_MESSAGES)],
+                                                     order='id desc', limit=MESSAGE_SCAN)
+            if len(msgs) == MESSAGE_SCAN or any(not (m.model or '').startswith(TS_MODEL_PREFIX) for m in msgs):
+                return True              # a message outside Talent Search (or too many to tell cheaply: fail closed)
     except Exception:            # noqa: BLE001 - cannot tell: treat as an account with activity
         return True
     return False

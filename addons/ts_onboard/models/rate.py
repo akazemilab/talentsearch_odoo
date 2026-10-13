@@ -2,7 +2,9 @@
 each family, /c/: 120), new guest attempts (5 an hour) and guest answers (200 a minute). A row holds a key such as
 'short:<ip hash>' and its time, nothing else; rows older than a day are dropped.
 
-A hit is counted in the request's own transaction (no second cursor). The lookups that can miss answer their 404 inside
+A hit is counted in the request's own transaction (no second cursor), under a transaction-scoped advisory lock on the
+key (pg_advisory_xact_lock), so concurrent requests of one address and family cannot all pass the count before any of
+them inserts: no overshoot. The lookups that can miss answer their 404 inside
 the request (controllers/invite.py `counted`), so the transaction, and with it the hit, is committed: guessing unknown
 codes is slowed down too.
 
@@ -27,6 +29,10 @@ class TsRateHit(models.Model):
         """Count one hit of `key`; False when `limit` hits already happened within `seconds` (the hit is not counted)."""
         now = fields.Datetime.now()
         cr = self.env.cr
+        # one request at a time per key (transaction-scoped advisory lock on a hash of the key, released at commit or
+        # rollback): count-then-insert cannot overshoot under concurrency. Requests of one key wait for each other for the
+        # rest of their transaction; different keys never do.
+        cr.execute('SELECT pg_advisory_xact_lock(hashtext(%s))', ['ts_rate:' + key])
         cr.execute('SELECT count(*) FROM ts_rate_hit WHERE key = %s AND at >= %s', [key, now - timedelta(seconds=seconds)])
         if cr.fetchone()[0] >= limit:
             return False

@@ -38,7 +38,8 @@ invitation link, so the link alone proves nothing. Every message the system send
 `dlv_email_hash`, administrators only); the secret exists only while the message is rendered (a send window around the
 send paths: `invite_url()` / `ts_short_url()` add it inside the window and never outside, so no panel page, copy button, QR
 code, export, audit row or log holds it). The SMS row of the Kavenegar log is masked («***», `kv_secret`, as for sign-in
-codes); the e-mail is auto-deleted after sending; the access log line is redacted (`/i/<code>/***`, `d=***`). The welcome
+codes), and a row imported from Kavenegar's outbox without a sent-log row keeps the link with `/i/<code>/***` / `d=***`;
+the e-mail is auto-deleted after sending; the access log line is redacted (`/i/<code>/***`, `d=***`). The welcome
 screen carries the secret as a hidden field of its form; only the POST checks it (constant-time, per channel). A new
 message replaces the secret of its channel (an older link then gets a code, as a copied link does); a message that did not
 go out keeps the previous one. Copied links and QR codes are «manual»; an invitation made by joining an open link or class
@@ -48,8 +49,10 @@ code is «campaign» (set on create; the data step marks the earlier ones).
 - does not exist yet: made now (a phone-only portal account for an SMS, a portal account for an e-mail; the name unknown —
   the panel's name is never copied; `ts_account_made` on the invitation), or
 - is a Talent Search phone-only portal account whose login is exactly the invited number (number verified here, no
-  internal access, no eot.ir activity: orders, invoices, payments, events, courses, eot.ir visits, an account bound to
-  another website; a check that cannot run counts as activity).
+  internal access, no eot.ir activity: orders, invoices, payments, events, courses, eot.ir visits, leads, helpdesk
+  tickets, survey answers, forum posts, a message the person wrote or was sent on a record outside Talent Search, an
+  account bound to another website; a model that is not installed is skipped, a check that cannot run counts as
+  activity).
 Any other existing account (an e-mail account, one with eot.ir activity, anything our phone flow did not make) and any link
 without a valid secret (the panel's copy, a wrong or older secret): a code to the invited number (shown by its last four
 digits), then accept; an invitation without a number: the ordinary sign-in (S-AUTH, or e-mail and password). Staff or
@@ -92,7 +95,9 @@ Persian zeros in Vazirmatn, seen in the shots); a number the visitor typed is sh
 working. Lookups are limited per hashed address and family, then a polite 429 page «کمی صبر کنید» with `Retry-After: 60`:
 `/invite/` and the short links `/i/`, `/j/` 60 a minute each, the open class link `/c/` 120 (a whole class opens it from one
 school network); parameters `ts_onboard.{invite,short,campaign}_per_minute`. A hit is counted in the request's own
-transaction (`ts.rate.hit`, rows kept one day, no second cursor); a miss is answered with the link 404 inside the request
+transaction (`ts.rate.hit`, rows kept one day, no second cursor) under a transaction-scoped advisory lock on the key
+(`pg_advisory_xact_lock`), so concurrent requests of one address and family cannot overshoot the limit (they wait for each
+other; other keys never do); a miss is answered with the link 404 inside the request
 (`invite.counted`), so the hit is committed with it and guessing unknown codes is slowed down too. An unknown token or
 code, or the link of a closed panel, answers the one explained link 404 «این پیوند باز نمی‌شود» (status 404, sign-in back
 to the link) with the same words whatever the reason.
@@ -230,6 +235,8 @@ screens too.
   still keeps the institution name and the link; an invitation SMS may take one part more.
 - The clone's threaded server refuses every websocket upgrade itself (400); on production websockets go through the gevent
   port, which dispatches through the same ir.http and its scope guard.
+- A page of a scoped session never starts the website bus: its frontend session info has no `bus_info`, so the bus service
+  does not open /websocket at all (no connection attempt, no reconnect loop, no 303).
 
 ## Risk review fixes (2026-10-13)
 
