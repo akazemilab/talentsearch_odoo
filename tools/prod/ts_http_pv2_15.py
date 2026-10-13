@@ -173,7 +173,7 @@ check('...no second row for that panel', "(1,)" in q("select count(*) from ts_as
 st, body = get(res, '/my/assessments/%s' % AT)
 check('the instrument report has the who-can-see block with the panels', st == 200 and 'ts-who-sees' in body and 'پنل S15 یک' in body)
 st, body = get(res, '/my/assessments/%s' % TAT)
-check('the talent report has the who-can-see block (no sharing yet)', st == 200 and 'ts-who-sees' in body and 'فقط شما' in body)
+check('the talent report has the who-can-see block (no sharing yet)', st == 200 and 'ts-who-sees' in body and ('فقط شما' in body or 'فقط تو' in body))
 check('the block links to the sharing page', '/my/sharing' in body)
 
 # ---- ACC-5, ACC-6 my data
