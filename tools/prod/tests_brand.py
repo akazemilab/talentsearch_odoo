@@ -211,7 +211,8 @@ nulls = env.cr.fetchone()[0]
 env.cr.execute('SELECT count(*) - count(DISTINCT short_code) FROM ts_assignment')
 dups = env.cr.fetchone()[0]
 check('S04 no invitation without a code, no duplicate code', nulls == 0 and dups == 0, '%s %s' % (nulls, dups))
-check('S05 short links are 34 characters or less', len(a1.ts_short_url()) <= 34 and len(inv.ts_short_url()) <= 34, a1.ts_short_url())
+# onb2: 12-character codes make the link 38 characters (https://talentsearch.ir/i/ + 12)
+check('S05 short links are 38 characters or less', len(a1.ts_short_url()) <= 38 and len(inv.ts_short_url()) <= 38, a1.ts_short_url())
 check('S06 invite_url is unchanged outside an SMS', '/invite/' in a1.invite_url() and '/i/' in a1.with_context(ts_sms_short=True).invite_url())
 
 # ================================================================ 5. every template, rendered with real records
