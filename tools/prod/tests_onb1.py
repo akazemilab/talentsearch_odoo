@@ -416,11 +416,18 @@ check('S01 a return path is refused when it could lead elsewhere (tab, newline, 
 check('S02 ordinary paths of the site are kept', all(local_path(g) == g for g in GOOD), [g for g in GOOD if local_path(g) != g])
 
 # migration: a member with a number but no state at all becomes «registered, not yet checked»
-env.cr.execute("ALTER TABLE ts_workspace_member ALTER COLUMN verification_state DROP NOT NULL")
-mm = member(wcl, 'clinician')
-env.cr.execute("UPDATE ts_workspace_member SET verification_state = NULL, license_number = 'NZ-9' WHERE id = %s", [mm.id])
+# The real column is NOT NULL now, and an ALTER TABLE on it waited on the served clone's own transactions (a rehearsal
+# once ended this suite with a lock error). A temporary table of the same name shadows it for this transaction only
+# (pg_temp comes first in the search path), so the migration's member updates run against old-style rows.
+env.cr.execute("CREATE TEMP TABLE ts_workspace_member (id int, verification_state varchar, license_number varchar) ON COMMIT DROP")
+env.cr.execute("INSERT INTO ts_workspace_member VALUES (1, NULL, 'NZ-9'), (2, NULL, ' '), (3, 'pending', ''), (4, 'verified', 'NZ-1')")
 pre.migrate(env.cr, '20.0.1.1.0')
-env.invalidate_all()
-check('M05 migration: a licence number without a state becomes «ثبت‌شده، هنوز تأیید نشده»', mm.verification_state == 'pending')
+env.cr.execute("SELECT id, verification_state FROM ts_workspace_member ORDER BY id")
+mrows = env.cr.fetchall()
+env.cr.execute("DROP TABLE pg_temp.ts_workspace_member")
+check('M05 migration: a licence number without a state becomes «ثبت‌شده، هنوز تأیید نشده»; without a number, no badge',
+      mrows == [(1, 'pending'), (2, 'not_required'), (3, 'not_required'), (4, 'verified')], mrows)
+env.cr.execute("SELECT count(*) FROM ts_workspace_member WHERE verification_state IS NULL")
+check('M05b the real member table is untouched by the shadow test', env.cr.fetchone()[0] == 0)
 
 print('SUMMARY %d/%d passed' % (sum(1 for _, ok in results if ok), len(results)))
