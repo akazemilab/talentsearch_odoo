@@ -143,6 +143,9 @@ TOKEN = tok.group(1) if tok else 'x'
 st, body = get(p1, '/invite/' + TOKEN)
 check('the participant\'s invitation page names the battery and lists its instruments',
       st == 200 and 'مجموعهٔ آزمون وب' in body and all(t in body for t in INST_TITLES), str(st))
+check('...with size and time first (UX T7 X5: «N سنجه: M پرسش» and the battery estimate) and the instant-result promise',
+      'id="ts-invite-facts"' in body and 'سنجه: ' in body and 'نتیجه بلافاصله پس از پایان آماده است' in body
+      and body.index('id="ts-invite-facts"') < body.index('/accept'), str(st))
 st, loc, _ = post(p1, '/invite/%s/accept' % TOKEN, {'share': '1'})
 check('accept -> /take/<first token>', st in (302, 303) and '/take/' in loc, loc)
 out = shell("a = env['ts.assignment'].browse(%s); print('ATT', ' '.join('%%s:%%s' %% (t.id, t.access_token) for t in a.ts_battery_attempts()), a.client_id.id)" % AID)

@@ -26,53 +26,104 @@
     .ts-meta--card { background: var(--color-surface); border: 0; box-shadow: var(--shadow-sm); border-radius: var(--r-18); padding: 18px 20px; margin-block: 18px 22px; }
     @media (max-width: 575px) { .ts-meta { grid-template-columns: 1fr; } .ts-meta dd { margin-block-end: 8px; } }
 
-    // player
-    .ts-player__head { position: sticky; inset-block-start: 72px; z-index: 5; background: var(--paper); padding-block: 12px 10px; border-block-end: 1px solid var(--line); margin-block-end: 18px; }
-    .ts-player__title { font-size: 1.35rem; margin-block-end: 10px; }
-    .ts-player__head { position: sticky; inset-block-start: 0; z-index: 5; background: var(--paper); padding-block: 10px 8px; margin-block-end: 8px; }
+    // player (UX audit T7, 2026-10-13: 5 items per page, one-row sticky bar, a selected answer you can see at arm's length)
+    .ts-player__head { position: sticky; inset-block-start: 0; z-index: 5; background: var(--paper); padding-block: 10px 8px; margin-block-end: 8px; border-block-end: 1px solid var(--line); }
     .ts-player__title { font-size: var(--fs-4, 1.25rem); margin-block-end: 8px; }
     .ts-progress { height: 6px; background: var(--color-neutral-800); border-radius: 999px; overflow: hidden; }
     .ts-progress__bar { height: 100%; background: var(--color-accent); border-radius: 999px; transition: width .25s; }
     .ts-progress__text { margin: 6px 0 0; font-size: var(--fs-0, .85rem); color: var(--muted); }
-    .ts-save-state { margin-inline-start: 10px; color: var(--success); font-weight: 700; }
+    .ts-save-state { margin-inline-start: 10px; color: var(--success); font-weight: 700; transition: opacity .4s; }
+    .ts-save-state.is-faded { opacity: 0; }
     .ts-save-state.is-error { color: var(--danger); }
     .ts-scale-help { color: var(--muted); }
     .ts-qlist { list-style: none; padding: 0; margin: 0; display: grid; gap: 14px; }
     .ts-q fieldset { border: 0; box-shadow: var(--shadow-sm); border-radius: 14px; background: var(--color-surface); padding: 16px 18px; margin: 0; min-width: 0; }
     .ts-q.is-answered fieldset { box-shadow: 0 0 0 1px var(--color-accent-700); }
+    // an item left unanswered (after the review page or the skip notice): warn ring + the word «بی‌پاسخ» (never colour alone)
+    .ts-q[data-missing] fieldset, .ts-q:target:not(.is-answered) fieldset { box-shadow: 0 0 0 2px var(--status-warn); }
+    .ts-q__flag { display: inline-block; margin-inline-start: 8px; padding: 0 8px; border-radius: 999px; background: var(--status-warn-soft); color: var(--status-warn); font-size: var(--fs-0, .8125rem); font-weight: 600; vertical-align: middle; }
     // floated legend renders inside the card instead of on the fieldset border (G2-P11-1)
     .ts-q__text { font-size: 1.05rem; font-weight: 500; color: var(--color-text); margin-block-end: 12px; float: inline-start; width: 100%; padding: 0; }
     .ts-q__text + * { clear: both; }
-    .ts-q { scroll-margin-block: 96px 150px; }
+    .ts-q { scroll-margin-block: 130px calc(96px + env(safe-area-inset-bottom)); }
     .ts-q__num { display: inline-grid; place-items: center; min-width: 30px; height: 30px; border-radius: 50%; background: var(--brand-soft); color: var(--brand-deep); font-size: .85rem; margin-inline-end: 8px; }
     .ts-scale { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 8px; }
+    // unchecked boundary >= 3:1 against the card (field-line, WCAG 1.4.11)
     .ts-opt { position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;
-        min-height: 64px; padding: 8px 4px; border: 1px solid var(--color-neutral-800); border-radius: 10px; cursor: pointer; text-align: center; background: transparent;
-        transition: background-color .15s, border-color .15s; }
+        min-height: 64px; padding: 8px 4px; border: 1px solid var(--field-line); border-radius: 10px; cursor: pointer; text-align: center; background: transparent;
+        transition: background-color .15s, border-color .15s, box-shadow .15s; }
     .ts-opt input { position: absolute; opacity: 0; inset: 0; margin: 0; cursor: pointer; }
+    .ts-opt span { background: none; padding: 0; border-radius: 0; }   // never the report legend's grey pills (B8-3)
     .ts-opt__num { font-weight: 600; font-size: 1.05rem; color: var(--color-text); }
-    .ts-opt__label { font-size: .78rem; color: var(--color-neutral-400); line-height: 1.3; }
-    .ts-opt:hover { border-color: var(--color-accent-600); }
-    .ts-opt:has(input:checked) { background: var(--color-accent-900); border-color: var(--color-accent); }
-    .ts-opt:has(input:checked) .ts-opt__num, .ts-opt:has(input:checked) .ts-opt__label { color: var(--color-accent-200); }
-    .ts-opt:has(input:focus-visible) { outline: 2px solid var(--color-accent); outline-offset: 2px; }
-    @media (max-width: 420px) { .ts-opt__label { font-size: .7rem; } .ts-opt { min-height: 58px; } }
+    .ts-opt__label { font-size: .8rem; color: var(--color-neutral-300); line-height: 1.3; }
+    .ts-opt:hover { border-color: var(--color-accent-500); }
+    // selected (B8-2, B9-1): filled, a 2 px ring, bold number and a ✓ badge — readable in light and dark
+    .ts-opt:has(input:checked) { background: var(--color-accent-400); border-color: var(--color-accent-200); box-shadow: 0 0 0 1px var(--color-accent-200); }
+    .ts-opt:has(input:checked) .ts-opt__num, .ts-opt:has(input:checked) .ts-opt__label { color: var(--color-bg); }
+    .ts-opt:has(input:checked) .ts-opt__num { font-weight: 800; }
+    .ts-opt:has(input:checked)::after { content: '✓'; position: absolute; inset-block-start: -7px; inset-inline-end: -7px; inline-size: 20px; block-size: 20px;
+        display: grid; place-items: center; border-radius: 50%; background: var(--color-bg); color: var(--color-accent-200);
+        box-shadow: 0 0 0 2px var(--color-accent-200); font-size: 12px; font-weight: 800; line-height: 1; }
+    .ts-opt:has(input:focus-visible) { outline: 3px solid var(--color-accent); outline-offset: 2px; }
+    @media (max-width: 420px) { .ts-opt { min-height: 58px; } .ts-opt__label { font-size: .8rem; } }
+    @media (forced-colors: active) { .ts-opt:has(input:checked) { border: 3px solid Highlight; } }
+
+    // unanswered notices above the bar: last page (B10-1) and the one-time skip check (B8-4a)
+    .ts-qnote, .ts-skip-note { margin-block: 18px 0; }
+    .ts-skip-note[hidden] { display: none; }
+    .ts-skip-note:focus-visible { outline: 3px solid var(--color-accent); outline-offset: 2px; }
+    .ts-skip-note p { margin: 0 0 6px; }
+    .ts-skip-note__link { display: inline-flex; align-items: center; min-block-size: 44px; padding-inline: 2px; color: inherit; text-decoration: underline; text-underline-offset: 3px; }
+    .ts-skip-note__go { margin-block-start: 4px; }
+
+    // the bar: previous and next in one row on phones (B8-5, B9-2); both 48 px
     .ts-qnav { display: flex; flex-wrap: wrap; gap: 10px; margin-block-start: 22px; align-items: center; }
     @media (max-width: 767.98px) {
-        .ts-qnav { position: sticky; inset-block-end: 0; z-index: 5; background: var(--paper); padding: 12px 0 calc(12px + env(safe-area-inset-bottom)); margin-block-start: 16px; border-block-start: 1px solid var(--line); }
-        .ts-qnav .ts-btn--primary { order: -1; flex: 1 1 100%; min-block-size: 50px; }
-        .ts-qnav .ts-btn--outline { flex: 1 1 auto; }
-        .ts-qnav .ts-btn--quiet { flex: 1 1 auto; font-size: var(--fs-0, .85rem); }
+        .ts-qnav { position: sticky; inset-block-end: 0; z-index: 5; display: grid; grid-template-columns: minmax(0, 1fr); background: var(--paper);
+            padding: 12px 0 calc(12px + env(safe-area-inset-bottom)); margin-block-start: 16px; border-block-start: 1px solid var(--line); }
+        .ts-qnav--two { grid-template-columns: minmax(0, 1fr) minmax(0, 2fr); }
+        .ts-qnav .ts-btn { inline-size: 100%; min-block-size: 48px; padding-inline: 10px; }
     }
-    .ts-missing { display: grid; gap: 6px; padding-inline-start: 1.2em; }
+    .ts-missing { display: grid; gap: 0; padding-inline-start: 0; list-style: none; margin: 0; }
+    .ts-missing a { display: block; min-block-size: 44px; padding-block: 10px; border-block-end: 1px solid var(--line); }
     .ts-review__title { font-size: var(--fs-5, 1.5rem); }
+    .ts-review__go { margin-block: 14px 22px; }
+    .ts-review__pages { margin-block-start: 22px; }
+    .ts-review__page + .ts-review__page { margin-block-start: 14px; }
+    .ts-review__page-h { font-size: var(--fs-2, 1rem); margin-block: 0 4px; }
+    .ts-review__list { list-style: none; padding: 0; margin: 0; }
+    .ts-review__list li { display: flex; justify-content: space-between; align-items: center; gap: 12px; min-block-size: 48px; border-block-end: 1px solid var(--line); }
+    .ts-review__list a { display: inline-flex; align-items: center; min-block-size: 44px; padding-inline: 8px; font-weight: 600; }
+    .ts-submit-form { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-block-start: 16px; }
+    @media (max-width: 575.98px) { .ts-submit-form, .ts-review__go { display: grid; gap: 10px; } .ts-submit-form .ts-btn, .ts-review__go .ts-btn { inline-size: 100%; } }
+    .ts-error-card__actions { display: flex; flex-wrap: wrap; gap: 10px; }
     .ts-step { margin: 0 0 4px; font-size: var(--fs-0, .85rem); font-weight: 600; color: var(--color-neutral-400); }
-    // the sticky bottom bar must never hide the focused question (WCAG 2.4.11)
+    // the sticky bars must never hide the focused answer (WCAG 2.4.11): the head above, the bar + iPhone inset below
+    // (the html scroll-padding is in ts.scss, outside #wrapwrap — nested here it never matched)
     @media (max-width: 767.98px) {
-        html:has(.ts-player) { scroll-padding-block-end: 150px; }
-        .ts-player .ts-opt input { scroll-margin-block: 110px 150px; }
+        .ts-player .ts-opt input { scroll-margin-block: 130px calc(96px + env(safe-area-inset-bottom)); }
         .ts-player .ts-qlist { padding-block-end: 16px; }
     }
+
+    // consent page: error summary under the H1 (B2-1, B4-2), details behind one button (B3-1), full-width start (B3-3)
+    #ts-list-catalog { margin-block-start: 16px; }   // UX T7 P19-1: not glued to the card above
+    .ts-error-summary { margin-block: 12px 18px; padding: 16px 18px; border: 3px solid var(--status-danger); border-radius: var(--r-12); background: var(--color-surface); }
+    .ts-error-summary:focus { outline: 3px solid var(--color-accent); outline-offset: 3px; }
+    .ts-error-summary__title { margin: 0 0 6px; font-family: var(--font-text); font-size: var(--fs-3, 1.125rem); font-weight: 700; color: var(--color-text); }
+    .ts-error-summary__list { margin: 0; padding-inline-start: 18px; }
+    .ts-error-summary__list a { display: inline-flex; align-items: center; min-block-size: 44px; color: var(--status-danger); font-weight: 600; text-decoration: underline; text-underline-offset: 3px; }
+    .ts-form__error[tabindex]:focus { outline: 2px solid var(--status-danger); outline-offset: 2px; }
+    .ts-consent-form input[aria-invalid='true'] { outline: 2px solid var(--status-danger); outline-offset: 2px; }
+    .ts-more { margin-block: -8px 18px; }
+    .ts-more__btn { display: flex; inline-size: 100%; justify-content: space-between; align-items: center; gap: 10px; min-block-size: 44px; padding: 8px 4px;
+        border: 0; border-block-end: 1px solid var(--line); background: none; color: var(--color-accent-300); font: inherit; font-family: var(--font-text); font-weight: 600; text-align: start; cursor: pointer; }
+    .ts-more__btn[hidden], .ts-more__body[hidden] { display: none; }
+    .ts-more__btn::after { content: '+'; flex: none; inline-size: 28px; block-size: 28px; display: grid; place-items: center; border-radius: 50%; background: var(--color-neutral-900); font-size: 1.1rem; }
+    .ts-more__btn[aria-expanded='true']::after { content: '−'; }
+    .ts-more__btn:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 2px; }
+    .ts-more__body .ts-meta--card { margin-block: 10px 0; }
+    .ts-consent__actions { margin-block-start: 8px; }
+    @media (max-width: 575.98px) { .ts-consent__start { inline-size: 100%; } }
 
     // age question and guardian confirmation on consent pages (G1-P12-2, PT-5): one 44 px row per option
     .ts-age { border: 0; padding: 0; margin: 0 0 6px; min-inline-size: 0; display: grid; gap: 4px; }
@@ -98,6 +149,8 @@
     .ts-pill--ok { background: var(--success-soft); color: var(--success); }
     .ts-pill--warn { background: var(--warn-soft); color: var(--warn); }
     .ts-btn--sm { min-height: 40px; padding: 6px 12px; font-size: .85rem; }
+    // a list row's own action (resume, report) is a full 44 px button on phones (PT11, B12-1, B18-2)
+    @media (max-width: 767.98px) { .tsp-rows .ts-btn--sm { min-block-size: 44px; } }
 
     // report
     .ts-report-actions { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; margin-block-end: 12px; }
@@ -114,6 +167,12 @@
     .ts-doc__kind { font-weight: 600; color: var(--color-accent-300); }
     .ts-doc__title { font-size: clamp(1.5rem, 3vw, 2rem); margin-block: 20px 12px; }
     .ts-doc__lead { font-size: var(--fs-3, 1.125rem); color: var(--color-neutral-300); margin-block-end: 16px; }
+    // the result at a glance, on the first screen (T7, B15-1); the intended-use paragraph moved into «جزئیات گزارش»
+    .ts-glance { margin-block: 0 16px; padding: 12px 16px; border-radius: var(--r-12); background: var(--color-accent-900); color: var(--color-text); }
+    .ts-glance p { margin: 0 0 4px; }
+    .ts-glance strong { color: var(--color-accent-200); }
+    .ts-glance__more a { display: inline-flex; align-items: center; min-block-size: 44px; font-weight: 600; }
+    .ts-doc__use { margin-block: 8px; color: var(--color-neutral-300); }
     .ts-doc__details { background: var(--color-neutral-900); border-radius: 12px; padding: 12px 16px; }
     .ts-doc__details > h2 { margin: 0; }
     .ts-doc__meta { padding-block-start: 10px; }

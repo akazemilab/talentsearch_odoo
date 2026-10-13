@@ -57,8 +57,10 @@
         <field name="inherit_id" ref="ts_battery.tpl_my_battery"/>
         <field name="website_id" ref="ts_website.website_ts"/>
         <field name="arch" type="xml">
+            <!-- the file of an unfinished battery would be a partial report: the button waits until every instrument is done
+                 (UX T7 B24-1, B handoff); «ادامهٔ مجموعه» leads the page meanwhile -->
             <xpath expr="//div[hasclass('ts-report-actions')]" position="inside">
-                <a t-attf-href="/my/assessments/battery/#{a.id}/pdf" class="ts-btn ts-btn--outline tsbr-pdf">دریافت فایل PDF</a>
+                <a t-if="done &gt;= total" t-attf-href="/my/assessments/battery/#{a.id}/pdf" class="ts-btn ts-btn--outline tsbr-pdf">دریافت فایل PDF</a>
             </xpath>
             <xpath expr="//article[hasclass('tsb-doc')]/header[hasclass('ts-doc__head')]" position="before">
                 <t t-set="tsbr" t-value="a.ts_brand_header()"/>

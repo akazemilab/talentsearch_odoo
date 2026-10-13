@@ -7,46 +7,71 @@
         <field name="website_id" ref="ts_website.website_ts"/>
         <field name="arch" type="xml">
             <t t-name="ts_assessment.consent">
+                <!-- UX audit T7 (2026-10-13, B3-1/PT1): a short first screen — size, who sees the result, saving, stopping,
+                     support — then the same words of «هدف», «پاسخ‌دهنده», «محدودیت» and «پیش از ارسال» behind one disclosure
+                     button (no-JS: open). Errors: one summary under the H1, focused on load, naming the exact problem
+                     (B4-2/B5-1/PT2); posted ticks come back ticked (`posted`, B4-3). Consent wording unchanged (v5). -->
                 <t t-call="website.layout" additional_title.f="پیش از شروع">
                     <div id="wrap" class="ts-page">
                         <section class="ts-section">
                             <div class="ts-container ts-narrow">
                                 <span class="ts-hero__kicker" t-out="inst.category"/>
                                 <h1 t-out="inst.ts_title()"/>
+                                <t t-set="pc" t-value="posted or {}"/>
+                                <div t-if="error" id="ts-error-summary" class="ts-error-summary" role="alert" tabindex="-1" aria-labelledby="ts-error-summary-h">
+                                    <h2 id="ts-error-summary-h" class="ts-error-summary__title"><t t-if="tu">برای شروع، این را کامل کن:</t><t t-else="">برای شروع، این را کامل کنید:</t></h2>
+                                    <ul id="ts-error-list" class="ts-error-summary__list">
+                                        <li t-if="error == 'consent'"><a href="#ts-consent-service"><t t-if="tu">تیک «متن بالا را خواندم…» را بزن.</t><t t-else="">تیک «متن بالا را خواندم…» را بزنید.</t></a></li>
+                                        <li t-if="error == 'guardian'"><a href="#ts-guardian-confirm">برای این سنجه تأیید ولی (پدر، مادر یا سرپرست قانونی) لازم است.</a></li>
+                                    </ul>
+                                </div>
                                 <p class="ts-lead">پیش از شروع، این موارد را بخوانید.</p>
-                                <dl class="ts-meta ts-meta--card">
-                                    <dt>هدف</dt><dd t-out="inst.ts_intended_use()"/>
-                                    <dt>زمان تقریبی</dt><dd>حدود <t t-out="fa(inst.duration_minutes)"/> دقیقه، <t t-out="fa(inst.active_item_count)"/> پرسش</dd>
-                                    <dt>پاسخ‌دهنده</dt><dd t-out="dict(inst._fields['audience'].selection).get(inst.audience)"/>
+                                <dl class="ts-meta ts-meta--card" id="ts-consent-key">
+                                    <dt>زمان تقریبی</dt><dd><t t-out="fa(inst.active_item_count)"/> پرسش، حدود <t t-out="fa(inst.duration_minutes)"/> دقیقه</dd>
                                     <dt>چه کسی نتیجه را می‌بیند</dt><dd>فقط شما، در حسابتان. نتیجه با هیچ کارفرما یا مرکزی به اشتراک گذاشته نمی‌شود.</dd>
                                     <dt>ذخیره و ادامه</dt><dd>پاسخ‌ها خودکار ذخیره می‌شوند؛ هر وقت خواستید می‌توانید از همان‌جا ادامه دهید.</dd>
-                                    <dt>محدودیت</dt><dd t-out="inst.limitations"/>
-                                    <dt>پیش از ارسال</dt><dd>پیش از ارسال، پاسخ‌ها را مرور می‌کنید. پس از ارسال، پاسخ‌ها قفل می‌شوند.</dd>
                                     <dt>انصراف</dt><dd>هر وقت بخواهید می‌توانید دست نگه دارید. برای پس گرفتن رضایت یا پاک کردن داده‌ها به صفحهٔ <a href="/my/privacy">حریم خصوصی</a> بروید.</dd>
-                                    <dt>پشتیبانی</dt><dd><a href="/contact?topic=support">تماس با پشتیبانی</a><t t-call="ts_website.sep"/>اگر حالتان خوب نیست، منتظر نمانید: اورژانس ۱۱۵.</dd>
+                                    <dt>پشتیبانی</dt><dd><a href="/contact?topic=support">تماس با پشتیبانی</a><t t-call="ts_website.sep"/>اگر حالتان خوب نیست، منتظر نمانید: اورژانس اجتماعی ۱۲۳ یا صدای مشاور ۱۴۸۰.</dd>
                                 </dl>
-                                <form t-attf-action="/take/#{attempt.access_token}/consent" method="post" class="ts-form">
+                                <div class="ts-more" id="ts-consent-more-box">
+                                    <button type="button" class="ts-more__btn" aria-expanded="true" aria-controls="ts-consent-more" hidden="hidden">جزئیات بیشتر: هدف، محدودیت و پیش از ارسال</button>
+                                    <div id="ts-consent-more" class="ts-more__body">
+                                        <dl class="ts-meta ts-meta--card">
+                                            <dt>هدف</dt><dd t-out="inst.ts_intended_use()"/>
+                                            <dt>پاسخ‌دهنده</dt><dd t-out="dict(inst._fields['audience'].selection).get(inst.audience)"/>
+                                            <dt>محدودیت</dt><dd t-out="inst.limitations"/>
+                                            <dt>پیش از ارسال</dt><dd>پیش از ارسال، پاسخ‌ها را مرور می‌کنید. پس از ارسال، پاسخ‌ها قفل می‌شوند.</dd>
+                                        </dl>
+                                    </div>
+                                </div>
+                                <form t-attf-action="/take/#{attempt.access_token}/consent" method="post" class="ts-form ts-consent-form">
                                     <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
-                                    <p t-if="error" class="ts-form__error" role="alert">
-                                        <t t-if="error == 'guardian'">برای این سنجه تأیید ولی (پدر، مادر یا سرپرست قانونی) لازم است.</t>
-                                        <t t-else="">برای شروع، رضایت برای انجام سنجه لازم است.</t>
-                                    </p>
-                                    <label class="ts-check"><input type="checkbox" name="consent_service" value="1" required="required"/>
-                                        <span>متن بالا را خواندم و برای پاسخ‌دهی و ذخیرهٔ نتیجه در حسابم رضایت می‌دهم. <span class="ts-hint">(الزامی)</span></span></label>
-                                    <label class="ts-check"><input type="checkbox" name="consent_research" value="1"/>
+                                    <div id="ts-consent-box" class="ts-consent-box">
+                                        <p t-if="error == 'consent'" id="ts-err-consent" class="ts-form__error"><t t-if="tu">برای شروع، تیک «متن بالا را خواندم…» را بزن.</t><t t-else="">برای شروع، تیک «متن بالا را خواندم…» را بزنید.</t></p>
+                                        <label class="ts-check"><input type="checkbox" id="ts-consent-service" name="consent_service" value="1" required="required"
+                                                                       t-att-checked="'checked' if pc.get('consent_service') == '1' else None"
+                                                                       t-att-aria-invalid="'true' if error == 'consent' else None"
+                                                                       t-att-aria-describedby="'ts-err-consent' if error == 'consent' else None"/>
+                                            <span>متن بالا را خواندم و برای پاسخ‌دهی و ذخیرهٔ نتیجه در حسابم رضایت می‌دهم. <span class="ts-hint">(الزامی)</span></span></label>
+                                    </div>
+                                    <label class="ts-check"><input type="checkbox" name="consent_research" value="1" t-att-checked="'checked' if pc.get('consent_research') == '1' else None"/>
                                         <span>اجازه می‌دهم پاسخ‌هایم بدون نام و به‌صورت تجمیعی برای بهبود سنجه‌ها استفاده شود. <span class="ts-hint">(اختیاری)</span></span></label>
                                     <t t-if="inst.audience in ('child', 'adolescent')">
-                                        <label class="ts-check"><input type="checkbox" name="guardian_confirm" value="1" required="required"/>
+                                        <p t-if="error == 'guardian'" id="ts-err-guardian" class="ts-form__error">برای این سنجه تأیید ولی (پدر، مادر یا سرپرست قانونی) لازم است.</p>
+                                        <label class="ts-check"><input type="checkbox" id="ts-guardian-confirm" name="guardian_confirm" value="1" required="required"
+                                                                       t-att-checked="'checked' if pc.get('guardian_confirm') == '1' else None"
+                                                                       t-att-aria-invalid="'true' if error == 'guardian' else None"
+                                                                       t-att-aria-describedby="'ts-err-guardian' if error == 'guardian' else None"/>
                                             <span t-if="inst.audience == 'child'">تأیید می‌کنم ولی (پدر، مادر یا سرپرست قانونی) کودک هستم و این سنجه را دربارهٔ او تکمیل می‌کنم. <span class="ts-hint">(الزامی)</span></span>
                                             <span t-else="">تأیید می‌کنم ولی قانونی نوجوان هستم و پاسخ‌دهی با اطلاع و رضایت من انجام می‌شود. <span class="ts-hint">(الزامی)</span></span>
                                         </label>
                                         <div>
-                                            <label for="subject_label">نام یا عنوان کودک/نوجوان (اختیاری، فقط برای نمایش در گزارش)</label>
+                                            <label for="subject_label">نام کودک یا نوجوان (اختیاری؛ فقط بالای گزارش نوشته می‌شود)</label>
                                             <input id="subject_label" type="text" name="subject_label" dir="auto" maxlength="80"/>
                                         </div>
                                     </t>
                                     <p class="ts-hint">نسخهٔ متن رضایت: <bdi dir="ltr" class="ts-bdi" t-out="consent_version"/><t t-call="ts_website.sep"/><a href="/privacy">سیاست حریم خصوصی</a></p>
-                                    <div><button type="submit" class="ts-btn ts-btn--primary">شروع پاسخ‌دهی</button></div>
+                                    <div class="ts-consent__actions"><button type="submit" class="ts-btn ts-btn--primary ts-btn--lg ts-consent__start">شروع پاسخ‌دهی</button></div>
                                 </form>
                             </div>
                         </section>
@@ -67,28 +92,33 @@
                 <t t-set="ts_exit_form" t-value="'ts-qform'"/>
                 <t t-call="website.layout" additional_title="inst.ts_title()">
                     <div id="wrap" class="ts-page">
-                        <section class="ts-section ts-player" t-att-data-token="attempt.access_token" t-att-data-total="total">
+                        <section class="ts-section ts-player" t-att-data-token="attempt.access_token" t-att-data-total="total" t-att-data-tu="'1' if tu else None">
                             <div class="ts-container ts-narrow">
                                 <div class="ts-player__head">
                                     <h1 class="ts-player__title" t-out="inst.ts_title()"/>
-                                    <div class="ts-progress" role="progressbar" aria-label="پیشرفت پاسخ‌دهی" t-att-aria-valuenow="answered" aria-valuemin="0" t-att-aria-valuemax="total">
+                                    <div class="ts-progress" role="progressbar" aria-label="پیشرفت پاسخ‌دهی" t-att-aria-valuenow="answered" aria-valuemin="0" t-att-aria-valuemax="total"
+                                         t-att-aria-valuetext="'%s از %s پرسش' % (fa(answered), fa(total))">
                                         <div class="ts-progress__bar" t-attf-style="width: #{int(100.0 * answered / total) if total else 0}%"/>
                                     </div>
                                     <p class="ts-progress__text"><span class="ts-js-answered" t-out="fa(answered)"/> از <t t-out="fa(total)"/> پرسش پاسخ داده شده<t t-if="n_pages &gt; 1"><t t-call="ts_website.sep"/>صفحهٔ <t t-out="fa(page)"/> از <t t-out="fa(n_pages)"/></t>
-                                        <span class="ts-save-state" aria-live="polite"/></p>
+                                        <span class="ts-save-state" aria-hidden="true"/></p>
+                                    <!-- autosave status for screen readers: the first save of a page and every failure (B8-7, WCAG 4.1.3) -->
+                                    <p class="ts-sr ts-save-live" aria-live="polite"/>
                                 </div>
-                                <p class="ts-scale-help" t-if="inst.audience == 'child'">هر جمله را بخوانید و بگویید چقدر دربارهٔ کودک درست است.</p>
-                                <p class="ts-scale-help" t-elif="tu">هر جمله را بخوان و بگو چقدر دربارهٔ تو درست است.</p>
-                                <p class="ts-scale-help" t-else="">هر جمله را بخوانید و بگویید چقدر دربارهٔ شما درست است.</p>
+                                <p class="ts-scale-help" t-if="inst.audience == 'child'">هر جمله را بخوانید و بگویید چقدر دربارهٔ کودک درست است. برای ساخته شدن نتیجه، به همهٔ پرسش‌ها پاسخ دهید.</p>
+                                <p class="ts-scale-help" t-elif="tu">هر جمله را بخوان و بگو چقدر دربارهٔ تو درست است. برای ساخته شدن نتیجه، به همهٔ پرسش‌ها پاسخ بده.</p>
+                                <p class="ts-scale-help" t-else="">هر جمله را بخوانید و بگویید چقدر دربارهٔ شما درست است. برای ساخته شدن نتیجه، به همهٔ پرسش‌ها پاسخ دهید.</p>
                                 <form t-attf-action="/take/#{attempt.access_token}/page" method="post" class="ts-qform" id="ts-qform">
                                     <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
                                     <input type="hidden" name="page" t-att-value="page"/>
                                     <ol class="ts-qlist" t-att-start="first_index + 1">
                                         <t t-foreach="items" t-as="it">
-                                            <li class="ts-q" t-att-data-item="it.id">
+                                            <!-- class="ts-q" stays first (tests read `class="ts-q" data-item=`); unanswered items after the
+                                                 review page carry data-missing (B8-4b, B11-2) -->
+                                            <li class="ts-q" t-att-data-item="it.id" t-attf-id="q-#{it.id}" t-att-data-missing="'1' if (show_missing and it.id not in answers) else None">
                                                 <fieldset>
-                                                    <legend class="ts-q__text"><span class="ts-q__num" t-out="fa(first_index + it_index + 1)"/> <t t-out="it.text"/></legend>
-                                                    <div class="ts-scale" role="radiogroup">
+                                                    <legend class="ts-q__text"><span class="ts-q__num" t-out="fa(first_index + it_index + 1)"/> <t t-out="it.text"/><span t-if="show_missing and it.id not in answers" class="ts-q__flag">بی‌پاسخ</span></legend>
+                                                    <div class="ts-scale">
                                                         <t t-foreach="scale" t-as="opt">
                                                             <label class="ts-opt">
                                                                 <input type="radio" t-attf-name="q_#{it.id}" t-att-value="opt[0]"
@@ -102,7 +132,13 @@
                                             </li>
                                         </t>
                                     </ol>
-                                    <div class="ts-qnav">
+                                    <!-- last page: items left unanswered on other pages are named before «مرور و ارسال» (B10-1) -->
+                                    <p t-if="page == n_pages and missing_elsewhere" class="ts-notice ts-notice--info ts-qnote" id="ts-missing-elsewhere">
+                                        <t t-out="fa(missing_elsewhere)"/> پرسش در صفحه‌های دیگر بی‌پاسخ مانده است؛ با «مرور و ارسال» <t t-if="tu">فهرستشان را می‌بینی و می‌توانی به هر کدام برگردی.</t><t t-else="">فهرستشان را می‌بینید و می‌توانید به هر کدام برگردید.</t>
+                                    </p>
+                                    <!-- filled by ts_player.js the first time «صفحهٔ بعد» is pressed with unanswered items here (B8-4a) -->
+                                    <div id="ts-skip-note" class="ts-notice ts-notice--warn ts-skip-note" tabindex="-1" hidden="hidden"/>
+                                    <div t-attf-class="ts-qnav #{'ts-qnav--two' if page &gt; 1 else ''}">
                                         <button t-if="page &gt; 1" type="submit" name="go" value="prev" class="ts-btn ts-btn--outline">صفحهٔ قبل</button>
                                         <button t-if="page &lt; n_pages" type="submit" name="go" value="next" class="ts-btn ts-btn--primary">صفحهٔ بعد</button>
                                         <button t-else="" type="submit" name="go" value="review" class="ts-btn ts-btn--primary">مرور و ارسال</button>
@@ -124,35 +160,56 @@
         <field name="website_id" ref="ts_website.website_ts"/>
         <field name="arch" type="xml">
             <t t-name="ts_assessment.review">
+                <!-- UX audit T7 (B11-1..4, B14-1..3): one primary action first, then the pages; every unanswered item links to
+                     its own row on its page (?missing=1#q-<id>), every page has a change link (check-answers pattern). -->
                 <t t-call="website.layout" additional_title.f="مرور و ارسال">
                     <div id="wrap" class="ts-page">
                         <section class="ts-section">
                             <div class="ts-container ts-narrow">
+                                <a t-attf-href="/take/#{attempt.access_token}?page=#{n_pages}" class="ts-back">برگشت به پرسش‌ها</a>
                                 <span class="ts-hero__kicker" t-out="inst.ts_title()"/>
                                 <h1 class="ts-review__title">مرور پاسخ‌ها پیش از ارسال</h1>
                                 <p class="ts-lead"><t t-out="fa(answered)"/> از <t t-out="fa(total)"/> پرسش پاسخ داده شده است.</p>
                                 <t t-if="missing">
-                                    <div class="ts-notice ts-notice--warn" role="alert">
-                                        <p><strong>برای ارسال باید به همهٔ پرسش‌ها پاسخ دهید.</strong> نمره فقط وقتی محاسبه می‌شود که همهٔ پرسش‌ها پاسخ داشته باشند.</p>
+                                    <div class="ts-notice ts-notice--warn" t-att-role="'alert' if error == 'missing' else None" id="ts-review-missing">
+                                        <p><strong><t t-out="fa(len(missing))"/> پرسش هنوز بی‌پاسخ است.</strong>
+                                            <t t-if="tu">برای ساخته شدن نتیجه، به همهٔ پرسش‌ها پاسخ بده؛ روی هر پرسش بزن تا به همان‌جا بروی.</t>
+                                            <t t-else="">برای ساخته شدن نتیجه، به همهٔ پرسش‌ها پاسخ دهید؛ روی هر پرسش بزنید تا به همان‌جا بروید.</t></p>
                                     </div>
-                                    <ul class="ts-missing">
-                                        <t t-foreach="missing" t-as="m">
-                                            <li><a t-attf-href="/take/#{attempt.access_token}?page=#{m[2]}">پرسش <t t-out="fa(m[0])"/>: <t t-out="m[1].text"/></a></li>
+                                    <p class="ts-review__go"><a t-attf-href="/take/#{attempt.access_token}?page=#{missing[0][2]}&amp;missing=1#q-#{missing[0][1].id}" class="ts-btn ts-btn--primary ts-btn--lg">رفتن به اولین پرسش بی‌پاسخ</a></p>
+                                    <section class="ts-review__pages" aria-labelledby="ts-review-pages-h">
+                                        <h2 id="ts-review-pages-h" class="h5">پرسش‌های بی‌پاسخ، صفحه به صفحه</h2>
+                                        <t t-foreach="page_rows" t-as="pr">
+                                            <div t-if="pr['missing']" class="ts-review__page">
+                                                <h3 class="ts-review__page-h">صفحهٔ <t t-out="fa(pr['page'])"/> <span class="ts-hint">(<t t-out="fa(len(pr['missing']))"/> پرسش بی‌پاسخ)</span></h3>
+                                                <ul class="ts-missing">
+                                                    <li t-foreach="pr['missing']" t-as="m"><a t-attf-href="/take/#{attempt.access_token}?page=#{m[2]}&amp;missing=1#q-#{m[1].id}">پرسش <t t-out="fa(m[0])"/>: <t t-out="m[1].text"/></a></li>
+                                                </ul>
+                                            </div>
                                         </t>
-                                    </ul>
-                                    <p><a t-attf-href="/take/#{attempt.access_token}?page=#{missing[0][2]}" class="ts-btn ts-btn--primary">رفتن به اولین پرسش بی‌پاسخ</a></p>
+                                    </section>
                                 </t>
                                 <t t-else="">
                                     <div class="ts-notice ts-notice--info" role="note" id="ts-review-lock">
-                                        <p><strong>پس از ارسال، پاسخ‌ها قفل می‌شوند</strong> و نتیجه بلافاصله در حساب شما نمایش داده می‌شود.</p>
+                                        <p t-if="tu"><strong>پس از ارسال، پاسخ‌هایت قفل می‌شود</strong> و نتیجه همان لحظه در حسابت آماده است.</p>
+                                        <p t-else=""><strong>پس از ارسال، پاسخ‌ها قفل می‌شوند</strong> و نتیجه همان لحظه در حسابتان آماده است.</p>
                                         <p id="ts-review-who">نتیجه را فقط خودتان می‌بینید.</p>
                                     </div>
                                     <form t-attf-action="/take/#{attempt.access_token}/submit" method="post" class="ts-submit-form">
                                         <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
                                         <input type="hidden" name="submission_key" t-att-value="attempt.access_token"/>
-                                        <button type="submit" class="ts-btn ts-btn--primary">ارسال نهایی و مشاهدهٔ نتیجه</button>
-                                        <a t-attf-href="/take/#{attempt.access_token}?page=#{n_pages}" class="ts-btn ts-btn--outline">بازگشت و بازبینی</a>
+                                        <button type="submit" class="ts-btn ts-btn--primary ts-btn--lg">ارسال و دیدن نتیجه</button>
+                                        <a t-attf-href="/take/#{attempt.access_token}?page=#{n_pages}" class="ts-btn ts-btn--outline">برگشت به پرسش‌ها</a>
                                     </form>
+                                    <section t-if="n_pages &gt; 1" class="ts-review__pages" aria-labelledby="ts-review-change-h">
+                                        <h2 id="ts-review-change-h" class="h5">تغییر یک پاسخ</h2>
+                                        <ul class="ts-review__list">
+                                            <li t-foreach="page_rows" t-as="pr">
+                                                <span>صفحهٔ <t t-out="fa(pr['page'])"/> <span class="ts-hint">(پرسش <t t-out="fa(pr['first'])"/> تا <t t-out="fa(pr['last'])"/>)</span></span>
+                                                <a t-attf-href="/take/#{attempt.access_token}?page=#{pr['page']}">تغییر<span class="ts-sr"> پاسخ‌های صفحهٔ <t t-out="fa(pr['page'])"/></span></a>
+                                            </li>
+                                        </ul>
+                                    </section>
                                 </t>
                             </div>
                         </section>
@@ -169,13 +226,18 @@
         <field name="website_id" ref="ts_website.website_ts"/>
         <field name="arch" type="xml">
             <t t-name="ts_assessment.error">
+                <!-- UX audit T7 (B20-1/2, W8): what happened, that nothing is lost, and a way out; no time promise (owner) -->
                 <t t-call="website.layout" additional_title.f="خطا در محاسبهٔ نتیجه">
                     <div id="wrap" class="ts-page">
                         <section class="ts-section">
                             <div class="ts-container ts-narrow">
                                 <h1>محاسبهٔ نتیجه انجام نشد</h1>
-                                <p>پاسخ‌های شما ذخیره شده است، اما محاسبهٔ نتیجه با خطا روبه‌رو شد و هیچ نمره‌ای نمایش داده نمی‌شود. همکاران ما موضوع را بررسی می‌کنند.</p>
-                                <p>شناسهٔ پیگیری: <bdi dir="ltr" t-out="attempt.name"/><t t-call="ts_website.sep"/><a href="/contact?topic=support">تماس با پشتیبانی</a></p>
+                                <div class="ts-card ts-card--soft" id="ts-error-card">
+                                    <p t-if="tu">پاسخ‌هایت ذخیره شده و چیزی از دست نرفته است؛ فقط ساختن نتیجه با خطا روبه‌رو شد. همکاران ما آن را بررسی می‌کنند و لازم نیست دوباره پاسخ بدهی. برای پیگیری، این شناسه را به پشتیبانی بده.</p>
+                                    <p t-else="">پاسخ‌هایتان ذخیره شده و چیزی از دست نرفته است؛ فقط ساختن نتیجه با خطا روبه‌رو شد. همکاران ما آن را بررسی می‌کنند و لازم نیست دوباره پاسخ دهید. برای پیگیری، این شناسه را به پشتیبانی بدهید.</p>
+                                    <p class="ts-hint">شناسهٔ پیگیری: <bdi dir="ltr" class="ts-bdi" t-out="attempt.name"/></p>
+                                    <p class="ts-error-card__actions"><a href="/my/assessments" class="ts-btn ts-btn--primary">سنجه‌ها و نتیجه‌ها</a> <a href="/contact?topic=support" class="ts-btn ts-btn--outline">تماس با پشتیبانی</a></p>
+                                </div>
                             </div>
                         </section>
                     </div>

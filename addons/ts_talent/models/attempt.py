@@ -78,14 +78,14 @@ class TsAttempt(models.Model):
         self._ts_check_open()
         v = self.version_id
         if self.ts_current_field():
-            raise UserError('ابتدا زمینهٔ در حال پاسخ را کامل کنید.')
+            raise UserError('اول زمینه‌ای که در حال پاسخ است باید کامل شود.')
         if len(self.field_ids) >= v.field_max:
-            raise UserError('حداکثر %s زمینه می‌توانید بنویسید.' % fa_digits(v.field_max))
+            raise UserError('بیشترین تعداد زمینه %s است.' % fa_digits(v.field_max))
         label = clean_label(raw_label)
         if len(label) < 2:
-            raise UserError('نام زمینه را بنویسید (دست‌کم دو حرف).')
+            raise UserError('نام زمینه دست‌کم دو حرف لازم دارد.')
         if any(f.label_norm == norm_label(label) for f in self.field_ids):
-            raise UserError('این زمینه را قبلاً نوشته‌اید؛ زمینهٔ دیگری بنویسید.')
+            raise UserError('این زمینه پیش‌تر نوشته شده است؛ یک زمینهٔ دیگر لازم است.')
         seq = max(self.field_ids.mapped('sequence') or [0]) + 1
         return self.env['ts.attempt.field'].create({
             'attempt_id': self.id, 'sequence': seq, 'label': label, 'label_norm': norm_label(label),
@@ -97,9 +97,9 @@ class TsAttempt(models.Model):
             raise UserError('نام این زمینه دیگر قابل تغییر نیست.')
         label = clean_label(raw_label)
         if len(label) < 2:
-            raise UserError('نام زمینه را بنویسید (دست‌کم دو حرف).')
+            raise UserError('نام زمینه دست‌کم دو حرف لازم دارد.')
         if any(f.label_norm == norm_label(label) for f in self.field_ids - field):
-            raise UserError('این زمینه را قبلاً نوشته‌اید؛ زمینهٔ دیگری بنویسید.')
+            raise UserError('این زمینه پیش‌تر نوشته شده است؛ یک زمینهٔ دیگر لازم است.')
         field.write({'label': label, 'label_norm': norm_label(label)})
 
     def ts_drop_empty_draft(self):
@@ -134,7 +134,7 @@ class TsAttempt(models.Model):
         items = self.active_items()
         by_item = {c.item_id.id: c for c in field.cell_ids}
         if any(i.id not in by_item for i in items):
-            raise UserError('هنوز به همهٔ جمله‌های این زمینه پاسخ نداده‌اید.')
+            raise UserError('هنوز به همهٔ جمله‌های این زمینه پاسخ داده نشده است.')
         values = [by_item[i.id].value for i in items]
         straight = len(set(values)) == 1
         if straight and not confirm_straight:
@@ -153,7 +153,7 @@ class TsAttempt(models.Model):
             raise UserError('این زمینه را نمی‌شود دوباره باز کرد.')
         self.ts_drop_empty_draft()
         if self.ts_current_field():
-            raise UserError('ابتدا زمینهٔ در حال پاسخ را کامل کنید.')
+            raise UserError('اول زمینه‌ای که در حال پاسخ است باید کامل شود.')
         field.write({'state': 'draft', 'finished_at': False, 'flag_straight': False, 'flag_fast': False})
         return field
 

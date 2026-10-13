@@ -15,6 +15,7 @@ from odoo.addons.ts_org.controllers.main import _membership as _org_membership
 
 from ..models import engine_matrix as EM
 from ..models import report as R
+from ..models.loader import LIMITATIONS, LIMITATIONS_TU
 from ..models.text import item_segments, norm_label
 
 PAGE = 5
@@ -83,8 +84,11 @@ def report_ctx(attempt, org_view=False, ws=None, submitted=None, panel_actions=N
 
     def fmt(v, d=None):
         return R.fmt(v, digits if d is None else d)
+    limitations = attempt.instrument_id.limitations or ''
+    if voice == 'tu' and limitations == LIMITATIONS:          # our own text: one pronoun per page (UX audit T7 P10-2)
+        limitations = LIMITATIONS_TU
     ctx = {
-        'attempt': attempt, 'inst': attempt.instrument_id, 'version': attempt.version_id,
+        'attempt': attempt, 'inst': attempt.instrument_id, 'version': attempt.version_id, 'limitations': limitations,
         'tiles': R.tiles(interp, profile, voice, digits), 'fields': fields,
         'charts': {f['label']: R.field_chart(f, digits) for f in fields},
         'legend': [EM.NAMES[c] for c in EM.SCALES], 'single': single,
@@ -174,7 +178,9 @@ class TsTalent(TsAssessment):
         if cur and view == 'rename' and not cur.cell_ids:
             return request.render('ts_talent.name', self._name_ctx(attempt, done, guidance, kw, rename=cur))
         if cur and view == 'straight':
-            return request.render('ts_talent.straight', {'attempt': attempt, 'field': cur, 'tu': attempt.ts_informal()})
+            return request.render('ts_talent.straight', {
+                'attempt': attempt, 'field': cur, 'tu': attempt.ts_informal(), 'fa': fa_digits,
+                'field_no': len(done.filtered(lambda f: f.sequence < cur.sequence)) + 1})
         if cur:
             items = attempt.active_items()
             n_pages = _n_pages(items)
@@ -186,23 +192,35 @@ class TsTalent(TsAssessment):
             p = min(max(int(p), 1), n_pages)
             chunk = items[(p - 1) * PAGE: p * PAGE]
             missing = {it.id for it in chunk if it.id not in cells} if kw.get('error') == 'missing' else set()
+            # numbers of the unanswered statements, linked from the error summary (UX audit T7 P5-1)
+            missing_nos = [(it.id, (p - 1) * PAGE + n + 1) for n, it in enumerate(chunk) if it.id in missing]
             return request.render('ts_talent.statements', {
                 'attempt': attempt, 'field': cur, 'page': p, 'n_pages': n_pages, 'items': chunk,
-                'first': (p - 1) * PAGE, 'scale': SCALE, 'cells': cells, 'missing': missing,
+                'first': (p - 1) * PAGE, 'scale': SCALE, 'cells': cells, 'missing': missing, 'missing_nos': missing_nos,
                 'field_no': len(done.filtered(lambda f: f.sequence < cur.sequence)) + 1, 'n_done': len(done),
                 'error': kw.get('error'), 'segments': item_segments, 'fa': fa_digits, 'tu': attempt.ts_informal()})
         if not done or view == 'name':
             return request.render('ts_talent.name', self._name_ctx(attempt, done, guidance, kw))
         tu = attempt.ts_informal()
+        # the final submit failed: say the real reason (carried in the session like the name errors), never a
+        # sentence that contradicts the fields shown on the page (UX audit T7 P8-1)
+        reason = request.session.pop('tt_finish_error', None) if kw.get('error') == 'finish' else None
+        enough = len(done) >= v.field_min
+        if enough:
+            finish_err = 'پایان ثبت نشد%s. دوباره «پایان و دیدن نتیجه» را %s؛ اگر باز هم نشد، با پشتیبانی تماس %s.' % (
+                (': ' + reason.rstrip('.')) if reason else '', 'بزن' if tu else 'بزنید', 'بگیر' if tu else 'بگیرید')
+        else:
+            finish_err = 'هنوز نمی‌شود پایان را زد: برای مقایسه دست‌کم %s زمینهٔ کامل لازم است.' % fa_digits(v.field_min)
         errors = {
-            'finish': 'پایان ممکن نشد؛ دست‌کم %s زمینهٔ کامل لازم است.' % fa_digits(v.field_min),
+            'finish': finish_err,
             'reopen': 'این زمینه باز نشد؛ اول زمینهٔ در حال پاسخ را کامل کن.' if tu else 'این زمینه باز نشد؛ اول زمینهٔ در حال پاسخ را کامل کنید.',
         }
         last = done.sorted(lambda f: f.finished_at or f.create_date)[-1:] or done[-1:]
         return request.render('ts_talent.between', {
             'attempt': attempt, 'done': done, 'last': last, 'field_min': v.field_min, 'field_max': v.field_max,
             'n_items': len(attempt.active_items()), 'ordinal_min': ordinal(v.field_min),
-            'error': errors.get(kw.get('error')), 'fa': fa_digits, 'tu': tu})
+            'ordinal_next': ordinal(len(done) + 1), 'error': errors.get(kw.get('error')),
+            'error_support': kw.get('error') == 'finish' and enough, 'fa': fa_digits, 'tu': tu})
 
     @http.route('/take/<string:token>/field', type='http', auth='user', website=True, methods=['POST'], sitemap=False)
     def field_post(self, token, **post):
@@ -280,7 +298,8 @@ class TsTalent(TsAssessment):
             return request.redirect('/my/assessments/%s' % attempt.id)
         try:
             ok = attempt.action_submit(submission_key=post.get('submission_key'))
-        except UserError:
+        except UserError as e:
+            request.session['tt_finish_error'] = str(e.args[0])
             return request.redirect(self._tt_url(token, error='finish'))
         if not ok:
             return request.redirect('/take/%s' % token)

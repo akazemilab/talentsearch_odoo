@@ -44,10 +44,19 @@ class TsInstrument(models.Model):
             return 'حدود %s دقیقه برای هر زمینه' % fa_digits(self.MATRIX_SECONDS_PER_FIELD // 60)
         return 'حدود %s دقیقه' % fa_digits(self.duration_minutes)
 
+    def ts_detail_tu(self):
+        """The matrix inventory's detail page in the «تو» register of its other pages (UX audit T7 P16-3):
+        {'use', 'limitations'}. A stored text that is not our own default is shown as stored."""
+        self.ensure_one()
+        from .loader import INTENDED_USE, INTENDED_USE_TU, LIMITATIONS, LIMITATIONS_TU
+        use = INTENDED_USE_TU if (self.intended_use or '') == INTENDED_USE else self.ts_intended_use()
+        lim = LIMITATIONS_TU if (self.limitations or '') == LIMITATIONS else (self.limitations or '')
+        return {'use': use, 'limitations': lim}
+
     def ts_audience_label(self):
         self.ensure_one()
         if self.current_version_id.mode == 'matrix':
-            return 'نوجوان ۱۵+ و بزرگسال'
+            return '۱۵ سال به بالا'
         return dict(self._fields['audience'].selection).get(self.audience)
 
 

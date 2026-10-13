@@ -123,9 +123,17 @@ check('accepting the invite leads to the test', st in (302, 303) and '/take/' in
 # public visitor on an invite: phone sign-in offered; expired link explains itself
 c3 = Client(TS)
 st, _, page = c3.req('/invite/%s' % tok_old)
-check('expired invite explains itself (200, no accept button)', st == 200 and 'مهلت دعوت تمام شده' in page and '/accept' not in page, str(st))
+check('expired invite explains itself (200, no accept button) with a next step', st == 200 and 'مهلت این دعوت تمام شده' in page
+      and '/accept' not in page and 'id="ts-state-card"' in page, str(st))
+# UX T7 X1: an invitation bound to an account reads like an unknown token to anyone else (same 404, same text): the page
+# explains and offers sign-in with the invited number, and returns to the link afterwards
 st, _, page = c3.req('/invite/%s' % tok)
-check('used invite tells a stranger it is used', st == 200 and 'قبلاً استفاده' in page and '/accept' not in page)
+st_u, _, page_u = c3.req('/invite/%s' % ('f' * 32))
+check('a used invite is a 404 for a signed-out stranger, explained, with sign-in back to the link',
+      st == 404 and 'این پیوند باز نمی‌شود' in page and ('/signup?next=/invite/%s' % tok) in page and '/accept' not in page
+      and 'دعوت‌شدهٔ HTTP' not in page, str(st))
+check('an unknown invite token gets the same status and the same explanation', st_u == 404 and 'این پیوند باز نمی‌شود' in page_u
+      and 'id="ts-link-404"' in page_u and 'id="ts-link-404"' in page, str(st_u))
 a2 = shell("""
 ws = env['ts.workspace'].search([('name','=','سازمان ثبت‌نام HTTP')], limit=1)
 a = env['ts.assignment'].create({'workspace_id': ws.id, 'instrument_id': env['ts.instrument'].search([('state','=','published'),('purpose','=','employment')], limit=1).id, 'invitee_name': 'تازه HTTP'})
@@ -134,6 +142,14 @@ env.cr.commit(); print('TOK2', a.token)
 tok2 = re.search(r'TOK2 (\S+)', a2).group(1)
 st, _, page = c3.req('/invite/%s' % tok2)
 check('fresh invite offers mobile sign-in with next=/invite/…', st == 200 and '/signup?next=/invite/%s' % tok2 in page and 'ورود یا ثبت‌نام با موبایل' in page, str(st))
+check('the open invite states size, time and the instant result first (UX T7 X2)', 'id="ts-invite-facts"' in page
+      and 'نتیجه بلافاصله پس از پایان آماده است' in page, str(st))
+st, _, page = c3.req('/signup?next=/invite/%s' % tok2)
+check('the sign-in page reached from an open invite says who invites to what (P2-1)', st == 200 and 'شما را به' in page
+      and 'دعوت کرده است' in page, str(st))
+st, _, page = c3.req('/signup?next=/invite/%s' % tok)
+check('...but not for an invite bound to an account (nothing new disclosed)', st == 200 and 'دعوت کرده است' not in page
+      and 'برای پاسخ‌دادن به دعوت' in page, str(st))
 # rate limit through the real endpoint
 for i in range(6):
     bypass_cooldown()

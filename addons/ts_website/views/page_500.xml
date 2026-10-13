@@ -39,14 +39,14 @@
                                 <p>اگر باز هم همین صفحه را دیدید، به پشتیبانی بگویید چه کاری می‌کردید و زمان خطا را هم بنویسید.</p>
                                 <p class="tse-ref" id="tse-ref" hidden="hidden"/>
                                 <nav class="tse-actions" aria-label="راه بازگشت">
-                                    <a href="/my/workspaces" class="tse-btn tse-btn--primary" id="tse-back">بازگشت به پنل</a>
+                                    <a href="/my" class="tse-btn tse-btn--primary" id="tse-back">کارهای من</a>
                                     <a href="/" class="tse-btn">صفحهٔ اصلی</a>
                                     <a href="/contact?topic=support" class="tse-btn tse-btn--quiet">تماس با پشتیبانی</a>
                                 </nav>
                             </div>
                         </main>
                         <footer class="tse-footer">
-                            <p>استعدادیاب خدمت اورژانسی نیست؛ در شرایط اضطراری با ۱۱۵ تماس بگیرید.</p>
+                            <p>استعدادیاب خدمت اورژانسی نیست؛ در شرایط اضطراری با اورژانس اجتماعی ۱۲۳ یا صدای مشاور ۱۴۸۰ تماس بگیرید.</p>
                         </footer>
                         <div t-if="editable or debug" dir="ltr" lang="en" class="container">
                             <t t-call="http_routing.http_error_debug"/>
@@ -54,6 +54,11 @@
                         <script>(function () {
                             try {
                                 var r = document.referrer, back = document.getElementById('tse-back');
+                                // a participant has no panel: «کارهای من» by default, the panel only on panel addresses (W54)
+                                if (location.pathname.indexOf('/my/workspaces') === 0) {
+                                    back.href = '/my/workspaces';
+                                    back.textContent = 'بازگشت به پنل';
+                                }
                                 if (r &amp;&amp; r.indexOf(location.origin + '/') === 0 &amp;&amp; r !== location.href) {
                                     back.href = r;
                                     back.textContent = 'بازگشت به صفحهٔ قبل';

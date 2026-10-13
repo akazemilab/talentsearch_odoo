@@ -97,7 +97,16 @@ o = Client(TS)
 o.login('ts.flow.b@example.invalid', ensure_user('ts.flow.b@example.invalid'))
 check('non-member gets 404 on the workspace', o.req('/my/workspaces/%s/legacy' % ws_id)[0] == 404)
 check('non-member gets 404 on the assignment', o.req('/my/workspaces/%s/a/%s' % (ws_id, aid.group(1)))[0] == 404)
-check('other account cannot use a taken invite', o.req('/invite/' + tok)[0] == 404)
+st_o, _, page_o = o.req('/invite/' + tok)
+check('other account cannot use a taken invite', st_o == 404)
+# UX T7 X1/P7-1: the 404 of a participant link explains, names the signed-in account, and offers the own list and a sign-out
+# that returns to the link; it renders in the auth layout (no player exit link #ts-focus-exit)
+check('...and the 404 explains: own list, sign out and back to the link, no player header',
+      'id="ts-link-404"' in page_o and 'href="/my/assessments"' in page_o and ('next%3D/invite/' + tok) in page_o
+      and 'id="ts-404-account"' in page_o and 'id="ts-focus-exit"' not in page_o)
+st_t, _, page_t = o.req('/take/' + '0' * 32)
+check('an unknown /take token: the same explanation in the auth layout (P17)', st_t == 404 and 'id="ts-link-404"' in page_t
+      and 'id="ts-focus-exit"' not in page_t, str(st_t))
 e = Client('www.eot.ir')
 e.login(HR, hr_pw)
 check('eot.ir /my/workspaces is 404', e.req('/my/workspaces')[0] == 404)

@@ -96,7 +96,7 @@
     #new-group:target, #new-group:focus { outline: 2px solid var(--color-accent); outline-offset: 2px; }
 }
 
-// The fixed bottom tab bar must not cover the end of the footer (copyright, ۱۱۵ line) on phones (PT-6, G5-P13-5, G5-P14-3).
+// The fixed bottom tab bar must not cover the end of the footer (copyright, crisis-line sentence) on phones (PT-6, G5-P13-5, G5-P14-3).
 @media (max-width: 1023.98px) {
     body:has(.tsp-tabbar) .ts-footer { padding-block-end: calc(64px + env(safe-area-inset-bottom, 0px)); }
 }

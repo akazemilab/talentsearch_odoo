@@ -7,6 +7,7 @@ is needed (panel, colleague invite, account page). Internal (staff) accounts are
 code. «این دستگاه شخصی من است» (default on) keeps a portal session for 30 days; off = a browser-session cookie
 (models/ir_http.py). Website 4 only: stock /web/login (email) stays reachable as the quiet second way.
 """
+import re
 from urllib.parse import quote
 
 from odoo import fields, http
@@ -19,15 +20,17 @@ from odoo.addons.ts_assessment.controllers.main import _ts_site_or_404
 from odoo.addons.ts_assessment.models.attempt import fa_digits
 from odoo.addons.ts_core.safe_url import local_path
 
+from ..models.phone_otp import TTL_MIN
 from ..models.res_partner import fmt_mobile
 from .main import MESSAGES
 
 MESSAGES = dict(MESSAGES, **{
-    'sent': ('ok', 'کد ۶ رقمی را فرستادیم.'),
-    'resent': ('ok', 'کد تازه را فرستادیم.'),
+    # the code line of the page already says «کد ۶ رقمی را به … فرستادیم»; the status adds the one missing fact (W40)
+    'sent': ('ok', 'کد تا %s دقیقه معتبر است.' % fa_digits(TTL_MIN)),
+    'resent': ('ok', 'کد تازه را فرستادیم؛ تا %s دقیقه معتبر است.' % fa_digits(TTL_MIN)),
     'short': ('warn', 'کد ۶ رقمی است.'),
     'wrong': ('warn', 'این کد درست نیست. دوباره امتحان کنید.'),
-    'expired': ('warn', 'این کد منقضی شده؛ کد تازه بگیرید.'),
+    'expired': ('warn', 'مهلت این کد تمام شده است؛ «ارسال دوباره کد» را بزنید.'),
     'attempts': ('warn', 'این کد چند بار نادرست وارد شد؛ کد تازه بگیرید.'),
     'locked': ('warn', 'چند بار کد نادرست وارد شد. برای امنیت حساب، ۱۵ دقیقهٔ دیگر دوباره امتحان کنید.'),
     'none': ('warn', 'اول شمارهٔ موبایل را بنویسید و کد بگیرید.'),
@@ -62,6 +65,40 @@ WHY = [
 ]
 
 
+_LINK_RE = re.compile(r'^/(invite|c)/([0-9A-Za-z]{16,64})$')
+
+
+def invite_context(nxt):
+    """Who invites to what, for the sign-in page reached from an invitation link (audit P2-1, P2-2): (text, tu) or None.
+    Only what that link's own page shows a signed-out visitor: an open (not yet accepted) invitation or an open link of a
+    running panel. Anything else (bound, unknown, closed) gets the general sentence, so nothing new is disclosed."""
+    m = _LINK_RE.match(nxt or '')
+    if not m:
+        return None
+    env = request.env
+    title = ws = None
+    if m.group(1) == 'invite':
+        a = env['ts.assignment'].sudo().search([('token', '=', m.group(2))], limit=1)   # ts-scope-ok: the secret token is the key
+        if not a or a.user_id or a.workspace_id.state != 'active':
+            return None
+        bat = a.battery_id if 'battery_id' in a._fields else None
+        ws, title = a.workspace_id, ('مجموعهٔ ' + bat.ts_title()) if bat else a.instrument_id.ts_title()
+    elif 'ts.campaign' in env:
+        c = env['ts.campaign'].sudo().search([('open_token', '=', m.group(2)), ('kind', '=', 'open_link')], limit=1)   # ts-scope-ok: the secret token is the key
+        if not c or c.workspace_id.state != 'active' or c.open_state() != 'ok':
+            return None
+        bat = c.battery_id if 'battery_id' in c._fields else None
+        ws, title = c.workspace_id, ('مجموعهٔ ' + bat.ts_title()) if bat else c.instrument_id.ts_title()
+    if not ws:
+        return None
+    tu = ws.purpose == 'education'
+    if tu:
+        text = '«%s» تو را به «%s» دعوت کرده است؛ اول با شمارهٔ موبایلت وارد شو، بعد به همان دعوت برمی‌گردی.'
+    else:
+        text = '«%s» شما را به «%s» دعوت کرده است؛ اول با شمارهٔ موبایل وارد شوید، بعد به همان دعوت برمی‌گردید.'
+    return text % (ws.ts_public_name(), title), tu
+
+
 def why_for(nxt):
     for prefix, text in WHY:
         if (nxt or '').startswith(prefix):
@@ -89,9 +126,12 @@ def signin_values(step, msg=None, nxt='/my', edit=False):
     """Render values of ts_sms.signup (also used by /web/login on talentsearch.ir)."""
     phone = request.session.get('ts_signup_phone') or ''
     Otp = request.env['ts.signup.otp']
+    ctx = invite_context(nxt)
     return {
         'enabled': _enabled(), 'step': step, 'msg': MESSAGES.get(msg), 'msg_key': msg or '', 'next': nxt,
-        'next_q': quote(nxt, safe='/'), 'why': why_for(nxt),
+        'next_q': quote(nxt, safe='/'), 'why': ctx[0] if ctx else why_for(nxt),
+        # «تو» on the sign-in page when the person comes from a school's invitation (P2-2; voice.md §2)
+        'tu': bool(ctx and ctx[1]),
         'phone': phone, 'phone_fa': fmt_mobile(phone) if phone else '',
         'phone_prefill': fa_digits(phone) if (phone and edit) else '',
         'personal': request.session.get(PERSONAL_KEY, True),

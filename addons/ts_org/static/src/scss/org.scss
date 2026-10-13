@@ -55,4 +55,21 @@
     .ts-share-box .ts-list-check li::before { inline-size: 6px; block-size: 11px; border: 0; border-right: 2px solid var(--color-accent-300); border-bottom: 2px solid var(--color-accent-300); transform: rotate(45deg); inset-block-start: .45em; inset-inline-start: 6px; }
     .ts-confirm .ts-check { display: flex; gap: var(--space-2); align-items: center; min-block-size: var(--control-min); }
     .ts-confirm .ts-check input { inline-size: 20px; block-size: 20px; flex: none; }
+
+    // ---- UX T7 (2026-10-13): invite, open link, join and link-404 pages
+    // a calmer rhythm than the 28 px section gap, so the button reaches the first phone screen
+    .ts-section > .ts-container.ts-invite:has(> .ts-section__head) { gap: 16px; }
+    .ts-invite .ts-section__head { gap: 6px; }
+    .ts-invite .ts-section__head .ts-invite__facts { color: var(--color-text); font-weight: 500; }
+    .ts-invite__act .ts-form { gap: 10px; }
+    .ts-invite__act .ts-form .ts-hint, .ts-invite__act > p { margin: 0; }
+    .ts-invite__more { display: flex; flex-wrap: wrap; gap: 4px 8px; margin-block-start: 8px; }
+    .ts-invite__more form { margin: 0; }
+    // .ts-acct*, .ts-state* and .ts-header__my live in ts_website ts.scss (ts_website templates use them)
+    // «what the panel sees»: a heading button that opens the list (ts_nav.js .ts-faq__q)
+    .ts-card.ts-share-box { padding: 4px 6px; gap: 0; }
+    .ts-share-box__h { margin: 0; font-size: inherit; }
+    .ts-share-box .ts-faq__q { min-block-size: var(--control-min); padding: 8px 12px; font-size: var(--fs-1); }
+    .ts-share-box__list { padding: 0 12px 12px; }
+    .ts-share-box__list[hidden] { display: none; }
 }

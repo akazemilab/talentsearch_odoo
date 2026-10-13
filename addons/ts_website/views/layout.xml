@@ -6,7 +6,8 @@
            marketing  public pages: full menu, theme toggle, full footer
            app        /my/*, /help/roles: a quiet bar (logo, participant links, account), slim footer
            focus      /take/*: logo only, no footer (the player keeps its own progress line)
-           auth       /web/login, /web/signup, /web/reset_password, /signup*, /invite/*, /join/*, /c/*: logo only, slim footer
+           auth       /web/login, /web/signup, /web/reset_password, /signup*, /invite/*, /join/*, /c/*: logo only (signed in: «کارهای من»), slim footer
+         A page may force the mode with t-set ts_force_mode before its layout call (the 404 of a participant link: 'auth').
          Theme: light by default; the inline script below sets <html data-theme> before first paint from
          localStorage['ts-site-theme'] or prefers-color-scheme. The toggle (ts_nav.js) stores the choice. -->
     <record id="layout_ts" model="ir.ui.view">
@@ -43,7 +44,7 @@
                 </xpath>
                 <xpath expr="//header[@id='top']" position="replace">
                     <t t-set="ts_path" t-value="request.httprequest.path"/>
-                    <t t-set="ts_mode" t-value="'focus' if ts_path.startswith('/take/') else ('auth' if (ts_path.startswith('/web/login') or ts_path.startswith('/web/signup') or ts_path.startswith('/web/reset_password') or ts_path.startswith('/signup') or ts_path == '/login' or ts_path.startswith('/invite/') or ts_path.startswith('/join/') or ts_path.startswith('/c/')) else ('app' if (ts_path.startswith('/my') or ts_path.startswith('/help/roles')) else 'marketing'))"/>
+                    <t t-set="ts_mode" t-value="ts_force_mode or ('focus' if ts_path.startswith('/take/') else ('auth' if (ts_path.startswith('/web/login') or ts_path.startswith('/web/signup') or ts_path.startswith('/web/reset_password') or ts_path.startswith('/signup') or ts_path == '/login' or ts_path.startswith('/invite/') or ts_path.startswith('/join/') or ts_path.startswith('/c/')) else ('app' if (ts_path.startswith('/my') or ts_path.startswith('/help/roles')) else 'marketing')))"/>
                     <t t-set="ts_public" t-value="request.env.user._is_public()"/>
                     <!-- o_no_autohide_menu + .top_menu: Odoo's frontend menu-autohide script expects header#top .top_menu (null error otherwise) -->
                     <header id="top" t-attf-class="ts-header o_no_autohide_menu ts-header--#{ts_mode} #{'ts-header--app' if ts_mode != 'marketing' else ''}" data-anchor="true" t-att-data-ts-mode="ts_mode">
@@ -110,14 +111,18 @@
                                 <span class="ts-theme__moon"><t t-call="ts_website.icon" ico.f="moon"/></span>
                                 <span class="ts-theme__sun"><t t-call="ts_website.icon" ico.f="sun"/></span>
                             </button>
-                            <button t-if="ts_mode == 'focus' and not ts_public and ts_exit_form" type="submit" t-att-form="ts_exit_form" name="go" value="exit" formnovalidate="formnovalidate" class="ts-btn ts-btn--quiet ts-btn--sm">ذخیره و خروج</button>
-                            <a t-elif="ts_mode == 'focus' and not ts_public" href="/my/assessments" class="ts-btn ts-btn--quiet ts-btn--sm">ذخیره و خروج</a>
+                            <!-- signed in on an entry page (/invite, /c, /join, a link 404): a quiet way to the person's own list (UX T7 X7) -->
+                            <a t-if="ts_mode == 'auth' and not ts_public" href="/my" class="ts-btn ts-btn--quiet ts-header__my">کارهای من</a>
+                            <!-- «ذخیره و خروج» only where the click saves something (a questionnaire page posts its form); consent, talent
+                                 (autosave) and task pages say «خروج» (UX T7 PT6; tst_player.js still relabels it while a timed section runs) -->
+                            <button t-if="ts_mode == 'focus' and not ts_public and ts_exit_form" id="ts-focus-exit" type="submit" t-att-form="ts_exit_form" name="go" value="exit" formnovalidate="formnovalidate" class="ts-btn ts-btn--quiet ts-btn--sm">ذخیره و خروج</button>
+                            <a t-elif="ts_mode == 'focus' and not ts_public" id="ts-focus-exit" href="/my/assessments" class="ts-btn ts-btn--quiet ts-btn--sm">بازگشت به فهرست</a>
                         </div>
                     </header>
                 </xpath>
                 <xpath expr="//footer[@id='bottom']" position="replace">
                     <t t-set="ts_path" t-value="request.httprequest.path"/>
-                    <t t-set="ts_mode" t-value="'focus' if ts_path.startswith('/take/') else ('auth' if (ts_path.startswith('/web/login') or ts_path.startswith('/web/signup') or ts_path.startswith('/web/reset_password') or ts_path.startswith('/signup') or ts_path == '/login' or ts_path.startswith('/invite/') or ts_path.startswith('/join/') or ts_path.startswith('/c/')) else ('app' if (ts_path.startswith('/my') or ts_path.startswith('/help/roles')) else 'marketing'))"/>
+                    <t t-set="ts_mode" t-value="ts_force_mode or ('focus' if ts_path.startswith('/take/') else ('auth' if (ts_path.startswith('/web/login') or ts_path.startswith('/web/signup') or ts_path.startswith('/web/reset_password') or ts_path.startswith('/signup') or ts_path == '/login' or ts_path.startswith('/invite/') or ts_path.startswith('/join/') or ts_path.startswith('/c/')) else ('app' if (ts_path.startswith('/my') or ts_path.startswith('/help/roles')) else 'marketing')))"/>
                     <footer t-if="ts_mode == 'marketing'" id="bottom" class="ts-footer" data-anchor="true">
                         <div class="ts-container">
                             <div class="ts-footer__grid">
@@ -152,7 +157,7 @@
                                 </div>
                             </div>
                             <div class="ts-footer__legal">
-                                <p>استعدادیاب خدمت اورژانسی نیست. در شرایط اضطراری با ۱۱۵ تماس بگیرید.</p>
+                                <p>استعدادیاب خدمت اورژانسی نیست. در شرایط اضطراری با اورژانس اجتماعی ۱۲۳ یا صدای مشاور ۱۴۸۰ تماس بگیرید.</p>
                                 <p>© مؤسسهٔ تعاملی هیجان اندیشه</p>
                             </div>
                         </div>
@@ -164,7 +169,7 @@
                                 <li><a href="/privacy">حریم خصوصی و رضایت</a></li>
                                 <li><a href="/contact?topic=support">تماس با پشتیبانی</a></li>
                             </ul>
-                            <p>© مؤسسهٔ تعاملی هیجان اندیشه<t t-call="ts_website.sep"/>استعدادیاب خدمت اورژانسی نیست؛ در شرایط اضطراری با ۱۱۵ تماس بگیرید.</p>
+                            <p>© مؤسسهٔ تعاملی هیجان اندیشه<t t-call="ts_website.sep"/>استعدادیاب خدمت اورژانسی نیست؛ در شرایط اضطراری با اورژانس اجتماعی ۱۲۳ یا صدای مشاور ۱۴۸۰ تماس بگیرید.</p>
                         </div>
                     </footer>
                 </xpath>

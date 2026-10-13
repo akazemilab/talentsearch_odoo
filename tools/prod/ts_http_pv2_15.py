@@ -113,10 +113,11 @@ new, res, inv, going, other, cns = (login(n) for n in NAMES)
 # ---- PRT-1 home
 check('anonymous /my goes to sign in', Client(TS).req('/my')[0] in (302, 303))
 st, body = get(new, '/my')
-check('a new user sees the empty home with one primary action', st == 200 and 'ts-home-empty' in body and '/assessments' in body and 'ts-home-results' not in body, str(st))
+check('a new user sees the empty home with one primary action', st == 200 and 'ts-home-empty' in body and '/assessments' in body and 'ts-home-results' not in body
+      and re.search(r'href="/assessments" class="ts-btn ts-btn--primary"', body) is not None, str(st))
 check('the home has the participant navigation', '/my/sharing' in body and '/my/assessments' in body and '/my/account' in body)   # portal v3: four destinations
 st, body = get(inv, '/my')
-check('an invited user sees the waiting invitation with its link', st == 200 and 'ts-home-invites' in body and '/invite/%s' % ITOK in body)
+check('an invited user sees the waiting invitation with its link, once (T7 P20-1)', st == 200 and body.count('/invite/%s' % ITOK) == 1)
 st, body = get(going, '/my')
 check('a user with an unfinished attempt sees the resume card', st == 200 and ('ts-home-going' in body or 'ts-home-next' in body) and '/take/%s' % GTOK in body)
 st, body = get(res, '/my')

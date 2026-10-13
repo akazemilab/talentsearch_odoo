@@ -96,9 +96,18 @@ check('consent without the required box is refused', 'error=consent' in loc, loc
 st, loc, _ = u.req('/take/%s/consent' % token, {'csrf_token': u.csrf(page), 'consent_service': '1', 'age18': 'yes'})
 st, _, page = u.req('/take/' + token)
 nq = page.count('class="ts-q"')
-check('player page renders (up to 10 items per page, 5-point scale)', st == 200 and 1 <= nq <= 10 and page.count('type="radio"') == 5 * nq,
+check('player page renders (up to 5 items per page, 5-point scale)', st == 200 and 1 <= nq <= 5 and page.count('type="radio"') == 5 * nq,
       '%s q=%d' % (st, page.count('class="ts-q"')))
+check('player: no radiogroup role inside the fieldset, items have anchors (T7 B8-8, B11-2)', 'role="radiogroup"' not in page and 'id="q-' in page)
 csrf = u.csrf(page)
+# T7 (B11-1/2, B8-4b): before answering, the review lists unanswered items by page; each link opens its page with the item marked
+st, _, rv = u.req('/take/%s/review' % token)
+mlink = re.search(r'href="(/take/%s\?page=\d+&amp;missing=1)#q-\d+"' % token, rv)
+check('review before answering: unanswered items grouped by page, links jump to the item', st == 200 and mlink and 'class="ts-review__page"' in rv
+      and 'رفتن به اولین پرسش بی‌پاسخ' in rv)
+if mlink:
+    st, _, pg = u.req(html.unescape(mlink.group(1)))
+    check('…and the item is marked «بی‌پاسخ» on its page', st == 200 and 'data-missing="1"' in pg and 'ts-q__flag' in pg)
 pages = int((re.search(r'صفحهٔ [۰-۹]+ از ([۰-۹]+)', page) or re.match('(۱)', '۱')).group(1).translate(str.maketrans('۰۱۲۳۴۵۶۷۸۹', '0123456789')))  # one page: no page count
 answered = 0
 for p in range(1, pages + 1):
@@ -110,7 +119,7 @@ check('every item autosaved (%d)' % answered, answered > 0)
 st, _, _ = u.req('/take/%s/answer' % token, {'csrf_token': csrf, 'item': '1', 'value': '9'})
 check('autosave rejects invalid value', st == 400)
 st, _, page = u.req('/take/%s/review' % token)
-check('review shows no missing items', st == 200 and 'ارسال نهایی' in page)
+check('review shows no missing items', st == 200 and 'ارسال و دیدن نتیجه' in page and 'id="ts-review-missing"' not in page)
 st, loc, _ = u.req('/take/%s/submit' % token, {'csrf_token': u.csrf(page), 'submission_key': token})
 report = path_of(loc)
 check('submit -> report', st in (302, 303) and report.startswith('/my/assessments/'), loc)
@@ -120,6 +129,8 @@ st, _, page = u.req(report.split('?')[0])
 check('report 200 with summary, bands and interpretation', st == 200 and 'خلاصهٔ نتیجه‌ها' in page and 'ts-band' in page and 'تفسیر نتیجهٔ شما' in page)
 check('report hides therapist guidance', 'راهنمای تخصصی درمانگر' not in page and 'راهنمای تخصصی مشاور' not in page and 'تحلیل و تفسیر' not in page)
 check('report has no English band words', not re.search(r'\b(Low|Medium|High)\b', html.unescape(re.sub(r'<[^>]+>', ' ', page))))
+check('report: result at a glance before the table, crisis lines 123 and 1480 (T7, owner 2026-10-13)',
+      0 < page.find('id="ts-glance"') < page.find('id="ts-summary"') and 'اورژانس اجتماعی ۱۲۳' in page and '۱۴۸۰' in page and '۱۱۵' not in page)
 st, _, page = u.req('/my/assessments')
 check('my assessments lists the report', st == 200 and report.split('?')[0] in page)
 st, _, page = u.req('/my')

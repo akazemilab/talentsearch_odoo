@@ -30,6 +30,23 @@ def ab_names(codes):
     return joinfa([NAMES[c] for c in codes])
 
 
+# Plain meaning of the five book names, shortened from the book's own definitions (talent_texts.json), for the first
+# screen of the report: a 15-year-old reads «کنش نوسودمندی» once with its meaning (UX audit T7 P9-1). Book texts and
+# names stay unchanged; the full definitions remain in «دربارهٔ این سنجه».
+PLAIN = {
+    'ANA': 'فهمیدن، تجزیه و دسته‌بندی مطلب‌ها',
+    'EXP': 'آزمودن دانسته‌ها با تجربه و کنجکاوی',
+    'ACA': 'یادگیری دقیق درس‌ها و مطلب‌های آموزشی',
+    'NOV': 'ارائهٔ راه‌حل‌های تازه و سودمند',
+    'DUT': 'انجام درست و دقیق کاری که خواسته می‌شود',
+}
+
+
+def ab_plain(codes):
+    """«کنش نوسودمندی (ارائهٔ راه‌حل‌های تازه و سودمند)» for each code, joined."""
+    return joinfa(['%s (%s)' % (NAMES[c], PLAIN[c]) if c in PLAIN else NAMES[c] for c in codes])
+
+
 # ------------------------------------------------------------------ charts
 def field_chart(field, digits=1):
     """One field: five abilities as dots on a true 20-100 axis with a +-8 band."""
@@ -251,18 +268,18 @@ def summary(interp, profile, voice='shoma', digits=0):
         fld = profile['fields'][0]
         sc = fld['scales']
         top = max(sc.values())
-        best = [NAMES[c] for c in SCALES if abs(sc[c] - top) < 1e-9]
+        best = [c for c in SCALES if abs(sc[c] - top) < 1e-9]
         if len(best) == len(SCALES):
             out.append('در «%s» به هر پنج توانایی نمرهٔ برابر (%s) %s.' % (fld['label'], f(top), V['gave']))
         else:
-            out.append('در «%s» بیشترین نمره در %s است (%s از ۱۰۰).' % (fld['label'], joinfa(best), f(top)))
+            out.append('در «%s» بیشترین نمره در %s است (%s از ۱۰۰).' % (fld['label'], ab_plain(best), f(top)))
         out.append('برای مقایسهٔ زمینه‌ها دست‌کم دو زمینه لازم است.')
     else:
         b = interp['brief']
         if abilities_all_tied(interp):
             out.append('به هر پنج توانایی به‌طور میانگین نمرهٔ برابر (%s) %s.' % (f(b['ability_score']), V['gave']))
         else:
-            out.append('بیشترین نمره را به %s %s (%s از ۱۰۰).' % (ab_names(b['abilities']), V['gave'], f(b['ability_score'])))
+            out.append('بیشترین نمره را به %s %s (%s از ۱۰۰).' % (ab_plain(b['abilities']), V['gave'], f(b['ability_score'])))
         if fields_all_tied(interp):
             out.append('میانگین همهٔ %s برابر است (%s)؛ این سنجه بین آن‌ها فرقی نشان نمی‌دهد.' % (V['fields'], f(b['field_score'])))
         elif len(b['fields']) > 1:
@@ -272,7 +289,7 @@ def summary(interp, profile, voice='shoma', digits=0):
     if voice == 'tu':
         out.append('این نتیجه را با مشاورت در میان بگذار و ببین با علاقه و نمره‌های مدرسه‌ات جور درمی‌آید یا نه.')
     elif voice == 'org':
-        out.append('در گفتگو بپرسید این ترتیب با علاقه و نمره‌های تحصیلی او جور درمی‌آید یا نه.')
+        out.append('در گفت‌وگو بپرسید این ترتیب با علاقه و نمره‌های تحصیلی او جور درمی‌آید یا نه.')
     else:
         out.append('این نتیجه را با یک مشاور در میان بگذارید و با علاقه و سابقهٔ تحصیلی‌تان کنار هم بخوانید.')
     return out
@@ -343,7 +360,8 @@ def tiles(interp, profile, voice='shoma', digits=1):
         if abilities_all_tied(interp):
             out.append({'k': 'برجسته‌ترین توانایی', 'v': 'هر پنج برابر', 's': fmt(b['ability_score'], digits)})
         else:
-            out.append({'k': 'برجسته‌ترین توانایی', 'v': ab_names(b['abilities']), 's': fmt(b['ability_score'], digits)})
+            out.append({'k': 'برجسته‌ترین توانایی', 'v': ab_names(b['abilities']), 's': fmt(b['ability_score'], digits),
+                        'g': PLAIN.get(b['abilities'][0]) if len(b['abilities']) == 1 else ''})
         if fields_all_tied(interp):
             out.append({'k': 'زمینه‌ها', 'v': 'همه برابر', 's': fmt(b['field_score'], digits)})
         else:
@@ -354,8 +372,9 @@ def tiles(interp, profile, voice='shoma', digits=1):
         fld = profile['fields'][0]['scales']
         top = max(fld.values())
         best = [NAMES[c] for c in SCALES if abs(fld[c] - top) < 1e-9]
+        top_codes = [c for c in SCALES if abs(fld[c] - top) < 1e-9]
         out.append({'k': 'برجسته‌ترین توانایی', 'v': 'هر پنج برابر' if len(best) == len(SCALES) else joinfa(best),
-                    's': 'در «%s»' % pf['label']})
+                    's': 'در «%s»' % pf['label'], 'g': PLAIN.get(top_codes[0]) if len(top_codes) == 1 else ''})
     return out
 
 
@@ -409,16 +428,17 @@ def compare_lines(interp, voice='shoma', digits=1):
     if interp['n_fields'] < 2:
         return []
     V = _v(voice)
+    read, weigh = ('بخوان', 'بسنج') if voice == 'tu' else ('بخوانید', 'بسنجید')
     b, w = interp['brief'], interp['weak']
     if fields_all_tied(interp):
-        return ['میانگین هر %s زمینه برابر است (%s)؛ این فهرست بین %s فرقی نشان نمی‌دهد. برای تصمیم، آن را با نمره‌ها، علاقه و مشورت کنار هم بخوانید.' % (
-            fa(interp['n_fields']), fmt(b['field_score'], digits), V['fields'])]
+        return ['میانگین هر %s زمینه برابر است (%s)؛ این فهرست بین %s فرقی نشان نمی‌دهد. برای تصمیم، آن را با نمره‌ها، علاقه و مشورت کنار هم %s.' % (
+            fa(interp['n_fields']), fmt(b['field_score'], digits), V['fields'], read)]
     hi = ('زمینه‌های %s هم‌امتیاز بالاترین میانگین را دارند' if len(b['fields']) > 1 else 'زمینهٔ %s بالاترین میانگین را دارد') % joinfa(b['fields'], True)
     lo = ('پایین‌ترین میانگین به زمینه‌های هم‌امتیاز %s می‌رسد' if len(w['fields']) > 1 else 'پایین‌ترین میانگین به زمینهٔ %s می‌رسد') % joinfa(w['fields'], True)
     return [
         'در این فهرست، %s (%s)؛ این فقط مقایسهٔ زمینه‌های %s با یکدیگر است.' % (hi, fmt(b['field_score'], digits), V['self']),
-        '%s (%s). این ترتیب توصیهٔ انتخاب یا حذف رشته نیست؛ برای تصمیم، آن را با نمره‌ها، علاقه و مشورت بسنجید.' % (
-            lo, fmt(w['field_score'], digits)),
+        '%s (%s). این ترتیب توصیهٔ انتخاب یا حذف رشته نیست؛ برای تصمیم، آن را با نمره‌ها، علاقه و مشورت %s.' % (
+            lo, fmt(w['field_score'], digits), weigh),
     ]
 
 

@@ -55,7 +55,7 @@ st, _, page = s.req('/my/assessments/%s' % att_id)
 check('G30: shared TALENT-INV-15 report shows the status block and «قطع اشتراک‌گذاری»',
       st == 200 and 'id="ts-who-sees"' in page and 'قطع اشتراک‌گذاری' in page, str(st))   # UX audit G2 P3-9: one merged block
 check('the block is outside the printed report (ts-noprint)', re.search(r'class="ts-doc__sec ts-noprint"\s+id="ts-who-sees"', page) is not None)
-check('wording says profile report without raw answers', 'گزارش نیمرخ شما، بدون پاسخ‌های خام' in page and 'پاسخ‌های خام شما را هیچ پنلی نمی‌بیند' in page)
+check('wording says profile report without raw answers', 'گزارش نیمرخ شما، بدون پاسخ‌های خام' in page and ('پاسخ‌های خام شما را هیچ پنلی نمی‌بیند' in page or 'پاسخ‌های خام تو را هیچ پنلی نمی‌بیند' in page))   # T7: «تو» for students
 check('no duplicate «ارسال برای مشاورم» while shared', 'id="ts-share-counselor"' not in page)
 
 c = Client(TS)

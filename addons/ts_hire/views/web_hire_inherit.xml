@@ -1,39 +1,90 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <!-- Invitation page of a position: what the employer sees, decision support, retention; optional fairness questions. -->
+    <!-- Invitation page of a position (UX T7, audit P26). ONE description of what the employer sees, taken from the code:
+         ts_org result_level() gives an employment member with results:summary the level 'summary' only when the candidate
+         shared; at that level the position pages (controllers/positions.py _row) show the job-fit summary (overall
+         band, each job need as a relative strength / meets the need / lower) and the integrity signals
+         (ts_validity_labels), and the panel's battery result page shows the band of each factor (no scores, answers or
+         texts). Without the tick the employer sees the state and progress only. The tick, the «what is seen» list and
+         the card below say exactly that. The card and the optional fairness questions follow the action, so the
+         first phone screen keeps the button. -->
     <record id="invite_position" model="ir.ui.view">
         <field name="name">ts_hire.invite</field>
         <field name="inherit_id" ref="ts_org.tpl_invite"/>
         <field name="website_id" ref="ts_website.website_ts"/>
         <field name="priority">30</field>
         <field name="arch" type="xml">
-            <xpath expr="//div[hasclass('ts-section__head')]" position="after">
+            <xpath expr="//label[hasclass('ts-check')]/span[@t-elif=&quot;ws.purpose == 'employment'&quot;]" position="before">
+                <span t-elif="ws.purpose == 'employment' and a.position_id">اجازه می‌دهم «<bdi t-out="ws.ts_public_name()"/>» سطح هر عامل، خلاصهٔ تناسبم با این شغل و نشانه‌های دقت پاسخ‌دهی را ببیند.</span>
+            </xpath>
+            <xpath expr="//t[@t-call='ts_org.share_box']" position="after">
                 <section t-if="a.position_id" class="ts-card tsh-invite" aria-labelledby="tsh-inv-h">
                     <h2 class="h5" id="tsh-inv-h">ارزیابی برای موقعیت «<bdi t-out="a.position_id.name"/>»</h2>
                     <ul class="ts-list-check">
-                        <li>اگر اشتراک‌گذاری را بپذیرید، سازمان خلاصهٔ تناسب شما با نیازهای این شغل را می‌بیند: سطح تناسب کلی (کم، متوسط یا زیاد)، اینکه هر نیاز شغل در شما پررنگ است یا کم‌رنگ‌تر، و نشانه‌های دقت اجرای آزمون (مثلاً پاسخ‌های بسیار سریع). پاسخ‌ها، نمره‌ها و متن‌های گزارش شما را نمی‌بیند.</li>
                         <li>این نتیجه فقط یکی از ورودی‌های تصمیم سازمان است؛ هیچ تصمیمی به‌طور خودکار گرفته نمی‌شود و می‌توانید توضیح بخواهید.</li>
                         <li>در پایان، گزارش بازخورد خودتان را می‌بینید.</li>
-                        <li>بخشی از ارزیابی آزمون زمان‌دار است؛ آن را در جایی آرام و ترجیحاً با رایانه انجام دهید.</li>
+                        <li>بخشی از ارزیابی آزمون زمان‌دار است: هر بخش زمان خودش را دارد و پیش از شروع هر بخش می‌توانید تمرین بدون نمره انجام دهید. آن را در جایی آرام و ترجیحاً با رایانه انجام دهید.</li>
+                        <li id="tsh-inv-extra">اگر به زمان بیشتر نیاز دارید (مثلاً به دلیل ناتوانی)، پیش از باز کردن اولین آزمون زمان‌دار به «<bdi t-out="ws.ts_public_name()"/>» بگویید؛ سازمان می‌تواند ۲۵ یا ۵۰ درصد زمان بیشتر بدهد.</li>
                         <li>۱۲ ماه پس از دعوت، دسترسی سازمان به نتیجه بسته و داده‌های این موقعیت از پنل سازمان پاک می‌شود؛ گزارش در حساب خودتان می‌ماند تا خودتان حذفش کنید.</li>
                     </ul>
                 </section>
             </xpath>
+            <!-- the share list is passed the position (ts_org.share_box share_pos) -->
             <xpath expr="//p[@id='ts_share_note']" position="after">
-                <fieldset t-if="a.position_id and hire_genders" class="tsh-demo">
-                    <legend>دو پرسش اختیاری برای بررسی منصفانه بودن</legend>
-                    <p class="ts-hint">پاسخ ندادن هیچ اثری ندارد. سازمان این پاسخ‌ها را برای هیچ فردی نمی‌بیند؛ فقط پس از بستن موقعیت، نرخ انتخاب گروه‌های ده‌نفره یا بزرگ‌تر نشان داده می‌شود.</p>
-                    <label class="tsp-field"><span class="tsp-field__label">جنسیت</span>
-                        <select name="ts_gender" class="form-select">
-                            <option value="">بدون پاسخ</option>
-                            <option t-foreach="hire_genders" t-as="g" t-att-value="g[0]" t-out="g[1]"/>
-                        </select></label>
-                    <label class="tsp-field"><span class="tsp-field__label">گروه سنی</span>
-                        <select name="ts_age_band" class="form-select">
-                            <option value="">بدون پاسخ</option>
-                            <option t-foreach="hire_ages" t-as="g" t-att-value="g[0]" t-out="g[1]"/>
-                        </select></label>
-                </fieldset>
+                <div t-if="a.position_id and hire_genders" class="tsh-demo-wrap">
+                    <button type="button" class="ts-faq__q tsh-demo__btn" aria-expanded="false" aria-controls="tsh-demo">
+                        <span>دو پرسش اختیاری برای بررسی منصفانه بودن</span>
+                        <span class="ts-faq__plus"><t t-call="ts_website.icon" ico.f="plus"/></span>
+                        <span class="ts-faq__minus"><t t-call="ts_website.icon" ico.f="minus"/></span>
+                    </button>
+                    <fieldset class="tsh-demo" id="tsh-demo" hidden="hidden">
+                        <legend class="visually-hidden">دو پرسش اختیاری برای بررسی منصفانه بودن</legend>
+                        <p class="ts-hint">پاسخ ندادن هیچ اثری ندارد. سازمان این پاسخ‌ها را برای هیچ فردی نمی‌بیند؛ فقط پس از بستن موقعیت، نرخ انتخاب گروه‌های ده‌نفره یا بزرگ‌تر نشان داده می‌شود.</p>
+                        <label class="tsp-field"><span class="tsp-field__label">جنسیت</span>
+                            <select name="ts_gender" class="form-select">
+                                <option value="">بدون پاسخ</option>
+                                <option t-foreach="hire_genders" t-as="g" t-att-value="g[0]" t-out="g[1]"/>
+                            </select></label>
+                        <label class="tsp-field"><span class="tsp-field__label">گروه سنی</span>
+                            <select name="ts_age_band" class="form-select">
+                                <option value="">بدون پاسخ</option>
+                                <option t-foreach="hire_ages" t-as="g" t-att-value="g[0]" t-out="g[1]"/>
+                            </select></label>
+                    </fieldset>
+                </div>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- «What is seen» of a job application: the same facts as the tick and the code (see invite_position above). -->
+    <record id="share_box_position" model="ir.ui.view">
+        <field name="name">ts_hire.share_box</field>
+        <field name="inherit_id" ref="ts_org.tpl_share_box"/>
+        <field name="website_id" ref="ts_website.website_ts"/>
+        <field name="priority">30</field>
+        <field name="arch" type="xml">
+            <xpath expr="//ul[@t-elif=&quot;share_ws.purpose == 'employment'&quot;]" position="before">
+                <ul class="ts-list-check" t-elif="share_ws.purpose == 'employment' and share_pos">
+                    <li>سازمان وضعیت ارزیابی را می‌بیند: شروع‌شده، چند بخش تمام‌شده یا تمام‌شده.</li>
+                    <li>اگر اجازه دهید، این‌ها را هم می‌بیند: سطح هر عامل (کم، متوسط یا زیاد)؛ خلاصهٔ تناسب شما با نیازهای این شغل (سطح تناسب کلی، و اینکه هر نیاز شغل در شما پررنگ است یا کم‌رنگ‌تر)؛ و نشانه‌های دقت پاسخ‌دهی (مثلاً پاسخ‌های بسیار سریع).</li>
+                    <li>پاسخ‌ها، نمره‌ها و متن‌های گزارش شما را نمی‌بیند.</li>
+                    <li>هر زمان بخواهید می‌توانید اشتراک‌گذاری را از صفحهٔ گزارش قطع کنید.</li>
+                </ul>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- Consent/review «who sees» line of a job application (T7 integrator, A handoff W2): the same facts as the tick and
+         the share list above (code: positions.py _row + the battery panel page at level 'summary'). A factual
+         correction of what the page says; the consent version is unchanged. -->
+    <record id="who_sees_position" model="ir.ui.view">
+        <field name="name">ts_hire.who_sees</field>
+        <field name="inherit_id" ref="ts_panel.who_sees_line"/>
+        <field name="website_id" ref="ts_website.website_ts"/>
+        <field name="priority">30</field>
+        <field name="arch" type="xml">
+            <xpath expr="//t[@t-elif=&quot;asg.workspace_id.purpose == 'clinical'&quot;]" position="after">
+                <t t-elif="asg.position_id">شما، و <strong t-out="org"/> سطح هر عامل (کم، متوسط یا زیاد)، خلاصهٔ تناسب شما با این شغل و نشانه‌های دقت پاسخ‌دهی را می‌بیند؛ نه پاسخ‌ها، نه نمره‌ها، نه متن گزارش.</t>
             </xpath>
         </field>
     </record>

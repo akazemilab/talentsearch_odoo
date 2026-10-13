@@ -4,11 +4,13 @@
   ledger gets a `guardian` row (given_as guardian, method checkbox).
 * A minor client inside a panel must tick their own assent; the ledger gets an `assent` row.
 Adults and the old flow are unchanged; the service and research rows follow every accepted consent.
+An error redirect carries the posted ticks back (consent_error_url, display only, UX audit T7 B2-2/B4-3); nothing is
+recorded until a POST passes every check.
 """
 from odoo import http
 from odoo.http import request
 
-from odoo.addons.ts_assessment.controllers.main import TsAssessment, _my_attempt, _ts_site_or_404
+from odoo.addons.ts_assessment.controllers.main import TsAssessment, _my_attempt, _ts_site_or_404, consent_error_url
 
 # v2 (1405-07-19, UX audit 2026-10-11): reworded age, guardian and assent lines
 TEXT_VERSION = 'TS-MINOR-1405-07-19-v2'
@@ -24,14 +26,14 @@ class TsPanelConsent(TsAssessment):
             kind = None
             if not attempt.workspace_id:
                 if post.get('age18') not in ('yes', 'no'):
-                    return request.redirect('/take/%s?error=age' % token)
+                    return request.redirect(consent_error_url(token, 'age', post))
                 if post['age18'] == 'no':
                     if post.get('guardian_ok') != '1':
-                        return request.redirect('/take/%s?error=guardian_ok' % token)
+                        return request.redirect(consent_error_url(token, 'guardian_ok', post))
                     kind = 'guardian'
             elif attempt.client_id.age_group == 'minor':
                 if post.get('assent_ok') != '1':
-                    return request.redirect('/take/%s?error=assent' % token)
+                    return request.redirect(consent_error_url(token, 'assent', post))
                 kind = 'assent'
             res = super().consent(token, **post)
             attempt.invalidate_recordset()

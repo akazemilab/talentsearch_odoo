@@ -156,7 +156,9 @@ class TsPanel(http.Controller):
             'urls': self._auth_urls('/join/' + token), 'error': _flash(), 'page_name': 'ts_panel',
             'bound_to': mask_identity(inv.phone, inv.email), 'by_phone': bool(inv.phone),
             'inviter': inv.invited_by_id.sudo().name or '', 'expires_fa': jalali(inv.expires_at, with_time=False),
-            'user_name': user.partner_id.ts_known_name() if signed else '', 'need_name': signed and _need_name()})
+            'user_name': user.partner_id.ts_known_name() if signed else '', 'need_name': signed and _need_name(),
+            # the signed-in account as its owner knows it: the name, else the masked mobile or e-mail (UX T7 X6, P10-1)
+            'account': user.ts_account_label()})
 
     @http.route('/join/<string:token>/accept', type='http', auth='user', website=True, methods=['POST'],
                 sitemap=False)

@@ -4,24 +4,35 @@
          UX audit 2026-10-11 (G1-P12-2, PT-5): one 44 px row per option; the guardian box shows only after «under 18»
          (no-JS keeps it visible; the server still checks it). Text version TS-MINOR-1405-07-19-v2. -->
     <template id="consent_age_ass" name="Age and assent on the consent page">
+        <!-- UX audit T7 (2026-10-13): the answers posted before an error redirect come back checked (query echo from
+             consent_error_url, B2-2/B4-3); each inline error has an id for aria-describedby and is focusable (B2-1); the
+             assent error says the choice is free (W31). Checkbox and radio wording unchanged (TS-MINOR v2). -->
         <t t-set="tu_c" t-value="attempt.ts_informal()"/>
+        <t t-set="qp" t-value="request.params"/>
         <t t-if="not attempt.workspace_id">
-            <fieldset id="ts-age-box" class="ts-age">
+            <fieldset id="ts-age-box" class="ts-age" t-att-aria-describedby="'ts-err-age' if error == 'age' else ('ts-err-guardian-ok' if error == 'guardian_ok' else None)">
                 <legend t-if="tu_c">۱۸ سال یا بیشتر داری؟</legend>
                 <legend t-else="">۱۸ سال یا بیشتر دارید؟</legend>
-                <p t-if="error == 'age'" class="ts-form__error tt-error" role="alert"><t t-if="tu_c">سنت را مشخص کن.</t><t t-else="">سن خود را مشخص کنید.</t></p>
-                <p t-if="error == 'guardian_ok'" class="ts-form__error tt-error" role="alert">برای زیر ۱۸ سال، موافقت ولی (پدر، مادر یا سرپرست قانونی) لازم است.</p>
-                <label class="ts-check"><input type="radio" name="age18" value="yes" required="required"/> <span>بله، ۱۸ سال یا بیشتر</span></label>
-                <label class="ts-check"><input type="radio" name="age18" value="no" t-att-checked="'checked' if error == 'guardian_ok' else None"/> <span>نه، کمتر از ۱۸ سال</span></label>
+                <p t-if="error == 'age'" id="ts-err-age" class="ts-form__error tt-error" tabindex="-1"><t t-if="tu_c">سنت را مشخص کن.</t><t t-else="">سن خود را مشخص کنید.</t></p>
+                <p t-if="error == 'guardian_ok'" id="ts-err-guardian-ok" class="ts-form__error tt-error" tabindex="-1">برای زیر ۱۸ سال، موافقت ولی (پدر، مادر یا سرپرست قانونی) لازم است.</p>
+                <label class="ts-check"><input type="radio" id="ts-age-yes" name="age18" value="yes" required="required"
+                                               t-att-checked="'checked' if qp.get('age') == 'yes' else None"/> <span>بله، ۱۸ سال یا بیشتر</span></label>
+                <label class="ts-check"><input type="radio" name="age18" value="no"
+                                               t-att-checked="'checked' if (error == 'guardian_ok' or qp.get('age') == 'no') else None"/> <span>نه، کمتر از ۱۸ سال</span></label>
                 <div id="ts-guardian-box" class="ts-guardian" aria-live="polite">
-                    <label class="ts-check"><input type="checkbox" name="guardian_ok" value="1"/>
+                    <label class="ts-check"><input type="checkbox" id="ts-guardian-ok" name="guardian_ok" value="1"
+                                                   t-att-checked="'checked' if qp.get('gok') == '1' else None"
+                                                   t-att-aria-invalid="'true' if error == 'guardian_ok' else None"/>
                         <span>ولی‌ام (پدر، مادر یا سرپرست قانونی) از انجام این سنجه خبر دارد و موافق است.</span></label>
                 </div>
             </fieldset>
         </t>
         <t t-elif="attempt.client_id and attempt.client_id.age_group == 'minor'">
-            <p t-if="error == 'assent'" class="ts-form__error tt-error" role="alert">برای ادامه، موافقت خودت لازم است.</p>
-            <label class="ts-check ts-assent"><input type="checkbox" name="assent_ok" value="1" required="required"/>
+            <p t-if="error == 'assent'" id="ts-err-assent" class="ts-form__error tt-error" tabindex="-1">اگر خودت هم موافقی، تیک زیر را بزن. اگر نمی‌خواهی، لازم نیست ادامه بدهی.</p>
+            <label class="ts-check ts-assent"><input type="checkbox" id="ts-assent" name="assent_ok" value="1" required="required"
+                                                     t-att-checked="'checked' if qp.get('ass') == '1' else None"
+                                                     t-att-aria-invalid="'true' if error == 'assent' else None"
+                                                     t-att-aria-describedby="'ts-err-assent' if error == 'assent' else None"/>
                 <span>برایم توضیح داده‌اند این سنجه چیست و هر وقت بخواهم می‌توانم دست نگه دارم؛ خودم هم موافقم.</span></label>
         </t>
     </template>
@@ -32,8 +43,23 @@
         <field name="mode">extension</field>
         <field name="website_id" ref="ts_website.website_ts"/>
         <field name="arch" type="xml">
-            <xpath expr="//input[@name='consent_service']/.." position="before">
+            <!-- T7: the age box sits right above the consent box (its error and checkbox stay together) -->
+            <xpath expr="//div[@id='ts-consent-box']" position="before">
                 <t t-call="ts_panel.consent_age_ass"/>
+            </xpath>
+            <!-- the error summary under the H1 names these errors too (B5-2, B2-1) -->
+            <xpath expr="//ul[@id='ts-error-list']" position="inside">
+                <li t-if="error == 'age'"><a href="#ts-age-yes"><t t-if="tu">سنت را مشخص کن.</t><t t-else="">سن خود را مشخص کنید.</t></a></li>
+                <li t-if="error == 'guardian_ok'"><a href="#ts-guardian-ok">برای زیر ۱۸ سال، موافقت ولی (پدر، مادر یا سرپرست قانونی) لازم است.</a></li>
+                <li t-if="error == 'assent'"><a href="#ts-assent">اگر خودت هم موافقی، تیک «خودم هم موافقم» را بزن.</a> اگر نمی‌خواهی، لازم نیست ادامه بدهی.</li>
+            </xpath>
+            <!-- someone who takes it on their own answers the age question below: «پاسخ‌دهنده: بزرگسال» next to it read as a
+                 contradiction (B3-2) -->
+            <xpath expr="//dt[text()='پاسخ‌دهنده']" position="attributes">
+                <attribute name="t-if">attempt.workspace_id or inst.audience != 'adult'</attribute>
+            </xpath>
+            <xpath expr="//dt[text()='پاسخ‌دهنده']/following-sibling::dd[1]" position="attributes">
+                <attribute name="t-if">attempt.workspace_id or inst.audience != 'adult'</attribute>
             </xpath>
         </field>
     </record>

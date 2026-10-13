@@ -42,7 +42,7 @@ if ONLY == 'take':
     from odoo.exceptions import UserError
     TK = lambda k: 'ts.take.%s@example.invalid' % k
     NOW = fields.Datetime.now()
-    PAGE = 10                                   # ts_assessment.controllers.main.PAGE_SIZE
+    PAGE = 5                                    # ts_assessment.controllers.main.PAGE_SIZE (balanced pages, T7)
     PHONE, CODE = '09127775101', '123456'       # sign-up flow (no account has this number)
     JOIN_PHONE = '09127775102'                  # colleague invitation bound to a mobile
     DEAD_API = 'http://127.0.0.1:9/v1/%s/%s.json'   # nothing listens on port 9: any SMS send fails, nothing leaves
@@ -436,10 +436,6 @@ if ONLY == 'take':
     pub = ['/assessments']
     nxt = '/invite/%s' % R['inv_pending'].token if 'inv_pending' in R else '/my'
     pub += ['/signup', '/signup?next=%s' % quote(nxt, safe='/')]
-    if 'sms' in R:
-        # the code step and the name step of the mobile sign-up, reached without any SMS (see sms_on)
-        pub += [post_('/signup/send', phone=PHONE, next=nxt), '/signup?step=code&msg=sent&next=%s' % quote(nxt, safe='/'),
-                post_('/signup/verify', code=CODE, next=nxt), '/signup?step=name&next=%s' % quote(nxt, safe='/')]
     for key in ('inv_pending', 'inv_expired', 'inv_declined', 'inv_withdrawn'):
         if key in R:
             pub.append('/invite/%s' % R[key].token)
@@ -455,26 +451,35 @@ if ONLY == 'take':
     pub.append('/assessments/%s' % quote(inst.slug))
     if 'lik.consent' in R:
         pub.append('/take/%s' % tok('lik.consent'))                 # an old player link while signed out -> sign-in page
+    if 'sms' in R:
+        # LAST (UX T7 X9): /signup/verify signs this context in, so every signed-out page above is captured signed out first.
+        # The code step of the mobile sign-up, reached without any SMS (see sms_on); there is no name step any more.
+        pub += [post_('/signup/send', phone=PHONE, next=nxt), '/signup?step=code&msg=sent&next=%s' % quote(nxt, safe='/'),
+                post_('/signup/verify', code=CODE, next=nxt)]
     m = {'': pub}
     if 'fresh' in R:
         m[TK('fresh')] = ['/my', '/my/assessments']
     if 'inv_mine' in R:
         t = R['inv_mine'].token
-        m[TK('inv')] = ['/my', '/invite/%s' % t, '/invite/%s?decline=1' % t] + (
+        # /my?msg=declined: the status line after «بله، دعوت را نمی‌پذیرم» (T7 P22-1), shown without declining
+        m[TK('inv')] = ['/my', '/invite/%s' % t, '/invite/%s?decline=1' % t, '/my?msg=declined'] + (
             ['/c/%s' % R['camp_ok'].open_token] if 'camp_ok' in R else [])
     if 'inv_other' in R:
-        m[TK('other')] = ['/invite/%s' % R['inv_other'].token]
+        # another signed-in account on someone else's invitation and on someone else's player link (T7 X9)
+        m[TK('other')] = ['/invite/%s' % R['inv_other'].token] + (
+            ['/take/%s' % tok('lik.consent')] if 'lik.consent' in R else [])
     if 'minor' in R:
-        m[TK('minor')] = ['/take/%s' % tok('minor'), '/take/%s?error=assent' % tok('minor')]
+        m[TK('minor')] = ['/take/%s' % tok('minor'), '/take/%s?error=assent&svc=1' % tok('minor')]
     if 'lik.consent' in R:
         t = tok('lik.consent')
-        m[TK('lik.consent')] = ['/take/%s' % t, '/take/%s?error=consent' % t, '/take/%s?error=age' % t,
-                                '/take/%s?error=guardian_ok' % t]
+        # error redirects carry the posted ticks back (consent_error_url, T7 B2-2/B4-3): the shots show them re-ticked
+        m[TK('lik.consent')] = ['/take/%s' % t, '/take/%s?error=consent&age=yes' % t, '/take/%s?error=age&svc=1' % t,
+                                '/take/%s?error=guardian_ok&svc=1&age=no' % t]
     if 'lik.going' in R:
         t, n_pages = tok('lik.going'), -(-len(R['lik.going'].active_items()) // PAGE)
         m[TK('lik.going')] = ['/my', '/take/%s?page=1' % t, '/take/%s?page=2' % t] + (
             ['/take/%s?page=%d' % (t, n_pages)] if n_pages > 2 else []) + [
-            '/take/%s/review' % t, '/my/assessments', '/assessments/%s' % quote(lik.slug)]
+            '/take/%s/review' % t, '/take/%s?page=1&missing=1' % t, '/my/assessments', '/assessments/%s' % quote(lik.slug)]
     if 'lik.full' in R:
         m[TK('lik.full')] = ['/take/%s/review' % tok('lik.full')]
     if 'lik.done' in R:
@@ -487,6 +492,10 @@ if ONLY == 'take':
     for k in ('tal.consent', 'tal.name', 'tal.one'):
         if k in R:
             m[TK(k)] = ['/take/%s' % tok(k)]
+    if 'tal.consent' in R:
+        # the talent consent's error summary and the age answer ticked again (T7 integrator, B handoff)
+        t = tok('tal.consent')
+        m[TK('tal.consent')] += ['/take/%s?error=consent&age=yes' % t, '/take/%s?error=age&svc=1' % t]
     if 'tal.stmt' in R:
         t = tok('tal.stmt')
         m[TK('tal.stmt')] = ['/take/%s' % t, '/take/%s?p=1&error=missing' % t, '/take/%s?p=2' % t]

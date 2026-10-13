@@ -17,6 +17,9 @@
             <xpath expr="//h1" position="replace">
                 <h1 t-if="bat_info" t-out="bat_info['name']"/>
                 <h1 t-else="" t-out="inst.title"/>
+            </xpath>
+            <!-- T7: the error summary stays right under the H1; the battery card comes just before the key facts -->
+            <xpath expr="//dl[@id='ts-consent-key']" position="before">
                 <t t-call="ts_battery.consent_battery_block"/>
             </xpath>
             <xpath expr="//dt[text()='هدف']/following-sibling::dd[1]" position="replace">
@@ -24,8 +27,9 @@
                 <dd t-else="" t-out="inst.ts_intended_use()"/>
             </xpath>
             <xpath expr="//dt[text()='زمان تقریبی']/following-sibling::dd[1]" position="replace">
-                <dd t-if="bat_info">حدود <t t-out="fa(bat_info['minutes'])"/> دقیقه برای همهٔ مجموعه، <t t-out="fa(bat_info['items'])"/> پرسش</dd>
-                <dd t-else="">حدود <t t-out="fa(inst.duration_minutes)"/> دقیقه، <t t-out="fa(inst.active_item_count)"/> پرسش</dd>
+                <!-- T7: counts from ts_org effort_facts / the instrument's labels (never «۰ پرسش» for a timed task, W20) -->
+                <dd t-if="bat_info"><t t-out="bat_info['size']"/>؛ <t t-out="bat_info['time']"/> برای همهٔ مجموعه</dd>
+                <dd t-else=""><t t-out="inst.ts_effort_label()"/>، <t t-out="inst.ts_duration_label()"/></dd>
             </xpath>
             <!-- one battery-level limitation, not the first instrument's (CONSENT_VERSION v4, G6-P12-1) -->
             <xpath expr="//dt[text()='محدودیت']/following-sibling::dd[1]" position="replace">
@@ -56,8 +60,9 @@
         <field name="inherit_id" ref="ts_assessment.tpl_player"/>
         <field name="website_id" ref="ts_website.website_ts"/>
         <field name="arch" type="xml">
+            <!-- honest progress per battery and per instrument (B22-1): «مجموعهٔ X، سنجهٔ ۲ از ۴، حدود ۴ دقیقه تا پایان این سنجه» -->
             <xpath expr="//h1[hasclass('ts-player__title')]" position="before">
-                <p t-if="attempt.ts_battery()" class="tsb-label" t-out="attempt.ts_battery_label()"/>
+                <p t-if="attempt.ts_battery()" class="tsb-label"><t t-out="attempt.ts_battery_label()"/><t t-if="minutes_left">، حدود <t t-out="fa(minutes_left)"/> دقیقه تا پایان این سنجه</t></p>
             </xpath>
         </field>
     </record>
@@ -70,8 +75,8 @@
                 <p t-if="attempt.ts_battery()" class="tsb-label" t-out="attempt.ts_battery_label()"/>
             </xpath>
             <xpath expr="//form[hasclass('ts-submit-form')]/button[@type='submit']" position="replace">
-                <button t-if="attempt.ts_battery() and len(attempt.ts_battery_siblings().filtered(lambda t: t.state != 'done')) &gt; 1" type="submit" class="ts-btn ts-btn--primary">ارسال و رفتن به سنجهٔ بعدی</button>
-                <button t-else="" type="submit" class="ts-btn ts-btn--primary">ارسال نهایی و مشاهدهٔ نتیجه</button>
+                <button t-if="attempt.ts_battery() and len(attempt.ts_battery_siblings().filtered(lambda t: t.state != 'done')) &gt; 1" type="submit" class="ts-btn ts-btn--primary ts-btn--lg">ارسال و رفتن به سنجهٔ بعدی</button>
+                <button t-else="" type="submit" class="ts-btn ts-btn--primary ts-btn--lg">ارسال و دیدن نتیجه</button>
             </xpath>
         </field>
     </record>
@@ -100,7 +105,7 @@
                     <div class="tsp-rows__text">
                         <strong>مجموعهٔ <t t-out="br['name']"/></strong>
                         <span class="ts-hint">به دعوت <t t-out="br['org']"/></span>
-                        <span class="ts-hint tsb-progress"><t t-out="fa(br['done'])"/> از <t t-out="fa(br['total'])"/> سنجه انجام شده</span>
+                        <span class="ts-hint tsb-progress"><t t-out="fa(br['done'])"/> از <t t-out="fa(br['total'])"/> سنجه انجام شده<t t-if="br.get('next_name')"><t t-call="ts_website.sep"/>بعدی: <t t-out="br['next_name']"/></t><t t-if="br.get('minutes_left')"><t t-call="ts_website.sep"/>حدود <t t-out="fa(br['minutes_left'])"/> دقیقه مانده</t></span>
                     </div>
                     <a t-att-href="br['url']" class="ts-btn ts-btn--primary ts-btn--sm"><t t-if="br['fresh'] and not br['done']">شروع</t><t t-else="">ادامه</t><span class="visually-hidden"> «مجموعهٔ <t t-out="br['name']"/>»</span></a>
                 </li>
@@ -124,7 +129,7 @@
             </xpath>
             <!-- an unfinished invited battery is the task: no catalog link pulling away from it (G6-P15-2) -->
             <xpath expr="//p[@id='ts-list-catalog']" position="attributes">
-                <attribute name="t-if">not batteries_going</attribute>
+                <attribute name="t-if">attempts and not batteries_going</attribute>
             </xpath>
         </field>
     </record>
@@ -144,7 +149,8 @@
                 <t t-elif="next_action['kind'] == 'resume' and next_action.get('battery')"><t t-if="next_action['progress']">یک مجموعهٔ نیمه‌تمام</t><t t-else="">یک مجموعه منتظر</t> <t t-if="tu and next_action['progress']">داری</t><t t-elif="next_action['progress']">دارید</t><t t-elif="tu">توست</t><t t-else="">شماست</t></t>
             </xpath>
             <xpath expr="//p[hasclass('tsp-next__meta')]/t[@t-elif=&quot;next_action['kind'] == 'resume' and next_action['progress']&quot;]" position="before">
-                <t t-elif="next_action['kind'] == 'resume' and next_action.get('battery') and next_action['progress']">سنجهٔ بعدی: <t t-out="next_action['battery_next']"/><t t-call="ts_website.sep"/><t t-out="next_action['battery_progress']"/><t t-call="ts_website.sep"/>آخرین ذخیره <t t-out="next_action['when']"/></t>
+                <!-- T7 (B25-2): two short lines, the next instrument with its place, then time left and the last save -->
+                <t t-elif="next_action['kind'] == 'resume' and next_action.get('battery') and next_action['progress']">سنجهٔ بعدی: <t t-out="next_action['battery_next']"/> (<t t-out="next_action.get('battery_place')"/>)<br/><t t-out="next_action['battery_progress']"/><t t-if="next_action.get('battery_minutes_left')"><t t-call="ts_website.sep"/>حدود <t t-out="fa(next_action['battery_minutes_left'])"/> دقیقه تا پایان</t><t t-call="ts_website.sep"/>آخرین ذخیره <t t-out="next_action['when']"/></t>
             </xpath>
             <xpath expr="//div[@id='ts-home-results']" position="attributes">
                 <attribute name="t-if">done or done_batteries</attribute>
@@ -155,7 +161,7 @@
                         <strong>مجموعهٔ <t t-out="br['name']"/></strong>
                         <span class="ts-hint"><t t-out="br['when']"/><t t-call="ts_website.sep"/><t t-if="br['shared']">با پنل به اشتراک گذاشته شده</t><t t-elif="tu">فقط تو می‌بینی</t><t t-else="">فقط شما می‌بینید</t></span>
                     </div>
-                    <a t-att-href="br['url']" class="ts-btn ts-btn--outline ts-btn--sm">گزارش مجموعه</a>
+                    <a t-att-href="br['url']" class="ts-btn ts-btn--outline ts-btn--sm">دیدن نتیجه<span class="visually-hidden"> «مجموعهٔ <t t-out="br['name']"/>»</span></a>
                 </li>
             </xpath>
             <xpath expr="//t[@t-if='not next_action and not invites and not going and not done']" position="attributes">
@@ -183,34 +189,27 @@
                 <h1 t-else="" t-out="inst.title"/>
             </xpath>
             <xpath expr="//div[hasclass('ts-section__head')]/p[@t-if='student']" position="replace">
-                <p t-if="a.battery_id and student"><strong t-out="ws.ts_public_name()"/> تو را به پاسخ‌دادن به سنجه‌های این مجموعه دعوت کرده است.</p>
-                <p t-elif="a.battery_id"><strong t-out="ws.ts_public_name()"/> شما را به پاسخ‌دادن به سنجه‌های این مجموعه دعوت کرده است.</p>
-                <p t-elif="student"><strong t-out="ws.ts_public_name()"/> تو را به پاسخ‌دادن به این سنجه دعوت کرده است.</p>
+                <p t-if="a.battery_id and student"><strong t-out="ws.ts_public_name()"/> تو را به پاسخ‌دادن به سنجه‌های این مجموعه <t t-out="inv_verb"/>.</p>
+                <p t-elif="a.battery_id"><strong t-out="ws.ts_public_name()"/> شما را به پاسخ‌دادن به سنجه‌های این مجموعه <t t-out="inv_verb"/>.</p>
+                <p t-elif="student"><strong t-out="ws.ts_public_name()"/> تو را به پاسخ‌دادن به این سنجه <t t-out="inv_verb"/>.</p>
             </xpath>
             <!-- the sharing tick stays ticked (owner decision 2026-10-12); for a battery it says that one tick covers every
                  instrument's report (G6-P11-1) -->
             <xpath expr="//p[@id='ts_share_note']" position="replace">
                 <p id="ts_share_note" class="ts-hint"><t t-if="a.battery_id"><t t-if="student">این تیک برای گزارش همهٔ سنجه‌های این مجموعه است. </t><t t-else="">این تیک برای گزارش همهٔ سنجه‌های این مجموعه است<t t-if="ws.purpose == 'clinical'">، همراه با راهنمای مشاور</t>. </t></t><t t-if="student">اگر تیک را برداری هم می‌توانی <t t-if="a.battery_id">به سنجه‌های مجموعه پاسخ بدهی</t><t t-else="">سنجه را انجام بدهی</t>؛ آن وقت نتیجه فقط برای خودت می‌ماند.</t><t t-else="">اگر تیک را بردارید هم می‌توانید <t t-if="a.battery_id">به سنجه‌های مجموعه پاسخ دهید</t><t t-else="">سنجه را انجام دهید</t>؛ آن وقت نتیجه فقط برای خودتان می‌ماند.</t></p>
             </xpath>
-            <xpath expr="//form[hasclass('ts-form')]/button[@type='submit']" position="replace">
-                <button type="submit" class="ts-btn ts-btn--primary">پذیرفتن دعوت و ادامه</button>
-            </xpath>
-            <xpath expr="//div[hasclass('ts-section__head')]" position="after">
+            <!-- UX T7: the instruments come after the action (the first phone screen keeps the button); size and time per
+                 instrument from its own labels (a timed task says «۳ بخش زمان‌دار», never «۰ پرسش»; P26-2, W20). The
+                 description never repeats minutes (effort_facts strips them) and a job application already has its own card. -->
+            <xpath expr="//t[@t-call='ts_org.share_box']" position="after">
                 <div t-if="a.battery_id" class="ts-card tsb-invite" id="tsb-invite">
-                    <t t-set="bat_card" t-value="a.battery_id.ts_card()"/>
-                    <p t-if="bat_card['description']" t-out="bat_card['description']"/>
+                    <p t-if="facts['description'] and not ('position_id' in a._fields and a.position_id)" t-out="facts['description']"/>
                     <p><strong>سنجه‌های این مجموعه</strong> (یکی پس از دیگری، با یک بار موافقت برای همه):</p>
                     <ol class="tsb-list">
-                        <li t-foreach="bat_card['lines']" t-as="ln"><span t-out="ln['name']"/><t t-call="ts_website.sep"/><span class="ts-hint"><t t-out="fa(ln['items'])"/> پرسش</span></li>
+                        <li t-foreach="facts['lines']" t-as="ln"><span t-out="ln['name']"/><t t-call="ts_website.sep"/><span class="ts-hint"><t t-out="ln['size']"/><t t-call="ts_website.sep"/><t t-out="ln['time']"/></span></li>
                     </ol>
-                    <p class="ts-hint">این مجموعه برای کمک به گفت‌وگوی مشاوره است، نه تشخیص.</p>
+                    <p t-if="ws.purpose != 'employment'" class="ts-hint">این مجموعه برای کمک به گفت‌وگوی مشاوره است، نه تشخیص.</p>
                 </div>
-            </xpath>
-            <xpath expr="//dt[text()='تعداد پرسش']/following-sibling::dd[1]" position="replace">
-                <dd t-out="fa(a.battery_id.item_count if a.battery_id else inst.active_item_count)"/>
-            </xpath>
-            <xpath expr="//dt[text()='تعداد پرسش']/following-sibling::dd[2]" position="replace">
-                <dd><t t-out="fa(a.battery_id.est_minutes if a.battery_id else inst.duration_minutes)"/> دقیقه</dd>
             </xpath>
         </field>
     </record>
@@ -383,21 +382,11 @@
                 <p class="ts-tag"><t t-if="c.battery_id">دعوت به مجموعهٔ سنجه‌ها</t><t t-else="">دعوت به سنجه</t></p>
             </xpath>
             <xpath expr="//div[hasclass('ts-section__head')]/p[@t-if='student']" position="replace">
-                <p t-if="c.battery_id and student"><strong t-out="ws.ts_public_name()"/> تو را به پاسخ‌دادن به سنجه‌های این مجموعه دعوت کرده است.</p>
-                <p t-elif="c.battery_id"><strong t-out="ws.ts_public_name()"/> شما را به پاسخ‌دادن به سنجه‌های این مجموعه دعوت کرده است.</p>
-                <p t-elif="student"><strong t-out="ws.ts_public_name()"/> تو را به پاسخ‌دادن به این سنجه دعوت کرده است.</p>
+                <p t-if="c.battery_id and student"><strong t-out="ws.ts_public_name()"/> تو را به پاسخ‌دادن به سنجه‌های این مجموعه <t t-out="inv_verb"/>.</p>
+                <p t-elif="c.battery_id"><strong t-out="ws.ts_public_name()"/> شما را به پاسخ‌دادن به سنجه‌های این مجموعه <t t-out="inv_verb"/>.</p>
+                <p t-elif="student"><strong t-out="ws.ts_public_name()"/> تو را به پاسخ‌دادن به این سنجه <t t-out="inv_verb"/>.</p>
             </xpath>
-            <xpath expr="//dt[@t-out=&quot;'اندازهٔ کار' if matrix else 'تعداد پرسش'&quot;]" position="attributes">
-                <attribute name="t-out">'اندازهٔ کار' if (matrix or c.battery_id) else 'تعداد پرسش'</attribute>
-            </xpath>
-            <xpath expr="//dd[@t-out='inst.ts_effort_label()']" position="replace">
-                <dd t-if="c.battery_id"><t t-out="fa(len(c.battery_id.line_ids))"/> سنجه، روی هم <t t-out="fa(c.battery_id.item_count)"/> پرسش: <t t-out="'، '.join(ln['name'] for ln in c.battery_id.ts_card()['lines'])"/></dd>
-                <dd t-else="" t-out="inst.ts_effort_label()"/>
-            </xpath>
-            <xpath expr="//dd[@t-out='inst.ts_duration_label()']" position="replace">
-                <dd t-if="c.battery_id">حدود <t t-out="fa(c.battery_id.est_minutes)"/> دقیقه</dd>
-                <dd t-else="" t-out="inst.ts_duration_label()"/>
-            </xpath>
+            <!-- size and time of a battery come from ts_org effort_facts (the facts line of the base page; UX T7 X5) -->
         </field>
     </record>
 </odoo>

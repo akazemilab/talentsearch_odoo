@@ -264,9 +264,12 @@ class TsAttemptTask(models.Model):
                 'limit': self._ts_limit(st, i), 'speed': bool(b.get('speed')), 'done': sb['done'],
                 'started': bool(sb['started']),
                 'remaining': max(0, int(sb['deadline'] - now)) if sb['deadline'] and not sb['done'] else None,
+                'answered': sum(1 for r in (sb['resp'] or []) if r),      # display only: the resume screen
                 'practice': {'items': p_items, 'keys': p_keys},
             })
-        return {'code': self.version_id.task_code, 'title': spec['title'], 'intro': spec['intro'],
+        # display only: the overview before block 1 states the whole effort (extra time included)
+        minutes = int(-(-spec['minutes'] * st.get('accom', 1.0) // 1))
+        return {'code': self.version_id.task_code, 'title': spec['title'], 'intro': spec['intro'], 'minutes': minutes,
                 'desktop': spec['desktop'], 'accom': st.get('accom', 1.0), 'blocks': blocks,
                 'current': next((b['i'] for b in blocks if not b['done']), None)}
 

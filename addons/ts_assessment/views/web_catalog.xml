@@ -78,13 +78,15 @@
                             <div class="ts-container ts-grid ts-grid--2">
                                 <div class="ts-prose">
                                     <h2>کاربرد</h2>
-                                    <p t-out="inst.ts_intended_use()"/>
+                                    <!-- the heading already says «کاربرد» (audit P15-3) -->
+                                    <p t-out="inst.ts_intended_use().strip().removeprefix('کاربرد:').strip()"/>
                                     <h2>ابعادی که توصیف می‌شود</h2>
                                     <ul class="ts-factors">
                                         <t t-foreach="version.factor_ids.filtered('scored')" t-as="f">
                                             <li>
-                                                <strong t-out="f.name"/>
-                                                <span t-if="f.definition" t-out="f.definition"/>
+                                                <!-- Persian letters even where a source text kept Arabic ك/ي (audit P16-1) -->
+                                                <strong t-out="(f.name or '').replace('ك', 'ک').replace('ي', 'ی')"/>
+                                                <span t-if="f.definition" t-out="f.definition.replace('ك', 'ک').replace('ي', 'ی')"/>
                                             </li>
                                         </t>
                                     </ul>
@@ -92,7 +94,7 @@
                                 <div class="ts-prose">
                                     <div class="ts-card ts-card--soft">
                                         <h3>چگونه پاسخ می‌دهید</h3>
-                                        <p>برای هر عبارت، میزان توصیف خود (یا کودک) را روی مقیاس پنج‌درجه‌ای از «بسیار کم» تا «بسیار زیاد» انتخاب می‌کنید. پاسخ‌ها خودکار ذخیره می‌شوند و می‌توانید بعداً ادامه دهید.</p>
+                                        <p>برای هر عبارت، میزان توصیف <t t-if="inst.audience == 'child'">کودک</t><t t-else="">خود</t> را روی مقیاس پنج‌درجه‌ای از «بسیار کم» تا «بسیار زیاد» انتخاب می‌کنید. پاسخ‌ها خودکار ذخیره می‌شوند و می‌توانید بعداً ادامه دهید.</p>
                                         <t t-if="inst.code != 'TALENT-INV-15'">
                                         <h3 id="ts-how-scored">نمره چگونه حساب می‌شود</h3>
                                         <p>نمرهٔ هر عامل میانگین پاسخ‌ها به پرسش‌های همان عامل است، از ۱ تا ۵. چند پرسش وارونه نوشته شده‌اند؛ پاسخ آن‌ها پیش از میانگین‌گیری برعکس شمرده می‌شود (مثلاً ۵ به‌جای ۱). سطح‌ها: کم، متوسط و زیاد.</p>

@@ -154,7 +154,13 @@ class TsBatteryPlayer(TsTalent):
             row = {'a': a, 'name': a.battery_id.ts_title(), 'org': a.workspace_id.ts_public_name(),
                    'done': done, 'total': total, 'when': jalali(a.accepted_at or a.create_date, with_time=False)}
             if nxt:
-                row.update(url='/take/%s' % nxt.access_token, fresh=nxt.state == 'consent')
+                rest = a.ts_battery_attempts().filtered(lambda x: x.state != 'done')
+                rest_matrix = any(hasattr(x, 'ts_is_matrix') and x.ts_is_matrix() for x in rest)
+                # T7 (B26-1): which instrument is next and about how long the rest takes
+                row.update(url='/take/%s' % nxt.access_token, fresh=nxt.state == 'consent',
+                           next_name=nxt.instrument_id.ts_title(),
+                           minutes_left=sum(rest.mapped('instrument_id.duration_minutes')) if rest_matrix else
+                           est_minutes(sum(rest.mapped('instrument_id.active_item_count'))))
                 qc['batteries_going'].append(row)
             else:
                 row.update(url=battery_url(a), shared=a.share_level != 'none', when=jalali(
@@ -186,6 +192,7 @@ class TsBatteryPlayer(TsTalent):
             'org': a.workspace_id.ts_public_name(), 'counselor': resp,
             'when': jalali(max(rows.filtered(lambda t: t.submitted_at).mapped('submitted_at') or [a.create_date]), with_time=False),
             'submitted': kw.get('submitted'), 'limit_note': LIMIT_NOTE, 'tu': rows[:1].ts_informal(),
+            'nxt': rows.filtered(lambda t: t.state != 'done')[:1],     # T7 B24-1: «ادامهٔ مجموعه» near the top
             'fa': fa_digits, 'page_name': 'ts_assessments'})
 
 
@@ -248,11 +255,19 @@ class TsBatteryPortal(TsPanelPortal):
                 pct = int(round(100.0 * done / total)) if total else 0
                 if not pct and cur.state == 'in_progress' and cur.answered_count:
                     pct = 1
-                # the headline is the battery name only; the progress is part of the meta line (G6-P16-1)
+                # the headline is the battery name only; the progress is part of the meta line (G6-P16-1).
+                # T7 (B25-1/2): «ادامهٔ مجموعه» once anything is answered; next instrument with its place, time left.
+                rest = a.ts_battery_attempts().filtered(lambda x: x.state != 'done')
+                rest_matrix = any(hasattr(x, 'ts_is_matrix') and x.ts_is_matrix() for x in rest)
+                rest_min = sum(rest.mapped('instrument_id.duration_minutes')) if rest_matrix else \
+                    est_minutes(sum(rest.mapped('instrument_id.active_item_count')))
                 nxt.update(title='مجموعهٔ %s' % a.battery_id.name,
                            battery_progress='%s از %s سنجه انجام شده' % (fa_digits(done), fa_digits(total)),
                            url='/take/%s' % cur.access_token, progress=pct, attempt_id=cur.id, battery=True,
-                           battery_next=cur.instrument_id.ts_title())
+                           battery_next=cur.instrument_id.ts_title(),
+                           battery_place='%s از %s' % (fa_digits(cur.ts_battery_index()), fa_digits(total)),
+                           battery_minutes_left=rest_min, when=cur.jalali_long(cur.write_date),
+                           label='ادامهٔ مجموعه' if pct else 'شروع مجموعه')
                 qc['going'] = qc['going'].filtered(lambda x: x.sudo().assignment_id != a)
         elif nxt and nxt.get('kind') == 'result' and first_done:
             a = first_done.sudo().assignment_id

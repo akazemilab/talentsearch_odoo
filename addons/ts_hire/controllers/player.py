@@ -14,6 +14,19 @@ HR_NOTE = ('این گزارش بازخورد برای خود شماست. ساز�
 class TsHirePlayer(TsTaskPlayer):
 
     @http.route()
+    def take(self, token, page=None, **kw):
+        """Timed task of a hiring battery: the player names the organisation that asked for it and what it sees (the
+        same facts as HR_NOTE and the invitation page; UX audit T7 P11-1). Presentation only."""
+        res = super().take(token, page=page, **kw)
+        qc = getattr(res, 'qcontext', None)
+        at = qc.get('attempt') if qc and getattr(res, 'template', None) == 'ts_tasks.player' else None
+        a = at.sudo().assignment_id if at and 'assignment_id' in at._fields else None
+        if a and a.position_id and a.user_id == at.user_id:
+            qc['hire_org'] = a.workspace_id.ts_public_name()
+            qc['hire_shared'] = a.share_level != 'none'
+        return res
+
+    @http.route()
     def my_battery(self, assignment_id, **kw):
         res = super().my_battery(assignment_id, **kw)
         qc = getattr(res, 'qcontext', None)

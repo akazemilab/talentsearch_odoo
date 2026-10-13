@@ -32,10 +32,23 @@
     .tt-dl { margin: 0 0 18px; display: grid; gap: 4px; font-size: .92rem; line-height: 1.9; }
     .tt-dl dt { font-weight: 600; color: var(--color-text); margin-block-start: 8px; }
     .tt-dl dd { margin: 0; color: var(--color-neutral-300); }
+    .tt-dl[hidden] { display: none; }
+    // consent details behind one button (same words; button + aria-expanded + hidden)
+    .tt-fold { display: flex; width: 100%; justify-content: space-between; align-items: center; gap: 10px; min-height: 44px; padding: 4px 0; margin: -8px 0 10px;
+        border: 0; background: none; color: var(--tt-hero2); font: 600 .92rem var(--font-text); text-align: start; cursor: pointer; }
+    .tt-fold::after { content: '−'; flex: none; inline-size: 28px; block-size: 28px; display: grid; place-items: center; border-radius: 50%; background: var(--color-neutral-900); }
+    .tt-fold[aria-expanded='false']::after { content: '+'; }
+    .tt-fold:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 2px; }
     .tt-fine { margin-block-start: 4px; }
     .tt-badge { width: 52px; height: 52px; border-radius: 50%; background: var(--tt-soft); box-shadow: 0 0 0 1px var(--color-accent-800); color: var(--tt-hero2); display: grid; place-items: center; font-size: 1.5rem; font-weight: 700; margin-block-end: 14px; }
     .tt-form { display: flex; flex-direction: column; gap: 14px; }
     .tt-error { background: var(--status-danger-soft); color: var(--tt-err); border-radius: 12px; padding: 10px 14px; font-size: .9rem; margin: 0; }
+    .tt-error p { margin: 0; }
+    .tt-error p + p { margin-block-start: 4px; }
+    .tt-error a { color: inherit; text-decoration: underline; text-underline-offset: 3px; display: inline-block; min-width: 24px; min-height: 24px; text-align: center; font-weight: 700; }
+    .tt-error:focus { outline: 2px solid var(--tt-err); outline-offset: 2px; }
+    .tt-stage > .tt-error { margin-block-end: 14px; }
+    .tt-next-step { color: var(--color-neutral-300); }
     .tt-check { display: flex; gap: 10px; align-items: flex-start; font-size: .95rem; cursor: pointer; }
     .tt-check input { width: 22px; height: 22px; margin-block-start: 4px; accent-color: var(--tt-hero2); flex: none; }
     .tt-input { width: 100%; min-height: 52px; border: 1px solid var(--field-line); border-radius: var(--r-12); padding: 10px 14px; font-size: 1.05rem; background: var(--color-bg); color: var(--tt-ink); }
@@ -44,8 +57,9 @@
         background: var(--color-accent-900); color: var(--color-accent-200); font-weight: 500; font-size: 1rem; text-decoration: none; transition: transform .12s, background .12s; }
     .tt-btn:hover { color: var(--color-accent-200); background: var(--color-accent-800); transform: translateY(-1px); }
     .tt-btn:focus-visible, .tt-chip:focus-visible, .tt-sec__btn:focus-visible, .tt-toggle:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 2px; }
-    .tt-btn--primary { background: var(--color-accent); border-color: var(--color-accent); color: var(--color-bg); font-weight: 600; }
-    .tt-btn--primary:hover { background: var(--color-accent-600); color: var(--color-bg); }
+    // the project primary (ts-btn--primary): accent border, accent-900 fill, accent-300 text (UX audit T7 PAT-3)
+    .tt-btn--primary { background: var(--color-accent-900); border-color: var(--color-accent); color: var(--color-accent-300); font-weight: 600; }
+    .tt-btn--primary:hover { background: var(--color-accent-800); color: var(--color-accent-200); }
     .tt-btn--sm { min-height: 44px; padding: 6px 14px; font-size: .88rem; }
     .tt-btn--block { display: flex; width: 100%; margin-block-end: 10px; }
     .tt-btn[disabled] { opacity: .45; cursor: not-allowed; box-shadow: none; transform: none; }
@@ -88,7 +102,12 @@
     @media (pointer: coarse), (hover: none), (max-width: 767.98px) { .tt-keyhint { display: none; } }
     .tt-qnum { color: var(--tt-hero2); font-weight: 600; margin-inline-end: 6px; font-feature-settings: "tnum"; }
     .tt-fn { color: var(--tt-hero2); font-weight: 600; }
-    .tt-q.is-missing { background: var(--status-warn-soft); box-shadow: 0 0 0 1px var(--status-warn); }
+    // unanswered after «صفحهٔ بعد»: the same status colour as the summary, plus an icon and a word (UX audit T7 P5-1)
+    .tt-q.is-missing { background: var(--status-danger-soft); box-shadow: 0 0 0 2px var(--status-danger); scroll-margin-block: 96px; }
+    .tt-miss, .tt-unsaved { margin: 0 0 8px; font-size: .88rem; font-weight: 700; color: var(--tt-err); }
+    .tt-q.is-unsaved { box-shadow: 0 0 0 2px var(--status-warn); }
+    .tt-unsaved { color: var(--tt-warn); }
+    .tt-savefail { margin: 8px 0 0; font-size: .9rem; font-weight: 600; color: var(--tt-warn); }
     .tt-opts { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; }
     .tt-opt { position: relative; display: block; cursor: pointer; }
     .tt-opt input { position: absolute; opacity: 0; inset: 0; width: 100%; height: 100%; cursor: pointer; margin: 0; }
@@ -142,6 +161,7 @@
     .tt-tile__k { font-size: .82rem; opacity: .85; }
     .tt-tile__v { font-size: 1.35rem; line-height: 1.5; }
     .tt-tile__s { font-size: .82rem; opacity: .85; }
+    .tt-tile__g { font-size: .82rem; line-height: 1.7; opacity: .9; }
     .tt-legend { list-style: none; padding: 0; margin: 0 0 12px; display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: .85rem; color: var(--tt-muted); }
     .tt-legend i { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-inline-end: 6px; }
     .tt-legend i.tt-s1, svg .tt-dot.tt-s1 { background: var(--tt-s1); fill: var(--tt-s1); }

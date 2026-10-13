@@ -19,6 +19,13 @@
     .tsb-next .ts-hint { margin: 0; }
     .tsb-actions { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-block: 8px 14px; }
     .tsb-actions .ts-btn { min-block-size: 44px; }
+    @media (max-width: 575.98px) { .tsb-actions { display: grid; } .tsb-actions .ts-btn { inline-size: 100%; } }   // T7 B23-2
+    .tsb-ready { margin-block: 4px 0; }
+    .tsb-ready a, .tsb-continue a:not(.ts-btn) { display: inline-flex; align-items: center; min-block-size: 44px; }
+    // partial battery report: the way to go on comes first (T7 B24-1)
+    .tsb-continue { margin-block: 0 16px; }
+    .tsb-continue h2 { margin: 0; }
+    @media (max-width: 575.98px) { .tsb-continue .ts-btn { inline-size: 100%; } }
 
     // consent and invitation blocks
     .tsb-consent, .tsb-invite { margin-block: 14px 18px; }

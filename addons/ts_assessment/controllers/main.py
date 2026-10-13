@@ -8,7 +8,9 @@ from odoo.http import request
 from odoo.addons.ts_assessment.models.attempt import CONSENT_VERSION, fa_digits
 from odoo.addons.ts_assessment.models.instrument import SCALE
 
-PAGE_SIZE = 10
+# Owner decision 2026-10-13 (UX audit T7, B8-1): at most 5 items per page, balanced — N items -> ceil(N/5) pages whose
+# sizes differ by at most one, larger pages first (22 -> 5/5/4/4/4). `?page=N`, autosave, review and submit are unchanged.
+PAGE_SIZE = 5
 
 
 def _ts_site_or_404():
@@ -35,10 +37,51 @@ def _my_attempt(token=None, attempt_id=None):
     return attempt
 
 
+def _n_pages(n_items):
+    return max(1, math.ceil(n_items / PAGE_SIZE))
+
+
+def _page_start(page, n_items):
+    """0-based index of the first item on `page` (1-based) in balanced paging."""
+    n = _n_pages(n_items)
+    base, extra = divmod(n_items, n)
+    return (page - 1) * base + min(page - 1, extra)
+
+
+def _page_of(idx, n_items):
+    """1-based page that holds the item at 0-based index `idx`."""
+    n = _n_pages(n_items)
+    base, extra = divmod(n_items, n)
+    big = extra * (base + 1)          # items on the larger pages, which come first
+    if idx < big:
+        return idx // (base + 1) + 1
+    return extra + (idx - big) // max(base, 1) + 1
+
+
 def _pages(attempt):
     items = attempt.active_items()
-    n = max(1, math.ceil(len(items) / PAGE_SIZE))
-    return items, n
+    return items, _n_pages(len(items))
+
+
+# consent page: the boxes a person ticked come back ticked after an error redirect (WCAG 3.3.7; display only — the
+# recorded consent is only ever written by the POST that passes every check). query key -> posted field
+CONSENT_ECHO = {'svc': 'consent_service', 'res': 'consent_research', 'gc': 'guardian_confirm', 'age': 'age18',
+                'gok': 'guardian_ok', 'ass': 'assent_ok'}
+
+
+def consent_error_url(token, error, post):
+    """/take/<token>?error=<code>&svc=1… with the posted ticks, for the consent page to tick them again."""
+    q = ['error=%s' % quote(error)]
+    for key, field in CONSENT_ECHO.items():
+        val = post.get(field)
+        if val in ('1', 'yes', 'no'):
+            q.append('%s=%s' % (key, val))
+    return '/take/%s?%s' % (token, '&'.join(q))
+
+
+def consent_posted(kw):
+    """The echoed ticks of consent_error_url, as {posted field: value} (only known keys and values)."""
+    return {field: kw[key] for key, field in CONSENT_ECHO.items() if kw.get(key) in ('1', 'yes', 'no')}
 
 
 class TsAssessment(http.Controller):
@@ -104,20 +147,35 @@ class TsAssessment(http.Controller):
         if attempt.state == 'consent':
             return request.render('ts_assessment.consent', {'attempt': attempt, 'inst': attempt.instrument_id,
                                                               'consent_version': CONSENT_VERSION, 'fa': fa_digits,
-                                                              'error': kw.get('error')})
+                                                              'error': kw.get('error'), 'posted': consent_posted(kw),
+                                                              'tu': attempt.ts_informal()})
         if attempt.state == 'error':
-            return request.render('ts_assessment.error', {'attempt': attempt})
+            return request.render('ts_assessment.error', {'attempt': attempt, 'tu': attempt.ts_informal()})
         items, n_pages = _pages(attempt)
         answers = attempt.answers_map()
+        n_items = len(items)
         if page is None:
             first_open = next((idx for idx, it in enumerate(items) if it.id not in answers), 0)
-            page = first_open // PAGE_SIZE + 1
-        page = min(max(int(page), 1), n_pages)
-        chunk = items[(page - 1) * PAGE_SIZE: page * PAGE_SIZE]
+            page = _page_of(first_open, n_items)
+        try:
+            page = int(page)
+        except (TypeError, ValueError):
+            page = 1
+        page = min(max(page, 1), n_pages)
+        start, end = _page_start(page, n_items), _page_start(page + 1, n_items) if page < n_pages else n_items
+        chunk = items[start:end]
+        chunk_ids = set(chunk.ids)
+        total = n_items
+        minutes = attempt.instrument_id.duration_minutes or 0
         return request.render('ts_assessment.player', {
             'attempt': attempt, 'inst': attempt.instrument_id, 'items': chunk, 'answers': answers,
             'page': page, 'n_pages': n_pages, 'scale': SCALE, 'fa': fa_digits,
-            'first_index': (page - 1) * PAGE_SIZE, 'answered': len(answers), 'total': len(items),
+            'first_index': start, 'answered': len(answers), 'total': total,
+            # unanswered items on the other pages (the last page says so before «مرور و ارسال», B10-1)
+            'missing_elsewhere': len([it for it in items if it.id not in answers and it.id not in chunk_ids]),
+            # coming back from the review page: unanswered items on this page are marked (B8-4, B11-2)
+            'show_missing': bool(kw.get('missing')),
+            'minutes_left': math.ceil((total - len(answers)) * minutes / total) if (total and minutes) else 0,
             'error': kw.get('error'), 'tu': attempt.ts_informal(),
         })
 
@@ -126,10 +184,10 @@ class TsAssessment(http.Controller):
         _ts_site_or_404()
         attempt = _my_attempt(token)
         if post.get('consent_service') != '1':
-            return request.redirect('/take/%s?error=consent' % token)
+            return request.redirect(consent_error_url(token, 'consent', post))
         role = 'guardian' if attempt.instrument_id.audience in ('child', 'adolescent') else 'self'
         if role == 'guardian' and post.get('guardian_confirm') != '1':
-            return request.redirect('/take/%s?error=guardian' % token)
+            return request.redirect(consent_error_url(token, 'guardian', post))
         attempt.give_consent(research=post.get('consent_research') == '1', role=role, subject=post.get('subject_label'))
         return request.redirect('/take/%s' % token)
 
@@ -176,10 +234,19 @@ class TsAssessment(http.Controller):
             return request.redirect('/take/%s' % token)
         items, n_pages = _pages(attempt)
         answers = attempt.answers_map()
-        missing = [(idx + 1, it, idx // PAGE_SIZE + 1) for idx, it in enumerate(items) if it.id not in answers]
+        n_items = len(items)
+        missing = [(idx + 1, it, _page_of(idx, n_items)) for idx, it in enumerate(items) if it.id not in answers]
+        # one row per page (B11-1, B14-2): numbers of its first and last item and its unanswered items
+        page_rows = []
+        for p in range(1, n_pages + 1):
+            start = _page_start(p, n_items)
+            end = _page_start(p + 1, n_items) if p < n_pages else n_items
+            page_rows.append({'page': p, 'first': start + 1, 'last': end,
+                              'missing': [m for m in missing if m[2] == p]})
         return request.render('ts_assessment.review', {
-            'attempt': attempt, 'inst': attempt.instrument_id, 'missing': missing, 'total': len(items),
-            'answered': len(answers), 'n_pages': n_pages, 'fa': fa_digits, 'error': kw.get('error'),
+            'attempt': attempt, 'inst': attempt.instrument_id, 'missing': missing, 'total': n_items,
+            'answered': len(answers), 'n_pages': n_pages, 'page_rows': page_rows, 'fa': fa_digits,
+            'error': kw.get('error'), 'tu': attempt.ts_informal(),
         })
 
     @http.route('/take/<string:token>/submit', type='http', auth='user', website=True, methods=['POST'], sitemap=False)
