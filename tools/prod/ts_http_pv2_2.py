@@ -22,7 +22,7 @@ def panel(name, purpose):
     org.write({'is_company': True})
     ws = env['ts.workspace'].search([('partner_id', '=', org.id)], limit=1) or env['ts.workspace'].create(
         {'name': name, 'purpose': purpose, 'partner_id': org.id, 'escalation_contact_id': org.id if purpose == 'clinical' else False})
-    ws.write({'approved_on': '2026-01-01 00:00:00'}); ws.state = 'pilot'
+    ws.state = 'active'
     return ws
 def member(ws, n, role):
     u = user(n)
@@ -128,18 +128,19 @@ check('counselor settings POST is a 403', st == 403, str(st))
 name = shell("print('NAME', env['ts.workspace'].browse(%s).name)" % A)
 check('and the name did not change', 'NAME پنل S2 آموزشی' in name, name[-60:])
 
-# unverified clinician
+# clinician without a verified licence (onb1: the licence is a badge, the work is not held back)
 u = login('unv')
 st, _, page = u.req('/my/workspaces/%s' % C)
-check('unverified clinician sees the notice page on the panel address', st == 200 and 'در حال بررسی است' in page and menu(page) == ['پیشخوان', 'راهنما'], '%s %s' % (st, menu(page)))
-check('the old page still answers 404 for them', u.req('/my/workspaces/%s/legacy' % C)[0] == 404)
+check('a clinician without the licence badge gets the clinician panel, no waiting page',
+      st == 200 and 'در حال بررسی است' not in page and 'پیشخوان' in menu(page) and 'شرکت‌کنندگان' in menu(page), '%s %s' % (st, menu(page)))
+check('the old page is not closed to them any more', u.req('/my/workspaces/%s/legacy' % C)[0] != 404)
 check('and settings is 403', u.req('/my/workspaces/%s/settings' % C)[0] == 403)
 
 # suspended panel
 shell("w = env['ts.workspace'].browse(%s); w.state = 'suspended'; env.cr.commit()" % B)
 st, _, page = pages[('hr', B)][0].req('/my/workspaces/%s' % B)
-check('suspended panel shows its notice page', st == 200 and 'موقتاً معلق' in page and menu(page) == ['پیشخوان', 'راهنما'], '%s %s' % (st, menu(page)))
-shell("w = env['ts.workspace'].browse(%s); w.state = 'pilot'; env.cr.commit()" % B)
+check('suspended panel shows its notice page', st == 200 and 'موقتاً متوقف شده است' in page and menu(page) == ['پیشخوان', 'راهنما'], '%s %s' % (st, menu(page)))
+shell("w = env['ts.workspace'].browse(%s); w.state = 'active'; env.cr.commit()" % B)
 
 # strangers
 o = login('outsider')

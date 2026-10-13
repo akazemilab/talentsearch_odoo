@@ -21,7 +21,7 @@ from odoo.addons.ts_assessment.models.loader import EMPLOYMENT_CATEGORIES  # noq
 SHARE_LEVELS = [
     ('none', 'بدون اشتراک‌گذاری نتیجه'),
     ('summary', 'خلاصهٔ بازه‌ها (بدون پاسخ‌ها و متن تفسیر)'),
-    ('clinical', 'گزارش کامل برای مشاور تأییدشده'),
+    ('clinical', 'گزارش کامل برای مشاوران همین مرکز'),
 ]
 
 
@@ -93,10 +93,8 @@ class TsAssignment(models.Model):
                 raise ValidationError('فقط سنجهٔ منتشرشده قابل دعوت است.')
             if a.purpose == 'employment' and a.instrument_id.purpose != 'employment':
                 raise ValidationError('این سنجه برای فرایند استخدام مجاز نیست.')
-            if a.workspace_id.state not in ('pilot', 'active'):
-                raise ValidationError('پنل فعال نیست.')
-            if a.workspace_id.gated:
-                raise ValidationError('این پنل در انتظار تأیید مالک پلتفرم است؛ دعوت شرکت‌کنندهٔ واقعی پس از تأیید ممکن می‌شود.')
+            if a.workspace_id.state != 'active':
+                raise ValidationError('این پنل فعال نیست یا موقتاً متوقف شده است؛ دعوت تازه ممکن نیست.')
 
     @api.constrains('responsible_id', 'workspace_id', 'user_id')
     def _check_responsible(self):
@@ -168,6 +166,9 @@ class TsAssignment(models.Model):
             raise UserError('این دعوت قبلاً با حساب دیگری پذیرفته شده است.')
         if not self.user_id and self.invite_state() == 'expired':
             raise UserError('مهلت این دعوت تمام شده است.')
+        if not self.user_id and self.workspace_id.state != 'active':
+            # onb1: a suspended (or closed) panel starts no new attempt; finished results stay with their owners
+            raise UserError('پنلی که این دعوت را فرستاده موقتاً متوقف شده است؛ پاسخ‌دهی تازه شروع نمی‌شود.')
         if not self.user_id:
             share_level = self.default_share_level() if share else 'none'
             if self.responsible_id.user_id == user:
@@ -192,8 +193,8 @@ class TsAssignment(models.Model):
         attempt = attempt.sudo()
         code = (code or '').strip().upper().translate(str.maketrans('۰۱۲۳۴۵۶۷۸۹٠١٢٣٤٥٦٧٨٩', '01234567890123456789'))
         ws = self.env['ts.workspace'].sudo().search([('code', '=', code), ('purpose', '=', 'education'),
-                                                      ('state', 'in', ('pilot', 'active'))], limit=1) if code else False
-        if not ws or ws.gated:
+                                                      ('state', '=', 'active')], limit=1) if code else False
+        if not ws:
             raise UserError('پنلی با این کد پیدا نشد. کد را از مشاور خود بپرسید.')
         if attempt.user_id != user or attempt.state != 'done' or attempt.workspace_id or attempt.source == 'import':
             raise UserError('این نتیجه قابل ارسال برای مشاور نیست.')
@@ -210,7 +211,7 @@ class TsAssignment(models.Model):
             self.env['ts.audit.event'].sudo().log('assignment.self_share', again[0], workspace=ws, instrument=attempt.instrument_id.code)
             return again[0]
         a = self.sudo().create({
-            'workspace_id': ws.id, 'instrument_id': attempt.instrument_id.id, 'invitee_name': user.name or 'شرکت‌کننده',
+            'workspace_id': ws.id, 'instrument_id': attempt.instrument_id.id, 'invitee_name': user.partner_id.ts_known_name() or 'شرکت‌کننده',
             'invited_by_id': user.id, 'user_id': user.id, 'attempt_id': attempt.id, 'share_level': 'summary',
             'accepted_at': fields.Datetime.now()})
         self.env['ts.audit.event'].sudo().log('assignment.self_share', a, workspace=ws, instrument=attempt.instrument_id.code)
@@ -280,12 +281,10 @@ class TsWorkspaceMember(models.Model):
     _inherit = 'ts.workspace.member'
 
     def can_act(self):
-        """May this member work in the panel at all: active, panel running, and (clinicians, clinic directors)
-        professionally verified. A suspended or draft panel gives False (A2, A3)."""
+        """May this member work in the panel at all: active member of a running panel. A suspended, closed or draft
+        panel gives False (A2, A3). The licence is a badge since onb1 and never blocks work."""
         self.ensure_one()
-        if not self.active or self.workspace_id.state not in ('pilot', 'active'):
-            return False
-        return not self._ts_unverified_pro()
+        return bool(self.active and self.workspace_id.state == 'active')
 
     # ------------------------------------------------ a specialist leaves or changes role
     def _ts_release_clients(self):
@@ -310,14 +309,13 @@ class TsWorkspaceMember(models.Model):
         return super().unlink()
 
     def can_invite(self):
-        """Role may create invitations (a gated panel is handled by can_invite_participants, as before;
-        admin is not added: the coordinator does not invite in this stage)."""
+        """Role may create invitations (admin is not added: the coordinator does not invite in this stage)."""
         return self.role in INVITE_ROLES
 
     def can_invite_participants(self):
-        """Real participants can be invited only once the platform owner approved gated panels."""
+        """Kept for older callers: the role may invite and the panel is running (no approval since onb1)."""
         self.ensure_one()
-        return self.can_invite() and not self.workspace_id.gated
+        return self.can_invite() and self.workspace_id.state == 'active'
 
     # ------------------------------------------------ responsible specialist
     def sees_all(self):

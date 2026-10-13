@@ -215,10 +215,11 @@
 
                             <section t-if="can_invite" class="ts-card" id="tsh-invite">
                                 <h2 class="h5">دعوت داوطلب</h2>
+                                <p t-if="quota_note" class="ts-notice" role="note" t-out="quota_note"/>
                                 <form t-attf-action="#{base}/invite" method="post" class="tsp-form" data-tsp-once="1">
                                     <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
                                     <label class="tsp-field tsp-field--wide"><span class="tsp-field__label">داوطلبان (هر نفر در یک سطر)</span>
-                                        <textarea name="people" rows="4" required="required" class="form-control" placeholder="مریم احمدی، ۰۹۱۲۱۲۳۴۵۶۷، maryam@example.com"/>
+                                        <textarea name="people" rows="4" required="required" class="form-control" placeholder="مریم احمدی، ۰۹۱۲۱۲۳۴۵۶۷، maryam@example.com" t-out="people_draft or ''"/>
                                         <span class="tsp-field__hint">در هر سطر: نام، موبایل و ایمیل (هر کدام که دارید، با ویرگول جدا). تا ۵۰ نفر در هر بار.</span></label>
                                     <fieldset class="tsp-field">
                                         <legend class="tsp-field__label">ارسال دعوت</legend>

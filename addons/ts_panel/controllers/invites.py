@@ -155,10 +155,6 @@ class TsPanelInvites(http.Controller):
 
     def _wizard_guard(self, ws_id):
         me = member_or_404(ws_id)
-        if me.can_act() and me.can_invite() and not me.can_invite_participants():
-            return me, render_in_shell('ts_panel.state_page', me, 'invites', 'دعوت هنوز ممکن نیست',
-                                       state_title='دعوت شرکت‌کنندگان پس از تأیید پنل ممکن می‌شود',
-                                       state_text='پنل شما در انتظار تأیید مالک پلتفرم است. تا آن زمان می‌توانید ردیف شرکت‌کنندگان را بسازید و سنجه‌ها را ببینید.')
         denied = require(me, 'invites:create', 'invites')
         if denied:
             return me, denied
@@ -187,7 +183,8 @@ class TsPanelInvites(http.Controller):
             ).filtered(lambda c: not c.contact_locked)[:10]
         vals = dict(step=step, draft=d, client=client, inst=inst, instruments=sorted_items(me.allowed_instruments()),
                     sms_ok=sms_available(me.workspace_id), steps=[('1', 'چه کسی'), ('2', 'کدام سنجه'), ('3', 'تنظیمات'), ('4', 'مرور')],
-                    recent=recent, age=AGE, age_default='minor' if me.workspace_id.purpose == 'education' else 'unknown',
+                    recent=recent, quota_note=me.workspace_id.ts_invite_quota_note() if me.can_act() else None,
+                    age=AGE, age_default='minor' if me.workspace_id.purpose == 'education' else 'unknown',
                     cancel_url='/my/workspaces/%s/invites' % ws_id, item_name=item_name,
                     # step 1 opens on «افزودن شرکت‌کنندهٔ تازه» when the panel has nobody to pick yet, or the draft is a new person
                     pick_default='new' if (step == '1' and (d.get('new_name') or not recent)) else 'existing')

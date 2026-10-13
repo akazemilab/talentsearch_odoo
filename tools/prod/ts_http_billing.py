@@ -41,8 +41,8 @@ name = 'پنل آزمون شارژ وب'
 org = env['res.partner'].search([('name', '=', name)], limit=1) or env['res.partner'].create({'name': name, 'is_company': True})
 ws = env['ts.workspace'].search([('partner_id', '=', org.id)], limit=1) or env['ts.workspace'].create(
     {'name': name, 'purpose': 'clinical', 'partner_id': org.id, 'escalation_contact_id': org.id})
-ws.write({'approved_on': '2026-01-01 00:00:00', 'billing_mode': 'prepaid', 'catalog_mode': 'purpose'})
-ws.state = 'pilot'
+ws.write({'billing_mode': 'prepaid', 'catalog_mode': 'purpose'})
+ws.state = 'active'
 # an earlier run of this suite on the same clone may have left names carrying the forbidden word
 for old in env['res.partner'].sudo().search([('name', 'like', 'آزمون اعتبار')]):
     old.name = old.name.replace('اعتبار', 'شارژ')

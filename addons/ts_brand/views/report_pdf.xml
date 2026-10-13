@@ -82,7 +82,7 @@
                                 <small class="role" t-out="'مشاور شما' if mode == 'self' else 'مشاور مسئول'"/>
                                 <strong t-out="pc['name']"/>
                                 <small t-if="pc['title']" t-out="pc['title']"/>
-                                <small t-if="pc['license']">شمارهٔ پروانه: <span dir="ltr" t-out="pc['license']"/> (تأییدشده)</small>
+                                <small t-if="pc['license']">پروانهٔ تأییدشده: <span dir="ltr" t-out="pc['license']"/></small>
                             </span>
                         </td>
                     </tr></table>

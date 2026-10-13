@@ -19,7 +19,7 @@ class TsWorkspaceHealth(models.Model):
     ts_open_invites = fields.Integer('دعوت‌های باز', compute='_compute_health')
     ts_done_30d = fields.Integer('تکمیل در ۳۰ روز', compute='_compute_health')
     ts_last_activity = fields.Datetime('آخرین فعالیت', compute='_compute_health')
-    ts_pending_days = fields.Integer('روز در انتظار', compute='_compute_health')
+    ts_age_days = fields.Integer('روز از ساخت', compute='_compute_health')
 
     @api.depends('state')
     def _compute_health(self):
@@ -52,7 +52,7 @@ class TsWorkspaceHealth(models.Model):
             ws.ts_open_invites = opens.get(ws.id, 0)
             ws.ts_done_30d = done.get(ws.id, 0)
             ws.ts_last_activity = last.get(ws.id) or False
-            ws.ts_pending_days = (now - ws.create_date).days if ws.gated and ws.state in ('draft', 'pilot') and ws.create_date else 0
+            ws.ts_age_days = (now - ws.create_date).days if ws.create_date else 0
 
 
 class TsDataRequestBackoffice(models.Model):

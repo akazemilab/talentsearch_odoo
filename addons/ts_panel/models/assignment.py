@@ -8,6 +8,58 @@ from odoo.addons.ts_org.models.panel import norm_phone
 CHANNELS = [('link', 'پیوند'), ('sms', 'پیامک'), ('email', 'ایمیل'), ('open_link', 'پیوند باز'),
             ('self_share', 'اشتراک‌گذاری خود فرد'), ('import', 'واردشده')]
 
+# onb1 (replaces approval): a self-service panel in its first NEW_PANEL_DAYS days creates at most NEW_PANEL_DAILY invitations per
+# 24 hours, across the wizard, list campaigns, HR positions and every other surface. Self-joins through a class/open
+# link have their own limits (ts.campaign) and a person sharing his own result is not an invitation.
+NEW_PANEL_DAYS = 7
+NEW_PANEL_DAILY = 50
+QUOTA_EXEMPT_CHANNELS = ('open_link', 'self_share', 'import')
+
+
+def fa_num(n):
+    return str(n).translate(str.maketrans('0123456789', '۰۱۲۳۴۵۶۷۸۹'))
+
+
+class TsWorkspaceInviteQuota(models.Model):
+    _inherit = 'ts.workspace'
+
+    def ts_invite_quota(self):
+        """(limit, left) for a self-service panel still in its first week, else None. Counted over the last 24 hours.
+        Panels the EOT team sets up in the back office (self_service False) have no such limit."""
+        self.ensure_one()
+        if not self.self_service or not self.create_date or self.create_date < fields.Datetime.now() - timedelta(days=NEW_PANEL_DAYS):
+            return None
+        limit = self.env['ir.config_parameter'].sudo().get_int('ts_panel.new_panel_daily_invites', NEW_PANEL_DAILY) or NEW_PANEL_DAILY
+        self.env.cr.execute("""SELECT COUNT(*) FROM ts_assignment WHERE workspace_id = %s AND create_date >= %s
+                                 AND COALESCE(channel, 'link') NOT IN %s
+                                 AND NOT (user_id IS NOT NULL AND user_id = invited_by_id AND attempt_id IS NOT NULL)""",
+                            [self.id, fields.Datetime.now() - timedelta(days=1), QUOTA_EXEMPT_CHANNELS])
+        used = self.env.cr.fetchone()[0]
+        return limit, max(0, limit - used)
+
+    def ts_invite_quota_note(self):
+        """One calm line for invite forms while the limit applies (None otherwise)."""
+        q = self.ts_invite_quota()
+        if not q:
+            return None
+        limit, left = q
+        if not left:
+            return ('این پنل تازه است و در هفتهٔ اول روزانه تا %s دعوت می‌فرستد؛ سهم ۲۴ ساعت گذشته پر شده است. '
+                    'فردا دوباره دعوت کنید یا از راهنما با پشتیبانی تماس بگیرید.') % fa_num(limit)
+        return 'این پنل تازه است و در هفتهٔ اول روزانه تا %s دعوت می‌فرستد؛ امروز %s دعوت دیگر ممکن است.' % (fa_num(limit), fa_num(left))
+
+    def ts_check_invite_quota(self, count):
+        """Raise before anything is created or sent when `count` new invitations do not fit today's limit."""
+        self.ensure_one()
+        q = self.ts_invite_quota()
+        if q and count > q[1]:
+            limit, left = q
+            if not left:
+                raise UserError('این پنل تازه است و در هفتهٔ اول روزانه تا %s دعوت می‌فرستد؛ سهم ۲۴ ساعت گذشته پر شده است. '
+                                'فردا دوباره امتحان کنید یا با پشتیبانی تماس بگیرید.' % fa_num(limit))
+            raise UserError('این پنل تازه است و در هفتهٔ اول روزانه تا %s دعوت می‌فرستد؛ امروز فقط %s دعوت دیگر ممکن است. '
+                            'فهرست را کوتاه‌تر کنید یا فردا ادامه دهید.' % (fa_num(limit), fa_num(left)))
+
 
 class TsAssignment(models.Model):
     _inherit = 'ts.assignment'
@@ -54,6 +106,15 @@ class TsAssignment(models.Model):
     @api.model_create_multi
     def create(self, vals_list):
         Client = self.env['ts.panel.client'].sudo()
+        need = {}
+        for vals in vals_list:
+            if not vals.get('workspace_id') or vals.get('channel') in QUOTA_EXEMPT_CHANNELS:
+                continue
+            if vals.get('user_id') and vals.get('user_id') == vals.get('invited_by_id') and vals.get('attempt_id'):
+                continue        # a participant sharing his own finished result
+            need[vals['workspace_id']] = need.get(vals['workspace_id'], 0) + 1
+        for ws_id, n in need.items():
+            self.env['ts.workspace'].sudo().browse(ws_id).ts_check_invite_quota(n)
         for vals in vals_list:
             if not vals.get('expires_at'):
                 vals['expires_at'] = self._ts_default_expiry(vals.get('deadline'))

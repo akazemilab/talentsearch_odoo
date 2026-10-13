@@ -60,8 +60,7 @@ def panel(purpose, mode='purpose'):
     if purpose == 'clinical':
         vals['escalation_contact_id'] = org.id
     ws = W.create(vals)
-    ws.write({'approved_on': '2026-01-01 00:00:00'})
-    ws.state = 'pilot'
+    ws.state = 'active'
     return ws
 
 
@@ -267,7 +266,7 @@ check('F01 a catalog change writes one catalog.change event', len(ev) == n0 + 1 
 check('F01 the event carries counts, not names', '"batteries": 3' in (ev[0].detail or '') and 'BAT-' not in (ev[0].detail or '')
       and 'ارزیابی' not in (ev[0].detail or ''), (ev[0].detail or '')[:120])
 n1 = len(cat_events(ws_g))
-ws_g.write({'approval_note': 'بدون تغییر کاتالوگ'})
+ws_g.write({'suspend_note': 'بدون تغییر کاتالوگ'})
 check('F02 an unrelated workspace edit writes no catalog event', len(cat_events(ws_g)) == n1)
 check('F03 a member restriction change writes catalog.change on the member',
       len(cat_events(cl_g)) == 2 and cat_events(cl_g)[0].workspace_id == ws_g)
@@ -335,7 +334,7 @@ check('G05 consent given once is copied to every sibling with the same values',
       set(rows.mapped('state')) == {'in_progress'} and all(r.consent_service and r.consent_research and r.consent_version == CONSENT_VERSION
                                                         and r.respondent_role == 'self' for r in rows),
       str(rows.mapped('state')))
-check('G05 CONSENT_VERSION is v4', CONSENT_VERSION.endswith('-v4') and CONSENT_VERSION.startswith('TS-CONSENT-'))
+check('G05 CONSENT_VERSION is v5 (onb1: the clinical sharing line names «مشاوران همین مرکز»)', CONSENT_VERSION.endswith('-v5') and CONSENT_VERSION.startswith('TS-CONSENT-'))
 Rec = env['ts.consent.record']
 check('G05 the consent ledger keeps one service row per attempt',
       Rec.search_count([('attempt_id', 'in', rows.ids), ('kind', '=', 'service')]) == N)
@@ -442,7 +441,7 @@ try:
         seed_ws = res.get('workspace')
         check('G15 the seed by default creates the panel and the owner, and NO colleague invitation',
               seed_ws and res.get('owner') and res['created'].get('invites') == 0 and not res.get('invites_on')
-              and I.search_count([]) == inv0 and seed_ws.catalog_mode == 'granted' and not seed_ws.gated,
+              and I.search_count([]) == inv0 and seed_ws.catalog_mode == 'granted' and seed_ws.state == 'active',
               str(res.get('created')))
 except Exception as e:
     check('G15 the seed by default creates the panel and the owner, and NO colleague invitation', False, repr(e)[:200])

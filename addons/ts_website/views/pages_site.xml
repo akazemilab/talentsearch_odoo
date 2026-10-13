@@ -26,9 +26,9 @@
                             <div class="ts-mock__main">
                                 <div class="ts-mock__top"><strong>دوازدهم ریاضی</strong><span class="ts-chip">کد کلاس <bdi dir="ltr">TS-4K7Q</bdi></span></div>
                                 <div class="ts-mock__stats">
-                                    <div><strong>32</strong><span>دانش‌آموز</span></div>
-                                    <div><strong>21</strong><span>تکمیل‌شده</span></div>
-                                    <div><strong>14</strong><span>به اشتراک گذاشته‌شده</span></div>
+                                    <div><strong>۳۲</strong><span>دانش‌آموز</span></div>
+                                    <div><strong>۲۱</strong><span>تکمیل‌شده</span></div>
+                                    <div><strong>۱۴</strong><span>به اشتراک گذاشته‌شده</span></div>
                                 </div>
                                 <div class="ts-mock__rows">
                                     <div><i>س</i><em>سارا محمدی</em><span class="ts-chip">به اشتراک گذاشت</span></div>
@@ -55,9 +55,9 @@
         <field name="arch" type="xml">
             <t t-name="ts_website.mock_bars">
                 <div class="ts-bars">
-                    <div class="ts-bars__row"><span>برنامه‌نویسی</span><span class="ts-bars__track"><i style="inline-size: 86%"/></span><span>86</span></div>
-                    <div class="ts-bars__row"><span>پزشکی</span><span class="ts-bars__track"><i class="c2" style="inline-size: 66%"/></span><span>66</span></div>
-                    <div class="ts-bars__row"><span>معماری</span><span class="ts-bars__track"><i class="c3" style="inline-size: 60%"/></span><span>60</span></div>
+                    <div class="ts-bars__row"><span>برنامه‌نویسی</span><span class="ts-bars__track"><i style="inline-size: 86%"/></span><span>۸۶</span></div>
+                    <div class="ts-bars__row"><span>پزشکی</span><span class="ts-bars__track"><i class="c2" style="inline-size: 66%"/></span><span>۶۶</span></div>
+                    <div class="ts-bars__row"><span>معماری</span><span class="ts-bars__track"><i class="c3" style="inline-size: 60%"/></span><span>۶۰</span></div>
                 </div>
             </t>
         </field>
@@ -275,8 +275,8 @@
                                     <div class="ts-card">
                                         <span class="ts-card__icon"><t t-call="ts_website.icon" ico.f="buildings"/></span>
                                         <h3>سازمان یا مرکز مشاوره هستید؟</h3>
-                                        <p class="ts-card__body">پنل سازمان‌ها و مراکز مشاوره در حال پایلوت است.</p>
-                                        <a class="ts-card__link" href="/contact?topic=partner">با ما تماس بگیرید<t t-call="ts_website.icon" ico.f="arrow-left"/></a>
+                                        <p class="ts-card__body">پنل خود را همین حالا رایگان بسازید؛ هر پنل همان لحظهٔ ساخت فعال است.</p>
+                                        <a class="ts-card__link" href="/panel">ساخت پنل<t t-call="ts_website.icon" ico.f="arrow-left"/></a>
                                     </div>
                                     <div class="ts-card">
                                         <span class="ts-card__icon"><t t-call="ts_website.icon" ico.f="question"/></span>
@@ -369,10 +369,11 @@
         <field name="website_id" ref="website_ts"/>
         <field name="arch" type="xml">
             <t t-name="ts_website.page_assessments">
-                <t t-set="start_href" t-value="start_url or '/web/login?redirect=/assessments'"/>
+                <t t-set="start_href" t-value="start_url or '/signup?next=/assessments'"/>
                 <t t-set="abil" t-value="['تحلیلی', 'تجربی', 'تحصیلی', 'نوسودمندی', 'وظیفه‌مندی']"/>
                 <t t-set="tops" t-value="[86, 70, 80, 84, 80]"/>
                 <t t-set="sample" t-value="[('برنامه‌نویسی', [86, 60, 73, 46, 80], 69), ('پزشکی', [66, 70, 80, 40, 76], 66), ('معماری', [60, 64, 53, 84, 58], 64), ('روان‌شناسی', [72, 52, 66, 56, 70], 63)]"/>
+                <t t-set="fatr" t-value="{48: '۰', 49: '۱', 50: '۲', 51: '۳', 52: '۴', 53: '۵', 54: '۶', 55: '۷', 56: '۸', 57: '۹'}"/>
                 <t t-call="website.layout" additional_title.f="سنجه‌ها">
                     <div id="wrap" class="ts-page">
                         <section class="ts-hero">
@@ -384,7 +385,7 @@
                                     <div class="ts-hero__meta"><span>۲ تا ۸ زمینه</span><span>۱۵ جمله برای هر زمینه</span><span>حدود ۱ دقیقه برای هر زمینه</span></div>
                                     <div class="ts-hero__actions">
                                         <a t-att-href="start_href" class="ts-btn ts-btn--primary ts-btn--lg">شروع سنجه<t t-call="ts_website.icon" ico.f="arrow-left"/></a>
-                                        <a t-if="request.env.user._is_public()" href="/web/login?redirect=/my/assessments" class="ts-btn ts-btn--quiet ts-btn--lg">ورود</a>
+                                        <a t-if="request.env.user._is_public()" href="/signup?next=/my/assessments" class="ts-btn ts-btn--quiet ts-btn--lg">ورود</a>
                                         <a t-else="" href="/my/assessments" class="ts-btn ts-btn--quiet ts-btn--lg">سنجه‌ها و نتیجه‌ها</a>
                                     </div>
                                 </div>
@@ -461,7 +462,7 @@
                                                 <t t-set="v" t-value="f[1][ab_index]"/>
                                                 <span t-out="f[0]"/>
                                                 <span class="ts-matrix__track"><i t-attf-class="ts-f#{f_index + 1}" t-attf-style="inline-size: #{v}%"/></span>
-                                                <span class="ts-matrix__n" t-out="v"/>
+                                                <span class="ts-matrix__n" t-out="str(v).translate(fatr)"/>
                                                 <span t-if="v == top" class="ts-badge ts-badge--top">برجسته</span>
                                                 <span t-elif="top - v &lt;= 10" class="ts-badge ts-badge--near">نزدیک</span>
                                                 <span t-else="" class="ts-badge"/>
@@ -473,9 +474,9 @@
                                             <t t-set="mx" t-value="max(f[1])"/>
                                             <t t-set="mn" t-value="min(f[1])"/>
                                             <strong><i t-attf-class="ts-f#{f_index + 1}"/><t t-out="f[0]"/></strong>
-                                            <span>میانگین <b t-out="f[2]"/></span>
-                                            <span>بیشترین: <t t-out="abil[f[1].index(mx)]"/> (<t t-out="mx"/>)</span>
-                                            <span>کمترین: <t t-out="abil[f[1].index(mn)]"/> (<t t-out="mn"/>)</span>
+                                            <span>میانگین <b t-out="str(f[2]).translate(fatr)"/></span>
+                                            <span>بیشترین: <t t-out="abil[f[1].index(mx)]"/> (<t t-out="str(mx).translate(fatr)"/>)</span>
+                                            <span>کمترین: <t t-out="abil[f[1].index(mn)]"/> (<t t-out="str(mn).translate(fatr)"/>)</span>
                                         </div>
                                     </div>
                                     <p class="ts-tagline" style="font-size: 14px">این ترتیب، پیشنهاد رشته نیست. کنار علاقه و نمره‌های درسی، با مشاورت بخوانش.</p>
@@ -526,7 +527,7 @@
                             <div class="ts-container">
                                 <div class="ts-plans">
                                     <div class="ts-plan ts-plan--free">
-                                        <div class="ts-plan__top"><h3>پنل مدرسه</h3></div>
+                                        <div class="ts-plan__top"><h2>پنل مدرسه</h2></div>
                                         <span class="ts-plan__price">رایگان</span>
                                         <span class="ts-plan__for">برای مدرسه‌ها و مراکز مشاوره</span>
                                         <ul>
@@ -538,7 +539,7 @@
                                         <div class="ts-plan__foot"><a href="/panel" class="ts-btn ts-btn--primary ts-btn--lg">ساخت پنل رایگان<t t-call="ts_website.icon" ico.f="arrow-left"/></a></div>
                                     </div>
                                     <div class="ts-plan ts-plan--pro">
-                                        <div class="ts-plan__top"><h3>همیار تفسیر</h3><span class="ts-soon">به‌زودی</span></div>
+                                        <div class="ts-plan__top"><h2>همیار تفسیر</h2><span class="ts-soon">به‌زودی</span></div>
                                         <span class="ts-plan__price">حرفه‌ای</span>
                                         <span class="ts-plan__for">برای مشاورانی که نتیجه را تفسیر می‌کنند</span>
                                         <ul>

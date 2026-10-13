@@ -20,7 +20,7 @@ def user(n): return env['res.users'].search([('login', '=', L[n])])
 org = env['res.partner'].search([('name', '=', 'S16 http school')], limit=1) or env['res.partner'].create({'name': 'S16 http school', 'is_company': True})
 org.write({'is_company': True})
 ws = env['ts.workspace'].search([('partner_id', '=', org.id)], limit=1) or env['ts.workspace'].create({'name': 'S16 http school', 'purpose': 'education', 'partner_id': org.id})
-ws.write({'approved_on': '2026-01-01 00:00:00'}); ws.state = 'pilot'
+ws.state = 'active'
 ou = user('owner')
 om = env['ts.workspace.member'].search([('workspace_id', '=', ws.id), ('user_id', '=', ou.id)]) or env['ts.workspace.member'].create(
     {'workspace_id': ws.id, 'user_id': ou.id, 'role': 'owner'})

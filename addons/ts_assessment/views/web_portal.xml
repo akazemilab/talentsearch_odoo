@@ -107,11 +107,12 @@
                                         <div class="ts-doc__kind">گزارش نتیجهٔ سنجه</div>
                                     </header>
                                     <h1 class="ts-doc__title" t-out="inst.ts_title()"/>
-                                    <p class="ts-doc__lead">نتیجهٔ <t t-out="attempt.partner_id.name"/> در <t t-out="attempt.jalali(attempt.submitted_at, False)"/>. <t t-out="inst.ts_intended_use()"/></p>
+                                    <t t-set="ts_who" t-value="attempt.partner_id.ts_known_name()"/>
+                                    <p class="ts-doc__lead">نتیجهٔ <t t-if="ts_who" t-out="ts_who"/><t t-else="">شما</t> در <t t-out="attempt.jalali(attempt.submitted_at, False)"/>. <t t-out="inst.ts_intended_use()"/></p>
                                     <div class="ts-doc__details tsp-collapse" data-tsp-collapse="1">
                                     <h2 class="h5">جزئیات گزارش</h2>
                                     <dl class="ts-meta ts-doc__meta">
-                                        <dt>شرکت‌کننده</dt><dd t-out="attempt.partner_id.name"/>
+                                        <t t-if="ts_who"><dt>شرکت‌کننده</dt><dd t-out="ts_who"/></t>
                                         <t t-if="attempt.subject_label"><dt>دربارهٔ</dt><dd t-out="attempt.subject_label"/></t>
                                         <dt>پاسخ‌دهنده</dt><dd t-out="dict(attempt._fields['respondent_role'].selection).get(attempt.respondent_role)"/>
                                         <dt>تاریخ تکمیل</dt><dd t-out="attempt.jalali(attempt.submitted_at)"/>

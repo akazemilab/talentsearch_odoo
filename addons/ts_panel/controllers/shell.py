@@ -13,13 +13,12 @@ from .invites import STATE_ORDER, invite_count_by_state
 # What a member sees instead of the dashboard when the panel or their own account cannot work yet.
 STATE_PAGES = {
     'draft': ('پنل هنوز فعال نشده است', 'پنل در حال راه‌اندازی است. پس از فعال‌شدن می‌توانید از آن استفاده کنید.'),
-    'suspended': ('این پنل موقتاً معلق است',
-                  'تا رفع تعلیق، کار با شرکت‌کنندگان و نتایج ممکن نیست. برای اطلاعات بیشتر با پشتیبانی تماس بگیرید.'),
+    'suspended': ('این پنل موقتاً متوقف شده است',
+                  'تیم استعدادیاب این پنل را موقتاً متوقف کرده است. در این مدت دعوت تازه فرستاده نمی‌شود و کسی پاسخ‌دهی تازه‌ای '
+                  'را شروع نمی‌کند. هر شرکت‌کننده نتیجهٔ سنجه‌هایی را که تمام کرده همچنان در حساب خودش می‌بیند. '
+                  'برای دانستن دلیل و ادامهٔ کار با پشتیبانی تماس بگیرید.'),
     'closed': ('این پنل بسته شده است',
                'پنل بسته شده و دعوت یا مشاهدهٔ نتیجهٔ تازه ممکن نیست. برای اطلاعات بیشتر با پشتیبانی تماس بگیرید.'),
-    'verify': ('احراز صلاحیت حرفه‌ای شما در حال بررسی است',
-               'تا پایان بررسی شمارهٔ پروانه یا نظام روان‌شناسی و مشاوره، به شرکت‌کنندگان و نتایج دسترسی ندارید. '
-               'پس از تأیید، همین صفحه کامل می‌شود.'),
 }
 
 
@@ -27,13 +26,10 @@ def _page_state(member):
     ws = member.workspace_id
     if ws.state in ('draft', 'suspended', 'closed'):
         return ws.state
-    if member._ts_unverified_pro():
-        return 'verify'
     return None
 
 
-OLD_ERRORS = {'pending': 'پنل در انتظار تأیید است؛ دعوت شرکت‌کنندهٔ واقعی پس از تأیید ممکن می‌شود.',
-              'form': 'نام و سنجه را کامل کنید.', 'rule': 'این تغییر مجاز نیست.'}
+OLD_ERRORS = {'form': 'نام و سنجه را کامل کنید.', 'rule': 'این تغییر مجاز نیست.'}
 
 
 class TsPanelWorkspace(TsOrg):
@@ -71,7 +67,7 @@ class TsPanelWorkspace(TsOrg):
     def invite_page(self, token, **kw):
         res = super().invite_page(token, **kw)
         a = request.env['ts.assignment'].sudo().search([('token', '=', token)], limit=1)   # ts-scope-ok: the secret token is the key of a public link
-        if a and not a.user_id and a.invite_state() == 'ok':
+        if a and not a.user_id and a.workspace_id.state == 'active' and a.invite_state() == 'ok':
             a.action_mark_opened()   # first visit of the link; a link preview may count too, so the panel says «بازشده», not «خوانده‌شده»
         return res
 
@@ -88,10 +84,9 @@ class TsPanelWorkspace(TsOrg):
         return render_in_shell('ts_panel.dashboard', member, 'home', 'پیشخوان',
                                attention=member.dash_attention(), tiles=member.dash_tiles(days), funnel=member.dash_funnel(days),
                                workload=member.dash_workload(), checklist=member.dash_checklist(), days=days, periods=PERIODS,
-                               is_new=is_new, total=sum(counts.values()), gated=ws.gated,
+                               is_new=is_new, total=sum(counts.values()),
                                can_invite=member.can_act() and member.has_perm('invites:create'),
                                can_dismiss=member.has_perm('members:invite'),
-                               rejected=ws.rejected_on, rejection_note=ws.rejection_note,
                                people=people_word(ws.purpose), person_a='مراجعی' if ws.purpose == 'clinical' else 'شرکت‌کننده‌ای')
 
 

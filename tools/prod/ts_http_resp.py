@@ -15,7 +15,7 @@ OWN, CA, CB = ('ts.resp.%s.http@example.invalid' % n for n in ('owner', 'ca', 'c
 pw = {u: ensure_user(u) for u in (OWN, CA, CB)}
 out = shell(r'''
 ws = env['ts.workspace'].search([('name', '=', 'مؤسسهٔ آزمون HTTP')], limit=1)
-assert ws and ws.state in ('pilot', 'active'), 'run ts_http_edu.py first'
+assert ws and ws.state == 'active', 'run ts_http_edu.py first'
 M = env['ts.workspace.member']
 def mem(login, role):
     u = env['res.users'].search([('login', '=', login)])

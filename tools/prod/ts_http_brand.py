@@ -40,8 +40,8 @@ name = 'پنل آزمون هویت وب'
 org = env['res.partner'].search([('name', '=', name)], limit=1) or env['res.partner'].create({'name': name, 'is_company': True})
 ws = env['ts.workspace'].search([('partner_id', '=', org.id)], limit=1) or env['ts.workspace'].create(
     {'name': name, 'purpose': 'clinical', 'partner_id': org.id, 'escalation_contact_id': org.id})
-ws.write({'approved_on': '2026-01-01 00:00:00', 'public_name': False, 'sms_name': False, 'brand_color': False, 'contact_line': False})
-ws.state = 'pilot'
+ws.write({'public_name': False, 'sms_name': False, 'brand_color': False, 'contact_line': False})
+ws.state = 'active'
 org.image_1920 = False                               # set-up step 1 stays open (name without logo) for section 7
 env.company.sudo().write({'kv_enabled': False})      # nothing is sent by this suite (the SMS suites enable their fake gateway)
 def member(n, role, lic=None):
@@ -214,8 +214,8 @@ check('participant report: the counselor\'s contact data never appears', 'ts.bra
 bad_img = [m for m in re.findall(r'src="data:image/([a-z+]+);base64,([A-Za-z0-9+/]{8})', body)
            if (m[0] == 'png' and not m[1].startswith('iVBOR')) or (m[0] == 'jpeg' and not m[1].startswith('/9j/'))]
 check('participant report: every header image is a data URI whose bytes match its type (no broken logo/photo)', not bad_img, str(bad_img))
-check('participant report: the counselor is labelled «مشاور شما», the licence «(تأییدشده)», no photo -> monogram',
-      'مشاور شما' in body and '(تأییدشده)' in body and 'tsbr-mono' in body)
+check('participant report: the counselor is labelled «مشاور شما», the licence with the «پروانهٔ تأییدشده» badge, no photo -> monogram',
+      'مشاور شما' in body and 'پروانهٔ تأییدشده' in body and 'tsbr-mono' in body)
 check('participant report: one PDF button (the browser-print button beside it is hidden by brand.scss)',
       body.count('tsbr-pdf') == 1)
 st, body = get(c1, W + '/clients/%s/r/%s' % (CL, AT))
@@ -287,8 +287,8 @@ check('owner dashboard: «راه‌اندازی مرکز» with «۲ از ۴ ا�
 check('owner dashboard: the generic checklist is replaced', 'گام‌های راه‌اندازی' not in body)
 check('owner dashboard: open steps always shown; the phone toggle folds only the done steps (aria-expanded + aria-controls)',
       'id="tsob-open"' in sec and 'aria-controls="tsob-more"' in sec and 'aria-expanded=' in sec and 'id="tsob-more"' in sec)
-check('owner dashboard: the EOT team\'s part (panel approval, counselor licences) shown as status lines',
-      'تأیید پنل' in sec and 'پروانهٔ مشاوران' in sec)
+check('owner dashboard: no panel approval line any more; the licence badges are an information line (onb1)',
+      'تأیید پنل' not in sec and 'نشان «پروانهٔ تأییدشده»' in sec)
 check('owner dashboard: one current step with the only primary button of the list', sec.count('tsob-step--current') == 1
       and sec.count('ts-btn--primary') == 1, str(sec.count('ts-btn--primary')))
 links = step_links(sec)

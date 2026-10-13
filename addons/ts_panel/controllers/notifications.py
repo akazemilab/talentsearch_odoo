@@ -15,7 +15,7 @@ PAGE = 50
 PREF_GROUPS = [
     ('mine', 'سنجه‌های خودم', ('invite', 'reminder', 'result_ready_participant', 'data_request_update')),
     ('people', 'شرکت‌کنندگان پنل', ('result_ready_staff', 'shared_with_panel', 'share_revoked', 'client_handover_request')),
-    ('admin', 'مدیریت پنل', ('panel_approved', 'panel_rejected', 'panel_suspended', 'member_joined', 'export_ready', 'import_done',
+    ('admin', 'مدیریت پنل', ('panel_suspended', 'member_joined', 'export_ready', 'import_done',
                                  'low_balance')),
     ('security', 'امنیت', ('support_access_opened', 'panel_transferred', 'panel_closed')),
 ]
@@ -39,7 +39,8 @@ def _display_title(row, user):
 
 
 def _safe_internal(url):
-    return url if url and url.startswith('/') and not url.startswith('//') else '/my/notifications'
+    from odoo.addons.ts_core.safe_url import local_path      # the one return-path validator (onb1)
+    return local_path(url, '/my/notifications')
 
 
 class TsPanelNotifications(http.Controller):
@@ -56,6 +57,13 @@ class TsPanelNotifications(http.Controller):
         return request.render('ts_panel.notifications', {
             'jalali': jalali, 'fa': fa_digits, 'rows': rows, 'items': items, 'unread': N._unread_count(user), 'only_unread': only_unread,
             'flash': request.session.pop('ts_flash', None), 'page_name': 'ts_panel_notifications'})
+
+    @http.route('/my/workspaces/<int:ws_id>/notifications', type='http', auth='user', website=True, methods=['GET'],
+                sitemap=False)
+    def panel_center(self, ws_id, **kw):
+        """Notifications are personal (one center for every panel): the panel address leads there instead of a 404."""
+        _ts_site_or_404()
+        return request.redirect('/my/notifications')
 
     @http.route('/my/notifications/read_all', type='http', auth='user', website=True, methods=['POST'], sitemap=False)
     def read_all(self, **post):

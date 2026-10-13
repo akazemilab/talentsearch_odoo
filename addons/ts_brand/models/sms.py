@@ -303,7 +303,7 @@ def _notice_record(row):
     t, ws = row.type, row.workspace_id
     if t == 'result_ready_staff':
         return 'ts_brand.sms_result_ready_staff', row
-    if t in ('panel_approved', 'panel_rejected', 'panel_suspended') and ws:
+    if t == 'panel_suspended' and ws:
         return 'ts_brand.sms_' + t, ws
     if t == 'low_balance' and ws:
         return 'ts_brand.sms_low_balance', row.env['ts.wallet'].sudo()._for_workspace(ws)
@@ -360,7 +360,7 @@ class TsPhoneOtpSms(models.Model):
         rec = self.env[model].sudo().search([('phone', '=', phone)], limit=1) if phone else self.env[model]
         return self.env['ts.brand'].sms_render(
             'ts_brand.sms_otp_signup' if signup else 'ts_brand.sms_otp_phone', rec,
-            values={'code': code, 'minutes': fa(TTL_MIN)}, latin_ok=True,
+            values={'code': code, 'minutes': fa(TTL_MIN), 'host': self._ts_otp_host()}, latin_ok=True,
             fallback=lambda: super(TsPhoneOtpSms, self)._ts_otp_body(code, phone))
 
 

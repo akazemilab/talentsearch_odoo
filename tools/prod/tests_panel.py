@@ -52,7 +52,7 @@ u_cl = puser('clin', '09129990003')
 # ---- creation: education is live at once
 before_aud = AUD.search_count([('event_type', '=', 'workspace.self_create')])
 ws1 = W.ts_panel_create(u1, 'TSP مدرسه', 'school', terms=True)
-check('education panel is active at once', ws1.state == 'active' and not ws1.gated and ws1.purpose == 'education')
+check('education panel is active at once', ws1.state == 'active' and ws1.self_service and ws1.purpose == 'education')
 own = M.search([('workspace_id', '=', ws1.id)])
 check('creator is the owner', len(own) == 1 and own.role == 'owner' and own.user_id == u1 and own.can_act())
 check('terms version + time + user recorded', ws1.terms_version and ws1.terms_accepted_on and ws1.terms_accepted_by_id == u1)
@@ -62,22 +62,23 @@ check('self-create and terms accept are audit-logged',
 check('company partner is a company', ws1.partner_id.is_company)
 check('education owner can invite participants at once', own.can_invite_participants())
 
-# ---- creation: organization = limited pending mode
-msgs_before = env['mail.message'].search_count([('model', '=', 'ts.workspace')])
+# ---- creation: organization is active at once too (onb1: no approval)
+mails_before = env['mail.mail'].sudo().search_count([])
 ws2 = W.ts_panel_create(u2, 'TSP سازمان', 'org', terms=True)
 o2 = M.search([('workspace_id', '=', ws2.id)])
-check('organization panel starts in limited pilot and is gated', ws2.state == 'pilot' and ws2.gated)
-check('pending owner can act (build panel) but not invite participants', o2.can_act() and o2.can_invite() and not o2.can_invite_participants())
+check('organization panel is active at once (no approval)', ws2.state == 'active' and ws2.self_service and not hasattr(ws2, 'gated'))
+check('the owner can invite participants at once', o2.can_act() and o2.can_invite() and o2.can_invite_participants())
 inst = env['ts.instrument'].search([('state', '=', 'published'), ('purpose', '=', 'employment')], limit=1)
-check('participant invite refused while pending approval',
-      raises(lambda: env['ts.assignment'].create({'workspace_id': ws2.id, 'instrument_id': inst.id, 'invitee_name': 'x'})))
-check('platform admins are notified of the pending panel',
-      env['mail.message'].search_count([('model', '=', 'ts.workspace')]) > msgs_before)
+check('participant invite works at once',
+      not raises(lambda: env['ts.assignment'].create({'workspace_id': ws2.id, 'instrument_id': inst.id, 'invitee_name': 'x'})))
+check('the new panel leaves a back-office log note and e-mails nobody',
+      env['mail.message'].search_count([('model', '=', 'ts.workspace'), ('res_id', '=', ws2.id), ('subtype_id', '=', env.ref('mail.mt_note').id)]) >= 1
+      and env['mail.mail'].sudo().search_count([]) == mails_before)
 
 # ---- creation: clinic needs the escalation acceptance
 check('clinic panel refused without escalation acceptance', raises(lambda: W.ts_panel_create(u3, 'TSP کلینیک', 'clinic', terms=True)))
 ws3 = W.ts_panel_create(u3, 'TSP کلینیک', 'clinic', terms=True, escalation_ok=True)
-check('clinic panel pending with escalation contact', ws3.gated and ws3.state == 'pilot' and ws3.escalation_contact_id == u3.partner_id)
+check('clinic panel active at once with escalation contact', ws3.state == 'active' and ws3.escalation_contact_id == u3.partner_id)
 
 # ---- creation: validation
 check('terms are required', raises(lambda: W.ts_panel_create(u4, 'TSP بدون شرایط', 'school', terms=False)))
@@ -87,7 +88,7 @@ check('solo needs a valid work type', raises(lambda: W.ts_panel_create(u4, 'TSP 
 ws4 = W.ts_panel_create(u4, 'TSP مستقل', 'solo', solo_as='counselor', terms=True)
 check('solo counselor = one-person education panel', ws4.purpose == 'education' and ws4.state == 'active' and ws4.member_count == 1)
 W.ts_panel_create(u4, 'TSP مستقل ۲', 'solo', solo_as='hr', terms=True)
-W.ts_panel_create(u4, 'TSP مستقل ۳', 'solo', solo_as='psychologist', terms=True, escalation_ok=True)
+W.ts_panel_create(u4, 'TSP مستقل ۳', 'solo', solo_as='psychologist', terms=True, escalation_ok=True, license_number='PSY-4')
 check('more than 3 panels a day by one person refused', raises(lambda: W.ts_panel_create(u4, 'TSP چهارم', 'school', terms=True)))
 pub = env['res.users'].browse(env.ref('base.public_user').id)
 check('public visitor cannot create a panel', raises(lambda: W.ts_panel_create(pub, 'TSP عمومی', 'school', terms=True)))
@@ -135,35 +136,33 @@ for i in range(30):
         break
 check('pending invite cap is enforced', i < 25)
 
-# ---- clinician invite needs a licence and starts unverified
+# ---- clinician invite: the licence is optional and only a badge (onb1)
 oc = M.search([('workspace_id', '=', ws3.id)])
 inv_c = I.ts_create(oc, 'clinician', phone_raw='09129990003')
-check('clinician accept needs a licence number', raises(lambda: inv_c.action_accept(u_cl)))
-mc = inv_c.action_accept(u_cl, license_number='TEST-99')
-check('clinician joins unverified (cannot act yet)', mc.verification_state == 'pending' and not mc.can_act())
+mc = inv_c.action_accept(u_cl)
+check('clinician joins without a licence number and can work at once', mc.verification_state == 'not_required' and mc.can_act()
+      and mc.has_perm('results:clinical'))
+mc.write({'license_number': 'TEST-99'})
+check('a licence number added later starts unverified, access unchanged', mc.verification_state == 'pending' and mc.can_act())
 
 # ---- last owner can never be removed
 check('the only owner cannot be deactivated', raises(lambda: own.write({'active': False})))
 check('the only owner cannot be deleted', raises(lambda: own.unlink()))
 
 # ---- platform admin side
-check('pending queue action exists', bool(env.ref('ts_core.ts_workspace_pending_action')))
-ws2.rejection_note = 'مدارک ناقص است'
-ws2.action_reject()
-check('reject records time + note, panel stays limited', ws2.rejected_on and ws2.gated and ws2.state == 'pilot')
-check('reject audit-logged', AUD.search_count([('event_type', '=', 'workspace.reject'), ('workspace_id', '=', ws2.id)]) == 1)
-ws2.action_approve()
-check('approve lifts the gate and clears rejection', not ws2.gated and not ws2.rejected_on and ws2.approved_on)
-check('after approval the owner can invite participants', o2.can_invite_participants())
-a = env['ts.assignment'].create({'workspace_id': ws2.id, 'instrument_id': inst.id, 'invitee_name': 'x'})
-check('participant invite works after approval', a.state == 'invited')
+act = env.ref('ts_core.ts_workspace_pending_action')
+check('the «پنل‌های تازه (۷ روز)» list exists and opens on the 7-day filter',
+      act.name == 'پنل‌های تازه (۷ روز)' and 'search_default_new7' in (act.context or ''))
+check('approve / reject are gone', not hasattr(ws2, 'action_approve') and not hasattr(ws2, 'action_reject'))
+a = env['ts.assignment'].create({'workspace_id': ws2.id, 'instrument_id': inst.id, 'invitee_name': 'x2'})
+check('participant invite works without any approval', a.state == 'invited')
 ws2.action_suspend()
 check('suspend stops the panel', ws2.state == 'suspended' and not o2.can_act())
 check('suspended panel refuses new participants', raises(lambda: env['ts.assignment'].create({'workspace_id': ws2.id, 'instrument_id': inst.id, 'invitee_name': 'y'})))
 check('suspend audit-logged', AUD.search_count([('event_type', '=', 'workspace.suspend'), ('workspace_id', '=', ws2.id)]) == 1)
 ws2.action_resume()
-check('resume returns to pilot', ws2.state == 'pilot' and o2.can_act())
-check('a panel owner cannot approve', raises(lambda: ws3.with_user(u3).action_approve(), (UserError, ValidationError, Exception)))
+check('resume returns to active', ws2.state == 'active' and o2.can_act())
+check('a panel owner cannot suspend', raises(lambda: ws3.with_user(u3).action_suspend(), (UserError, ValidationError, Exception)))
 
 
 # ---- participant sends a finished self-taken result to a counselor panel (by code)

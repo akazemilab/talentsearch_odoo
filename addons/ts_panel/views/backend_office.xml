@@ -14,7 +14,7 @@
                 <field name="ts_open_invites"/>
                 <field name="ts_done_30d"/>
                 <field name="ts_last_activity"/>
-                <field name="ts_pending_days" optional="hide"/>
+                <field name="ts_age_days" optional="hide"/>
             </list>
         </field>
     </record>
@@ -25,7 +25,7 @@
         <field name="inherit_id" ref="ts_core.ts_workspace_view_search"/>
         <field name="arch" type="xml">
             <xpath expr="//filter[@name='live']" position="after">
-                <filter name="suspended" string="تعلیق‌شده" domain="[('state', '=', 'suspended')]"/>
+                <filter name="suspended" string="متوقف" domain="[('state', '=', 'suspended')]"/>
             </xpath>
         </field>
     </record>
@@ -49,12 +49,16 @@
         <field name="name">ts.workspace.pending.list</field>
         <field name="model">ts.workspace</field>
         <field name="arch" type="xml">
-            <list create="0" delete="0" decoration-danger="ts_pending_days &gt; 7">
+            <list create="0" delete="0" decoration-warning="state == 'suspended'">
+                <field name="create_date" string="تاریخ ساخت"/>
                 <field name="name"/>
                 <field name="purpose"/>
                 <field name="state"/>
-                <field name="create_date"/>
-                <field name="ts_pending_days"/>
+                <field name="self_service"/>
+                <field name="owner_user_id"/>
+                <field name="ts_member_count"/>
+                <field name="ts_open_invites"/>
+                <field name="ts_done_30d"/>
                 <field name="terms_version"/>
                 <field name="terms_accepted_on"/>
                 <field name="terms_accepted_by_id"/>

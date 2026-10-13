@@ -33,8 +33,7 @@ def panel(purpose, name, approved=True):
     org = env['res.partner'].create({'name': name, 'is_company': True})
     org.write({'is_company': True})
     ws = W.create({'name': name, 'purpose': purpose, 'partner_id': org.id})
-    ws.write({'approved_on': '2026-01-01 00:00:00' if approved else False})
-    ws.state = 'pilot'
+    ws.state = 'active'
     return ws
 
 
@@ -163,10 +162,10 @@ edu.sudo().onboarding_dismissed_on = now
 check('dismissing hides it', owner.dash_checklist() == [])
 edu.sudo().onboarding_dismissed_on = False
 
-# ---- gated panel line, the page never carries a score or band
-pend = panel('employment', 'پنل S12 در انتظار', approved=False)
+# ---- no approval line any more (onb1), the page never carries a score or band
+pend = panel('employment', 'پنل S12 تازه')
 pown = member(pend, 'owner')
-check('a panel awaiting approval tells its owner', line(pown, 'gated') is not None)
+check('a new panel has no «awaiting approval» line', line(pown, 'gated') is None and line(pown, 'verify') is None)
 blob = str([owner.dash_attention(), owner.dash_tiles(30), owner.dash_funnel(30), owner.dash_checklist()]).lower()
 check('no dashboard block carries a score or a band', not any(w in blob for w in ('score', 'band', 'نمره', 'سطح کم', 'سطح زیاد')))
 

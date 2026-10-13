@@ -20,7 +20,7 @@ class TsPanelCampaignJoin(TsOrg):
     def _campaign(self, token):
         _ts_site_or_404()
         c = request.env['ts.campaign'].sudo().search([('open_token', '=', token), ('kind', '=', 'open_link')], limit=1)   # ts-scope-ok: the secret token is the key of a public link
-        if not c or c.workspace_id.state not in ('pilot', 'active'):
+        if not c or c.workspace_id.state != 'active':
             raise request.not_found()
         return c
 
@@ -35,7 +35,7 @@ class TsPanelCampaignJoin(TsOrg):
                 [('campaign_id', '=', c.id), ('client_id.user_id', '=', user.id)], limit=1)   # ts-scope-ok: campaign_id is the panel's own
         return request.render('ts_panel.campaign_join', {
             'c': c, 'ws': c.workspace_id, 'inst': c.instrument_id, 'public': user._is_public(), 'fa': fa_digits,
-            'flash': request.session.pop('ts_flash', None), 'state': st, 'msg': JOIN_MSG.get(st), 'mine': mine, 'user_name': (user.name or '') if not user._is_public() else '',
+            'flash': request.session.pop('ts_flash', None), 'state': st, 'msg': JOIN_MSG.get(st), 'mine': mine, 'user_name': user.partner_id.ts_known_name() if not user._is_public() else '',
             **self._auth_urls('/c/%s' % token)})
 
     @http.route('/c/<string:token>/join', type='http', auth='user', website=True, methods=['POST'], sitemap=False)

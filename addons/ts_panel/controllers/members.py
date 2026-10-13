@@ -10,7 +10,6 @@ from .base import (flash_error, flash_ok, forbidden, member_or_404, need_reauth,
 
 MEMBER_STATE = {
     'active': ('فعال', 'ts-pill--ok'),
-    'awaiting': ('در انتظار احراز صلاحیت', 'ts-pill--warn'),
     'inactive': ('غیرفعال', 'ts-pill--neutral'),
 }
 

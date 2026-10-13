@@ -9,9 +9,9 @@ TYPES = [
     ('result_ready_staff', 'نتیجهٔ تازه در پنل شما'),             # clinic phase 5 (docs/clinic/05_sms_texts.md section 3)
     ('shared_with_panel', 'نتیجه با پنل به اشتراک گذاشته شد'),
     ('share_revoked', 'اشتراک‌گذاری یک نتیجه قطع شد'),
-    ('panel_approved', 'پنل تأیید شد'),
-    ('panel_rejected', 'پنل تأیید نشد'),
-    ('panel_suspended', 'پنل معلق شد'),
+    ('panel_approved', 'پنل تأیید شد'),          # history only: panels need no approval since onb1
+    ('panel_rejected', 'پنل تأیید نشد'),         # history only
+    ('panel_suspended', 'پنل موقتاً متوقف شد'),
     ('member_joined', 'عضو تازه به پنل پیوست'),
     ('client_handover_request', 'درخواست سپردن شرکت‌کننده'),
     ('export_ready', 'فایل خروجی آماده است'),
@@ -27,13 +27,11 @@ TYPES = [
 TITLES = dict(TYPES)
 
 # Types whose SMS leg is controlled by the staff switch and the person's own opt-in (preferences page).
-SMS_STAFF_TYPES = ('result_ready_staff', 'panel_approved', 'panel_rejected', 'panel_suspended', 'low_balance', 'cap_reached')
+SMS_STAFF_TYPES = ('result_ready_staff', 'panel_suspended', 'low_balance', 'cap_reached')
 
 SMS_BODIES = {
     'result_ready_staff': 'در استعدادیاب نتیجهٔ یکی از شرکت‌کنندگان پنل شما آماده است. برای دیدن آن وارد پنل شوید:\n%(url)s',
-    'panel_approved': 'پنل شما در استعدادیاب تأیید شد. برای ادامه وارد پنل شوید:\n%(url)s',
-    'panel_rejected': 'درخواست پنل شما در استعدادیاب تأیید نشد. جزئیات را در پنل ببینید:\n%(url)s',
-    'panel_suspended': 'پنل شما در استعدادیاب تعلیق شد. جزئیات را در پنل ببینید:\n%(url)s',
+    'panel_suspended': 'پنل شما در استعدادیاب موقتاً متوقف شد. جزئیات را در پنل ببینید:\n%(url)s',
     'reminder': 'یادآوری: دعوت شما به یک سنجش در استعدادیاب هنوز باز است. پذیرش کاملاً اختیاری است:\n%(url)s',
     # Fallbacks only: with ts_brand installed every body comes from its sms.template (docs/clinic/05_sms_texts.md).
     # low_balance / cap_reached keys: panel, amount, url (a missing key renders empty, see notify._Fill)
@@ -50,7 +48,7 @@ PREF_LABELS = {
     'share_revoked': 'قطع اشتراک‌گذاری نتیجه',
     'panel_approved': 'تأیید پنل',
     'panel_rejected': 'رد پنل',
-    'panel_suspended': 'تعلیق پنل',
+    'panel_suspended': 'توقف موقت پنل',
     'member_joined': 'پیوستن عضو تازه',
     'client_handover_request': 'درخواست سپردن شرکت‌کننده',
     'export_ready': 'آماده‌شدن فایل خروجی',

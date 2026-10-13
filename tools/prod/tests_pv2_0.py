@@ -26,8 +26,7 @@ v = inst.current_version_id
 owner, student = puser('owner'), puser('student')
 org = env['res.partner'].create({'name': 'مؤسسهٔ آزمون S0', 'is_company': True})
 ws = env['ts.workspace'].create({'name': 'مؤسسهٔ آزمون S0', 'purpose': 'education', 'partner_id': org.id})
-ws.write({'approved_on': '2026-01-01 00:00:00'})
-ws.state = 'pilot'
+ws.state = 'active'
 env['ts.workspace.member'].create({'workspace_id': ws.id, 'user_id': owner.id, 'role': 'owner'})
 a = env['ts.assignment'].sudo().create({
     'workspace_id': ws.id, 'instrument_id': inst.id, 'invitee_name': 'دانش‌آموز آزمون', 'invited_by_id': owner.id})

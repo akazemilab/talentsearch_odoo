@@ -59,8 +59,7 @@ def panel(purpose='clinical', mode='prepaid', name=None):
     if purpose == 'clinical':
         vals['escalation_contact_id'] = org.id
     ws = W.create(vals)
-    ws.write({'approved_on': '2026-01-01 00:00:00'})
-    ws.state = 'pilot'
+    ws.state = 'active'
     if mode == 'prepaid':
         ws.billing_mode = 'prepaid'
     return ws

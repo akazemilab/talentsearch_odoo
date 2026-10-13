@@ -27,8 +27,7 @@ def panel(purpose):
     org.write({'is_company': True})
     ws = W.create({'name': org.name, 'purpose': purpose, 'partner_id': org.id,
                    'escalation_contact_id': org.id if purpose == 'clinical' else False})
-    ws.write({'approved_on': '2026-01-01 00:00:00'})
-    ws.state = 'pilot'
+    ws.state = 'active'
     return ws
 
 
@@ -60,7 +59,8 @@ check('menu per role: owner has settings, admin and counselor do not',
       and core['admin'] == ['home', 'clients', 'groups', 'invites', 'members', 'help'] and core['counselor'] == ['home', 'clients', 'groups', 'invites', 'help'], str(keys))
 cl = panel('clinical')
 unv = M.create({'workspace_id': cl.id, 'user_id': puser().id, 'role': 'clinician'})
-check('menu for an unverified clinician: dashboard and help only', [i['key'] for i in build_menu(unv, 'home')] == ['home', 'help'])
+check('menu for a clinician without a licence badge: the full clinician menu (onb1, licence is a badge)',
+      {'home', 'clients', 'invites', 'help'} <= set(i['key'] for i in build_menu(unv, 'home')))
 check('current item is flagged', [i['key'] for i in build_menu(m1, 'settings') if i['current']] == ['settings'])
 
 print('SUMMARY %d/%d passed' % (sum(ok for _, ok in results), len(results)))

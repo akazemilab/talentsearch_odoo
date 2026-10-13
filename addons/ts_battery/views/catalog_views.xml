@@ -49,8 +49,9 @@
         <field name="arch" type="xml">
             <form>
                 <header>
-                    <button name="action_verify" type="object" string="تأیید صلاحیت" class="btn-primary" invisible="verification_state != 'pending'" groups="ts_core.group_ts_manager"/>
-                    <field name="verification_state" widget="statusbar" statusbar_visible="pending,verified"/>
+                    <button name="action_verify" type="object" string="تأیید پروانه" class="btn-primary" invisible="verification_state not in ('pending', 'rejected')" groups="ts_core.group_ts_manager"/>
+                    <button name="action_unverify" type="object" string="پروانه تأیید نشد" invisible="verification_state != 'pending'" groups="ts_core.group_ts_manager"/>
+                    <field name="verification_state" widget="statusbar" statusbar_visible="not_required,pending,verified"/>
                 </header>
                 <sheet>
                     <group>

@@ -42,8 +42,7 @@ MENU = [
 
 STATE_LABELS = {'invited': 'دعوت‌شده', 'opened': 'بازشده', 'expired': 'منقضی', 'accepted': 'پذیرفته', 'in_progress': 'در حال پاسخ',
                 'done': 'تکمیل‌شده', 'declined': 'ردشده', 'withdrawn': 'لغوشده'}
-GATED_LABEL = 'در انتظار تأیید'      # a pilot panel that is still gated (glossary §9-6); an approved pilot panel is «فعال»
-PANEL_STATE_LABELS = {'draft': 'پیش‌نویس', 'pilot': GATED_LABEL, 'active': 'فعال', 'suspended': 'معلق', 'closed': 'بسته'}
+PANEL_STATE_LABELS = {'draft': 'پیش‌نویس', 'active': 'فعال', 'suspended': 'متوقف', 'closed': 'بسته'}
 
 # One sentence per role (and purpose where it differs): what this member can see and do. Shown in the shell next to
 # the role, which links to /help/roles#role-<key> (audit G5 PT-2). Presentation only: access is decided elsewhere.
@@ -52,8 +51,8 @@ ROLE_SCOPE = {
     'admin': 'کارهای اجرایی پنل را پیش می‌برید؛ نتیجه‌ها را نمی‌بینید، فقط وضعیت دعوت‌ها را.',
     ('counselor', 'education'): 'دانش‌آموزانی را که کارشناس مسئول آن‌ها هستید و فهرست «بدون کارشناس» را می‌بینید؛ نتیجه را در سطح مشاور می‌خوانید.',
     'counselor': 'شرکت‌کنندگانی را که کارشناس مسئول آن‌ها هستید می‌بینید؛ نتیجه را در سطح مشاور می‌خوانید.',
-    'clinic_director': 'همهٔ شرکت‌کنندگان پنل را می‌بینید و اعضا و دعوت‌ها را اداره می‌کنید؛ گزارش کامل ویژهٔ مشاور پس از احراز صلاحیت باز می‌شود.',
-    'clinician': 'فقط شرکت‌کنندگانی را که کارشناس مسئول آن‌ها هستید می‌بینید؛ گزارش کامل ویژهٔ مشاور پس از احراز صلاحیت باز می‌شود.',
+    'clinic_director': 'همهٔ مراجعان پنل را می‌بینید و اعضا و دعوت‌ها را اداره می‌کنید؛ گزارش کامل ویژهٔ مشاور را با اجازهٔ مراجع می‌خوانید.',
+    'clinician': 'فقط مراجعانی را که مشاورشان هستید می‌بینید؛ گزارش کامل ویژهٔ مشاور را با اجازهٔ مراجع می‌خوانید.',
     'hr_admin': 'همهٔ شرکت‌کنندگان را می‌بینید و اعضا و دعوت‌ها را اداره می‌کنید؛ از نتیجه فقط خلاصه (سطح هر عامل) دیده می‌شود.',
     'hiring_manager': 'شرکت‌کنندگانی را که کارشناس مسئول آن‌ها هستید می‌بینید؛ از نتیجه فقط خلاصه (سطح هر عامل، بدون نمره و پاسخ).',
     'reviewer': 'از نتیجهٔ شرکت‌کنندگان فقط سطح هر عامل را می‌بینید؛ نمره و پاسخ‌ها نمایش داده نمی‌شود و دعوت نمی‌فرستید.',
@@ -65,20 +64,7 @@ def role_scope(role, purpose):
 
 
 def panel_state_label(ws):
-    if ws.state == 'pilot' and not ws.gated:
-        return PANEL_STATE_LABELS['active']     # approved pilot panel
     return PANEL_STATE_LABELS.get(ws.state, ws.state)
-
-
-def gated_note(member):
-    """The one-line notice of a gated panel, worded for what this member can do (None when the panel is not gated)."""
-    ws = member.workspace_id
-    if not ws.gated:
-        return None
-    if member.has_perm('invites:create') or member.has_perm('members:invite'):
-        return ('این پنل در انتظار تأیید تیم استعدادیاب است. تا آن زمان می‌توانید پنل را کامل کنید و همکاران را دعوت کنید؛ '
-                'دعوت شرکت‌کننده و دیدن نتیجه پس از تأیید باز می‌شود.')
-    return 'این پنل در انتظار تأیید تیم استعدادیاب است؛ کار با شرکت‌کنندگان پس از تأیید شروع می‌شود.'
 
 
 def deny(member, why, **detail):
@@ -143,7 +129,7 @@ def render_in_shell(template, member, active, title, status=None, **vals):
         member=member, ws=ws, active=active, menu=build_menu(member, active), fa=fa_digits, jalali=jalali,
         role_label=ROLE_LABELS.get(member.role, member.role),
         role_scope=role_scope(member.role, ws.purpose), role_help_url='/help/roles#role-%s' % member.role,
-        panel_state=panel_state_label(ws), panel_gated=bool(ws.gated), gated_note=gated_note(member),
+        panel_state=panel_state_label(ws),
         back_url=None, back_label=None,
         flash_ok=ok, flash_err=err,
         title='%s · %s' % (title, ws.name), page_title=title, page_name='ts_panel_shell')

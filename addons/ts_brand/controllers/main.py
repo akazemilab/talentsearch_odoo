@@ -203,6 +203,8 @@ class TsBrandMembers(TsBatteryMembers):
         vals = {'title': post.get('title', ''), 'show_on_report': bool(post.get('show_on_report'))}
         if own and 'report_bio' in post:
             vals['report_bio'] = post.get('report_bio', '')
+        if own and 'license_number' in post:
+            vals['license_number'] = post.get('license_number', '')
         try:
             changed = m.ts_brand_save(
                 me, vals,

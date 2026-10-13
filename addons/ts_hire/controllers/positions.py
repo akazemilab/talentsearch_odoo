@@ -204,7 +204,9 @@ class TsHirePositions(http.Controller):
                                can_invite=me.has_perm('invites:create') and p.state == 'open' and me.can_act(),
                                can_fair=me.has_perm('reports:group'), base=_base(ws_id, p.id),
                                back_url=_base(ws_id), back_label='موقعیت‌های شغلی',
-                               email_on=request.env['ts.assignment'].sudo()._ts_email_enabled(), credit=CREDIT)
+                               email_on=request.env['ts.assignment'].sudo()._ts_email_enabled(), credit=CREDIT,
+                               quota_note=me.workspace_id.ts_invite_quota_note() if me.can_act() else None,
+                               people_draft=request.session.pop('tsh_people_draft', None))
 
     @http.route('/my/workspaces/<int:ws_id>/positions/<int:pid>/state', type='http', auth='user', website=True,
                 sitemap=False, methods=['POST'])
@@ -248,11 +250,21 @@ class TsHirePositions(http.Controller):
             flash_error('این مجموعهٔ ارزیابی برای پنل شما فعال نشده است؛ از مدیر پنل یا پشتیبانی بخواهید آن را فعال کند.')
             return request.redirect(back)
         people, errors = _parse_people(post.get('people'))
+        # on any refusal below the typed lines come back in the form (nothing is lost, onb1)
+        draft = (post.get('people') or '')[:20000]
         if errors or not people:
+            request.session['tsh_people_draft'] = draft
             flash_error(' '.join(errors) or 'دست‌کم یک داوطلب وارد کنید: در هر سطر نام، موبایل و ایمیل.')
             return request.redirect(back + '#tsh-invite')
         if len(people) > 50:
+            request.session['tsh_people_draft'] = draft
             flash_error('در هر بار حداکثر ۵۰ داوطلب را دعوت کنید.')
+            return request.redirect(back + '#tsh-invite')
+        try:
+            me.workspace_id.sudo().ts_check_invite_quota(len(people))
+        except UserError as e:
+            request.session['tsh_people_draft'] = draft
+            flash_error(str(e.args[0] if e.args else e))
             return request.redirect(back + '#tsh-invite')
         extra = post.get('extra_time') if post.get('extra_time') in ('1.0', '1.25', '1.5') else '1.0'
         want_sms, want_email = post.get('send_sms') == '1', post.get('send_email') == '1'
@@ -280,6 +292,7 @@ class TsHirePositions(http.Controller):
                     if want_email and x['email']:
                         to_mail.append(a)
         except (UserError, ValidationError) as e:
+            request.session['tsh_people_draft'] = draft
             flash_error(str(e.args[0] if e.args else e))
             return request.redirect(back + '#tsh-invite')
         for a in to_mail:

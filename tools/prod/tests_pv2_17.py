@@ -43,8 +43,7 @@ puser = U.create({'name': 'p17', 'login': 'ts.pv2s17.p@example.invalid', 'email'
 org = env['res.partner'].create({'name': 'S17 org', 'is_company': True})
 org.write({'is_company': True})
 ws = W.create({'name': 'S17 org', 'purpose': 'education', 'partner_id': org.id})
-ws.write({'approved_on': '2026-01-01 00:00:00'})
-ws.state = 'pilot'
+ws.state = 'active'
 inst = env['ts.instrument'].search([('state', '=', 'published'), ('code', '!=', 'TALENT-INV-15')], limit=1)
 M.create({'workspace_id': ws.id, 'user_id': puser.id, 'role': 'owner'})
 c1 = CL.create({'workspace_id': ws.id, 'name': 'c17a'})
@@ -65,12 +64,12 @@ check('member count', w.ts_member_count == 1, w.ts_member_count)
 check('client count', w.ts_client_count == 2, w.ts_client_count)
 check('open invitations', w.ts_open_invites == 1, w.ts_open_invites)
 check('nothing finished yet', w.ts_done_30d == 0)
-check('no pending days for an approved panel', w.ts_pending_days == 0)
-fresh = W.create({'name': 'S17 gated', 'purpose': 'clinical', 'partner_id': org.id})
+check('the age of a panel is shown in days (back-office «پنل‌های تازه» list)', w.ts_age_days >= 0)
+fresh = W.create({'name': 'S17 fresh', 'purpose': 'clinical', 'partner_id': org.id})
 
 env.cr.execute('UPDATE ts_workspace SET create_date = now() - interval \'4 days\' WHERE id = %s', [fresh.id])
 fresh.invalidate_recordset()
-check('a waiting panel shows its age in days', fresh.gated and fresh.ts_pending_days == 4, fresh.ts_pending_days)
+check('a 4-day-old panel shows its age in days', fresh.ts_age_days == 4, fresh.ts_age_days)
 check('the health columns hold no client name field', not any('name' in f and f.startswith('ts_') for f in W._fields))
 
 # ---- PLT-9: data requests

@@ -59,8 +59,7 @@ def panel(name, purpose, approved=True):
     org.write({'is_company': True})
     ws = env['ts.workspace'].search([('partner_id', '=', org.id)], limit=1) or env['ts.workspace'].create(
         {'name': name, 'purpose': purpose, 'partner_id': org.id})
-    ws.write({'approved_on': '2026-01-01 00:00:00' if approved else False})
-    ws.state = 'pilot'
+    ws.state = 'active'
     return ws
 def member(ws, n, role):
     u = user(n)
@@ -158,7 +157,7 @@ check('the menu has the import item', W + '/import' in get(own, W)[1])
 st, body = get(hm, '/my/workspaces/%s/import' % B)
 check('a hiring manager gets the 403 page', st == 403, str(st))
 st, body = get(gown, '/my/workspaces/%s/import' % G)
-check('a panel waiting for approval shows the pending text', st == 200 and 'پس از تأیید' in body and 'type="file"' not in body, str(st))
+check('a brand-new panel opens the import at once (no approval)', st == 200 and 'پس از تأیید' not in body and 'type="file"' in body, str(st))
 check('an anonymous visitor is sent to sign in', Client(TS).req(W + '/import')[0] in (302, 303))
 e = Client('www.eot.ir')
 e.login(L['owner'], pw[L['owner']])

@@ -59,8 +59,7 @@ def panel(name, purpose, approved=True):
     org.write({'is_company': True})
     ws = env['ts.workspace'].search([('partner_id', '=', org.id)], limit=1) or env['ts.workspace'].create(
         {'name': name, 'purpose': purpose, 'partner_id': org.id})
-    ws.write({'approved_on': '2026-01-01 00:00:00' if approved else False})
-    ws.state = 'pilot'
+    ws.state = 'active'
     return ws
 def member(ws, n, role):
     u = user(n)
@@ -199,10 +198,10 @@ st, loc, _ = post(own, W + '/campaigns/new', [('step', 'create')])
 check('SMS campaign sent exactly one message to the one client with a phone', len(SMS) == 1 and ('/invite/' in SMS[0]['message'] or '/i/' in SMS[0]['message']) and SMS[0]['receptor'] == '09125552222', str(SMS)[:200])
 check('the invitation records the consent and the sms channel', count("ts_assignment where workspace_id = %s and sms_consent and remind_ok and channel = 'sms'" % A) == '[(1,)]')
 
-# ---- gated panel
+# ---- a brand-new panel (onb1: no approval)
 for path in ('/campaigns', '/campaigns/new'):
     st, body = get(gown, '/my/workspaces/%s%s' % (G, path))
-    check('a panel waiting for approval shows the pending text on ' + path, st == 200 and 'پس از تأیید' in body, str(st))
+    check('a brand-new panel opens ' + path + ' at once, no approval text', st == 200 and 'پس از تأیید' not in body and 'در انتظار تأیید' not in body, str(st))
 
 # ---- open link
 st, loc, body = post(own, W + '/campaigns/new', [('kind', 'open_link'), ('name', 'پیوند کلاس'), ('instrument_id', inst_id), ('open_max', '2'),

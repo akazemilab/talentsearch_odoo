@@ -30,6 +30,8 @@ class TsPhoneOtp(models.Model):
     expires_at = fields.Datetime(required=True)
     attempts = fields.Integer()
     used = fields.Boolean()
+    # onb1 risk review: a number another account holds gets a row like any other but no SMS; every code is then wrong
+    blocked = fields.Boolean()
 
     @staticmethod
     def _hash(salt, code):
@@ -37,7 +39,9 @@ class TsPhoneOtp(models.Model):
 
     @api.model
     def request_code(self, user, phone_raw):
-        """Return (ok, reason). reason in: format, cooldown, limit, disabled, send."""
+        """Return (ok, reason). reason in: format, cooldown, limit, disabled, send. A number that belongs to another
+        account is never revealed here: the answer is the same as a normal send, nothing is sent, and the code step
+        refuses every code with the neutral «wrong» text (one number, one account)."""
         company = self.env.company.sudo()
         phone = iran_mobile(phone_raw)
         if not phone:
@@ -55,6 +59,10 @@ class TsPhoneOtp(models.Model):
             return False, 'limit'
         code = '%06d' % secrets.randbelow(10 ** 6)
         salt = secrets.token_hex(8)
+        if self.env['res.users'].ts_phone_owner(phone, exclude=user):
+            S.create({'user_id': user.id, 'phone': phone, 'salt': salt, 'code_hash': self._hash(salt, secrets.token_hex(16)),
+                      'expires_at': now + timedelta(minutes=TTL_MIN), 'blocked': True})
+            return True, None
         rec = S.create({'user_id': user.id, 'phone': phone, 'salt': salt, 'code_hash': self._hash(salt, code),
                         'expires_at': now + timedelta(minutes=TTL_MIN)})
         if not self._send_code(company, phone, code):
@@ -86,13 +94,25 @@ class TsPhoneOtp(models.Model):
             return False
 
     @api.model
+    def _ts_otp_host(self):
+        """The host of talentsearch.ir for the WebOTP line «@host #code» (the browser checks it against the page)."""
+        from urllib.parse import urlsplit
+        site = self.env.ref('ts_website.website_ts', raise_if_not_found=False)
+        host = urlsplit(site.domain if '://' in (site.domain or '') else 'https://%s' % (site.domain or '')).hostname if site else None
+        return (host or 'talentsearch.ir').lower()
+
+    @api.model
     def _ts_otp_body(self, code, phone=None):
-        """Text of the plain-SMS code (no Kavenegar lookup template). ts_brand renders it from an sms.template."""
-        return _('کد تأیید استعدادیاب: %s\nاین کد را به کسی ندهید.', code)
+        """Text of the plain-SMS code (no Kavenegar lookup template). ts_brand renders it from an sms.template. The last
+        line is the WebOTP / iOS one-time-code line."""
+        return 'استعدادیاب\nکد ورود: %s\nاین کد را به کسی ندهید.\n@%s #%s' % (code, self._ts_otp_host(), code)
 
     @api.model
     def verify_code(self, user, code):
-        """Return (ok, reason, phone). reason: none, expired, wrong, attempts."""
+        """Return (ok, reason, phone). reason: short, none, expired, wrong, attempts."""
+        from .signup_otp import clean_code
+        if len(clean_code(code)) != 6:
+            return False, 'short', None
         S = self.sudo()
         rec = S.search([('user_id', '=', user.id), ('used', '=', False)], limit=1)
         if not rec:
@@ -102,8 +122,8 @@ class TsPhoneOtp(models.Model):
         if rec.attempts >= MAX_ATTEMPTS:
             return False, 'attempts', None
         rec.attempts += 1
-        good = hmac.compare_digest(rec.code_hash, self._hash(rec.salt, (code or '').strip()))
-        if not good:
+        good = hmac.compare_digest(rec.code_hash, self._hash(rec.salt, clean_code(code)))
+        if not good or rec.blocked:
             return False, 'wrong', None
         rec.used = True
         return True, None, rec.phone

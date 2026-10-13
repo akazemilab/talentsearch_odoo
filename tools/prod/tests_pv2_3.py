@@ -47,8 +47,7 @@ def panel(purpose):
     org.write({'is_company': True})
     ws = W.create({'name': org.name, 'purpose': purpose, 'partner_id': org.id,
                    'escalation_contact_id': org.id if purpose == 'clinical' else False})
-    ws.write({'approved_on': '2026-01-01 00:00:00'})
-    ws.state = 'pilot'
+    ws.state = 'active'
     return ws
 
 
@@ -110,7 +109,8 @@ check('counselor cannot deactivate others', raises(lambda: c2.ts_deactivate(c2))
 # --- practising owner
 cl = panel('clinical')
 co = member(cl, 'owner')
-check('practising owner in a clinical panel needs a licence', raises(lambda: co.ts_set_practising(co, True)))
+check('an owner of a counseling center who counsels gives a licence number (self-declared, onb1 risk review)',
+      raises(lambda: co.ts_set_practising(co, True)) and not co.owner_practices)
 co.ts_set_practising(co, True, 'N-123')
 check('with a licence it is saved', co.owner_practices and co.license_number == 'N-123')
 check('only the owner for themselves', raises(lambda: co.ts_set_practising(member(cl, 'admin'), True)))

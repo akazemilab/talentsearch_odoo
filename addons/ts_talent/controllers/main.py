@@ -96,7 +96,7 @@ def report_ctx(attempt, org_view=False, ws=None, submitted=None, panel_actions=N
         'summary': R.summary(interp, profile, voice, digits),
         'flagged': flagged, 'all_flagged': bool(fields) and len(flagged) >= len(fields),
         'fields_tied': R.fields_all_tied(interp),
-        'gap': int(gap), 'org_view': org_view, 'ws': ws, 'who': attempt.person_id.name or attempt.partner_id.name or '',
+        'gap': int(gap), 'org_view': org_view, 'ws': ws, 'who': attempt.person_id.name or attempt.partner_id.ts_known_name() or '',
         'voice': voice, 'tu': voice == 'tu',
         'quote': R.norm_text(t['quotes']['purpose']['text']),
         'texts': t, 'defs': defs, 'submitted': submitted, 'panel_actions': panel_actions or [],

@@ -20,9 +20,8 @@ def user(n): return env['res.users'].search([('login', '=', L[n])])
 org = env['res.partner'].search([('name', '=', 'S19 http')], limit=1) or env['res.partner'].create({'name': 'S19 http', 'is_company': True})
 org.write({'is_company': True})
 ws = env['ts.workspace'].search([('partner_id', '=', org.id)], limit=1) or env['ts.workspace'].create({'name': 'S19 http', 'purpose': 'education', 'partner_id': org.id})
-ws.write({'approved_on': '2026-01-01 00:00:00'})
 if ws.state in ('draft', 'closed'):
-    ws.write({'state': 'pilot'})
+    ws.write({'state': 'active'})
 for n, role in (('owner', 'owner'), ('cns', 'counselor')):
     u = user(n)
     m = env['ts.workspace.member'].search([('workspace_id', '=', ws.id), ('user_id', '=', u.id)]) or env['ts.workspace.member'].create(
@@ -151,7 +150,9 @@ st, html = get(pub, '/')
 check('the home page uses the marketing header and the full footer', 'ts-header--marketing' in html and 'ts-footer__grid' in html)
 check('the home page shows the redesign hero, the theme toggle and the free panel', 'مشاورهٔ تحصیلی با داده، نه حدس' in html and 'ts-theme' in html and 'ساخت پنل رایگان' in html and "localStorage.getItem('ts-site-theme')" in html)
 st, html = get(pub, '/web/login')
-check('the sign-in page is the Persian card without the stock English form', 'ورود به استعدادیاب' in html and 'Enter your' not in html and 'Passkey' not in html)
+check('the sign-in page is the mobile sign-in (S-AUTH) without the stock English form', 'ورود یا ثبت‌نام' in html and 'name="phone"' in html and 'Enter your' not in html and 'Passkey' not in html)
+st, html = get(pub, '/web/login?email=1')
+check('the e-mail sign-in is the Persian card without the stock English form', 'ورود با ایمیل' in html and 'name="password"' in html and 'Enter your' not in html and 'Passkey' not in html)
 st, html = get(pub, '/pricing')
 check('the pricing page presents the free panel, the pro plan and the FAQ', 'ts-plan--free' in html and 'ts-plan--pro' in html and 'خبرم کنید' in html and 'id="faq"' in html and 'aria-expanded="false"' in html)
 for old, new in (('/how-it-works', '/schools'), ('/evidence', '/assessments'), ('/about', '/'), ('/help', '/pricing#faq'), ('/employers', '/contact?topic=partner'), ('/clinics', '/contact?topic=partner'), ('/sample-report', '/assessments#sample'), ('/consent-policy', '/privacy'), ('/entekhab-reshteh', '/assessments')):

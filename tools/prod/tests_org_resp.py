@@ -38,7 +38,6 @@ inst = pub.filtered(lambda i: i.code == 'TALENT-INV-15')[:1] or pub[:1]
 org = env['res.partner'].create({'name': 'مدرسهٔ آزمون مسئول', 'is_company': True})
 WS, M, A = env['ts.workspace'], env['ts.workspace.member'], env['ts.assignment']
 w = WS.create({'name': 'مدرسهٔ مسئول', 'purpose': 'education', 'partner_id': org.id})
-w.write({'approved_on': fields.Datetime.now()})  # education is gated until the platform owner approves
 w.state = 'active'
 m_o = M.create({'workspace_id': w.id, 'user_id': u_o.id, 'role': 'owner'})
 
@@ -90,7 +89,7 @@ m_self = M.create({'workspace_id': w.id, 'user_id': u_p.id, 'role': 'counselor'}
 check('participant who is also a counselor cannot be responsible for themselves',
       raises(lambda: a1.write({'responsible_id': m_self.id}), ValidationError))
 org2 = env['res.partner'].create({'name': 'سازمان دیگر', 'is_company': True})
-w2 = WS.create({'approved_on': '2026-01-01 00:00:00', 'name': 'دیگر', 'purpose': 'employment', 'partner_id': org2.id})
+w2 = WS.create({'name': 'دیگر', 'purpose': 'employment', 'partner_id': org2.id})
 w2.state = 'active'
 m_x = M.create({'workspace_id': w2.id, 'user_id': puser('x').id, 'role': 'hr_admin'})
 check('responsible must belong to the same workspace', raises(lambda: a1.write({'responsible_id': m_x.id}), ValidationError))
@@ -108,7 +107,7 @@ check('import responsible must be a specialist of that workspace', raises(lambda
 
 # ---- clinic: unassigned queue is not shown to a clinician
 org3 = env['res.partner'].create({'name': 'کلینیک آزمون', 'is_company': True})
-wc = WS.create({'approved_on': '2026-01-01 00:00:00', 'name': 'کلینیک مسئول', 'purpose': 'clinical', 'partner_id': org3.id, 'escalation_contact_id': org3.id})
+wc = WS.create({'name': 'کلینیک مسئول', 'purpose': 'clinical', 'partner_id': org3.id, 'escalation_contact_id': org3.id})
 wc.state = 'active'
 m_dir = M.create({'workspace_id': wc.id, 'user_id': puser('dir').id, 'role': 'clinic_director', 'license_number': 'D-1'})
 m_cl = M.create({'workspace_id': wc.id, 'user_id': puser('cl').id, 'role': 'clinician', 'license_number': 'C-1'})

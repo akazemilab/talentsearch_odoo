@@ -37,11 +37,13 @@
                     </t>
                 </xpath>
                 <xpath expr="//a[hasclass('o_skip_to_content')]" position="replace">
-                    <a class="o_skip_to_content ts-skip" href="#wrap" groups="!base.group_user">پرش به محتوا</a>
+                    <!-- visually-hidden-focusable (Bootstrap, !important) hides it at rest on every page whatever the cascade;
+                         .ts-skip only styles the focused state -->
+                    <a class="o_skip_to_content ts-skip visually-hidden-focusable" href="#wrap" groups="!base.group_user">پرش به محتوا</a>
                 </xpath>
                 <xpath expr="//header[@id='top']" position="replace">
                     <t t-set="ts_path" t-value="request.httprequest.path"/>
-                    <t t-set="ts_mode" t-value="'focus' if ts_path.startswith('/take/') else ('auth' if (ts_path.startswith('/web/login') or ts_path.startswith('/web/signup') or ts_path.startswith('/web/reset_password') or ts_path.startswith('/signup') or ts_path.startswith('/invite/') or ts_path.startswith('/join/') or ts_path.startswith('/c/')) else ('app' if (ts_path.startswith('/my') or ts_path.startswith('/help/roles')) else 'marketing'))"/>
+                    <t t-set="ts_mode" t-value="'focus' if ts_path.startswith('/take/') else ('auth' if (ts_path.startswith('/web/login') or ts_path.startswith('/web/signup') or ts_path.startswith('/web/reset_password') or ts_path.startswith('/signup') or ts_path == '/login' or ts_path.startswith('/invite/') or ts_path.startswith('/join/') or ts_path.startswith('/c/')) else ('app' if (ts_path.startswith('/my') or ts_path.startswith('/help/roles')) else 'marketing'))"/>
                     <t t-set="ts_public" t-value="request.env.user._is_public()"/>
                     <!-- o_no_autohide_menu + .top_menu: Odoo's frontend menu-autohide script expects header#top .top_menu (null error otherwise) -->
                     <header id="top" t-attf-class="ts-header o_no_autohide_menu ts-header--#{ts_mode} #{'ts-header--app' if ts_mode != 'marketing' else ''}" data-anchor="true" t-att-data-ts-mode="ts_mode">
@@ -66,7 +68,7 @@
                                         <span class="ts-theme__sun"><t t-call="ts_website.icon" ico.f="sun"/></span>
                                     </button>
                                     <div class="ts-header__wide ts-nav__actions">
-                                        <a t-if="ts_public" href="/web/login" class="ts-btn ts-btn--quiet">ورود</a>
+                                        <a t-if="ts_public" href="/signup" class="ts-btn ts-btn--quiet">ورود</a>
                                         <a t-else="" href="/my" class="ts-btn ts-btn--quiet">حساب من</a>
                                         <a href="/panel" class="ts-btn ts-btn--primary">ساخت پنل رایگان</a>
                                     </div>
@@ -81,7 +83,7 @@
                                         <li t-foreach="ts_menu" t-as="m"><a t-att-href="m.url" t-out="m.name" t-att-aria-current="'page' if ts_path == m.url else None"/></li>
                                     </ul>
                                     <div class="ts-nav__actions">
-                                        <a t-if="ts_public" href="/web/login" class="ts-btn ts-btn--outline">ورود</a>
+                                        <a t-if="ts_public" href="/signup" class="ts-btn ts-btn--outline">ورود</a>
                                         <a t-else="" href="/my" class="ts-btn ts-btn--outline">حساب من</a>
                                         <a href="/panel" class="ts-btn ts-btn--primary">ساخت پنل رایگان</a>
                                     </div>
@@ -98,10 +100,11 @@
                                     <t t-call="ts_website.icon" ico.f="user"/>
                                     <span>حساب</span>
                                 </a>
-                                <a href="/web/session/logout?redirect=/" rel="nofollow" title="خروج">
-                                    <t t-call="ts_website.icon" ico.f="sign-out"/>
-                                    <span>خروج</span>
-                                </a>
+                                <!-- Odoo 20 signs out by POST only (a GET link answered 405) -->
+                                <form action="/web/session/logout?redirect=/" method="post" class="ts-appnav__out">
+                                    <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                                    <button type="submit" title="خروج"><t t-call="ts_website.icon" ico.f="sign-out"/><span>خروج</span></button>
+                                </form>
                             </nav>
                             <button t-if="ts_mode != 'marketing'" type="button" t-attf-class="ts-iconbtn ts-theme #{'' if ts_mode == 'app' else 'ts-theme--end'}" aria-label="تغییر حالت روشن و تیره" title="حالت روشن یا تیره">
                                 <span class="ts-theme__moon"><t t-call="ts_website.icon" ico.f="moon"/></span>
@@ -114,7 +117,7 @@
                 </xpath>
                 <xpath expr="//footer[@id='bottom']" position="replace">
                     <t t-set="ts_path" t-value="request.httprequest.path"/>
-                    <t t-set="ts_mode" t-value="'focus' if ts_path.startswith('/take/') else ('auth' if (ts_path.startswith('/web/login') or ts_path.startswith('/web/signup') or ts_path.startswith('/web/reset_password') or ts_path.startswith('/signup') or ts_path.startswith('/invite/') or ts_path.startswith('/join/') or ts_path.startswith('/c/')) else ('app' if (ts_path.startswith('/my') or ts_path.startswith('/help/roles')) else 'marketing'))"/>
+                    <t t-set="ts_mode" t-value="'focus' if ts_path.startswith('/take/') else ('auth' if (ts_path.startswith('/web/login') or ts_path.startswith('/web/signup') or ts_path.startswith('/web/reset_password') or ts_path.startswith('/signup') or ts_path == '/login' or ts_path.startswith('/invite/') or ts_path.startswith('/join/') or ts_path.startswith('/c/')) else ('app' if (ts_path.startswith('/my') or ts_path.startswith('/help/roles')) else 'marketing'))"/>
                     <footer t-if="ts_mode == 'marketing'" id="bottom" class="ts-footer" data-anchor="true">
                         <div class="ts-container">
                             <div class="ts-footer__grid">

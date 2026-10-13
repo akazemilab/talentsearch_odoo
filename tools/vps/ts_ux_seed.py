@@ -360,10 +360,8 @@ if ONLY == 'take':
             {'name': name, 'is_company': True})
         ws = env['ts.workspace'].search([('partner_id', '=', org.id)], limit=1) or env['ts.workspace'].create(
             {'name': name, 'purpose': 'employment', 'partner_id': org.id})
-        if not ws.approved_on:
-            ws.write({'approved_on': '2026-01-01 00:00:00'})
-        if ws.state != 'pilot':
-            ws.state = 'pilot'
+        if ws.state != 'active':
+            ws.state = 'active'      # onb1: no approval step
         hr = tuser('hr', 'مدیر منابع انسانی آزمایشی')
         mm = M.with_context(active_test=False).search([('workspace_id', '=', ws.id), ('user_id', '=', hr.id)], limit=1) or M.create(
             {'workspace_id': ws.id, 'user_id': hr.id, 'role': 'hr_admin'})
@@ -582,7 +580,8 @@ else:
     step('likert', lambda: likert('progress'))
 
     tok = lambda k: R[k].access_token if k in R else None
-    pub = ['/panel', '/panel/terms', '/signup', '/web/login', '/web/reset_password', '/help/panel', '/assessments/%s' % inst.slug,
+    pub = ['/panel', '/panel/terms', '/signup', 'POSTSHOT /signup/send phone=09127770375&next=/my',   # code step (ts_ui_matrix.sh seeds it)
+           '/web/login', '/web/reset_password', '/help/panel', '/assessments/%s' % inst.slug,
            '/my/workspaces/new', '/contact?topic=credit']     # «درخواست شارژ اعتبار» without a panel (signed out)
     if 'pending' in R: pub.append('/invite/%s' % R['pending'].token)
     if 'minv' in R and R['minv']: pub.append('/join/%s' % R['minv'].token)
@@ -897,10 +896,8 @@ else:
             {'name': CNAME, 'is_company': True})
         ws = env['ts.workspace'].search([('partner_id', '=', org.id)], limit=1) or env['ts.workspace'].create(
             {'name': CNAME, 'purpose': 'clinical', 'partner_id': org.id, 'escalation_contact_id': org.id})
-        if not ws.approved_on:
-            ws.write({'approved_on': '2026-01-01 00:00:00'})
-        if ws.state != 'pilot':
-            ws.state = 'pilot'
+        if ws.state != 'active':
+            ws.state = 'active'      # onb1: no approval step
         ws.write({'public_name': 'مرکز مشاورهٔ آرامش', 'contact_line': '۰۲۱-۸۸۰۰۰۰۰۰ · aramesh.example', 'brand_color': '#2a6f97',
                   'ts_onb_nocap_on': False})
         if not org.image_1920:

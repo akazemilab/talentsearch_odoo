@@ -23,7 +23,7 @@
                                     <t t-set="m_ppl" t-value="'مراجعان' if ws.purpose == 'clinical' else 'شرکت‌کنندگان'"/>
                                     <dt><t t-out="m_ppl"/> زیر نظر <t t-if="is_self">شما</t><t t-else="">او</t></dt><dd class="ts-num" t-out="fa(clients)"/>
                                     <dt>آخرین فعالیت</dt><dd t-out="last"/>
-                                    <t t-if="m.verification_state == 'pending'"><dt>احراز صلاحیت</dt><dd>در انتظار بررسی</dd></t>
+                                    <t t-if="m.license_number or m.verification_state == 'verified'"><dt>پروانه</dt><dd><span t-if="m.verification_state == 'verified'" class="ts-pill ts-pill--ok">پروانهٔ تأییدشده</span><t t-else="">ثبت‌شده، هنوز بررسی نشده</t></dd></t>
                                 </dl>
                             </section>
 
@@ -45,13 +45,14 @@
                             </section>
 
                             <section t-if="is_self and m.role == 'owner'" class="ts-card" id="tsp-practice" aria-labelledby="tsp-practice-h">
-                                <h2 id="tsp-practice-h" class="h5">خودم هم شرکت‌کننده می‌بینم</h2>
+                                <h2 id="tsp-practice-h" class="h5">خودم هم <t t-out="'مشاوره می‌دهم' if clinical else 'شرکت‌کننده می‌بینم'"/></h2>
                                 <form t-attf-action="/my/workspaces/#{ws.id}/members/#{m.id}/practice" method="post" class="tsp-form" data-tsp-once="1">
                                     <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
-                                    <label class="tsp-check"><input type="checkbox" name="practises" value="1" t-att-checked="'checked' if m.owner_practices else None"/> خودم هم مسئول شرکت‌کنندگان هستم</label>
+                                    <label class="tsp-check"><input type="checkbox" name="practises" value="1" t-att-checked="'checked' if m.owner_practices else None" aria-describedby="tsp_prac_h"/> خودم هم مسئول <t t-out="'مراجعان' if clinical else 'شرکت‌کنندگان'"/> هستم</label>
+                                    <p t-if="clinical" class="tsp-field__hint" id="tsp_prac_h">مالکی که خودش مشاوره نمی‌دهد، برای حفظ حریم مراجعان فقط وضعیت دعوت‌ها را می‌بیند. اگر روشنش کنید، گزارش مراجعانی را که مشاورشان هستید، با اجازهٔ آن‌ها، می‌خوانید.</p>
                                     <div t-if="clinical" class="tsp-field">
-                                        <label class="tsp-field__label" for="tsp_lic">شمارهٔ پروانه یا نظام روان‌شناسی و مشاوره</label>
-                                        <p class="tsp-field__hint" id="tsp_lic_h">برای دیدن گزارش ویژهٔ مشاور لازم است و پس از بررسی تیم استعدادیاب فعال می‌شود.</p>
+                                        <label class="tsp-field__label" for="tsp_lic">شمارهٔ پروانه یا نظام روان‌شناسی و مشاوره (برای مشاوره در مرکز لازم است)</label>
+                                        <p class="tsp-field__hint" id="tsp_lic_h">کار شما منتظر بررسی آن نمی‌ماند؛ پس از بررسی تیم استعدادیاب، نشان «پروانهٔ تأییدشده» کنار نامتان و شماره در گزارش‌ها می‌آید.</p>
                                         <input id="tsp_lic" name="license_number" type="text" dir="ltr" maxlength="60" t-att-value="m.license_number" aria-describedby="tsp_lic_h"/>
                                     </div>
                                     <p><button type="submit" class="ts-btn ts-btn--outline">ذخیره</button></p>

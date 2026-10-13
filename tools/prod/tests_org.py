@@ -42,9 +42,9 @@ hr, rev, clin, clin2, p1, p2, outsider = (puser('ts.org.%s@example.invalid' % n)
                                           ('hr', 'rev', 'clin', 'clin2', 'p1', 'p2', 'out'))
 org = env['res.partner'].create({'name': 'سازمان آزمون', 'is_company': True})
 WS = env['ts.workspace']
-w_emp = WS.create({'approved_on': '2026-01-01 00:00:00', 'name': 'استخدام آزمون', 'purpose': 'employment', 'partner_id': org.id})
+w_emp = WS.create({'name': 'استخدام آزمون', 'purpose': 'employment', 'partner_id': org.id})
 w_emp.state = 'active'
-w_cli = WS.create({'approved_on': '2026-01-01 00:00:00', 'name': 'مرکز آزمون', 'purpose': 'clinical', 'partner_id': org.id, 'escalation_contact_id': org.id})
+w_cli = WS.create({'name': 'مرکز آزمون', 'purpose': 'clinical', 'partner_id': org.id, 'escalation_contact_id': org.id})
 w_cli.state = 'active'
 M = env['ts.workspace.member']
 m_hr = M.create({'workspace_id': w_emp.id, 'user_id': hr.id, 'role': 'hr_admin'})
@@ -52,7 +52,8 @@ m_rev = M.create({'workspace_id': w_emp.id, 'user_id': rev.id, 'role': 'reviewer
 m_clin = M.create({'workspace_id': w_cli.id, 'user_id': clin.id, 'role': 'clinician', 'license_number': 'T-1'})
 m_clin2 = M.create({'workspace_id': w_cli.id, 'user_id': clin2.id, 'role': 'clinician', 'license_number': 'T-2'})
 m_clin.action_verify()
-check('unverified clinician cannot act', not m_clin2.can_act() and m_clin.can_act())
+check('an unverified clinician acts too (licence is a badge, onb1)', m_clin2.can_act() and m_clin.can_act()
+      and m_clin2.verification_state == 'pending' and m_clin.verification_state == 'verified')
 check('hr admin may invite, reviewer may not', m_hr.can_invite() and not m_rev.can_invite())
 check('employment member sees only employment instruments', set(m_hr.allowed_instruments().ids) == set(emp.ids))
 _nohr = pub.filtered(lambda i: not i.invite_only) if 'invite_only' in pub._fields else pub   # HR instruments: employment panels only

@@ -297,7 +297,7 @@
                                     <p class="tt-lead" t-elif="tu">این نمره‌ها نشان می‌دهد در هر زمینه خودت را چطور دیده‌ای. فقط زمینه‌ها و توانایی‌های خودت با هم مقایسه می‌شوند، نه با دیگران. نمره‌ها از ۲۰ تا ۱۰۰ است.</p>
                                     <p class="tt-lead" t-else="">این نمره‌ها نشان می‌دهد در هر زمینه خودتان را چطور دیده‌اید. فقط زمینه‌ها و توانایی‌های خودتان با هم مقایسه می‌شوند، نه با دیگران. نمره‌ها از ۲۰ تا ۱۰۰ است.</p>
                                     <dl class="ts-meta ts-doc__meta">
-                                        <dt>شرکت‌کننده</dt><dd t-out="who"/>
+                                        <t t-if="who"><dt>شرکت‌کننده</dt><dd t-out="who"/></t>
                                         <dt>تاریخ تکمیل</dt><dd t-out="attempt.jalali(attempt.submitted_at)"/>
                                         <dt>زمینه‌ها</dt><dd><t t-out="joinfa([f['label'] for f in fields], True)"/></dd>
                                         <dt>شناسهٔ گزارش</dt><dd><bdi dir="ltr" class="ts-bdi" t-out="attempt.name"/></dd>

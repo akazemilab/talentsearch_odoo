@@ -54,8 +54,7 @@ def panel(purpose, name):
     org = env['res.partner'].create({'name': name, 'is_company': True})
     org.write({'is_company': True})
     ws = W.create({'name': name, 'purpose': purpose, 'partner_id': org.id})
-    ws.write({'approved_on': '2026-01-01 00:00:00'})
-    ws.state = 'pilot'
+    ws.state = 'active'
     return ws
 
 
@@ -110,31 +109,31 @@ def fake_send(self, company_, number, body, partner_id=False):
 
 staff = puser('09123334411')
 check('the verified mobile is found', N._phone_of(staff) == '09123334411')
-P.ts_save(staff, 'panel_approved', True, True)
+P.ts_save(staff, 'panel_suspended', True, True)
 company.write({'kv_enabled': True})
 company.ts_sms_staff = False
 with patch.object(nt.TsNotification, '_send_sms', fake_send), patch.object(nt.TsNotification, '_quiet_now', lambda self, now=None: False):
-    r = N._notify(staff, 'panel_approved', '/p', emp)
+    r = N._notify(staff, 'panel_suspended', '/p', emp)
     check('NOT-5b: with the staff switch off no SMS is sent, the in-app row exists', len(r) == 1 and not calls and not r.sms_state)
     company.ts_sms_staff = True
-    r = N._notify(staff, 'panel_approved', '/p', emp)
+    r = N._notify(staff, 'panel_suspended', '/p', emp)
     check('switch on + opt-in + verified mobile: one SMS with a link and no name', len(calls) == 1 and calls[0][0] == '09123334411'
           and ('/p' in calls[0][1] or calls[0][1].endswith('/n/%s' % r.id)) and staff.name not in calls[0][1] and r.sms_state == 'sent')
     check('the send is audited without recipient data', env['ts.audit.event'].search_count([('event_type', '=', 'notify.send'), ('res_id', '=', r.id)]) == 1
           and '0912' not in (env['ts.audit.event'].search([('event_type', '=', 'notify.send'), ('res_id', '=', r.id)]).detail or ''))
     nophone = puser()
-    P.ts_save(nophone, 'panel_approved', True, True)
-    N._notify(nophone, 'panel_approved', '/p', emp)
+    P.ts_save(nophone, 'panel_suspended', True, True)
+    N._notify(nophone, 'panel_suspended', '/p', emp)
     check('no verified mobile: no SMS', len(calls) == 1)
     nopt = puser('09123334422')
-    N._notify(nopt, 'panel_approved', '/p', emp)
+    N._notify(nopt, 'panel_suspended', '/p', emp)
     check('no opt-in: no SMS', len(calls) == 1)
     P.ts_save(nopt, 'export_ready', True, True)
     N._notify(nopt, 'export_ready', '/p', emp)
     check('a type without an SMS text never sends', len(calls) == 1)
     env['ir.config_parameter'].sudo().set_str('ts_panel.sms_per_day', '2')
-    N._notify(staff, 'panel_approved', '/p', emp)
-    r3 = N._notify(staff, 'panel_approved', '/p', emp)
+    N._notify(staff, 'panel_suspended', '/p', emp)
+    r3 = N._notify(staff, 'panel_suspended', '/p', emp)
     check('NOT-3: the daily limit (2) skips the third SMS', len(calls) == 2, str(len(calls)))
     check('...and marks it skipped', r3.sms_state == 'skipped' and len(calls) == 2)
     env['ir.config_parameter'].sudo().set_str('ts_panel.sms_per_day', '5')
@@ -205,12 +204,11 @@ check('share_revoked goes to the responsible specialist', len(rows(cs1.user_id, 
 
 # workspace decisions
 w3 = panel('education', 'پنل تصمیم S10')
-w3.write({'approved_on': False})
 o3 = member(w3, 'owner')
 manager = env.ref('base.user_admin')
 w3_m = w3.with_user(manager)
 check('panel decisions: a suspend tells the owners', (w3.with_user(manager).action_suspend() or True) and len(rows(o3.user_id, 'panel_suspended')) == 1)
-w3.write({'state': 'pilot'})
+w3.write({'state': 'active'})
 
 # member joined
 inv = env['ts.member.invite'].sudo().create({'workspace_id': w2.id, 'role': 'counselor', 'email': 'new.s10@example.invalid', 'invited_by_id': ow.user_id.id})

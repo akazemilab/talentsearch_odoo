@@ -211,7 +211,7 @@ def audit(p, login, paths):
         ok = False
         for _try in (1, 2):                  # a reset tunnel during the sign-in once left a whole user on the login page
             try:
-                nav(page, '/web/login')
+                nav(page, '/web/login?email=1')      # onb1: plain /web/login on talentsearch.ir is the mobile sign-in
                 page.fill('input[name=login]', login); page.fill('input[name=password]', password)
                 # wait for the POST navigation itself: networkidle alone could return before it started, and the next goto
                 # then aborted the sign-in (flaky «sign-in failed» for a random login, 2026-10-11)
@@ -282,6 +282,15 @@ def audit(p, login, paths):
                 page.keyboard.press('Tab')   # keyboard modality, so :focus-visible styles apply to programmatic focus
                 nofocus = page.evaluate(FOCUS_JS)
                 if nofocus: probs.append('no-focus-ring ' + '|'.join(nofocus))
+            # the shot shows the page at rest: the Tab above lands on the skip link, which is drawn only while focused
+            page.evaluate("() => { const a = document.activeElement; if (a && a !== document.body && a.blur) { a.blur(); } }")
+            skip = page.evaluate("""() => { const s = document.querySelector('.o_skip_to_content');
+              if (!s) { return 0; } const r = s.getBoundingClientRect(), c = getComputedStyle(s);
+              return (c.display !== 'none' && c.visibility !== 'hidden' && r.width > 2 && r.height > 2
+                      && !/inset\\(50%\\)/.test(c.clipPath) && c.clip.indexOf('rect(0') !== 0) ? Math.round(r.width) : 0; }""")
+            if skip:
+                bad += 0 if probs else 1
+                probs.append('skip-link-visible %dpx' % skip)
             page.screenshot(path=stem + '.png', full_page=True)
             if FOLD and w <= 430:
                 page.set_viewport_size({'width': w, 'height': FOLD_H.get(w, int(w * 2.16))})

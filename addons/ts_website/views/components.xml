@@ -103,10 +103,9 @@
                         <a t-if="login_url" t-att-href="login_url" class="ts-btn ts-btn--primary ts-btn--lg ts-btn--block">ورود با ایمیل</a>
                     </t>
                     <t t-elif="phone_url">
-                        <a t-att-href="phone_url" class="ts-btn ts-btn--primary ts-btn--lg ts-btn--block">ادامه با شمارهٔ موبایل</a>
+                        <a t-att-href="phone_url" class="ts-btn ts-btn--primary ts-btn--lg ts-btn--block">ورود یا ثبت‌نام با موبایل</a>
                         <p t-if="login_url and not only" class="ts-authchoice__alt">
-                            <a t-att-href="login_url">حساب ایمیلی دارم</a>
-                            <t t-if="signup_url"><t t-call="ts_website.sep"/><a t-att-href="signup_url">ثبت‌نام با ایمیل</a></t>
+                            <a t-att-href="login_url">با ایمیل ثبت‌نام کرده بودید؟</a>
                         </p>
                     </t>
                     <t t-elif="not only">

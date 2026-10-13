@@ -292,7 +292,7 @@ class TsWorkspaceBrand(models.Model):
                                              'logo': False, 'footer': FOOTER_LINE})
         sample = self.ts_brand_sample_member()
         h['counselor'] = sample.ts_brand_block() if sample else {
-            'name': 'نام مشاور', 'title': 'عنوان حرفه‌ای', 'license': '…', 'photo': False, 'initial': '', 'bio': '',
+            'name': 'نام مشاور', 'title': 'عنوان حرفه‌ای', 'license': False, 'photo': False, 'initial': '', 'bio': '',
             'signature': False, 'sample': True}
         h['preview'] = True
         return h
@@ -390,6 +390,12 @@ class TsMemberBrand(models.Model):
                 raise UserError('عنوان حرفه‌ای حداکثر ۴۰ نویسه است.')
         if 'show_on_report' in vals:
             new['show_on_report'] = bool(vals.get('show_on_report'))
+        if 'license_number' in vals and own:
+            # the member's own licence number (onb1: optional, a badge after the EOT team's check; editing resets it)
+            lic = clean_line((vals.get('license_number') or '').translate(str.maketrans('۰۱۲۳۴۵۶۷۸۹٠١٢٣٤٥٦٧٨٩', '01234567890123456789'))) or False
+            if lic and (len(lic) > 60 or not re.fullmatch(r'[\w\-/. ]+', lic)):
+                raise UserError('شمارهٔ پروانه را فقط با رقم، حرف، خط تیره یا ممیز و حداکثر ۶۰ نویسه بنویسید.')
+            new['license_number'] = lic
         if 'report_bio' in vals and 'report_bio' in allowed:
             new['report_bio'] = clean_line(vals.get('report_bio')) or False
             if new['report_bio'] and len(new['report_bio']) > BIO_MAX:

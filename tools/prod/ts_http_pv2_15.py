@@ -22,7 +22,7 @@ def panel(name, purpose):
     org = env['res.partner'].search([('name', '=', name)], limit=1) or env['res.partner'].create({'name': name, 'is_company': True})
     org.write({'is_company': True})
     ws = env['ts.workspace'].search([('partner_id', '=', org.id)], limit=1) or env['ts.workspace'].create({'name': name, 'purpose': purpose, 'partner_id': org.id})
-    ws.write({'approved_on': '2026-01-01 00:00:00'}); ws.state = 'pilot'
+    ws.state = 'active'
     return ws
 E1, E2, E3 = panel('پنل S15 یک', 'education'), panel('پنل S15 دو', 'education'), panel('پنل S15 سه', 'education')
 EMP = panel('پنل S15 کاری', 'employment')

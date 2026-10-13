@@ -12,18 +12,17 @@
                 <t t-call="website.layout" additional_title="title">
                     <div id="wrap" class="ts-page">
                         <t t-call="ts_panel.shell_frame">
-                            <t t-set="pro_verified" t-value="member.verification_state == 'verified'"/>
                             <t t-set="role_notes" t-value="{
                                 'counselor': 'شما در این پنل دانش‌آموزانی را که مسئول آن‌ها هستید و صف «بدون کارشناس» را می‌بینید؛ گزارش‌ها در سطح مشاور نمایش داده می‌شوند و پاسخ‌های خام دیده نمی‌شوند.',
-                                'clinician': ('شما فقط مراجعانی را که مشاورشان هستید می‌بینید. صلاحیت حرفه‌ای شما تأیید شده است؛ گزارش ویژهٔ مشاور، همراه با راهنمای مشاور، برای مراجعان خودتان نمایش داده می‌شود.' if pro_verified else 'شما فقط مراجعانی را که مشاورشان هستید می‌بینید. گزارش ویژهٔ مشاور، همراه با راهنمای مشاور، پس از تأیید صلاحیت حرفه‌ای شما نمایش داده می‌شود؛ در انتظار تأیید تیم استعدادیاب.'),
-                                'clinic_director': ('شما همهٔ مراجعان این پنل را می‌بینید. صلاحیت حرفه‌ای شما تأیید شده است و گزارش ویژهٔ مشاور را می‌بینید.' if pro_verified else 'شما همهٔ مراجعان این پنل را می‌بینید. گزارش ویژهٔ مشاور پس از تأیید صلاحیت حرفه‌ای شما نمایش داده می‌شود؛ در انتظار تأیید تیم استعدادیاب.'),
+                                'clinician': 'شما فقط مراجعانی را که مشاورشان هستید می‌بینید؛ گزارش ویژهٔ مشاور، همراه با راهنمای مشاور، با اجازهٔ هر مراجع نمایش داده می‌شود.',
+                                'clinic_director': 'شما همهٔ مراجعان این پنل را می‌بینید و گزارش ویژهٔ مشاور را با اجازهٔ هر مراجع می‌خوانید.',
+                                'owner': ('شما مالک این مرکز هستید و خودتان مشاوره نمی‌دهید؛ برای حفظ حریم مراجعان، گزارش را فقط مشاوران مرکز می‌خوانند و شما وضعیت دعوت‌ها را می‌بینید. اگر خودتان هم مشاوره می‌دهید، در صفحهٔ عضویت خود «خودم هم مسئول مراجعان هستم» را روشن کنید.' if ws.purpose == 'clinical' and not member.owner_practices else ''),
                                 'reviewer': 'شما در این پنل فقط سطح (بازهٔ) هر عامل را می‌بینید؛ نمره، پاسخ و متن تفسیری نمایش داده نمی‌شود.',
                                 'hiring_manager': 'شما شرکت‌کنندگانی را که مسئول آن‌ها هستید می‌بینید و از نتیجه فقط سطح هر عامل نمایش داده می‌شود؛ نمره و پاسخ دیده نمی‌شود.',
                                 'hr_admin': 'شما همهٔ شرکت‌کنندگان این پنل را می‌بینید و از نتیجه فقط سطح هر عامل نمایش داده می‌شود؛ نمره و پاسخ دیده نمی‌شود.',
                                 'school_admin': 'شما وضعیت دعوت‌ها و شرکت‌کنندگان مدرسه را می‌بینید؛ پاسخ‌های خام دیده نمی‌شوند.'}"/>
                             <t t-set="can_assign" t-value="member.has_perm('clients:assign')"/>
-                            <!-- 'gated' is skipped: the shell shows the gated notice on every panel page -->
-                            <t t-set="att" t-value="[x for x in (attention or []) if x['key'] != 'gated' and (x['key'] != 'unassigned' or can_assign)]"/>
+                            <t t-set="att" t-value="[x for x in (attention or []) if x['key'] != 'unassigned' or can_assign]"/>
                             <t t-set="manages" t-value="member.can_act() and member.has_perm('invites:manage')"/>
                             <t t-set="empty" t-value="manages and not total"/>
                             <header class="tsp-head">
@@ -34,14 +33,13 @@
                                 <div class="tsp-head__actions">
                                     <!-- first_run (set by ts_brand while a set-up list or card is shown): that list holds the one primary button -->
                                     <a t-if="can_invite" t-attf-href="/my/workspaces/#{ws.id}/invites/new?fresh=1" t-attf-class="ts-btn #{'ts-btn--outline' if first_run else 'ts-btn--primary'}">دعوت تازه</a>
-                                    <span t-attf-class="ts-pill #{'ts-pill--ok' if ws.state in ('pilot', 'active') and not gated else 'ts-pill--warn'}"><t t-out="'در انتظار تأیید' if gated else panel_state"/></span>
+                                    <span t-attf-class="ts-pill #{'ts-pill--ok' if ws.state == 'active' else 'ts-pill--warn'}"><t t-out="panel_state"/></span>
                                 </div>
                             </header>
                             <p t-if="role_notes.get(member.role)" class="tsp-role-note" role="note">
                                 <t t-out="role_notes[member.role]"/>
                                 <a t-att-href="role_help_url or '/help/roles'">دسترسی نقش‌ها</a>
                             </p>
-                            <p t-if="gated and rejected" class="ts-notice ts-notice--warn" role="status">درخواست تأیید رد شد<t t-if="rejection_note">: <span t-out="rejection_note"/></t>. می‌توانید اطلاعات پنل را اصلاح کنید و با پشتیبانی تماس بگیرید.</p>
                             <p t-if="is_new" class="ts-notice" role="status">پنل ساخته شد.</p>
 
                             <section t-if="att" class="ts-card" aria-labelledby="tsp-d-att">
@@ -53,7 +51,7 @@
                                 </ul>
                             </section>
 
-                            <div t-if="empty and not gated" class="tsp-empty tsp-dash-empty">
+                            <div t-if="empty" class="tsp-empty tsp-dash-empty">
                                 <!-- a member who sees only their own people sees only their own invitations: say so (G8-P8-2) -->
                                 <h2 t-if="member.has_perm('clients:read_all')" class="h5">این پنل هنوز دعوتی ندارد</h2>
                                 <h2 t-else="" class="h5">شما هنوز دعوتی نفرستاده‌اید</h2>
@@ -129,8 +127,8 @@
                                     <tbody>
                                         <tr t-foreach="workload" t-as="w">
                                             <th scope="row" data-label="عضو"><bdi t-out="w[0].user_id.name"/></th>
-                                            <td data-label="شرکت‌کنندگان" class="ts-num" t-out="fa(w[1])"/>
-                                            <td data-label="دعوت‌های باز" class="ts-num" t-out="fa(w[2])"/>
+                                            <td data-label="شرکت‌کنندگان" class="ts-num" t-out="fa(str(w[1] or 0))"/>
+                                            <td data-label="دعوت‌های باز" class="ts-num" t-out="fa(str(w[2] or 0))"/>
                                         </tr>
                                     </tbody>
                                 </table>

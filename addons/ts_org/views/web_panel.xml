@@ -24,12 +24,12 @@
                                     </article>
                                     <article class="ts-card ts-panel-kind">
                                         <h2 class="h4">سازمان</h2>
-                                        <p>پنل را بسازید و همکارانتان را دعوت کنید. دعوت شرکت‌کنندهٔ واقعی پس از بررسی و تأیید تیم استعدادیاب باز می‌شود.</p>
+                                        <p>بلافاصله فعال می‌شود. همکاران را دعوت کنید، موقعیت شغلی بسازید و داوطلب‌ها را به ارزیابی بفرستید.</p>
                                         <a t-attf-href="#{cta_url}?kind=org" class="ts-btn ts-btn--outline">ساخت پنل سازمان</a>
                                     </article>
                                     <article class="ts-card ts-panel-kind">
                                         <h2 class="h4">مرکز مشاوره</h2>
-                                        <p>پنل را بسازید و مشاوران را دعوت کنید. دعوت شرکت‌کنندهٔ واقعی پس از بررسی و تأیید تیم استعدادیاب باز می‌شود.</p>
+                                        <p>بلافاصله فعال می‌شود. مشاوران را دعوت کنید و برای مراجعان سنجه یا مجموعهٔ سنجه بفرستید.</p>
                                         <a t-attf-href="#{cta_url}?kind=clinic" class="ts-btn ts-btn--outline">ساخت پنل مرکز مشاوره</a>
                                     </article>
                                     <article class="ts-card ts-panel-kind">
@@ -38,7 +38,7 @@
                                         <a t-attf-href="#{cta_url}?kind=solo" class="ts-btn ts-btn--outline">ساخت پنل یک‌نفره</a>
                                     </article>
                                 </div>
-                                <p class="ts-hint ts-panel-steps">اول با شمارهٔ موبایل وارد می‌شوید، بعد نام و نوع پنل را می‌نویسید. پنل مدرسه بلافاصله فعال است؛ پنل سازمان و مرکز مشاوره تا بررسی تیم استعدادیاب «در انتظار تأیید» می‌ماند و در این مدت می‌توانید پنل را کامل کنید و همکارانتان را دعوت کنید.</p>
+                                <p class="ts-hint ts-panel-steps">اول با شمارهٔ موبایل وارد می‌شوید، بعد نام و نوع پنل را می‌نویسید. هر پنل همان لحظهٔ ساخت فعال است.</p>
                                 <p><a href="/panel/terms">شرایط استفاده از پنل</a></p>
                             </div>
                         </section>
@@ -64,8 +64,10 @@
                                 <p class="ts-hint"><t t-out="version_label"/> (<bdi dir="ltr" t-out="version"/>)</p>
                                 <h2 class="h4">قیمت</h2>
                                 <p>ساخت و استفاده از پنل در این فصل رایگان است. تعداد سنجه‌های تکمیل‌شده ثبت می‌شود، اما چیزی کسر یا مسدود نمی‌شود. اگر بعداً تعرفه‌ای تعیین شود، پیش از اعمال به شما اطلاع داده می‌شود.</p>
-                                <h2 class="h4">پنل سازمان و مرکز مشاوره</h2>
-                                <p>این پنل‌ها ابتدا «در انتظار تأیید» ساخته می‌شوند: می‌توانید پنل را بسازید و همکاران را دعوت کنید، اما دعوت شرکت‌کنندهٔ واقعی و دریافت نتیجه پس از بررسی و تأیید تیم استعدادیاب امکان‌پذیر می‌شود. تیم استعدادیاب می‌تواند درخواست را رد کند یا پنلی را تعلیق کند.</p>
+                                <h2 class="h4">فعال‌شدن پنل و هفتهٔ اول</h2>
+                                <p>هر پنل، از هر نوع، همان لحظهٔ ساخت فعال است. پنلی که خودتان می‌سازید در هفت روز اول در هر ۲۴ ساعت تا ۵۰ دعوت شرکت‌کننده می‌فرستد؛ پیوستن با پیوند کلاس یا پیوند باز در این شمار نیست. اگر زودتر به دعوت بیشتری نیاز دارید، با پشتیبانی تماس بگیرید.</p>
+                                <h2 class="h4">توقف موقت پنل</h2>
+                                <p>اگر از پنلی برخلاف این شرایط استفاده شود، تیم استعدادیاب می‌تواند آن را موقتاً متوقف کند. در این مدت دعوت یا پاسخ‌دهی تازه شروع نمی‌شود، ولی هر شرکت‌کننده نتیجهٔ سنجه‌هایی را که تمام کرده همچنان در حساب خود می‌بیند.</p>
                                 <h2 class="h4">حریم خصوصی شرکت‌کننده</h2>
                                 <p>شرکت‌کننده تصمیم می‌گیرد چه چیزی با پنل به اشتراک گذاشته شود. پاسخ‌های خام هرگز نمایش داده نمی‌شوند. شما متعهد می‌شوید از نتایج فقط برای هدفی که پنل برای آن ساخته شده استفاده کنید.</p>
                                 <h2 class="h4">مسئولیت شما</h2>
@@ -103,14 +105,19 @@
                                 <p t-if="error" class="ts-notice ts-notice--warn" role="alert" t-out="error"/>
                                 <form action="/my/workspaces/new/create" method="post" class="ts-form ts-panel-new">
                                     <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                                    <t t-if="need_name">
+                                        <label for="ts_p_own">نام شما</label>
+                                        <input id="ts_p_own" name="own_name" type="text" required="required" minlength="2" maxlength="80" autocomplete="name" aria-describedby="ts_p_own_h" t-att-value="vals.get('own_name')"/>
+                                        <p id="ts_p_own_h" class="ts-hint">همکاران و مراجعان این نام را کنار پنل می‌بینند.</p>
+                                    </t>
                                     <label for="ts_p_name">نام پنل</label>
                                     <input id="ts_p_name" name="name" type="text" required="required" minlength="2" maxlength="100" t-att-value="vals.get('name')"/>
                                     <fieldset class="ts-fieldset" aria-describedby="ts_p_kind_h">
                                         <legend>نوع پنل</legend>
-                                        <p id="ts_p_kind_h" class="ts-hint">پنل مدرسه بلافاصله فعال می‌شود. پنل سازمان و مرکز مشاوره تا بررسی تیم استعدادیاب «در انتظار تأیید» است؛ در این مدت می‌توانید پنل را کامل کنید و همکاران را دعوت کنید.</p>
+                                        <p id="ts_p_kind_h" class="ts-hint">هر نوع پنلی همان لحظه فعال می‌شود.</p>
                                         <label class="ts-check"><input type="radio" name="kind" value="school" required="required" t-att-checked="'checked' if vals.get('kind') == 'school' else None"/><span>مدرسه یا دانشگاه</span></label>
-                                        <label class="ts-check"><input type="radio" name="kind" value="org" t-att-checked="'checked' if vals.get('kind') == 'org' else None"/><span>سازمان <span class="ts-hint">(نیاز به تأیید)</span></span></label>
-                                        <label class="ts-check"><input type="radio" name="kind" value="clinic" t-att-checked="'checked' if vals.get('kind') == 'clinic' else None"/><span>مرکز مشاوره <span class="ts-hint">(نیاز به تأیید)</span></span></label>
+                                        <label class="ts-check"><input type="radio" name="kind" value="org" t-att-checked="'checked' if vals.get('kind') == 'org' else None"/><span>سازمان (استخدام و منابع انسانی)</span></label>
+                                        <label class="ts-check"><input type="radio" name="kind" value="clinic" t-att-checked="'checked' if vals.get('kind') == 'clinic' else None"/><span>مرکز مشاوره</span></label>
                                         <label class="ts-check"><input type="radio" name="kind" value="solo" t-att-checked="'checked' if vals.get('kind') == 'solo' else None"/><span>کار مستقل (پنل یک‌نفره)</span></label>
                                     </fieldset>
                                     <div class="ts-reveal" data-ts-show="kind=solo">
@@ -118,13 +125,14 @@
                                         <select id="ts_p_solo" name="solo_as">
                                             <option value="">—</option>
                                             <option value="counselor" t-att-selected="'selected' if vals.get('solo_as') == 'counselor' else None">مشاور تحصیلی یا شغلی</option>
-                                            <option value="psychologist" t-att-selected="'selected' if vals.get('solo_as') == 'psychologist' else None">روان‌شناس یا مشاور (نیاز به تأیید)</option>
-                                            <option value="hr" t-att-selected="'selected' if vals.get('solo_as') == 'hr' else None">منابع انسانی (نیاز به تأیید)</option>
+                                            <option value="psychologist" t-att-selected="'selected' if vals.get('solo_as') == 'psychologist' else None">روان‌شناس یا مشاور</option>
+                                            <option value="hr" t-att-selected="'selected' if vals.get('solo_as') == 'hr' else None">منابع انسانی</option>
                                         </select>
                                     </div>
                                     <div class="ts-reveal" data-ts-show="kind=solo;solo_as=psychologist">
-                                        <label for="ts_p_lic">شمارهٔ پروانه یا نظام روان‌شناسی و مشاوره (برای روان‌شناس یا مشاور)</label>
-                                        <input id="ts_p_lic" name="license_number" type="text" maxlength="60" dir="ltr"/>
+                                        <label for="ts_p_lic">شمارهٔ پروانه یا نظام روان‌شناسی و مشاوره</label>
+                                        <input id="ts_p_lic" name="license_number" type="text" maxlength="60" dir="ltr" aria-describedby="ts_p_lic_h" t-att-value="vals.get('license_number') or None"/>
+                                        <p id="ts_p_lic_h" class="ts-hint">روان‌شناس مستقل گزارش کامل مراجعانش را می‌بیند، پس این شماره لازم است. کار با پنل منتظر بررسی آن نمی‌ماند؛ پس از بررسی تیم استعدادیاب، نشان «پروانهٔ تأییدشده» کنار نامتان می‌آید.</p>
                                     </div>
                                     <div class="ts-reveal" data-ts-show="kind=clinic|solo">
                                         <label class="ts-check"><input type="checkbox" name="escalation_ok" value="1"/><span>می‌پذیرم که پیگیری فوری نشانه‌های خطر با من است (برای پنل مرکز مشاوره).</span></label>
@@ -212,7 +220,7 @@
                                         <p t-else="">این دعوت برای ایمیل <bdi dir="ltr" t-out="bound_to"/> صادر شده است. برای پذیرفتن، با همین ایمیل وارد شوید یا حساب بسازید.</p>
                                         <p class="ts-hero__actions">
                                             <t t-if="by_phone">
-                                                <a t-if="urls.get('phone_url')" t-att-href="urls['phone_url']" class="ts-btn ts-btn--primary">ورود با کد تأیید پیامکی</a>
+                                                <a t-if="urls.get('phone_url')" t-att-href="urls['phone_url']" class="ts-btn ts-btn--primary">ورود یا ثبت‌نام با موبایل</a>
                                                 <a t-else="" t-att-href="urls['login_url']" class="ts-btn ts-btn--primary">ورود</a>
                                             </t>
                                             <t t-else="">
@@ -222,15 +230,18 @@
                                         </p>
                                     </t>
                                     <t t-elif="not fits">
-                                        <p class="ts-notice ts-notice--warn" role="alert">با حساب «<bdi t-out="user_name"/>» وارد شده‌اید. این دعوت برای شمارهٔ موبایل یا ایمیل دیگری (<bdi dir="ltr" t-out="bound_to"/>) صادر شده است. با حسابی که دعوت برایش صادر شده وارد شوید. <a t-attf-href="/web/session/logout?redirect=/join/#{inv.token}">خروج از این حساب</a></p>
+                                        <p class="ts-notice ts-notice--warn" role="alert">با حساب «<bdi t-out="user_name"/>» وارد شده‌اید. این دعوت برای شمارهٔ موبایل یا ایمیل دیگری (<bdi dir="ltr" t-out="bound_to"/>) صادر شده است. با حسابی که دعوت برایش صادر شده وارد شوید.</p>
+                                        <form t-attf-action="/web/session/logout?redirect=/join/#{inv.token}" method="post"><input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                                            <button type="submit" class="ts-btn ts-btn--outline">خروج از این حساب</button></form>
                                     </t>
                                     <form t-else="" t-attf-action="/join/#{inv.token}/accept" method="post" class="ts-form">
                                         <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
-                                        <t t-if="inv.role in ('clinician', 'clinic_director')">
-                                            <label for="ts_j_lic">شمارهٔ پروانه یا نظام روان‌شناسی و مشاوره</label>
-                                            <input id="ts_j_lic" name="license_number" type="text" required="required" maxlength="60" dir="ltr"/>
-                                            <p class="ts-hint">شمارهٔ پروانه توسط تیم استعدادیاب بررسی می‌شود.</p>
+                                        <t t-if="need_name">
+                                        <label for="ts_j_own">نام شما</label>
+                                        <input id="ts_j_own" name="own_name" type="text" required="required" minlength="2" maxlength="80" autocomplete="name" aria-describedby="ts_j_own_h"/>
+                                        <p id="ts_j_own_h" class="ts-hint">همکاران پنل شما را با این نام می‌شناسند.</p>
                                         </t>
+                                        <p t-if="inv.role in ('clinician', 'clinic_director')" class="ts-hint">شمارهٔ پروانه را بعد از پیوستن، هر وقت خواستید، در «هویت شما در گزارش‌ها» بنویسید؛ کار شما منتظر آن نمی‌ماند.</p>
                                         <button type="submit" class="ts-btn ts-btn--primary">پذیرفتن دعوت</button>
                                     </form>
                                 </t>
@@ -281,6 +292,11 @@
                                         <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
                                         <input type="hidden" name="code" t-att-value="ws.code"/>
                                         <p>نتیجه برای پنل «<strong><bdi t-out="ws.ts_public_name()"/></strong>» ارسال شود؟</p>
+                                        <t t-if="need_name">
+                                        <label for="ts_sh_own">نام شما</label>
+                                        <input id="ts_sh_own" name="own_name" type="text" required="required" minlength="2" maxlength="80" autocomplete="name" aria-describedby="ts_sh_own_h"/>
+                                        <p id="ts_sh_own_h" class="ts-hint">مشاورتان نتیجه را با این نام می‌بیند.</p>
+                                        </t>
                                         <button type="submit" class="ts-btn ts-btn--primary">بله، ارسال شود</button>
                                         <a t-attf-href="/my/assessments/#{attempt.id}/share" class="ts-btn ts-btn--outline">نه، کد دیگری وارد می‌کنم</a>
                                     </form>

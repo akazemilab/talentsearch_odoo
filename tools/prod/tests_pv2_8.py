@@ -57,8 +57,7 @@ def panel(purpose='education'):
     org = env['res.partner'].create({'name': 'پنل آزمون S8', 'is_company': True})
     org.write({'is_company': True})
     ws = W.create({'name': org.name, 'purpose': purpose, 'partner_id': org.id})
-    ws.write({'approved_on': '2026-01-01 00:00:00'})
-    ws.state = 'pilot'
+    ws.state = 'active'
     return ws
 
 

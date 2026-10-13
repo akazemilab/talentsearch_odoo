@@ -11,7 +11,80 @@ from .phone_otp import COOLDOWN_S, MAX_ATTEMPTS, TTL_MIN, iran_mobile
 MAX_PER_HOUR_PHONE = 5
 MAX_PER_HOUR_IP = 20
 LOGIN_TOKEN_TTL_S = 120
+# onb1 (risk review): wrong codes are counted across codes (a new code does not reset the count) per number AND network
+# address: the 10th wrong code within an hour from one address locks that number for that address for 15 minutes, so a
+# stranger elsewhere cannot lock the owner out. A per-number ceiling stays: 30 wrong codes within 24 hours, from
+# anywhere, lock the number for 1 hour. The 5 tries per code stay as before.
+LOCK_AFTER_WRONG = 10
+LOCK_WINDOW_MIN = 60
+LOCK_MIN = 15
+GLOBAL_AFTER_WRONG = 30
+GLOBAL_WINDOW_H = 24
+GLOBAL_LOCK_MIN = 60
+GLOBAL_KEY = '*'
 _DIGITS = str.maketrans('۰۱۲۳۴۵۶۷۸۹٠١٢٣٤٥٦٧٨٩', '01234567890123456789')
+
+
+def clean_code(raw):
+    """The digits of a typed or pasted code: Persian/Arabic digits, spaces and dashes are accepted."""
+    return ''.join(ch for ch in (raw or '').translate(_DIGITS) if ch.isdigit())[:12]
+
+
+class TsSignupLock(models.Model):
+    """Wrong sign-in codes (onb1): one row per (number, hashed network address), and one per number with ip_hash «*»
+    for the 24-hour ceiling. No code and no raw address is stored."""
+    _name = 'ts.signup.lock'
+    _description = 'Talent Search sign-in lock'
+
+    phone = fields.Char(required=True, index=True)
+    ip_hash = fields.Char(required=True, default='', index=True)
+    wrong = fields.Integer()
+    window_start = fields.Datetime()
+    locked_until = fields.Datetime()
+
+    _phone_ip_unique = models.Constraint('unique(phone, ip_hash)', 'one row per mobile number and address')
+
+    @api.model
+    def _key(self, ip):
+        return self.env['ts.signup.otp'].ip_digest(ip) if ip else ''
+
+    @api.model
+    def _row(self, phone, key):
+        S = self.sudo()
+        return S.search([('phone', '=', phone), ('ip_hash', '=', key)], limit=1) \
+            or S.create({'phone': phone, 'ip_hash': key, 'wrong': 0})
+
+    @api.model
+    def locked(self, phone, ip=None):
+        """Locked for this address, or for everyone after the 24-hour ceiling."""
+        now = fields.Datetime.now()
+        rows = self.sudo().search([('phone', '=', phone), ('ip_hash', 'in', [self._key(ip), GLOBAL_KEY])])
+        return any(r.locked_until and r.locked_until > now for r in rows)
+
+    @api.model
+    def note_wrong(self, phone, ip=None):
+        """Count one wrong code; returns True when this one locked the number (for this address or for everyone)."""
+        now = fields.Datetime.now()
+        locked = False
+        for key, after, window, lock in ((self._key(ip), LOCK_AFTER_WRONG, timedelta(minutes=LOCK_WINDOW_MIN), LOCK_MIN),
+                                         (GLOBAL_KEY, GLOBAL_AFTER_WRONG, timedelta(hours=GLOBAL_WINDOW_H), GLOBAL_LOCK_MIN)):
+            row = self._row(phone, key)
+            if not row.window_start or row.window_start < now - window:
+                row.write({'wrong': 0, 'window_start': now})
+            row.wrong += 1
+            if row.wrong >= after:
+                row.write({'locked_until': now + timedelta(minutes=lock), 'wrong': 0, 'window_start': now})
+                locked = True
+        return locked
+
+    @api.model
+    def note_ok(self, phone, ip=None):
+        """The right code: the count of this address starts again (the 24-hour ceiling keeps its count)."""
+        self.sudo().search([('phone', '=', phone), ('ip_hash', '=', self._key(ip))]).write({'wrong': 0, 'window_start': False})
+
+    @api.autovacuum
+    def _gc_old(self):
+        self.sudo().search([('write_date', '<', fields.Datetime.now() - timedelta(days=2))]).unlink()
 
 
 def _h(salt, value):
@@ -38,13 +111,15 @@ class TsSignupOtp(models.Model):
 
     @api.model
     def request_code(self, phone_raw, ip=None):
-        """Return (ok, reason, phone). reason in: format, disabled, cooldown, limit, send."""
+        """Return (ok, reason, phone). reason in: format, disabled, locked, cooldown, limit, send."""
         company = self.env.company.sudo()
         phone = iran_mobile(phone_raw)
         if not phone:
             return False, 'format', None
         if not (company.kv_enabled and company.ts_sms_otp):
             return False, 'disabled', None
+        if self.env['ts.signup.lock'].locked(phone, ip):
+            return False, 'locked', phone
         S, now = self.sudo(), fields.Datetime.now()
         last = S.search([('phone', '=', phone)], limit=1)
         if last and last.create_date > now - timedelta(seconds=COOLDOWN_S):
@@ -63,8 +138,24 @@ class TsSignupOtp(models.Model):
         return True, None, phone
 
     @api.model
-    def verify_code(self, phone, code):
-        """Return (ok, reason). reason: none, expired, wrong, attempts."""
+    def seconds_to_resend(self, phone):
+        """Seconds until this number may get a new code (the server cooldown), 0 when it may now."""
+        last = self.sudo().search([('phone', '=', phone)], limit=1) if phone else None
+        if not last:
+            return 0
+        left = COOLDOWN_S - (fields.Datetime.now() - last.create_date).total_seconds()
+        # fields.Datetime.now() drops the microseconds, create_date keeps them: never show more than the cooldown itself
+        return max(0, min(COOLDOWN_S, int(left + 0.999)))
+
+    @api.model
+    def verify_code(self, phone, code, ip=None):
+        """Return (ok, reason). reason: short, locked, none, expired, wrong, attempts."""
+        digits = clean_code(code)
+        if len(digits) != 6:
+            return False, 'short'
+        Lock = self.env['ts.signup.lock']
+        if Lock.locked(phone, ip):
+            return False, 'locked'
         rec = self.sudo().search([('phone', '=', phone), ('used', '=', False)], limit=1)
         if not rec:
             return False, 'none'
@@ -73,9 +164,10 @@ class TsSignupOtp(models.Model):
         if rec.attempts >= MAX_ATTEMPTS:
             return False, 'attempts'
         rec.attempts += 1
-        if not hmac.compare_digest(rec.code_hash, _h(rec.salt, (code or '').strip().translate(_DIGITS))):
-            return False, 'wrong'
+        if not hmac.compare_digest(rec.code_hash, _h(rec.salt, digits)):
+            return False, 'locked' if Lock.note_wrong(phone, ip) else 'wrong'
         rec.used = True
+        Lock.note_ok(phone, ip)
         return True, None
 
     @api.autovacuum

@@ -22,6 +22,9 @@ class TsAttempt(models.Model):
         partner = self.sudo().partner_id
         if not (company.kv_enabled and company.ts_sms_result and partner.ts_phone and partner.ts_sms_results):
             return False
+        ws = self.sudo().workspace_id if 'workspace_id' in self._fields else False
+        if ws and ws.state != 'active':
+            return False          # onb1 risk review: a suspended or closed panel sends nothing (the result stays on «/my»)
         body = self._ts_result_sms_body()
         try:
             with self.env.cr.savepoint():

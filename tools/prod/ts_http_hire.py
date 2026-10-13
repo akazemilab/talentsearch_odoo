@@ -33,8 +33,7 @@ name = 'شرکت آزمون استخدام وب'
 org = env['res.partner'].search([('name', '=', name)], limit=1) or env['res.partner'].create({'name': name, 'is_company': True})
 ws = env['ts.workspace'].search([('partner_id', '=', org.id)], limit=1) or env['ts.workspace'].create(
     {'name': name, 'purpose': 'employment', 'partner_id': org.id})
-ws.write({'approved_on': '2026-01-01 00:00:00'})
-ws.state = 'pilot'
+ws.state = 'active'
 def member(n, role):
     u = user(n)
     m = env['ts.workspace.member'].with_context(active_test=False).search([('workspace_id', '=', ws.id), ('user_id', '=', u.id)]) \

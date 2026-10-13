@@ -73,7 +73,7 @@ class TsBrandHelp(TsPanelHelp):
             mine = request.env['ts.workspace.member'].sudo().search(  # the caller's own memberships, found by user
                 [('user_id', '=', request.env.user.id), ('active', '=', True)])
             hidden = [m for m in mine if m.ts_onb_hidden_on and m.ts_onb_applies(ignore_hidden=True)]
-            centers = mine.filtered(lambda m: m.workspace_id.purpose == 'clinical' and m.workspace_id.state in ('pilot', 'active'))
+            centers = mine.filtered(lambda m: m.workspace_id.purpose == 'clinical' and m.workspace_id.state == 'active')
             if len(centers.workspace_id) == 1:
                 ws_one = centers.workspace_id      # place names in #center-setup become links into this panel
         qc['tsob_hidden'] = hidden

@@ -52,7 +52,9 @@
         <field name="arch" type="xml">
             <t t-name="ts_panel.result_bands_body">
                             <section t-if="level == 'status'" class="ts-card">
-                                <p>این سنجه تکمیل شده، اما نتیجه‌اش برای نقش شما قابل نمایش نیست یا شرکت‌کننده آن را به اشتراک نگذاشته است. فقط وضعیت دعوت در دسترس است.</p>
+                                <!-- A5b (kept in onb1, privacy not approval): a counseling-center owner who does not counsel sees status only; say why -->
+                                <p t-if="member and member.role == 'owner' and member.workspace_id.purpose == 'clinical' and not member.owner_practices">شما مالک این مرکز هستید و خودتان مشاوره نمی‌دهید؛ برای حفظ حریم مراجعان، گزارش را فقط مشاوران مرکز می‌خوانند و شما وضعیت دعوت‌ها را می‌بینید. اگر خودتان هم مشاوره می‌دهید، در صفحهٔ عضویت خود «خودم هم مسئول مراجعان هستم» را روشن کنید.</p>
+                                <p t-else="">این سنجه تکمیل شده، اما نتیجه‌اش برای نقش شما قابل نمایش نیست یا شرکت‌کننده آن را به اشتراک نگذاشته است. فقط وضعیت دعوت در دسترس است.</p>
                             </section>
                             <t t-if="level != 'status'">
                                 <section class="ts-card" t-att-aria-labelledby="(blk_id or 'tsp-r') + '-1'">
