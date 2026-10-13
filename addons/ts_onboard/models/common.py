@@ -61,12 +61,12 @@ _FA = str.maketrans('0123456789', '۰۱۲۳۴۵۶۷۸۹')
 
 
 def mask_email(email):
-    """«ma•••@example.com»: enough for the person to recognise the address, not to read it."""
+    """«ma***@example.com»: enough for the person to recognise the address, not to read it."""
     email = (email or '').strip()
     if '@' not in email:
         return ''
     local, _at, dom = email.partition('@')
-    return '%s•••@%s' % (local[:2], dom)
+    return '%s***@%s' % (local[:2], dom)
 
 
 def first_name(full):

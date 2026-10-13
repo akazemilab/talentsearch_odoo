@@ -8,7 +8,7 @@ reach:
   * the player of its attempts (/take/<token>[/...], the ts_tasks endpoints live under it);
   * the participant's own result of those attempts (/my/assessments/<id>[/pdf|/unshare], /my/assessments/battery/<id>[/...]);
   * static assets, sign-out, and the sign-in (/signup, /login).
-Anything else answers 303 to the sign-in with the number shown masked («۰۹۱۲•••۴۵۶۷»); after the code the session is an
+Anything else answers 303 to the sign-in with the number shown masked («۰۹۱۲***۴۵۶۷»); after the code the session is an
 ordinary full session. A session whose user no longer matches the scope drops it.
 
 Every response of the invitation, player and short-link families carries `Referrer-Policy: no-referrer` (the token or

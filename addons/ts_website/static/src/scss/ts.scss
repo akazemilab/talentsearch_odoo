@@ -73,7 +73,9 @@
     bdi, code, .ts-ltr { unicode-bidi: isolate; }
     bdi[dir=ltr], span[dir=ltr], .ts-bdi, code, kbd, .ts-ltr, input[type=email], input[type=url], input[dir=ltr] { font-family: Vazirmatn, var(--font-text); }   // identifiers keep Latin digits
     span[dir=ltr], .ts-bdi { unicode-bidi: isolate; }
-    .ts-bdi { direction: ltr; overflow-wrap: anywhere; }
+    // no CSS `direction` here: rtlcss flips it to rtl in the RTL bundle (a number like «۰۹۱۲ ۷۷۷ ۰۳۷۵» then showed its groups
+    // reversed, onb2 shots); every .ts-bdi carries dir="ltr", which sets the direction
+    .ts-bdi { overflow-wrap: anywhere; }
     .ts-jdate__input[dir=ltr] { font-family: var(--font-text); text-align: end; }   // a Jalali date keeps Persian digits
     code { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: .9em; }
     .text-muted { color: var(--color-neutral-400) !important; }

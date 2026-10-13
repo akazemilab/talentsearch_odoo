@@ -56,7 +56,7 @@
                                             <p t-elif="contact">این دعوت برای شمارهٔ <bdi dir="ltr" class="ts-bdi" t-out="contact['masked']"/> فرستاده شده است و شما با حساب دیگری وارد شده‌اید.</p>
                                             <p>برای ادامه از این حساب خارج شوید؛ همین دعوت دوباره باز می‌شود.</p>
                                         </div>
-                                        <form t-att-action="logout_url" method="post" class="ts-form">
+                                        <form t-att-action="logout_url" method="post" class="ts-form tso-solid">
                                             <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
                                             <button type="submit" class="ts-btn ts-btn--primary ts-btn--lg ts-btn--block">خروج و ادامه با این دعوت</button>
                                         </form>
@@ -116,9 +116,13 @@
                                                             <ol class="tso-parts"><li t-foreach="item_names" t-as="nm" t-out="nm"/></ol>
                                                         </t>
                                                         <dl class="ts-meta tso-terms">
-                                                            <dt>ذخیره و ادامه</dt><dd>پاسخ‌ها خودکار ذخیره می‌شوند و هر وقت خواستید از همان‌جا ادامه می‌دهید.</dd>
-                                                            <dt>دست نگه داشتن</dt><dd>هر وقت بخواهید دست نگه می‌دارید. برای پس گرفتن رضایت یا پاک‌کردن داده‌ها به صفحهٔ <a href="/privacy">حریم خصوصی</a> بروید.</dd>
-                                                            <dt>پشتیبانی</dt><dd><a href="/contact?topic=support">تماس با پشتیبانی</a><t t-call="ts_website.sep"/>اگر حالتان خوب نیست، منتظر نمانید: اورژانس ۱۱۵.</dd>
+                                                            <dt>ذخیره و ادامه</dt>
+                                                            <dd t-if="tu">پاسخ‌ها خودکار ذخیره می‌شوند و هر وقت خواستی از همان‌جا ادامه می‌دهی.</dd>
+                                                            <dd t-else="">پاسخ‌ها خودکار ذخیره می‌شوند و هر وقت خواستید از همان‌جا ادامه می‌دهید.</dd>
+                                                            <dt>دست نگه داشتن</dt>
+                                                            <dd t-if="tu">هر وقت بخواهی دست نگه می‌داری. برای پس گرفتن رضایت یا پاک‌کردن داده‌ها به صفحهٔ <a href="/privacy" aria-label="حریم خصوصی">حریم خصوصی</a> برو.</dd>
+                                                            <dd t-else="">هر وقت بخواهید دست نگه می‌دارید. برای پس گرفتن رضایت یا پاک‌کردن داده‌ها به صفحهٔ <a href="/privacy" aria-label="حریم خصوصی">حریم خصوصی</a> بروید.</dd>
+                                                            <dt>پشتیبانی</dt><dd><a href="/contact?topic=support" aria-label="تماس با پشتیبانی">تماس با پشتیبانی</a><t t-call="ts_website.sep"/><t t-if="tu">اگر حالت خوب نیست، منتظر نمان: اورژانس ۱۱۵.</t><t t-else="">اگر حالتان خوب نیست، منتظر نمانید: اورژانس ۱۱۵.</t></dd>
                                                         </dl>
                                                         <label class="ts-check"><input type="checkbox" name="consent_research" value="1"/>
                                                             <span>اجازه می‌دهم پاسخ‌هایم بدون نام و به‌صورت تجمیعی برای بهبود سنجه‌ها استفاده شود. <span class="ts-hint">(اختیاری)</span></span></label>
@@ -139,7 +143,7 @@
                                             </label>
                                             <p t-if="error" class="ts-form__error" role="alert" t-out="error"/>
                                             <button type="submit" class="ts-btn ts-btn--primary ts-btn--lg ts-btn--block tso-go"><t t-if="need['assent']">من هم موافقم</t><t t-else="">موافقم و شروع می‌کنم</t></button>
-                                            <p class="ts-hint tso-after"><t t-if="need['assent']">این دکمه یعنی خودت هم موافقی؛ هر وقت بخواهی می‌توانی دست نگه داری.</t><t t-elif="tu">با این دکمه رضایتت ثبت می‌شود و پاسخ‌دادن شروع می‌شود.</t><t t-else="">با این دکمه رضایت شما ثبت می‌شود و پاسخ‌دادن شروع می‌شود.</t></p>
+                                            <p class="ts-hint tso-after"><t t-if="need['assent'] and tu">این دکمه یعنی خودت هم موافقی؛ هر وقت بخواهی می‌توانی دست نگه داری.</t><t t-elif="need['assent']">این دکمه یعنی خودتان هم موافقید؛ هر وقت بخواهید می‌توانید دست نگه دارید.</t><t t-elif="tu">با این دکمه رضایتت ثبت می‌شود و پاسخ‌دادن شروع می‌شود.</t><t t-else="">با این دکمه رضایت شما ثبت می‌شود و پاسخ‌دادن شروع می‌شود.</t></p>
                                         </form>
                                         <section t-if="ask_decline" class="ts-confirm" id="tso-decline" aria-labelledby="tso-decline-h">
                                             <h2 class="h6" id="tso-decline-h"><t t-if="tu">دعوت را نمی‌پذیری؟</t><t t-else="">دعوت را نمی‌پذیرید؟</t></h2>

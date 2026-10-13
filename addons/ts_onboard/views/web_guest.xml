@@ -15,7 +15,7 @@
                             <div class="ts-container ts-narrow tso-start">
                                 <p class="ts-tag">سنجهٔ رایگان</p>
                                 <h1 t-out="inst.ts_title()"/>
-                                <p class="ts-lead" t-out="inst.ts_intended_use()"/>
+                                <p class="ts-lead" t-out="inst.ts_guest_lead()"/>
                                 <p class="tso-facts" id="tso-start-facts"><t t-out="fa(inst.active_item_count)"/> جمله<t t-call="ts_website.sep"/>حدود <t t-out="fa(inst.duration_minutes)"/> دقیقه</p>
                                 <t t-if="guest and guest.state == 'done'">
                                     <div class="ts-card tso-card"><p>نتیجهٔ سنجه‌ای که در همین مرورگر پاسخ دادید آماده است.</p></div>
@@ -47,9 +47,10 @@
                                             <dt t-if="public">نگه‌داری پاسخ‌ها</dt><dd t-if="public">پاسخ‌ها در همین مرورگر و تا ۴۸ ساعت نگه داشته می‌شود. اگر در این مدت با شمارهٔ موبایل نتیجه را نگیرید، پاک می‌شود.</dd>
                                             <dt>ذخیره و ادامه</dt><dd>هر پاسخ خودکار ذخیره می‌شود؛ هر وقت خواستید از همان‌جا ادامه می‌دهید.</dd>
                                             <dt>محدودیت</dt><dd t-out="inst.limitations"/>
-                                            <dt>پشتیبانی</dt><dd><a href="/contact?topic=support">تماس با پشتیبانی</a><t t-call="ts_website.sep"/>اگر حالتان خوب نیست، منتظر نمانید: اورژانس ۱۱۵.</dd>
+                                            <dt>کاربرد</dt><dd t-out="inst.ts_intended_use()"/>
+                                            <dt>پشتیبانی</dt><dd><a href="/contact?topic=support" aria-label="تماس با پشتیبانی">تماس با پشتیبانی</a><t t-call="ts_website.sep"/>اگر حالتان خوب نیست، منتظر نمانید: اورژانس ۱۱۵.</dd>
                                         </dl>
-                                        <p class="ts-hint">نسخهٔ متن رضایت: <bdi dir="ltr" class="ts-bdi" t-out="consent_version"/><t t-call="ts_website.sep"/><a href="/privacy">حریم خصوصی</a></p>
+                                        <p class="ts-hint">نسخهٔ متن رضایت: <bdi dir="ltr" class="ts-bdi" t-out="consent_version"/><t t-call="ts_website.sep"/><a href="/privacy" aria-label="حریم خصوصی">حریم خصوصی</a></p>
                                     </div>
                                 </details>
                             </div>

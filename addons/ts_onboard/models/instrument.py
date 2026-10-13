@@ -40,6 +40,18 @@ class TsInstrumentGuest(models.Model):
         self.ensure_one()
         return str(self.duration_minutes or 0).translate(str.maketrans('0123456789', '۰۱۲۳۴۵۶۷۸۹'))
 
+    def ts_guest_lead(self):
+        """What it measures, in one line for the start screen: «این سنجه ۴ عامل را توصیف می‌کند: الف، ب، ج و د.»
+        (the scored factors of the current version; the intended use, a longer book text, stays under «بیشتر بدانید»)."""
+        self.ensure_one()
+        names = [f.name for f in self.current_version_id.factor_ids.filtered('scored').sorted(lambda f: (f.sequence, f.id))
+                 if f.name]
+        if not names:
+            return self.ts_intended_use()
+        joined = names[0] if len(names) == 1 else '%s و %s' % ('، '.join(names[:-1]), names[-1])
+        n = str(len(names)).translate(str.maketrans('0123456789', '۰۱۲۳۴۵۶۷۸۹'))
+        return 'این سنجه %s عامل را توصیف می‌کند: %s.' % (n, joined)
+
     @api.model
     def ts_starter(self):
         """«سنجهٔ آغاز»: the configured starter when it is guest-ok, else the shortest guest-ok instrument."""

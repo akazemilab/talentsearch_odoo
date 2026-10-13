@@ -60,8 +60,8 @@ def client(host=TS):
 
 
 FA = str.maketrans('0123456789', '۰۱۲۳۴۵۶۷۸۹')
-PH = {'sms': '09127779921', 'manual': '09127779922', 'mis': '09127779923', 'other': '09127779924', 'guest': '09127779925',
-      'guest2': '09127779926'}
+PH = {'sms': '09126654391', 'manual': '09126654392', 'mis': '09126654393', 'other': '09126654394', 'guest': '09126654395',
+      'guest2': '09126654396'}
 EMAIL = 'ts.onb2.cand.http@example.invalid'
 L = {n: 'ts.onb2.%s.http@example.invalid' % n for n in ('other', 'minor')}
 pw = {u: ensure_user(u) for u in L.values()}
@@ -215,7 +215,13 @@ def q(code):
 
 
 def masked(phone):
-    return (phone[:4] + '•••' + phone[-4:]).translate(FA)
+    return (phone[:4] + '***' + phone[-4:]).translate(FA)
+
+
+def in_full(phone, page):
+    """The number appears whole (Latin or Persian digits, grouped or not)."""
+    s = '%s %s %s' % (phone[:4], phone[4:7], phone[7:])
+    return any(x in page for x in (s, s.translate(FA), phone, phone.translate(FA)))
 
 
 def cookies(h):
@@ -278,9 +284,9 @@ check('Q13 ...while its own result page stays reachable (the attempt is not fini
 st, loc, _ = pub.req('/take/%s' % TAKE1.split('/take/')[1].split('/')[0])
 check('Q14 ...and its player', st == 200, str(st))
 st, h, page = raw(pub, '/signup?next=/my')
-check('Q15 the sign-in shows the invited number masked («۰۹۱۲•••») with «دریافت کد», no number field',
+check('Q15 the sign-in shows the invited number masked («۰۹۱۲***») with «دریافت کد», no number field',
       st == 200 and masked(PH['sms']) in page and 'name="known"' in page and 'id="tsa_phone"' not in page
-      and '0912 777 9921' not in page and PH['sms'] not in page, str(st))
+      and not in_full(PH['sms'], page), str(st))
 st, h, j = ajax(pub, '/signup/send', {'csrf_token': pub.csrf(page), 'known': '1', 'phone': '', 'next': '/my'})
 check('Q16 «دریافت کد» sends the code to the invited number; the answer shows it masked',
       j.get('state') == 'code' and j.get('phone_fa') == masked(PH['sms']) and last_code(PH['sms']), str(j)[:160])
@@ -306,8 +312,8 @@ st, loc, _ = other_browser.req('/invite/%s/accept' % T_SMS, {'csrf_token': other
 check('D04 another browser gets no session: a code goes to the invited number', st == 303 and path_of(loc).startswith('/signup?step=code')
       and sms_count(PH['sms']) == n + 1, loc)
 st, page = get(other_browser, path_of(loc))
-check('D05 «برای ادامه، کدی به ۰۹۱۲•••۹۹۲۱ فرستادیم»: the number masked, never in full, nothing to type but the code',
-      st == 200 and 'برای ادامه، کدی به' in page and masked(PH['sms']) in page and '0912 777 9921' not in page
+check('D05 «برای ادامه، کدی به ۰۹۱۲***۹۹۲۱ فرستادیم»: the number masked, never in full, nothing to type but the code',
+      st == 200 and 'برای ادامه، کدی به' in page and masked(PH['sms']) in page and not in_full(PH['sms'], page)
       and 'ویرایش شماره' not in page and 'id="tsa_code"' in page, str(st))
 st, h, j = ajax(other_browser, '/signup/verify', {'csrf_token': other_browser.csrf(page), 'code': last_code(PH['sms']),
                                                   'next': '/invite/%s' % T_SMS})

@@ -1,5 +1,13 @@
 // onb2 (ts_onboard): invitation welcome, start screen, result gate. Tokens: ts_website/static/src/scss/tokens.scss; prefix tso-.
 .tso-welcome h1, .tso-start h1 { margin-block-end: var(--space-2); }
+// the one action of these screens is solid, like the sign-in's (#wrapwrap: ts.scss styles .ts-btn--primary under it)
+#wrapwrap .tso-form .ts-btn--primary, #wrapwrap .tso-solid .ts-btn--primary {
+    background: var(--color-accent-300); border-color: var(--color-accent-300); color: var(--color-surface);
+}
+#wrapwrap .tso-form .ts-btn--primary:hover, #wrapwrap .tso-solid .ts-btn--primary:hover {
+    background: var(--color-accent-200); border-color: var(--color-accent-200); color: var(--color-surface);
+}
+.tso-sees h2 { font-size: var(--fs-3); font-weight: 700; line-height: 1.6; }
 .tso-who { margin-block-end: var(--space-4); }
 .tso-card { margin-block: 0 var(--space-4); }
 .tso-card > :last-child { margin-block-end: 0; }

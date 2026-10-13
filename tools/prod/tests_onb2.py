@@ -34,7 +34,7 @@ portal = env.ref('base.group_portal')
 U = env['res.users'].with_context(no_reset_password=True)
 W, A, Att = env['ts.workspace'], env['ts.assignment'].sudo(), env['ts.attempt'].sudo()
 _n = [0]
-PH = {'a': '09127779901', 'b': '09127779902', 'c': '09127779903'}
+PH = {'a': '09126654381', 'b': '09126654382', 'c': '09126654383'}
 
 
 def puser(phone=None):

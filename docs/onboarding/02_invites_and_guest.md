@@ -32,19 +32,20 @@ the panel's name is never copied; an e-mail account is made the same way), brows
 this invitation and its short link, the player of its attempts (`/take/<token>/…`, the timed-task endpoints included), the
 participant's own result of those attempts (`/my/assessments/<id>`, `/pdf`, `/unshare`, `/my/assessments/battery/<id>/…`),
 static assets, sign-out, `/signup`. Anything else answers 303 to `/signup?next=…` showing the number masked
-(«۰۹۱۲•••۴۵۶۷») with «دریافت کد»; after the code the session is an ordinary full session. A scoped e-mail account that
+(«۰۹۱۲***۴۵۶۷», the mask /my/phone already uses: bullets «•••» read as Persian zeros «۰۰۰» in Vazirmatn) with «دریافت
+کد»; after the code the session is an ordinary full session. A scoped e-mail account that
 verifies a number nobody holds gets that number (one person, one account). Staff or archived accounts are never signed in
 by a link (the ordinary sign-in follows).
 
 **Device binding.** The first accept binds the invitation to this browser: cookie `ts_dev` (signed with the database secret,
 HttpOnly, SameSite=Lax, Secure on https, 90 days, one per browser); the server stores only sha256 of its random part
 (`device_hash`). A later open of an accepted invitation by a visitor who is not signed in shows «ادامه»: the bound browser
-goes on (scoped again, no code); another browser gets «برای ادامه، کدی به ۰۹۱۲•••۴۵۶۷ فرستادیم» — a code to the invited
+goes on (scoped again, no code); another browser gets «برای ادامه، کدی به ۰۹۱۲***۴۵۶۷ فرستادیم» — a code to the invited
 number (the code page never shows the number in full, «ویرایش شماره» is hidden) and after the code it continues. The same
 code-first path applies to a manual invitation that has a number. No number and no address: the ordinary sign-in first.
 
 **Mismatch.** A signed-in account that does not hold the invited number (or address) sees one notice («این دعوت برای شمارهٔ
-۰۹۱۲•••۴۵۶۷ فرستاده شده است و شما با حساب دیگری وارد شده‌اید.») and one action «خروج و ادامه با این دعوت»; the POST
+۰۹۱۲***۴۵۶۷ فرستاده شده است و شما با حساب دیگری وارد شده‌اید.») and one action «خروج و ادامه با این دعوت»; the POST
 accepts nothing. An invitation accepted by another account shows the same notice instead of a bare 404. Links without a
 number keep the old name notice.
 
