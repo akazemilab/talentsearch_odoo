@@ -119,8 +119,13 @@ check('suspended panel dashboard is closed', st == 404)
 
 # homepage call-to-action
 st, _, home = anon.req('/')
-check('homepage main button is «ساخت پنل رایگان» -> /panel', st == 200 and 'href="/panel"' in home and 'ساخت پنل رایگان' in home)
-check('homepage secondary button is «نمونهٔ گزارش» -> /assessments', 'نمونهٔ گزارش' in home and 'href="/assessments#sample"' in home)
+if 'id="tso-hero-start"' in home:
+    # onb2 (ts_onboard with a guest starter): the free test leads, the free panel follows
+    check('homepage main button is «شروع سنجهٔ رایگان» -> /start', st == 200 and 'href="/start"' in home and 'شروع سنجهٔ رایگان' in home)
+    check('homepage secondary button is «ساخت پنل رایگان» -> /panel', 'href="/panel"' in home and 'ساخت پنل رایگان' in home)
+else:
+    check('homepage main button is «ساخت پنل رایگان» -> /panel', st == 200 and 'href="/panel"' in home and 'ساخت پنل رایگان' in home)
+    check('homepage secondary button is «نمونهٔ گزارش» -> /assessments', 'نمونهٔ گزارش' in home and 'href="/assessments#sample"' in home)
 
 # participant shares a finished self-taken result with a counselor panel (by code)
 PART = 'ts.panel.http.part@example.invalid'
