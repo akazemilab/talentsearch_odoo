@@ -358,10 +358,12 @@ class TsWorkspaceMember(models.Model):
         self.ensure_one()
         if rec.workspace_id != self.workspace_id:
             return False
-        own_preview = ((rec._name == 'ts.assignment' and rec.ts_preview)
-                       or (rec._name == 'ts.panel.client' and rec.source == 'preview'))
-        if own_preview and rec.user_id and rec.user_id == self.user_id:
-            return True                            # onb3: a member always sees his own try-out
+        preview = ((rec._name in ('ts.assignment', 'ts.attempt') and rec.ts_preview)
+                   or (rec._name == 'ts.panel.client' and rec.source == 'preview'))
+        if preview:
+            # onb3: a try-out and its preview client are the member's own data: he always sees them, nobody else does
+            # (not even a colleague with clients:read_all; risk review LOW)
+            return bool(rec.user_id and rec.user_id == self.user_id)
         if self.has_perm('clients:read_all'):
             return True
         if rec.responsible_id:

@@ -339,7 +339,17 @@
         <field name="website_id" ref="ts_website.website_ts"/>
         <field name="arch" type="xml">
             <t t-name="ts_onboard.sample_body">
-                <t t-if="sample_kind == 'clinic'">
+                <!-- public (audience pages): only what the participant himself reads; the counselor guide and the talk
+                     points are inside the panel only (risk review LOW) -->
+                <t t-if="sample_kind == 'clinic' and sample_public">
+                    <p class="tsp-head__help tso-sample-sub">مجموعهٔ «<t t-out="sample['battery'].ts_title()"/>» برای «<t t-out="sample['who']"/>»؛ همان گزارشی که مراجع پس از پایان خودش می‌خواند. مشاوران مرکز در پنل، راهنمای تفسیر ویژهٔ خودشان را هم می‌بینند.</p>
+                    <section t-foreach="sample['sections']" t-as="sec" class="tso-sample-part ts-doc" t-att-aria-labelledby="'tso-s%s' % sec_index">
+                        <h2 class="h4" t-att-id="'tso-s%s' % sec_index" t-out="sec['inst'].ts_title()"/>
+                        <t t-call="ts_assessment.report_blocks" results="sec['results']" blk_sub="True" blk_sum_id="'tso-s%s-sum' % sec_index" tu="False"/>
+                    </section>
+                    <p class="ts-hint">این گزارش برای گفت‌وگوی مشاوره است، نه تشخیص.</p>
+                </t>
+                <t t-if="sample_kind == 'clinic' and not sample_public">
                     <p class="tsp-head__help tso-sample-sub">مجموعهٔ «<t t-out="sample['battery'].ts_title()"/>» برای «<t t-out="sample['who']"/>»؛ گزارش ویژهٔ مشاور، همان‌طور که مشاوران مرکز گزارش هر مراجع را می‌بینند.</p>
                     <section t-foreach="sample['sections']" t-as="sec" class="tso-sample-part" t-att-aria-labelledby="'tso-s%s' % sec_index">
                         <h2 class="h4" t-att-id="'tso-s%s' % sec_index" t-out="sec['inst'].ts_title()"/>
@@ -406,7 +416,7 @@
             <xpath expr="//section[@id='tsp-practice']" position="after">
                 <section t-if="is_self" class="ts-card" id="tso-guide" aria-labelledby="tso-guide-h">
                     <h2 id="tso-guide-h" class="h5">پیامک‌های راهنما</h2>
-                    <p class="ts-hint">پیامک‌های کوتاه شروع کار (حداکثر یکی در روز، نه بین ساعت ۲۲ تا ۸) و خلاصهٔ هفتگی پنل. هیچ‌کدام نام سنجه، <t t-out="ws.ts_onb_words()['one']"/> یا نتیجه را نمی‌آورد. پیامک نخستین نتیجه هم جزو همین‌هاست.</p>
+                    <p class="ts-hint">پیامک‌های کوتاه شروع کار (حداکثر یکی در روز، نه بین ساعت ۲۲ تا ۸) و خلاصهٔ هفتگی پنل. هیچ‌کدام نام سنجه، <t t-out="ws.ts_onb_words()['one']"/> یا نتیجه را نمی‌آورد. پیامک نخستین نتیجه هم جزو همین‌هاست.<t t-if="not ws.ts_onb3_panel"> در این پنل خاموش است تا خودتان روشنش کنید.</t></p>
                     <form t-attf-action="/my/workspaces/#{ws.id}/members/#{m.id}/guide-sms" method="post" class="tsp-inline" data-tsp-once="1">
                         <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
                         <input type="hidden" name="on" t-att-value="'0' if m.ts_guide_sms else '1'"/>
@@ -414,6 +424,36 @@
                         <button type="submit" class="ts-btn ts-btn--outline"><t t-if="m.ts_guide_sms">خاموش کردن</t><t t-else="">روشن کردن</t></button>
                     </form>
                 </section>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- ===================================================== the permanent link of a counseling panel asks the age (HIGH 2) -->
+    <record id="campaign_join_age" model="ir.ui.view">
+        <field name="name">ts_onboard.campaign_join.age</field>
+        <field name="inherit_id" ref="ts_panel.tpl_campaign_join"/>
+        <field name="website_id" ref="ts_website.website_ts"/>
+        <field name="arch" type="xml">
+            <!-- the age first (who may join at all), then the sharing choice and the button -->
+            <xpath expr="//form[@t-attf-action='/c/#{c.open_token}/join']/t[@t-call='ts_org.share_tick']" position="before">
+                <fieldset t-if="ws.purpose == 'clinical'" class="ts-field tso-age-q" id="tso-age-q" aria-describedby="tso-age-h">
+                    <legend>سن شما</legend>
+                    <label class="ts-check"><input type="radio" name="age" value="adult" required="required"/> <span>۱۸ سال یا بیشتر دارم</span></label>
+                    <label class="ts-check"><input type="radio" name="age" value="minor"/> <span>کمتر از ۱۸ سال دارم</span></label>
+                    <p id="tso-age-h" class="ts-hint">برای زیر ۱۸ سال، مرکز دعوت جداگانه‌ای با رضایت ولی می‌فرستد.</p>
+                </fieldset>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- ===================================================== members page: the join SMS was held back by its daily cap (HIGH 1) -->
+    <record id="members_sms_capped" model="ir.ui.view">
+        <field name="name">ts_onboard.members.sms_capped</field>
+        <field name="inherit_id" ref="ts_panel.tpl_members"/>
+        <field name="website_id" ref="ts_website.website_ts"/>
+        <field name="arch" type="xml">
+            <xpath expr="//section[@t-if='new_inv']/t[@t-elif='new_inv.phone']" position="before">
+                <t t-elif="new_inv.ts_sms_capped">سقف پیامک دعوت امروز پر شده؛ پیوند را خودتان بفرستید.</t>
             </xpath>
         </field>
     </record>

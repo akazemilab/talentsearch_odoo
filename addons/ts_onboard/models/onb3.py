@@ -17,8 +17,11 @@ from odoo.exceptions import UserError
 from odoo.http import request
 
 from odoo.addons.ts_assessment.models.attempt import fa_digits
+from odoo.addons.ts_panel.models.campaign import JOIN_MSG
 
 _logger = logging.getLogger(__name__)
+# a permanent link that took its day's joins (a panel in its first week): the model's refusal text
+JOIN_MSG.setdefault('today', 'امروز جای بیشتری در این پیوند نیست؛ فردا دوباره امتحان کنید.')
 
 KINDS = [('clinic', 'مرکز مشاوره'), ('solo', 'مشاور یا روان‌شناس مستقل'), ('school', 'مدرسه'),
          ('hr', 'استخدام و منابع انسانی')]
@@ -41,13 +44,24 @@ def kind_of_purpose(purpose):
 
 
 def sms_allowed(env):
-    """The guide and join SMS of onb3 go out from the production database only, or to a local fake gateway (the test
-    suites). A clone restored from a dump carries the live Kavenegar settings and the live cron runs on it: without this
-    rule a stale clone would text real panel owners (the weekly digest) and test numbers."""
-    ICP = env['ir.config_parameter'].sudo()
-    if env.cr.dbname == ((ICP.get_str('ts_onboard.sms_db') or '').strip() or 'eot_main'):
-        return True
-    return (ICP.get_str('ts_kavenegar.api_base') or '').startswith(('http://127.0.0.1:', 'http://localhost:'))
+    """The SMS of onb3 go out from the live database only, or to a local fake gateway (the test suites): the one rule of
+    ts_kavenegar/tools/guard.py, which also guards every other send path (Kavenegar client, sms.sms queue, IAP)."""
+    from odoo.addons.ts_kavenegar.tools.guard import sms_route_allowed
+    return sms_route_allowed(env)
+
+
+# the colleague join SMS (risk review HIGH 1): per panel per rolling day, fewer in the panel's first week, and per
+# receiving number across all panels; every send counts (a resend or a re-invite is a new invitation row with ts_sms_at)
+JOIN_SMS_PANEL_DAY = 10
+JOIN_SMS_PANEL_DAY_NEW = 5
+JOIN_SMS_NUMBER_DAY = 2
+JOIN_SMS_CAPPED = 'سقف پیامک دعوت امروز پر شده؛ پیوند را خودتان بفرستید.'
+# the permanent link (risk review MED): its open_max (500) holds, and a panel in its first week takes at most this many
+# joins a rolling day (ICP ts_onboard.perm_joins_per_day_new)
+PERM_JOINS_DAY_NEW = 100
+# the permanent link of a counseling panel asks the age (risk review HIGH 2)
+AGE_ASK = 'لطفاً بگویید ۱۸ سال یا بیشتر دارید یا کمتر.'
+MINOR_REFUSED = 'برای زیر ۱۸ سال، مرکز باید دعوت جداگانه با رضایت ولی بفرستد.'
 
 
 class TsWorkspaceOnb3(models.Model):
@@ -63,6 +77,9 @@ class TsWorkspaceOnb3(models.Model):
     ts_onb_result_opened_at = fields.Datetime('نخستین نتیجهٔ بازشده', readonly=True, copy=False)
     ts_onb_followup_at = fields.Datetime('پیگیری تیم (۷ روز بدون نتیجه)', readonly=True, copy=False)
     ts_perm_campaign_id = fields.Many2one('ts.campaign', 'پیوند همیشگی پنل', readonly=True, copy=False, ondelete='set null')
+    # made by the one form since onb3: its members get the guide SMS unless they switch them off; on a panel made before,
+    # nobody gets an unsolicited guide SMS (an owner may switch them on on his own page)
+    ts_onb3_panel = fields.Boolean('ساخته‌شده با فرم onb3', readonly=True, copy=False)
 
     # ------------------------------------------------------------------ kind, words, starter
     def ts_onb_kind(self):
@@ -194,7 +211,8 @@ class TsWorkspaceOnb3(models.Model):
         k = KIND_OF_KIND.get(kind)
         if kind == 'solo' and ws.purpose != 'clinical':
             k = kind_of_purpose(ws.purpose)          # an older caller's solo counselor (education) or solo HR
-        ws.sudo().write({'ts_kind': k, 'ts_onb_start': True})
+        ws.sudo().write({'ts_kind': k, 'ts_onb_start': True, 'ts_onb3_panel': True})
+        ws.sudo().member_ids.write({'ts_guide_sms': True})
         if ws.purpose == 'employment':
             owner = ws.member_ids.filtered(lambda m: m.role == 'owner')[:1]
             ws.ts_onb_sample_position(by=owner)
@@ -206,10 +224,20 @@ class TsWorkspaceOnb3(models.Model):
 class TsMemberOnb3(models.Model):
     _inherit = 'ts.workspace.member'
 
-    ts_guide_sms = fields.Boolean('پیامک‌های راهنما', default=True,
-                                  help='پیامک‌های کوتاه راهنمای شروع کار و خلاصهٔ هفتگی پنل. هیچ‌کدام نام سنجه، مراجع یا نتیجه را نمی‌آورد.')
+    ts_guide_sms = fields.Boolean('پیامک‌های راهنما',
+                                  help='پیامک‌های کوتاه راهنمای شروع کار و خلاصهٔ هفتگی پنل. هیچ‌کدام نام سنجه، مراجع یا نتیجه را نمی‌آورد. '
+                                       'روشن برای اعضای پنل‌هایی که از onb3 ساخته شده‌اند؛ در پنل‌های قدیمی‌تر خاموش، مگر عضو خودش روشنش کند.')
     ts_start_hidden_on = fields.Datetime('«شروع کار» پنهان شد', readonly=True, copy=False)
     ts_more_hidden_on = fields.Datetime('«پنل را کامل کنید» پنهان شد', readonly=True, copy=False)
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        """The guide SMS are on for a member of a panel made since onb3, off for one of an older panel (opt-in)."""
+        WS = self.env['ts.workspace'].sudo()
+        for vals in vals_list:
+            if 'ts_guide_sms' not in vals and vals.get('workspace_id'):
+                vals['ts_guide_sms'] = bool(WS.browse(vals['workspace_id']).ts_onb3_panel)
+        return super().create(vals_list)
 
     # ------------------------------------------------------------------ the member's own try-out
     def ts_onb_preview(self):
@@ -223,19 +251,36 @@ class TsMemberOnb3(models.Model):
         self.ensure_one()
         return bool(self.active and self.can_act() and (self.has_perm('invites:create') or self.role == 'owner'))
 
+    def ts_onb_tried(self, bat, inst):
+        """This member's COMPLETED try-out of that starter in this membership (the first one), or an empty recordset."""
+        self.ensure_one()
+        dom = [('workspace_id', '=', self.workspace_id.id), ('ts_preview', '=', True), ('user_id', '=', self.user_id.id),
+               ('state', '=', 'done'), ('create_date', '>=', self.create_date)]
+        dom += [('battery_id', '=', bat.id)] if bat else [('instrument_id', '=', inst.id), ('battery_id', '=', False)]
+        return self.env['ts.assignment'].sudo().with_context(active_test=False).search(dom, order='id', limit=1)
+
     def ts_onb_try(self):
-        """Start (or go on with) this member's try-out of the panel's starter. Returns the assignment."""
+        """Start (or go on with) this member's try-out of the panel's starter. Returns the assignment. At most one
+        completed try-out per member and starter for the life of the membership (risk review LOW): a finished one is
+        returned again; an unfinished one that was withdrawn, declined or expired may restart (audited)."""
         self.ensure_one()
         me = self.sudo()
         ws = me.workspace_id
         if not me.ts_onb_can_try():
             raise UserError('پیش‌نمایش با عضو فعالی است که دعوت می‌فرستد.')
+        bat, inst = ws.ts_onb_starter(me)
+        if inst:
+            done = me.ts_onb_tried(bat, inst)
+            if done:
+                return done
         a = me.ts_onb_preview()
         if a and a.state not in ('declined', 'withdrawn', 'expired'):
             return a
-        bat, inst = ws.ts_onb_starter(me)
         if not inst:
             raise UserError('سنجهٔ آغاز این پنل در فهرست شما نیست.')
+        ended = self.env['ts.assignment'].sudo().with_context(active_test=False).search_count([
+            ('workspace_id', '=', ws.id), ('ts_preview', '=', True), ('user_id', '=', me.user_id.id),
+            ('create_date', '>=', me.create_date), ('state', '!=', 'done')])
         name = me.user_id.partner_id.ts_known_name() or 'عضو پنل'
         label = PREVIEW_PREFIX + name
         C = self.env['ts.panel.client'].sudo()
@@ -258,6 +303,9 @@ class TsMemberOnb3(models.Model):
         a.action_accept(me.user_id, share=True)
         self.env['ts.audit.event'].sudo().log('onboarding.try', a, workspace=ws, member=me,
                                               item=bat.code if bat else inst.code)
+        if ended:
+            self.env['ts.audit.event'].sudo().log('onboarding.try_restart', a, workspace=ws, member=me,
+                                                  item=bat.code if bat else inst.code, earlier=ended)
         return a
 
     def ts_onb_take_url(self, a):
@@ -532,17 +580,63 @@ class TsCampaignOnb3(models.Model):
     _inherit = 'ts.campaign'
 
     ts_permanent = fields.Boolean('پیوند همیشگی پنل', readonly=True, copy=False,
-                                  help='پیوند باز سنجهٔ آغاز پنل (onb3): خودبه‌خود بسته نمی‌شود و سقف پیوستن ندارد؛ پنل هر وقت بخواهد آن را می‌بندد.')
+                                  help='پیوند باز سنجهٔ آغاز پنل (onb3): خودبه‌خود بسته نمی‌شود؛ سقف پیوستن آن (۵۰۰) و در هفتهٔ اول '
+                                       'پنل، سقف روزانه دارد؛ پنل هر وقت بخواهد آن را می‌بندد.')
 
     def open_state(self):
+        """A permanent link never expires; it is full at open_max (500) and, in the panel's first week, for the rest of
+        a rolling day after PERM_JOINS_DAY_NEW joins ('today')."""
         self.ensure_one()
         if self.ts_permanent:
-            return 'ok' if (self.kind == 'open_link' and self.state == 'open') else 'closed'
+            if self.kind != 'open_link' or self.state != 'open':
+                return 'closed'
+            if self.joined_count() >= (self.open_max or 0):
+                return 'full'
+            if self._ts_perm_day_full():
+                return 'today'
+            return 'ok'
         return super().open_state()
+
+    def _ts_perm_day_full(self):
+        self.ensure_one()
+        ws = self.workspace_id.sudo()
+        now = fields.Datetime.now()
+        if not ws.create_date or ws.create_date < now - timedelta(days=7):
+            return False
+        raw = (self.env['ir.config_parameter'].sudo().get_str('ts_onboard.perm_joins_per_day_new') or '').strip()
+        cap = int(raw) if raw.isdigit() else PERM_JOINS_DAY_NEW
+        return self.env['ts.assignment'].sudo().search_count(
+            [('campaign_id', '=', self.id), ('create_date', '>=', now - timedelta(hours=24))]) >= cap
+
+    def ts_join(self, user, name):
+        """The /c join of a counseling panel carries the age answer in the context (controllers/onb3.py): «adult» marks
+        the client adult and is recorded; «minor» is refused (the centre invites a minor personally, with the guardian's
+        attestation). Other callers (back office, tests) and other kinds of panel are unchanged; a school's class link
+        keeps its student and assent behaviour."""
+        self.ensure_one()
+        age = self.env.context.get('ts_join_age')
+        ws = self.sudo().workspace_id
+        if not age or ws.purpose != 'clinical':
+            return super().ts_join(user, name)
+        if age != 'adult':
+            raise UserError(MINOR_REFUSED)
+        client = self.env['ts.panel.client'].sudo().search([('workspace_id', '=', ws.id), ('user_id', '=', user.id),
+                                                            ('state', '=', 'active'), ('source', '!=', 'preview')], limit=1)
+        if client and client.age_group == 'minor':
+            raise UserError(MINOR_REFUSED)
+        a = super().ts_join(user, name)
+        c = a.client_id.sudo()
+        if c and c.age_group != 'adult':
+            c.age_group = 'adult'
+        self.env['ts.audit.event'].sudo().log('campaign.join_age', a, workspace=ws, campaign_id=self.id, age='adult')
+        return a
 
 
 class TsMemberInviteOnb3(models.Model):
     _inherit = 'ts.member.invite'
+
+    ts_sms_at = fields.Datetime('پیامک دعوت فرستاده شد در', readonly=True, copy=False, index=True)
+    ts_sms_capped = fields.Boolean('سقف پیامک دعوت پر بود', readonly=True, copy=False)
 
     @api.model
     def ts_create(self, by_member, role, phone_raw=None, email_raw=None):
@@ -552,6 +646,22 @@ class TsMemberInviteOnb3(models.Model):
         if inv.phone:
             inv.sudo()._ts_onb_send_join_sms()
         return inv
+
+    def _ts_onb_join_sms_cap(self):
+        """None, or 'panel' / 'number' when the join SMS of a rolling day are used up: JOIN_SMS_PANEL_DAY a panel
+        (JOIN_SMS_PANEL_DAY_NEW in its first 7 days) and JOIN_SMS_NUMBER_DAY a receiving number across all panels."""
+        self.ensure_one()
+        ws = self.workspace_id.sudo()
+        now = fields.Datetime.now()
+        since = now - timedelta(hours=24)
+        S = self.sudo().with_context(active_test=False)
+        young = bool(ws.create_date and ws.create_date > now - timedelta(days=7))
+        if S.search_count([('workspace_id', '=', ws.id), ('ts_sms_at', '>=', since)]) >= (
+                JOIN_SMS_PANEL_DAY_NEW if young else JOIN_SMS_PANEL_DAY):
+            return 'panel'
+        if S.search_count([('phone', '=', self.phone), ('ts_sms_at', '>=', since)]) >= JOIN_SMS_NUMBER_DAY:
+            return 'number'
+        return None
 
     def _ts_onb_send_join_sms(self):
         self.ensure_one()
@@ -563,6 +673,16 @@ class TsMemberInviteOnb3(models.Model):
         number = iran_mobile(self.phone)
         if not number:
             return False
+        # one decision at a time for this panel and this number (two invitations at once cannot both pass the cap)
+        self.env.cr.execute('SELECT pg_advisory_xact_lock(hashtext(%s)), pg_advisory_xact_lock(hashtext(%s))',
+                            ['ts_join_sms:ws:%d' % ws.id, 'ts_join_sms:ph:%s' % self.phone])
+        cap = self._ts_onb_join_sms_cap()
+        if cap:
+            self.write({'ts_sms_capped': True})
+            self.env['ts.audit.event'].sudo().log('member.invite_sms', self, workspace=ws, role=self.role, outcome='denied',
+                                                  reason='cap_' + cap)
+            return False
+        self.write({'ts_sms_at': fields.Datetime.now()})
         ok = self.env['ts.notification']._send_sms(company, number, self.ts_member_invite_sms_body())
         if ok:
             self.write({'sms_sent': True})

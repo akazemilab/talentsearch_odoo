@@ -171,5 +171,6 @@ st, _, _ = e.req('/my/phone')
 check('eot.ir /my/phone is not served', st in (404, 302, 303) , str(st))
 st, _, page = e.req('/kavenegar/x/status')
 check('eot.ir webhook path 404', st == 404, str(st))
-shell("env['ir.config_parameter'].sudo().set_str('ts_kavenegar.api_base', ''); env.cr.commit()")
+shell("env['ir.config_parameter'].sudo().set_str('ts_kavenegar.api_base', %r); env.company.sudo().write({'kv_enabled': False, "
+      "'kv_api_key': False}); env.cr.commit()" % lib.CLONE_API_BASE)    # back to the clone state of ts_db.sh (never a live route)
 lib.summary()

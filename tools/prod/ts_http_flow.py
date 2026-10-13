@@ -10,6 +10,12 @@ import http.cookiejar, os, re, subprocess, sys, urllib.parse, urllib.request, ht
 DB, PORT = sys.argv[1], sys.argv[2]
 assert DB.startswith('eot_ts'), 'clones only'
 BASE = 'http://127.0.0.1:%s' % PORT
+_spec = __import__('importlib.util').util.spec_from_file_location(
+    'flowlib', os.path.join(os.path.dirname(os.path.abspath(__file__)), 'ts_flowlib.py'))
+_lib = __import__('importlib.util').util.module_from_spec(_spec)
+_spec.loader.exec_module(_lib)
+_lib.setup(DB, PORT)
+_lib.fake_kavenegar()     # clones never text anyone: any SMS of this flow goes to a local fake gateway
 results = []
 
 

@@ -4,9 +4,14 @@
 # 3 h, 24 h, first result, weekly digest; quiet hours, one a day, opt-out, suspended), the 7-day back-office follow-up, the
 # colleague join SMS, the welcome credit, sample reports and the activation funnel. Run ONLY on an eot_ts* clone via
 # odoo-bin shell. Never commits; never sends an SMS or an e-mail (the one SMS path is replaced by a recorder and the
-# Kavenegar address points at a closed local port).
+# Kavenegar address points at a closed local port). Risk review fixes: the clone SMS guard on every send path (X), the join
+# SMS caps (J), the age question of a counseling panel's permanent link and the class link's parity (L), at-most-once guide
+# SMS (G), the permanent link's caps and the low-balance alert (L), the digest only for onb3 panels or owners who opted in
+# (G), a try-out seen by its member only and one completed try-out per starter (T), participant-level public samples (S).
 from datetime import datetime, timedelta
 from unittest.mock import patch
+
+import requests
 from zoneinfo import ZoneInfo
 
 from odoo import Command, fields
@@ -46,6 +51,7 @@ def fake_send(self, company, number, body, partner_id=False):
 
 
 N_cls = type(env['ts.notification'])
+ORIG_SEND_SMS = N_cls._send_sms
 _p_sms = patch.object(N_cls, '_send_sms', fake_send)
 _p_sms.start()
 Nudge = env['ts.onb.nudge'].sudo()
@@ -60,7 +66,7 @@ W, M, A, Att, C = env['ts.workspace'], env['ts.workspace.member'], env['ts.assig
     env['ts.panel.client'].sudo()
 F, Audit, Txn = env['ts.funnel.event'].sudo(), env['ts.audit.event'].sudo(), env['ts.wallet.txn'].sudo()
 _n = [0]
-PH = ['091266545%02d' % i for i in range(0, 20)]
+PH = ['091266545%02d' % i for i in range(0, 30)]
 for p in PH:
     env['res.partner'].with_context(active_test=False).search([('ts_phone', '=', p)]).write({'ts_phone': False})
     for u in U.with_context(active_test=False).search([('login', '=', p)]):
@@ -77,9 +83,15 @@ def puser(phone=None, name=None):
     return u
 
 
+def flush():
+    """What the post-commit hook does after a request: send the queued guide SMS that are due (no commit here)."""
+    return Nudge.search([('state', '=', 'queued'), ('due_at', '<=', fields.Datetime.now())])._ts_send()
+
+
 def make(kind, phone=None, name=None, **kw):
     u = puser(phone)
     ws = W.ts_panel_create(u, name or ('پنل آزمون onb3 %s %d' % (kind, _n[0])), kind, terms=True, **kw)
+    flush()
     return ws, ws.member_ids.filtered(lambda m: m.role == 'owner')[:1], u
 
 
@@ -181,6 +193,11 @@ check('T04 in no list or count of the panel: clients, invitations, dashboard til
       and tiles.get('sent', 0) == 0 and sum(x[2] for x in o_cl.dash_funnel(30)) == 0 and not o_cl.ts_onb_recent(), str(tiles))
 check('T05 the member still sees his own try-out (can_see), a colleague without read-all does not',
       o_cl.can_see(pv) and o_cl.can_see(pv.client_id))
+co_owner = M.create({'workspace_id': w_cl.id, 'user_id': puser(name='مالک دوم آزمون onb3').id, 'role': 'owner'})
+check('T05b ...nor does a colleague WITH clients:read_all (a second owner): not the try-out, its parts, its preview client, '
+      'its report', co_owner.has_perm('clients:read_all') and not co_owner.can_see(pv) and not co_owner.can_see(pv.client_id)
+      and not any(co_owner.can_see(t) for t in pv.ts_battery_attempts()) and pv.result_level(co_owner) == 'none')
+co_owner.active = False
 check('T06 no reminder is ever due for a try-out; a manual reminder is refused; no notification row was written',
       not pv._ts_reminder_due(fields.Date.today() + timedelta(days=5)) and pv.ts_manual_reminder(o_cl)[0] is False
       and env['ts.notification'].sudo().search_count([]) == n_notif)
@@ -206,6 +223,18 @@ check('C02 after the try-out: ۲ از ۴, the current step is the first invitati
       and card['hero']['second'][0] and '?preview=1' in card['hero']['second'][0])
 coach = o_cl.ts_onb_coach()
 check('C03 the coach line under the report: «حالا نخستین مراجع را دعوت کنید»', coach and coach['cta'] == 'حالا نخستین مراجع را دعوت کنید')
+# one completed try-out per member and starter (risk review LOW)
+check('T12 asked again after it finished, the same try-out comes back (no second free result)', o_cl.ts_onb_try() == pv
+      and A.search_count([('workspace_id', '=', w_cl.id), ('ts_preview', '=', True), ('user_id', '=', u_cl.id)]) == 1)
+w_t, o_t, u_t = make('clinic', PH[24])
+t1 = o_t.ts_onb_try()
+t1.sudo().write({'state': 'withdrawn', 'withdrawn': True})
+t2 = o_t.ts_onb_try()
+check('T13 an unfinished try-out that was withdrawn may start again, audited («onboarding.try_restart»)', t2 != t1
+      and Audit.search_count([('event_type', '=', 'onboarding.try_restart'), ('workspace_id', '=', w_t.id)]) == 1)
+finish_all(t2)
+check('T14 ...but once one is finished there is never another', o_t.ts_onb_try() == t2 and o_t.ts_onb_try() == t2
+      and A.search_count([('workspace_id', '=', w_t.id), ('ts_preview', '=', True)]) == 2)
 
 # escalation once, then the first real invitation
 check('E04 ts_set_escalation: the inviting member takes it, once (audited)', w_cl.ts_set_escalation(o_cl) is True
@@ -239,6 +268,10 @@ cand = puser(PH[5], name='مراجع شرکت‌کننده onb3')
 at = real2.action_accept(cand, share=True)
 finish(at)
 real2.invalidate_recordset()
+check('G00 the first-result SMS is not sent inside the transaction that made it: queued, sent after commit (post-commit hook)',
+      not SENT and set(Nudge.search([('workspace_id', '=', w_cl.id), ('kind', '=', 'first_result')]).mapped('state')) == {'queued'}
+      and 'ts_onboard.nudge_ids' in env.cr.postcommit.data)
+flush()
 rows = Nudge.search([('workspace_id', '=', w_cl.id), ('kind', '=', 'first_result')])
 bodies = [b_ for _n_, b_ in SENT]
 check('G01 first real shared result: ready mark, one SMS to the owner and one to the inviting member, «نخستین نتیجه در پنل … آماده است»',
@@ -254,6 +287,7 @@ SENT.clear()
 real3 = A.with_user(u_cl).sudo().create({'workspace_id': w_cl.id, 'instrument_id': adult.id, 'invitee_name': 'مراجع سوم onb3',
                                        'invited_by_id': u_cl.id})
 finish(real3.action_accept(puser(), share=True))
+flush()
 check('G04 the second result sends nothing', not SENT and Nudge.search_count([('workspace_id', '=', w_cl.id), ('kind', '=', 'first_result')]) == 2)
 card = o_cl.ts_onb_start_card()
 check('C06 ready, not opened: «نخستین نتیجه آماده است» with «دیدن نتیجه»', card['current']['key'] == 'result'
@@ -380,6 +414,61 @@ check('L04 a counseling panel (escalation set) gets the intake battery as its pe
 rev = M.create({'workspace_id': w_hr.id, 'user_id': puser().id, 'role': 'reviewer'})
 check('L05 a member who may not invite cannot make it (a reviewer)', not rev.has_perm('invites:create')
       and raises(lambda: w_hr.ts_onb_permanent_link(rev), UserError))
+# the age on a counseling panel's permanent link (risk review HIGH 2); the class link keeps its behaviour
+from odoo.addons.ts_onboard.models.onb3 import MINOR_REFUSED
+from odoo.addons.ts_panel.models.campaign import JOIN_MSG
+Cl = env['ts.panel.client'].sudo()
+kid = puser(name='نوجوان آزمون onb3')
+check('L06 /c of a counseling panel: «کمتر از ۱۸ سال دارم» is refused kindly, nothing is made',
+      raises(lambda: lkc.with_context(ts_join_age='minor').ts_join(kid, 'نوجوان آزمون'), UserError, MINOR_REFUSED)
+      and not Cl.search_count([('workspace_id', '=', w_cl.id), ('user_id', '=', kid.id)]))
+grown = puser(name='بزرگسال آزمون onb3')
+aj = lkc.with_context(ts_join_age='adult').ts_join(grown, 'بزرگسال آزمون')
+check('L07 «۱۸ سال یا بیشتر دارم»: joins as an adult client, the answer recorded (audit «campaign.join_age»)',
+      aj.client_id.age_group == 'adult' and aj.client_id.source == 'open_link'
+      and Audit.search_count([('event_type', '=', 'campaign.join_age'), ('res_id', '=', aj.id)]) == 1, aj.client_id.age_group)
+minor_cl = Cl.create({'workspace_id': w_cl.id, 'name': 'مراجع زیر ۱۸ آزمون', 'user_id': kid.id, 'age_group': 'minor'})
+check('L08 a client the centre recorded as a minor cannot join the link as an adult', raises(
+    lambda: lkc.with_context(ts_join_age='adult').ts_join(kid, 'نوجوان آزمون'), UserError, MINOR_REFUSED))
+default_age = Cl.default_get(['age_group']).get('age_group')
+stu = puser(name='دانش‌آموز پیوند آزمون onb3')
+aj_s = lk2.ts_join(stu, 'دانش‌آموز پیوند')
+check('L09 a school class link keeps its pre-onb3 behaviour: no age question, the client as before (age group «%s»), the '
+      'consent screen decides the assent' % default_age, aj_s.client_id.age_group == default_age
+      and not Audit.search_count([('event_type', '=', 'campaign.join_age'), ('res_id', '=', aj_s.id)]))
+# the caps of the permanent link (risk review MED)
+lk2.open_max = lk2.joined_count()
+check('L10 the permanent link holds its open_max (500 by default): full', lk2.open_state() == 'full' and lkc.open_max == 500)
+lk2.open_max = 500
+ICP.set_str('ts_onboard.perm_joins_per_day_new', str(lk2.joined_count() + 1))
+lk2.ts_join(puser(), 'دانش‌آموز دوم')
+check('L11 a panel in its first week: after the day\'s joins the link says «امروز جای بیشتری …» (state «today»)',
+      lk2.open_state() == 'today' and raises(lambda: lk2.ts_join(puser(), 'دانش‌آموز سوم'), UserError, JOIN_MSG['today']))
+env.flush_all()
+env.cr.execute("UPDATE ts_workspace SET create_date = now() at time zone 'UTC' - interval '8 days' WHERE id = %s", [w_sc.id])
+w_sc.invalidate_recordset()
+check('L12 ...after its first week, only open_max', lk2.open_state() == 'ok')
+env.cr.execute("UPDATE ts_workspace SET create_date = now() at time zone 'UTC' WHERE id = %s", [w_sc.id])
+w_sc.invalidate_recordset()
+ICP.set_str('ts_onboard.perm_joins_per_day_new', '')
+# a prepaid panel whose link cannot hold its price: one alert a day, however many refused joins
+w_lb, o_lb, u_lb = make('clinic', PH[23], name='پنل بی‌اعتبار آزمون onb3')
+w_lb.billing_mode = 'prepaid'
+w_lb.ts_set_escalation(o_lb)
+env['ts.wallet']._for_workspace(w_lb).sudo().ts_grant(30000000, 'promo')    # the floor of an open link: ten joins
+lkb = w_lb.ts_onb_permanent_link(o_lb)
+intake.write({'ts_list_price': 90000000})                                     # now one join costs more than the credit
+lb0 = Audit.search_count([('event_type', '=', 'credit.low_balance'), ('workspace_id', '=', w_lb.id)])
+refused = 0
+for i_ in range(3):
+    try:
+        lkb.with_context(ts_join_age='adult').ts_join(puser(), 'مراجع بی‌اعتبار %d' % i_)
+    except UserError:
+        refused += 1
+intake.write({'ts_list_price': 3000000})
+check('L13 refused joins of a prepaid panel without credit: one low-balance alert a day, not one per join',
+      refused == 3 and Audit.search_count([('event_type', '=', 'credit.low_balance'), ('workspace_id', '=', w_lb.id)]) == lb0 + 1,
+      '%s %s' % (refused, Audit.search_count([('event_type', '=', 'credit.low_balance'), ('workspace_id', '=', w_lb.id)]) - lb0))
 
 # ================================================================ G. guide SMS rules
 SENT.clear()
@@ -389,7 +478,7 @@ w_q, o_q, u_q = make('school', PH[7])
 wq_row = Nudge.search([('workspace_id', '=', w_q.id), ('kind', '=', 'welcome')])
 check('G05 the welcome SMS at 23:00 Tehran waits in the queue (quiet hours 22:00–08:00)', wq_row.state == 'queued' and not SENT)
 NOW[0] = NOW[0].replace(hour=8, minute=30) + timedelta(days=1)
-Nudge._cron_onb_nudges()
+Nudge._ts_run()
 check('G06 ...and goes out from 08:00 with the hourly run', wq_row.state == 'sent' and SENT and SENT[-1][0] == PH[7]
       and 'پنل' in SENT[-1][1] and 'ساخته شد. نخستین قدم: خودتان امتحان کنید.' in SENT[-1][1]
       and '/my/workspaces/%d' % w_q.id in SENT[-1][1], str(SENT[-1:]))
@@ -398,12 +487,12 @@ env.flush_all()
 env.cr.execute("UPDATE ts_workspace SET create_date = now() at time zone 'UTC' - interval '4 hours' WHERE id = %s", [w_q.id])
 w_q.invalidate_recordset()
 SENT.clear()
-Nudge._cron_onb_nudges()
+Nudge._ts_run()
 r3 = Nudge.search([('workspace_id', '=', w_q.id), ('kind', '=', 'stall_3h')])
 check('G07 3 hours without a try-out or an invitation: the nudge is due but the one-a-day cap holds it', r3.state == 'queued' and not SENT,
       r3.state)
 NOW[0] = NOW[0] + timedelta(days=1)
-Nudge._cron_onb_nudges()
+Nudge._ts_run()
 check('G08 ...the next day it goes, «اول خودتان ببینید دانش‌آموز چه می‌بیند»', r3.state == 'sent' and SENT
       and 'اول خودتان ببینید دانش‌آموز چه می‌بیند' in SENT[-1][1], str(SENT[-1:]))
 # 24 h: a stall_24h row, the link to the permanent link; the 3 h nudge of another panel still queued gives way
@@ -413,7 +502,7 @@ env.cr.execute("UPDATE ts_workspace SET create_date = now() at time zone 'UTC' -
 w_r.invalidate_recordset()
 NOW[0] = NOW[0] + timedelta(days=1)
 SENT.clear()
-Nudge._cron_onb_nudges()
+Nudge._ts_run()
 r24 = Nudge.search([('workspace_id', '=', w_r.id), ('kind', '=', 'stall_24h')])
 r3b = Nudge.search([('workspace_id', '=', w_r.id), ('kind', '=', 'stall_3h')])
 check('G09 a day without an invitation: «پیوند همیشگی پنل … آماده است» with the link to it; the 3-hour nudge is superseded',
@@ -426,7 +515,7 @@ env.cr.execute("UPDATE ts_workspace SET create_date = now() at time zone 'UTC' -
 w_d.invalidate_recordset()
 finish_all(o_d.ts_onb_try())
 NOW[0] = NOW[0] + timedelta(days=1)
-Nudge._cron_onb_nudges()
+Nudge._ts_run()
 rd = Nudge.search([('workspace_id', '=', w_d.id), ('kind', '=', 'stall_3h')])
 check('G10 a stall nudge stops once its step is done (try-out done: «step_done»)', rd.state == 'skipped' and rd.reason == 'step_done',
       '%s %s' % (rd.state, rd.reason))
@@ -436,7 +525,7 @@ env.flush_all()
 env.cr.execute("UPDATE ts_workspace SET create_date = now() at time zone 'UTC' - interval '4 hours' WHERE id = %s", [w_o.id])
 w_o.invalidate_recordset()
 NOW[0] = NOW[0] + timedelta(days=1)
-Nudge._cron_onb_nudges()
+Nudge._ts_run()
 ro = Nudge.search([('workspace_id', '=', w_o.id), ('kind', '=', 'stall_3h')])
 check('G11 «پیامک‌های راهنما» off on the member\'s own profile: nothing goes («opted_out»)', ro.state == 'skipped' and ro.reason == 'opted_out',
       '%s %s' % (ro.state, ro.reason))
@@ -450,7 +539,7 @@ row_x, _new = Nudge._new(w_x, o_x, 'stall_24h', key='stall_24h')
 ICP.set_str('ts_onboard.nudges_enabled', '0')
 row_x._ts_try_send()
 check('G13 the switch ts_onboard.nudges_enabled=0 stops every guide SMS', row_x.state == 'skipped' and row_x.reason == 'switch_off'
-      and Nudge._cron_onb_nudges() == 0)
+      and Nudge._ts_run() == 0)
 ICP.set_str('ts_onboard.nudges_enabled', '1')
 # 7 days without a result: a back-office activity, never an SMS
 w_7, o_7, u_7 = make('clinic', PH[13])
@@ -459,12 +548,12 @@ env.cr.execute("UPDATE ts_workspace SET create_date = now() at time zone 'UTC' -
 w_7.invalidate_recordset()
 SENT.clear()
 NOW[0] = NOW[0] + timedelta(days=1)
-Nudge._cron_onb_nudges()
+Nudge._ts_run()
 act = env['mail.activity'].sudo().search([('res_model', '=', 'ts.workspace'), ('res_id', '=', w_7.id)])
 check('G14 7 days without a result: one activity «تماس شخصی با پنل …» for a platform manager, marked once',
       len(act) == 1 and act.summary == 'تماس شخصی با پنل %s' % w_7.name and w_7.ts_onb_followup_at
       and (not act.user_id or not act.user_id.share), str(act.mapped('summary')))
-Nudge._cron_onb_nudges()
+Nudge._ts_run()
 check('G15 ...not again', env['mail.activity'].sudo().search_count([('res_model', '=', 'ts.workspace'), ('res_id', '=', w_7.id)]) == 1)
 check('G16 the follow-up itself sends no SMS to the panel', not any(n_ == PH[13] and 'تماس' in b_ for n_, b_ in SENT))
 # the weekly digest: Saturday from 09:00, counts only
@@ -473,13 +562,13 @@ while sat.weekday() != 5:
     sat += timedelta(days=1)
 NOW[0] = sat.replace(hour=9, minute=30)
 SENT.clear()
-Nudge._cron_onb_nudges()
+Nudge._ts_run()
 dg = Nudge.search([('workspace_id', '=', w_cl.id), ('kind', '=', 'digest')])
 dbody = [b_ for n_, b_ in SENT if n_ == PH[0]]
 check('G17 the weekly digest (Saturday from 09:00): counts only, Persian digits, no names',
-      len(dg) == 1 and dg.key.startswith('digest:') and dbody and 'این هفته در پنل' in dbody[0] and '۴ دعوت' in dbody[0]
+      len(dg) == 1 and dg.key.startswith('digest:') and dbody and 'این هفته در پنل' in dbody[0] and '۵ دعوت' in dbody[0]
       and '۲ نتیجه' in dbody[0] and 'مراجع' not in dbody[0], str((dbody[:1], dg.mapped('state'), dg.mapped('reason'), len(SENT))))
-Nudge._cron_onb_nudges()
+Nudge._ts_run()
 check('G18 ...once a week', Nudge.search_count([('workspace_id', '=', w_cl.id), ('kind', '=', 'digest')]) == 1)
 check('G19 a panel made before onb3 (follow-up marked by the migration) never gets a stall SMS',
       not Nudge.search_count([('workspace_id.ts_onb_followup_at', '!=', False), ('kind', 'in', ('stall_3h', 'stall_24h')),
@@ -495,6 +584,103 @@ check('G21 a clone (any database but eot_main) with the live gateway sends no gu
 ICP.set_str('ts_kavenegar.api_base', 'http://127.0.0.1:9/v1/%s/%s.json')
 check('G22 ...a local fake gateway (the test suites) is allowed', sms_allowed(env))
 
+# at most once: a claimed row is never sent again, even when its result could not be written (risk review MED)
+NOW[0] = NOW[0].replace(hour=10, minute=0)
+w_i, o_i, u_i = make('clinic', PH[19])
+SENT.clear()
+row_a, _new = Nudge._new(w_i, o_i, 'first_result', key='first_result:a')
+row_a.write({'state': 'sending', 'claimed_at': fields.Datetime.now()})
+row_a._ts_try_send()
+Nudge._ts_run()
+to_i = lambda: [b_ for n_, b_ in SENT if n_ == PH[19]]
+check('G23 a row another run has claimed («sending») is never sent by a second run', not to_i() and row_a.state == 'sending')
+row_b, _new = Nudge._new(w_i, o_i, 'first_result', key='first_result:b')
+import logging
+_nlog = logging.getLogger('odoo.addons.ts_onboard.models.onb3_nudge')
+_nlvl = _nlog.level
+_nlog.setLevel(logging.CRITICAL)                     # the expected «result not written» trace stays out of the verdict lines
+with patch.object(NudgeCls, '_ts_mark', lambda self, ok: (_ for _ in ()).throw(RuntimeError('rollback after send'))):
+    row_b._ts_send()
+_nlog.setLevel(_nlvl)
+n_b = len(to_i())
+Nudge._ts_run()
+row_b._ts_send()
+check('G24 the gateway took it, then the result write rolled back: the row stays «sending» and is not sent again',
+      n_b == 1 and len(to_i()) == 1 and row_b.state == 'sending', '%s %s %s' % (n_b, len(to_i()), row_b.state))
+env.flush_all()
+env.cr.execute("UPDATE ts_onb_nudge SET claimed_at = now() at time zone 'UTC' - interval '2 hours' WHERE id = %s", [row_b.id])
+row_b.invalidate_recordset()
+Nudge._ts_run()
+check('G25 an hour later the hourly run marks it failed («unknown»), still without a second send', row_b.state == 'failed'
+      and row_b.reason == 'unknown' and len(to_i()) == 1)
+check('G26 the hourly scheduled action runs with commits (claims committed before the gateway); the suites call _ts_run '
+      'without them', 'commit=True' in __import__('inspect').getsource(NudgeCls._cron_onb_nudges))
+
+# the weekly digest and every other guide SMS: never unsolicited on a panel made before onb3 (risk review LOW)
+w_old, o_old, u_old = make('clinic', PH[20])
+w_old.sudo().ts_onb3_panel = False
+o_old.sudo().ts_guide_sms = False                    # what the migration leaves on an older panel
+w_old.sudo().ts_set_escalation(o_old)
+r_old = A.with_user(u_old).sudo().create({'workspace_id': w_old.id, 'instrument_id': adult.id, 'invitee_name': 'مراجع پنل قدیمی onb3',
+                                         'invited_by_id': u_old.id})
+late = M.create({'workspace_id': w_old.id, 'user_id': puser().id, 'role': 'clinician'})
+check('D01 a member who joins an older panel has the guide SMS off; on a panel made since onb3, on',
+      late.ts_guide_sms is False and colleague.ts_guide_sms is True)
+sat = NOW[0]
+while sat.weekday() != 5:
+    sat += timedelta(days=1)
+NOW[0] = sat.replace(hour=9, minute=30) + timedelta(days=7)
+SENT.clear()
+Nudge._ts_run()
+check('D02 the weekly digest skips the older panel (no row for its owner) while the onb3 panels with activity get theirs',
+      not Nudge.search_count([('workspace_id', '=', w_old.id), ('kind', '=', 'digest')])
+      and Nudge.search_count([('workspace_id', '=', w_cl.id), ('kind', '=', 'digest')]) == 2)
+finish(r_old.action_accept(puser(), share=True))
+flush()
+fr = Nudge.search([('workspace_id', '=', w_old.id), ('kind', '=', 'first_result')])
+check('D03 ...nor a first-result SMS (skipped «opted_out»)', fr and set(fr.mapped('reason')) == {'opted_out'}
+      and not any(n_ == PH[20] for n_, _b in SENT if 'نخستین نتیجه' in _b))
+o_old.sudo().ts_guide_sms = True                     # the owner opts in on his own page
+Nudge._ts_run()
+check('D04 once its owner switches them on, the digest comes', Nudge.search_count([('workspace_id', '=', w_old.id), ('kind', '=', 'digest')]) == 1)
+
+# ================================================================ X. clones never text anyone: every send path
+from odoo.addons.ts_kavenegar.tools.guard import is_live_db, sms_route_allowed
+from odoo.addons.ts_kavenegar.tools.kavenegar import KavenegarError
+CALLS = []
+_orig_send = requests.sessions.Session.send
+
+
+def spy_send(self, req, **kw):
+    CALLS.append(req.url.split('?')[0][:60])
+    raise requests.exceptions.ConnectionError('blocked by the test')
+
+
+ICP.set_str('ts_kavenegar.api_base', 'https://api.kavenegar.com/v1/%s/%s.json')     # the live address on a clone
+company.write({'kv_enabled': True, 'kv_api_key': 'TEST-not-a-key'})
+with patch.object(requests.sessions.Session, 'send', spy_send):
+    check('X01 a clone is not the live database and has no local gateway: no SMS route',
+          not is_live_db(env) and not sms_route_allowed(env))
+    check('X02 the Kavenegar client refuses on a clone (OTP lookups, account calls, wizards all use it)',
+          raises(lambda: company._kv_client(), KavenegarError) and not CALLS)
+    sms = env['sms.sms'].sudo().create({'number': PH[21], 'body': 'آزمون نگهبان پیامک', 'sms_type': 'alert'})
+    sms.send(unlink_sent=False, raise_exception=False)
+    check('X03 an sms.sms of the queue (invitation, result, reminder, staff SMS) fails at once, no network call',
+          sms.state == 'error' and sms.failure_type == 'sms_server' and not CALLS, '%s %s %s' % (sms.state, sms.failure_type, CALLS))
+    company.write({'kv_enabled': False})
+    sms2 = env['sms.sms'].sudo().create({'number': PH[21], 'body': 'آزمون نگهبان IAP', 'sms_type': 'alert'})
+    sms2.send(unlink_sent=False, raise_exception=False)
+    check('X04 Kavenegar off: Odoo\'s own IAP SMS route is blocked on a clone too', sms2.state == 'error' and not CALLS,
+          '%s %s' % (sms2.state, CALLS))
+    company.write({'kv_enabled': True})
+    check('X05 the notification helper (staff, result, nudges, join SMS) sends nothing',
+          ORIG_SEND_SMS(env['ts.notification'].sudo(), company, PH[21], 'آزمون') is False and not CALLS)
+    company.write({'ts_sms_otp': True, 'ts_sms_otp_template_id': False})
+    ok_otp, why = env['ts.phone.otp'].sudo().request_code(puser(), PH[22])
+    check('X06 a sign-in code (OTP) is not sent either', not ok_otp and why == 'send' and not CALLS, '%s %s' % (ok_otp, why))
+ICP.set_str('ts_kavenegar.api_base', 'http://127.0.0.1:9/v1/%s/%s.json')
+check('X07 a local fake gateway is the one route a clone may use (the suites)', sms_route_allowed(env) and not is_live_db(env))
+
 # ================================================================ J. the colleague join SMS
 SENT.clear()
 inv = env['ts.member.invite'].sudo().ts_create(o_sc, 'counselor', phone_raw=PH[14])
@@ -509,6 +695,31 @@ check('J03 «ساخت پیوند تازه» sends a fresh SMS', new.sms_sent and
 joined = new.action_accept(puser(PH[14]))
 check('J04 the colleague joins with that number; no licence is asked at the door', joined and joined.active
       and joined.workspace_id == w_sc and not joined.license_number, str(joined))
+# the caps (risk review HIGH 1): 5 a rolling day for a panel in its first week (10 after), 2 a number across all panels;
+# resends and re-invites count
+MI = env['ts.member.invite'].sudo()
+SENT.clear()
+denied0 = Audit.search_count([('event_type', '=', 'member.invite_sms'), ('outcome', '=', 'denied')])
+inv2 = MI.ts_create(o_sc, 'counselor', phone_raw=PH[15])
+r2 = inv2.ts_resend(o_sc)
+r3 = r2.ts_resend(o_sc)
+check('J05 resend flood: the third join SMS to one number in a day is refused (2 a number), the invitation is still made',
+      inv2.sms_sent and r2.sms_sent and not r3.sms_sent and r3.ts_sms_capped and r3.state == 'pending'
+      and [n_ for n_, _b in SENT].count(PH[15]) == 2, str([n_ for n_, _b in SENT]))
+inv_x = MI.ts_create(o_cl, 'clinician', phone_raw=PH[14])
+check('J06 ...across all panels: the number already had two today (J01, J03 in another panel)', not inv_x.sms_sent and inv_x.ts_sms_capped)
+inv3 = MI.ts_create(o_sc, 'counselor', phone_raw=PH[16])
+inv4 = MI.ts_create(o_sc, 'counselor', phone_raw=PH[17])
+check('J07 a panel in its first week: the sixth join SMS of the day is refused (J01, J03, J05 ×2, one more = 5)',
+      inv3.sms_sent and not inv4.sms_sent and inv4.ts_sms_capped, '%s %s' % (inv3.sms_sent, inv4.sms_sent))
+check('J08 every refusal is audited («denied», the reason) and the page says «سقف پیامک دعوت امروز پر شده؛ پیوند را خودتان بفرستید.»',
+      Audit.search_count([('event_type', '=', 'member.invite_sms'), ('outcome', '=', 'denied')]) == denied0 + 3
+      and env.ref('ts_onboard.members_sms_capped').arch_db.count('سقف پیامک دعوت امروز پر شده؛ پیوند را خودتان بفرستید.') == 1)
+env.flush_all()
+env.cr.execute("UPDATE ts_workspace SET create_date = now() at time zone 'UTC' - interval '8 days' WHERE id = %s", [w_sc.id])
+w_sc.invalidate_recordset()
+inv5 = MI.ts_create(o_sc, 'counselor', phone_raw=PH[18])
+check('J09 after its first week a panel has 10 a day', inv5.sms_sent and not inv5.ts_sms_capped)
 
 # ================================================================ S. sample reports (in memory)
 env.flush_all()
@@ -522,6 +733,30 @@ check('S01 a sample report per kind from the real engines: clinic (intake parts 
       and sh and sh['res'].get('band') and S.ts_kind_sample('solo')['kind'] == 'clinic',
       '%s %s %s' % (bool(sc), bool(ss), bool(sh)))
 check('S02 nothing is stored: no attempt, person or panel row behind a sample', cnt() == before, '%s %s' % (before, cnt()))
+pub = S.ts_kind_sample('clinic', public=True)
+staff_rows = [r for sec in sc['sections'] for r in sec['results']]
+pub_rows = [r for sec in pub['sections'] for r in sec['results']]
+check('S03 the public sample (/sample/clinic) carries the participant\'s texts only: no counselor guide, no talk points; '
+      'the panel\'s sample keeps them', pub_rows and all(not r.therapist_text and not r.talk_points for r in pub_rows)
+      and any(r.client_text for r in pub_rows) and any(r.therapist_text for r in staff_rows), '%s %s' % (len(pub_rows), len(staff_rows)))
+import odoo.addons.ts_onboard.models.onb3_sample as SMOD
+SMOD._CACHE.clear()
+n_eng = [0]
+_eng = SMOD.engine_score
+
+
+def count_eng(*a, **k):
+    n_eng[0] += 1
+    return _eng(*a, **k)
+
+
+with patch.object(SMOD, 'engine_score', count_eng):
+    S.ts_kind_sample('clinic', public=True)
+    first_n = n_eng[0]
+    S.ts_kind_sample('clinic', public=True)
+    S.ts_kind_sample('clinic')
+check('S04 the engines run once per kind and day (cached plain values): the public page cannot make the server score on each '
+      'request', first_n >= 1 and n_eng[0] == first_n, '%s %s' % (first_n, n_eng[0]))
 
 # ================================================================ Z. the migration on the live panels of this clone
 ws4 = W.browse(4).exists()
@@ -534,6 +769,10 @@ old = W.search([('create_date', '<', fields.Datetime.now() - timedelta(days=9))]
 bad = [w.id for w in old if w.ts_onb_start and w.ts_onb_first_invite_at and w.ts_onb_first_invite_at < w.ts_onb_followup_at]
 check('Z02 every older panel: «شروع کار» off when it had sent a real invitation; the team follow-up marked; a kind set',
       old and not bad and all(w.ts_onb_followup_at and w.ts_kind for w in old), str(bad[:5]))
+check('Z03 no unsolicited SMS for an older panel: not an onb3 panel, its members\' guide SMS off (opt-in on their own page)',
+      old and not any(w.ts_onb3_panel for w in old)
+      and not any(m.ts_guide_sms for w in old for m in w.with_context(active_test=False).member_ids),
+      str([w.id for w in old if w.ts_onb3_panel][:5]))
 
 # ================================================================ F. back office
 check('F01 «فعال‌شدن پنل‌ها» (pivot by step and kind) and «پیامک‌های راهنما» are managers-only menus',

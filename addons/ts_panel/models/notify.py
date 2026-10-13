@@ -139,7 +139,11 @@ class TsNotification(models.Model):
 
     @api.model
     def _send_sms(self, company, number, body, partner_id=False):
-        """One alert SMS through the existing gateway; the row is removed once the gateway has taken it."""
+        """One alert SMS through the existing gateway; the row is removed once the gateway has taken it. A clone (any
+        database but the live one, without a local fake gateway) sends nothing (ts_kavenegar/tools/guard.py)."""
+        from odoo.addons.ts_kavenegar.tools.guard import sms_route_allowed
+        if not sms_route_allowed(self.env):
+            return False
         try:
             with self.env.cr.savepoint():
                 sms = self.env['sms.sms'].sudo().with_company(company).create(

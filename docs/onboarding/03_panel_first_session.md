@@ -38,12 +38,19 @@ member's own list «(پیش‌نمایش)», the sample position of hiring «پ�
 player's «submitted» redirect) is the real staff report view of the panel (`?preview=1`, clinical level for a counseling
 panel even when the owner does not counsel: it is his own data) with the coach line «پیش‌نمایش · گزارش مراجعانتان همین‌جا
 می‌آید» and under it one primary button «حالا نخستین مراجع را دعوت کنید» (school «حالا پیوند کلاس را بسازید», HR «حالا
-نخستین داوطلب‌ها را دعوت کنید»). The HR admin becomes the first candidate of the sample position.
+نخستین داوطلب‌ها را دعوت کنید»). The HR admin becomes the first candidate of the sample position. Privacy: a try-out, its
+parts and its preview client are seen by that member only (`can_see`), never by a colleague, not even one with
+clients:read_all (owners included); the sample position lists only the viewer's own «پیش‌نمایش». At most one COMPLETED
+try-out per member and starter for the life of the membership (asked again, the finished one comes back); an unfinished
+one that was withdrawn, declined or expired may start again (audit `onboarding.try_restart`).
 
 **Sample reports.** `ts.onb.sample` builds a sample per kind in memory from fixed synthetic answers with the real engines
 and the real templates (clinic: the intake parts with bands and counselor texts; school: the talent report; HR: the job-fit
 block of the candidate page, now its own template `ts_hire.candidate_fit`). Nothing is stored. Inside the panel:
-`/my/workspaces/<id>/sample` («یا نمونهٔ گزارش را ببینید»); public: `/sample/clinic|solo|school|hr` (audience pages). Each
+`/my/workspaces/<id>/sample` («یا نمونهٔ گزارش را ببینید»; the counselor's report with the guide and the talk points);
+public: `/sample/clinic|solo|school|hr` (audience pages): participant-level only (the clinic sample is the report the client
+himself reads; the counselor guide and the talk points are never put into it). The engines run once per kind and day (a
+per-process cache of plain values), so the public pages cannot make the server score on each request. Each
 says «نمونه — داده‌های ساختگی» and names a synthetic person.
 
 **«شروع کار».** The dashboard card (`ts_onb_start_card`): four steps ticked by real data — «پنل ساخته شد», «خودتان امتحان
@@ -64,10 +71,18 @@ another instrument or battery (the existing picker and its billing check), e-mai
 minors' guardian attestation; the line under «فرستادن» is the SMS consent attestation) and «پیوند همیشگی و QR». The old
 four-step wizard stays only for choosing a registered participant (`?wizard=1`) and for every POST that carries a step.
 
-**The permanent link.** `ts_onb_permanent_link`: an open-link campaign of the starter (`ts_permanent`, no expiry, 500 joins,
-open until the panel closes it); the participant signs in with his own number (S-AUTH), types his name and joins with the
+**The permanent link.** `ts_onb_permanent_link`: an open-link campaign of the starter (`ts_permanent`, no expiry, open
+until the panel closes it); the participant signs in with his own number (S-AUTH), types his name and joins with the
 sharing choice of `/c`. Copy, share, «دریافت QR» (`/link/qr.png?download=1`) and the QR image. Hiring has none (invitations
-belong to a position).
+belong to a position). Caps: `open_max` (500 joins) holds («همهٔ جاهای این دعوت پر شده است»); in the panel's first 7 days
+at most 100 joins a rolling day (`ts_onboard.perm_joins_per_day_new`; state «today»: «امروز جای بیشتری در این پیوند
+نیست»). A prepaid panel whose link cannot hold its price alerts its credit members once a day (the wallet's 24-hour rule),
+however many joins are refused. **The age** (counseling panels only): the join form asks «۱۸ سال یا بیشتر دارم» /
+«کمتر از ۱۸ سال دارم» (required). Under 18 is refused kindly («برای زیر ۱۸ سال، مرکز باید دعوت جداگانه با رضایت ولی
+بفرستد.», audit `campaign.join_minor`); the centre invites a minor personally, with the guardian attestation of the
+one-screen invitation. «۱۸ سال یا بیشتر» joins as an adult client (age group adult, audit `campaign.join_age`); a person the
+centre recorded as a minor cannot join the link. A school's class link keeps exactly its earlier behaviour (no age
+question; the consent screen asks the student's assent).
 
 **Live status.** `ts_panel.invite_steps`: «فرستاده شد → باز شد → در حال پاسخ → آماده» (phone: dots and the current label)
 in the invitation list and in the dashboard's «دعوت‌های اخیر»; ended invitations keep their pill. Counts start with the
@@ -90,14 +105,23 @@ named. Switch `ts_onboard.nudges_enabled` (default on).
 Rules: one row per member and key (nothing twice); at most one guide SMS a member a day (the first-result SMS answers his
 own invitation and is not held back); a stall nudge stops once its step is done (the 24-hour one supersedes a waiting
 3-hour one); 22:00–08:00 Tehran queued for the hourly run (`ts_onboard.quiet_start/quiet_end`); suspended or closed panels
-get nothing; each member switches them off on his own page («پیامک‌های راهنما»); separate from the staff-SMS switch.
-**Clones never text anyone**: the guide and join SMS go out only from the database `eot_main` (`ts_onboard.sms_db`) or to
-a local fake gateway (127.0.0.1); elsewhere the row is skipped («not_production»). Panels older than the release get no
-stall SMS (the migration marks their follow-up).
+get nothing; separate from the staff-SMS switch. **No unsolicited SMS for an older panel**: the member switch «پیامک‌های
+راهنما» is on by default only on panels made by the one form since onb3 (`ts_onb3_panel`); on every older panel (and for a
+member who joins one later) it is off, so no stall, first-result or digest SMS goes there unless the member switches it on
+on his own page; older panels also get no stall SMS (the migration marks their follow-up).
+
+**At most once.** The hourly run and the post-commit hook claim queued rows with `SELECT … FOR UPDATE SKIP LOCKED`, mark them
+«sending» and commit BEFORE the gateway is called; the result is written after it. A row whose result was never written
+stays «sending» and is never sent again (the hourly run marks it failed, reason «unknown», after an hour). The welcome and
+first-result SMS are never sent inside the request that causes them: the row is queued and sent by a post-commit hook in its
+own transaction; a request that rolls back leaves no row and sends nothing.
 
 **Colleague join SMS.** A colleague invited with a mobile number (and «ساخت پیوند تازه») gets the join SMS (`/j/` link,
 template `ts_brand.sms_member_invite`) from the system; the members page says whether it went. Joining is unchanged
-(sign-in with that number, «پذیرفتن»; no licence at the door).
+(sign-in with that number, «پذیرفتن»; no licence at the door). Caps (a rolling day; every send counts, resends and
+re-invites included): 10 a panel (5 in its first 7 days) and 2 a receiving number across all panels. A refusal is audited
+(`member.invite_sms`, outcome denied, reason cap_panel / cap_number), the invitation is still made and the page says
+«سقف پیامک دعوت امروز پر شده؛ پیوند را خودتان بفرستید.»
 
 ## B4, O4. Help and audience pages
 
@@ -109,6 +133,25 @@ and `/schools` (updated): one promise, three benefits, «ساخت پنل رای�
 public sample), three or four questions (who sees what, privacy, cost «رایگان در دورهٔ آزمایشی», HR data retention 12
 months), Persian titles and descriptions. `/pricing`: every kind free during early access, links to the audience pages.
 The home hero's three quiet links point to `/clinics`, `/hiring`, `/schools`.
+
+## Clones never text anyone (all SMS, not only onb3)
+
+A clone is restored from the live dump (the live Kavenegar key and settings) and the live Odoo server also runs its crons on
+clone databases. Two layers:
+
+1. `tools/prod/ts_db.sh clone`: Kavenegar off with no key on every company, `ts_kavenegar.api_base` on a closed local port
+   (`http://127.0.0.1:9/...`), Odoo's `sms.endpoint` and `iap.endpoint` there too, IAP SMS tokens void, the SMS queue
+   dropped (next to the mail servers switched off). `tools/vps/ts_rehearse.sh` checks this right after the restore and
+   stops the rehearsal before any suite if the clone still has a live route.
+2. Code (`ts_kavenegar/tools/guard.py`): an SMS leaves only from the live database (`ts_kavenegar.live_db`, default
+   `eot_main`) or, on any other database, only to a local fake gateway. It guards the Kavenegar client (`_kv_client`: SMS,
+   OTP lookups, account and template calls), the sms.sms queue (`_split_by_api`: Kavenegar and Odoo's IAP route; a blocked
+   message fails at once with «sms_server», no network call) and `ts.notification._send_sms`.
+
+Suites that need a gateway start a local fake first (`ts_flowlib.fake_kavenegar()`, or their own) and put the clone back to
+the state above at the end. **Recommendation for the owner (ops, not done here):** pin the live server to its database
+(`db_name = eot_main` and `dbfilter = ^eot_main$` in /etc/odoo20.conf), so the live server no longer runs crons on clone
+databases at all.
 
 ## Measures and money
 
@@ -131,7 +174,10 @@ or a purchase.
 
 ## Tests
 
-`tools/prod/tests_onb3.py` (ORM, never commits, SMS recorded, the rules clock patched) and `tools/prod/ts_http_onb3.py`
-(HTTP with a local fake Kavenegar), both registered in `tools/vps/ts_rehearse.sh`; old suites updated where the behaviour
+`tools/prod/tests_onb3.py` (ORM, never commits, SMS recorded, the rules clock patched; the risk-review checks: every send
+path on a clone, join-SMS flood through resends, a minor on /c, the class link's parity, the permanent link's caps, the
+low-balance alert, a duplicate send after a rollback, the digest on older panels, a try-out seen by its member only, one
+completed try-out, participant-level public samples and their cache) and `tools/prod/ts_http_onb3.py` (HTTP with a local
+fake Kavenegar; the same over HTTP with real commits), both registered in `tools/vps/ts_rehearse.sh`; old suites updated where the behaviour
 changed (stage1, panel, pv2_12, brand, onb1, onb2 and their HTTP companions, pv2_1, pv2_11, pv2_19). Shots: the matrix
 owner gets six panels in their first-session states (`tools/vps/ts_onb3_seed.py`).

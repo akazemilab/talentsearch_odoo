@@ -126,3 +126,13 @@ class SmsApiKavenegar(SmsApiBase):
             else:
                 out.append({'uuid': i['uuid'], 'state': 'processing', 'kv': kv})
         return out
+
+
+class SmsApiBlocked(SmsApiBase):
+    """The SMS route of a clone (tools/guard.py): every message fails at once with «sms_server», no network call."""
+    PROVIDER_TO_SMS_FAILURE_TYPE = SmsApiBase.PROVIDER_TO_SMS_FAILURE_TYPE | {'sms_server': 'sms_server'}
+
+    def _send_sms_batch(self, messages, delivery_reports_url=False):
+        _logger.info('SMS blocked on database %s (not the live database, no local gateway)', self.env.cr.dbname)
+        return [{'uuid': n['uuid'], 'state': 'sms_server', 'failure_reason': _('Test database: no real SMS is sent')}
+                for m in messages for n in m['numbers']]

@@ -8,6 +8,7 @@ assert DB.startswith('eot_ts'), 'clones only'
 spec = importlib.util.spec_from_file_location('flowlib', os.path.join(os.path.dirname(os.path.abspath(__file__)), 'ts_flowlib.py'))
 lib = importlib.util.module_from_spec(spec); spec.loader.exec_module(lib)
 lib.setup(DB, PORT)
+lib.fake_kavenegar()     # clones never text anyone: any SMS of these flows goes to a local fake gateway
 Client, check, ensure_user, summary, shell = lib.Client, lib.check, lib.ensure_user, lib.summary, lib.shell
 TS = 'talentsearch.ir'
 NAMES = ('owner', 'admin', 'c1', 'c2', 'hm', 'hmo', 'outsider')

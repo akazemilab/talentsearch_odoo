@@ -4,6 +4,7 @@ from odoo import api, fields, models, _
 from odoo.exceptions import UserError
 
 from odoo.addons.sms.tools.sms_api import SmsApi
+from ..tools.guard import sms_route_allowed
 from ..tools.kavenegar import Kavenegar, KavenegarError
 
 
@@ -94,6 +95,9 @@ class ResCompany(models.Model):
 
     def _kv_client(self):
         self.ensure_one()
+        if not sms_route_allowed(self.env):
+            # a clone (any database but the live one) reaches no real gateway: only a local fake (tools/guard.py)
+            raise KavenegarError(403, 'این پایگاه داده نسخهٔ آزمایشی است؛ پیامک واقعی فرستاده نمی‌شود.', 'guard')
         base = self.env['ir.config_parameter'].sudo().get_str('ts_kavenegar.api_base') or None
         return Kavenegar(self.sudo().kv_api_key, base_url=base)
 

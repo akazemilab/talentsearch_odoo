@@ -6,6 +6,8 @@
   Sepehr, workspace 4; the school panels with invitations) sees its finished state: no start card, no second card.
 * Activation marks from real data: first real invitation, first real shared result, and «opened» for a panel that already
   has a finished result. The 7-day team follow-up is marked done for every older panel (it is for new panels).
+* No unsolicited SMS for an older panel: the guide SMS (stall, first result, weekly digest) are off for its members
+  (ts_guide_sms); an owner may switch them on on his own page. Panels made by the one form since onb3 have them on.
 Sends nothing; idempotent (only empty values are filled).
 """
 import json
@@ -50,6 +52,8 @@ def migrate(cr, version):
     # «شروع کار» only for a panel that has not started; every older panel is past the 7-day follow-up
     cr.execute("UPDATE ts_workspace SET ts_onb_start = (ts_onb_first_invite_at IS NULL AND state = 'active'), "
                "ts_onb_followup_at = COALESCE(ts_onb_followup_at, now() AT TIME ZONE 'UTC')")
+    cr.execute("UPDATE ts_workspace SET ts_onb3_panel = FALSE WHERE ts_onb3_panel IS NULL")
+    cr.execute("UPDATE ts_workspace_member SET ts_guide_sms = FALSE WHERE ts_guide_sms IS NULL")
     cr.execute("SELECT count(*) FILTER (WHERE ts_onb_start), count(*) FROM ts_workspace")
     on, total = cr.fetchone()
     _logger.info('ts_onboard 20.0.2.0.0: kinds set, «شروع کار» on for %s of %s panels', on, total)

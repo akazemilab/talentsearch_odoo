@@ -15,7 +15,14 @@ client or result named, Persian digits, the link last). One row per member and k
 Rules: the switch `ts_onboard.nudges_enabled` (default on); at most one guide SMS a member a day (the first-result SMS is
 an answer to the member's own invitation and is never held back by the cap); a stall nudge stops once its step is done;
 no SMS between 22:00 and 08:00 Tehran (queued, sent by the hourly run from 08:00); a suspended or closed panel gets
-nothing; each member opts out on his own profile («پیامک‌های راهنما»). Separate from the global staff-SMS switch.
+nothing; each member switches them on or off on his own profile («پیامک‌های راهنما»): on by default on a panel made
+since onb3, off on an older panel (no unsolicited SMS; its owner may opt in). Separate from the global staff-SMS switch.
+
+At most once (risk review MED): a row is claimed (SELECT … FOR UPDATE SKIP LOCKED, state «sending») and that claim is
+committed BEFORE the gateway call; the result is written after it. A row whose result was never written (a crash, a
+rolled-back transaction) stays «sending» and is never sent again (the hourly run marks it failed after an hour). The
+welcome and first-result SMS are not sent inside the request that causes them: the row is queued and sent after that
+request commits (a post-commit hook, in its own transaction); a request that rolls back leaves no row and sends nothing.
 """
 import logging
 from datetime import datetime, timedelta
@@ -59,9 +66,10 @@ class TsOnbNudge(models.Model):
     member_id = fields.Many2one('ts.workspace.member', required=True, index=True, ondelete='cascade')
     kind = fields.Selection(KINDS, required=True, index=True)
     key = fields.Char(required=True)
-    state = fields.Selection([('queued', 'در صف'), ('sent', 'ارسال شد'), ('failed', 'نرسید'), ('skipped', 'فرستاده نشد')],
-                             default='queued', required=True, index=True)
+    state = fields.Selection([('queued', 'در صف'), ('sending', 'در حال ارسال'), ('sent', 'ارسال شد'), ('failed', 'نرسید'),
+                              ('skipped', 'فرستاده نشد')], default='queued', required=True, index=True)
     due_at = fields.Datetime(default=fields.Datetime.now, required=True)
+    claimed_at = fields.Datetime('برداشته شد برای ارسال', readonly=True)
     sent_at = fields.Datetime(readonly=True)
     reason = fields.Char('دلیل فرستاده‌نشدن')
 
@@ -107,20 +115,51 @@ class TsOnbNudge(models.Model):
     # ------------------------------------------------------------------ events
     @api.model
     def ts_on_panel_created(self, ws):
+        rows = self.browse()
         for m in self._owners(ws)[:1]:
             row, new = self._new(ws, m, 'welcome')
             if new:
-                row._ts_try_send()
+                rows |= row
+        rows._ts_send_after_commit()
 
     @api.model
     def ts_on_first_result(self, a):
         ws = a.workspace_id.sudo()
         members = self._owners(ws)
         inviter = ws.member_ids.filtered(lambda m: m.active and a.invited_by_id and m.user_id == a.invited_by_id)
+        rows = self.browse()
         for m in (members | inviter):
             row, new = self._new(ws, m, 'first_result')
             if new:
-                row._ts_try_send()
+                rows |= row
+        rows._ts_send_after_commit()
+
+    def _ts_send_after_commit(self):
+        """Send these queued rows after the current transaction commits, in a transaction of their own (never inside the
+        request that made them). One hook per transaction; rows of a rolled-back transaction do not exist and nothing is
+        sent. What cannot go now (quiet hours, the daily cap) stays queued for the hourly run."""
+        if not self:
+            return
+        cr = self.env.cr
+        data = cr.postcommit.data
+        key = 'ts_onboard.nudge_ids'
+        first = key not in data
+        data.setdefault(key, set()).update(self.ids)
+        if not first:
+            return
+        registry, uid = self.env.registry, self.env.uid
+
+        def _send():
+            ids = sorted(data.pop(key, set()))
+            if not ids:
+                return
+            try:
+                with registry.cursor() as cr2:
+                    env2 = api.Environment(cr2, uid, {})
+                    env2['ts.onb.nudge'].sudo().browse(ids).exists()._ts_send(commit=True)
+            except Exception:       # noqa: BLE001 - the request is already committed; the hourly run retries what is queued
+                _logger.exception('ts_onboard: post-commit nudge send failed')
+        cr.postcommit.add(_send)
 
     # ------------------------------------------------------------------ sending
     def _ts_still_due(self):
@@ -137,16 +176,62 @@ class TsOnbNudge(models.Model):
             return not invited
         return True
 
-    def _ts_try_send(self, now=None):
-        """Send one queued row now if every rule allows it; otherwise leave it queued or mark it skipped."""
-        for row in self.sudo().filtered(lambda r: r.state == 'queued'):
+    def _ts_try_send(self, now=None, commit=False):
+        """Send the queued rows that every rule allows now; leave the others queued or mark them skipped."""
+        return self._ts_send(now=now, commit=commit)
+
+    def _ts_send(self, now=None, commit=False):
+        """Claim → (commit) → gateway → result. `commit` (the hourly run and the post-commit hook) commits the claim
+        before the gateway is called and each result after it; without it (the ORM suites) the same steps run in the
+        caller's transaction. A row another transaction holds (SKIP LOCKED) or that is no longer queued is left alone,
+        so two runs never send the same row."""
+        if not self:
+            return 0
+        cr = self.env.cr
+        self.env['ts.onb.nudge'].flush_model()
+        cr.execute("SELECT id FROM ts_onb_nudge WHERE id IN %s AND state = 'queued' ORDER BY id FOR UPDATE SKIP LOCKED",
+                   [tuple(self.ids)])
+        rows = self.sudo().browse([r[0] for r in cr.fetchall()])
+        rows.invalidate_recordset()
+        plan = []
+        for row in rows:
             try:
-                with self.env.cr.savepoint():
-                    row._ts_send_one(now)
+                with cr.savepoint():
+                    job = row._ts_claim(now)
+                if job:
+                    plan.append((row, job))
             except Exception:       # noqa: BLE001 - one row never stops the others
                 _logger.exception('ts_onboard: nudge %s failed', row.id)
+        if commit:
+            cr.commit()             # the claims («sending») are durable before any gateway call
+        sent = 0
+        for row, (company, number, body, partner_id) in plan:
+            ok = False
+            try:
+                ok = bool(self.env['ts.notification']._send_sms(company, number, body, partner_id))
+            except Exception:       # noqa: BLE001
+                _logger.exception('ts_onboard: nudge %s gateway call failed', row.id)
+            try:
+                with cr.savepoint():
+                    row._ts_mark(ok)
+            except Exception:       # noqa: BLE001 - the row stays «sending»: never sent twice
+                _logger.exception('ts_onboard: nudge %s result not written', row.id)
+            if commit:
+                cr.commit()
+            sent += ok
+        return sent
 
-    def _ts_send_one(self, now=None):
+    def _ts_mark(self, ok):
+        self.ensure_one()
+        # the clock of the rules (quiet hours, one a day) is the one that stamps the row
+        self.write({'state': 'sent' if ok else 'failed',
+                    'sent_at': self._tehran_now().astimezone(UTC).replace(tzinfo=None)})
+        self.env['ts.audit.event'].sudo().log('onboarding.nudge', self, workspace=self.workspace_id, member=self.member_id,
+                                              kind=self.kind, outcome='ok' if ok else 'error')
+
+    def _ts_claim(self, now=None):
+        """Every rule of one queued row: None (skipped, or waiting) or the (company, number, body, partner) to send,
+        with the row marked «sending»."""
         self.ensure_one()
         ws, m = self.workspace_id.sudo(), self.member_id.sudo()
         skip = None
@@ -164,8 +249,8 @@ class TsOnbNudge(models.Model):
         if self._quiet(now):
             return False                                   # waits for 08:00 Tehran (hourly run)
         if self.kind in CAPPED and self.search_count([
-                ('member_id', '=', m.id), ('state', '=', 'sent'), ('kind', 'in', list(CAPPED)),
-                ('sent_at', '>=', self._day_start_utc()), ('id', '!=', self.id)], limit=1):
+                ('member_id', '=', m.id), ('state', 'in', ('sent', 'sending')), ('kind', 'in', list(CAPPED)),
+                '|', ('sent_at', '>=', self._day_start_utc()), ('state', '=', 'sending'), ('id', '!=', self.id)], limit=1):
             return False                                   # one guide SMS a member a day: tomorrow
         company = (ws.company_id or self.env.company).sudo()
         phones = m.user_id.sudo()._ts_verified_phones()
@@ -177,13 +262,9 @@ class TsOnbNudge(models.Model):
         if not sms_allowed(self.env):
             self.write({'state': 'skipped', 'reason': 'not_production'})
             return False
-        ok = self.env['ts.notification']._send_sms(company, number, self._ts_body(), m.user_id.partner_id.id)
-        # the clock of the rules (quiet hours, one a day) is the one that stamps the row
-        self.write({'state': 'sent' if ok else 'failed',
-                    'sent_at': self._tehran_now().astimezone(UTC).replace(tzinfo=None)})
-        self.env['ts.audit.event'].sudo().log('onboarding.nudge', self, workspace=ws, member=m, kind=self.kind,
-                                              outcome='ok' if ok else 'error')
-        return ok
+        body = self._ts_body()
+        self.write({'state': 'sending', 'claimed_at': fields.Datetime.now()})
+        return company, number, body, m.user_id.partner_id.id
 
     def _ts_values(self):
         self.ensure_one()
@@ -223,10 +304,18 @@ class TsOnbNudge(models.Model):
     # ------------------------------------------------------------------ the hourly run
     @api.model
     def _cron_onb_nudges(self):
+        """The hourly scheduled action: _ts_run with commits (claims are committed before the gateway is called)."""
+        return self._ts_run(commit=True)
+
+    @api.model
+    def _ts_run(self, commit=False):
         """Hourly: queue the nudges that came due, send what may go now, the weekly digest, the 7-day follow-up."""
         if not self._enabled():
             return 0
         now = fields.Datetime.now()
+        # a claim whose result was never written (a crash between the gateway and the result): never sent again
+        self.sudo().search([('state', '=', 'sending'), ('claimed_at', '<', now - timedelta(hours=1))]).write(
+            {'state': 'failed', 'reason': 'unknown'})
         WS = self.env['ts.workspace'].sudo()
         # stall nudges for panels made in the last 8 days (onb3 panels only: ts_onb_start; a panel older than the release
         # has its follow-up marked by the migration and gets no stall SMS)
@@ -256,7 +345,7 @@ class TsOnbNudge(models.Model):
             self._ts_digest(t)
         # rows queued during this run are due too (their due_at is a little after `now`)
         rows = self.sudo().search([('state', '=', 'queued'), ('due_at', '<=', fields.Datetime.now())], order='id', limit=300)
-        rows._ts_try_send()
+        rows._ts_send(commit=commit)
         return len(rows)
 
     @api.model
@@ -267,8 +356,9 @@ class TsOnbNudge(models.Model):
         ws_ids = {r['workspace_id'][0] for r in A.search_read(
             [('create_date', '>=', since)] + REAL, ['workspace_id'])} | {r['workspace_id'][0] for r in A.search_read(
             [('state', '=', 'done'), ('attempt_id.submitted_at', '>=', since)] + REAL, ['workspace_id'])}
+        # only owners whose guide SMS are on: on by default on a panel made since onb3, off (opt-in) on an older one
         for ws in self.env['ts.workspace'].sudo().browse(sorted(ws_ids)).filtered(lambda w: w.state == 'active'):
-            for m in self._owners(ws):
+            for m in self._owners(ws).filtered('ts_guide_sms'):
                 self._new(ws, m, 'digest', key=key)
 
     @api.model

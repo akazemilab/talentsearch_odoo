@@ -3,6 +3,7 @@ from collections import defaultdict
 
 from odoo import fields, models
 
+from ..tools.guard import is_live_db, sms_route_allowed
 from .mail_notification import KV_FAILURES
 
 
@@ -21,17 +22,25 @@ class SmsSms(models.Model):
     kv_secret = fields.Boolean('Secret text', help='OTP-like text: the body is masked in the Kavenegar log.')
 
     def _split_by_api(self):
+        # clones never text anyone (tools/guard.py): on any database but the live one, Kavenegar only to a local fake
+        # gateway and Odoo's IAP route never; what may not go is failed by SmsApiBlocked, without a network call
+        from ..tools.sms_api import SmsApiBlocked
+        live, kv_ok = is_live_db(self.env), sms_route_allowed(self.env)
         by_company = defaultdict(lambda: self.env['sms.sms'])
-        rest = self.browse()
+        rest = blocked = self.browse()
         for sms in self:
             by_company[sms._get_sms_company()] += sms
         for company, recs in by_company.items():
-            if company.kv_enabled:
+            if company.kv_enabled and kv_ok:
                 api = company._get_sms_api_class()(self.env)
                 api._set_company(company)
                 yield api, recs
+            elif not live:
+                blocked += recs
             else:
                 rest += recs
+        if blocked:
+            yield SmsApiBlocked(self.env), blocked
         if rest:
             yield from super(SmsSms, rest)._split_by_api()
 

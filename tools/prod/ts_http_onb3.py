@@ -5,6 +5,9 @@ member's own try-out («پیش‌نمایش») and its end on the panel's report
 public), the one-screen «دعوت تازه» (escalation asked once, the SMS preview, «فرستادن», minors, prepaid refusal), the
 permanent link with its QR, the live status stepper, the first-result SMS, «پنل را کامل کنید», the guide-SMS switch, the
 colleague join SMS, the help sections, the audience pages (/clinics /hiring /schools /pricing) and the activation funnel.
+Risk review fixes: the age question of a counseling panel's permanent link (and the class link's parity), the join-SMS
+cap through «ساخت پیوند تازه», at-most-once guide SMS with real commits, and no SMS route on a clone for the flows of
+earlier releases (invitation SMS, colleague join SMS) when the clone carries the live Kavenegar address.
 eot.ir must stay exactly as it was.
     ts_http_onb3.py DB PORT"""
 import http.server, importlib.util, json, os, re, sys, threading, urllib.parse
@@ -53,8 +56,8 @@ def sms_to(phone):
 
 
 PH = {'cl': '09126654530', 'sc': '09126654531', 'hr': '09126654532', 'pp': '09126654533', 'cand': '09126654534',
-      'kid': '09126654535', 'col': '09126654536', 'pcand': '09126654537'}
-L = {n: 'ts.onb3.%s.http@example.invalid' % n for n in ('cl', 'sc', 'hr', 'pp', 'cand')}
+      'kid': '09126654535', 'col': '09126654536', 'pcand': '09126654537', 'guard': '09126654538', 'guard2': '09126654539'}
+L = {n: 'ts.onb3.%s.http@example.invalid' % n for n in ('cl', 'sc', 'hr', 'pp', 'cand', 'adult', 'minor', 'stu')}
 pw = {u: ensure_user(u) for u in L.values()}
 
 out = shell(r"""
@@ -278,6 +281,33 @@ if url:
           str(st))
 check('L05 eot.ir never serves the QR (sign-in redirect or 404, never the image)', Client(EOT).req(W + '/link/qr.png')[0] in (302, 303, 404))
 
+# ================================================================ Y. the age question on a counseling panel's permanent link
+TOK = re.search(r'/c/([^"/?#]+)', url.group(1)).group(1) if url else 'none'
+ad, mi = login('adult'), login('minor')
+st, jp = get(ad, '/c/' + TOK)
+age_q = re.search(r'<fieldset[^>]*id="tso-age-q".*?</fieldset>', jp, re.S)
+check('Y01 signed in, the join form of a counseling panel asks «۱۸ سال یا بیشتر دارم» / «کمتر از ۱۸ سال دارم» (a required choice)',
+      st == 200 and age_q and '۱۸ سال یا بیشتر دارم' in age_q.group(0) and 'کمتر از ۱۸ سال دارم' in age_q.group(0)
+      and 'required' in age_q.group(0), str(st))
+st, mp_ = get(mi, '/c/' + TOK)
+st, loc, _ = post(mi, '/c/%s/join' % TOK, {'name': 'نوجوان آزمون onb3', 'share': '1', 'age': 'minor'}, mp_)
+st2, page = get(mi, '/c/' + TOK)
+nm = shell("print('NM', env['ts.panel.client'].sudo().search_count([('workspace_id', '=', %s), ('user_id.login', '=', %r)]), "
+           "env['ts.audit.event'].sudo().search_count([('event_type', '=', 'campaign.join_minor'), ('workspace_id', '=', %s)]))"
+           % (WC, L['minor'], WC))
+check('Y02 «کمتر از ۱۸ سال دارم» is refused kindly on the same page («برای زیر ۱۸ سال، مرکز باید دعوت جداگانه با رضایت ولی بفرستد.»); '
+      'no client or invitation is made; the answer is recorded', st in (302, 303) and (loc or '').endswith('/c/' + TOK)
+      and 'برای زیر ۱۸ سال، مرکز باید دعوت جداگانه با رضایت ولی بفرستد.' in page and 'NM 0 1' in nm, nm[-40:])
+st, loc, _ = post(ad, '/c/%s/join' % TOK, {'name': 'بزرگسال آزمون onb3', 'share': '1'}, jp)
+st2, jp2 = get(ad, '/c/' + TOK)
+check('Y03 without an answer nobody joins; the page asks again', st in (302, 303) and 'لطفاً بگویید ۱۸ سال یا بیشتر دارید یا کمتر.' in jp2)
+st, loc, _ = post(ad, '/c/%s/join' % TOK, {'name': 'بزرگسال آزمون onb3', 'share': '1', 'age': 'adult'}, jp2)
+ag = shell("c = env['ts.panel.client'].sudo().search([('workspace_id', '=', %s), ('user_id.login', '=', %r)]); "
+           "print('AG', c.age_group, c.source, env['ts.audit.event'].sudo().search_count([('event_type', '=', 'campaign.join_age'), "
+           "('workspace_id', '=', %s)]))" % (WC, L['adult'], WC))
+check('Y04 «۱۸ سال یا بیشتر دارم» joins and goes on to consent; the client is an adult, the answer recorded',
+      st in (302, 303) and '/take/' in (loc or '') and 'AG adult open_link 1' in ag, '%s %s' % (loc, ag[-40:]))
+
 # ================================================================ R. the first result: SMS to the owner, «پنل را کامل کنید»
 n_owner = len(sms_to(PH['cl']))
 fin = shell(r"""
@@ -334,8 +364,40 @@ check('G03 a colleague invited with a mobile number gets the join SMS (/j/ link)
       len(sms_to(PH['col'])) == n_col + 1 and '/j/' in sms_to(PH['col'])[-1] and 'پیامک دعوت برای همکار فرستاده شد' in mem2,
       str(sms_to(PH['col'])[-1:])[:160])
 check('G04 the members form says «فرستادن دعوت»', 'فرستادن دعوت' in mem)
+mv = re.search(r'minv=(\d+)', loc or '')
+st, loc, _ = post(cl, W + '/members/invites/%s/resend' % (mv.group(1) if mv else 0), {}, mem2)
+mv2 = re.search(r'minv=(\d+)', loc or '')
+st, mem3 = get(cl, path_of(loc)) if loc else (0, '')
+st, loc, _ = post(cl, W + '/members/invites/%s/resend' % (mv2.group(1) if mv2 else 0), {}, mem3)
+st, mem4 = get(cl, path_of(loc)) if loc else (0, '')
+check('G04b «ساخت پیوند تازه» twice: the second resend would be the third join SMS to that number today; it is held back and the '
+      'page says «سقف پیامک دعوت امروز پر شده؛ پیوند را خودتان بفرستید.» (the new link is still shown)',
+      len(sms_to(PH['col'])) == n_col + 2 and 'سقف پیامک دعوت امروز پر شده؛ پیوند را خودتان بفرستید.' in mem4 and 'id="tsp-newinv"' in mem4,
+      str(len(sms_to(PH['col'])) - n_col))
 st, loc, _ = post(cl, W + '/more/hide', {}, dash)
 check('G05 «بعداً» hides «پنل را کامل کنید» for this member', st in (302, 303) and 'id="tso-more"' not in get(cl, W)[1])
+first_cl = lambda: [b_ for b_ in sms_to(PH['cl']) if 'نخستین نتیجه' in b_]
+n_first = len(first_cl())
+dup = shell(r"""
+from unittest.mock import patch
+N = env['ts.onb.nudge'].sudo()
+ws = env['ts.workspace'].browse(%s)
+m = ws.member_ids.filtered(lambda x: x.role == 'owner')[:1]
+row, _n = N._new(ws, m, 'first_result', key='first_result:dup-http')
+env.cr.commit()
+with patch.object(type(N), '_ts_mark', lambda self, ok: (_ for _ in ()).throw(RuntimeError('rolled back after the gateway'))):
+    N.browse(row.id)._ts_send(commit=True)
+env.invalidate_all()
+s1 = N.browse(row.id).state
+N._cron_onb_nudges()
+N.browse(row.id)._ts_send(commit=True)
+env.invalidate_all()
+print('DUP', s1, N.browse(row.id).state)
+env.cr.commit()
+""" % WC)
+check('G06 at most once with real commits: the gateway took the SMS, its result write rolled back; the row stays «sending» and '
+      'neither the hourly run nor a second send repeats it', 'DUP sending sending' in dup and len(first_cl()) == n_first + 1,
+      '%s %s' % (dup[-60:], len(first_cl()) - n_first))
 
 # ================================================================ K. school: minors on one screen, the class link
 sc = login('sc')
@@ -358,6 +420,18 @@ check('K05 a minor without the guardian attestation is refused with the reason',
 st, loc, _ = post(sc, SW + '/invites/new', {'one': '1', 'attest': '1', 'new_name': 'دانش‌آموز آزمون onb3', 'new_phone': PH['kid'],
                                             'new_age': 'minor', 'guardian_ok': '1'}, one)
 check('K06 ...with it, the invitation is made', st in (302, 303) and '?new=1' in (loc or ''), '%s %s' % (st, loc))
+st, b, page = post(sc, SW + '/invites/new', {'one': 'link'}, one)
+st, lks = get(sc, SW + '/invites/new?mode=link')
+surl = re.search(r'id="tso_link_url"[^>]*value="([^"]+)"', lks) or re.search(r'value="([^"]+/c/[^"]+)"[^>]*id="tso_link_url"', lks)
+STOK = re.search(r'/c/([^"/?#]+)', surl.group(1)).group(1) if surl else 'none'
+stu = login('stu')
+st, sjp = get(stu, '/c/' + STOK)
+st, loc, _ = post(stu, '/c/%s/join' % STOK, {'name': 'دانش‌آموز پیوند آزمون', 'share': '1'}, sjp)
+sg = shell("c = env['ts.panel.client'].sudo().search([('workspace_id', '=', %s), ('user_id.login', '=', %r)]); print('SG', c.age_group)"
+           % (WS_, L['stu']))
+check('K07 the class link keeps its pre-onb3 behaviour: no age question, the student joins straight to consent, the client '
+      'as before («unknown»: the consent screen asks the assent)', 'id="tso-age-q"' not in sjp and 'name="name"' in sjp
+      and st in (302, 303) and '/take/' in (loc or '') and 'SG unknown' in sg, '%s %s' % (loc, sg[-30:]))
 
 # ================================================================ H. hiring: the sample position, the HR admin as first candidate
 hr = login('hr')
@@ -433,6 +507,28 @@ st, loc, _ = anon.req('/employers')
 check('W08 /employers → /hiring (301)', st == 301 and loc.endswith('/hiring'), '%s %s' % (st, loc))
 e = Client(EOT)
 check('W09 eot.ir serves none of it', all(e.req(p)[0] == 404 for p in ('/clinics', '/hiring', '/sample/clinic')))
+
+# ================================================================ X. a clone that carries the live Kavenegar address sends nothing
+x = shell(r"""
+icp = env['ir.config_parameter'].sudo()
+icp.set_str('ts_kavenegar.api_base', 'https://api.kavenegar.com/v1/%s/%s.json')
+env.company.sudo().write({'kv_enabled': True, 'kv_api_key': 'FAKEKEY', 'ts_sms_invite': True})
+env.cr.commit()
+print('LIVEBASE ok')
+""")
+n_all = len(REQS)
+st, one = get(cl, W + '/invites/new')
+st, loc, _ = post(cl, W + '/invites/new', {'one': '1', 'attest': '1', 'new_name': 'مراجع نگهبان onb3', 'new_phone': PH['guard']}, one)
+gid = re.search(r'/invites/(\d+)', loc or '/invites/0').group(1)
+st, mem = get(cl, W + '/members')
+st, loc2, _ = post(cl, W + '/members/invite', {'role': 'clinician', 'phone': PH['guard2']}, mem)
+xg = shell("a = env['ts.assignment'].sudo().browse(%s); i = env['ts.member.invite'].sudo().search([('phone', '=', %r)], limit=1); "
+           "print('XG', bool(a.sms_sent_at), bool(i.sms_sent), env['kavenegar.message'].sudo().search_count([('receptor', 'in', (%r, %r))]))"
+           % (gid, PH['guard2'], PH['guard'], PH['guard2']))
+check('X01 with the live Kavenegar address on a clone, the invitation SMS and the colleague join SMS of earlier flows reach no '
+      'gateway at all (not even the local fake): nothing marked sent, nothing logged', 'LIVEBASE ok' in x and len(REQS) == n_all
+      and 'XG False False 0' in xg, '%s %s' % (len(REQS) - n_all, xg[-40:]))
+shell("env['ir.config_parameter'].sudo().set_str('ts_kavenegar.api_base', 'http://127.0.0.1:%d/v1/%%s/%%s.json'); env.cr.commit()" % FAKE_PORT)
 
 # ================================================================ F. the activation funnel (no personal data)
 fo = shell(r"""

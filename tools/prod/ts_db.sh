@@ -40,6 +40,23 @@ case $CMD in
     cp -a "$FS/eot_main" "$FS/$DB"; chown -R odoo:odoo "$FS/$DB"
     # clones never send real email (eot_main has the Liara server since 2026-10-12): servers off, queue dropped
     sudo -u postgres psql -d "$DB" -Atc "UPDATE ir_mail_server SET active = false; DELETE FROM mail_mail WHERE state IN ('outgoing', 'exception'); SELECT 'mail servers off: '||count(*) FROM ir_mail_server" 2>&1 | tail -1
+    # clones never send real SMS either (onb3 risk review): the dump carries the live Kavenegar key and the live server
+    # runs its crons on every clone. Kavenegar off with no key, its address and Odoo's SMS/IAP endpoints on a closed local
+    # port, IAP SMS tokens void, the SMS queue dropped. Suites that need a gateway start a local fake (ts_flowlib.py).
+    # The code guard (ts_kavenegar/tools/guard.py) is the second layer; ts_rehearse.sh checks this before any suite.
+    sudo -u postgres psql -d "$DB" -v ON_ERROR_STOP=1 -At > /tmp/ts_clone_sms_$DB.log 2>&1 <<'SQL'
+UPDATE res_company SET kv_enabled = false, kv_api_key = NULL;
+DELETE FROM ir_config_parameter WHERE key IN ('ts_kavenegar.api_base', 'sms.endpoint', 'iap.endpoint', 'ts_kavenegar.live_db');
+INSERT INTO ir_config_parameter (key, value, create_uid, write_uid, create_date, write_date) VALUES
+  ('ts_kavenegar.api_base', 'http://127.0.0.1:9/v1/%s/%s.json', 1, 1, now(), now()),
+  ('sms.endpoint', 'http://127.0.0.1:9', 1, 1, now(), now()),
+  ('iap.endpoint', 'http://127.0.0.1:9', 1, 1, now(), now());
+UPDATE iap_account a SET account_token = 'clone-void-' || a.id FROM iap_service s WHERE s.id = a.service_id AND s.technical_name = 'sms';
+DELETE FROM sms_sms WHERE state IN ('outgoing', 'process');
+SELECT 'sms: kavenegar on '||(SELECT count(*) FROM res_company WHERE kv_enabled OR coalesce(kv_api_key, '') <> '')||', api_base '||(SELECT value FROM ir_config_parameter WHERE key = 'ts_kavenegar.api_base');
+SQL
+    rc_sms=$?; tail -1 /tmp/ts_clone_sms_$DB.log
+    [ $rc_sms -ne 0 ] && { echo "!! could not switch the clone's SMS off"; cat /tmp/ts_clone_sms_$DB.log | head -5; exit 1; }
     step done; sudo -u postgres psql -d "$DB" -Atc "select 'websites='||count(*) from website" ;;
   install|upgrade)
     MODS=${3:?modules}; FLAG=-i; [[ $CMD == upgrade ]] && FLAG=-u

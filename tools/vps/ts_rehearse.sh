@@ -44,6 +44,18 @@ http(){ # http FILE : HTTP suite against the served clone
 }
 
 ts db clone $DB || exit 1
+# first suite, fail-fast: the clone has no live SMS route (no Kavenegar key, Kavenegar off, its address and Odoo's SMS and
+# IAP endpoints local). Nothing else runs on a clone that could text a real phone.
+sms=$(ssh $P "sudo -u postgres psql -d $DB -At -c \"SELECT (SELECT count(*) FROM res_company WHERE kv_enabled OR coalesce(kv_api_key, '') <> '') || '|' || coalesce((SELECT value FROM ir_config_parameter WHERE key = 'ts_kavenegar.api_base'), '-') || '|' || coalesce((SELECT value FROM ir_config_parameter WHERE key = 'sms.endpoint'), '-') || '|' || coalesce((SELECT value FROM ir_config_parameter WHERE key = 'iap.endpoint'), '-')\"")
+echo "=== $(date +%T) clone SMS route: $sms"
+local_re='^0[|]http://127[.]0[.]0[.]1:[0-9]+/[^|]*[|]http://127[.]0[.]0[.]1:[0-9]+[|]http://127[.]0[.]0[.]1:[0-9]+$'
+if [[ $sms =~ $local_re ]]; then
+  echo "PASS  clone has no live SMS route (Kavenegar off, no key, local endpoints)"
+else
+  echo "FAIL  clone has a live SMS route: $sms"
+  echo "REHEARSAL $DB slot $SLOT: guard NOT RUN, portal NOT RUN, unexpected failures: 1 (clone SMS route)"
+  exit 1
+fi
 ssh $P "rm -f /root/.ts_flow_${DB}_* /root/.ts_portal_$DB"   # a re-used clone name must not inherit stale test users
 if [ "${SKIP_BASE:-0}" != 1 ]; then
   # baseline = the clone served on the code that is LIVE now (stage may already hold newer code)

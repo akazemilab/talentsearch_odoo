@@ -81,6 +81,8 @@ try:
                 WA + '/members/%d' % ma.id, WB, mb.ts_onb_preview_url(pvb), WB + '/invites/new?mode=link', WC, WC + '/invites',
                 WSC, WSC + '/sample', WSC + '/invites/new?mode=link', WHR, WHR + '/positions', WHR + '/sample', WSO,
                 '/help/panel#getting-started']
+    if wb.ts_perm_campaign_id.open_token:      # the join screen of a counseling panel's permanent link (the age question)
+        ONB3_OWN.append('/c/%s' % wb.ts_perm_campaign_id.open_token)
     ONB3_PUB = ['/clinics', '/hiring', '/sample/clinic', '/sample/school', '/sample/hr']
     print('ONB3SEED', len(ONB3_OWN), len(ONB3_PUB))
 except Exception as e:      # noqa: BLE001 - the rest of the matrix still runs

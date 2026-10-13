@@ -15,23 +15,31 @@ from odoo.addons.ts_billing.controllers.main import TsBillingInvites
 from odoo.addons.ts_battery.controllers.main import _picker_ctx
 from odoo.addons.ts_org.models.panel import norm_email, norm_phone
 from odoo.addons.ts_panel.controllers.base import flash_error, flash_ok, forbidden, member_or_404, render_in_shell, require
+from odoo.addons.ts_panel.controllers.campaigns_public import JOIN_PAGE, TsPanelCampaignJoin
 from odoo.addons.ts_panel.controllers.clients import AGE, visible_domain
 from odoo.addons.ts_panel.controllers.invites import sms_available
 from odoo.addons.ts_tasks.controllers.main import TsTaskPlayer
 from odoo.addons.ts_website.tools import parse_jdate
 
+from ..models.onb3 import AGE_ASK, MINOR_REFUSED
+
 SAMPLE_KINDS = ('clinic', 'solo', 'school', 'hr')
+# a permanent link that took its day's joins in the panel's first week (models/onb3.py, open_state 'today')
+JOIN_PAGE.setdefault('today', ('امروز جای بیشتری در این پیوند نیست',
+                               'فردا دوباره امتحان کنید یا از کسی که پیوند را فرستاده دعوت جداگانه بخواهید.',
+                               'فردا دوباره امتحان کن یا از کسی که پیوند را فرستاده دعوت جداگانه بخواه.'))
 KIND_TITLES = {'clinic': 'گزارش نمونهٔ مرکز مشاوره', 'solo': 'گزارش نمونهٔ مشاور مستقل', 'school': 'گزارش نمونهٔ مدرسه',
                'hr': 'گزارش نمونهٔ استخدام'}
 
 
-def _sample_ctx(kind, ws=None):
+def _sample_ctx(kind, ws=None, public=False):
     """Template values of the sample report of `kind` (None when its instruments are not published). `ws`: the panel the
-    talent report names inside a panel; the public page names the synthetic «مدرسهٔ نمونه»."""
-    d = request.env['ts.onb.sample'].sudo().ts_kind_sample(kind)
+    talent report names inside a panel; the public page names the synthetic «مدرسهٔ نمونه». `public`: the audience pages'
+    sample shows only what the participant himself reads (no counselor guide, no talk points)."""
+    d = request.env['ts.onb.sample'].sudo().ts_kind_sample(kind, public=public)
     if not d:
         return None
-    ctx = {'sample': d, 'sample_kind': d['kind'], 'fa': fa_digits}
+    ctx = {'sample': d, 'sample_kind': d['kind'], 'fa': fa_digits, 'sample_public': public}
     if d['kind'] == 'school':
         from odoo.addons.ts_talent.controllers.main import report_ctx
         rc = report_ctx(d['attempt'], org_view=True, ws=ws or d['ws'])
@@ -388,7 +396,7 @@ class TsOnb3Public(http.Controller):
         _ts_site_or_404()
         if kind not in SAMPLE_KINDS:
             raise request.not_found()
-        ctx = _sample_ctx(kind)
+        ctx = _sample_ctx(kind, public=True)
         if not ctx:
             raise request.not_found()
         back = {'clinic': '/clinics', 'solo': '/clinics', 'school': '/schools', 'hr': '/hiring'}[kind]
@@ -402,3 +410,26 @@ class TsOnb3Public(http.Controller):
             vals.update(report_frame='ts_onboard.sample_public_frame', autoprint=False, viewers=None, print_url=None)
             return request.render('ts_talent.report', vals)
         return request.render('ts_onboard.sample_public', dict(ctx, **extra))
+
+
+class TsOnb3CampaignJoin(TsPanelCampaignJoin):
+    """The permanent link of a counseling panel asks the age before anyone joins (risk review HIGH 2): «۱۸ سال یا بیشتر
+    دارم» joins as an adult client (recorded), «کمتر از ۱۸ سال دارم» is refused kindly (the centre invites a minor
+    personally, with the guardian's attestation). Every other link, a school's class link included, is unchanged."""
+
+    @http.route()
+    def campaign_join(self, token, **post):
+        c = self._campaign(token)
+        if c.workspace_id.purpose != 'clinical':
+            return super().campaign_join(token, **post)
+        age = post.get('age')
+        if age not in ('adult', 'minor'):
+            request.session['ts_flash'] = AGE_ASK
+            return request.redirect('/c/%s' % token)
+        if age == 'minor':
+            request.env['ts.audit.event'].sudo().log('campaign.join_minor', c, workspace=c.workspace_id, outcome='denied',
+                                                     campaign_id=c.id, age='minor')
+            request.session['ts_flash'] = MINOR_REFUSED
+            return request.redirect('/c/%s' % token)
+        request.update_context(ts_join_age='adult')
+        return super().campaign_join(token, **post)

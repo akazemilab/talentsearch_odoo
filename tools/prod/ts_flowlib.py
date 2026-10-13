@@ -103,3 +103,70 @@ class Client:
         _, _, p = self.req('/web/login')
         st, loc, _ = self.req('/web/login', {'csrf_token': self.csrf(p), 'login': login, 'password': pw, 'redirect': '/my'})
         return st in (302, 303)
+
+
+# ---------------------------------------------------------------------- a local fake Kavenegar (clones never text anyone)
+CLONE_API_BASE = 'http://127.0.0.1:9/v1/%s/%s.json'     # what ts_db.sh sets on every clone: a closed local port
+FAKE_REQS = []
+
+
+def fake_kavenegar(port=None):
+    """Start a local fake Kavenegar on 127.0.0.1 and point the clone at it (Kavenegar on, a fake key and line). A suite
+    whose flows may send an SMS calls this first, so nothing depends on what an earlier suite left. At exit the clone goes
+    back to the state ts_db.sh gave it: Kavenegar off, no key, the address on a closed local port. Returns FAKE_REQS, the
+    list of (method path, params) the clone sent."""
+    import atexit, http.server, json, threading
+    port = port or 18092 + 10 * int(_SLOT)
+
+    class Fake(http.server.BaseHTTPRequestHandler):
+        def log_message(self, *a):
+            pass
+
+        def _do(self):
+            n = int(self.headers.get('Content-Length') or 0)
+            body = self.rfile.read(n).decode() if n else ''
+            q = dict(urllib.parse.parse_qsl(urllib.parse.urlsplit(self.path).query))
+            q.update(dict(urllib.parse.parse_qsl(body)))
+            path = urllib.parse.urlsplit(self.path).path.split('/v1/', 1)[-1].split('/', 1)[-1][:-5]
+            FAKE_REQS.append((path, q))
+            ent = []
+            if path in ('sms/send', 'sms/sendarray', 'verify/lookup'):
+                rec = q.get('receptor', '')
+                try:
+                    recs = json.loads(rec) if rec.startswith('[') else rec.split(',')
+                except ValueError:
+                    recs = rec.split(',')
+                for i, r in enumerate(recs):
+                    ent.append({'messageid': 970000 + len(FAKE_REQS) * 100 + i, 'message': q.get('message', ''), 'status': 1,
+                                'statustext': 'q', 'sender': '10004346', 'receptor': r, 'cost': 100})
+            out = json.dumps({'return': {'status': 200, 'message': 'ok'}, 'entries': ent}).encode()
+            self.send_response(200)
+            self.send_header('Content-Type', 'application/json')
+            self.end_headers()
+            self.wfile.write(out)
+
+        do_GET = do_POST = do_DELETE = _do
+
+    srv = http.server.ThreadingHTTPServer(('127.0.0.1', port), Fake)
+    threading.Thread(target=srv.serve_forever, daemon=True).start()
+    out = shell("""
+assert env.cr.dbname.startswith('eot_ts')
+env['ir.config_parameter'].sudo().set_str('ts_kavenegar.api_base', 'http://127.0.0.1:%d/v1/%%s/%%s.json')
+c = env.company.sudo()
+c.write({'kv_lines': '10004346'})
+c.write({'kv_enabled': True, 'kv_api_key': 'FAKEKEY', 'kv_sender': '10004346'})
+env.cr.commit()
+print('FAKEKV ok')
+""" % port)
+    assert 'FAKEKV ok' in out, out[-1500:]
+
+    def _back():
+        srv.shutdown()
+        shell("""
+assert env.cr.dbname.startswith('eot_ts')
+env['ir.config_parameter'].sudo().set_str('ts_kavenegar.api_base', %r)
+env.company.sudo().write({'kv_enabled': False, 'kv_api_key': False})
+env.cr.commit()
+""" % CLONE_API_BASE)
+    atexit.register(_back)
+    return FAKE_REQS
