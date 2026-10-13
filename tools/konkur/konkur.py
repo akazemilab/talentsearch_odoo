@@ -6,6 +6,7 @@ repo (tools/konkur/ref) so every mapping decision is versioned. Every command pr
 (peek prints at most 60 lines of one page, on purpose).
 
   doctor                          PDF backends, python, data dirs, O*NET cache shape
+  setup                           install a PDF backend once (detached: ts konkur bg setup setup)
   status                          raw files (MB, pages), work/out files, reference table sizes
   fetch KIND URL [NAME]           download (https, allow-listed Iranian education hosts) into raw/KIND; KIND booklet|curriculum|ref
   import KIND NAME                move /root/share/in/konkur/NAME into raw/KIND
@@ -102,6 +103,11 @@ def c_doctor(a):
             c = json.load(f)
         top = list(c)[:12] if isinstance(c, dict) else type(c).__name__
         lines.append('onet cache %s: top keys %s' % (os.path.basename(ONET_CACHE), top))
+        for fld in ('interests', 'values', 'occ', 'elem_id'):
+            v = c.get(fld) if isinstance(c, dict) else None
+            if isinstance(v, dict) and v:
+                k0 = sorted(v)[0]
+                lines.append('  %s: %d entries; %s -> %s' % (fld, len(v), k0, json.dumps(v[k0], ensure_ascii=False)[:160]))
         occ = c.get('occupations') if isinstance(c, dict) else None
         if isinstance(occ, dict) and occ:
             k0 = sorted(occ)[0]
@@ -236,28 +242,33 @@ def c_majors(a):
 def c_curriculum(a):
     rows, pages = kk_extract.curriculum_rows(raw(a[0]), a[1])
     out = os.path.join(D, 'work', 'curriculum', '%s.csv' % a[1])
-    kk_extract.write_csv(rows, out, ['family_id', 'page', 'name', 'numbers', 'line'])
-    return say(bool(rows), 'curriculum %s -> %s: %d pages, %d course-like rows' % (a[0], os.path.relpath(out, D), pages, len(rows)))
+    kk_extract.write_csv(rows, out, ['family_id', 'page', 'course', 'units_total', 'units_practice', 'name', 'numbers', 'line'])
+    parsed = [r for r in rows if r['course']]
+    return say(bool(parsed), 'curriculum %s -> %s: %d pages, %d number lines, %d parsed course rows (%g units)' % (
+        a[0], os.path.relpath(out, D), pages, len(rows), len(parsed), sum(float(r['units_total']) for r in parsed)),
+        ['p%s %s | %g u, %g practice' % (r['page'], r['course'], r['units_total'], r['units_practice']) for r in parsed[:8]])
 
 
 def c_courses(a):
-    rule = kk_extract.rules().get('curriculum', {})
-    ti, pi, ui = rule.get('theory_index'), rule.get('practice_index'), rule.get('units_index', 0)
+    """Parsed curriculum rows -> one row per distinct course (first occurrence wins: the course tables come first)."""
     files = [os.path.join(D, 'work', 'curriculum', '%s.csv' % a[0])] if a else sorted(glob.glob(os.path.join(D, 'work', 'curriculum', '*.csv')))
     lines = []
     for f in files:
-        fam, out = os.path.basename(f)[:-4], []
+        fam, out, seen, dup = os.path.basename(f)[:-4], [], set(), 0
         for r in csv.DictReader(open(f, encoding='utf-8')):
-            nums = [float(x) for x in r['numbers'].split()]
-            pick = lambda i: nums[i] if i is not None and -len(nums) <= i < len(nums) else 0.0  # noqa: E731
-            u = pick(ui)
-            if not 0 < u <= 16:
+            if not r.get('course'):
                 continue
-            out.append({'family_id': fam, 'course': r['name'], 'units_total': u, 'units_theory': pick(ti),
-                        'units_practice': pick(pi), 'page': r['page']})
+            k = key(r['course'])
+            if k in seen:
+                dup += 1
+                continue
+            seen.add(k)
+            u, pr = float(r['units_total']), float(r['units_practice'] or 0)
+            out.append({'family_id': fam, 'course': r['course'], 'units_total': u, 'units_theory': u - pr,
+                        'units_practice': pr, 'page': r['page']})
         kk_extract.write_csv(out, os.path.join(D, 'work', 'courses', fam + '.csv'),
                              ['family_id', 'course', 'units_total', 'units_theory', 'units_practice', 'page'])
-        lines.append('%s: %d courses, %.0f units' % (fam, len(out), sum(x['units_total'] for x in out)))
+        lines.append('%s: %d courses, %.0f units, %d duplicates skipped' % (fam, len(out), sum(x['units_total'] for x in out), dup))
     return say(bool(files), 'courses: %d families' % len(files), lines)
 
 
@@ -287,9 +298,30 @@ def c_classify(a):
                [r['course'] for r in rows[:15]])
 
 
+def c_setup(a):
+    """Install a PDF text backend once (poppler-utils via apt, else pypdf via pip). Run detached: ts konkur bg setup setup"""
+    import subprocess
+    if kk_pdf.backends():
+        return say(True, 'setup: PDF backend already present (%s)' % ', '.join(kk_pdf.backends()))
+    env = dict(os.environ, DEBIAN_FRONTEND='noninteractive')
+    tries = [['apt-get', 'install', '-y', '-q', 'poppler-utils'],
+             [sys.executable, '-m', 'pip', 'install', '--break-system-packages', '-q', 'pypdf']]
+    log = []
+    for argv in tries:
+        try:
+            p = subprocess.run(argv, capture_output=True, text=True, timeout=900, env=env)
+            log.append('%s rc=%s %s' % (argv[0], p.returncode, (p.stderr or p.stdout).strip().splitlines()[-1:] or ''))
+        except Exception as e:
+            log.append('%s %s' % (argv[0], e.__class__.__name__))
+        if kk_pdf.backends():
+            break
+    return say(bool(kk_pdf.backends()), 'setup: backends now %s' % (', '.join(kk_pdf.backends()) or 'NONE'), log)
+
+
 def c_onet_find(a):
     with open(ONET_FA, encoding='utf-8') as f:
         occ = json.load(f)['occupations']
+    occ = occ if isinstance(occ, dict) else {o['code']: o for o in occ}
     words = [key(w) for w in a]
     hits = []
     for code, o in sorted(occ.items()):
@@ -342,7 +374,7 @@ def c_test(a):
 
 
 CMDS = {'doctor': c_doctor, 'status': c_status, 'fetch': c_fetch, 'import': c_import, 'peek': c_peek, 'find': c_find,
-        'booklet': c_booklet, 'majors': c_majors, 'curriculum': c_curriculum, 'courses': c_courses,
+        'setup': c_setup, 'booklet': c_booklet, 'majors': c_majors, 'curriculum': c_curriculum, 'courses': c_courses,
         'classify': c_classify, 'onet-find': c_onet_find, 'build': c_build, 'match': c_match, 'test': c_test}
 
 if __name__ == '__main__':

@@ -94,7 +94,10 @@ def course_profile(courses, clf, know_rows):
 
 def onet_interests(cache, soc_codes):
     """Mean O*NET occupational interest (1-7) over the family's occupations. Shape-tolerant reader."""
-    occs = cache.get('occupations', cache) if isinstance(cache, dict) else {}
+    if isinstance(cache, dict) and isinstance(cache.get('interests'), dict):
+        occs = cache['interests']             # onet-match cache v1: interests[code] = {'OI': {...}, 'IH': [...]}
+    else:
+        occs = cache.get('occupations', cache) if isinstance(cache, dict) else {}
     acc, n, missing = {k: 0.0 for k in RIASEC}, 0, []
     for code in soc_codes:
         o = occs.get(code) if isinstance(occs, dict) else None
@@ -124,6 +127,18 @@ def onet_interests(cache, soc_codes):
     return ({k: round(acc[k] / n, 2) for k in RIASEC} if n else None), n, missing
 
 
+WORK_VALUES = ('Achievement', 'Independence', 'Recognition', 'Relationships', 'Support', 'Working Conditions')
+
+
+def onet_values(cache, soc_codes):
+    """Mean O*NET work values (Extent 1-7, legacy 30.2 data) over the family's occupations; None when none have data."""
+    vals = cache.get('values') if isinstance(cache, dict) else None
+    rows = [vals[c] for c in soc_codes if isinstance(vals, dict) and isinstance(vals.get(c), dict)]
+    if not rows:
+        return None
+    return {k: round(sum(float(r.get(k, 0)) for r in rows) / len(rows), 2) for k in WORK_VALUES}
+
+
 def build(families, courses_by_family, family_soc, cache, overrides=None):
     clf, know_rows = Classifier(), read_csv(os.path.join(REF, 'knowledge.csv'))
     overrides = overrides or {}
@@ -143,7 +158,8 @@ def build(families, courses_by_family, family_soc, cache, overrides=None):
         if cp['unclassified']:
             issues.append('%s: %d unclassified course names' % (fid, len(cp['unclassified'])))
         out.append({'id': fid, 'name': f.get('name_fa'), 'groups': [g for g in f.get('groups', '').split('|') if g],
-                    'riasec': ri, 'riasec_source': src, 'riasec_n_occupations': n, **cp})
+                    'riasec': ri, 'riasec_source': src, 'riasec_n_occupations': n,
+                    'values': onet_values(cache, socs), 'onet_codes': socs, **cp})
     return {'version': VERSION, 'families': out, 'issues': issues}
 
 

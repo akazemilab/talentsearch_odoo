@@ -62,7 +62,10 @@ def main():
     # extraction helpers
     check('clean line presentation forms', kk_extract.clean_line('ﺷﯿﻤﯽ') == 'شیمی')
     check('number regex', kk_extract.NUM.findall('ریاضی 3 واحد 48 ساعت -2') == ['3', '48', '-2'])
-    n = 32
+    check('msrt row 5-run', kk_extract.parse_msrt('ندارد 32 16 1 1 2 تحلیل گرافیکی و اکتشافی دادهها 1') == ('تحلیل گرافیکی و اکتشافی دادهها', 2.0, 1.0))
+    check('msrt row prereq digits', kk_extract.parse_msrt('ریاضی عمومی 1 64 4 4 ریاضی عمومی 2 4') == ('ریاضی عمومی 2', 4.0, 0.0))
+    check('msrt total line ignored', kk_extract.parse_msrt('23 جمع') is None)
+    n = 35
     print('KONKUR test %s: %d checks, %d failed' % ('OK' if not FAILS else '[FAIL]', n, len(FAILS)))
     for f in FAILS:
         print('  FAIL ' + f)
