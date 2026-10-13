@@ -191,6 +191,7 @@ class TsCareerRun(models.Model):
                 'level': row['level'], 'level_fa': LEVEL_FA.get(row['level'], ''), 'ready': row['ready'],
                 'ready_fa': READY_FA.get(row['ready'], ''), 'jz': row.get('jz'), 'jz_fa': JZ_FA.get(row.get('jz') or 0, ''),
                 'why': why, 'watch': watch, 'clinic_fa': [JF.AB_FA.get(a, a) for a in row.get('clinic') or []],
+                'types_fa': ' و '.join(RIASEC_FA[k] for k in (row.get('I') or {}).get('job_top', [])),
                 'rank': row['rank']}
 
     # ---------------------------------------------------------------- instruments

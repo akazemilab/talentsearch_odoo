@@ -23,11 +23,15 @@
 .tsc-chip[aria-current="page"] { background: var(--status-info-soft); color: var(--status-info); font-weight: 700; }
 .tsc-jobs { list-style: none; padding: 0; margin: 0 0 var(--space-4); display: grid; gap: var(--space-2); }
 .tsc-job { background: var(--color-surface); box-shadow: var(--shadow-sm); border-radius: var(--r-12); }
-.tsc-job__link { display: grid; grid-template-columns: 1fr auto; grid-template-areas: "t go" "r go"; gap: var(--space-1) var(--space-2);
+.tsc-job__link { display: grid; grid-template-columns: 1fr auto; grid-template-areas: "t go" "w go" "r go"; gap: var(--space-1) var(--space-2);
     align-items: center; min-block-size: 56px; padding: var(--space-3) var(--space-4); text-decoration: none; color: inherit; }
 .tsc-job__link .tsc-job__title { grid-area: t; }
 .tsc-job__link .tsc-pill { grid-area: r; justify-self: start; }
 .tsc-job__go { grid-area: go; color: var(--color-neutral-400); }
+.tsc-job__why { grid-area: w; color: var(--color-neutral-400); font-size: var(--fs-1); }
+.tsc-job__rank { color: var(--color-neutral-400); font-weight: 600; margin-inline-end: var(--space-1); }
+.tsc-jobnext { background: var(--status-info-soft); border-radius: var(--r-12); padding: var(--space-4); margin-block: var(--space-4); }
+.tsc-jobnext p { margin-block: 0 var(--space-3); }
 .tsc-job__title { font-weight: 700; color: var(--color-text); }
 .tsc-job__en { color: var(--color-neutral-400); font-size: var(--fs-0); }
 .tsc-job__tags { display: flex; flex-wrap: wrap; gap: var(--space-1); }
@@ -51,4 +55,4 @@
 .tsc-next { background: var(--status-info-soft); border-radius: var(--r-12); padding: var(--space-4); margin-block: var(--space-4); }
 .tsc-next h2 { font-size: var(--fs-3); margin-block: 0 var(--space-2); }
 .tsc-next p { margin-block: 0 var(--space-3); }
-.tsc-opt { font-size: var(--fs-0); font-weight: 600; color: var(--color-neutral-400); margin-inline-start: var(--space-2); }
+.tsc-opt { display: inline-block; vertical-align: middle; font-size: var(--fs-0); font-weight: 600; padding: .1rem .55rem; border-radius: 999px; background: var(--color-surface); color: var(--color-neutral-400); margin-inline-start: var(--space-2); }

@@ -71,7 +71,7 @@ class TsCareer(TsOnbCatalog):
         top = E.person_top(person['riasec'], 6)
         mx = max(float(person['riasec'][k]) for k in top) or 1
         profile = [{'name': RIASEC_FA[k], 'gloss': RIASEC_GLOSS[k], 'w': int(round(100 * float(person['riasec'][k]) / mx))}
-                   for k in top]
+                   for k in top[:3]]
         return request.render('ts_career.result', {
             'run': run, 'st': st, 'res': res, 'tier': res['tier'], 'profile': profile,
             'rows': [Run.ts_view_row(r, person) for r in rows[:n]], 'more': len(rows) > n, 'n': n, 'ready_only': ready_only,
@@ -92,7 +92,7 @@ class TsCareer(TsOnbCatalog):
         if st['tasks_done'] < st['tasks_total']:
             missing.append('توانایی‌های شما هنوز کامل سنجیده نشده است.')
         return request.render('ts_career.job', {'run': run, 'j': request.env['ts.career.run'].ts_view_row(row, res['person']),
-                                                'tier': res['tier'], 'missing': missing, 'fa': fa_digits,
+                                                'tier': res['tier'], 'missing': missing, 'fa': fa_digits, 'st': st,
                                                 'notice': ONET_NOTICE})
 
     @http.route('/career/more/<string:kind>', type='http', auth='user', website=True, sitemap=False, methods=['POST'])

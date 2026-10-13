@@ -118,7 +118,7 @@
                                 <h1 t-else="">شغل‌هایی که با علایق و سبک کاری شما هم‌خوان‌اند</h1>
 
                                 <section class="tsc-profile" aria-labelledby="tsc-prof-h">
-                                    <h2 id="tsc-prof-h">علایق شما</h2>
+                                    <h2 id="tsc-prof-h">سه علاقهٔ پررنگ‌تر شما</h2>
                                     <ul class="tsc-bars">
                                         <li t-foreach="profile" t-as="p">
                                             <span class="tsc-bars__name" t-out="p['name']"/>
@@ -153,7 +153,8 @@
                                 <ol class="tsc-jobs" id="tsc-jobs">
                                     <li t-foreach="rows" t-as="j" class="tsc-job">
                                         <a t-attf-href="/career/job/#{j['code']}" class="tsc-job__link">
-                                            <span class="tsc-job__title" t-out="j['fa']"/>
+                                            <span class="tsc-job__title"><span class="tsc-job__rank" t-out="fa(j['rank'])"/> <t t-out="j['fa']"/></span>
+                                            <span t-if="j['types_fa']" class="tsc-job__why">بیشتر <t t-out="j['types_fa']"/></span>
                                             <span t-attf-class="tsc-pill tsc-pill--#{j['ready'].lower()}">آمادگی: <t t-out="j['ready_fa']"/></span>
                                             <span class="tsc-job__go" aria-hidden="true"><t t-call="ts_website.icon" ico.f="arrow-left"/></span>
                                         </a>
@@ -210,6 +211,16 @@
                                     <ul t-if="missing" class="tsc-watch"><li t-foreach="missing" t-as="m" t-out="m"/></ul>
                                     <p class="tsc-small">هم‌خوانی بر پایهٔ داده‌های شغلی O*NET (آمریکا) است و بازار کار ایران ممکن است فرق داشته باشد. <t t-call="ts_career.notice"/></p>
                                 </section>
+                                <form t-if="not st['hex_done']" action="/career/more/personality" method="post" class="tsc-jobnext">
+                                    <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                                    <p>برای دقیق‌تر شدن این تصویر، سبک‌های کاری‌تان را هم اضافه کنید (حدود ۱۵ دقیقه).</p>
+                                    <button type="submit" class="ts-btn ts-btn--primary">افزودن سبک‌های کاری</button>
+                                </form>
+                                <form t-elif="st['tasks_done'] &lt; st['tasks_total']" action="/career/more/abilities" method="post" class="tsc-jobnext">
+                                    <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                                    <p>با ۳ بخش زمان‌دار کوتاه، توانایی‌هایتان هم در تناسب اثر می‌گذارد (حدود ۲۳ دقیقه).</p>
+                                    <button type="submit" class="ts-btn ts-btn--primary">افزودن توانایی‌ها</button>
+                                </form>
                                 <a href="/career/r" class="ts-btn ts-btn--quiet">بازگشت به فهرست</a>
                             </div>
                         </section>
