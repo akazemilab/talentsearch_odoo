@@ -368,6 +368,49 @@ def c_match(a):
                 for r in res['rows']])
 
 
+def c_career_data(a):
+    """Build addons/ts_career/data/career_onet.json in a repo (default slot 2) from the O*NET cache + ts_onet Persian titles.
+    Usage: career-data [REPO]   REPO in /root/talentsearch_odoo | /root/ts_wt_s1 | /root/ts_wt_s2"""
+    repo = a[0] if a else '/root/ts_wt_s2'
+    if repo not in ('/root/talentsearch_odoo', '/root/ts_wt_s1', '/root/ts_wt_s2'):
+        return say(False, 'career-data: repo must be a ts repo root')
+    c = json.load(open(ONET_CACHE, encoding='utf-8'))
+    fa = json.load(open(os.path.join(repo, 'addons/ts_onet/data/onet_hr.json'), encoding='utf-8'))
+    occs = fa['occupations']
+    occs = occs if isinstance(occs, dict) else {o['code']: o for o in occs}
+    riasec = ['Realistic', 'Investigative', 'Artistic', 'Social', 'Enterprising', 'Conventional']
+    values = ['Achievement', 'Independence', 'Recognition', 'Relationships', 'Support', 'Working Conditions']
+    ab_all = c['desc']['AB']
+    names = sorted(c['elem_id']['AB'])
+    lv_sorted = {}
+    for ab in names:
+        lv_sorted[ab] = sorted(v[1] for occ in ab_all.values() for e, v in occ.items()
+                               if e == ab and v[1] is not None and not v[3])
+    out, miss_i = {}, 0
+    for code in sorted(occs):
+        o = occs[code]
+        it = c['interests'].get(code) or {}
+        oi = it.get('OI') or {}
+        wv = c['values'].get(code) or {}
+        if len(oi) < 6:
+            miss_i += 1
+        out[code] = {
+            'fa': o.get('fa'), 'en': o.get('en') or c['occ'].get(code), 'desc': o.get('desc'), 'jz': c['jz'].get(code, o.get('jz')),
+            'oi': [oi[k] for k in riasec] if len(oi) == 6 else None, 'ih': it.get('IH') or [],
+            'wv': [wv[k] for k in values] if all(k in wv for k in values) else None,
+            'ws': c['styles'].get(code) or {}, 'ab': ab_all.get(code) or {}}
+    meta = dict(c.get('meta') or {})
+    data = {'version': 'CAREER-DATA-1', 'onet': meta.get('onet_release', '31.0'), 'ab_id': c['elem_id']['AB'],
+            'lv_sorted': lv_sorted, 'occ': out}
+    dst = os.path.join(repo, 'addons/ts_career/data/career_onet.json')
+    os.makedirs(os.path.dirname(dst), exist_ok=True)
+    with open(dst + '.part', 'w', encoding='utf-8') as f:
+        json.dump(data, f, ensure_ascii=False, separators=(',', ':'), sort_keys=True)
+    os.replace(dst + '.part', dst)
+    return say(True, 'career-data -> %s: %d occupations, %d without interests, %.1f MB, sha %s' % (
+        dst, len(out), miss_i, os.path.getsize(dst) / 1048576, sha(dst)[:12]))
+
+
 def c_test(a):
     import kk_tests
     return kk_tests.main()
@@ -375,6 +418,7 @@ def c_test(a):
 
 CMDS = {'doctor': c_doctor, 'status': c_status, 'fetch': c_fetch, 'import': c_import, 'peek': c_peek, 'find': c_find,
         'setup': c_setup, 'booklet': c_booklet, 'majors': c_majors, 'curriculum': c_curriculum, 'courses': c_courses,
+        'career-data': c_career_data,
         'classify': c_classify, 'onet-find': c_onet_find, 'build': c_build, 'match': c_match, 'test': c_test}
 
 if __name__ == '__main__':
