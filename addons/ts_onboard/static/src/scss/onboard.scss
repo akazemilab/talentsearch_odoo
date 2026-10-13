@@ -52,3 +52,68 @@
     display: inline-flex; align-items: center; min-block-size: 44px; text-decoration: underline; text-underline-offset: 3px;
 }
 .tso-hero-links .tso-dot { color: var(--color-neutral-400); }
+
+// ---------------------------------------------------------------- onb3: the first session inside a panel
+// «شروع کار» and «پنل را کامل کنید» reuse ts_brand's .tsob* card styles (progress line, bar, step list, tags)
+.tso-usage { margin: calc(-1 * var(--space-2)) 0 var(--space-3); color: var(--color-neutral-400); font-size: var(--fs-1); }
+.tso-start, .tso-complete { display: grid; gap: var(--space-3); }
+.tso-hero { display: grid; gap: var(--space-2); padding: var(--space-4); border-radius: var(--r-12);
+    background: var(--color-accent-900); }
+.tso-hero__title { margin: 0; font-family: var(--font-display); line-height: 1.5; }
+.tso-hero__text { margin: 0; max-inline-size: 64ch; }
+.tso-hero__acts { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2) var(--space-4); margin-block-start: var(--space-1); }
+.tso-hero__acts form { margin: 0; }
+.tso-hero__second { display: inline-flex; align-items: center; min-block-size: 44px; font-weight: 600; color: var(--color-accent-300); }
+@media (max-width: 575.98px) {
+    .tso-hero__acts { flex-direction: column; align-items: stretch; }
+    .tso-hero__acts .ts-btn, .tso-hero__acts form .ts-btn { inline-size: 100%; justify-content: center; }
+    .tso-hero__second { justify-content: center; }
+}
+.tso-steps .tsob-step__title strong { font-weight: 500; }
+.tso-celebrate { margin: 0; font-weight: 600; color: var(--status-ok); }
+.tso-recent { display: grid; gap: var(--space-2); }
+.tso-recent__list { list-style: none; margin: 0; padding: 0; display: grid; gap: 0; }
+.tso-recent__list li { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-1) var(--space-3);
+    min-block-size: 44px; padding-block: var(--space-2); border-block-start: 1px solid var(--color-neutral-800); }
+.tso-recent__list li:first-child { border-block-start: 0; }
+.tso-recent__who { display: inline-flex; align-items: center; min-block-size: 44px; font-weight: 500; }
+.tso-recent__all { justify-self: start; display: inline-flex; align-items: center; min-block-size: 44px; }
+// the coach line on a finished try-out's report
+.tso-coach { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-3);
+    background: var(--color-accent-900); }
+.tso-coach__line { margin: 0; font-weight: 600; display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); }
+@media (max-width: 575.98px) { .tso-coach .ts-btn { inline-size: 100%; justify-content: center; } }
+// «دعوت تازه»: two equal choices
+.tso-seg { display: grid; grid-template-columns: 1fr 1fr; gap: 0; margin: 0 0 var(--space-3); padding: 4px; border: 0;
+    border-radius: var(--r-12); background: var(--color-neutral-900); }
+.tso-seg__opt { position: relative; display: flex; align-items: center; justify-content: center; min-block-size: 44px;
+    padding: var(--space-2); border-radius: 10px; cursor: pointer; text-align: center; font-weight: 600; color: var(--color-neutral-300); }
+.tso-seg__opt input { position: absolute; opacity: 0; inset: 0; margin: 0; cursor: pointer; }
+.tso-seg__opt:has(input:checked) { background: var(--color-surface); color: var(--color-text); box-shadow: var(--shadow-sm); }
+.tso-seg__opt:has(input:focus-visible) { outline: 2px solid var(--color-accent-500); outline-offset: 2px; }
+.tso-one form, .tso-link form { display: grid; gap: var(--space-3); }
+.tso-esc { display: grid; gap: var(--space-1); }
+.tso-for { margin: 0; }
+.tso-item { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--space-1) var(--space-2); }
+.tso-sms { display: grid; gap: var(--space-1); }
+.tso-sms__body { margin: 0; padding: var(--space-3); white-space: pre-line; border-radius: 14px 14px 4px 14px;
+    background: var(--color-neutral-900); color: var(--color-text); max-inline-size: 38ch; overflow-wrap: anywhere; }
+.tso-moreset { border: 1px solid var(--color-neutral-800); border-radius: var(--r-12); }
+.tso-moreset > summary { display: flex; align-items: center; min-block-size: 44px; padding-inline: var(--space-3); cursor: pointer;
+    font-weight: 600; color: var(--color-accent-300); }
+.tso-moreset > summary:focus-visible { outline: 2px solid currentColor; outline-offset: 2px; }
+.tso-moreset__body { display: grid; gap: var(--space-3); padding: 0 var(--space-3) var(--space-3); }
+@media (max-width: 575.98px) { .tso-one .tsp-actions .ts-btn, .tso-link .tsp-actions .ts-btn { inline-size: 100%; justify-content: center; } }
+.tso-link__acts { flex-wrap: wrap; }
+// sample reports
+.tso-sample-banner { display: flex; flex-wrap: wrap; gap: var(--space-1) var(--space-2); margin-block-end: var(--space-3); }
+.tso-sample-next { margin-block-end: var(--space-3); }
+.tso-sample-h { margin-block: var(--space-2) var(--space-3); }
+.tso-sample-sub { margin-block-end: var(--space-3); }
+.tso-sample-part { display: grid; gap: var(--space-3); margin-block-end: var(--space-5); }
+.tso-sample-part > h2 { margin: 0; }
+.tso-sample-cta { margin-block-start: var(--space-6); }
+// audience pages
+.tso-aud-alt { margin: var(--space-2) 0 0; }
+.tso-aud-alt a { display: inline-flex; align-items: center; min-block-size: 44px; }
+.tso-plans-go { display: flex; justify-content: center; margin: var(--space-5) 0 0; }

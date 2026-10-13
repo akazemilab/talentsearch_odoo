@@ -99,8 +99,11 @@ class TsAssignmentMail(models.Model):
         return used
 
     def _ts_mail_candidate_done(self):
-        """Tell the inviting HR member (by email, if they have one) that a candidate finished; link only."""
+        """Tell the inviting HR member (by email, if they have one) that a candidate finished; link only. A member's own
+        try-out (onb3) sends nothing."""
         self.ensure_one()
+        if self.ts_preview:
+            return False
         user = self.invited_by_id
         if user and user.email and '@' in user.email:
             self._ts_send_template('ts_hire.mail_candidate_done', email_to=user.email)

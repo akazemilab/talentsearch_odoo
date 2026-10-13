@@ -100,7 +100,42 @@ class TsWorkspaceBilling(models.Model):
                 self.env['ts.audit.event'].sudo().log('billing.mode', ws, workspace=ws, old=old[ws.id], new=ws.billing_mode)
                 if ws.billing_mode == 'prepaid':
                     self.env['ts.wallet']._for_workspace(ws)
+                    ws._ts_welcome_credit()
         return res
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        recs = super().create(vals_list)
+        for ws in recs.filtered(lambda w: w.billing_mode == 'prepaid'):
+            ws._ts_welcome_credit()
+        return recs
+
+    # ------------------------------------------------------------------ welcome credit (onb3; off by default)
+    ts_welcome_credit_on = fields.Datetime('اعتبار خوش‌آمد', readonly=True, copy=False,
+                                           help='زمانی که اعتبار خوش‌آمد (ts_billing.welcome_credit_rial) به این پنل داده شد.')
+
+    def _ts_welcome_credit(self):
+        """A new prepaid panel gets `ts_billing.welcome_credit_rial` (0 = off, the default) once, through the existing
+        back-office grant path (ledger row «اعتبار هدیه», reason promo) - never an invoice, never a recorded payment. A panel
+        whose wallet already holds a grant or a purchase (it was prepaid before) gets nothing."""
+        raw = (self.env['ir.config_parameter'].sudo().get_str('ts_billing.welcome_credit_rial') or '0').strip()
+        amount = int(raw) if raw.isdigit() else 0
+        amount -= amount % 10                       # the ledger takes whole toman
+        if amount <= 0:
+            return False
+        done = False
+        for ws in self.sudo():
+            if ws.ts_welcome_credit_on or ws.billing_mode != 'prepaid':
+                continue
+            w = self.env['ts.wallet']._for_workspace(ws)
+            if self.env['ts.wallet.txn'].sudo().search_count([('wallet_id', '=', w.id), ('type', 'in', ('grant', 'purchase'))]):
+                ws.ts_welcome_credit_on = fields.Datetime.now()
+                continue
+            w.sudo().ts_grant(amount, 'promo')
+            ws.ts_welcome_credit_on = fields.Datetime.now()
+            self.env['ts.audit.event'].sudo().log('billing.welcome_credit', ws, workspace=ws, amount=amount)
+            done = True
+        return done
 
     # ------------------------------------------------------------------ back office: invoices
     def _ts_topup_product(self):

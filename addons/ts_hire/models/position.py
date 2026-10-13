@@ -99,6 +99,8 @@ class TsHirePosition(models.Model):
     created_by_id = fields.Many2one('res.users', 'سازنده', default=lambda s: s.env.user, readonly=True)
     assignment_ids = fields.One2many('ts.assignment', 'position_id', 'داوطلبان')
     company_id = fields.Many2one(related='workspace_id.company_id', store=True)
+    # onb3: the sample position a new employment panel starts with («کارشناس فروش (نمونه)»); editable like any other
+    ts_sample = fields.Boolean('موقعیت نمونه', readonly=True, copy=False)
 
     @api.depends('battery_choice')
     def _compute_battery(self):
@@ -139,7 +141,7 @@ class TsHirePosition(models.Model):
 
     def ts_counts(self):
         self.ensure_one()
-        a = self.assignment_ids.sudo().filtered(lambda x: x.state not in ('withdrawn',))
+        a = self.assignment_ids.sudo().filtered(lambda x: x.state not in ('withdrawn',) and not x.ts_preview)
         return {'invited': len(a), 'done': len(a.filtered(lambda x: x.ts_hire_complete)),
                 'going': len(a.filtered(lambda x: x.state in ('accepted', 'in_progress') and not x.ts_hire_complete)),
                 'strong': len(a.filtered(lambda x: x.jobfit_band == 'strong'))}
@@ -156,7 +158,8 @@ class TsHirePosition(models.Model):
         FAIR_MIN_GROUP are not shown and exact sizes are never shown; the rule flags a group whose rate is below 4/5 of
         the highest group."""
         self.ensure_one()
-        decided = self.assignment_ids.sudo().filtered(lambda x: x.hire_decision and x.hire_decision != 'none')
+        decided = self.assignment_ids.sudo().filtered(lambda x: x.hire_decision and x.hire_decision != 'none'
+                                                      and not x.ts_preview)     # a member's try-out is never counted (onb3)
         out = {}
         for field, labels in (('ts_gender', dict(GENDERS)), ('ts_age_band', dict(AGE_BANDS))):
             groups = {}

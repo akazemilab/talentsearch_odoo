@@ -937,7 +937,8 @@ else:
         u = user('center.%s' % k, name)
         mm = M.with_context(active_test=False).search([('workspace_id', '=', ws.id), ('user_id', '=', u.id)], limit=1) or M.create(
             {'workspace_id': ws.id, 'user_id': u.id, 'role': role})
-        base = {'active': True, 'ts_onb_hidden_on': False, 'ts_onb_card_hidden_on': False, 'ts_catalog_seen_on': False}
+        base = {'active': True, 'ts_start_hidden_on': False, 'ts_more_hidden_on': False, 'ts_onb_card_hidden_on': False,
+                'ts_catalog_seen_on': False}
         if role == 'clinician':
             base['monthly_cap'] = 0
         mm.write(dict(base, **vals))
@@ -973,7 +974,7 @@ else:
         if a.responsible_id != c1:
             a.responsible_id = c1
         if ws.billing_mode != 'prepaid':
-            ws.billing_mode = 'prepaid'           # steps 4 and 5 appear; the balance stays 0 (step 5 open)
+            ws.billing_mode = 'prepaid'           # onb3 «پنل را کامل کنید»: credit and caps items open (the balance stays 0)
         return {'ws': ws, 'mo': mo, 'c1': c1, 'c2': c2, 'a': a}
     step('center', center_seed)
     if 'center' in R:

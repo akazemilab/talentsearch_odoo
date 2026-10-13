@@ -1,4 +1,4 @@
-"""Funnel events of onb2 (design §6, measured weekly by the EOT team). One row per step reached, with no personal data and
+"""Funnel events of onb2 (design §6, measured weekly by the EOT team) and the panel activation steps of onb3. One row per step reached, with no personal data and
 nothing that points at a person: the step, the channel (a guest, a signed-in visitor, or how the invitation reached the
 person), the instrument, a salted hash, and the day and hour (Tehran time). No invitation, account, website, address or
 access columns (`_log_access = False`: no create/write user). Kept 180 days (daily cron). Cheap: at most one indexed
@@ -19,7 +19,13 @@ STEPS = [
     ('start_view', 'دیدن صفحهٔ شروع'), ('start', 'شروع سنجه'), ('q1', 'پاسخ به نخستین پرسش'), ('finish', 'پایان سنجه'),
     ('gate_view', 'دیدن صفحهٔ نتیجه (ورود)'), ('gate_signed_in', 'ورود و نگه‌داشتن نتیجه'), ('report_view', 'دیدن گزارش'),
     ('invite_view', 'دیدن دعوت'), ('invite_accept', 'پذیرفتن دعوت'),
+    # onb3: activation of a panel (one row per panel and step; the hash is the panel's, salted - no person behind it)
+    ('panel_created', 'پنل ساخته شد'), ('self_test_done', 'پیش‌نمایش تمام شد'), ('first_invite', 'نخستین دعوت'),
+    ('first_result_opened', 'نخستین نتیجهٔ بازشده'),
 ]
+PANEL_STEPS = ('panel_created', 'self_test_done', 'first_invite', 'first_result_opened')
+PANEL_KINDS = [('clinic', 'مرکز مشاوره'), ('solo', 'مشاور یا روان‌شناس مستقل'), ('school', 'مدرسه'),
+               ('hr', 'استخدام و منابع انسانی')]
 ENTRIES = [
     ('guest', 'بدون حساب'), ('user', 'با حساب'), ('sms', 'دعوت با پیامک'), ('email', 'دعوت با ایمیل'),
     ('manual', 'دعوت با پیوند یا QR'), ('campaign', 'پیوند باز یا کلاس'),
@@ -49,6 +55,7 @@ class TsFunnelEvent(models.Model):
     day = fields.Date('روز', required=True, index=True, readonly=True,
                       default=lambda s: datetime.now(TEHRAN).date())
     hour = fields.Integer('ساعت', readonly=True, default=lambda s: datetime.now(TEHRAN).hour)
+    panel_kind = fields.Selection(PANEL_KINDS, 'نوع پنل', index=True, readonly=True)
 
     @api.model
     def _ts_salt(self):
@@ -98,6 +105,23 @@ class TsFunnelEvent(models.Model):
             with self.env.cr.savepoint():
                 return S.create(vals)
         except Exception:       # noqa: BLE001 - measuring never breaks the page
+            return self.browse()
+
+    @api.model
+    def ts_log_panel(self, step, ws, extra=''):
+        """One activation row per panel and step (onb3): the step, the panel's kind, the day and hour, and a salted hash of
+        the panel (and of `extra`, e.g. a member for the try-out) so a step counts once. Never raises."""
+        try:
+            if step not in PANEL_STEPS or not ws:
+                return self.browse()
+            h = hashlib.sha256(('%s:panel:%s:%s' % (self._ts_salt(), ws.id, extra or '')).encode()).hexdigest()[:24]
+            S = self.sudo()
+            if S.search_count([('step', '=', step), ('session_hash', '=', h)], limit=1):
+                return S.browse()
+            kind = ws.sudo().ts_onb_kind() if hasattr(ws, 'ts_onb_kind') else False
+            with self.env.cr.savepoint():
+                return S.create({'step': step, 'session_hash': h, 'panel_kind': kind or False})
+        except Exception:       # noqa: BLE001 - measuring never breaks the work
             return self.browse()
 
     @api.model

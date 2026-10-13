@@ -10,6 +10,9 @@ class TsAttempt(models.Model):
     responsible_id = fields.Many2one(
         'ts.workspace.member', 'کارشناس مسئول', index=True, ondelete='set null',
         help='برای نتیجه‌های واردشده که دعوتی ندارند؛ برای دعوت‌های وب، کارشناس مسئولِ دعوت ملاک است.')
+    # onb3: the attempts of a member's own try-out («پیش‌نمایش») and the synthetic sample reports: never billed, never
+    # counted in usage, statistics, funnels, fairness or norms
+    ts_preview = fields.Boolean('پیش‌نمایش یا نمونه (شمرده نمی‌شود)', readonly=True, copy=False, index=True)
 
     @api.constrains('responsible_id', 'workspace_id')
     def _check_responsible(self):
@@ -63,7 +66,7 @@ class TsAttempt(models.Model):
         res = super().action_submit(*args, **kwargs)
         Usage = self.env['ts.usage.event'].sudo()
         for at in self:
-            if res and at.state == 'done' and at.workspace_id and at.source != 'import' \
+            if res and at.state == 'done' and at.workspace_id and at.source != 'import' and not at.ts_preview \
                     and not Usage.search_count([('attempt_id', '=', at.id)]):
                 a = self.env['ts.assignment'].sudo().search([('attempt_id', '=', at.id)], limit=1)
                 Usage.create({'workspace_id': at.workspace_id.id, 'attempt_id': at.id, 'assignment_id': a.id or False})

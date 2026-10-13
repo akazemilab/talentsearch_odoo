@@ -103,7 +103,8 @@ class TsAssignmentBattery(models.Model):
             if inst.id in have:
                 continue
             vals = {'user_id': first.user_id.id, 'instrument_id': inst.id, 'version_id': inst.current_version_id.id,
-                    'workspace_id': first.workspace_id.id, 'assignment_id': self.id, 'battery_seq': n}
+                    'workspace_id': first.workspace_id.id, 'assignment_id': self.id, 'battery_seq': n,
+                    'ts_preview': bool(first.ts_preview)}      # onb3: every part of a try-out is a try-out
             if 'client_id' in T._fields and first.client_id:
                 vals['client_id'] = first.client_id.id
             if 'person_id' in T._fields and first.person_id:

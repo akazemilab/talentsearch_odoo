@@ -289,8 +289,8 @@ class TsMemberInviteSms(models.Model):
             i.ts_sms_link = self.env.context.get('ts_sms_link') or (s.ts_short_url() if s.id else '')
 
     def ts_member_invite_sms_body(self):
-        """Text of a colleague-invitation SMS (template member_invite). Nothing sends it today: the panel shares the link
-        itself (owner decision 2026-10-11); a future explicit «send by SMS» button uses this body."""
+        """Text of a colleague-invitation SMS (template member_invite). Since onb3 the system sends it when a colleague is
+        invited (or re-invited) with a mobile number (ts_onboard TsMemberInviteOnb3)."""
         self.ensure_one()
         return self.env['ts.brand'].sms_render(
             'ts_brand.sms_member_invite', self,

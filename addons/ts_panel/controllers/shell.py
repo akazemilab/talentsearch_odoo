@@ -83,10 +83,9 @@ class TsPanelWorkspace(TsOrg):
         counts = invite_count_by_state(member) if member.can_act() and member.has_perm('invites:manage') else {k: 0 for k in STATE_ORDER}
         return render_in_shell('ts_panel.dashboard', member, 'home', 'پیشخوان',
                                attention=member.dash_attention(), tiles=member.dash_tiles(days), funnel=member.dash_funnel(days),
-                               workload=member.dash_workload(), checklist=member.dash_checklist(), days=days, periods=PERIODS,
+                               workload=member.dash_workload(), days=days, periods=PERIODS,
                                is_new=is_new, total=sum(counts.values()),
                                can_invite=member.can_act() and member.has_perm('invites:create'),
-                               can_dismiss=member.has_perm('members:invite'),
                                people=people_word(ws.purpose), person_a='مراجعی' if ws.purpose == 'clinical' else 'شرکت‌کننده‌ای')
 
 
@@ -95,15 +94,6 @@ class TsPanelShell(http.Controller):
     @http.route('/my/workspaces/<int:ws_id>/home', type='http', auth='user', website=True, sitemap=False)
     def home(self, ws_id, **kw):
         member_or_404(ws_id)
-        return request.redirect('/my/workspaces/%s' % ws_id)
-
-    @http.route('/my/workspaces/<int:ws_id>/dashboard/dismiss', type='http', auth='user', website=True, methods=['POST'], sitemap=False)
-    def dismiss_checklist(self, ws_id, **post):
-        member = member_or_404(ws_id)
-        denied = require(member, 'members:invite', 'home')
-        if denied:
-            return denied
-        member.workspace_id.sudo().onboarding_dismissed_on = fields.Datetime.now()
         return request.redirect('/my/workspaces/%s' % ws_id)
 
     # ------------------------------------------------------------------ settings

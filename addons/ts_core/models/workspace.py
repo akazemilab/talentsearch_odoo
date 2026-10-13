@@ -62,7 +62,8 @@ class TsWorkspace(models.Model):
     member_count = fields.Integer(compute='_compute_member_count')
     data_contact_id = fields.Many2one('res.partner', 'مسئول داده', tracking=True)
     escalation_contact_id = fields.Many2one('res.partner', 'مسئول پیگیری فوری', tracking=True,
-                                            help='برای پنل مرکز مشاوره، پیش از فعال‌سازی الزامی است.')
+                                            help='برای پنل مرکز مشاوره، پیش از نخستین دعوت مراجع الزامی است؛ '
+                                                 'یک بار در صفحهٔ نخستین دعوت پرسیده می‌شود.')
     note = fields.Html('یادداشت داخلی')
     company_id = fields.Many2one('res.company', required=True, default=lambda s: s.env.company)
 
@@ -126,12 +127,9 @@ class TsWorkspace(models.Model):
                 self.env['ts.audit.event'].log('workspace.state', ws, workspace=ws, state=vals['state'])
         return res
 
-    @api.constrains('state', 'purpose', 'escalation_contact_id')
-    def _check_activation(self):
-        for ws in self:
-            if ws.state == 'active':
-                if ws.purpose == 'clinical' and not ws.escalation_contact_id:
-                    raise ValidationError('پنل مرکز مشاوره بدون مسئول پیگیری فوری فعال نمی‌شود.')
+    # onb3 (2026-10-13): the escalation contact of a counseling-center panel is no longer asked when the panel is made.
+    # It is asked once, inside the first client invitation, and every client invitation of a clinical panel requires it
+    # (ts_org TsAssignment._check_escalation): no client of a clinical panel is ever invited while it is empty.
 
     def action_view_audit(self):
         self.ensure_one()

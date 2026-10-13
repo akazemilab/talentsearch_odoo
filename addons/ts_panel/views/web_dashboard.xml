@@ -55,33 +55,17 @@
                                 <!-- a member who sees only their own people sees only their own invitations: say so (G8-P8-2) -->
                                 <h2 t-if="member.has_perm('clients:read_all')" class="h5">این پنل هنوز دعوتی ندارد</h2>
                                 <h2 t-else="" class="h5">شما هنوز دعوتی نفرستاده‌اید</h2>
-                                <p t-if="can_invite">از اینجا <t t-out="people"/> را به سنجه دعوت می‌کنید و نتیجه‌هایی را که با پنل به اشتراک می‌گذارند می‌بینید. با «دعوت تازه» نخستین دعوت را بفرستید.</p>
+                                <p t-if="can_invite">از اینجا <t t-out="people"/> را به سنجه دعوت می‌کنید و نتیجه‌هایی را که با پنل به اشتراک می‌گذارند می‌بینید. با «دعوت تازه» در بالای صفحه نخستین دعوت را بفرستید.</p>
                                 <p t-else="">وقتی مالک یا هماهنگ‌کنندهٔ پنل دعوت بفرستد و <t t-out="person_a"/> سنجه را تمام کند، اینجا و در «شرکت‌کنندگان» دیده می‌شود.</p>
+                                <!-- one «دعوت تازه»: the header holds it (the duplicate primary here is gone, onb3) -->
                                 <p class="tsp-row-actions">
-                                    <a t-if="can_invite and not first_run" t-attf-href="/my/workspaces/#{ws.id}/invites/new?fresh=1" class="ts-btn ts-btn--primary">دعوت تازه</a>
                                     <a href="/help/roles" class="ts-btn ts-btn--quiet">نقش من چه چیزهایی را می‌بیند</a>
                                 </p>
                             </div>
 
-                            <section t-if="checklist" class="ts-card ts-card--soft" id="ts-checklist" aria-labelledby="tsp-d-chk">
-                                <h2 id="tsp-d-chk" class="h5">گام‌های راه‌اندازی</h2>
-                                <ol class="ts-checklist tsp-checklist">
-                                    <t t-foreach="checklist" t-as="c">
-                                        <li t-if="not c[1]" class="is-open"><span class="tsp-open-ico" aria-hidden="true"></span><a t-if="c[2]" t-att-href="c[2]" t-out="c[0]"/><span t-else="" t-out="c[0]"/></li>
-                                    </t>
-                                    <t t-foreach="checklist" t-as="c">
-                                        <li t-if="c[1]" class="is-done"><span class="tsp-check-ico" aria-hidden="true"></span><span t-out="c[0]"/> <span class="tsp-done-label">انجام شد</span></li>
-                                    </t>
-                                </ol>
-                                <form t-if="can_dismiss" t-attf-action="/my/workspaces/#{ws.id}/dashboard/dismiss" method="post" data-tsp-once="1">
-                                    <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
-                                    <button type="submit" class="ts-btn ts-btn--ghost">دیگر نشان نده</button>
-                                </form>
-                            </section>
-
                             <section t-if="tiles and not empty" class="ts-card" aria-labelledby="tsp-d-kpi">
                                 <h2 id="tsp-d-kpi" class="h5">رخدادهای این دوره</h2>
-                                <p class="ts-hint">شمار کارهایی که در این بازه رخ داده است (تجمعی)، حتی اگر وضعیت دعوت بعداً عوض شده باشد.</p>
+                                <p class="ts-hint">شمار کارهایی که در این بازه رخ داده است (تجمعی)، حتی اگر وضعیت دعوت بعداً عوض شده باشد.<t t-if="manages and not [t for t in tiles if t['key'] == 'rate']"> نرخ تکمیل و میانهٔ زمان از پنجمین دعوت به بعد نشان داده می‌شود.</t></p>
                                 <nav class="tsp-chips" aria-label="دورهٔ گزارش">
                                     <a t-foreach="periods" t-as="p" t-attf-href="/my/workspaces/#{ws.id}?period=#{p}"
                                        t-attf-class="tsp-chip #{'is-on' if p == days else ''}" t-att-aria-current="'true' if p == days else None">

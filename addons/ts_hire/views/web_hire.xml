@@ -39,7 +39,7 @@
                                     <tbody>
                                         <tr t-foreach="rows" t-as="p">
                                             <t t-set="c" t-value="counts[p.id]"/>
-                                            <th scope="row" data-label="موقعیت"><a t-attf-href="/my/workspaces/#{ws.id}/positions/#{p.id}"><bdi t-out="p.name"/></a></th>
+                                            <th scope="row" data-label="موقعیت"><a t-attf-href="/my/workspaces/#{ws.id}/positions/#{p.id}"><bdi t-out="p.name"/></a><span t-if="p.ts_sample" class="ts-pill ts-pill--info tsh-sample">نمونه</span></th>
                                             <td data-label="شغل مرجع" t-out="p.occupation_id.title_fa"/>
                                             <td data-label="ارزیابی" t-out="dict(p._fields['battery_choice'].selection)[p.battery_choice]"/>
                                             <td data-label="داوطلبان"><t t-out="fa(c['done'])"/> از <t t-out="fa(c['invited'])"/> تکمیل<t t-if="c['strong']"> · <t t-out="fa(c['strong'])"/> تناسب زیاد</t></td>
@@ -197,7 +197,8 @@
                         <t t-call="ts_panel.shell_frame">
                             <header class="tsp-head">
                                 <div>
-                                    <h1 class="tsp-head__title"><bdi t-out="p.name"/></h1>
+                                    <h1 class="tsp-head__title"><bdi t-out="p.name"/><span t-if="p.ts_sample" class="ts-pill ts-pill--info tsh-sample">نمونه</span></h1>
+                                    <p t-if="p.ts_sample" class="ts-hint tsh-sample-note">این موقعیت نمونه را استعدادیاب برای شروع ساخته است؛ نام، شغل مرجع و نیازهایش را مثل هر موقعیت دیگر تغییر دهید یا داوطلب واقعی دعوت کنید.</p>
                                     <p class="tsp-head__help">شغل مرجع: <t t-out="p.occupation_id.title_fa"/> · <t t-out="dict(p._fields['battery_choice'].selection)[p.battery_choice]"/><t t-if="deadline_fa"> · مهلت <t t-out="deadline_fa"/></t></p>
                                 </div>
                                 <div class="tsp-head__actions">
@@ -318,6 +319,61 @@
                                 </section>
                             </t>
                             <t t-else="">
+                                <t t-call="ts_hire.candidate_fit"/>
+                            </t>
+
+                            <section class="ts-card" t-if="can_invite and a.user_id and a.ts_hire_complete and not a.ts_preview">
+                                <h2 class="h5">آزمون تأیید حضوری</h2>
+                                <p class="ts-hint">پیش از تصمیم نهایی، داوطلب یک آزمون استدلال کوتاه با پرسش‌های تازه را در سازمان شما و زیر نظر شما انجام می‌دهد. افت زیاد نسبت به آزمون اول نشانه‌ای برای بررسی است.</p>
+                                <t t-if="ver">
+                                    <p>وضعیت: <t t-out="dict(ver._fields['state'].selection).get(ver.state)"/></p>
+                                    <div t-if="ver.state in ('invited', 'opened')" class="tsh-link">
+                                        <input type="text" readonly="readonly" class="form-control" dir="ltr" t-att-value="ver.invite_url()" aria-label="پیوند آزمون تأیید" id="tsh-vlink"/>
+                                        <button type="button" class="ts-btn ts-btn--outline ts-btn--sm" data-tsp-copy="tsh-vlink">کپی پیوند</button>
+                                    </div>
+                                </t>
+                                <form t-else="" t-attf-action="#{base}/c/#{a.id}/verify" method="post" class="tsp-inline">
+                                    <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                                    <button type="submit" class="ts-btn ts-btn--outline">ساخت آزمون تأیید</button>
+                                </form>
+                            </section>
+
+                            <section class="ts-card" t-if="can_decide and not a.ts_preview">
+                                <h2 class="h5">تصمیم شما</h2>
+                                <form t-attf-action="#{base}/c/#{a.id}/decision" method="post" class="tsp-form">
+                                    <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                                    <fieldset class="tsp-field tsh-decisions">
+                                        <legend class="tsp-sr">تصمیم</legend>
+                                        <label t-foreach="decisions" t-as="d" class="tsp-radio"><input type="radio" name="decision" t-att-value="d[0]" t-att-checked="'checked' if (a.hire_decision or 'none') == d[0] else None"/><span t-out="d[1]"/></label>
+                                    </fieldset>
+                                    <label class="tsp-field tsp-field--wide"><span class="tsp-field__label">یادداشت (اختیاری، برای همکاران)</span>
+                                        <input type="text" name="note" maxlength="200" class="form-control" t-att-value="a.decision_note"/></label>
+                                    <div class="tsp-actions"><button type="submit" class="ts-btn ts-btn--primary">ثبت تصمیم</button></div>
+                                    <p t-if="a.decision_at" class="ts-hint">آخرین تصمیم: <t t-out="jalali(a.decision_at)"/> · <t t-out="a.decision_by_id.name"/></p>
+                                </form>
+                            </section>
+                            <section class="tsh-method" aria-labelledby="tsh-method-h">
+                                <h2 class="h6" id="tsh-method-h">روش و محدودیت‌ها</h2>
+                                <p class="ts-hint">تناسب از دو بخش می‌آید: سبک‌های کاری (پرسش‌نامهٔ شخصیت، مقایسهٔ ویژگی‌های هر داوطلب با خودش) و توانایی‌ها (آزمون‌های زمان‌دار، مقایسه با سطح لازم برای این شغل در میان مشاغل). بازه‌ها هنوز با عملکرد شغلی در ایران اعتبارسنجی نشده‌اند و نمرهٔ برش نیستند.</p>
+                                <p class="ts-hint" t-att-data-model="model" t-out="credit"/>
+                            </section>
+                        </t>
+                    </div>
+                </t>
+            </t>
+        </field>
+    </record>
+
+
+    <!-- The job-fit summary of one candidate (onb3: its own template, so the synthetic sample report renders exactly the
+         candidate page's block). Context: r (a _row() dict with res and explain), res, st_labels; optional a. -->
+    <record id="tpl_candidate_fit" model="ir.ui.view">
+        <field name="name">TS hire: candidate fit block</field>
+        <field name="type">qweb</field>
+        <field name="key">ts_hire.candidate_fit</field>
+        <field name="website_id" ref="ts_website.website_ts"/>
+        <field name="arch" type="xml">
+            <t t-name="ts_hire.candidate_fit">
                                 <t t-set="ex" t-value="r['explain']"/>
                                 <div class="tsh-grid">
                                     <section class="ts-card" t-if="ex['why']">
@@ -365,47 +421,8 @@
                                     <p>این نیازهای جسمی و حسی در استعدادیاب سنجیده نمی‌شود. اگر داوطلب را برای این شغل جدی می‌گیرید، فهرست را همراه معرفی‌نامه به مرکز طب کار بدهید:</p>
                                     <ul class="tsh-chips"><li t-foreach="res['clinic']" t-as="c" class="ts-pill" t-out="c['fa']"/></ul>
                                 </section>
-                                <p t-if="a.ts_extra_time and a.ts_extra_time != '1.0'" class="ts-hint">این داوطلب آزمون‌ها را با زمان بیشتر (<t t-out="dict(a._fields['ts_extra_time'].selection)[a.ts_extra_time]"/>) انجام داده است.</p>
-                            </t>
-
-                            <section class="ts-card" t-if="can_invite and a.user_id and a.ts_hire_complete">
-                                <h2 class="h5">آزمون تأیید حضوری</h2>
-                                <p class="ts-hint">پیش از تصمیم نهایی، داوطلب یک آزمون استدلال کوتاه با پرسش‌های تازه را در سازمان شما و زیر نظر شما انجام می‌دهد. افت زیاد نسبت به آزمون اول نشانه‌ای برای بررسی است.</p>
-                                <t t-if="ver">
-                                    <p>وضعیت: <t t-out="dict(ver._fields['state'].selection).get(ver.state)"/></p>
-                                    <div t-if="ver.state in ('invited', 'opened')" class="tsh-link">
-                                        <input type="text" readonly="readonly" class="form-control" dir="ltr" t-att-value="ver.invite_url()" aria-label="پیوند آزمون تأیید" id="tsh-vlink"/>
-                                        <button type="button" class="ts-btn ts-btn--outline ts-btn--sm" data-tsp-copy="tsh-vlink">کپی پیوند</button>
-                                    </div>
-                                </t>
-                                <form t-else="" t-attf-action="#{base}/c/#{a.id}/verify" method="post" class="tsp-inline">
-                                    <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
-                                    <button type="submit" class="ts-btn ts-btn--outline">ساخت آزمون تأیید</button>
-                                </form>
-                            </section>
-
-                            <section class="ts-card" t-if="can_decide">
-                                <h2 class="h5">تصمیم شما</h2>
-                                <form t-attf-action="#{base}/c/#{a.id}/decision" method="post" class="tsp-form">
-                                    <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
-                                    <fieldset class="tsp-field tsh-decisions">
-                                        <legend class="tsp-sr">تصمیم</legend>
-                                        <label t-foreach="decisions" t-as="d" class="tsp-radio"><input type="radio" name="decision" t-att-value="d[0]" t-att-checked="'checked' if (a.hire_decision or 'none') == d[0] else None"/><span t-out="d[1]"/></label>
-                                    </fieldset>
-                                    <label class="tsp-field tsp-field--wide"><span class="tsp-field__label">یادداشت (اختیاری، برای همکاران)</span>
-                                        <input type="text" name="note" maxlength="200" class="form-control" t-att-value="a.decision_note"/></label>
-                                    <div class="tsp-actions"><button type="submit" class="ts-btn ts-btn--primary">ثبت تصمیم</button></div>
-                                    <p t-if="a.decision_at" class="ts-hint">آخرین تصمیم: <t t-out="jalali(a.decision_at)"/> · <t t-out="a.decision_by_id.name"/></p>
-                                </form>
-                            </section>
-                            <section class="tsh-method" aria-labelledby="tsh-method-h">
-                                <h2 class="h6" id="tsh-method-h">روش و محدودیت‌ها</h2>
-                                <p class="ts-hint">تناسب از دو بخش می‌آید: سبک‌های کاری (پرسش‌نامهٔ شخصیت، مقایسهٔ ویژگی‌های هر داوطلب با خودش) و توانایی‌ها (آزمون‌های زمان‌دار، مقایسه با سطح لازم برای این شغل در میان مشاغل). بازه‌ها هنوز با عملکرد شغلی در ایران اعتبارسنجی نشده‌اند و نمرهٔ برش نیستند.</p>
-                                <p class="ts-hint" t-att-data-model="model" t-out="credit"/>
-                            </section>
-                        </t>
-                    </div>
-                </t>
+                                <p t-if="a and a.ts_extra_time and a.ts_extra_time != '1.0'" class="ts-hint">این داوطلب آزمون‌ها را با زمان بیشتر (<t t-out="dict(a._fields['ts_extra_time'].selection)[a.ts_extra_time]"/>) انجام داده است.</p>
+                            
             </t>
         </field>
     </record>

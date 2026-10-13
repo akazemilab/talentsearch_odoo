@@ -56,8 +56,11 @@ check('role must match purpose (clinician in employment refused)',
 check('internal users cannot be customer members',
       raises(lambda: M.create({'workspace_id': ws_emp.id, 'user_id': env.ref('base.user_admin').id, 'role': 'hr_admin'}), ValidationError))
 check('a clinician with a licence number starts with the badge unverified (onb1: badge, not a gate)', M.search([('user_id', '=', u_cli.id)]).verification_state == 'pending')
-check('clinical workspace cannot go live without escalation owner',
-      raises(lambda: ws_cli.write({'state': 'active'}), ValidationError))
+check('a clinical workspace goes live without an escalation owner, but invites no client until it has one (onb3)',
+      not raises(lambda: ws_cli.write({'state': 'active'}), ValidationError)
+      and raises(lambda: (ws_cli.write({'state': 'active'}), env['ts.assignment'].create({
+          'workspace_id': ws_cli.id, 'invitee_name': 'x',
+          'instrument_id': env['ts.instrument'].search([('state', '=', 'published')], limit=1).id})), ValidationError))
 ws_edu = W.create({'name': 'TS test education', 'purpose': 'education', 'partner_id': org1.id})
 ws_gate = W.create({'name': 'TS test employment', 'purpose': 'employment', 'partner_id': org1.id})
 check('employment needs no approval (onb1)', not raises(lambda: ws_gate.write({'state': 'active'}), ValidationError))

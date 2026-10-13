@@ -7,7 +7,7 @@ from odoo import api, fields, models
 
 from .wallet import CreditRefused
 
-NO_HOLD_CHANNELS = ('self_share', 'import')
+NO_HOLD_CHANNELS = ('self_share', 'import', 'preview')     # onb3: a member's own try-out is never billed
 
 
 class TsAssignmentBilling(models.Model):
@@ -49,7 +49,7 @@ class TsAssignmentBilling(models.Model):
         """Hold the price of one new invitation of a prepaid panel (no row when the price is 0)."""
         self.ensure_one()
         ws = self.workspace_id
-        if not ws.ts_is_prepaid() or self.channel in NO_HOLD_CHANNELS or self.attempt_id:
+        if not ws.ts_is_prepaid() or self.channel in NO_HOLD_CHANNELS or self.ts_preview or self.attempt_id:
             return False
         product = self._ts_billing_product()
         price = ws.ts_price(product) if product else 0

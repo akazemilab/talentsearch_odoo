@@ -371,13 +371,14 @@ from odoo.addons.ts_onboard.models.funnel import is_bot
 F = env['ts.funnel.event']
 MAGIC = {'id', 'display_name'}
 fields_f = set(F._fields) - MAGIC
-check('F01 a funnel row holds only the step, the channel, the instrument, a salted hash, the day and the hour; no invitation, '
-      'account, website, address or create/write user', fields_f == {'step', 'entry', 'instrument_id', 'session_hash', 'day', 'hour'},
-      sorted(fields_f))
+check('F01 a funnel row holds only the step, the channel, the instrument, a salted hash, the day and the hour (and, onb3, the '
+      'kind of panel); no invitation, account, website, address or create/write user',
+      fields_f == {'step', 'entry', 'instrument_id', 'session_hash', 'day', 'hour', 'panel_kind'}, sorted(fields_f))
 check('F05 the channels: guest, signed in, and how the invitation came (sms, email, manual, campaign)',
       set(dict(F._fields['entry'].selection)) == {'guest', 'user', 'sms', 'email', 'manual', 'campaign'})
-check('F02 the steps are the nine of the plan', set(dict(F._fields['step'].selection)) == {
-    'start_view', 'start', 'q1', 'finish', 'gate_view', 'gate_signed_in', 'report_view', 'invite_view', 'invite_accept'})
+check('F02 the steps are the nine of the plan (and the four panel activation steps of onb3)', set(dict(F._fields['step'].selection)) == {
+    'start_view', 'start', 'q1', 'finish', 'gate_view', 'gate_signed_in', 'report_view', 'invite_view', 'invite_accept',
+    'panel_created', 'self_test_done', 'first_invite', 'first_result_opened'})
 f_old = F.sudo().create({'step': 'start', 'session_hash': 'onb2old'})
 f_new = F.sudo().create({'step': 'start', 'session_hash': 'onb2new'})
 f_old.write({'day': fields.Date.today() - timedelta(days=181)})

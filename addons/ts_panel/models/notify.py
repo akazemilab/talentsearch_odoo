@@ -249,7 +249,7 @@ class TsAssignmentNotify(models.Model):
         N = self.env['ts.notification']
         for a in recs:
             user = a._ts_account()
-            if user:
+            if user and not a.ts_preview:
                 N._notify(user, 'invite', '/invite/%s' % a.token, a.workspace_id)
         return recs
 
@@ -271,7 +271,7 @@ class TsAssignmentNotify(models.Model):
     def _ts_reminder_due(self, today):
         """Is this invitation due for its one automatic reminder on `today` (a date in Tehran)?"""
         self.ensure_one()
-        if self.state not in OPEN_STATES or self.reminder_count or self.withdrawn or self.declined:
+        if self.state not in OPEN_STATES or self.reminder_count or self.withdrawn or self.declined or self.ts_preview:
             return False
         if self.workspace_id.state != 'active':
             return False
@@ -336,7 +336,8 @@ class TsAssignmentNotify(models.Model):
         if N._quiet_now():
             return 0
         today = N._tehran_now().date()
-        cand = self.sudo().search([('reminder_count', '=', 0), ('state', 'in', list(OPEN_STATES))], limit=500)
+        cand = self.sudo().search([('reminder_count', '=', 0), ('state', 'in', list(OPEN_STATES)), ('ts_preview', '=', False)],
+                                  limit=500)
         n = 0
         for a in cand:
             if a._ts_reminder_due(today):
@@ -349,7 +350,7 @@ class TsAssignmentNotify(models.Model):
         -> (ok, message)"""
         self.ensure_one()
         N = self.env['ts.notification']
-        if self.state not in OPEN_STATES:
+        if self.state not in OPEN_STATES or self.ts_preview:
             return False, 'این دعوت دیگر باز نیست.'
         if self.workspace_id.state != 'active':
             return False, 'این پنل فعال نیست یا موقتاً متوقف شده است؛ یادآوری فرستاده نمی‌شود.'
@@ -379,6 +380,8 @@ class TsAttemptNotify(models.Model):
 
     def _ts_notify_done(self):
         self.ensure_one()
+        if self.sudo().ts_preview:
+            return None             # onb3: a member's own try-out tells nobody (the page he is on shows the report)
         N = self.env['ts.notification']
         if self.user_id:
             N._notify(self.user_id, 'result_ready_participant', '/my/assessments/%s' % self.id, self.workspace_id)

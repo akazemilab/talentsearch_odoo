@@ -31,16 +31,17 @@ class TsWorkspaceHealth(models.Model):
             since = fields.Datetime.now() - timedelta(days=30)
             cr.execute("SELECT workspace_id, COUNT(*) FROM ts_workspace_member WHERE active AND workspace_id IN %s GROUP BY 1", [tuple(ids)])
             members.update(dict(cr.fetchall()))
+            # a member's own try-out (onb3) is never counted
             cr.execute("SELECT workspace_id, COUNT(*), MAX(last_activity_at) FROM ts_panel_client WHERE state = 'active' "
-                       "AND workspace_id IN %s GROUP BY 1", [tuple(ids)])
+                       "AND source IS DISTINCT FROM 'preview' AND workspace_id IN %s GROUP BY 1", [tuple(ids)])
             for w, n, la in cr.fetchall():
                 clients[w] = n
                 last[w] = la
-            cr.execute("SELECT workspace_id, COUNT(*) FROM ts_assignment WHERE state IN %s AND workspace_id IN %s GROUP BY 1",
-                       [OPEN, tuple(ids)])
+            cr.execute("SELECT workspace_id, COUNT(*) FROM ts_assignment WHERE state IN %s AND ts_preview IS NOT TRUE "
+                       "AND workspace_id IN %s GROUP BY 1", [OPEN, tuple(ids)])
             opens.update(dict(cr.fetchall()))
             cr.execute("SELECT workspace_id, COUNT(*), MAX(submitted_at) FROM ts_attempt WHERE state = 'done' AND NOT voided "
-                       "AND workspace_id IN %s AND submitted_at >= %s GROUP BY 1", [tuple(ids), since])
+                       "AND ts_preview IS NOT TRUE AND workspace_id IN %s AND submitted_at >= %s GROUP BY 1", [tuple(ids), since])
             for w, n, sa in cr.fetchall():
                 done[w] = n
                 if sa and (not last.get(w) or sa > last[w]):

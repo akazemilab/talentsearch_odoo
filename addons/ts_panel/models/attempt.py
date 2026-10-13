@@ -39,7 +39,7 @@ class TsAttempt(models.Model):
     def _ts_panel_record_usage(self):
         Usage = self.env['ts.usage.event'].sudo()
         for at in self.sudo():
-            if at.state != 'done' or not at.workspace_id or at.source == 'import':
+            if at.state != 'done' or not at.workspace_id or at.source == 'import' or at.ts_preview:     # onb3: never billed
                 continue
             if not Usage.search_count([('attempt_id', '=', at.id)]):
                 a = self.env['ts.assignment'].sudo().search([('attempt_id', '=', at.id)], limit=1)

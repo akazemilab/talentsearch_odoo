@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <!-- ======================================================= landing -->
+    <!-- ======================================================= landing (onb3: one question, four kinds) -->
     <record id="tpl_panel_landing" model="ir.ui.view">
         <field name="name">TS: panel landing</field>
         <field name="type">qweb</field>
@@ -13,32 +13,21 @@
                         <section class="ts-section">
                             <div class="ts-container">
                                 <div class="ts-section__head">
-                                    <h1>پنل مرکز خود را رایگان بسازید</h1>
-                                    <p>یک پنل، فضای کار شما برای دعوت شرکت‌کننده‌ها، دیدن گزارش‌هایی است که خودشان با شما به اشتراک می‌گذارند، و هم‌کاری با همکارانتان. ساخت پنل در این فصل رایگان است.</p>
+                                    <h1>پنل خود را رایگان بسازید</h1>
+                                    <p>بگویید برای چه کاری از استعدادیاب استفاده می‌کنید. پنل همان لحظه فعال است و با یک سنجهٔ آماده برای همان کار شروع می‌شود.</p>
                                 </div>
-                                <div class="ts-grid ts-panel-kinds">
-                                    <article class="ts-card ts-panel-kind">
-                                        <h2 class="h4">مدرسه یا دانشگاه</h2>
-                                        <p>بلافاصله فعال می‌شود. مشاورها را دعوت کنید و برای هر دانش‌آموز یک مشاور مسئول تعیین کنید.</p>
-                                        <a t-attf-href="#{cta_url}?kind=school" class="ts-btn ts-btn--primary">ساخت پنل مدرسه</a>
-                                    </article>
-                                    <article class="ts-card ts-panel-kind">
-                                        <h2 class="h4">سازمان</h2>
-                                        <p>بلافاصله فعال می‌شود. همکاران را دعوت کنید، موقعیت شغلی بسازید و داوطلب‌ها را به ارزیابی بفرستید.</p>
-                                        <a t-attf-href="#{cta_url}?kind=org" class="ts-btn ts-btn--outline">ساخت پنل سازمان</a>
-                                    </article>
-                                    <article class="ts-card ts-panel-kind">
-                                        <h2 class="h4">مرکز مشاوره</h2>
-                                        <p>بلافاصله فعال می‌شود. مشاوران را دعوت کنید و برای مراجعان سنجه یا مجموعهٔ سنجه بفرستید.</p>
-                                        <a t-attf-href="#{cta_url}?kind=clinic" class="ts-btn ts-btn--outline">ساخت پنل مرکز مشاوره</a>
-                                    </article>
-                                    <article class="ts-card ts-panel-kind">
-                                        <h2 class="h4">کار مستقل</h2>
-                                        <p>اگر تنها کار می‌کنید، یک پنل یک‌نفره بسازید؛ بعداً می‌توانید همکار اضافه کنید.</p>
-                                        <a t-attf-href="#{cta_url}?kind=solo" class="ts-btn ts-btn--outline">ساخت پنل یک‌نفره</a>
-                                    </article>
-                                </div>
-                                <p class="ts-hint ts-panel-steps">اول با شمارهٔ موبایل وارد می‌شوید، بعد نام و نوع پنل را می‌نویسید. هر پنل همان لحظهٔ ساخت فعال است.</p>
+                                <ul class="ts-grid ts-panel-kinds" aria-label="نوع پنل">
+                                    <li t-foreach="[('clinic', 'مرکز مشاوره', 'مراجع پیش از جلسه سنجه را در خانه پر می‌کند؛ شما با گزارش وارد جلسه می‌شوید.'),
+                                                    ('solo', 'مشاور یا روان‌شناس مستقل', 'گزارش علمی با نام و نشان خودتان، روی موبایل مراجع.'),
+                                                    ('school', 'مدرسه', 'یک پیوند برای کل کلاس؛ تصویر کلاس و گزارش هر دانش‌آموز.'),
+                                                    ('org', 'استخدام و منابع انسانی', 'داوطلب‌ها را بر پایهٔ نیازهای همان شغل ببینید، نه فقط رزومه.')]"
+                                        t-as="k" class="ts-card ts-panel-kind">
+                                        <h2 class="h4" t-out="k[1]"/>
+                                        <p t-out="k[2]"/>
+                                        <a t-attf-href="#{cta_url}?kind=#{k[0]}" class="ts-panel-kind__go" t-att-aria-label="'ساخت پنل: ' + k[1]">ساخت پنل<t t-call="ts_website.icon" ico.f="arrow-left"/></a>
+                                    </li>
+                                </ul>
+                                <p class="ts-hint ts-panel-steps">در دورهٔ آزمایشی رایگان است. اول با شمارهٔ موبایل وارد می‌شوید، بعد نام پنل و نام خودتان را می‌نویسید؛ همین.</p>
                                 <p><a href="/panel/terms">شرایط استفاده از پنل</a></p>
                             </div>
                         </section>
@@ -63,7 +52,7 @@
                                 <h1>شرایط استفاده از پنل</h1>
                                 <p class="ts-hint"><t t-out="version_label"/> (<bdi dir="ltr" t-out="version"/>)</p>
                                 <h2 class="h4">قیمت</h2>
-                                <p>ساخت و استفاده از پنل در این فصل رایگان است. تعداد سنجه‌های تکمیل‌شده ثبت می‌شود، اما چیزی کسر یا مسدود نمی‌شود. اگر بعداً تعرفه‌ای تعیین شود، پیش از اعمال به شما اطلاع داده می‌شود.</p>
+                                <p>ساخت و استفاده از پنل در دورهٔ آزمایشی رایگان است. تعداد نتیجه‌های تکمیل‌شده ثبت می‌شود، اما چیزی کسر یا مسدود نمی‌شود. اگر بعداً تعرفه‌ای تعیین شود، پیش از اعمال به شما اطلاع داده می‌شود. پیش‌نمایشی که خودتان انجام می‌دهید و گزارش نمونه هیچ‌وقت هزینه ندارد.</p>
                                 <h2 class="h4">فعال‌شدن پنل و هفتهٔ اول</h2>
                                 <p>هر پنل، از هر نوع، همان لحظهٔ ساخت فعال است. پنلی که خودتان می‌سازید در هفت روز اول در هر ۲۴ ساعت تا ۵۰ دعوت شرکت‌کننده می‌فرستد؛ پیوستن با پیوند کلاس یا پیوند باز در این شمار نیست. اگر زودتر به دعوت بیشتری نیاز دارید، با پشتیبانی تماس بگیرید.</p>
                                 <h2 class="h4">توقف موقت پنل</h2>
@@ -73,7 +62,7 @@
                                 <h2 class="h4">مسئولیت شما</h2>
                                 <p>هر دعوتی که از پنل فرستاده می‌شود به نام شما و پنل شما ثبت می‌شود. اعضای پنل فقط آنچه را که به آن‌ها سپرده‌اید می‌بینند. نتایج ابزار سنجش، تشخیص یا تصمیم نهایی نیستند.</p>
                                 <h2 class="h4">پنل مرکز مشاوره</h2>
-                                <p>مالک پنل مرکز مشاوره می‌پذیرد که اگر شرکت‌کننده‌ای نشانهٔ خطر یا نیاز به پیگیری فوری نشان دهد، پیگیری فوری با مشاوران همان پنل است و استعدادیاب خدمات اورژانسی ارائه نمی‌کند.</p>
+                                <p>پیش از نخستین دعوت مراجع، یکی از اعضای پنل مرکز مشاوره می‌پذیرد که اگر مراجعی نشانهٔ خطر یا نیاز به پیگیری فوری نشان دهد، پیگیری فوری با مشاوران همان پنل است و استعدادیاب خدمات اورژانسی ارائه نمی‌کند. بدون این پذیرش، دعوتی برای مراجع فرستاده نمی‌شود.</p>
                                 <h2 class="h4" id="transfer">وقتی عضوی از پنل می‌رود، و انتقال شرکت‌کنندگان</h2>
                                 <p>اگر عضوی از پنل جدا شود یا نقشش تغییر کند، شرکت‌کنندگان و نتیجه‌هایی که به او سپرده شده بود به صف «بدون کارشناس» برمی‌گردند: دسترسی او تمام می‌شود، هیچ نتیجه‌ای ناپدید نمی‌شود، و مالک پنل هر کدام را به عضو دیگری می‌سپارد. هر تغییر در دفتر ممیزی ثبت می‌شود.</p>
                                 <p>اگر عضوی که پنل یک‌نفرهٔ خودش را دارد کار را رها کند، انتقال خودکار شرکت‌کنندگان به پنل دیگر فعلاً وجود ندارد. داده‌ها بین پنل‌ها جابه‌جا نمی‌شوند. شرکت‌کنندگان فقط وقتی نتیجه‌شان در پنل تازه دیده می‌شود که خودشان آن را دوباره برای آن پنل بفرستند یا دعوت آن پنل را بپذیرند.</p>
@@ -88,7 +77,7 @@
         </field>
     </record>
 
-    <!-- ======================================================= create -->
+    <!-- ======================================================= create (onb3: one form - kind, panel name, «نام شما») -->
     <record id="tpl_panel_new" model="ir.ui.view">
         <field name="name">TS: new panel</field>
         <field name="type">qweb</field>
@@ -99,48 +88,32 @@
                 <t t-call="website.layout" additional_title.f="ساخت پنل رایگان">
                     <div id="wrap" class="ts-page">
                         <section class="ts-section">
-                            <div class="ts-container">
+                            <div class="ts-container ts-panel-form">
                                 <a href="/my/workspaces" class="ts-backlink">پنل‌های من</a>
                                 <div class="ts-section__head"><h1>ساخت پنل</h1></div>
                                 <p t-if="error" class="ts-notice ts-notice--warn" role="alert" t-out="error"/>
                                 <form action="/my/workspaces/new/create" method="post" class="ts-form ts-panel-new">
                                     <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
-                                    <t t-if="need_name">
-                                        <label for="ts_p_own">نام شما</label>
-                                        <input id="ts_p_own" name="own_name" type="text" required="required" minlength="2" maxlength="80" autocomplete="name" aria-describedby="ts_p_own_h" t-att-value="vals.get('own_name')"/>
-                                        <p id="ts_p_own_h" class="ts-hint">همکاران و مراجعان این نام را کنار پنل می‌بینند.</p>
-                                    </t>
-                                    <label for="ts_p_name">نام پنل</label>
-                                    <input id="ts_p_name" name="name" type="text" required="required" minlength="2" maxlength="100" t-att-value="vals.get('name')"/>
-                                    <fieldset class="ts-fieldset" aria-describedby="ts_p_kind_h">
-                                        <legend>نوع پنل</legend>
-                                        <p id="ts_p_kind_h" class="ts-hint">هر نوع پنلی همان لحظه فعال می‌شود.</p>
-                                        <label class="ts-check"><input type="radio" name="kind" value="school" required="required" t-att-checked="'checked' if vals.get('kind') == 'school' else None"/><span>مدرسه یا دانشگاه</span></label>
-                                        <label class="ts-check"><input type="radio" name="kind" value="org" t-att-checked="'checked' if vals.get('kind') == 'org' else None"/><span>سازمان (استخدام و منابع انسانی)</span></label>
-                                        <label class="ts-check"><input type="radio" name="kind" value="clinic" t-att-checked="'checked' if vals.get('kind') == 'clinic' else None"/><span>مرکز مشاوره</span></label>
-                                        <label class="ts-check"><input type="radio" name="kind" value="solo" t-att-checked="'checked' if vals.get('kind') == 'solo' else None"/><span>کار مستقل (پنل یک‌نفره)</span></label>
+                                    <fieldset class="ts-fieldset ts-kind-pick">
+                                        <legend>برای چه کاری از استعدادیاب استفاده می‌کنید؟</legend>
+                                        <label t-foreach="[('clinic', 'مرکز مشاوره', 'مراجعان مرکز را پیش از جلسه می‌سنجید.'),
+                                                           ('solo', 'مشاور یا روان‌شناس مستقل', 'تنها کار می‌کنید و گزارش با نام شما می‌آید.'),
+                                                           ('school', 'مدرسه', 'کلاس یا دانش‌آموزان را می‌سنجید.'),
+                                                           ('org', 'استخدام و منابع انسانی', 'داوطلب‌های یک شغل را ارزیابی می‌کنید.')]"
+                                               t-as="k" class="ts-kind-opt">
+                                            <input type="radio" name="kind" t-att-value="k[0]" required="required" t-att-checked="'checked' if vals.get('kind') == k[0] else None"/>
+                                            <span><strong t-out="k[1]"/><small t-out="k[2]"/></span>
+                                        </label>
                                     </fieldset>
-                                    <div class="ts-reveal" data-ts-show="kind=solo">
-                                        <label for="ts_p_solo">در پنل یک‌نفره چه کاری می‌کنید؟</label>
-                                        <select id="ts_p_solo" name="solo_as">
-                                            <option value="">—</option>
-                                            <option value="counselor" t-att-selected="'selected' if vals.get('solo_as') == 'counselor' else None">مشاور تحصیلی یا شغلی</option>
-                                            <option value="psychologist" t-att-selected="'selected' if vals.get('solo_as') == 'psychologist' else None">روان‌شناس یا مشاور</option>
-                                            <option value="hr" t-att-selected="'selected' if vals.get('solo_as') == 'hr' else None">منابع انسانی</option>
-                                        </select>
-                                    </div>
-                                    <div class="ts-reveal" data-ts-show="kind=solo;solo_as=psychologist">
-                                        <label for="ts_p_lic">شمارهٔ پروانه یا نظام روان‌شناسی و مشاوره</label>
-                                        <input id="ts_p_lic" name="license_number" type="text" maxlength="60" dir="ltr" aria-describedby="ts_p_lic_h" t-att-value="vals.get('license_number') or None"/>
-                                        <p id="ts_p_lic_h" class="ts-hint">روان‌شناس مستقل گزارش کامل مراجعانش را می‌بیند، پس این شماره لازم است. کار با پنل منتظر بررسی آن نمی‌ماند؛ پس از بررسی تیم استعدادیاب، نشان «پروانهٔ تأییدشده» کنار نامتان می‌آید.</p>
-                                    </div>
-                                    <div class="ts-reveal" data-ts-show="kind=clinic|solo">
-                                        <label class="ts-check"><input type="checkbox" name="escalation_ok" value="1"/><span>می‌پذیرم که پیگیری فوری نشانه‌های خطر با من است (برای پنل مرکز مشاوره).</span></label>
-                                    </div>
-                                    <label class="ts-check"><input type="checkbox" name="terms" value="1" required="required"/><span><a href="/panel/terms">شرایط استفاده</a> را خوانده‌ام و می‌پذیرم.</span></label>
-                                    <button type="submit" class="ts-btn ts-btn--primary">ساخت پنل</button>
+                                    <label for="ts_p_name">نام پنل</label>
+                                    <input id="ts_p_name" name="name" type="text" required="required" minlength="2" maxlength="100" aria-describedby="ts_p_name_h" t-att-value="vals.get('name')"/>
+                                    <p id="ts_p_name_h" class="ts-hint">همان نامی که مراجعان و همکاران می‌بینند؛ مثلاً نام مرکز، مدرسه یا شرکت.</p>
+                                    <label for="ts_p_own">نام شما</label>
+                                    <input id="ts_p_own" name="own_name" type="text" t-att-required="'required' if need_name else None" minlength="2" maxlength="80" autocomplete="name" aria-describedby="ts_p_own_h" t-att-value="vals.get('own_name')"/>
+                                    <p id="ts_p_own_h" class="ts-hint">همکاران و مراجعان این نام را کنار پنل می‌بینند.</p>
+                                    <button type="submit" name="accept" value="1" class="ts-btn ts-btn--primary ts-btn--lg">ساخت پنل</button>
+                                    <p class="ts-hint">با ساخت پنل، <a href="/panel/terms">شرایط استفاده</a> را می‌پذیرید. در دورهٔ آزمایشی رایگان است.</p>
                                 </form>
-                                <t t-call="ts_org.reveal_js"/>
                             </div>
                         </section>
                     </div>

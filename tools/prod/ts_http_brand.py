@@ -49,7 +49,7 @@ def member(n, role, lic=None):
     m = env['ts.workspace.member'].with_context(active_test=False).search([('workspace_id', '=', ws.id), ('user_id', '=', u.id)]) \
         or env['ts.workspace.member'].create({'workspace_id': ws.id, 'user_id': u.id, 'role': role})
     m.write({'active': True, 'role': role, 'title': False, 'report_bio': False, 'show_on_report': True,
-             'ts_onb_hidden_on': False, 'ts_onb_card_hidden_on': False, 'ts_catalog_seen_on': False})
+             'ts_start_hidden_on': False, 'ts_more_hidden_on': False, 'ts_onb_card_hidden_on': False, 'ts_catalog_seen_on': False})
     if m.catalog_restricted or m.restrict_instrument_ids or m.restrict_battery_ids:
         m.write({'catalog_restricted': False, 'restrict_instrument_ids': [Command.clear()], 'restrict_battery_ids': [Command.clear()]})
     if lic:
@@ -271,9 +271,12 @@ check('eot.ir does not serve /i/ or /j/', e.req('/i/' + ICODE)[0] == 404 and e.r
 st, loc, _ = anon.req('/n/1')
 check('/n/<id> leads to the notice page (which checks the reader)', st == 302 and loc.endswith('/my/notifications/1'), loc)
 
-# ---------------------------------------------------------------- 7. set-up guide «راه‌اندازی مرکز» (clinic phase 6)
-def tsob_section(body):
-    m = re.search(r'<section[^>]*id="tsob".*?</section>', body, re.S)
+# ---------------------------------------------------------------- 7. completing a counseling-center panel (clinic phase 6, onb3)
+# The six-step list gave way to ts_onboard's «شروع کار» and, after the first real result is opened, «پنل را کامل کنید»
+# (id="tso-more"); ts_http_onb3.py covers the cards end to end. Here: the items a counseling center gets, their buttons and
+# anchors, who sees the card, «بدون سقف بماند», the counselor's first-run card and the help section.
+def more_section(body):
+    m = re.search(r'<section[^>]*id="tso-more".*?</section>', body, re.S)
     return m.group(0) if m else ''
 
 
@@ -281,39 +284,31 @@ def step_links(sec):
     return [re.search(r'href="([^"]+)"', a).group(1).replace('&amp;', '&') for a in re.findall(r'<a [^>]*tsob-btn[^>]*>', sec)]
 
 
+shell("ws = env['ts.workspace'].browse(%s); ws.sudo().write({'ts_onb_start': True, 'ts_onb_result_opened_at': '2026-01-01 00:00:00', 'sms_name': False}); "
+      "env['ts.workspace.member'].browse(%s).sudo().ts_more_hidden_on = False; env.cr.commit()" % (WS, MO))
 st, body = get(own, W)
-sec = tsob_section(body)
-# free panel: 4 steps; counselors done (two clinicians), invitation done (fixtures), identity open (name without logo),
-# catalog open (two counselors, none decided)
-check('owner dashboard: «راه‌اندازی مرکز» with «۲ از ۴ انجام شده» and the help link', st == 200 and 'راه‌اندازی مرکز' in sec
-      and '۲ از ۴ انجام شده' in sec and 'href="/help/panel#center-setup"' in sec, str(st))
-check('owner dashboard: the generic checklist is replaced', 'گام‌های راه‌اندازی' not in body)
-check('owner dashboard: open steps always shown; the phone toggle folds only the done steps (aria-expanded + aria-controls)',
-      'id="tsob-open"' in sec and 'aria-controls="tsob-more"' in sec and 'aria-expanded=' in sec and 'id="tsob-more"' in sec)
-check('owner dashboard: no panel approval line any more; the licence badges are an information line (onb1)',
-      'تأیید پنل' not in sec and 'نشان «پروانهٔ تأییدشده»' in sec)
-check('owner dashboard: one current step with the only primary button of the list', sec.count('tsob-step--current') == 1
-      and sec.count('ts-btn--primary') == 1, str(sec.count('ts-btn--primary')))
+sec = more_section(body)
+check('owner dashboard: the old lists are gone («راه‌اندازی مرکز», «گام‌های راه‌اندازی»)', st == 200 and 'id="tsob"' not in body
+      and 'گام‌های راه‌اندازی' not in body and 'راه‌اندازی مرکز' not in body, str(st))
+check('owner dashboard: «پنل را کامل کنید», all optional, with the help link', 'پنل را کامل کنید' in sec and 'همه اختیاری است' in sec
+      and 'href="/help/panel#more"' in sec)
+check('owner dashboard: the card has no primary button (the page keeps one primary action)', 'ts-btn--primary' not in sec)
 links = step_links(sec)
-check('owner dashboard: one button per open step (identity -> name and logo section, catalog -> first counselor)',
-      W + '/settings#tsbr-org' in links and (W + '/members/%s#tsp-catalog' % M1) in links, str(links))
+check('owner dashboard: one button per open item (identity -> the identity section)', W + '/settings#tsbr-org' in links, str(links))
 bad = []
 for url in links:
     path, _, frag = url.partition('#')
     st2, page = get(own, path)
     if st2 != 200 or (frag and ('id="%s"' % frag) not in page):
         bad.append('%s -> %s' % (url, st2))
-check('every step button opens a page that has its anchor', links and not bad, str(bad))
-st, loc, _ = post(own, W + '/members/%s/catalog' % M1, {'catalog_mode': 'all'})
-sec = tsob_section(get(own, W)[1])
-check('saving a counselor\'s catalog unchanged counts; the button moves to the next counselor', '۱ از ۲' in sec
-      and (W + '/members/%s#tsp-catalog' % M3) in step_links(sec), str(step_links(sec)))
-st, loc, _ = post(own, W + '/members/%s/catalog' % M3, {'catalog_mode': 'all'})
-sec = tsob_section(get(own, W)[1])
-check('both counselors decided -> «۳ از ۴ انجام شده»', '۳ از ۴ انجام شده' in sec)
+check('every item button opens a page that has its anchor', links and not bad, str(bad))
 st, body = get(c1, W)
-check('a counselor never sees the set-up checklist', st == 200 and 'id="tsob"' not in body and 'راه‌اندازی مرکز' not in body, str(st))
+check('a counselor never sees «پنل را کامل کنید»', st == 200 and 'id="tso-more"' not in body, str(st))
 check('a counselor with a title gets no first-run card', 'id="tsob-card"' not in body)
+st, body = get(c3, W)
+check('a counselor sees «شروع کار» with his own try-out first (one primary action; the identity card waits)', st == 200
+      and 'id="tso-start"' in body and 'id="tsob-card"' not in body, str(st))
+post(c3, W + '/start/hide', {})
 st, body = get(c3, W)
 check('a counselor without a title gets the first-run card linking to their own identity section', st == 200
       and 'هویت شما در گزارش‌ها را کامل کنید' in body and (W + '/members/%s#tsbr-member' % M3) in body, str(st))
@@ -323,23 +318,20 @@ st, loc, _ = post(c3, W + '/onboarding/card-hide', {})
 check('the counselor closes the card', st in (302, 303) and 'id="tsob-card"' not in get(c3, W)[1], str(st))
 st, loc, _ = post(c1, W + '/onboarding/nocap', {})
 check('a counselor cannot record «بدون سقف»', st == 403, str(st))
-st, loc, _ = post(own, W + '/onboarding/hide', {})
-check('«بعداً نشانم نده» hides the checklist for the owner', st in (302, 303) and 'id="tsob"' not in get(own, W)[1], str(st))
-st, body = get(own, '/help/panel')
-check('the help page offers the owner the restore button', st == 200 and ('action="%s/onboarding/show"' % W) in body, str(st))
-st, loc, _ = post(own, W + '/onboarding/show', {})
-check('«نمایش دوباره» brings it back', st in (302, 303) and 'id="tsob"' in get(own, W)[1], str(st))
+st, loc, _ = post(own, W + '/more/hide', {})
+check('«بعداً» hides the card for the owner', st in (302, 303) and 'id="tso-more"' not in get(own, W)[1], str(st))
+check('the old hide / show routes are gone', post(own, W + '/onboarding/hide', {})[0] == 404 and post(own, W + '/onboarding/show', {})[0] == 404)
 st, body = get(anon, '/help/panel')
 m7 = re.search(r'<article[^>]*id="center-setup".*?</article>', body, re.S)
 art = m7.group(0) if m7 else ''
-check('/help/panel has #center-setup, listed in its table of contents', st == 200 and art and 'href="#center-setup"' in body
-      and 'راهنمای راه‌اندازی مرکز مشاوره' in art, str(st))
-check('the section explains the six steps, the prepaid model and the invoices', all(w in art for w in (
-    'هویت مرکز در گزارش‌ها', 'دعوت مشاوران', 'سنجه‌های هر مشاور', 'سقف ماهانهٔ مشاوران', 'اعتبار پنل', 'نخستین دعوت',
-    'رزرو', 'کسر', 'آزاد', 'فاکتورهای شارژ اعتبار')))
+check('/help/panel has #center-setup «کامل کردن پنل مرکز مشاوره», listed in its table of contents', st == 200 and art
+      and 'href="#center-setup"' in body and 'کامل کردن پنل مرکز مشاوره' in art, str(st))
+check('the section explains the items, the prepaid model and the invoices', all(w in art for w in (
+    'هویت مرکز در گزارش‌ها', 'دعوت همکاران', 'نام پیامکی', 'سقف', 'اعتبار', 'پروانه', 'رزرو', 'کسر', 'آزاد', 'فاکتور')))
 check('the section speaks counseling, no «!» or «متأسفانه»', not any(w in re.sub(r'<[^>]+>', ' ', art) for w in (
     '!', 'متأسفانه', 'درمان', 'بالینی', 'کلینیک', 'بیمار', 'مؤسسه')))
-check('anonymous visitors get no restore button', 'onboarding/show' not in body)
+check('anonymous visitors are offered to build a panel, no restore button', '/my/workspaces/new?kind=clinic' in art
+      and 'onboarding/show' not in body)
 
 # ---------------------------------------------------------------- 6. titles never repeat the site name
 dup = []

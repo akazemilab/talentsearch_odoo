@@ -67,6 +67,9 @@ class TsAssignment(models.Model):
     withdrawn = fields.Boolean(readonly=True)
     declined = fields.Boolean(readonly=True)
     company_id = fields.Many2one(related='workspace_id.company_id', store=True)
+    # onb3: a member's own try-out of the panel's starter («پیش‌نمایش»). Never billed and never counted: usage, panel
+    # statistics, funnels, fairness, norms and reminders all leave it out; every list that shows it says «پیش‌نمایش».
+    ts_preview = fields.Boolean('پیش‌نمایش (عضو پنل خودش)', readonly=True, copy=False, index=True)
 
     _token_unique = models.Constraint('unique(token)', 'توکن دعوت باید یکتا باشد.')
 
@@ -95,6 +98,16 @@ class TsAssignment(models.Model):
                 raise ValidationError('این سنجه برای فرایند استخدام مجاز نیست.')
             if a.workspace_id.state != 'active':
                 raise ValidationError('این پنل فعال نیست یا موقتاً متوقف شده است؛ دعوت تازه ممکن نیست.')
+
+    @api.constrains('workspace_id', 'ts_preview')
+    def _check_escalation(self):
+        """A client of a counseling panel is invited only once the panel has its escalation contact (onb3 moved the
+        question from panel creation to the first client invitation; the rule itself is unchanged)."""
+        for a in self:
+            ws = a.workspace_id
+            if ws.purpose == 'clinical' and not a.ts_preview and not ws.escalation_contact_id:
+                raise ValidationError('پیش از نخستین دعوت مراجع، کسی در پنل باید پیگیری فوری نشانه‌های خطر را بپذیرد. '
+                                      'در صفحهٔ «دعوت تازه» آن را تیک بزنید.')
 
     @api.constrains('responsible_id', 'workspace_id', 'user_id')
     def _check_responsible(self):
@@ -179,6 +192,8 @@ class TsAssignment(models.Model):
                 'user_id': user.id, 'instrument_id': inst.id, 'version_id': inst.current_version_id.id,
                 'workspace_id': self.workspace_id.id,
             })
+            if self.ts_preview:
+                attempt.sudo().ts_preview = True
             self.write({'user_id': user.id, 'attempt_id': attempt.id, 'share_level': share_level,
                         'accepted_at': fields.Datetime.now()})
             self.env['ts.audit.event'].log('assignment.accept', self, workspace=self.workspace_id,
@@ -248,6 +263,12 @@ class TsAssignment(models.Model):
         if member.workspace_id != self.workspace_id or not member.can_act() or not member.can_see(self):  # step 1
             return 'none'
         at = self.attempt_id
+        if self.ts_preview and self.user_id == member.user_id:
+            # onb3: a member's own try-out shows the report as the panel's practitioners see a client's (it is his own
+            # data: the A5b privacy rule of a non-counselling owner protects clients, not himself)
+            if not at or at.state != 'done' or not at.released or self.share_level == 'none':
+                return 'status'
+            return {'clinical': 'clinical', 'education': 'education'}.get(self.purpose, 'summary')
         if not at or at.state != 'done':                                                                   # 2, 3
             return 'status'
         if not at.released or self.share_level == 'none':                                                  # 5, 6
@@ -337,6 +358,10 @@ class TsWorkspaceMember(models.Model):
         self.ensure_one()
         if rec.workspace_id != self.workspace_id:
             return False
+        own_preview = ((rec._name == 'ts.assignment' and rec.ts_preview)
+                       or (rec._name == 'ts.panel.client' and rec.source == 'preview'))
+        if own_preview and rec.user_id and rec.user_id == self.user_id:
+            return True                            # onb3: a member always sees his own try-out
         if self.has_perm('clients:read_all'):
             return True
         if rec.responsible_id:

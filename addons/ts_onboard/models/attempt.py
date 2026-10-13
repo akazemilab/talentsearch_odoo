@@ -73,6 +73,8 @@ class TsAttemptGuest(models.Model):
         s = self.sudo()
         if s.ts_guest:
             return True, None
+        if s.ts_preview:
+            return False, None                      # onb3: a member's try-out and the sample reports are never counted
         if s.workspace_id:
             a = s.assignment_id if 'assignment_id' in s._fields else self.env['ts.assignment']
             a = a or self.env['ts.assignment'].sudo().search([('attempt_id', '=', s.id)], limit=1)
@@ -137,14 +139,14 @@ class TsAttemptGuest(models.Model):
                     t._ts_funnel('finish')
         return res
 
-    # ------------------------------------------------------------------ nothing is sent for a guest
+    # ------------------------------------------------------------------ nothing is sent for a guest or a member's own try-out
     def _ts_notify_done(self):
-        if self.sudo().ts_guest:
+        if self.sudo().ts_guest or self.sudo().ts_preview:
             return None
         return super()._ts_notify_done()
 
     def _ts_notify_result_ready(self):
-        if self.sudo().ts_guest:
+        if self.sudo().ts_guest or self.sudo().ts_preview:
             return False
         return super()._ts_notify_result_ready()
 

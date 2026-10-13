@@ -6,14 +6,14 @@ from odoo.exceptions import UserError
 from odoo.addons.ts_org.models.panel import norm_phone
 
 CHANNELS = [('link', 'پیوند'), ('sms', 'پیامک'), ('email', 'ایمیل'), ('open_link', 'پیوند باز'),
-            ('self_share', 'اشتراک‌گذاری خود فرد'), ('import', 'واردشده')]
+            ('self_share', 'اشتراک‌گذاری خود فرد'), ('import', 'واردشده'), ('preview', 'پیش‌نمایش')]
 
 # onb1 (replaces approval): a self-service panel in its first NEW_PANEL_DAYS days creates at most NEW_PANEL_DAILY invitations per
 # 24 hours, across the wizard, list campaigns, HR positions and every other surface. Self-joins through a class/open
 # link have their own limits (ts.campaign) and a person sharing his own result is not an invitation.
 NEW_PANEL_DAYS = 7
 NEW_PANEL_DAILY = 50
-QUOTA_EXEMPT_CHANNELS = ('open_link', 'self_share', 'import')
+QUOTA_EXEMPT_CHANNELS = ('open_link', 'self_share', 'import', 'preview')
 
 
 def fa_num(n):
@@ -108,6 +108,8 @@ class TsAssignment(models.Model):
         Client = self.env['ts.panel.client'].sudo()
         need = {}
         for vals in vals_list:
+            if vals.get('ts_preview'):
+                vals['channel'] = 'preview'         # onb3: a member's own try-out (never counted, never billed)
             if not vals.get('workspace_id') or vals.get('channel') in QUOTA_EXEMPT_CHANNELS:
                 continue
             if vals.get('user_id') and vals.get('user_id') == vals.get('invited_by_id') and vals.get('attempt_id'):
@@ -216,7 +218,8 @@ class TsAssignment(models.Model):
         client = self.client_id.sudo()
         if client and not client.user_id:
             other = self.env['ts.panel.client'].sudo().search(
-                [('workspace_id', '=', self.workspace_id.id), ('user_id', '=', user.id), ('id', '!=', client.id)], limit=1)
+                [('workspace_id', '=', self.workspace_id.id), ('user_id', '=', user.id), ('id', '!=', client.id),
+                 ('source', '!=', 'preview')], limit=1)
             if other:
                 self.sudo().write({'client_id': other.id})
                 if attempt.sudo().client_id == client:

@@ -51,8 +51,8 @@ if [ "$MODE" = ux ] || [ "$MODE" = take ]; then
   ssh -n eot-odoo-prod "$SHELL_CMD < /tmp/ts_ux_seed.py 2>&1 | grep -E '^(UXMATRIX|SEED-SKIP)|Error' | tail -20"
   ssh -n eot-odoo-prod "TS_SLOT=$SLOT python3 $STAGE/tools/prod/ts_ux_users.py $DB $PORT /tmp/ux_matrix.json; cat /tmp/ux_matrix.json" > /tmp/ui_matrix_out_$DB.txt
 else
-  scp -q $REPO/tools/vps/ts_ui_seed.py $REPO/tools/vps/ts_onb2_seed.py eot-odoo-prod:/tmp/
-  ssh -n eot-odoo-prod "chmod 644 /tmp/ts_onb2_seed.py; $SHELL_CMD < /tmp/ts_ui_seed.py 2>&1 | grep -E '^(MATRIX|consent|ONB2SEED|SEED-SKIP)'; cat /tmp/ui_matrix.json" > /tmp/ui_matrix_out_$DB.txt
+  scp -q $REPO/tools/vps/ts_ui_seed.py $REPO/tools/vps/ts_onb2_seed.py $REPO/tools/vps/ts_onb3_seed.py eot-odoo-prod:/tmp/
+  ssh -n eot-odoo-prod "chmod 644 /tmp/ts_onb2_seed.py /tmp/ts_onb3_seed.py; $SHELL_CMD < /tmp/ts_ui_seed.py 2>&1 | grep -E '^(MATRIX|consent|ONB2SEED|ONB3SEED|SEED-SKIP)'; cat /tmp/ui_matrix.json" > /tmp/ui_matrix_out_$DB.txt
   # onb2: the claimed-report login has the owner's password (ts_onb2_seed.py copies the hash): the same root-only file
   ssh -n eot-odoo-prod "f=/root/.ts_flow_${DB}_ts.pv2s19.owner.http; [ -f \$f ] && install -m 600 \$f /root/.ts_flow_${DB}_ts.onb2.shot.claim"
 fi

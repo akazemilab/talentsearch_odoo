@@ -86,7 +86,7 @@ for (n, w), items in want.items():
 # tiles
 c, page = pages[('owner', A)]
 check('dashboard shows period tiles as links to the filtered invitation list (S12 replaced the six counters)',
-      ('tsp-d-kpi' in page and 'class="tsp-stat"' in page and '/invites?' in page) or 'tsp-dash-empty' in page)   # a panel without invitations shows one empty state
+      ('tsp-d-kpi' in page and 'class="tsp-stat"' in page and '/invites?' in page) or 'tsp-dash-empty' in page or 'id="tso-start"' in page)   # a panel without invitations shows one empty state (onb3: «شروع کار»)
 check('current menu item is marked', 'aria-current="page"' in page)
 check('pill states the panel is active (word, not colour only)', 'ts-pill--ok' in page and 'فعال' in page)
 

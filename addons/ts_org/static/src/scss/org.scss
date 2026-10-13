@@ -44,8 +44,27 @@
     .ts-org-card:has(.ts-org-card__go):hover { box-shadow: var(--shadow-md); }
     .ts-org-card:has(.ts-org-card__go:focus-visible) { outline: 2px solid var(--color-accent); outline-offset: 2px; }
     .ts-org-new { margin-block-start: var(--space-6); }
-    .ts-panel-kind { display: flex; flex-direction: column; gap: var(--space-3); }
-    .ts-panel-kind .ts-btn { margin-block-start: auto; align-self: flex-start; }
+    // onb3: /panel lists four kinds; the whole card opens the one form with that kind chosen
+    .ts-panel-kinds { list-style: none; padding: 0; margin: 0; }
+    .ts-panel-kind { position: relative; display: flex; flex-direction: column; gap: var(--space-3); }
+    .ts-panel-kind h2, .ts-panel-kind p { margin: 0; }
+    .ts-panel-kind__go { margin-block-start: auto; display: inline-flex; align-items: center; gap: 6px; min-block-size: var(--control-min);
+        font-weight: 600; color: var(--brand-deep); text-decoration: none; }
+    .ts-panel-kind__go::after { content: ''; position: absolute; inset: 0; border-radius: inherit; }
+    .ts-panel-kind:hover { box-shadow: var(--shadow-md); }
+    .ts-panel-kind:has(.ts-panel-kind__go:focus-visible) { outline: 2px solid var(--color-accent); outline-offset: 2px; }
+    .ts-panel-form { max-inline-size: 640px; }
+    .ts-panel-new > .ts-btn { align-self: flex-start; }
+    @media (max-width: 575.98px) { .ts-panel-new > .ts-btn { align-self: stretch; justify-content: center; } }
+    .ts-kind-pick { gap: var(--space-2); }
+    .ts-kind-pick > legend { margin-block-end: var(--space-2); }
+    .ts-kind-opt { display: flex; gap: var(--space-3); align-items: flex-start; min-block-size: var(--control-min); padding: 12px 14px;
+        border: 1px solid var(--line); border-radius: var(--radius-md); background: var(--color-surface); cursor: pointer; }
+    .ts-kind-opt input { inline-size: 20px; block-size: 20px; flex: none; margin-block-start: 3px; accent-color: var(--brand-deep); }
+    .ts-kind-opt span { display: grid; gap: 2px; }
+    .ts-kind-opt small { color: var(--muted); font-size: var(--fs-1); }
+    .ts-kind-opt:has(input:checked) { border-color: var(--brand-accent); box-shadow: 0 0 0 1px var(--brand-accent); }
+    .ts-kind-opt:has(input:focus-visible) { outline: 2px solid var(--color-accent); outline-offset: 2px; }
     .ts-panel-steps { margin-block: var(--space-4) var(--space-2); max-inline-size: 70ch; }
     .ts-auth-choices { display: grid; gap: var(--space-2); justify-items: start; margin-block: var(--space-4); }
     @media (max-width: 575.98px) { .ts-auth-choices .ts-btn { inline-size: 100%; justify-content: center; } }

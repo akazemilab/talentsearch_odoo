@@ -13,7 +13,7 @@ _logger = logging.getLogger(__name__)
 
 LOCKED_FIELDS = {'phone', 'email', 'guardian_name', 'guardian_phone', 'guardian_relation'}
 SOURCES = [('manual', 'ثبت دستی'), ('csv', 'فایل'), ('invite', 'دعوت'), ('open_link', 'پیوند عمومی'),
-           ('self_share', 'ارسال با کد پنل'), ('import', 'واردشده')]
+           ('self_share', 'ارسال با کد پنل'), ('import', 'واردشده'), ('preview', 'پیش‌نمایش (عضو پنل خودش)')]
 
 
 class TsPanelClient(models.Model):
@@ -272,7 +272,8 @@ class TsPanelClient(models.Model):
     # ------------------------------------------------------------------ finding or making a client
     @api.model
     def _active_in(self, ws_id):
-        return [('workspace_id', '=', int(ws_id)), ('state', '=', 'active')]
+        # a member's try-out client (onb3) never takes a real invitation
+        return [('workspace_id', '=', int(ws_id)), ('state', '=', 'active'), ('source', '!=', 'preview')]
 
     @api.model
     def ts_for_invitation(self, vals):

@@ -143,7 +143,8 @@ class TsWallet(models.Model):
                              (SELECT count(*) FROM ts_usage_event u WHERE u.attempt_id = a.id),
                              (SELECT count(*) FROM ts_wallet_txn t WHERE t.attempt_id = a.id AND t.type = 'debit_usage')
                         FROM ts_attempt a
-                       WHERE a.state = 'done' AND a.workspace_id IS NOT NULL AND a.source IS DISTINCT FROM 'import'""")
+                       WHERE a.state = 'done' AND a.workspace_id IS NOT NULL AND a.source IS DISTINCT FROM 'import'
+                         AND a.ts_preview IS NOT TRUE""")
         for aid, ws, ev, deb in cr.fetchall():
             if ev != 1 or deb != 1:
                 problems.append(('attempt', ws, aid))

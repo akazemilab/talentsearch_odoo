@@ -61,6 +61,16 @@ class TsCampaign(models.Model):
             if c.send_sms and not c.sms_consent_attested:
                 raise ValidationError('برای ارسال پیامک، تأیید رضایت لازم است.')
 
+    @api.constrains('workspace_id')
+    def _check_escalation(self):
+        """onb3: a counseling panel opens a group invitation or a link only once it has its escalation contact (asked once,
+        in «دعوت تازه»), so no participant ever meets a link that cannot take him."""
+        for c in self:
+            ws = c.workspace_id.sudo()
+            if ws.purpose == 'clinical' and not ws.escalation_contact_id:
+                raise ValidationError('پیش از نخستین دعوت مراجع، کسی در پنل باید پیگیری فوری نشانه‌های خطر را بپذیرد. '
+                                      'در صفحهٔ «دعوت تازه» آن را تیک بزنید.')
+
     @api.constrains('instrument_id', 'workspace_id', 'created_by_id')
     def _check_instrument(self):
         for c in self:
@@ -164,7 +174,8 @@ class TsCampaign(models.Model):
             raise UserError(JOIN_MSG['closed'])
         if not 2 <= len(name) <= 120:
             raise UserError('نام را بین ۲ تا ۱۲۰ نویسه بنویسید.')
-        client = C.search([('workspace_id', '=', ws.id), ('user_id', '=', user.id), ('state', '=', 'active')], limit=1)
+        client = C.search([('workspace_id', '=', ws.id), ('user_id', '=', user.id), ('state', '=', 'active'),
+                           ('source', '!=', 'preview')], limit=1)
         if client and client.contact_locked:
             raise UserError('این دعوت برای حساب شما ممکن نیست.')
         mine = A.search([('campaign_id', '=', self.id), ('client_id', '=', client.id)], limit=1) if client else A.browse()

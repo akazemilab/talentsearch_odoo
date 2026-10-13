@@ -87,12 +87,13 @@ check('owner role label is «مالک پنل»', 'مالک پنل' in page)
 s = Client(TS)
 check('solo login', s.login(SOLO, pw[SOLO]))
 st, _, form = s.req('/my/workspaces/new')
-check('create form has the licence field', st == 200 and 'name="license_number"' in form, str(st))
+check('create form: one form, «مشاور یا روان‌شناس مستقل» is a kind, no licence field (onb3: the licence lives on the profile)',
+      st == 200 and 'value="solo"' in form and 'مشاور یا روان‌شناس مستقل' in form and 'name="license_number"' not in form, str(st))
 st, loc, _ = s.req('/my/workspaces/new/create', {
     'name': 'روان‌شناس S1 HTTP %s' % os.getpid(), 'kind': 'solo', 'solo_as': 'psychologist', 'license_number': 'PSY-123',
     'terms': '1', 'escalation_ok': '1', 'csrf_token': s.csrf(form)})
 check('solo clinical panel is created', st in (302, 303) and 'new=1' in (loc or ''), '%s %s' % (st, loc))
 r = shell("m = env['ts.workspace.member'].search([('user_id.login','=',%r),('role','=','owner')], order='id desc', limit=1)\n"
           "print('SOLO', m.owner_practices, m.license_number, m.workspace_id.purpose)" % SOLO)
-check('the solo owner practises and keeps the licence number', 'SOLO True PSY-123 clinical' in r, r[-120:])
+check('the solo owner practises and keeps a licence number an older form still sends', 'SOLO True PSY-123 clinical' in r, r[-120:])
 summary()

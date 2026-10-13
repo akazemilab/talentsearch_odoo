@@ -30,18 +30,12 @@
         <field name="url_to">/pricing#faq</field>
         <field name="website_id" ref="website_ts"/>
     </record>
+    <!-- onb3: /clinics and /hiring are audience pages again (ts_onboard); /employers leads to /hiring -->
     <record id="rw_employers" model="website.rewrite">
-        <field name="name">TS: /employers → /contact?topic=partner</field>
+        <field name="name">TS: /employers → /hiring</field>
         <field name="redirect_type">301</field>
         <field name="url_from">/employers</field>
-        <field name="url_to">/contact?topic=partner</field>
-        <field name="website_id" ref="website_ts"/>
-    </record>
-    <record id="rw_clinics" model="website.rewrite">
-        <field name="name">TS: /clinics → /contact?topic=partner</field>
-        <field name="redirect_type">301</field>
-        <field name="url_from">/clinics</field>
-        <field name="url_to">/contact?topic=partner</field>
+        <field name="url_to">/hiring</field>
         <field name="website_id" ref="website_ts"/>
     </record>
     <record id="rw_sample" model="website.rewrite">

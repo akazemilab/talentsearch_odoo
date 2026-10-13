@@ -39,7 +39,8 @@ check('anonymous create is sent to sign-in', st in (302, 303) and ('/signup' in 
 own = Client(TS)
 check('owner login', own.login(OWN, own_pw))
 st, _, page = own.req('/my/workspaces/new')
-check('create form 200', st == 200 and 'name="kind"' in page and 'name="terms"' in page, str(st))
+check('create form 200: one form (kind, panel name, «نام شما»), the button accepts the terms', st == 200 and 'name="kind"' in page
+      and 'name="own_name"' in page and 'name="accept"' in page and '/panel/terms' in page, str(st))
 csrf = own.csrf(page)
 st, _, bad = own.req('/my/workspaces/new/create', {'csrf_token': csrf, 'name': 'پنل آزمایشی HTTP', 'kind': 'org'})
 check('creation without accepting terms is refused with a message', st == 200 and 'شرایط استفاده را بپذیرید' in bad)
@@ -51,7 +52,7 @@ ws_id = re.search(r'/my/workspaces/(\d+)', loc).group(1)
 st, _, page = lib.follow(own, loc)
 check('a new organization panel is active at once: no approval banner (onb1)', st == 200 and 'در انتظار تأیید' not in page
       and 'پایلوت' not in page)
-check('checklist shown, without «(پس از تأیید)»', 'گام‌های راه‌اندازی' in page and 'پس از تأیید' not in page)
+check('«شروع کار» shown (onb3), without «(پس از تأیید)»', 'id="tso-start"' in page and 'پس از تأیید' not in page)
 st, _, legacy = own.req('/my/workspaces/%s/legacy' % ws_id)   # the dashboard has no forms (S6); the old page still does
 check('participant invite form available at once', 'id="ts-invite"' in legacy and 'id="ts-pending"' not in legacy)
 

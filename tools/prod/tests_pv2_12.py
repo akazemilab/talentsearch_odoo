@@ -139,7 +139,7 @@ check('the completion rate shows x of y once y reaches 5', rate and rate['text']
 check('the median and the unshared tile are for owner and managers only', tile(c1, 'median') is None and tile(c1, 'noshare') is None)
 check('a counselor\'s tiles count only their own clients', tile(c1, 'sent')['n'] < tile(owner, 'sent')['n'])
 check('the specialist tile counts open clients of the member', tile(c1, 'mine_open') is not None)
-check('the usage tile needs credits:read and says free', tile(owner, 'usage') and tile(owner, 'usage')['text'] == 'رایگان در این فصل' and tile(c1, 'usage') is None)
+check('the usage tile needs credits:read and says free', tile(owner, 'usage') and tile(owner, 'usage')['text'] == 'در دورهٔ آزمایشی رایگان' and tile(c1, 'usage') is None)
 
 # ---- funnel and filters
 fun = owner.dash_funnel(30)
@@ -154,19 +154,15 @@ check('workload lists the members who can be responsible, with clients and open 
       {w[0] for w in wl} >= {c1, c2} and next(w for w in wl if w[0] == c1)[1] == 1 and next(w for w in wl if w[0] == c1)[2] >= 1)
 check('a counselor gets no workload table', c1.dash_workload() == [])
 
-# ---- checklist
-steps = owner.dash_checklist()
-check('the owner sees the checklist while steps are open', steps and steps[0][1] and not all(s[1] for s in steps))
-check('a counselor does not', c1.dash_checklist() == [])
-edu.sudo().onboarding_dismissed_on = now
-check('dismissing hides it', owner.dash_checklist() == [])
-edu.sudo().onboarding_dismissed_on = False
+# ---- checklist: the generic 7-step list gave way to ts_onboard's «شروع کار» (onb3; tests_onb3.py)
+check('the generic set-up checklist is gone (its «راه ارتباط با پنل» step could never be finished)',
+      not hasattr(owner, 'dash_checklist') and 'onboarding_dismissed_on' not in edu._fields)
 
 # ---- no approval line any more (onb1), the page never carries a score or band
 pend = panel('employment', 'پنل S12 تازه')
 pown = member(pend, 'owner')
 check('a new panel has no «awaiting approval» line', line(pown, 'gated') is None and line(pown, 'verify') is None)
-blob = str([owner.dash_attention(), owner.dash_tiles(30), owner.dash_funnel(30), owner.dash_checklist()]).lower()
+blob = str([owner.dash_attention(), owner.dash_tiles(30), owner.dash_funnel(30)]).lower()
 check('no dashboard block carries a score or a band', not any(w in blob for w in ('score', 'band', 'نمره', 'سطح کم', 'سطح زیاد')))
 
 passed = sum(1 for _n_, ok in results if ok)

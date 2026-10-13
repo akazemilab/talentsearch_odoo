@@ -73,9 +73,10 @@ def _visible(me, p):
     order = {'done': 0, 'in_progress': 1, 'accepted': 2, 'invited': 3, 'declined': 4}
     rows.sort(key=lambda r: (0, r['a'].jobfit_order or 99, -r['a'].id) if r['res']
               else (1, order.get(r['a'].state, 5), -r['a'].id))
-    counts = {'invited': len(rows), 'done': sum(1 for r in rows if r['complete']),
-              'going': sum(1 for r in rows if r['a'].state in ('accepted', 'in_progress') and not r['complete']),
-              'strong': sum(1 for r in rows if r['band'] == 'strong')}
+    real = [r for r in rows if not r['a'].ts_preview]     # a member's try-out is listed («پیش‌نمایش») but never counted (onb3)
+    counts = {'invited': len(real), 'done': sum(1 for r in real if r['complete']),
+              'going': sum(1 for r in real if r['a'].state in ('accepted', 'in_progress') and not r['complete']),
+              'strong': sum(1 for r in real if r['band'] == 'strong')}
     return rows, counts
 
 

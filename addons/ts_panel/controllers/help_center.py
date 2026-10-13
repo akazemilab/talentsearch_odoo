@@ -9,8 +9,9 @@ from odoo.http import request
 
 from odoo.addons.ts_assessment.controllers.main import _ts_site_or_404
 
-CHECKED = '۱۹ مهر ۱۴۰۵'          # keep in step with the text of web_help.xml, update when a section changes
-SECTIONS = ('invite', 'import', 'report', 'roles', 'sharing', 'minors', 'export', 'audit', 'support', 'credits')
+CHECKED = '۲۱ مهر ۱۴۰۵'          # keep in step with the text of web_help.xml, update when a section changes
+SECTIONS = ('getting-started', 'invite', 'import', 'report', 'roles', 'sharing', 'minors', 'export', 'audit', 'support',
+            'credits', 'hr', 'more')
 
 
 class TsPanelHelp(http.Controller):
@@ -24,7 +25,7 @@ class TsPanelHelp(http.Controller):
             member = request.env['ts.workspace.member'].sudo().search(  # ts-scope-ok: the caller's own membership, found by user
                 [('user_id', '=', request.env.user.id), ('active', '=', True)], limit=1)
             if member:
-                contact += '&panel=%s' % member.workspace_id.id
+                contact += '&panel=%s' % (member.workspace_id.code or '')     # the panel code, as on every other contact link (audit §9.13)
                 if member.has_perm('audit:read'):
                     audit_url = '/my/workspaces/%s/audit' % member.workspace_id.id
         return request.render('ts_panel.help_panel', {'checked': CHECKED, 'contact_url': contact, 'audit_url': audit_url,

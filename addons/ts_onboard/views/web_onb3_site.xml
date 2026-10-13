@@ -1,0 +1,278 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- onb3 O4: audience pages /clinics and /hiring (new), /schools and /pricing (updated). Website 4 only (views and pages
+         bound to ts_website.website_ts). One promise (B2B research §2), three benefits, «نمونهٔ گزارش» (the public
+         synthetic sample), «ساخت پنل رایگان» (the one form, kind chosen), three or four questions. Nothing about a pilot or a
+         contact form for panels. -->
+
+    <!-- ============================================================ /clinics -->
+    <record id="page_clinics_view" model="ir.ui.view">
+        <field name="name">TS: clinics (audience)</field>
+        <field name="type">qweb</field>
+        <field name="key">ts_onboard.page_clinics</field>
+        <field name="website_id" ref="ts_website.website_ts"/>
+        <field name="arch" type="xml">
+            <t t-name="ts_onboard.page_clinics">
+                <t t-set="faqs" t-value="[
+                    ('c1', 'چه کسی نتیجه را می‌بیند؟', 'خود مراجع همیشه. پنل فقط وقتی گزارش را می‌بیند که مراجع پیش از شروع اجازه بدهد، و او هر وقت بخواهد اشتراک‌گذاری را قطع می‌کند. مالک مرکزی که خودش مشاوره نمی‌دهد فقط وضعیت دعوت‌ها را می‌بیند.'),
+                    ('c2', 'حریم خصوصی مراجع چطور حفظ می‌شود؟', 'پاسخ‌های خام را هیچ‌کس جز خود مراجع نمی‌بیند. هر بار که کسی گزارشی را باز یا چاپ کند، در دفتر ممیزی پنل ثبت می‌شود. پیامک‌ها هرگز نام سنجه یا نتیجه را نمی‌آورند.'),
+                    ('c3', 'هزینه چقدر است؟', 'در دورهٔ آزمایشی رایگان است. اگر تعرفه‌ای تعیین شود، پیش از اعمال خبر می‌دهیم. پیش‌نمایشی که خودتان انجام می‌دهید هیچ‌وقت هزینه ندارد.'),
+                    ('c4', 'برای ساخت پنل شمارهٔ پروانه لازم است؟', 'نه. هر مشاور هر وقت خواست شمارهٔ پروانه یا نظام روان‌شناسی و مشاورهٔ خود را در صفحهٔ خودش می‌نویسد و پس از بررسی، نشان «پروانهٔ تأییدشده» می‌گیرد.'),
+                ]"/>
+                <t t-call="website.layout" additional_title.f="برای مراکز مشاوره و مشاوران مستقل">
+                    <div id="wrap" class="ts-page">
+                        <section class="ts-hero">
+                            <div class="ts-container ts-hero__grid">
+                                <div class="ts-hero__words">
+                                    <span class="ts-hero__kicker">برای مراکز مشاوره و مشاوران مستقل</span>
+                                    <h1>مراجع پیش از جلسه سنجه را در خانه پر می‌کند؛ شما با گزارش وارد جلسه می‌شوید.</h1>
+                                    <p class="ts-hero__lead">تنها کار می‌کنید؟ گزارش علمی با نام و نشان خودتان، روی موبایل مراجع.</p>
+                                    <div class="ts-hero__actions">
+                                        <a href="/panel?kind=clinic" class="ts-btn ts-btn--primary ts-btn--lg" id="tso-build">ساخت پنل رایگان<t t-call="ts_website.icon" ico.f="arrow-left"/></a>
+                                        <a href="/sample/clinic" class="ts-btn ts-btn--quiet ts-btn--lg" id="tso-sample">نمونهٔ گزارش</a>
+                                    </div>
+                                    <p class="tso-aud-alt"><a href="/panel?kind=solo">مشاور یا روان‌شناس مستقل هستید؟ پنل یک‌نفره بسازید</a></p>
+                                </div>
+                            </div>
+                        </section>
+                        <section class="ts-section">
+                            <div class="ts-container">
+                                <div class="ts-grid" style="--min: 230px">
+                                    <div class="ts-card"><span class="ts-card__icon"><t t-call="ts_website.icon" ico.f="clipboard"/></span><h2 class="h4">پیش از جلسه</h2><p>مجموعهٔ «ارزیابی آغاز مشاوره» را با یک پیامک یا یک پیوند همیشگی بفرستید؛ مراجع در خانه پاسخ می‌دهد.</p></div>
+                                    <div class="ts-card"><span class="ts-card__icon"><t t-call="ts_website.icon" ico.f="chart-bar"/></span><h2 class="h4">گزارش ویژهٔ مشاور</h2><p>سطح هر عامل، راهنمای مشاور و نکته‌های گفت‌وگو؛ با اجازهٔ مراجع، در همان پنل.</p></div>
+                                    <div class="ts-card"><span class="ts-card__icon"><t t-call="ts_website.icon" ico.f="id-card"/></span><h2 class="h4">نام و نشان شما</h2><p>نام و لوگوی مرکز و نام و عنوان مشاور بالای گزارش هر مراجع.</p></div>
+                                </div>
+                            </div>
+                        </section>
+                        <t t-call="ts_onboard.audience_faq"/>
+                        <t t-call="ts_onboard.audience_cta" cta_url.f="/panel?kind=clinic" cta_title.f="پنل مرکز خود را امروز بسازید."/>
+                    </div>
+                </t>
+            </t>
+        </field>
+    </record>
+
+    <!-- ============================================================ /hiring -->
+    <record id="page_hiring_view" model="ir.ui.view">
+        <field name="name">TS: hiring (audience)</field>
+        <field name="type">qweb</field>
+        <field name="key">ts_onboard.page_hiring</field>
+        <field name="website_id" ref="ts_website.website_ts"/>
+        <field name="arch" type="xml">
+            <t t-name="ts_onboard.page_hiring">
+                <t t-set="faqs" t-value="[
+                    ('h1', 'سازمان از داوطلب چه می‌بیند؟', 'فقط اگر داوطلب اشتراک‌گذاری را بپذیرد: سطح کلی تناسب با شغل، قوی‌تر یا ضعیف‌تر بودن هر نیاز شغل، سطح هر عامل و نشانه‌های دقت پاسخ‌دهی. پاسخ‌ها، نمره‌ها و متن‌های گزارش او را هرگز.'),
+                    ('h2', 'نتیجه برای تصمیم استخدام کافی است؟', 'نه. نتیجه یکی از ورودی‌های تصمیم است، کنار مصاحبه، سوابق و نمونه‌کار. استعدادیاب کسی را خودکار رد نمی‌کند و نمرهٔ برش ندارد.'),
+                    ('h3', 'داده‌های داوطلب تا کی می‌ماند؟', 'داده‌های استخدامی هر داوطلب ۱۲ ماه پس از ارزیابی پاک می‌شود. داوطلب هر وقت بخواهد اشتراک‌گذاری را قطع می‌کند.'),
+                    ('h4', 'هزینه چقدر است؟', 'در دورهٔ آزمایشی رایگان است. اگر تعرفه‌ای تعیین شود، پیش از اعمال خبر می‌دهیم.'),
+                ]"/>
+                <t t-call="website.layout" additional_title.f="برای استخدام و منابع انسانی">
+                    <div id="wrap" class="ts-page">
+                        <section class="ts-hero">
+                            <div class="ts-container ts-hero__grid">
+                                <div class="ts-hero__words">
+                                    <span class="ts-hero__kicker">برای استخدام و منابع انسانی</span>
+                                    <h1>داوطلب‌ها را بر پایهٔ نیازهای همان شغل ببینید، نه فقط رزومه.</h1>
+                                    <p class="ts-hero__lead">یک موقعیت شغلی بسازید، داوطلب‌ها را با پیامک دعوت کنید و فهرستی ببینید که به ترتیب تناسب با نیازهای همان شغل چیده شده است.</p>
+                                    <div class="ts-hero__actions">
+                                        <a href="/panel?kind=org" class="ts-btn ts-btn--primary ts-btn--lg" id="tso-build">ساخت پنل رایگان<t t-call="ts_website.icon" ico.f="arrow-left"/></a>
+                                        <a href="/sample/hr" class="ts-btn ts-btn--quiet ts-btn--lg" id="tso-sample">نمونهٔ گزارش</a>
+                                    </div>
+                                </div>
+                            </div>
+                        </section>
+                        <section class="ts-section">
+                            <div class="ts-container">
+                                <div class="ts-grid" style="--min: 230px">
+                                    <div class="ts-card"><span class="ts-card__icon"><t t-call="ts_website.icon" ico.f="list"/></span><h2 class="h4">نیازهای هر شغل</h2><p>۹۲۳ شغل با نیازهای سبک کاری و توانایی؛ تا سه نیاز را کلیدی کنید.</p></div>
+                                    <div class="ts-card"><span class="ts-card__icon"><t t-call="ts_website.icon" ico.f="users"/></span><h2 class="h4">داوطلب‌ها به ترتیب تناسب</h2><p>پرسش‌نامهٔ سبک‌های کاری و آزمون‌های زمان‌دار، در سه سطح و بی‌نمرهٔ برش.</p></div>
+                                    <div class="ts-card"><span class="ts-card__icon"><t t-call="ts_website.icon" ico.f="seal-check"/></span><h2 class="h4">تصمیم با شماست</h2><p>برای هر داوطلب «آنچه جور است» و «آنچه در مصاحبه بپرسید» را می‌بینید.</p></div>
+                                </div>
+                            </div>
+                        </section>
+                        <t t-call="ts_onboard.audience_faq"/>
+                        <t t-call="ts_onboard.audience_cta" cta_url.f="/panel?kind=org" cta_title.f="پنل استخدام خود را امروز بسازید."/>
+                    </div>
+                </t>
+            </t>
+        </field>
+    </record>
+
+    <!-- shared pieces of the audience pages -->
+    <record id="tpl_audience_faq" model="ir.ui.view">
+        <field name="name">TS onboard: audience FAQ</field>
+        <field name="type">qweb</field>
+        <field name="key">ts_onboard.audience_faq</field>
+        <field name="website_id" ref="ts_website.website_ts"/>
+        <field name="arch" type="xml">
+            <t t-name="ts_onboard.audience_faq">
+                <section class="ts-section ts-section--mist" id="faq">
+                    <div class="ts-container ts-container--narrow">
+                        <div class="ts-faq">
+                            <h2>پرسش‌های رایج</h2>
+                            <div class="ts-faq__box">
+                                <div class="ts-faq__item" t-foreach="faqs" t-as="fq" t-att-id="'faq-' + fq[0]">
+                                    <button type="button" class="ts-faq__q" aria-expanded="false" t-att-aria-controls="'faq-' + fq[0] + '-a'">
+                                        <span t-out="fq[1]"/>
+                                        <span class="ts-faq__plus"><t t-call="ts_website.icon" ico.f="plus"/></span>
+                                        <span class="ts-faq__minus"><t t-call="ts_website.icon" ico.f="minus"/></span>
+                                    </button>
+                                    <div class="ts-faq__a" t-att-id="'faq-' + fq[0] + '-a'" hidden="hidden"><p t-out="fq[2]"/></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            </t>
+        </field>
+    </record>
+
+    <record id="tpl_audience_cta" model="ir.ui.view">
+        <field name="name">TS onboard: audience call to action</field>
+        <field name="type">qweb</field>
+        <field name="key">ts_onboard.audience_cta</field>
+        <field name="website_id" ref="ts_website.website_ts"/>
+        <field name="arch" type="xml">
+            <t t-name="ts_onboard.audience_cta">
+                <section class="ts-section">
+                    <div class="ts-container">
+                        <div class="ts-cta">
+                            <div>
+                                <h2 t-out="cta_title"/>
+                                <p>در دورهٔ آزمایشی رایگان است و همان لحظه فعال می‌شود.</p>
+                            </div>
+                            <a t-att-href="cta_url" class="ts-btn">ساخت پنل رایگان</a>
+                        </div>
+                    </div>
+                </section>
+            </t>
+        </field>
+    </record>
+
+    <!-- ============================================================ /schools (updated) -->
+    <record id="page_schools_onb3" model="ir.ui.view">
+        <field name="name">ts_onboard.schools.onb3</field>
+        <field name="inherit_id" ref="ts_website.page_schools_view"/>
+        <field name="website_id" ref="ts_website.website_ts"/>
+        <field name="arch" type="xml">
+            <xpath expr="//t[@t-call='website.layout']" position="before">
+                <t t-set="faqs" t-value="[
+                    ('s1', 'چه کسی نتیجه را می‌بیند؟', 'اول خود دانش‌آموز. بعد خودش تعیین می‌کند نتیجه به پنل مدرسه برسد یا نه، و هر وقت بخواهد اشتراک‌گذاری را قطع می‌کند.'),
+                    ('s2', 'برای دانش‌آموز زیر ۱۸ سال چه لازم است؟', 'مدرسه تأیید می‌کند که رضایت ولی را دارد و خود دانش‌آموز هم پیش از شروع موافقت می‌کند؛ هر دو با زمان ثبت می‌شود.'),
+                    ('s3', 'هزینه چقدر است؟', 'در دورهٔ آزمایشی رایگان است، بی‌محدودیت دانش‌آموز و بی‌کسر اعتبار.'),
+                    ('s4', 'داده‌ها کجا می‌ماند و چطور پاک می‌شود؟', 'پاسخ‌های خام را هیچ‌کس جز خود دانش‌آموز نمی‌بیند. هر کس از صفحهٔ «حریم خصوصی» حساب خودش درخواست حذف داده می‌دهد.'),
+                ]"/>
+            </xpath>
+            <xpath expr="//section[hasclass('ts-hero')]//p[hasclass('ts-hero__lead')]" position="replace">
+                <p class="ts-hero__lead">یک پیوند برای کل کلاس؛ تصویر کلاس و گزارش هر دانش‌آموز.</p>
+            </xpath>
+            <xpath expr="//section[hasclass('ts-hero')]//div[hasclass('ts-hero__actions')]" position="replace">
+                <div class="ts-hero__actions">
+                    <a href="/panel?kind=school" class="ts-btn ts-btn--primary ts-btn--lg" id="tso-build">ساخت پنل رایگان<t t-call="ts_website.icon" ico.f="arrow-left"/></a>
+                    <a href="/sample/school" class="ts-btn ts-btn--quiet ts-btn--lg" id="tso-sample">نمونهٔ گزارش</a>
+                </div>
+            </xpath>
+            <!-- three benefits (the fourth, team work, is in the help pages) -->
+            <xpath expr="//div[hasclass('ts-grid')]/div[4]" position="replace"/>
+            <xpath expr="//section[hasclass('ts-section--mist')]" position="after">
+                <t t-call="ts_onboard.audience_faq"/>
+            </xpath>
+            <xpath expr="//t[@t-call='ts_website.cta']" position="replace">
+                <t t-call="ts_onboard.audience_cta" cta_url.f="/panel?kind=school" cta_title.f="پنل مدرسه‌تان را امروز بسازید."/>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- ============================================================ /pricing (updated: every kind, free during early access) -->
+    <record id="page_pricing_onb3" model="ir.ui.view">
+        <field name="name">ts_onboard.pricing.onb3</field>
+        <field name="inherit_id" ref="ts_website.page_pricing_view"/>
+        <field name="website_id" ref="ts_website.website_ts"/>
+        <field name="arch" type="xml">
+            <xpath expr="//t[@t-set='faqs']" position="attributes">
+                <attribute name="t-value">[
+                    ('f0', 'برای مرکز مشاوره و استخدام هم رایگان است؟', 'بله. در دورهٔ آزمایشی همهٔ پنل‌ها رایگان‌اند: مدرسه، مرکز مشاوره، مشاور مستقل و استخدام. اگر تعرفه‌ای تعیین شود، پیش از اعمال خبر می‌دهیم.'),
+                    ('f7', 'پیش‌نمایش و گزارش نمونه هزینه دارد؟', 'نه، هیچ‌وقت. پیش‌نمایشی که خودتان در پنل انجام می‌دهید و گزارش نمونه در هیچ هزینه یا آماری شمرده نمی‌شود.'),
+                    ('f1', 'شرکت‌کننده می‌تواند نیمه‌کاره رها کند؟', 'بله. پاسخ‌ها خودکار ذخیره می‌شوند و تا پایان مهلت دعوت از همان‌جا ادامه می‌دهد.'),
+                    ('f2', 'چه کسی نتیجه را می‌بیند؟', 'اول فقط خود شرکت‌کننده. بعد خودش تعیین می‌کند نتیجه با پنل به اشتراک‌گذاری گذاشته شود یا نه.'),
+                    ('f3', 'استعدادیاب تشخیص می‌دهد یا تصمیم می‌گیرد؟', 'نه. گزارش برای گفت‌وگوست. تصمیم را شرکت‌کننده، خانواده، مشاور یا کارفرما می‌گیرند.'),
+                    ('f4', 'پیوند دعوت منقضی شده؛ چه کنم؟', 'از کسی که دعوت را فرستاده بخواهید دعوت تازه بفرستد.'),
+                    ('f5', 'چطور رضایتم را پس بگیرم؟', 'از صفحهٔ «حریم خصوصی» در حساب خودتان، با یک دکمه.'),
+                    ('f6', 'اینترنت قطع شد؛ پاسخ‌ها از بین رفت؟', 'نه. همان پیوند را دوباره باز کنید.'),
+                ]</attribute>
+            </xpath>
+            <xpath expr="//section[hasclass('ts-hero')]//h1" position="replace">
+                <h1>در دورهٔ آزمایشی، همهٔ پنل‌ها رایگان‌اند.</h1>
+            </xpath>
+            <xpath expr="//section[hasclass('ts-hero')]//p[hasclass('ts-hero__lead')]" position="replace">
+                <p class="ts-hero__lead">مدرسه، مرکز مشاوره، مشاور مستقل و استخدام؛ بدون کسر اعتبار. اگر تعرفه‌ای تعیین شود، پیش از اعمال خبر می‌دهیم.</p>
+            </xpath>
+            <xpath expr="//div[hasclass('ts-plan--free')]" position="replace">
+                <div class="ts-plan ts-plan--free">
+                    <div class="ts-plan__top"><h2>مدرسه</h2></div>
+                    <span class="ts-plan__price">رایگان</span>
+                    <span class="ts-plan__for">در دورهٔ آزمایشی</span>
+                    <ul>
+                        <li>پیوند و QR برای کل کلاس</li>
+                        <li>گزارش فردی و گزارش کلاس</li>
+                        <li>اعضا، نقش‌ها و دفتر ممیزی</li>
+                    </ul>
+                    <div class="ts-plan__foot"><a href="/schools" class="ts-btn ts-btn--outline ts-btn--lg">بیشتر برای مدرسه‌ها</a></div>
+                </div>
+                <div class="ts-plan ts-plan--free">
+                    <div class="ts-plan__top"><h2>مرکز مشاوره و مشاور مستقل</h2></div>
+                    <span class="ts-plan__price">رایگان</span>
+                    <span class="ts-plan__for">در دورهٔ آزمایشی</span>
+                    <ul>
+                        <li>ارزیابی آغاز مشاوره و سنجه‌های دیگر</li>
+                        <li>گزارش ویژهٔ مشاور با نام مرکز</li>
+                        <li>پیوند همیشگی برای اتاق انتظار</li>
+                    </ul>
+                    <div class="ts-plan__foot"><a href="/clinics" class="ts-btn ts-btn--outline ts-btn--lg">بیشتر برای مراکز مشاوره</a></div>
+                </div>
+                <div class="ts-plan ts-plan--free">
+                    <div class="ts-plan__top"><h2>استخدام و منابع انسانی</h2></div>
+                    <span class="ts-plan__price">رایگان</span>
+                    <span class="ts-plan__for">در دورهٔ آزمایشی</span>
+                    <ul>
+                        <li>موقعیت شغلی با نیازهای همان شغل</li>
+                        <li>داوطلب‌ها به ترتیب تناسب</li>
+                        <li>بی‌نمرهٔ برش؛ تصمیم با شما</li>
+                    </ul>
+                    <div class="ts-plan__foot"><a href="/hiring" class="ts-btn ts-btn--outline ts-btn--lg">بیشتر برای استخدام</a></div>
+                </div>
+            </xpath>
+            <xpath expr="//div[hasclass('ts-plans')]" position="after">
+                <p class="tso-plans-go"><a href="/panel" class="ts-btn ts-btn--primary ts-btn--lg">ساخت پنل رایگان<t t-call="ts_website.icon" ico.f="arrow-left"/></a></p>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- ============================================================ pages and their Persian titles and descriptions -->
+    <record id="page_clinics" model="website.page">
+        <field name="url">/clinics</field>
+        <field name="view_id" ref="page_clinics_view"/>
+        <field name="website_id" ref="ts_website.website_ts"/>
+        <field name="website_published" eval="True"/>
+        <field name="website_indexed" eval="True"/>
+        <field name="website_meta_title">استعدادیاب برای مراکز مشاوره و مشاوران مستقل</field>
+        <field name="website_meta_description">مراجع پیش از جلسه سنجه را در خانه پر می‌کند و شما با گزارش ویژهٔ مشاور وارد جلسه می‌شوید. پنل مرکز مشاوره در دورهٔ آزمایشی رایگان است.</field>
+    </record>
+    <record id="page_hiring" model="website.page">
+        <field name="url">/hiring</field>
+        <field name="view_id" ref="page_hiring_view"/>
+        <field name="website_id" ref="ts_website.website_ts"/>
+        <field name="website_published" eval="True"/>
+        <field name="website_indexed" eval="True"/>
+        <field name="website_meta_title">استعدادیاب برای استخدام و منابع انسانی</field>
+        <field name="website_meta_description">داوطلب‌ها را بر پایهٔ نیازهای همان شغل ببینید، نه فقط رزومه: سبک‌های کاری و توانایی، بی‌نمرهٔ برش. پنل استخدام در دورهٔ آزمایشی رایگان است.</field>
+    </record>
+    <record id="ts_website.page_schools" model="website.page">
+        <field name="website_meta_title">استعدادیاب برای مدرسه‌ها</field>
+        <field name="website_meta_description">یک پیوند برای کل کلاس؛ تصویر کلاس و گزارش هر دانش‌آموز با اجازهٔ خودش. پنل مدرسه در دورهٔ آزمایشی رایگان است.</field>
+    </record>
+    <record id="ts_website.page_pricing" model="website.page">
+        <field name="website_meta_title">هزینهٔ استعدادیاب</field>
+        <field name="website_meta_description">در دورهٔ آزمایشی همهٔ پنل‌ها رایگان‌اند: مدرسه، مرکز مشاوره، مشاور مستقل و استخدام. پرسش‌های رایج دربارهٔ هزینه، حریم خصوصی و نتیجه.</field>
+    </record>
+</odoo>

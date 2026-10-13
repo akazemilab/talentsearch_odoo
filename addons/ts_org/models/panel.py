@@ -55,25 +55,24 @@ class TsWorkspace(models.Model):
     def ts_panel_create(self, user, name, kind, solo_as=None, terms=False, escalation_ok=False,
                        license_number=None):
         """Self-service panel: the person becomes owner and the panel is active at once, whatever its kind (owner decision
-        2026-10-12: no approval). New panels have a daily invitation limit for their first week (ts_org.assignment)."""
+        2026-10-12: no approval). New panels have a daily invitation limit for their first week (ts_org.assignment).
+
+        onb3 (one form): kind, panel name and «نام شما». A solo practitioner («مشاور یا روان‌شناس مستقل») is a
+        counseling panel whose owner counsels (solo_as defaults to 'psychologist'). The licence number lives on the member
+        profile (a badge, onb1) and the escalation contact of a counseling panel is asked once, inside its first client
+        invitation; both arguments are still accepted for older callers (a given licence number is stored on the owner)."""
         name = ' '.join((name or '').split())
         if not (2 <= len(name) <= 100):
             raise UserError('نام پنل باید بین ۲ تا ۱۰۰ نویسه باشد.')
         if kind == 'solo':
-            purpose = SOLO_AS.get(solo_as)
+            purpose = SOLO_AS.get(solo_as or 'psychologist')
         else:
             purpose = KINDS.get(kind)
         if not purpose:
             raise UserError('نوع پنل را انتخاب کنید.')
         if not terms:
             raise UserError('برای ساخت پنل باید شرایط استفاده را بپذیرید.')
-        if purpose == 'clinical' and not escalation_ok:
-            raise UserError('برای پنل مرکز مشاوره باید مسئولیت پیگیری فوری را بپذیرید.')
         lic = (license_number or '').strip()[:60] or False
-        if kind == 'solo' and purpose == 'clinical' and not lic:
-            # a psychologist working alone sees full reports at once: a self-declared number is required (risk review)
-            raise UserError('برای پنل روان‌شناس مستقل، شمارهٔ پروانه یا نظام روان‌شناسی و مشاوره‌تان را بنویسید؛ '
-                            'کار شما منتظر بررسی آن نمی‌ماند.')
         if not user.share or user._is_public():
             raise UserError('برای ساخت پنل وارد حساب خود شوید.')
         S = self.sudo()
@@ -88,23 +87,40 @@ class TsWorkspace(models.Model):
             'name': name, 'purpose': purpose, 'partner_id': partner.id,
             'state': 'active', 'self_service': True,
             'data_contact_id': me.id,
-            'escalation_contact_id': me.id if purpose == 'clinical' else False,
+            # a counseling panel takes its escalation contact at its first client invitation (onb3)
+            'escalation_contact_id': me.id if (purpose == 'clinical' and escalation_ok) else False,
             'terms_version': TERMS_VERSION, 'terms_accepted_on': fields.Datetime.now(),
             'terms_accepted_by_id': user.id,
         })
         solo_clinical = kind == 'solo' and purpose == 'clinical'
         self.env['ts.workspace.member'].sudo().create({
             'workspace_id': ws.id, 'user_id': user.id, 'role': 'owner',
-            'owner_practices': kind == 'solo', 'license_number': lic if kind == 'solo' else False,
+            'owner_practices': kind == 'solo', 'license_number': lic,
             'practising_since': fields.Datetime.now() if solo_clinical else False})
         audit = self.env['ts.audit.event'].sudo()
         audit.log('workspace.self_create', ws, workspace=ws, purpose=purpose, kind=kind)
         audit.log('workspace.terms_accept', ws, workspace=ws, version=TERMS_VERSION,
-                  clinical_escalation=bool(purpose == 'clinical'))
+                  clinical_escalation=bool(purpose == 'clinical' and escalation_ok))
+        if solo_clinical:
+            # a counseling owner who counsels sees full reports at once: listed for an after-the-fact review (onb1)
+            audit.log('member.licence_self_declared', ws, workspace=ws, licence=bool(lic), solo=True)
         # after-the-fact record for the back office (list «پنل‌های تازه (۷ روز)»); a log note, so nobody is emailed
         ws.sudo().message_post(body='پنل از سلف‌سرویس ساخته شد (%s) و از همین لحظه فعال است.' % PURPOSE_LABELS.get(purpose, purpose),
                                message_type='comment', subtype_xmlid='mail.mt_note')
         return ws
+
+    def ts_set_escalation(self, member):
+        """The first client invitation of a counseling panel: the inviting member takes the urgent follow-up of risk signs
+        (one tick; recorded once with an audit row). Returns True when it was set now."""
+        self.ensure_one()
+        ws = self.sudo()
+        if ws.purpose != 'clinical' or ws.escalation_contact_id:
+            return False
+        if member.workspace_id != self or not member.can_act():
+            raise UserError('این کار با عضو فعال همین پنل است.')
+        ws.escalation_contact_id = member.user_id.partner_id.id
+        self.env['ts.audit.event'].sudo().log('workspace.escalation', ws, workspace=ws, member=member)
+        return True
 
     def ts_update_profile(self, name=None, logo_bytes=None, remove_logo=False):
         self.ensure_one()

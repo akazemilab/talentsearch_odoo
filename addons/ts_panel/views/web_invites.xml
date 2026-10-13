@@ -50,7 +50,7 @@
                                         <tr t-foreach="rows" t-as="a" t-attf-class="#{'tsp-row--new' if a.id in unseen else ''}">
                                             <th scope="row" data-label="شرکت‌کننده"><a t-attf-href="/my/workspaces/#{ws.id}/invites/#{a.id}"><bdi t-out="a.invitee_name"/></a></th>
                                             <td data-label="سنجه" t-out="a.instrument_id.ts_title()"/>
-                                            <td data-label="وضعیت"><span t-attf-class="ts-pill #{pill.get(a.state, '')}" t-out="state_labels.get(a.state, a.state)"/></td>
+                                            <td data-label="وضعیت"><t t-call="ts_panel.invite_steps"/></td>
                                             <td data-label="فرستنده"><bdi t-out="a.invited_by_id.sudo().name or '—'"/></td>
                                             <td data-label="ساخته‌شده" t-out="jalali(a.create_date)"/>
                                             <td data-label="پیوند باز است تا"><t t-if="a.state in ('invited', 'opened', 'expired') and a.expires_at" t-out="jalali(a.expires_at)"/><t t-else="">—</t></td>
@@ -433,6 +433,25 @@
     }
     if (document.readyState === 'loading') { document.addEventListener('DOMContentLoaded', run); } else { run(); }
 })();</script>
+            </t>
+        </field>
+    </record>
+
+    <!-- onb3: the live status of one invitation as a short stepper «فرستاده شد → باز شد → در حال پاسخ → آماده» (an ended
+         invitation keeps its pill). Context: a. Used by the invitation list and the dashboard. -->
+    <record id="tpl_invite_steps" model="ir.ui.view">
+        <field name="name">TS panel: invitation status stepper</field>
+        <field name="type">qweb</field>
+        <field name="key">ts_panel.invite_steps</field>
+        <field name="website_id" ref="ts_website.website_ts"/>
+        <field name="arch" type="xml">
+            <t t-name="ts_panel.invite_steps">
+                <t t-set="st_i" t-value="{'invited': 0, 'opened': 1, 'accepted': 2, 'in_progress': 2, 'done': 3}.get(a.state)"/>
+                <t t-set="st_names" t-value="['فرستاده شد', 'باز شد', 'در حال پاسخ', 'آماده']"/>
+                <ol t-if="st_i is not None" class="tsp-steps" t-att-aria-label="'وضعیت دعوت: ' + st_names[st_i]">
+                    <li t-foreach="st_names" t-as="lb" t-attf-class="tsp-steps__s #{'is-done' if lb_index &lt; st_i else ('is-now' if lb_index == st_i else 'is-next')}" t-att-aria-current="'step' if lb_index == st_i else None"><span t-out="lb"/></li>
+                </ol>
+                <span t-else="" t-attf-class="ts-pill #{'ts-pill--warn' if a.state == 'expired' else 'ts-pill--neutral'}" t-out="{'expired': 'منقضی', 'declined': 'ردشده', 'withdrawn': 'لغوشده'}.get(a.state, a.state)"/>
             </t>
         </field>
     </record>

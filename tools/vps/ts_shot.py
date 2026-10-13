@@ -113,6 +113,7 @@ JS = r"""() => {
   const unnamed = [];
   for (const el of document.querySelectorAll('#wrapwrap a[href], #wrapwrap button, #wrapwrap [role=button]')) {
     const r = el.getBoundingClientRect(); if (!r.width || !r.height) continue;
+    if (el.closest('details:not([open])') && !el.closest('summary')) continue;   // a closed <details> still reports a box
     const name = (el.innerText || '').trim() || el.getAttribute('aria-label') || el.getAttribute('title') || (el.getAttribute('aria-labelledby') && 'x') || [...el.querySelectorAll('img[alt]')].map(i => i.alt).join('');
     if (!name) unnamed.push(el.tagName.toLowerCase() + '.' + [...el.classList].slice(0, 2).join('.'));
   }

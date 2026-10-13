@@ -41,5 +41,11 @@ import os as _os
 if _os.path.exists('/tmp/ts_onb2_seed.py'):
     exec(open('/tmp/ts_onb2_seed.py').read())
 pub += ONB2
+# onb3: six self-service panels of the matrix owner in their first-session states, the audience pages, the public samples
+ONB3_PUB, ONB3_OWN = [], []
+if _os.path.exists('/tmp/ts_onb3_seed.py'):
+    exec(open('/tmp/ts_onb3_seed.py').read())
+pub += ONB3_PUB
+own += ONB3_OWN
 json.dump(dict({'': pub, L['owner']: own, L['cns']: cns}, **ONB2_USERS), open('/tmp/ui_matrix.json', 'w'))
 print('MATRIX', len(pub), len(own), len(cns), W)

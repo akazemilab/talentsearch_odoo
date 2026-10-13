@@ -29,12 +29,12 @@ for n, role in (('owner', 'owner'), ('cns', 'counselor')):
     if m.role != role:
         m.write({'role': role})
 env.cr.commit()
-print('WS', ws.id)
+print('WS', ws.id, ws.code)
 """ % L
 out = shell(code)
-mm = re.search(r'WS (\d+)', out)
+mm = re.search(r'WS (\d+) (\S+)', out)
 assert mm, out[-1200:]
-WS = mm.group(1)
+WS, WCODE = mm.group(1), mm.group(2)
 W = '/my/workspaces/%s' % WS
 
 
@@ -111,8 +111,8 @@ check('the public help page links to support without a panel number', 'href="/co
 
 ow = login('owner')
 st, page = get(ow, '/help/panel')
-check('a member gets the support link with the panel number', 'href="/contact?topic=panel&amp;panel=%s"' % WS in page or
-      'href="/contact?topic=panel&panel=%s"' % WS in page, st)
+check('a member gets the support link with the panel code (as every other contact link, audit §9.13)',
+      'href="/contact?topic=panel&amp;panel=%s"' % WCODE in page or 'href="/contact?topic=panel&panel=%s"' % WCODE in page, st)
 st, page = get(ow, W)
 check('the menu help link points to the help center', 'href="/help/panel"' in page, st)
 
@@ -155,9 +155,12 @@ st, html = get(pub, '/web/login?email=1')
 check('the e-mail sign-in is the Persian card without the stock English form', 'ورود با ایمیل' in html and 'name="password"' in html and 'Enter your' not in html and 'Passkey' not in html)
 st, html = get(pub, '/pricing')
 check('the pricing page presents the free panel, the pro plan and the FAQ', 'ts-plan--free' in html and 'ts-plan--pro' in html and 'خبرم کنید' in html and 'id="faq"' in html and 'aria-expanded="false"' in html)
-for old, new in (('/how-it-works', '/schools'), ('/evidence', '/assessments'), ('/about', '/'), ('/help', '/pricing#faq'), ('/employers', '/contact?topic=partner'), ('/clinics', '/contact?topic=partner'), ('/sample-report', '/assessments#sample'), ('/consent-policy', '/privacy'), ('/entekhab-reshteh', '/assessments')):
+for old, new in (('/how-it-works', '/schools'), ('/evidence', '/assessments'), ('/about', '/'), ('/help', '/pricing#faq'), ('/employers', '/hiring'), ('/sample-report', '/assessments#sample'), ('/consent-policy', '/privacy'), ('/entekhab-reshteh', '/assessments')):
     st, loc, _ = pub.req(old)
     check('redirect %s -> %s (301)' % (old, new), st == 301 and loc.endswith(new), '%s %s' % (st, loc))
+for page in ('/clinics', '/hiring'):
+    st, html = get(pub, page)
+    check('%s is an audience page again (onb3), not a redirect' % page, st == 200 and 'ساخت پنل رایگان' in html, str(st))
 st, html = get(ow, '/my')
 check('participant pages use the app header and the slim footer', 'ts-header--app' in html and 'ts-footer--slim' in html and 'ts-footer__grid' not in html)
 st, html = get(ow, W)

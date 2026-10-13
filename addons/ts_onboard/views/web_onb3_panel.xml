@@ -1,0 +1,420 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- onb3: the first session inside a panel (docs/onboarding/03_panel_first_session.md). Website 4 only. Every value
+         comes from models/onb3.py; every button points at a route that keeps its own permission check. -->
+
+    <!-- ===================================================== dashboard: «شروع کار», «پنل را کامل کنید», live invitations, usage -->
+    <record id="dashboard_onb3" model="ir.ui.view">
+        <field name="name">ts_onboard.dashboard.onb3</field>
+        <field name="inherit_id" ref="ts_panel.tpl_dashboard"/>
+        <field name="website_id" ref="ts_website.website_ts"/>
+        <field name="arch" type="xml">
+            <xpath expr="//header[hasclass('tsp-head')]" position="before">
+                <t t-set="tso_start" t-value="member.ts_onb_start_card()"/>
+                <t t-if="tso_start and tso_start['finished']"><t t-set="tso_start" t-value="None"/></t>
+                <t t-set="tso_more" t-value="None if tso_start else member.ts_onb_more_card()"/>
+                <t t-set="tso_hero" t-value="tso_start and tso_start['hero']"/>
+                <t t-set="tso_primary" t-value="bool(tso_hero and (tso_hero.get('post') or tso_hero.get('url')))"/>
+                <!-- one primary action on the page: the card's current step holds it; the header's «دعوت تازه» turns outline.
+                     `empty` stays true (no tiles of zeros before the first invitation); the card replaces the empty state -->
+                <t t-if="tso_start"><t t-set="tsob_card" t-value="False"/></t>
+                <t t-set="first_run" t-value="bool(tsob_card or tso_primary)"/>
+                <t t-set="tso_recent" t-value="member.ts_onb_recent()"/>
+            </xpath>
+            <xpath expr="//header[hasclass('tsp-head')]" position="after">
+                <t t-set="tso_usage" t-value="ws.ts_onb_usage_line() if member.has_perm('credits:read') or member.role == 'owner' else None"/>
+                <p t-if="tso_usage" class="tso-usage" id="tso-usage" t-out="tso_usage"/>
+            </xpath>
+            <xpath expr="//div[hasclass('tsp-dash-empty')]" position="attributes">
+                <attribute name="t-if">empty and not tso_start</attribute>
+            </xpath>
+            <xpath expr="//div[hasclass('tsp-dash-empty')]" position="before">
+                <section t-if="tso_start" class="ts-card tsob tso-start" id="tso-start" aria-labelledby="tso-start-h">
+                    <div class="tsob__head">
+                        <h2 id="tso-start-h" class="h5">شروع کار</h2>
+                        <a t-att-href="tso_start['help']" class="tsob__help">راهنمای شروع کار</a>
+                    </div>
+                    <p class="tsob__progress" id="tso-start-progress"><strong><t t-out="fa(tso_start['done_n'])"/> از <t t-out="fa(tso_start['total'])"/></strong></p>
+                    <span class="tsob__bar" aria-hidden="true"><span class="tsob__fill" t-attf-style="inline-size: #{round(100.0 * tso_start['done_n'] / tso_start['total'])}%"></span></span>
+                    <div t-if="tso_hero" class="tso-hero" id="tso-hero">
+                        <h3 class="h4 tso-hero__title" t-out="tso_hero['title']"/>
+                        <p class="tso-hero__text" t-out="tso_hero['text']"/>
+                        <div t-if="tso_hero.get('post') or tso_hero.get('url') or (tso_hero.get('second') and tso_hero['second'][0])" class="tso-hero__acts">
+                            <form t-if="tso_hero.get('post')" t-att-action="tso_hero['post']" method="post" data-tsp-once="1">
+                                <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                                <button type="submit" class="ts-btn ts-btn--primary ts-btn--lg" id="tso-try" t-out="tso_hero['btn']"/>
+                            </form>
+                            <a t-elif="tso_hero.get('url')" t-att-href="tso_hero['url']" class="ts-btn ts-btn--primary ts-btn--lg" id="tso-go" t-out="tso_hero['btn']"/>
+                            <a t-if="tso_hero.get('second') and tso_hero['second'][0]" t-att-href="tso_hero['second'][0]" class="tso-hero__second" id="tso-sample-link" t-out="tso_hero['second'][1]"/>
+                        </div>
+                    </div>
+                    <ol class="tsob__list tso-steps" aria-describedby="tso-start-progress">
+                        <li t-foreach="tso_start['steps']" t-as="s"
+                            t-attf-class="tsob-step tsob-step--#{'done' if s['done'] else 'open'}#{' tsob-step--current' if tso_start['current'] and s['key'] == tso_start['current']['key'] else ''}"
+                            t-att-data-tso-step="s['key']" t-att-aria-current="'step' if tso_start['current'] and s['key'] == tso_start['current']['key'] else None">
+                            <span class="tsob-step__ico" aria-hidden="true"></span>
+                            <div class="tsob-step__body">
+                                <p class="tsob-step__title">
+                                    <strong><t t-out="fa(s_index + 1)"/>. <t t-out="s['label']"/></strong>
+                                    <span t-if="s['done']" class="tsob-tag tsob-tag--ok">انجام شد</span>
+                                    <span t-elif="tso_start['current'] and s['key'] == tso_start['current']['key']" class="tsob-tag tsob-tag--now">گام بعدی</span>
+                                    <span t-else="" class="tsp-sr">مانده</span>
+                                </p>
+                            </div>
+                        </li>
+                    </ol>
+                    <form t-attf-action="/my/workspaces/#{ws.id}/start/hide" method="post" class="tsob__hide" data-tsp-once="1">
+                        <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                        <button type="submit" class="ts-btn ts-btn--quiet tsob-btn" aria-describedby="tso-start-hide-h">بعداً</button>
+                        <span class="ts-hint" id="tso-start-hide-h">فقط برای شما پنهان می‌شود؛ گام‌ها در «راهنما» هم هست.</span>
+                    </form>
+                </section>
+
+                <section t-if="tso_more" class="ts-card tsob tso-complete" id="tso-more" aria-labelledby="tso-more-h">
+                    <p t-if="tso_more['celebrate']" class="tso-celebrate" role="status">نخستین نتیجه را دیدید؛ کار اصلی پنل راه افتاد.</p>
+                    <div class="tsob__head">
+                        <h2 id="tso-more-h" class="h5">پنل را کامل کنید</h2>
+                        <a href="/help/panel#more" class="tsob__help">راهنما</a>
+                    </div>
+                    <p class="tsob__progress" id="tso-more-progress">همه اختیاری است: <t t-out="fa(tso_more['done_n'])"/> از <t t-out="fa(tso_more['total'])"/></p>
+                    <ol class="tsob__list" aria-describedby="tso-more-progress">
+                        <li t-foreach="tso_more['open'] + tso_more['done']" t-as="x" t-attf-class="tsob-step tsob-step--#{'done' if x['done'] else 'open'}" t-att-data-tso-item="x['key']">
+                            <span class="tsob-step__ico" aria-hidden="true"></span>
+                            <div class="tsob-step__body">
+                                <p class="tsob-step__title"><strong t-out="x['label']"/><span t-if="x['done']" class="tsob-tag tsob-tag--ok">انجام شد</span></p>
+                                <p t-if="not x['done']" class="tsob-step__why" t-out="x['why']"/>
+                                <div t-if="not x['done']" class="tsob-step__actions">
+                                    <a t-att-href="x['url']" class="ts-btn ts-btn--outline tsob-btn" t-out="x['btn']"/>
+                                    <form t-if="x['nocap']" t-attf-action="/my/workspaces/#{ws.id}/onboarding/nocap" method="post" data-tsp-once="1">
+                                        <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                                        <button type="submit" class="ts-btn ts-btn--quiet tsob-btn">بدون سقف بماند</button>
+                                    </form>
+                                </div>
+                            </div>
+                        </li>
+                    </ol>
+                    <form t-attf-action="/my/workspaces/#{ws.id}/more/hide" method="post" class="tsob__hide" data-tsp-once="1">
+                        <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                        <button type="submit" class="ts-btn ts-btn--quiet tsob-btn">بعداً</button>
+                    </form>
+                </section>
+
+                <section t-if="tso_recent" class="ts-card tso-recent" id="tso-recent" aria-labelledby="tso-recent-h">
+                    <h2 id="tso-recent-h" class="h5">دعوت‌های اخیر</h2>
+                    <ul class="tso-recent__list">
+                        <li t-foreach="tso_recent" t-as="a">
+                            <a class="tso-recent__who" t-attf-href="/my/workspaces/#{ws.id}/invites/#{a.id}"><bdi t-out="a.invitee_name"/></a>
+                            <t t-call="ts_panel.invite_steps"/>
+                        </li>
+                    </ul>
+                    <a t-attf-href="/my/workspaces/#{ws.id}/invites" class="tso-recent__all">همهٔ دعوت‌ها</a>
+                </section>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- ===================================================== the coach line on a finished try-out's report (?preview=1) -->
+    <record id="shell_coach" model="ir.ui.view">
+        <field name="name">ts_onboard.shell.coach</field>
+        <field name="inherit_id" ref="ts_panel.tpl_shell_frame"/>
+        <field name="website_id" ref="ts_website.website_ts"/>
+        <field name="arch" type="xml">
+            <xpath expr="//p[hasclass('tsp-flash--danger')]" position="after">
+                <t t-if="member and request.params.get('preview') == '1'">
+                    <t t-set="tso_coach" t-value="member.ts_onb_coach()"/>
+                    <section t-if="tso_coach" class="ts-card tso-coach" id="tso-coach" aria-labelledby="tso-coach-h">
+                        <p id="tso-coach-h" class="tso-coach__line"><span class="ts-pill ts-pill--info">پیش‌نمایش</span> گزارش <t t-out="tso_coach['many']"/>تان همین‌جا می‌آید.</p>
+                        <a t-att-href="tso_coach['url']" class="ts-btn ts-btn--primary ts-btn--lg" id="tso-coach-cta" t-out="tso_coach['cta']"/>
+                    </section>
+                </t>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- ===================================================== «دعوت تازه»: one screen, two equal choices -->
+    <record id="tpl_invite_one" model="ir.ui.view">
+        <field name="name">TS onboard: one-screen invitation</field>
+        <field name="type">qweb</field>
+        <field name="key">ts_onboard.invite_one</field>
+        <field name="website_id" ref="ts_website.website_ts"/>
+        <field name="arch" type="xml">
+            <t t-name="ts_onboard.invite_one">
+                <t t-call="website.layout" additional_title="title">
+                    <div id="wrap" class="ts-page">
+                        <t t-call="ts_panel.shell_frame">
+                            <header class="tsp-head">
+                                <div>
+                                    <h1 class="tsp-head__title">دعوت تازه</h1>
+                                    <p class="tsp-head__help">یک <t t-out="words['one']"/> را با نام و موبایل دعوت کنید<t t-if="kind != 'hr'">، یا پیوند همیشگی پنل را به همه بدهید</t>.</p>
+                                </div>
+                            </header>
+                            <p t-if="error" class="tsp-flash tsp-flash--danger" role="alert" id="tso-err" t-out="error"/>
+                            <p t-if="quota_note" class="ts-notice" role="note" t-out="quota_note"/>
+                            <p t-if="positions_url" class="ts-notice" role="note">برای داوطلب‌های یک شغل، از <a t-att-href="positions_url">«موقعیت‌های شغلی»</a> دعوت کنید تا تناسب هر داوطلب با همان شغل دیده شود.</p>
+                            <fieldset t-if="kind != 'hr'" class="tso-seg" id="tso-seg">
+                                <legend class="tsp-sr">شیوهٔ دعوت</legend>
+                                <label class="tso-seg__opt"><input type="radio" name="tso_mode" value="one" t-att-checked="'checked' if mode != 'link' else None"/><span>فرستادن به یک نفر</span></label>
+                                <label class="tso-seg__opt"><input type="radio" name="tso_mode" value="link" t-att-checked="'checked' if mode == 'link' else None"/><span>پیوند همیشگی و QR</span></label>
+                            </fieldset>
+
+                            <section class="ts-card tso-one" id="tso-one" t-att-data-ts-show="'tso_mode=one' if kind != 'hr' else None" aria-labelledby="tso-one-h">
+                                <h2 id="tso-one-h" class="h5">فرستادن به یک نفر</h2>
+                                <form t-attf-action="/my/workspaces/#{ws.id}/invites/new" method="post" class="tsp-form" data-tsp-once="1">
+                                    <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                                    <input type="hidden" name="one" value="1"/>
+                                    <input type="hidden" name="attest" value="1"/>
+                                    <div t-if="need_escalation" class="ts-notice tso-esc" id="tso-esc">
+                                        <label class="tsp-check"><input type="checkbox" name="escalation_ok" value="1" required="required"/><span>پیگیری فوری نشانه‌های خطر در این مرکز با من است.</span></label>
+                                        <p class="ts-hint">فقط همین یک بار پرسیده می‌شود. اگر مراجعی نشانهٔ خطر نشان دهد، پیگیری فوری با مشاوران پنل است؛ استعدادیاب خدمات اورژانسی ارائه نمی‌کند.</p>
+                                    </div>
+                                    <t t-if="client">
+                                        <input type="hidden" name="client" t-att-value="client.id"/>
+                                        <p class="tso-for">برای: <strong><bdi t-out="client.name"/></strong> · <a t-attf-href="/my/workspaces/#{ws.id}/invites/new">کس دیگری</a></p>
+                                    </t>
+                                    <t t-else="">
+                                        <label class="tsp-field"><span class="tsp-field__label">نام</span>
+                                            <input type="text" name="new_name" required="required" minlength="2" maxlength="120" class="form-control" autocomplete="off" t-att-value="vals.get('new_name')"/></label>
+                                        <label class="tsp-field"><span class="tsp-field__label">موبایل</span>
+                                            <input type="tel" name="new_phone" maxlength="20" dir="ltr" inputmode="tel" class="form-control" autocomplete="off" placeholder="۰۹۱۲ ۳۴۵ ۶۷۸۹" t-att-value="vals.get('new_phone')"/></label>
+                                        <fieldset t-if="age_default == 'minor'" class="tsp-field tso-age">
+                                            <legend class="tsp-field__label">سن</legend>
+                                            <label class="tsp-radio"><input type="radio" name="new_age" value="minor" t-att-checked="'checked' if (vals.get('new_age') or 'minor') == 'minor' else None"/><span>زیر ۱۸ سال</span></label>
+                                            <label class="tsp-radio"><input type="radio" name="new_age" value="adult" t-att-checked="'checked' if vals.get('new_age') == 'adult' else None"/><span>بزرگسال</span></label>
+                                        </fieldset>
+                                    </t>
+                                    <p t-if="(client and client.ts_needs_guardian()) or (not client and age_default == 'minor')" class="ts-notice" id="ts-guardian-box"
+                                       t-att-data-ts-show="None if client else 'new_age=minor'">
+                                        <label class="tsp-check"><input type="checkbox" name="guardian_ok" value="1"/><span>رضایت ولی (پدر، مادر یا سرپرست قانونی) را گرفته‌ایم و نزد ما محفوظ است.</span></label>
+                                        <a class="tsp-what" href="/help/panel#minors">این چیست؟</a></p>
+                                    <div class="tso-item" id="tso-item">
+                                        <span class="tsp-field__label">سنجه</span>
+                                        <strong t-if="starter_bat" t-out="starter_bat.ts_title()"/>
+                                        <strong t-elif="starter_inst" t-out="starter_inst.ts_title()"/>
+                                        <span t-else="" class="ts-hint">از «تنظیمات بیشتر» یکی را برگزینید.</span>
+                                        <span class="ts-hint"> · قابل تغییر در «تنظیمات بیشتر»</span>
+                                    </div>
+                                    <div t-if="sms_ok and preview_sms" class="tso-sms" id="tso-sms">
+                                        <span class="tsp-field__label" id="tso-sms-h">پیامکی که می‌رود</span>
+                                        <p class="tso-sms__body" aria-labelledby="tso-sms-h" t-out="preview_sms"/>
+                                    </div>
+                                    <p t-elif="not sms_ok" class="ts-hint">پیامک دعوت در این پنل خاموش است؛ پس از ساخت دعوت، پیوند را خودتان بفرستید.</p>
+                                    <details class="tso-moreset" id="tso-moreset" t-att-open="'open' if (vals.get('deadline') or vals.get('note') or vals.get('new_email') or vals.get('battery_id') or vals.get('instrument_id')) else None">
+                                        <summary>تنظیمات بیشتر</summary>
+                                        <div class="tso-moreset__body">
+                                            <t t-if="batteries" t-call="ts_battery.item_picker"/>
+                                            <fieldset t-elif="len(instruments) &gt; 1" class="tsp-field">
+                                                <legend class="tsp-field__label">سنجه</legend>
+                                                <label t-foreach="instruments" t-as="i" class="tsp-radio"><input type="radio" name="instrument_id" t-att-value="i.id" t-att-checked="'checked' if (starter_inst and i == starter_inst) else None"/><span t-out="i.ts_title()"/></label>
+                                            </fieldset>
+                                            <input t-elif="instruments" type="hidden" name="instrument_id" t-att-value="instruments[:1].id"/>
+                                            <div class="tsp-field">
+                                                <t t-call="ts_website.jdate" jd_name.f="deadline" jd_id.f="tso_deadline" jd_label.f="مهلت پاسخ (اختیاری)" jd_value="vals.get('deadline') or False" jd_hint.f="بدون مهلت، پیوند دعوت ۳۰ روز باز است"/>
+                                            </div>
+                                            <label class="tsp-field"><span class="tsp-field__label">یادداشت برای <t t-out="words['one']"/> (اختیاری)</span><input type="text" name="note" maxlength="300" class="form-control" t-att-value="vals.get('note')"/></label>
+                                            <label t-if="not client" class="tsp-field"><span class="tsp-field__label">ایمیل (اختیاری)</span><input type="email" name="new_email" maxlength="200" dir="ltr" class="form-control" autocomplete="off" t-att-value="vals.get('new_email')"/></label>
+                                            <label t-if="not client and age_default != 'minor'" class="tsp-field"><span class="tsp-field__label">گروه سنی</span>
+                                                <select name="new_age" class="form-select">
+                                                    <option t-foreach="age" t-as="ag" t-att-value="ag[0]" t-att-selected="'selected' if ag[0] == (vals.get('new_age') or age_default) else None" t-out="ag[1]"/>
+                                                </select></label>
+                                            <p t-if="not client and age_default != 'minor'" class="ts-notice" id="ts-guardian-box-2" data-ts-show="new_age=minor">
+                                                <label class="tsp-check"><input type="checkbox" name="guardian_ok" value="1"/><span>رضایت ولی (پدر، مادر یا سرپرست قانونی) را گرفته‌ایم و نزد ما محفوظ است.</span></label></p>
+                                            <label t-if="extra_time" class="tsp-field"><span class="tsp-field__label">زمان آزمون‌ها</span>
+                                                <select name="extra_time" class="form-select">
+                                                    <option value="1.0">عادی</option>
+                                                    <option value="1.25">۲۵٪ بیشتر (برای نیاز ویژه)</option>
+                                                    <option value="1.5">۵۰٪ بیشتر (برای نیاز ویژه)</option>
+                                                </select></label>
+                                            <p class="ts-hint"><a t-att-href="wizard_url">انتخاب از میان شرکت‌کنندگان ثبت‌شده</a> (جست‌وجو با نام یا شناسه)</p>
+                                        </div>
+                                    </details>
+                                    <div class="tsp-actions"><button type="submit" class="ts-btn ts-btn--primary ts-btn--lg" id="tso-send">فرستادن</button></div>
+                                    <p t-if="sms_ok" class="ts-hint">با «فرستادن» تأیید می‌کنید که <t t-out="words['one']"/> (یا ولی او) با دریافت این پیامک و یک یادآوری موافق است.</p>
+                                </form>
+                            </section>
+
+                            <section t-if="kind != 'hr'" class="ts-card tso-link" id="tso-link" data-ts-show="tso_mode=link" aria-labelledby="tso-link-h">
+                                <h2 id="tso-link-h" class="h5">پیوند همیشگی پنل</h2>
+                                <t t-if="link">
+                                    <p>این پیوند همیشه باز است تا خودتان آن را ببندید. هر <t t-out="words['one']"/> با شمارهٔ موبایل خودش وارد می‌شود، نامش را می‌نویسد و «<t t-out="starter_bat.ts_title() if starter_bat else starter_inst.ts_title()"/>» را پر می‌کند؛ نتیجه با اجازهٔ خودش به پنل می‌رسد.</p>
+                                    <input id="tso_link_url" type="text" readonly="readonly" class="ts-copy" dir="ltr" t-att-value="link_url" aria-label="پیوند همیشگی پنل"/>
+                                    <p class="tsp-inline tso-link__acts">
+                                        <button type="button" class="ts-btn ts-btn--primary" data-tsp-copy="tso_link_url" hidden="hidden">کپی پیوند</button>
+                                        <button type="button" class="ts-btn ts-btn--outline" data-tsp-share="tso_link_url" t-att-data-tsp-share-title="ws.name" hidden="hidden">هم‌رسانی</button>
+                                        <a t-attf-href="/my/workspaces/#{ws.id}/link/qr.png?download=1" class="ts-btn ts-btn--outline" download="">دریافت QR</a>
+                                        <span class="tsp-field__hint" role="status" data-tsp-copied="1"></span>
+                                    </p>
+                                    <img t-attf-src="/my/workspaces/#{ws.id}/link/qr.png" width="200" height="200" alt="کد QR پیوند همیشگی پنل برای اسکن با گوشی" class="tsp-qr"/>
+                                    <p class="ts-hint">پیوند را در پیام نوبت‌دهی، شبکه‌های اجتماعی یا روی برگه‌ای در اتاق انتظار<t t-if="kind == 'school'"> یا تختهٔ کلاس</t> بگذارید.<t t-if="member.has_perm('invites:bulk')"> <a t-attf-href="/my/workspaces/#{ws.id}/campaigns/#{link.id}">کسانی که با این پیوند پیوستند</a></t></p>
+                                </t>
+                                <form t-else="" t-attf-action="/my/workspaces/#{ws.id}/invites/new" method="post" class="tsp-form" data-tsp-once="1">
+                                    <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                                    <input type="hidden" name="one" value="link"/>
+                                    <p>یک پیوند و QR برای همه، بی‌آنکه نام و شمارهٔ کسی را بنویسید. هر <t t-out="words['one']"/> شمارهٔ خودش را می‌زند و نامش را می‌نویسد؛ نتیجه با اجازهٔ خودش به پنل می‌رسد.</p>
+                                    <div t-if="need_escalation" class="ts-notice tso-esc">
+                                        <label class="tsp-check"><input type="checkbox" name="escalation_ok" value="1" required="required"/><span>پیگیری فوری نشانه‌های خطر در این مرکز با من است.</span></label>
+                                        <p class="ts-hint">فقط همین یک بار پرسیده می‌شود؛ استعدادیاب خدمات اورژانسی ارائه نمی‌کند.</p>
+                                    </div>
+                                    <div class="tsp-actions"><button type="submit" class="ts-btn ts-btn--primary ts-btn--lg" id="tso-make-link">ساخت پیوند همیشگی</button></div>
+                                </form>
+                            </section>
+                            <t t-call="ts_org.reveal_js"/>
+                            <t t-call="ts_panel.daily_js"/>
+                        </t>
+                    </div>
+                </t>
+            </t>
+        </field>
+    </record>
+
+    <!-- ===================================================== the sample report: banner, frames, body -->
+    <record id="tpl_sample_banner" model="ir.ui.view">
+        <field name="name">TS onboard: sample banner</field>
+        <field name="type">qweb</field>
+        <field name="key">ts_onboard.sample_banner</field>
+        <field name="website_id" ref="ts_website.website_ts"/>
+        <field name="arch" type="xml">
+            <t t-name="ts_onboard.sample_banner">
+                <div class="ts-notice tso-sample-banner" role="note" id="tso-sample-banner">
+                    <strong>نمونه — داده‌های ساختگی.</strong>
+                    <span>این گزارش از پاسخ‌های ساختگیِ «<t t-out="sample['who']"/>» با همان قالب گزارش واقعی ساخته شده است؛ پشت آن هیچ فرد و هیچ دادهٔ واقعی نیست.</span>
+                </div>
+            </t>
+        </field>
+    </record>
+
+    <!-- inside the panel: the shell, the banner and one next step (try it yourself, else the first invitation) -->
+    <record id="tpl_sample_shell_frame" model="ir.ui.view">
+        <field name="name">TS onboard: sample frame (panel)</field>
+        <field name="type">qweb</field>
+        <field name="key">ts_onboard.sample_shell_frame</field>
+        <field name="website_id" ref="ts_website.website_ts"/>
+        <field name="arch" type="xml">
+            <t t-name="ts_onboard.sample_shell_frame">
+                <t t-call="ts_panel.shell_frame">
+                    <t t-call="ts_onboard.sample_banner"/>
+                    <div class="tso-sample-next ts-noprint">
+                        <form t-if="can_try" t-att-action="try_url" method="post" data-tsp-once="1">
+                            <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                            <button type="submit" class="ts-btn ts-btn--primary">اول خودتان امتحان کنید</button>
+                        </form>
+                        <a t-else="" t-att-href="invite_url" class="ts-btn ts-btn--primary" t-out="invite_cta"/>
+                    </div>
+                    <t t-out="0"/>
+                </t>
+            </t>
+        </field>
+    </record>
+
+    <!-- the public page: the banner, the report, then «ساخت پنل رایگان» -->
+    <record id="tpl_sample_public_frame" model="ir.ui.view">
+        <field name="name">TS onboard: sample frame (public)</field>
+        <field name="type">qweb</field>
+        <field name="key">ts_onboard.sample_public_frame</field>
+        <field name="website_id" ref="ts_website.website_ts"/>
+        <field name="arch" type="xml">
+            <t t-name="ts_onboard.sample_public_frame">
+                <section class="ts-section tso-sample-page">
+                    <div class="ts-container">
+                        <a t-att-href="back_url" class="ts-backlink">بازگشت</a>
+                        <t t-call="ts_onboard.sample_banner"/>
+                        <t t-out="0"/>
+                        <div class="ts-cta tso-sample-cta">
+                            <div>
+                                <h2>پنل خودتان را بسازید.</h2>
+                                <p>در دورهٔ آزمایشی رایگان است و همان لحظه فعال می‌شود.</p>
+                            </div>
+                            <a t-att-href="build_url" class="ts-btn">ساخت پنل رایگان</a>
+                        </div>
+                    </div>
+                </section>
+            </t>
+        </field>
+    </record>
+
+    <!-- the body of a clinic or hiring sample (the school sample is ts_talent's own report) -->
+    <record id="tpl_sample_body" model="ir.ui.view">
+        <field name="name">TS onboard: sample body</field>
+        <field name="type">qweb</field>
+        <field name="key">ts_onboard.sample_body</field>
+        <field name="website_id" ref="ts_website.website_ts"/>
+        <field name="arch" type="xml">
+            <t t-name="ts_onboard.sample_body">
+                <t t-if="sample_kind == 'clinic'">
+                    <p class="tsp-head__help tso-sample-sub">مجموعهٔ «<t t-out="sample['battery'].ts_title()"/>» برای «<t t-out="sample['who']"/>»؛ گزارش ویژهٔ مشاور، همان‌طور که مشاوران مرکز گزارش هر مراجع را می‌بینند.</p>
+                    <section t-foreach="sample['sections']" t-as="sec" class="tso-sample-part" t-att-aria-labelledby="'tso-s%s' % sec_index">
+                        <h2 class="h4" t-att-id="'tso-s%s' % sec_index" t-out="sec['inst'].ts_title()"/>
+                        <t t-call="ts_panel.result_bands_body" level="'clinical'" results="sec['results']" blk_id="'tso-s%s-r' % sec_index" blk_sub="True" member="None"/>
+                    </section>
+                    <p class="ts-hint">این گزارش برای گفت‌وگوی مشاوره است، نه تشخیص.</p>
+                </t>
+                <t t-if="sample_kind == 'hr'">
+                    <div class="tsh-verdict tso-sample-sub">
+                        <span>«<t t-out="sample['who']"/>» برای «کارشناس فروش» (شغل مرجع: <t t-out="sample['occupation'].title_fa"/>)</span>
+                        <span t-if="res['band']" t-attf-class="tsh-band tsh-band--#{res['band']} tsh-band--lg" t-out="r['band_fa']"/>
+                    </div>
+                    <p class="ts-notice tsh-note">این خلاصه فقط یکی از ورودی‌های تصمیم است. پاسخ‌ها، نمره‌ها و متن‌های شخصی داوطلب به شما نمایش داده نمی‌شود.</p>
+                    <t t-call="ts_hire.candidate_fit"/>
+                </t>
+            </t>
+        </field>
+    </record>
+
+    <record id="tpl_sample_panel" model="ir.ui.view">
+        <field name="name">TS onboard: sample report (panel)</field>
+        <field name="type">qweb</field>
+        <field name="key">ts_onboard.sample_panel</field>
+        <field name="website_id" ref="ts_website.website_ts"/>
+        <field name="arch" type="xml">
+            <t t-name="ts_onboard.sample_panel">
+                <t t-call="website.layout" additional_title="title">
+                    <div id="wrap" class="ts-page">
+                        <t t-call="ts_onboard.sample_shell_frame">
+                            <header class="tsp-head"><div><h1 class="tsp-head__title" t-out="title_kind"/></div></header>
+                            <t t-call="ts_onboard.sample_body"/>
+                        </t>
+                    </div>
+                </t>
+            </t>
+        </field>
+    </record>
+
+    <record id="tpl_sample_public" model="ir.ui.view">
+        <field name="name">TS onboard: sample report (public)</field>
+        <field name="type">qweb</field>
+        <field name="key">ts_onboard.sample_public</field>
+        <field name="website_id" ref="ts_website.website_ts"/>
+        <field name="arch" type="xml">
+            <t t-name="ts_onboard.sample_public">
+                <t t-call="website.layout" additional_title="title_kind">
+                    <div id="wrap" class="ts-page">
+                        <t t-call="ts_onboard.sample_public_frame">
+                            <h1 class="tso-sample-h" t-out="title_kind"/>
+                            <t t-call="ts_onboard.sample_body"/>
+                        </t>
+                    </div>
+                </t>
+            </t>
+        </field>
+    </record>
+
+    <!-- ===================================================== member page: «پیامک‌های راهنما» (the member's own switch) -->
+    <record id="member_guide_sms" model="ir.ui.view">
+        <field name="name">ts_onboard.member.guide_sms</field>
+        <field name="inherit_id" ref="ts_panel.tpl_member"/>
+        <field name="website_id" ref="ts_website.website_ts"/>
+        <field name="arch" type="xml">
+            <xpath expr="//section[@id='tsp-practice']" position="after">
+                <section t-if="is_self" class="ts-card" id="tso-guide" aria-labelledby="tso-guide-h">
+                    <h2 id="tso-guide-h" class="h5">پیامک‌های راهنما</h2>
+                    <p class="ts-hint">پیامک‌های کوتاه شروع کار (حداکثر یکی در روز، نه بین ساعت ۲۲ تا ۸) و خلاصهٔ هفتگی پنل. هیچ‌کدام نام سنجه، <t t-out="ws.ts_onb_words()['one']"/> یا نتیجه را نمی‌آورد. پیامک نخستین نتیجه هم جزو همین‌هاست.</p>
+                    <form t-attf-action="/my/workspaces/#{ws.id}/members/#{m.id}/guide-sms" method="post" class="tsp-inline" data-tsp-once="1">
+                        <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                        <input type="hidden" name="on" t-att-value="'0' if m.ts_guide_sms else '1'"/>
+                        <span t-attf-class="ts-pill #{'ts-pill--ok' if m.ts_guide_sms else ''}"><t t-if="m.ts_guide_sms">روشن</t><t t-else="">خاموش</t></span>
+                        <button type="submit" class="ts-btn ts-btn--outline"><t t-if="m.ts_guide_sms">خاموش کردن</t><t t-else="">روشن کردن</t></button>
+                    </form>
+                </section>
+            </xpath>
+        </field>
+    </record>
+</odoo>

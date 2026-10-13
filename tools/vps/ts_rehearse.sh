@@ -73,6 +73,9 @@ has ts_hire && NOCOMMIT+=(tests_hire.py)         # HR hiring (ts_onet, ts_tasks,
 { has ts_core || has ts_org || has ts_panel || has ts_sms; } && NOCOMMIT+=(tests_onb1.py)
 # onb2: invitation proof, scope, minors, short codes, guest attempts (claim, 48 h clean-up), funnel; HTTP companion: ts_http_onb2.py
 has ts_onboard && NOCOMMIT+=(tests_onb2.py)
+# onb3: one form, kind-driven starter, try-out never counted, «شروع کار», permanent link, guide SMS, welcome credit, samples;
+# HTTP companion: ts_http_onb3.py
+has ts_onboard && NOCOMMIT+=(tests_onb3.py)
 for f in "${NOCOMMIT[@]}"; do
   [ -f $REPO_DIR/tools/prod/$f ] || continue
   grep -q "cr.commit" $REPO_DIR/tools/prod/$f && { echo "!! $f commits; it cannot run beside the guard"; continue; }
@@ -95,7 +98,7 @@ else
 fi
 
 echo "=== $(date +%T) talent search pages"
-ssh $P "python3 $STAGE/tools/prod/ts_pages.py $PORT talentsearch.ir / /schools /assessments /assessments?all=1 /privacy /contact /pricing /contact/thanks /how-it-works /evidence /help /consent-policy /masnavi /sitemap.xml /this-does-not-exist /panel /panel/terms /signup" | grep -E '^(FAIL|SUMMARY)'
+ssh $P "python3 $STAGE/tools/prod/ts_pages.py $PORT talentsearch.ir / /schools /assessments /assessments?all=1 /privacy /contact /pricing /contact/thanks /how-it-works /evidence /help /consent-policy /masnavi /sitemap.xml /this-does-not-exist /panel /panel/terms /signup /clinics /hiring /sample/clinic /sample/school /sample/hr" | grep -E '^(FAIL|SUMMARY)'
 ssh $P "python3 $STAGE/tools/prod/ts_pages.py $PORT odoo.innerquest.me /" | grep -E 'w1|FAIL' | head -1 | sed 's/^/unknown host -> /'
 
 # ---- suites that commit or depend on each other's committed fixtures: strictly in order
@@ -148,6 +151,8 @@ has ts_hire && { echo "=== $(date +%T) http HR hiring (positions, job fit, tasks
 { has ts_sms || has ts_panel; } && { echo "=== $(date +%T) http onb1 (S-AUTH sign-in, no approval, suspend, licence badge)"; http ts_http_onb1.py; }
 # onb2: one-tap invitations (welcome, scope, device binding, minors, fairness at the end, short links) and test first (guest, gate, claim)
 has ts_onboard && { echo "=== $(date +%T) http onb2 (one-tap invitations, test first)"; http ts_http_onb2.py; }
+# onb3: the first session inside a panel (one form, try-out, sample, one-screen invitation, permanent link, guide SMS, audience pages)
+has ts_onboard && { echo "=== $(date +%T) http onb3 (the first session inside a panel)"; http ts_http_onb3.py; }
 if has ts_kavenegar; then
   echo "=== $(date +%T) kavenegar tests (fake API, commits)"; orm tests_kavenegar.py
   echo "=== $(date +%T) kavenegar webhooks (http)"; http ts_http_kv.py

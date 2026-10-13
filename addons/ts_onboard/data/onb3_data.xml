@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- onb3 guide SMS: native sms.template records rendered by ts.brand.sms_render (texts rule-checked: no test, client or
+         result named; Persian digits; the link last and alone). Values come in the render context (ctx): panel (the
+         panel's SMS name), one (مراجع / دانش‌آموز / داوطلب), link, invite, n_inv, n_done, n_wait. noupdate="0": the texts
+         follow the repository. -->
+    <data noupdate="0">
+        <record id="sms_onb_welcome" model="sms.template">
+            <field name="name">استعدادیاب: پنل ساخته شد (راهنما)</field>
+            <field name="model_id" ref="ts_core.model_ts_workspace"/>
+            <field name="body">استعدادیاب
+پنل {{ ctx.get('panel') }} ساخته شد. نخستین قدم: خودتان امتحان کنید.
+{{ ctx.get('link') }}</field>
+        </record>
+        <record id="sms_onb_try" model="sms.template">
+            <field name="name">استعدادیاب: سه ساعت پس از ساخت (راهنما)</field>
+            <field name="model_id" ref="ts_core.model_ts_workspace"/>
+            <field name="body">استعدادیاب
+چند دقیقه وقت دارید؟ اول خودتان ببینید {{ ctx.get('one') }} چه می‌بیند.
+{{ ctx.get('link') }}</field>
+        </record>
+        <record id="sms_onb_invite" model="sms.template">
+            <field name="name">استعدادیاب: یک روز بی‌دعوت (راهنما)</field>
+            <field name="model_id" ref="ts_core.model_ts_workspace"/>
+            <field name="body">استعدادیاب
+{{ ctx.get('invite') }}
+{{ ctx.get('link') }}</field>
+        </record>
+        <record id="sms_onb_first_result" model="sms.template">
+            <field name="name">استعدادیاب: نخستین نتیجه آماده است</field>
+            <field name="model_id" ref="ts_core.model_ts_workspace"/>
+            <field name="body">استعدادیاب
+نخستین نتیجه در پنل {{ ctx.get('panel') }} آماده است.
+{{ ctx.get('link') }}</field>
+        </record>
+        <record id="sms_onb_digest" model="sms.template">
+            <field name="name">استعدادیاب: خلاصهٔ هفتگی پنل</field>
+            <field name="model_id" ref="ts_core.model_ts_workspace"/>
+            <field name="body">استعدادیاب
+این هفته در پنل {{ ctx.get('panel') }}: {{ ctx.get('n_inv') }} دعوت، {{ ctx.get('n_done') }} نتیجه، {{ ctx.get('n_wait') }} در انتظار.
+{{ ctx.get('link') }}</field>
+        </record>
+    </data>
+
+    <data noupdate="1">
+        <record id="cron_onb_nudges" model="ir.cron">
+            <field name="name">استعدادیاب: پیامک‌های راهنمای شروع کار و پیگیری پنل‌های تازه</field>
+            <field name="model_id" ref="model_ts_onb_nudge"/>
+            <field name="state">code</field>
+            <field name="code">model._cron_onb_nudges()</field>
+            <field name="interval_number">1</field>
+            <field name="interval_type">hours</field>
+        </record>
+    </data>
+
+    <!-- «فعال‌شدن پنل‌ها»: the activation steps of ts.funnel.event by panel kind (no personal data), managers only -->
+    <record id="ts_funnel_event_view_pivot_panels" model="ir.ui.view">
+        <field name="name">ts.funnel.event.pivot.panels</field>
+        <field name="model">ts.funnel.event</field>
+        <field name="arch" type="xml">
+            <pivot string="فعال‌شدن پنل‌ها">
+                <field name="step" type="row"/>
+                <field name="panel_kind" type="col"/>
+            </pivot>
+        </field>
+    </record>
+    <record id="ts_funnel_event_action_panels" model="ir.actions.act_window">
+        <field name="name">فعال‌شدن پنل‌ها (بدون دادهٔ شخصی)</field>
+        <field name="res_model">ts.funnel.event</field>
+        <field name="view_mode">pivot,list</field>
+        <field name="domain">[('step', 'in', ('panel_created', 'self_test_done', 'first_invite', 'first_result_opened'))]</field>
+        <field name="view_ids" eval="[(5, 0, 0), (0, 0, {'view_mode': 'pivot', 'view_id': ref('ts_funnel_event_view_pivot_panels')})]"/>
+        <field name="help" type="html"><p>هر ردیف یک گام فعال‌شدن یک پنل است: ساخت، پیش‌نمایش، نخستین دعوت و نخستین نتیجهٔ بازشده، بر حسب نوع پنل. هیچ نام، شماره یا پنلی در ردیف‌ها نیست؛ ردیف‌ها پس از ۱۸۰ روز پاک می‌شوند.</p></field>
+    </record>
+    <menuitem id="menu_ts_funnel_panels" name="فعال‌شدن پنل‌ها" parent="ts_assessment.menu_ts_assessments"
+              action="ts_funnel_event_action_panels" sequence="41" groups="ts_core.group_ts_manager"/>
+
+    <!-- guide SMS rows (back office, managers): what went out and why something did not -->
+    <record id="ts_onb_nudge_view_list" model="ir.ui.view">
+        <field name="name">ts.onb.nudge.list</field>
+        <field name="model">ts.onb.nudge</field>
+        <field name="arch" type="xml">
+            <list create="false" edit="false" delete="false">
+                <field name="create_date"/>
+                <field name="workspace_id"/>
+                <field name="kind"/>
+                <field name="state"/>
+                <field name="sent_at"/>
+                <field name="reason"/>
+            </list>
+        </field>
+    </record>
+    <record id="ts_onb_nudge_action" model="ir.actions.act_window">
+        <field name="name">پیامک‌های راهنمای پنل‌ها</field>
+        <field name="res_model">ts.onb.nudge</field>
+        <field name="view_mode">list</field>
+    </record>
+    <menuitem id="menu_ts_onb_nudges" name="پیامک‌های راهنما" parent="ts_assessment.menu_ts_assessments"
+              action="ts_onb_nudge_action" sequence="42" groups="ts_core.group_ts_manager"/>
+</odoo>

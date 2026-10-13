@@ -264,9 +264,9 @@ check('D14 with the number: full reports at once, badge unverified, audit row, l
       own_np.has_perm('results:clinical') and own_np.verification_state == 'pending' and own_np.practising_since
       and AUD.search_count([('event_type', '=', 'member.practice'), ('res_id', '=', own_np.id)]) >= 1 and own_np in listed
       and env.ref('ts_org.ts_member_practising_action').name == 'مالک مشاور شد (بررسی پروانه)')
-check('D15 a solo psychologist panel needs the number too',
-      raises(lambda: W.ts_panel_create(puser(), 'پنل onb1 روان‌شناس', 'solo', solo_as='psychologist', terms=True,
-                                       escalation_ok=True), UserError, 'شمارهٔ پروانه'))
+ws_np = W.ts_panel_create(puser(), 'پنل onb1 روان‌شناس', 'solo', solo_as='psychologist', terms=True)
+check('D15 a solo psychologist panel no longer asks for the number at creation (onb3); it is listed for the licence review',
+      ws_np.state == 'active' and AUD.search_count([('event_type', '=', 'member.licence_self_declared'), ('workspace_id', '=', ws_np.id)]) == 1)
 nn = puser()
 nn.partner_id.write({'ts_name_unknown': True})
 check('D16 an account without a name cannot become a member (colleagues see members by name)',

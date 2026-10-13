@@ -1,4 +1,5 @@
-"""Dashboard definitions (S12: DSH-1..DSH-5; 03_ia_and_ux.md section 5).
+"""Dashboard definitions (S12: DSH-1, DSH-2, DSH-4, DSH-5; 03_ia_and_ux.md section 5). The DSH-3 set-up list gave way to
+ts_onboard's «شروع کار» card in onb3 (its «راه ارتباط با پنل» step could never be finished).
 
 One method per block, each returning counts and the list URL that shows exactly the same records: the invitation list and
 the client list build their domains from the same helpers (`invite_filters`, the `handover` / `mine_open` client filters),
@@ -100,12 +101,6 @@ def invite_filters(env, me, base, kw):
     return dom, f
 
 
-class TsWorkspaceDashboard(models.Model):
-    _inherit = 'ts.workspace'
-
-    onboarding_dismissed_on = fields.Datetime(readonly=True, copy=False)
-
-
 class TsMemberDashboard(models.Model):
     _inherit = 'ts.workspace.member'
 
@@ -184,7 +179,7 @@ class TsMemberDashboard(models.Model):
         if self.has_perm('credits:read'):
             wallet = env['ts.wallet']._for_workspace(ws)
             out.append({'key': 'usage', 'label': 'سنجه‌های تکمیل‌شدهٔ این دوره', 'n': wallet.units_since(period_start(days)),
-                        'text': 'رایگان در این فصل' if wallet._free_mode() else None, 'url': base + '/credits'})
+                        'text': 'در دورهٔ آزمایشی رایگان' if wallet._free_mode() else None, 'url': base + '/credits'})
         return out[:8]
 
     def dash_funnel(self, days):
@@ -220,27 +215,3 @@ class TsMemberDashboard(models.Model):
         rows = [(m, clients.get(m.id, 0), opens.get(m.id, 0)) for m in members if m.has_perm('clients:be_responsible')]
         # nothing assigned to anyone yet: no card of zeros (a Persian zero reads like a bullet; screenshot review)
         return rows if any(r[1] or r[2] for r in rows) else []
-
-    # ------------------------------------------------------------------ DSH-3 onboarding checklist (owner)
-    def dash_checklist(self):
-        """[(label, done, url or None)] or [] when finished, dismissed or not for this member."""
-        self.ensure_one()
-        ws = self.workspace_id
-        if not self.has_perm('members:invite') or ws.onboarding_dismissed_on:
-            return []
-        env = self.env
-        base = '/my/workspaces/%d' % ws.id
-        S = env['ts.assignment'].sudo()
-        others = len(ws.member_ids.filtered(lambda m: m.active and m != self))
-        others += env['ts.member.invite'].sudo().search_count([('workspace_id', '=', ws.id), ('state', '=', 'pending')])
-        solo = self.owner_practices
-        steps = [
-            ('پنل ساخته شد', True, None),
-            ('نام و لوگوی پنل', bool(ws.partner_id.image_1920), base + '/settings'),
-            ('راه ارتباط با پنل', bool(ws.partner_id.phone or ws.partner_id.email), base + '/settings'),
-            ('دعوت اولین همکار' + (' (برای کار تک‌نفره لازم نیست)' if solo else ''), bool(others) or bool(solo), base + '/members'),
-            ('ثبت اولین شرکت‌کننده', bool(env['ts.panel.client'].sudo().search_count([('workspace_id', '=', ws.id)])), base + '/clients'),
-            ('دعوت اولین شرکت‌کننده', bool(S.search_count([('workspace_id', '=', ws.id)])), base + '/invites/new?fresh=1'),
-            ('اولین نتیجهٔ تکمیل‌شده', bool(S.search_count([('workspace_id', '=', ws.id), ('state', '=', 'done')])), base + '/invites'),
-        ]
-        return [] if all(s[1] for s in steps) else steps

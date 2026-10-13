@@ -37,6 +37,20 @@ def _take_own_name(post):
     request.env['ts.audit.event'].sudo().log('account.name')
 
 
+def _take_panel_name(post):
+    """«نام شما» on the panel form (onb3: always on the form, filled with the account's name). An account without a name
+    must give one; a known name is updated only when the person changed it (2 to 80 characters)."""
+    name = ' '.join((post.get('own_name') or '').split())
+    if _need_name():
+        return _take_own_name(post)
+    if not name or name == (request.env.user.name or '').strip():
+        return
+    if not 2 <= len(name) <= 80:
+        raise UserError('نام و نام خانوادگی خود را بنویسید (۲ تا ۸۰ نویسه)؛ همکاران و مراجعان این نام را می‌بینند.')
+    request.env.user.sudo().write({'name': name})
+    request.env['ts.audit.event'].sudo().log('account.name')
+
+
 def _flash(msg=None):
     if msg:
         request.session['ts_flash'] = msg
@@ -60,6 +74,9 @@ class TsPanel(http.Controller):
     @http.route('/panel', type='http', auth='public', website=True, sitemap=False)
     def landing(self, **kw):
         _ts_site_or_404()
+        if kw.get('kind') in PANEL_KINDS:
+            # an audience page's «ساخت پنل رایگان» lands in the one form with its kind chosen (sign-in first, onb3)
+            return request.redirect('/my/workspaces/new?kind=%s' % kw['kind'])
         return request.render('ts_org.panel_landing', {
             'cta_url': '/my/workspaces/new', 'page_name': 'ts_panel'})
 
@@ -76,20 +93,24 @@ class TsPanel(http.Controller):
         kind = kw.get('kind') if kw.get('kind') in PANEL_KINDS else ''
         if request.env.user._is_public():
             return request.redirect(self._login_url('/my/workspaces/new' + ('?kind=' + kind if kind else '')))
+        user = request.env.user
         return request.render('ts_org.panel_new', {
-            'error': _flash(), 'vals': {'kind': kind}, 'page_name': 'ts_panel', 'need_name': _need_name()})
+            'error': _flash(), 'vals': {'kind': kind, 'own_name': user.partner_id.ts_known_name() or ''},
+            'page_name': 'ts_panel', 'need_name': _need_name()})
 
     @http.route('/my/workspaces/new/create', type='http', auth='user', website=True, methods=['POST'],
                 sitemap=False)
     def create(self, **post):
+        """One form (onb3): kind, panel name, «نام شما». The button is the acceptance of the panel terms (the line under it
+        says so, as on the sign-in page); a form of an older page that still sends the tick works the same."""
         _ts_site_or_404()
-        vals = {k: (post.get(k) or '')[:120] for k in ('name', 'kind', 'solo_as', 'own_name', 'license_number')}
+        vals = {k: (post.get(k) or '')[:120] for k in ('name', 'kind', 'solo_as', 'own_name')}
         try:
             with request.env.cr.savepoint():
-                _take_own_name(post)
+                _take_panel_name(post)
             ws = request.env['ts.workspace'].ts_panel_create(
-                request.env.user, post.get('name'), post.get('kind'), solo_as=post.get('solo_as'),
-                terms=bool(post.get('terms')), escalation_ok=bool(post.get('escalation_ok')),
+                request.env.user, post.get('name'), post.get('kind'), solo_as=post.get('solo_as') or None,
+                terms=bool(post.get('terms') or post.get('accept')), escalation_ok=bool(post.get('escalation_ok')),
                 license_number=post.get('license_number'))
         except (UserError, ValidationError) as e:
             return request.render('ts_org.panel_new', {

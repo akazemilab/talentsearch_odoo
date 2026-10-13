@@ -19,7 +19,10 @@
                             </header>
 
                             <section t-if="new_inv" class="ts-notice" role="status">
-                                دعوت برای نقش «<t t-out="invite_role_label(new_inv)"/>» ساخته شد. این پیوند را خودتان برای همکار بفرستید؛ استعدادیاب پیامک یا ایمیلی نمی‌فرستد.
+                                دعوت برای نقش «<t t-out="invite_role_label(new_inv)"/>» ساخته شد.
+                                <t t-if="new_inv.sms_sent">پیامک دعوت برای همکار فرستاده شد؛ او با همان شماره وارد می‌شود و «پذیرفتن» را می‌زند. اگر پیامک نرسید، همین پیوند را خودتان بفرستید.</t>
+                                <t t-elif="new_inv.phone">پیامک دعوت فرستاده نشد؛ این پیوند را خودتان برای همکار بفرستید.</t>
+                                <t t-else="">این پیوند را خودتان برای همکار بفرستید؛ دعوت با ایمیل، پیامکی نمی‌فرستد.</t>
                                 <input type="text" readonly="readonly" class="ts-copy" id="tsp-newinv" t-att-value="new_inv.invite_url()" aria-label="پیوند دعوت" dir="ltr"/>
                                 <button type="button" class="ts-btn ts-btn--outline ts-btn--sm" data-tsp-copy="tsp-newinv" hidden="hidden">کپی پیوند</button>
                             </section>
@@ -69,7 +72,7 @@
                                         </div>
                                     </li>
                                 </ul>
-                                <p class="ts-hint">«ساخت پیوند تازه» پیامکی نمی‌فرستد: پیوند قبلی را از کار می‌اندازد و پیوند تازه‌ای با ۷ روز مهلت نشان می‌دهد تا خودتان برای همکار بفرستید.</p>
+                                <p class="ts-hint">«ساخت پیوند تازه» پیوند قبلی را از کار می‌اندازد و پیوند تازه‌ای با ۷ روز مهلت می‌سازد؛ اگر دعوت با موبایل باشد، پیامک تازه هم فرستاده می‌شود.</p>
                             </section>
 
                             <section t-if="can_invite" class="ts-card" id="tsp-invite" aria-labelledby="tsp-invite-h">
@@ -86,14 +89,14 @@
                                     </fieldset>
                                     <div class="tsp-field">
                                         <label class="tsp-field__label" for="tsp_phone">شمارهٔ موبایل همکار</label>
-                                        <p class="tsp-field__hint" id="tsp_phone_h">موبایل یا ایمیل، یکی از این دو کافی است. پیوند فقط با همین هویت باز می‌شود. مثال: ۰۹۱۲۳۴۵۶۷۸۹</p>
+                                        <p class="tsp-field__hint" id="tsp_phone_h">موبایل یا ایمیل، یکی از این دو کافی است. با موبایل، استعدادیاب پیامک دعوت را می‌فرستد؛ پیوند فقط با همین هویت باز می‌شود. مثال: ۰۹۱۲۳۴۵۶۷۸۹</p>
                                         <input id="tsp_phone" name="phone" type="tel" dir="ltr" inputmode="tel" autocomplete="off" maxlength="20" aria-describedby="tsp_phone_h" t-att-value="vals.get('phone')"/>
                                     </div>
                                     <div class="tsp-field">
                                         <label class="tsp-field__label" for="tsp_email">یا ایمیل همکار</label>
                                         <input id="tsp_email" name="email" type="email" dir="ltr" inputmode="email" autocomplete="off" maxlength="200" t-att-value="vals.get('email')"/>
                                     </div>
-                                    <p><button type="submit" class="ts-btn ts-btn--primary">ساخت پیوند دعوت</button></p>
+                                    <p><button type="submit" class="ts-btn ts-btn--primary">فرستادن دعوت</button></p>
                                     <p class="ts-hint">برای دعوت مالک دیگر، یک بار دیگر رمز عبور یا کد پیامکی خود را وارد می‌کنید.</p>
                                 </form>
                             </section>

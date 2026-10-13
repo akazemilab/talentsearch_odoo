@@ -103,3 +103,21 @@
 @media print {
     [data-tsp-print], .tsp-actions { display: none !important; }
 }
+
+// onb3: live invitation status «فرستاده شد → باز شد → در حال پاسخ → آماده». Wide: four labelled steps on a line;
+// phone: four dots and only the current label (the others stay for screen readers).
+.tsp-steps { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; align-items: center; gap: 4px 0; }
+.tsp-steps__s { display: inline-flex; align-items: center; gap: 6px; font-size: var(--fs-0); color: var(--color-neutral-400); }
+.tsp-steps__s::before { content: ''; inline-size: 10px; block-size: 10px; border-radius: 50%; flex: none;
+    border: 2px solid var(--color-neutral-600); background: transparent; }
+.tsp-steps__s + .tsp-steps__s::after { order: -1; content: ''; inline-size: 14px; block-size: 2px; background: var(--color-neutral-700);
+    margin-inline: 4px; }
+.tsp-steps__s.is-done { color: var(--color-neutral-300); }
+.tsp-steps__s.is-done::before { background: var(--status-ok); border-color: var(--status-ok); }
+.tsp-steps__s.is-done + .tsp-steps__s::after { background: var(--status-ok); }
+.tsp-steps__s.is-now { color: var(--color-text); font-weight: 600; }
+.tsp-steps__s.is-now::before { border-color: var(--color-accent-500); background: var(--color-accent-500); box-shadow: 0 0 0 3px var(--color-accent-900); }
+@media (max-width: 767.98px) {
+    .tsp-steps__s:not(.is-now) span { position: absolute; inline-size: 1px; block-size: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+    .tsp-steps__s + .tsp-steps__s::after { inline-size: 8px; margin-inline: 2px; }
+}

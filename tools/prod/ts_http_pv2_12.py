@@ -24,7 +24,7 @@ def user(n): return env['res.users'].search([('login', '=', L[n])])
 org = env['res.partner'].search([('name', '=', 'پنل S12 وب')], limit=1) or env['res.partner'].create({'name': 'پنل S12 وب', 'is_company': True})
 org.write({'is_company': True})
 ws = env['ts.workspace'].search([('partner_id', '=', org.id)], limit=1) or env['ts.workspace'].create({'name': 'پنل S12 وب', 'purpose': 'education', 'partner_id': org.id})
-ws.write({'onboarding_dismissed_on': False}); ws.state = 'active'
+ws.state = 'active'
 mem = {}
 for n, role in (('owner', 'owner'), ('c1', 'counselor'), ('c2', 'counselor')):
     m = env['ts.workspace.member'].search([('workspace_id', '=', ws.id), ('user_id', '=', user(n).id)]) or env['ts.workspace.member'].create(
@@ -141,17 +141,13 @@ check('the client list has the handover filter', st == 200 and 'درخواست �
 # ---- roles
 st, cb = get(c1, W)
 check('a counselor sees the dashboard without workload and credits', st == 200 and 'حجم کار اعضا' not in cb and 'سنجه‌های تکمیل‌شدهٔ این دوره' not in cb)
-check('...and without the setup checklist', 'گام‌های راه‌اندازی' not in cb)
+check('...and without the old setup checklist', 'گام‌های راه‌اندازی' not in cb)
 cl = [(u.replace('&amp;', '&'), t) for u, t in pat.findall(cb)]
 badc = [(u, t) for u, t in cl if list_count(c1, u)[1] != (num(t.split('از')[-1]) if 'از' in t else num(t))]
 check('a counselor\'s numbers equal their own lists', cl and not badc, str(badc))
-check('the owner sees the workload and credits tile', 'حجم کار اعضا' in body and 'سنجه‌های تکمیل‌شدهٔ این دوره' in body and 'رایگان در این فصل' in body)
+check('the owner sees the workload and credits tile', 'حجم کار اعضا' in body and 'سنجه‌های تکمیل‌شدهٔ این دوره' in body and 'در دورهٔ آزمایشی رایگان' in body)
 
-# ---- checklist and dismissal
-check('the owner sees the checklist', 'گام‌های راه‌اندازی' in body)
-check('a counselor cannot dismiss it', post(c1, W + '/dashboard/dismiss')[0] == 403)
-st, loc, _ = post(own, W + '/dashboard/dismiss')
-check('the owner can dismiss it', st in (302, 303) and 'گام‌های راه‌اندازی' not in get(own, W)[1])
-check('dismiss needs a CSRF token', own.req(W + '/dashboard/dismiss', [('x', '1')])[0] in (400, 403))
-shell("ws = env['ts.workspace'].browse(%s); ws.onboarding_dismissed_on = False; env.cr.commit()" % WS)
+# ---- the generic 7-step checklist gave way to ts_onboard's «شروع کار» (onb3; ts_http_onb3.py)
+check('the old checklist is gone from the owner dashboard', 'گام‌های راه‌اندازی' not in body)
+check('its dismiss route is gone', post(own, W + '/dashboard/dismiss')[0] == 404)
 summary()

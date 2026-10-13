@@ -75,10 +75,18 @@ check('the new panel leaves a back-office log note and e-mails nobody',
       env['mail.message'].search_count([('model', '=', 'ts.workspace'), ('res_id', '=', ws2.id), ('subtype_id', '=', env.ref('mail.mt_note').id)]) >= 1
       and env['mail.mail'].sudo().search_count([]) == mails_before)
 
-# ---- creation: clinic needs the escalation acceptance
-check('clinic panel refused without escalation acceptance', raises(lambda: W.ts_panel_create(u3, 'TSP کلینیک', 'clinic', terms=True)))
-ws3 = W.ts_panel_create(u3, 'TSP کلینیک', 'clinic', terms=True, escalation_ok=True)
-check('clinic panel active at once with escalation contact', ws3.state == 'active' and ws3.escalation_contact_id == u3.partner_id)
+# ---- creation: clinic (onb3: the escalation acceptance moved to the first client invitation; an older caller's tick still counts)
+ws3 = W.ts_panel_create(u3, 'TSP کلینیک', 'clinic', terms=True)
+cinst = env['ts.instrument'].search([('state', '=', 'published'), ('audience', '=', 'adult'), ('purpose', '!=', 'employment'),
+                                     ('code', '!=', 'TALENT-INV-15')], limit=1)
+check('clinic panel active at once without the escalation question; no client invitation until it is answered',
+      ws3.state == 'active' and not ws3.escalation_contact_id
+      and raises(lambda: env['ts.assignment'].create({'workspace_id': ws3.id, 'instrument_id': cinst.id, 'invitee_name': 'x'}),
+                 ValidationError))
+ws3.ts_set_escalation(ws3.member_ids[:1])
+check('...answered once (the member takes it), client invitations work',
+      ws3.escalation_contact_id == u3.partner_id
+      and not raises(lambda: env['ts.assignment'].create({'workspace_id': ws3.id, 'instrument_id': cinst.id, 'invitee_name': 'x'})))
 
 # ---- creation: validation
 check('terms are required', raises(lambda: W.ts_panel_create(u4, 'TSP بدون شرایط', 'school', terms=False)))

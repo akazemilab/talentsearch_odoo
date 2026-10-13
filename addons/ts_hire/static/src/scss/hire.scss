@@ -58,3 +58,6 @@
 .tsh-cmp-hit { display: inline-flex; align-items: center; justify-content: center; min-inline-size: var(--control-min); min-block-size: var(--control-min); cursor: pointer; }
 .tsh-cmp-hit input { inline-size: 1.4rem; block-size: 1.4rem; }
 .tsh-decisions .tsp-radio { min-block-size: var(--control-min); align-items: center; }
+/* onb3: the sample position (and a member's own try-out in its candidate list) say «نمونه» / «پیش‌نمایش» */
+.tsh-sample { margin-inline-start: .5rem; vertical-align: middle; font-size: var(--fs-1); }
+.tsh-sample-note { margin: .25rem 0 0; max-inline-size: 70ch; }

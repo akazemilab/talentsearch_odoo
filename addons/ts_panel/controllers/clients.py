@@ -76,8 +76,10 @@ def _cols(raw):
 
 
 def visible_domain(me):
-    """Relationship rules R0-R3 as a domain, the same answer as ts_org's member.can_see(client)."""
-    dom = [('workspace_id', '=', me.workspace_id.id)]
+    """Relationship rules R0-R3 as a domain, the same answer as ts_org's member.can_see(client). A member's own try-out
+    (source «preview», onb3) is in no list or count of the panel: the dashboard's «شروع کار» card and, in hiring, the
+    sample position show it, labelled «پیش‌نمایش»."""
+    dom = [('workspace_id', '=', me.workspace_id.id), ('source', '!=', 'preview')]
     if me.has_perm('clients:read_all'):
         return dom
     if not me.has_perm('clients:read_own'):
