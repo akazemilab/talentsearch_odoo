@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- interest module (CAREER-IP-60) and the personal work-style copy (CAREER-HEXACO-1); idempotent by code -->
+    <function model="ts.career.run" name="_ts_load_career"/>
+    <data noupdate="1">
+        <record id="param_daily_cap" model="ir.config_parameter">
+            <field name="key">ts_career.daily_cap</field>
+            <field name="value">100</field>
+        </record>
+    </data>
+</odoo>

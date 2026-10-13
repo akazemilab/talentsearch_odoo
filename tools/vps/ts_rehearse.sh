@@ -95,6 +95,7 @@ for f in "${NOCOMMIT[@]}"; do
 done
 has ts_talent && { echo "=== $(date +%T) talent engine"; ssh $P "python3 $STAGE/tools/prod/tests_talent_engine.py" 2>&1 | grep -E '^(FAIL|SUMMARY)'; }
 has ts_hire && { echo "=== $(date +%T) hr engines"; ssh $P "python3 $STAGE/tools/prod/tests_hire_engine.py" 2>&1 | grep -E '^(FAIL|SUMMARY)'; }
+has ts_career && { echo "=== $(date +%T) career engine"; ssh $P "python3 $STAGE/tools/prod/tests_career_engine.py" 2>&1 | grep -E '^(FAIL|SUMMARY)'; }
 wait $GPID; g=$?
 echo "=== $(date +%T) guard result"; cat $J/${DB}_guard.txt | tail -15
 
@@ -159,6 +160,7 @@ has ts_battery && { echo "=== $(date +%T) http clinic phase 3 (battery run)"; ht
 has ts_billing && { echo "=== $(date +%T) http clinic phase 4 (prepaid billing)"; http ts_http_billing.py; }
 has ts_brand && { echo "=== $(date +%T) http clinic phase 5 (branding, PDF, SMS templates, short links)"; http ts_http_brand.py; }
 has ts_hire && { echo "=== $(date +%T) http HR hiring (positions, job fit, tasks, feedback)"; http ts_http_hire.py; }
+has ts_career && { echo "=== $(date +%T) http free career match"; http ts_http_career.py; }
 # onb1: mobile sign-in (JSON states, WebOTP line, cookie length, staff numbers, lock), names, invite limit, suspend, badge
 { has ts_sms || has ts_panel; } && { echo "=== $(date +%T) http onb1 (S-AUTH sign-in, no approval, suspend, licence badge)"; http ts_http_onb1.py; }
 # onb2: one-tap invitations (welcome, scope, device binding, minors, fairness at the end, short links) and test first (guest, gate, claim)

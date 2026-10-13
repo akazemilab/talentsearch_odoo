@@ -14,6 +14,7 @@ if [ "$SLOT" = 0 ]; then STAGE=/opt/odoo/talentsearch_stage; REPO=/root/talentse
 else STAGE=/opt/odoo/talentsearch_stage_s$SLOT; REPO=/root/ts_wt_s$SLOT; fi
 MODE=${TS_SHOT_WIDTHS:-}
 SEED_ENV=; [ "$MODE" = take ] && SEED_ENV='TS_UX_ONLY=take'     # sudo drops the caller's environment: pass it explicitly
+# W=career: only the ts_career pages (no seed suites; see the career branch below)
 SHELL_CMD="cd /tmp && sudo -u odoo env HOME=/opt/odoo $SEED_ENV /opt/odoo/venv/bin/python3 /opt/odoo/odoo/odoo-bin shell -c /etc/odoo20.conf -d $DB --db-filter='^$DB\$' --addons-path=$STAGE/addons,/opt/odoo/themes,/opt/odoo/enterprise,/opt/odoo/odoo/addons --no-http --log-level=error"
 case "$DB" in eot_ts*) ;; *) echo "!! shots run on eot_ts* clones only"; exit 2 ;; esac
 # onb1: the mobile sign-in (S-AUTH) renders only while codes can be sent. On the clone SMS is switched on with Kavenegar
@@ -39,8 +40,28 @@ env.cr.commit()
 print('SHOTSMS on: kavenegar -> 127.0.0.1:9 (dead), otp', bool(c.kv_enabled and c.ts_sms_otp), 'code step for', P)
 PY
 echo "=== $(date +%T) seed"
-ssh -n eot-odoo-prod "TS_SLOT=$SLOT PYTHONIOENCODING=utf-8 python3 -u $STAGE/tools/prod/ts_http_pv2_19.py $DB $PORT 2>&1 | grep -E '^(FAIL|SUMMARY)'"
-if [ "$MODE" = ux ] || [ "$MODE" = take ]; then
+[ "$MODE" = career ] || ssh -n eot-odoo-prod "TS_SLOT=$SLOT PYTHONIOENCODING=utf-8 python3 -u $STAGE/tools/prod/ts_http_pv2_19.py $DB $PORT 2>&1 | grep -E '^(FAIL|SUMMARY)'"
+if [ "$MODE" = career ]; then
+  # ts_career: the free career pages of the HTTP suite's people (run ts_http_career.py on this clone first)
+  export TS_SHOT_WIDTHS=360,390,1280 TS_SHOT_DARK=${TS_SHOT_DARK:-390} TS_SHOT_FOLD=1
+  ssh eot-odoo-prod "$SHELL_CMD" 2>&1 > /tmp/ui_matrix_out_$DB.txt <<'PY'
+import json
+U = env['res.users']
+p = U.search([('login', '=', 'ts.career.http@example.invalid')])
+q = U.search([('login', '=', 'ts.career.http2@example.invalid')])
+run = env['ts.career.run'].sudo().search([('user_id', '=', p.id)])
+res = run.ts_result() or {'rows': []}
+code = res['rows'][0]['code'] if res['rows'] else 'none'
+rq = env['ts.career.run'].sudo().ts_for_user(q, create=True)
+at = rq.ts_ensure_attempt('CAREER-IP-60')
+if at.state == 'consent':
+    at.give_consent()
+env.cr.commit()
+print('CAREER matrix')
+print(json.dumps({'': ['/career'], p.login: ['/career', '/career/r', '/career/r?ready=1', '/career/job/' + code, '/career/r?edit=1'],
+                  q.login: ['/take/' + at.access_token]}))
+PY
+elif [ "$MODE" = ux ] || [ "$MODE" = take ]; then
   if [ "$MODE" = take ]; then
     export TS_SHOT_WIDTHS=360,390,1280 TS_SHOT_DARK=${TS_SHOT_DARK:-390} TS_SHOT_FOLD=1 TS_UX_ONLY=take
   else
