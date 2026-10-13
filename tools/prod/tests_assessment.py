@@ -217,7 +217,7 @@ check('resume line counts items and minutes left', a.ts_progress_line() == '' or
 # ------------------------------------------------ content v2 overlay (fixture passed in the context, never a file)
 from odoo.addons.ts_assessment.models.attempt import COUNSELOR_HEADING, DEF_HEADING, PARTICIPANT_HEADING, TALK_HEADING
 from odoo.addons.ts_assessment.models.loader import scoring_fingerprint
-env['ir.config_parameter'].sudo().set_param('ts_assessment.content_v2', '1')
+env['ir.config_parameter'].sudo().set_str('ts_assessment.content_v2', '1')
 code = 'inventory_014'
 inst = pub.filtered(lambda i: i.code == code)
 old_v = inst.current_version_id
@@ -283,11 +283,11 @@ check('v2: a file missing a factor is refused, the instrument goes back to the b
       st3['content_errors'] == st2['content_errors'] + 1 and not book_v.content_version and not inst.summary and st3['versions'] == 0
       and scoring_fingerprint(book_v) == scoring_fingerprint(new_v), str(st3))
 L._ts_load_source()
-env['ir.config_parameter'].sudo().set_param('ts_assessment.content_v2', '0')
+env['ir.config_parameter'].sudo().set_str('ts_assessment.content_v2', '0')
 st4 = L._ts_load_source()
 check("v2: ts_assessment.content_v2 = '0' switches back to the book version, nothing created",
       inst.current_version_id == book_v and st4['versions'] == 0 and not book_v.superseded and new_v.superseded, str(st4))
-env['ir.config_parameter'].sudo().set_param('ts_assessment.content_v2', '1')
+env['ir.config_parameter'].sudo().set_str('ts_assessment.content_v2', '1')
 
 # ------------------------------------------------ privacy
 check('other participant cannot read my attempt', raises(lambda: a.with_user(u2).read(['name']), AccessError))

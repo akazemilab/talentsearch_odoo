@@ -188,7 +188,7 @@ check('bad phone / e-mail rejected', IM.norm_phone('12345') is None and IM.norm_
 import json as _json
 from odoo.addons.ts_assessment.models.loader import scoring_fingerprint
 from odoo.addons.ts_talent.controllers.main import report_ctx
-env['ir.config_parameter'].sudo().set_param('ts_assessment.content_v2', '1')
+env['ir.config_parameter'].sudo().set_str('ts_assessment.content_v2', '1')
 Inst = env['ts.instrument']
 v_old = inst.current_version_id
 from odoo.tools.misc import file_path as _fp
