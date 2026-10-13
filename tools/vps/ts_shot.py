@@ -6,6 +6,8 @@ Matrix entries: "/path[#anchor]" (loaded without the anchor, then scrolled to it
 "POST /path body" (a form post that sets up the next page, no screenshot); "POSTSHOT /path body" (the page a form post
 answers with, captured like a page: one post per width / theme). A path with print=1, /my/assessments/ or /a/ also gets a
 print-media check and a _print.png.
+TS_SHOT_FOLD=1 (`ts shots DB take`): for every width <= 430 also <stem>_fold.png, the viewport only (not full page) at a
+phone's height: what a phone shows before scrolling.
 Tunnels VPS:18071 -> prod:PORT, maps talentsearch.ir to it, signs in with the clone-only test user
 (password read from prod's root-only file, never printed) and reports per page and width:
 status, horizontal overflow, elements wider than the viewport, small tap targets, images without alt,
@@ -26,6 +28,8 @@ elif args and args[0] == '--matrix':
 PATHS = args or ['/']
 WIDTHS = tuple(int(x) for x in os.environ.get('TS_SHOT_WIDTHS', '1280,375').split(','))   # portal v3: 320,390,430,768,1280
 DARK = tuple(int(x) for x in os.environ.get('TS_SHOT_DARK', '').split(',') if x)   # extra dark-theme pass (contrast + png)
+FOLD = os.environ.get('TS_SHOT_FOLD') == '1'       # extra viewport-only png per phone width (what shows before scrolling)
+FOLD_H = {320: 568, 360: 740, 375: 667, 390: 844, 393: 852, 412: 915, 414: 896, 430: 932}   # CSS px of common phones
 CHROME = '/snap/chromium/current/usr/lib/chromium-browser/chrome'
 LOCAL = 10000 + int(PORT)          # one tunnel per clone port: a stale 18071 tunnel once pointed the shots at another slot's clone
 
@@ -279,6 +283,10 @@ def audit(p, login, paths):
                 nofocus = page.evaluate(FOCUS_JS)
                 if nofocus: probs.append('no-focus-ring ' + '|'.join(nofocus))
             page.screenshot(path=stem + '.png', full_page=True)
+            if FOLD and w <= 430:
+                page.set_viewport_size({'width': w, 'height': FOLD_H.get(w, int(w * 2.16))})
+                page.screenshot(path=stem + '_fold.png', full_page=False)
+                page.set_viewport_size({'width': w, 'height': 900})
             print('%s %-4s %-40s %s%s' % (r.status if r else '-', w, path[:40], '; '.join(probs) or 'ok', info), flush=True)
         for w in DARK:
             page.set_viewport_size({'width': w, 'height': 900})
