@@ -61,21 +61,32 @@ class TsCareer(TsOnbCatalog):
                                                            'error': request.httprequest.method == 'POST'})
         res = run.ts_result()
         person = res['person']
-        ready_only = kw.get('ready') == '1'
+        full_list = kw.get('all') == '1'
+        ready_only = full_list and kw.get('ready') == '1'
         rows = [r for r in res['rows'] if not ready_only or r['ready'] == 'READY']
+        Run = request.env['ts.career.run']
+        groups, order = {}, []
+        for i, r in enumerate([r for r in res['rows'] if r.get('short')]):
+            v = Run.ts_view_row(r, person)
+            v['n'] = i + 1
+            if v['area'] not in groups:
+                order.append(v['area'])
+                groups[v['area']] = {'name': v['area_fa'], 'rows': []}
+            groups[v['area']]['rows'].append(v)
         try:
             n = max(PAGE, min(120, int(kw.get('n') or PAGE)))
         except ValueError:
             n = PAGE
-        Run = request.env['ts.career.run']
         top = E.person_top(person['riasec'], 6)
         mx = max(float(person['riasec'][k]) for k in top) or 1
         profile = [{'name': RIASEC_FA[k], 'gloss': RIASEC_GLOSS[k], 'w': int(round(100 * float(person['riasec'][k]) / mx))}
                    for k in top[:3]]
         return request.render('ts_career.result', {
             'run': run, 'st': st, 'res': res, 'tier': res['tier'], 'profile': profile,
-            'rows': [Run.ts_view_row(r, person) for r in rows[:n]], 'more': len(rows) > n, 'n': n, 'ready_only': ready_only,
-            'total': len(rows), 'fa': fa_digits, 'notice': ONET_NOTICE})
+            'rows': [Run.ts_view_row(r, person) for r in rows[:n]] if full_list else [], 'more': full_list and len(rows) > n, 'n': n, 'ready_only': ready_only,
+            'total': len(rows), 'fa': fa_digits, 'notice': ONET_NOTICE, 'full_list': full_list,
+            'groups': [groups[k] for k in order], 'n_short': sum(len(groups[k]['rows']) for k in order),
+            'n_all': len(res['rows'])})
 
     @http.route('/career/job/<string:code>', type='http', auth='user', website=True, sitemap=False)
     def career_job(self, code, **kw):

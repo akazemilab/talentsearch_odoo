@@ -114,8 +114,14 @@
                         <section class="ts-section tsc-result">
                             <div class="ts-container ts-narrow">
                                 <p class="ts-tag">نتیجهٔ مسیر شغلی<t t-call="ts_website.sep"/>نسخهٔ آزمایشی</p>
-                                <h1 t-if="tier == 'quick'">شغل‌هایی که با علایق شما هم‌خوان‌اند</h1>
-                                <h1 t-else="">شغل‌هایی که با علایق و سبک کاری شما هم‌خوان‌اند</h1>
+                                <t t-if="full_list">
+                                    <h1>فهرست کامل شغل‌ها به ترتیب هم‌خوانی</h1>
+                                    <p><a href="/career/r" class="tsc-back">بازگشت به شغل‌های برگزیده</a></p>
+                                </t>
+                                <t t-else="">
+                                    <h1><t t-out="fa(n_short)"/> شغلی که بیشترین هم‌خوانی را با شما دارند</h1>
+                                    <p class="ts-lead" id="tsc-basis">از میان <t t-out="fa(n_all)"/> شغل، بر پایهٔ <t t-if="tier == 'quick'">علایق شما</t><t t-elif="st['tasks_done']">علایق، سبک کاری و توانایی‌های شما</t><t t-else="">علایق و سبک کاری شما</t>.</p>
+                                </t>
 
                                 <section class="tsc-profile" aria-labelledby="tsc-prof-h">
                                     <h2 id="tsc-prof-h">سه علاقهٔ پررنگ‌تر شما</h2>
@@ -143,9 +149,27 @@
                                         <p class="tsc-consent">با شروع، رضایتی که در آغاز دادید برای این بخش هم ثبت می‌شود.</p>
                                     </form>
                                 </section>
+                                <t t-if="not full_list">
+                                    <p t-if="not groups" class="tsc-note" id="tsc-empty">پاسخ‌های شما به همهٔ کارها یکسان بود و نمی‌شود علایقتان را از هم جدا کرد. اگر بخواهید، دوباره پاسخ دهید.</p>
+                                    <section t-foreach="groups" t-as="g" class="tsc-area">
+                                        <h2 class="tsc-area__h" t-out="g['name']"/>
+                                        <ol class="tsc-jobs">
+                                            <li t-foreach="g['rows']" t-as="j" class="tsc-job">
+                                                <a t-attf-href="/career/job/#{j['code']}" class="tsc-job__link">
+                                                    <span class="tsc-job__title"><span class="tsc-job__rank" t-out="fa(j['n'])"/> <t t-out="j['fa']"/></span>
+                                                    <span t-if="j['types_fa']" class="tsc-job__why">بیشتر <t t-out="j['types_fa']"/></span>
+                                                    <span t-attf-class="tsc-pill tsc-pill--#{j['ready'].lower()}">آمادگی: <t t-out="j['ready_fa']"/></span>
+                                                    <span class="tsc-job__go" aria-hidden="true"><t t-call="ts_website.icon" ico.f="arrow-left"/></span>
+                                                </a>
+                                            </li>
+                                        </ol>
+                                    </section>
+                                    <a href="/career/r?all=1" class="ts-btn ts-btn--quiet" id="tsc-all">دیدن فهرست کامل</a>
+                                </t>
+                                <t t-else="">
                                 <nav class="tsc-filter" aria-label="فیلتر فهرست">
-                                    <a t-attf-href="/career/r" t-att-aria-current="'page' if not ready_only else None" class="tsc-chip">همهٔ شغل‌ها</a>
-                                    <a t-attf-href="/career/r?ready=1" t-att-aria-current="'page' if ready_only else None" class="tsc-chip">شغل‌هایی که برایشان آماده‌اید</a>
+                                    <a t-attf-href="/career/r?all=1" t-att-aria-current="'page' if not ready_only else None" class="tsc-chip">همهٔ شغل‌ها</a>
+                                    <a t-attf-href="/career/r?all=1&amp;ready=1" t-att-aria-current="'page' if ready_only else None" class="tsc-chip">شغل‌هایی که برایشان آماده‌اید</a>
                                 </nav>
 
                                 <p t-if="not rows" class="tsc-note" id="tsc-empty">
@@ -162,7 +186,8 @@
                                         </a>
                                     </li>
                                 </ol>
-                                <a t-if="more" t-attf-href="/career/r?n=#{n + 20}#{'&amp;ready=1' if ready_only else ''}" class="ts-btn ts-btn--quiet" id="tsc-more-rows">نمایش ۲۰ شغل دیگر</a>
+                                <a t-if="more" t-attf-href="/career/r?all=1&amp;n=#{n + 20}#{'&amp;ready=1' if ready_only else ''}" class="ts-btn ts-btn--quiet" id="tsc-more-rows">نمایش ۲۰ شغل دیگر</a>
+                                </t>
 
 
                                 <p class="tsc-small"><a href="/career/r?edit=1">ویرایش تحصیلات و سابقه</a></p>
