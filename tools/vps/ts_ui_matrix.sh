@@ -44,7 +44,7 @@ echo "=== $(date +%T) seed"
 if [ "$MODE" = career ]; then
   # ts_career: the free career pages of the HTTP suite's people (run ts_http_career.py on this clone first)
   export TS_SHOT_WIDTHS=360,390,1280 TS_SHOT_DARK=${TS_SHOT_DARK:-390} TS_SHOT_FOLD=1
-  ssh -n eot-odoo-prod "$SHELL_CMD" > /tmp/ui_matrix_out_$DB.txt <<'PY'
+  ssh eot-odoo-prod "$SHELL_CMD" 2>&1 > /tmp/ui_matrix_out_$DB.txt <<'PY'
 import json
 U = env['res.users']
 p = U.search([('login', '=', 'ts.career.http@example.invalid')])
