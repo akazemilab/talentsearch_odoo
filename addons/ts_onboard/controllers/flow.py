@@ -11,7 +11,7 @@ from odoo.addons.ts_assessment.models.attempt import CONSENT_VERSION
 from odoo.addons.ts_sms.controllers.signup import KNOWN_KEY, RESENDS_KEY, create_phone_user, pick_phone_user
 
 from ..models.common import DEVICE_COOKIE, DEVICE_COOKIE_AGE, digest, new_token, read_token, set_cookie
-from ..models.ir_http import SCOPE_KEY
+from ..models.ir_http import OTHER_KEY, SCOPE_KEY
 
 PENDING_KEY = 'ts_invite_pending'
 PENDING_TTL_S = 30 * 60
@@ -159,6 +159,7 @@ def otp_then(a, phone, pending):
     sess = request.session
     sess[PENDING_KEY] = dict(pending, aid=a.id, exp=time.time() + PENDING_TTL_S)
     sess[KNOWN_KEY] = phone
+    sess.pop(OTHER_KEY, None)
     nxt = '/invite/%s' % a.token
     ok, reason, norm = request.env['ts.signup.otp'].request_code(phone, request.httprequest.remote_addr)
     if ok or (reason in ('cooldown', 'limit', 'locked') and norm):

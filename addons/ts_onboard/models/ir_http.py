@@ -28,6 +28,7 @@ from odoo.addons.ts_panel.models.security import on_ts_site
 _logger = logging.getLogger(__name__)
 SCOPE_KEY = 'ts_scope'
 KNOWN_KEY = 'ts_auth_known'        # ts_sms.controllers.signup.KNOWN_KEY
+OTHER_KEY = 'ts_auth_other'        # «شمارهٔ دیگری دارم» chosen: the known number is no longer offered in this session
 STATIC = ('/web/assets/', '/web/image/', '/web/static/', '/website/static/', '/web/webclient/translations',
           '/website/translations', '/web/manifest.webmanifest', '/favicon.ico', '/robots.txt', '/websocket')
 OPEN = {'/signup', '/signup/send', '/signup/verify', '/login', '/web/session/logout'}
@@ -83,7 +84,7 @@ class IrHttpScope(models.AbstractModel):
             allowed = False
         if allowed:
             return
-        if scope.get('phone'):
+        if scope.get('phone') and not sess.get(OTHER_KEY):
             sess[KNOWN_KEY] = scope['phone']
         target = hr.full_path if hr.method in ('GET', 'HEAD') else hr.path
         nxt = local_path(target.rstrip('?'), '/my')

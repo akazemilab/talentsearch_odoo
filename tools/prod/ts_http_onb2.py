@@ -338,6 +338,23 @@ check('D06 after the code it goes on', j.get('ok') and j.get('redirect') == '/in
 st, loc, _ = other_browser.req('/invite/%s' % T_SMS)
 check('D07 ...to the same invitation\'s player', st in (302, 303) and '/take/' in loc, loc)
 other_browser.req('/web/session/logout', {'csrf_token': other_browser.csrf(other_browser.req('/my')[2])})
+shell("env.cr.execute(\"update ts_signup_otp set create_date = create_date - interval '2 hours'\"); env.cr.commit()")
+ob = client()
+st, _, page = ob.req('/invite/%s' % T_SMS)
+st, loc, _ = ob.req('/invite/%s/accept' % T_SMS, {'csrf_token': ob.csrf(page), 'welcome': '1'})
+st, page = get(ob, path_of(loc))
+check('D08 the masked-code page offers «شمارهٔ دیگری دارم» (the ordinary sign-in)', st == 200 and 'signup?other=1' in page
+      and 'شمارهٔ دیگری دارم' in page, str(st))
+st, page = get(ob, '/signup?other=1&next=/invite/%s' % T_SMS)
+check('D09 ...which shows the number field and never the invited number', st == 200 and 'id="tsa_phone"' in page
+      and masked(PH['sms']) not in page and not in_full(PH['sms'], page), str(st))
+st, h, j = ajax(ob, '/signup/send', {'csrf_token': ob.csrf(page), 'phone': PH['other'], 'next': '/invite/%s' % T_SMS})
+st, h, j = ajax(ob, '/signup/verify', {'csrf_token': ob.csrf(page), 'code': last_code(PH['other']) or '000000',
+                                       'next': '/invite/%s' % T_SMS})
+info = q("a = env['ts.assignment'].sudo().search([('token', '=', '%s')]); print('OWN', a.user_id.login)" % T_SMS)
+check('D10 signing in with another number accepts nothing for it: the invitation stays with the invited account',
+      j.get('ok') and ('OWN %s' % PH['sms']) in info, '%s %s' % (str(j)[:80], info.strip()[-40:]))
+ob.req('/web/session/logout', {'csrf_token': ob.csrf(ob.req('/my')[2])})
 
 # ================================================================ 5. a signed-in account that is not the invited number
 oc = client()

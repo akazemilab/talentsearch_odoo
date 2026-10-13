@@ -16,7 +16,7 @@ from odoo.addons.ts_assessment.controllers.main import _ts_site_or_404
 from odoo.addons.ts_sms.controllers.signup import KNOWN_KEY, TsAuthSiteHome, TsSignup, safe_next
 
 from ..models.common import GUEST_COOKIE, digest, drop_cookie, read_token
-from ..models.ir_http import SCOPE_KEY
+from ..models.ir_http import OTHER_KEY, SCOPE_KEY
 from . import flow
 
 LOGGED_KEY = 'ts_onb_logged'         # set by _login for the rest of this request only (popped in verify)
@@ -41,11 +41,18 @@ class TsOnbSignup(TsSignup):
 
     @http.route()
     def signup(self, step=None, msg=None, **kw):
+        if kw.get('other') == '1':
+            # «شمارهٔ دیگری دارم»: the ordinary sign-in with any number. Nothing is accepted for it: an invitation still
+            # checks who may accept it (another number sees the mismatch notice).
+            _ts_site_or_404()
+            for key in (KNOWN_KEY, 'ts_signup_phone'):
+                request.session.pop(key, None)
+            request.session[OTHER_KEY] = True
         if request.session.get(SCOPE_KEY) and not request.env.user._is_public():
             # signed in for one invitation only: the sign-in page itself (the number masked), not a redirect loop
             _ts_site_or_404()
             phone = request.session[SCOPE_KEY].get('phone')
-            if phone:
+            if phone and not request.session.get(OTHER_KEY):
                 request.session[KNOWN_KEY] = phone
             nxt = safe_next(kw.get('next'))
             if step == 'code' and request.session.get('ts_signup_phone'):
@@ -76,6 +83,7 @@ class TsOnbSignup(TsSignup):
             return res
         request.session.pop(SCOPE_KEY, None)          # an ordinary full session from now on
         request.session.pop(KNOWN_KEY, None)
+        request.session.pop(OTHER_KEY, None)
         request.update_env(user=uid)
         user = request.env.user
         nxt = safe_next(post.get('next'))
