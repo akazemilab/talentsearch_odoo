@@ -1,0 +1,607 @@
+{
+ "instrument": "CAREER-IP-60",
+ "source": "O*NET Interest Profiler Short Form (USDOL/ETA), Persian adaptation",
+ "method": "two independent forward translations, reconciliation, blind back-translation",
+ "items": [
+  {
+   "n": 1,
+   "type": "R",
+   "en": "Build kitchen cabinets",
+   "fa": "ساخت کابینت آشپزخانه",
+   "back_en": "Making kitchen cabinets",
+   "adapted": false,
+   "note": "",
+   "drift": "none"
+  },
+  {
+   "n": 2,
+   "type": "R",
+   "en": "Drive a truck to deliver packages to offices and homes",
+   "fa": "رانندگی کامیون برای رساندن بسته به ادارات و منازل",
+   "back_en": "Driving a truck to deliver packages to offices and homes",
+   "adapted": false,
+   "note": "",
+   "drift": "none"
+  },
+  {
+   "n": 3,
+   "type": "R",
+   "en": "Lay brick or tile",
+   "fa": "آجرچینی یا کاشی‌کاری",
+   "back_en": "Bricklaying or tiling",
+   "adapted": false,
+   "note": "",
+   "drift": "none"
+  },
+  {
+   "n": 4,
+   "type": "R",
+   "en": "Test the quality of parts before shipment",
+   "fa": "بررسی کیفیت قطعات پیش از ارسال",
+   "back_en": "Checking the quality of parts before they are sent out",
+   "adapted": false,
+   "note": "",
+   "drift": "none"
+  },
+  {
+   "n": 5,
+   "type": "R",
+   "en": "Repair household appliances",
+   "fa": "تعمیر لوازم خانگی",
+   "back_en": "Repairing household appliances",
+   "adapted": false,
+   "note": "",
+   "drift": "none"
+  },
+  {
+   "n": 6,
+   "type": "R",
+   "en": "Repair and install locks",
+   "fa": "تعمیر و نصب قفل",
+   "back_en": "Repairing and installing locks",
+   "adapted": false,
+   "note": "",
+   "drift": "none"
+  },
+  {
+   "n": 7,
+   "type": "R",
+   "en": "Raise fish in a fish hatchery",
+   "fa": "پرورش ماهی در مرکز تکثیر ماهی",
+   "back_en": "Raising fish at a fish breeding center",
+   "adapted": false,
+   "note": "",
+   "drift": "none"
+  },
+  {
+   "n": 8,
+   "type": "R",
+   "en": "Set up and operate machines to make products",
+   "fa": "راه‌اندازی و کار با دستگاه‌های تولید کالا",
+   "back_en": "Setting up and operating machines that produce goods",
+   "adapted": false,
+   "note": "",
+   "drift": "none"
+  },
+  {
+   "n": 9,
+   "type": "R",
+   "en": "Assemble electronic parts",
+   "fa": "مونتاژ قطعات الکترونیکی",
+   "back_en": "Assembling electronic parts",
+   "adapted": false,
+   "note": "",
+   "drift": "none"
+  },
+  {
+   "n": 10,
+   "type": "R",
+   "en": "Put out forest fires",
+   "fa": "خاموش کردن آتش‌سوزی جنگل",
+   "back_en": "Extinguishing forest fires",
+   "adapted": false,
+   "note": "",
+   "drift": "none"
+  },
+  {
+   "n": 11,
+   "type": "I",
+   "en": "Develop a new medicine",
+   "fa": "ساخت داروی جدید",
+   "back_en": "Making a new medicine",
+   "adapted": false,
+   "note": "",
+   "drift": "none"
+  },
+  {
+   "n": 12,
+   "type": "I",
+   "en": "Investigate the cause of a fire",
+   "fa": "بررسی علت آتش‌سوزی",
+   "back_en": "Examining the cause of a fire",
+   "adapted": false,
+   "note": "",
+   "drift": "none"
+  },
+  {
+   "n": 13,
+   "type": "I",
+   "en": "Study ways to reduce water pollution",
+   "fa": "پژوهش دربارهٔ راه‌های کاهش آلودگی آب",
+   "back_en": "Research on ways of reducing water pollution",
+   "adapted": false,
+   "note": "",
+   "drift": "none"
+  },
+  {
+   "n": 14,
+   "type": "I",
+   "en": "Develop a way to better predict the weather",
+   "fa": "ابداع روشی برای پیش‌بینی بهتر وضع هوا",
+   "back_en": "Devising a method for predicting the weather better",
+   "adapted": false,
+   "note": "",
+   "drift": "none"
+  },
+  {
+   "n": 15,
+   "type": "I",
+   "en": "Conduct chemical experiments",
+   "fa": "انجام آزمایش‌های شیمیایی",
+   "back_en": "Carrying out chemical experiments",
+   "adapted": false,
+   "note": "",
+   "drift": "none"
+  },
+  {
+   "n": 16,
+   "type": "I",
+   "en": "Work in a biology lab",
+   "fa": "کار در آزمایشگاه زیست‌شناسی",
+   "back_en": "Working in a biology laboratory",
+   "adapted": false,
+   "note": "",
+   "drift": "none"
+  },
+  {
+   "n": 17,
+   "type": "I",
+   "en": "Study the movement of planets",
+   "fa": "مطالعهٔ حرکت سیاره‌ها",
+   "back_en": "Studying the motion of planets",
+   "adapted": false,
+   "note": "",
+   "drift": "none"
+  },
+  {
+   "n": 18,
+   "type": "I",
+   "en": "Invent a replacement for sugar",
+   "fa": "ابداع جایگزینی برای شکر",
+   "back_en": "Inventing a substitute for sugar",
+   "adapted": false,
+   "note": "",
+   "drift": "none"
+  },
+  {
+   "n": 19,
+   "type": "I",
+   "en": "Examine blood samples using a microscope",
+   "fa": "بررسی نمونه‌های خون با میکروسکوپ",
+   "back_en": "Examining blood samples with a microscope",
+   "adapted": false,
+   "note": "",
+   "drift": "none"
+  },
+  {
+   "n": 20,
+   "type": "I",
+   "en": "Do laboratory tests to identify diseases",
+   "fa": "انجام آزمایش‌های آزمایشگاهی برای تشخیص بیماری‌ها",
+   "back_en": "Carrying out laboratory tests to diagnose diseases",
+   "adapted": false,
+   "note": "",
+   "drift": "none"
+  },
+  {
+   "n": 21,
+   "type": "A",
+   "en": "Write books or plays",
+   "fa": "نوشتن کتاب یا نمایش‌نامه",
+   "back_en": "Writing books or plays",
+   "adapted": false,
+   "note": "",
+   "drift": "none"
+  },
+  {
+   "n": 22,
+   "type": "A",
+   "en": "Paint sets for plays",
+   "fa": "نقاشی دکور برای نمایش‌های تئاتر",
+   "back_en": "Painting scenery for theater plays",
+   "adapted": false,
+   "note": "",
+   "drift": "none"
+  },
+  {
+   "n": 23,
+   "type": "A",
+   "en": "Play a musical instrument",
+   "fa": "نواختن یک ساز موسیقی",
+   "back_en": "Playing a musical instrument",
+   "adapted": false,
+   "note": "",
+   "drift": "none"
+  },
+  {
+   "n": 24,
+   "type": "A",
+   "en": "Write scripts for movies or television shows",
+   "fa": "نوشتن فیلم‌نامه برای فیلم سینمایی یا برنامه تلویزیونی",
+   "back_en": "Writing screenplays for a movie or a television program",
+   "adapted": false,
+   "note": "",
+   "drift": "none"
+  },
+  {
+   "n": 25,
+   "type": "A",
+   "en": "Compose or arrange music",
+   "fa": "آهنگ‌سازی یا تنظیم موسیقی",
+   "back_en": "Composing or arranging music",
+   "adapted": false,
+   "note": "",
+   "drift": "none"
+  },
+  {
+   "n": 26,
+   "type": "A",
+   "en": "Perform jazz or tap dance",
+   "fa": "بازیگری روی صحنه تئاتر",
+   "back_en": "Acting on a theater stage",
+   "adapted": true,
+   "note": "Jazz or tap dance (public dance performance) is socially unsuitable in Iran; replaced with stage acting in theater, same Artistic type and performing-skill level. Back-translation differs by design (intended adaptation).",
+   "drift": "major"
+  },
+  {
+   "n": 27,
+   "type": "A",
+   "en": "Draw pictures",
+   "fa": "کشیدن نقاشی",
+   "back_en": "Drawing or painting pictures",
+   "adapted": false,
+   "note": "",
+   "drift": "none"
+  },
+  {
+   "n": 28,
+   "type": "A",
+   "en": "Sing in a band",
+   "fa": "خوانندگی در یک گروه موسیقی",
+   "back_en": "Singing in a music group",
+   "adapted": false,
+   "note": "",
+   "drift": "none"
+  },
+  {
+   "n": 29,
+   "type": "A",
+   "en": "Create special effects for movies",
+   "fa": "ساخت جلوه‌های ویژه برای فیلم",
+   "back_en": "Creating special effects for films",
+   "adapted": false,
+   "note": "",
+   "drift": "none"
+  },
+  {
+   "n": 30,
+   "type": "A",
+   "en": "Edit movies",
+   "fa": "تدوین فیلم",
+   "back_en": "Editing films",
+   "adapted": false,
+   "note": "",
+   "drift": "none"
+  },
+  {
+   "n": 31,
+   "type": "S",
+   "en": "Teach an individual an exercise routine",
+   "fa": "آموزش برنامهٔ تمرین ورزشی به یک نفر",
+   "back_en": "Teaching one person an exercise program",
+   "adapted": false,
+   "note": "",
+   "drift": "none"
+  },
+  {
+   "n": 32,
+   "type": "S",
+   "en": "Teach children how to play sports",
+   "fa": "آموزش ورزش به کودکان",
+   "back_en": "Teaching sports to children",
+   "adapted": false,
+   "note": "",
+   "drift": "none"
+  },
+  {
+   "n": 33,
+   "type": "S",
+   "en": "Help people with personal or emotional problems",
+   "fa": "کمک به افراد برای حل مشکلات شخصی یا عاطفی",
+   "back_en": "Helping people solve personal or emotional problems",
+   "adapted": false,
+   "note": "",
+   "drift": "none"
+  },
+  {
+   "n": 34,
+   "type": "S",
+   "en": "Teach sign language to people who are deaf or hard of hearing",
+   "fa": "آموزش زبان اشاره به افراد ناشنوا یا کم‌شنوا",
+   "back_en": "Teaching sign language to deaf or hard-of-hearing people",
+   "adapted": false,
+   "note": "",
+   "drift": "none"
+  },
+  {
+   "n": 35,
+   "type": "S",
+   "en": "Give career guidance to people",
+   "fa": "راهنمایی شغلی به افراد",
+   "back_en": "Giving career guidance to people",
+   "adapted": false,
+   "note": "Chose guidance (راهنمایی) over adding education, which translation A introduced and the source lacks.",
+   "drift": "none"
+  },
+  {
+   "n": 36,
+   "type": "S",
+   "en": "Help conduct a group therapy session",
+   "fa": "کمک به برگزاری جلسهٔ مشاورهٔ گروهی",
+   "back_en": "Helping to hold a group therapy session",
+   "adapted": false,
+   "note": "",
+   "drift": "none"
+  },
+  {
+   "n": 37,
+   "type": "S",
+   "en": "Perform rehabilitation therapy",
+   "fa": "انجام تمرین‌های توان‌بخشی با افراد",
+   "back_en": "Providing rehabilitation treatments",
+   "adapted": false,
+   "note": "",
+   "drift": "none"
+  },
+  {
+   "n": 38,
+   "type": "S",
+   "en": "Take care of children at a day-care center",
+   "fa": "مراقبت از کودکان در مهدکودک",
+   "back_en": "Taking care of children at a kindergarten or day-care center",
+   "adapted": false,
+   "note": "",
+   "drift": "none"
+  },
+  {
+   "n": 39,
+   "type": "S",
+   "en": "Do volunteer work at a non-profit organization",
+   "fa": "کار داوطلبانه در یک سازمان غیرانتفاعی",
+   "back_en": "Volunteer work at a non-profit organization",
+   "adapted": false,
+   "note": "",
+   "drift": "none"
+  },
+  {
+   "n": 40,
+   "type": "S",
+   "en": "Teach a high-school class",
+   "fa": "تدریس در یک کلاس دبیرستان",
+   "back_en": "Teaching a high school class",
+   "adapted": false,
+   "note": "",
+   "drift": "none"
+  },
+  {
+   "n": 41,
+   "type": "E",
+   "en": "Buy and sell stocks and bonds",
+   "fa": "خرید و فروش سهام و اوراق بهادار",
+   "back_en": "Buying and selling stocks and securities",
+   "adapted": false,
+   "note": "Bonds rendered as securities (اوراق بهادار), the standard Iranian market term; interest-bearing bonds are not the local instrument.",
+   "drift": "minor"
+  },
+  {
+   "n": 42,
+   "type": "E",
+   "en": "Negotiate business contracts",
+   "fa": "مذاکره دربارهٔ قراردادهای تجاری",
+   "back_en": "Negotiating business contracts",
+   "adapted": false,
+   "note": "",
+   "drift": "none"
+  },
+  {
+   "n": 43,
+   "type": "E",
+   "en": "Manage a retail store",
+   "fa": "مدیریت یک فروشگاه خرده‌فروشی",
+   "back_en": "Managing a retail store",
+   "adapted": false,
+   "note": "",
+   "drift": "none"
+  },
+  {
+   "n": 44,
+   "type": "E",
+   "en": "Represent a client in a lawsuit",
+   "fa": "وکالت از موکل در یک دعوای حقوقی",
+   "back_en": "Representing a client in a legal lawsuit",
+   "adapted": false,
+   "note": "",
+   "drift": "none"
+  },
+  {
+   "n": 45,
+   "type": "E",
+   "en": "Operate a beauty salon or barber shop",
+   "fa": "ادارهٔ آرایشگاه زنانه یا مردانه",
+   "back_en": "Running a women's or men's hair and beauty salon",
+   "adapted": false,
+   "note": "Beauty salon or barber shop merged into the natural Iranian pair of women's or men's salon (gender-segregated establishments).",
+   "drift": "none"
+  },
+  {
+   "n": 46,
+   "type": "E",
+   "en": "Market a new line of clothing",
+   "fa": "بازاریابی برای مجموعهٔ جدید پوشاک",
+   "back_en": "Marketing a new clothing collection",
+   "adapted": false,
+   "note": "",
+   "drift": "none"
+  },
+  {
+   "n": 47,
+   "type": "E",
+   "en": "Manage a department within a large company",
+   "fa": "مدیریت یک بخش در یک شرکت بزرگ",
+   "back_en": "Managing a department in a large company",
+   "adapted": false,
+   "note": "",
+   "drift": "none"
+  },
+  {
+   "n": 48,
+   "type": "E",
+   "en": "Sell merchandise at a department store",
+   "fa": "فروش کالا در یک فروشگاه بزرگ",
+   "back_en": "Selling goods in a large store",
+   "adapted": false,
+   "note": "",
+   "drift": "none"
+  },
+  {
+   "n": 49,
+   "type": "E",
+   "en": "Start your own business",
+   "fa": "راه‌اندازی کسب‌وکار شخصی",
+   "back_en": "Starting a personal business of one's own",
+   "adapted": false,
+   "note": "",
+   "drift": "none"
+  },
+  {
+   "n": 50,
+   "type": "E",
+   "en": "Manage a clothing store",
+   "fa": "مدیریت یک فروشگاه پوشاک",
+   "back_en": "Managing a clothing store",
+   "adapted": false,
+   "note": "",
+   "drift": "none"
+  },
+  {
+   "n": 51,
+   "type": "C",
+   "en": "Develop a spreadsheet using computer software",
+   "fa": "تهیهٔ جدول محاسباتی با نرم‌افزار رایانه‌ای",
+   "back_en": "Preparing a spreadsheet with computer software",
+   "adapted": false,
+   "note": "",
+   "drift": "none"
+  },
+  {
+   "n": 52,
+   "type": "C",
+   "en": "Calculate the wages of employees",
+   "fa": "محاسبهٔ حقوق و دستمزد کارکنان",
+   "back_en": "Calculating employees' salaries and wages",
+   "adapted": false,
+   "note": "",
+   "drift": "none"
+  },
+  {
+   "n": 53,
+   "type": "C",
+   "en": "Proofread records or forms",
+   "fa": "غلط‌گیری سوابق یا فرم‌ها",
+   "back_en": "Correcting errors in records or forms",
+   "adapted": false,
+   "note": "",
+   "drift": "none"
+  },
+  {
+   "n": 54,
+   "type": "C",
+   "en": "Inventory supplies using a hand-held computer",
+   "fa": "انبارگردانی اقلام با رایانه دستی",
+   "back_en": "Taking inventory of items with a handheld computer",
+   "adapted": false,
+   "note": "",
+   "drift": "none"
+  },
+  {
+   "n": 55,
+   "type": "C",
+   "en": "Install software across computers on a large network",
+   "fa": "نصب نرم‌افزار روی رایانه‌های یک شبکه بزرگ",
+   "back_en": "Installing software on the computers of a large network",
+   "adapted": false,
+   "note": "",
+   "drift": "none"
+  },
+  {
+   "n": 56,
+   "type": "C",
+   "en": "Record rent payments",
+   "fa": "ثبت پرداخت‌های اجاره‌بها",
+   "back_en": "Recording rent payments",
+   "adapted": false,
+   "note": "",
+   "drift": "none"
+  },
+  {
+   "n": 57,
+   "type": "C",
+   "en": "Operate a calculator",
+   "fa": "کار با ماشین‌حساب",
+   "back_en": "Working with a calculator",
+   "adapted": false,
+   "note": "",
+   "drift": "none"
+  },
+  {
+   "n": 58,
+   "type": "C",
+   "en": "Keep inventory records",
+   "fa": "نگهداری سوابق موجودی انبار",
+   "back_en": "Keeping warehouse stock records",
+   "adapted": false,
+   "note": "",
+   "drift": "none"
+  },
+  {
+   "n": 59,
+   "type": "C",
+   "en": "Keep shipping and receiving records",
+   "fa": "نگهداری سوابق ارسال و دریافت کالا",
+   "back_en": "Keeping records of shipping and receiving goods",
+   "adapted": false,
+   "note": "",
+   "drift": "none"
+  },
+  {
+   "n": 60,
+   "type": "C",
+   "en": "Stamp, sort, and distribute mail for an organization",
+   "fa": "مهر زدن، دسته‌بندی و توزیع نامه‌های یک سازمان",
+   "back_en": "Stamping, sorting and distributing an organization's letters",
+   "adapted": false,
+   "note": "Mail rendered as letters (نامه) for natural usage; minor narrowing.",
+   "drift": "minor"
+  }
+ ]
+}
