@@ -456,6 +456,13 @@ Data step (owner-only, NOT in code): approve workspace 1, set pilot, add the cou
 - Rehearsal eot_ts993 was restored and stopped before any test (port 8073 still held by eot_ts992) and dropped. Rehearsal eot_ts994 on 8dfb197 (slot 1, INSTALL ts_onboard, UPGRADE ts_core,ts_website,ts_assessment,ts_org,ts_sms,ts_talent,ts_panel,ts_battery,ts_billing,ts_brand,ts_onet,ts_tasks,ts_hire): 72 suites, 2909/2909, guard UNCHANGED (1049 pages), portal UNCHANGED, unexpected failures 0; served on :8073. Not shipped, not pushed.
 - `ts shots eot_ts994` (375, 1280): 109 files, only the intended /nist-404 flagged; looked at the welcome screens (share tick, «این دستگاه شخصی من است», minors' screen), the result gate and the masked-code screen («*** ۰۳۷۵»).
 
+### onb2 closing items (re-review OK)
+
+- eot.ir activity check (fail-closed) also counts crm.lead, helpdesk.ticket, survey.user_input (partner child_of), forum.post (create_uid) and person-written mail.message (comment/email) on non-`ts.*` records; each model only `if in env`; a full scan page (200) counts as activity.
+- Scoped pages get no `bus_info`/`websocket_worker_version` in the frontend session info, so the bus worker never starts (no reconnect loop, no log noise). Rate limiter: `pg_advisory_xact_lock(hashtext('ts_rate:'+key))` before the count, same transaction, no second cursor. Kavenegar outbox import masks `/i/<code>/<secret>` and `?d=` secrets (`mask_link_secrets`; length and parts from the original text).
+- Tests: tests_onb2 Z01–Z06 (activity models, messages, crm.lead, fail-closed, advisory lock, outbox mask); ts_http_onb2 8b: a scoped session starts, answers and finishes the timed tasks of an HR battery over HTTP, another person's token gets 403/404, scoped Likert answer POST. Commit 137807a; origin/main unchanged.
+- eot_ts994 dropped. Rehearsal eot_ts995 on 137807a (slot 1, INSTALL ts_onboard, UPGRADE ts_core,ts_website,ts_assessment,ts_org,ts_sms,ts_talent,ts_panel,ts_battery,ts_billing,ts_brand,ts_onet,ts_tasks,ts_hire,ts_kavenegar): 74 suites, 2984/2986 (the two known tests_kavenegar inbox failures only), guard UNCHANGED, portal UNCHANGED, unexpected failures 0; served on :8073. Not shipped, not pushed.
+
 ## take1 — test-taking UX pass (2026-10-13, LIVE)
 
 - Research (docs in session /home/claude/ux7/research_notes.md, summary in the Project report «Test-taking UX audit»): radio-style options, few items per page on phones, honest progress, stated time, transition interstitials, no silent skips, OTP autofill (WCAG 3.3.8), result promise, short consent; WCAG 2.2 AA, ISO 9241-110/-11, GOV.UK question pages, ITC 2022.
