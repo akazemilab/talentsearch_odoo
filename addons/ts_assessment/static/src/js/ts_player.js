@@ -23,7 +23,9 @@
         body.append('item', li.getAttribute('data-item'));
         body.append('value', input.value);
         if (state) { state.classList.remove('is-error'); state.textContent = 'در حال ذخیره…'; }
-        fetch('/take/' + root.getAttribute('data-token') + '/answer', { method: 'POST', body: body, credentials: 'same-origin' })
+        // onb2: the page names its own autosave address (the guest player has no token in any address)
+        var url = root.getAttribute('data-answer-url') || ('/take/' + root.getAttribute('data-token') + '/answer');
+        fetch(url, { method: 'POST', body: body, credentials: 'same-origin' })
             .then(function (r) { return r.json().then(function (j) { return { ok: r.ok && j.ok, j: j }; }); })
             .then(function (res) {
                 if (!res.ok) { throw new Error(res.j && res.j.error); }

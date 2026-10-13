@@ -65,9 +65,11 @@
             <t t-name="ts_assessment.player">
                 <!-- the header «ذخیره و خروج» submits this page's form, so unsaved choices are posted too (UX audit G2-P11-3) -->
                 <t t-set="ts_exit_form" t-value="'ts-qform'"/>
+                <!-- onb2: the guest player (/start/q, no account yet) renders this page with its own address and no token -->
+                <t t-set="take_url" t-value="take_url or ('/take/' + attempt.access_token)"/>
                 <t t-call="website.layout" additional_title="inst.ts_title()">
                     <div id="wrap" class="ts-page">
-                        <section class="ts-section ts-player" t-att-data-token="attempt.access_token" t-att-data-total="total">
+                        <section class="ts-section ts-player" t-att-data-token="None if guest else attempt.access_token" t-att-data-answer-url="take_url + '/answer'" t-att-data-total="total">
                             <div class="ts-container ts-narrow">
                                 <div class="ts-player__head">
                                     <h1 class="ts-player__title" t-out="inst.ts_title()"/>
@@ -80,7 +82,7 @@
                                 <p class="ts-scale-help" t-if="inst.audience == 'child'">هر جمله را بخوانید و بگویید چقدر دربارهٔ کودک درست است.</p>
                                 <p class="ts-scale-help" t-elif="tu">هر جمله را بخوان و بگو چقدر دربارهٔ تو درست است.</p>
                                 <p class="ts-scale-help" t-else="">هر جمله را بخوانید و بگویید چقدر دربارهٔ شما درست است.</p>
-                                <form t-attf-action="/take/#{attempt.access_token}/page" method="post" class="ts-qform" id="ts-qform">
+                                <form t-att-action="take_url + '/page'" method="post" class="ts-qform" id="ts-qform">
                                     <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
                                     <input type="hidden" name="page" t-att-value="page"/>
                                     <ol class="ts-qlist" t-att-start="first_index + 1">
@@ -124,6 +126,7 @@
         <field name="website_id" ref="ts_website.website_ts"/>
         <field name="arch" type="xml">
             <t t-name="ts_assessment.review">
+                <t t-set="take_url" t-value="take_url or ('/take/' + attempt.access_token)"/>
                 <t t-call="website.layout" additional_title.f="مرور و ارسال">
                     <div id="wrap" class="ts-page">
                         <section class="ts-section">
@@ -137,21 +140,21 @@
                                     </div>
                                     <ul class="ts-missing">
                                         <t t-foreach="missing" t-as="m">
-                                            <li><a t-attf-href="/take/#{attempt.access_token}?page=#{m[2]}">پرسش <t t-out="fa(m[0])"/>: <t t-out="m[1].text"/></a></li>
+                                            <li><a t-attf-href="#{take_url}?page=#{m[2]}">پرسش <t t-out="fa(m[0])"/>: <t t-out="m[1].text"/></a></li>
                                         </t>
                                     </ul>
-                                    <p><a t-attf-href="/take/#{attempt.access_token}?page=#{missing[0][2]}" class="ts-btn ts-btn--primary">رفتن به اولین پرسش بی‌پاسخ</a></p>
+                                    <p><a t-attf-href="#{take_url}?page=#{missing[0][2]}" class="ts-btn ts-btn--primary">رفتن به اولین پرسش بی‌پاسخ</a></p>
                                 </t>
                                 <t t-else="">
                                     <div class="ts-notice ts-notice--info" role="note" id="ts-review-lock">
                                         <p><strong>پس از ارسال، پاسخ‌ها قفل می‌شوند</strong> و نتیجه بلافاصله در حساب شما نمایش داده می‌شود.</p>
                                         <p id="ts-review-who">نتیجه را فقط خودتان می‌بینید.</p>
                                     </div>
-                                    <form t-attf-action="/take/#{attempt.access_token}/submit" method="post" class="ts-submit-form">
+                                    <form t-att-action="take_url + '/submit'" method="post" class="ts-submit-form">
                                         <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
-                                        <input type="hidden" name="submission_key" t-att-value="attempt.access_token"/>
+                                        <input type="hidden" name="submission_key" t-att-value="None if guest else attempt.access_token"/>
                                         <button type="submit" class="ts-btn ts-btn--primary">ارسال نهایی و مشاهدهٔ نتیجه</button>
-                                        <a t-attf-href="/take/#{attempt.access_token}?page=#{n_pages}" class="ts-btn ts-btn--outline">بازگشت و بازبینی</a>
+                                        <a t-attf-href="#{take_url}?page=#{n_pages}" class="ts-btn ts-btn--outline">بازگشت و بازبینی</a>
                                     </form>
                                 </t>
                             </div>

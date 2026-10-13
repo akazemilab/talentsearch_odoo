@@ -119,7 +119,8 @@
             ev.preventDefault();
             if (busy) { return; }
             var n = digits(phoneIn.value);
-            if (n.length < 10) {
+            var known = !!phoneForm.querySelector('input[name="known"]');   // onb2: the server holds the number
+            if (!known && n.length < 10) {
                 say('شمارهٔ موبایل ایران را به شکل ۰۹۱۲۳۴۵۶۷۸۹ وارد کنید.', 'warn');
                 invalid(phoneIn, true);
                 phoneIn.focus();

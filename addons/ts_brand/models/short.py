@@ -1,10 +1,11 @@
 """Short links for SMS (docs/clinic/05_sms_texts.md rule 2: a link of at most 34 characters, never the full token).
 
 `ts.assignment.short_code` -> /i/<code> -> 302 /invite/<token>; `ts.member.invite.short_code` -> /j/<code> -> 302
-/join/<token>. 8 characters of [a-z0-9] (36^8 = 2.8e12), unique, set in create (before any SMS is sent from an inner
-create) and backfilled at install (hooks.py). The code is as secret as the token it leads to: it is only ever sent to the
-invitee. Inside an SMS context (`ts_sms_short`), `invite_url()` answers the short link, so the old fallback texts never
-carry the token either.
+/join/<token>. onb2: new codes have 12 characters of [a-z0-9] (36^12 = 4.7e18); the 8-character codes of earlier
+invitations keep working. Unique, set in create (before any SMS is sent from an inner create) and backfilled at install
+(hooks.py). The code is as secret as the token it leads to: it is only ever sent to the invitee, and lookups are
+rate-limited per network address (ts_onboard). Inside an SMS context (`ts_sms_short`), `invite_url()` answers the short
+link, so the old fallback texts never carry the token either.
 """
 import re
 import secrets
@@ -13,8 +14,8 @@ import string
 from odoo import api, fields, models
 
 ALPHABET = string.ascii_lowercase + string.digits
-CODE_LEN = 8
-CODE_RE = re.compile(r'^[a-z0-9]{8}$')
+CODE_LEN = 12
+CODE_RE = re.compile(r'^(?:[a-z0-9]{8}|[a-z0-9]{12})$')     # 12 since onb2; older 8-character codes stay valid
 
 
 def new_code():

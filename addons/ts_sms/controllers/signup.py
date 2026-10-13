@@ -6,6 +6,9 @@ New people get an account straight after the code (no name step): the name stays
 is needed (panel, colleague invite, account page). Internal (staff) accounts are never signed in or duplicated by a
 code. «این دستگاه شخصی من است» (default on) keeps a portal session for 30 days; off = a browser-session cookie
 (models/ir_http.py). Website 4 only: stock /web/login (email) stays reachable as the quiet second way.
+
+onb2: a number the server already knows (KNOWN_KEY: the invited number of an invitation, or the number of a session
+scoped to one invitation) is shown masked («۰۹۱۲•••۴۵۶۷») and the visitor types nothing but the code.
 """
 from urllib.parse import quote
 
@@ -37,7 +40,24 @@ MESSAGES = dict(MESSAGES, **{
 })
 PERSONAL_KEY = 'ts_auth_personal'       # the «این دستگاه شخصی من است» choice, until the code is verified
 RESENDS_KEY = 'ts_auth_resends'         # how many times a code was asked again for the current number
+KNOWN_KEY = 'ts_auth_known'             # onb2: a number the server holds; shown masked, never typed
 HELP_AFTER_RESENDS = 2
+_FA = str.maketrans('0123456789', '۰۱۲۳۴۵۶۷۸۹')
+
+
+def mask_mobile(phone):
+    """«۰۹۱۲•••۴۵۶۷»: the first four and the last four digits of a normalised mobile number, in Persian digits."""
+    phone = phone or ''
+    if len(phone) < 8:
+        return ''
+    return (phone[:4] + '•••' + phone[-4:]).translate(_FA)
+
+
+def _shown(phone):
+    """The number as the page shows it: masked when it is the known number, else formatted in full."""
+    if not phone:
+        return ''
+    return mask_mobile(phone) if phone == request.session.get(KNOWN_KEY) else fmt_mobile(phone)
 
 
 def safe_next(value):
@@ -59,6 +79,7 @@ WHY = [
     ('/join/', 'برای پیوستن به پنل، اول وارد شوید؛ بعد به همان دعوت برمی‌گردید.'),
     ('/assessments/', 'پاسخ‌ها و نتیجه در حساب شما ذخیره می‌شود؛ بعد از ورود به همان سنجه برمی‌گردید.'),
     ('/take/', 'پاسخ‌ها و نتیجه در حساب شما ذخیره می‌شود؛ بعد از ورود به همان سنجه برمی‌گردید.'),
+    ('/start/', 'نتیجه‌تان آماده است؛ با شمارهٔ موبایل آن را می‌بینید و در حسابتان نگه می‌دارید.'),
 ]
 
 
@@ -88,12 +109,14 @@ def _ajax():
 def signin_values(step, msg=None, nxt='/my', edit=False):
     """Render values of ts_sms.signup (also used by /web/login on talentsearch.ir)."""
     phone = request.session.get('ts_signup_phone') or ''
+    known = request.session.get(KNOWN_KEY) or ''
     Otp = request.env['ts.signup.otp']
     return {
         'enabled': _enabled(), 'step': step, 'msg': MESSAGES.get(msg), 'msg_key': msg or '', 'next': nxt,
         'next_q': quote(nxt, safe='/'), 'why': why_for(nxt),
-        'phone': phone, 'phone_fa': fmt_mobile(phone) if phone else '',
-        'phone_prefill': fa_digits(phone) if (phone and edit) else '',
+        'phone': phone, 'phone_fa': _shown(phone),
+        'phone_prefill': fa_digits(phone) if (phone and edit and phone != known) else '',
+        'known_fa': mask_mobile(known) if known else '',
         'personal': request.session.get(PERSONAL_KEY, True),
         'wait': Otp.seconds_to_resend(phone) if (phone and step == 'code') else 0,
         'resends': request.session.get(RESENDS_KEY, 0),
@@ -101,6 +124,27 @@ def signin_values(step, msg=None, nxt='/my', edit=False):
         'email_url': ('/web/login?redirect=%s&email=1' % quote(nxt, safe='/')) if nxt != '/my' else '/web/login?email=1',
         'page_name': 'ts_signup',
     }
+
+
+def pick_phone_user(users, phone):
+    """Of the accounts that hold a number, the most recently verified one (the verified number first, then the login)."""
+    return users.sorted(lambda u: (u.partner_id.ts_phone == phone,
+                                   u.partner_id.ts_phone_verified_at or fields.Datetime.from_string('2000-01-01')),
+                        reverse=True)[:1]
+
+
+def create_phone_user(env, phone):
+    """A portal account from a mobile number alone (a verified code, or since onb2 the invitation SMS that reached this
+    number). The name is unknown: `name` holds the formatted number for the back office, and the site asks for a real
+    name only where others will see it. The name a panel typed on an invitation is never copied here."""
+    Users = env['res.users'].sudo().with_context(no_reset_password=True, ts_name_placeholder=True)
+    user = Users.create({
+        'name': fmt_mobile(phone, persian=False), 'login': phone,
+        'group_ids': [(6, 0, [env.ref('base.group_portal').id])],
+    })
+    user.partner_id.sudo().with_context(ts_name_placeholder=True).write({
+        'phone': phone, 'ts_phone': phone, 'ts_phone_verified_at': fields.Datetime.now(), 'ts_name_unknown': True})
+    return user
 
 
 class TsSignup(http.Controller):
@@ -120,7 +164,7 @@ class TsSignup(http.Controller):
             phone = request.session.get('ts_signup_phone') or ''
             m = MESSAGES.get(msg)
             data = {'ok': ok, 'state': state, 'msg': m[1] if m else '', 'tone': m[0] if m else '', 'key': msg or '',
-                    'redirect': url, 'phone_fa': fmt_mobile(phone) if phone else '',
+                    'redirect': url, 'phone_fa': _shown(phone),
                     'wait': request.env['ts.signup.otp'].seconds_to_resend(phone) if phone else 0,
                     'resends': request.session.get(RESENDS_KEY, 0), 'help_after': HELP_AFTER_RESENDS}
             data.update(extra)
@@ -147,6 +191,8 @@ class TsSignup(http.Controller):
         if 'personal' in post or 'personal_shown' in post:
             request.session[PERSONAL_KEY] = post.get('personal') == '1'
         resend = post.get('resend') == '1'
+        if post.get('known') == '1' and request.session.get(KNOWN_KEY):
+            phone = request.session[KNOWN_KEY]      # the number the server holds (shown masked): nothing is typed
         if resend and not phone:
             phone = request.session.get('ts_signup_phone')
         before = request.session.get('ts_signup_phone')
@@ -175,7 +221,7 @@ class TsSignup(http.Controller):
             return self._reply(False, 'code', reason, nxt)
         owners = request.env['res.users'].ts_phone_owner(phone)
         personal = request.session.get(PERSONAL_KEY, True)
-        for key in ('ts_signup_phone', RESENDS_KEY, PERSONAL_KEY, 'ts_signup_ok'):
+        for key in ('ts_signup_phone', RESENDS_KEY, PERSONAL_KEY, 'ts_signup_ok', KNOWN_KEY):
             request.session.pop(key, None)
         if owners.filtered(lambda u: not u.share):
             # a staff (internal) account holds this number: never signed in by code, never duplicated
@@ -186,8 +232,7 @@ class TsSignup(http.Controller):
             return self._reply(False, 'phone', 'inactive', nxt)
         if active:
             # a number linked to an email account (ts_phone) or a mobile account (login): the most recently verified
-            user = active.sorted(lambda u: (u.partner_id.ts_phone == phone, u.partner_id.ts_phone_verified_at or fields.Datetime.from_string('2000-01-01')),
-                                 reverse=True)[0]
+            user = pick_phone_user(active, phone)
             request.env['ts.audit.event'].sudo().log('account.login_phone', user)
         else:
             user = self._create_user(phone)
@@ -196,16 +241,8 @@ class TsSignup(http.Controller):
         return self._reply(True, 'done', None, nxt, url=nxt)
 
     def _create_user(self, phone):
-        """A portal account from the verified mobile alone. The name is unknown: `name` holds the formatted number for
-        the back office, and the site asks for a real name only where others will see it."""
-        Users = request.env['res.users'].sudo().with_context(no_reset_password=True, ts_name_placeholder=True)
-        user = Users.create({
-            'name': fmt_mobile(phone, persian=False), 'login': phone,
-            'group_ids': [(6, 0, [request.env.ref('base.group_portal').id])],
-        })
-        user.partner_id.sudo().with_context(ts_name_placeholder=True).write({
-            'phone': phone, 'ts_phone': phone, 'ts_phone_verified_at': fields.Datetime.now(), 'ts_name_unknown': True})
-        return user
+        """A portal account from the verified mobile alone (see create_phone_user)."""
+        return create_phone_user(request.env, phone)
 
 
 class TsAuthSiteHome(AuthSignupHome):

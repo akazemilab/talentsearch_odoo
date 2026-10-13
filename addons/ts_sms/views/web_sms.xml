@@ -143,7 +143,10 @@
                                         <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
                                         <input type="hidden" name="next" t-att-value="next"/>
                                         <input type="hidden" name="personal_shown" value="1"/>
-                                        <div>
+                                        <!-- onb2: a number the server holds is shown masked and sent as known=1; nothing is typed -->
+                                        <p t-if="known_fa" class="tsa-known" id="tsa-known">کد ورود را به <bdi dir="ltr" class="ts-bdi" t-out="known_fa"/> می‌فرستیم.
+                                            <input type="hidden" name="known" value="1"/><input type="hidden" name="phone" value=""/></p>
+                                        <div t-else="">
                                             <label for="tsa_phone">شمارهٔ موبایل</label>
                                             <input id="tsa_phone" name="phone" type="tel" dir="ltr" inputmode="numeric" autocomplete="tel"
                                                    required="required" maxlength="20" placeholder="۰۹۱۲ ۳۴۵ ۶۷۸۹" class="ts-input tsa-num"
@@ -163,8 +166,8 @@
                                           t-att-hidden="None if step == 'code' else 'hidden'" novalidate="novalidate">
                                         <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
                                         <input type="hidden" name="next" t-att-value="next"/>
-                                        <p class="tsa-sent">کد ۶ رقمی را به <bdi dir="ltr" class="ts-bdi tsa-sent__num" t-out="phone_fa"/> فرستادیم.
-                                            <a class="tsa-edit" t-attf-href="/signup?edit=1&amp;next=#{next_q}" data-tsa-edit="1">ویرایش شماره</a></p>
+                                        <p class="tsa-sent"><t t-if="known_fa and phone_fa == known_fa">برای ادامه، کدی به</t><t t-else="">کد ۶ رقمی را به</t> <bdi dir="ltr" class="ts-bdi tsa-sent__num" t-out="phone_fa"/> فرستادیم.
+                                            <a t-if="not (known_fa and phone_fa == known_fa)" class="tsa-edit" t-attf-href="/signup?edit=1&amp;next=#{next_q}" data-tsa-edit="1">ویرایش شماره</a></p>
                                         <div>
                                             <label for="tsa_code">کد ۶ رقمی</label>
                                             <input id="tsa_code" name="code" type="text" dir="ltr" inputmode="numeric" autocomplete="one-time-code"
