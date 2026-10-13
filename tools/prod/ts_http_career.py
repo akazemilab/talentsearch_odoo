@@ -33,13 +33,13 @@ ip = env['ts.instrument'].sudo().search([('code', '=', 'CAREER-IP-60')])
 hx = env['ts.instrument'].sudo().search([('code', '=', 'CAREER-HEXACO-1')])
 env.cr.commit()
 print('ITEMS', ' '.join('%%d:%%s' %% (i.id, i.factor_id.code) for i in ip.current_version_id.item_ids))
-print('HEX', ' '.join('%%d:%%s' %% (i.id, i.factor_id.code) for i in hx.current_version_id.item_ids if not i.disabled))
+print('HEX', '|'.join('%%d:%%s' %% (i.id, i.factor_id.code) for i in hx.current_version_id.item_ids if not i.disabled))
 print('STATE', ip.state, hx.state)
 """ % L)
 m = re.search(r'ITEMS (.*)', out)
 assert m, out[-1500:]
 items = [tuple(x.split(':')) for x in m.group(1).split()]
-hexi = [tuple(x.split(':', 1)) for x in re.search(r'HEX (.*)', out).group(1).split()]
+hexi = [tuple(x.split(':', 1)) for x in re.search(r'HEX (.*)', out).group(1).split('|')]
 check('both modules published', 'STATE published published' in out, out[-300:])
 check('60 interest items', len(items) == 60, str(len(items)))
 
