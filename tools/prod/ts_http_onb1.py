@@ -243,7 +243,7 @@ tok = start(c1, '/invite/' + TOK_INV)
 st, h, j = ajax(c1, '/signup/send', {'csrf_token': tok, 'phone': fa(PH['new']), 'next': '/invite/' + TOK_INV,
                                      'personal_shown': '1', 'personal': '1'})
 check('J01 a number in Persian digits -> JSON: code state, the number shown formatted, about 60 s to resend',
-      st == 200 and j.get('ok') and j.get('state') == 'code' and j.get('phone_fa') == '۰۹۱۲ ۷۷۷ ۸۸۰۱' and 50 <= (j.get('wait') or 0) <= 60, str(j)[:200])
+      st == 200 and j.get('ok') and j.get('state') == 'code' and j.get('phone_fa') == '۰۹۱۲\u200e ۷۷۷\u200e ۸۸۰۱' and 50 <= (j.get('wait') or 0) <= 60, str(j)[:200])
 code, body = last_code(PH['new'])
 lines = body.split('\n')
 check('J02 the SMS: «استعدادیاب / کد ورود: … / این کد را به کسی ندهید.» and the last line «@talentsearch.ir #code», <= 140 characters',
@@ -344,11 +344,17 @@ age_codes()
 st, h, j1 = ajax(ch, '/signup/send', {'csrf_token': tok, 'resend': '1', 'next': '/my'})
 age_codes()
 st, h, j2 = ajax(ch, '/signup/send', {'csrf_token': tok, 'resend': '1', 'next': '/my'})
-check('K07 «کد تازه را فرستادیم.» and the resend count reaches the help threshold (2)',
-      j1.get('msg') == 'کد تازه را فرستادیم.' and j2.get('resends') == 2 and j2.get('help_after') == 2, '%s %s' % (str(j1)[:80], str(j2)[:80]))
+check('K07 «کد تازه را فرستادیم؛ تا ۵ دقیقه معتبر است.» and the resend count reaches the help threshold (2)',
+      j1.get('msg') == 'کد تازه را فرستادیم؛ تا ۵ دقیقه معتبر است.' and j2.get('resends') == 2 and j2.get('help_after') == 2, '%s %s' % (str(j1)[:80], str(j2)[:80]))
 st, _, page = ch.req('/signup?step=code')
 tag = re.search(r'<details[^>]*id="tsa-help"[^>]*>', page)
 check('K08 after two resends the page (without script) opens «کد نرسید؟» help', st == 200 and tag and 'hidden' not in tag.group(0), tag.group(0) if tag else str(st))
+# UX T7 P3-1: the code step is marked so the intro and «why» fold away (signin.scss); R9 stays: one field, one-time-code,
+# numeric keyboard, Persian digits accepted by the pattern
+code_in = re.search(r'<input[^>]*id="tsa_code"[^>]*>', page)
+check('K09 the code step: data-tsa-state="code", «کد تأیید ۶ رقمی», one-time-code + numeric + Persian-digit pattern',
+      'data-tsa-state="code"' in page and 'کد تأیید ۶ رقمی' in page and code_in and 'autocomplete="one-time-code"' in code_in.group(0)
+      and 'inputmode="numeric"' in code_in.group(0) and '۰-۹' in code_in.group(0), code_in.group(0)[:200] if code_in else '')
 
 # ================================================================ 5. e-mail account: offer once, /my/phone
 cm = Client(TS)

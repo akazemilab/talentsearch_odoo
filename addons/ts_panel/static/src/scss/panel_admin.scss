@@ -4,9 +4,15 @@
     // ---------- participant sub-navigation (G2 X1, G4 PT11) ----------
     .tsp-subnav--my .tsp-subnav__item { min-block-size: var(--control-min); scroll-margin-inline: var(--space-6); }
     .tsp-subnav--my .tsp-subnav__item.is-on { font-weight: 600; box-shadow: inset 0 -3px 0 var(--color-accent); }
-    @media (max-width: 480px) {
-        .tsp-subnav--my { display: grid; grid-template-columns: 1fr 1fr; overflow: visible; }
-        .tsp-subnav--my .tsp-subnav__item { justify-content: center; text-align: center; padding-inline: var(--space-2); }
+    // UX T7 (P18-1): on a phone the participant pages keep ONE navigation: these four tabs as a single scrollable row
+    // (44 px, replaces the 2x2 grid of panel.scss for this nav); the header drops its clipboard/account icons, which repeat
+    // the tabs, and its sign-out gets its word back
+    @media (max-width: 719.98px) {
+        .tsp-subnav.tsp-subnav--my { display: flex; flex-wrap: nowrap; overflow-x: auto; overscroll-behavior-inline: contain; padding-block-end: 6px; }
+        .tsp-subnav.tsp-subnav--my .tsp-subnav__item { flex: none; white-space: nowrap; border-radius: 999px; padding-inline: var(--space-3); }
+        &:has(.tsp-subnav--my) .ts-appnav a[href='/my/assessments'], &:has(.tsp-subnav--my) .ts-appnav a[href='/my'] { display: none; }
+        &:has(.tsp-subnav--my) .ts-appnav__out button { padding-inline: 10px; }
+        &:has(.tsp-subnav--my) .ts-appnav__out button span { position: static; inline-size: auto; block-size: auto; overflow: visible; clip-path: none; }
     }
     // card headings never larger than the page h1 (G4 PT12)
     .tsp-section .ts-card h2, .tsp-section .ts-card > form > h2 { font-size: var(--fs-3); }

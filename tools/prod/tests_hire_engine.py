@@ -121,5 +121,10 @@ check('S07 flanker inverse efficiency on incongruent trials', 450 <= S.raw_score
 check('S08 bands at thirds', S.band_of(20) == 'low' and S.band_of(50) == 'medium' and S.band_of(80) == 'high')
 check('S09 every instrument factor maps to blocks of that instrument',
       all(set(b for bs in sp['factors'].values() for b in bs) <= {x['key'] for x in sp['blocks']} for sp in S.INSTRUMENTS.values()))
+m_help = [b['help'] for sp in S.INSTRUMENTS.values() for b in sp['blocks'] if b['key'] == 'matrices']
+check('S10 matrix instructions name no side (the grid is drawn LTR: the empty cell is bottom-right on screen)',
+      m_help and all('چپ' not in h and 'راست' not in h for h in m_help), m_help)
+check('S11 instructions say «نمره», never «امتیاز» (glossary)',
+      all('امتیاز' not in b['help'] for sp in S.INSTRUMENTS.values() for b in sp['blocks']))
 
 print('SUMMARY %d/%d passed' % (sum(results), len(results)))

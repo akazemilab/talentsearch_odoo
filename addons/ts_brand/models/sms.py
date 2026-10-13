@@ -157,7 +157,8 @@ class TsAssignmentSms(models.Model):
             a.ts_sms_link = self.env.context.get('ts_sms_link') or (s.ts_short_url() if s.id else '')
             bat = s.battery_id if 'battery_id' in s._fields else False
             a.ts_sms_count = fa(len(bat.line_ids)) if bat else ''
-            a.ts_sms_minutes = fa(bat.est_minutes) if (bat and bat.est_minutes and 'minutes' not in drop) else ''
+            # the sum of the per-instrument minutes, as on the invite page (verify T7)
+            a.ts_sms_minutes = bat.ts_minutes_text() if (bat and 'minutes' not in drop) else ''
 
     def _ts_sms_is_student(self):
         """The «تو» texts only in an education panel and only when the number on file is the student's own (rule 9)."""

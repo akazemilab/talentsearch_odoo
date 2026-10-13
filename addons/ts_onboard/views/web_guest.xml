@@ -48,7 +48,7 @@
                                             <dt>ذخیره و ادامه</dt><dd>هر پاسخ خودکار ذخیره می‌شود؛ هر وقت خواستید از همان‌جا ادامه می‌دهید.</dd>
                                             <dt>محدودیت</dt><dd t-out="inst.limitations"/>
                                             <dt>کاربرد</dt><dd t-out="inst.ts_intended_use()"/>
-                                            <dt>پشتیبانی</dt><dd><a href="/contact?topic=support" aria-label="تماس با پشتیبانی">تماس با پشتیبانی</a><t t-call="ts_website.sep"/>اگر حالتان خوب نیست، منتظر نمانید: اورژانس ۱۱۵.</dd>
+                                            <dt>پشتیبانی</dt><dd><a href="/contact?topic=support" aria-label="تماس با پشتیبانی">تماس با پشتیبانی</a><t t-call="ts_website.sep"/>اگر حالتان خوب نیست، منتظر نمانید: اورژانس اجتماعی ۱۲۳ یا صدای مشاور ۱۴۸۰.</dd>
                                         </dl>
                                         <p class="ts-hint">نسخهٔ متن رضایت: <bdi dir="ltr" class="ts-bdi" t-out="consent_version"/><t t-call="ts_website.sep"/><a href="/privacy" aria-label="حریم خصوصی">حریم خصوصی</a></p>
                                     </div>
@@ -144,17 +144,15 @@
         <field name="website_id" ref="ts_website.website_ts"/>
         <field name="priority">40</field>
         <field name="arch" type="xml">
-            <xpath expr="//div[@id='ts-review-lock']/p[1]" position="attributes">
+            <!-- the whole lock note is replaced for a guest (the signed-in note promises the result «در حسابتان») -->
+            <xpath expr="//div[@id='ts-review-lock']" position="attributes">
                 <attribute name="t-if">not guest</attribute>
             </xpath>
-            <xpath expr="//div[@id='ts-review-lock']/p[1]" position="after">
-                <p t-if="guest"><strong>پس از ارسال، پاسخ‌ها قفل می‌شوند</strong> و با شمارهٔ موبایل نتیجه را می‌بینید و نگه می‌دارید.</p>
-            </xpath>
-            <xpath expr="//p[@id='ts-review-who']" position="attributes">
-                <attribute name="t-if">not guest</attribute>
-            </xpath>
-            <xpath expr="//p[@id='ts-review-who']" position="after">
-                <p t-if="guest" id="tso-review-who"><strong>چه کسی نتیجه را می‌بیند:</strong> فقط خودتان.</p>
+            <xpath expr="//div[@id='ts-review-lock']" position="after">
+                <div t-if="guest" class="ts-notice ts-notice--info" role="note" id="tso-review-lock">
+                    <p><strong>پس از ارسال، پاسخ‌ها قفل می‌شوند</strong> و با شمارهٔ موبایل نتیجه را می‌بینید و نگه می‌دارید.</p>
+                    <p id="tso-review-who"><strong>چه کسی نتیجه را می‌بیند:</strong> فقط خودتان.</p>
+                </div>
             </xpath>
         </field>
     </record>

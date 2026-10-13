@@ -382,7 +382,10 @@
                                     <span class="ts-hero__kicker">سنجه</span>
                                     <h1>فهرست تعاملی استعداد</h1>
                                     <p class="ts-hero__lead">پنج توانایی، در زمینه‌هایی که خودت انتخاب می‌کنی.</p>
-                                    <div class="ts-hero__meta"><span>۲ تا ۸ زمینه</span><span>۱۵ جمله برای هر زمینه</span><span>حدود ۱ دقیقه برای هر زمینه</span></div>
+                                    <!-- time per field from the instrument itself (ts_talent MATRIX_SECONDS_PER_FIELD), the same words as the invite and
+                                         the detail page (UX T7 P14-1, X5) -->
+                                    <t t-set="ts_tal" t-value="request.env['ts.instrument'].sudo().search([('code', '=', 'TALENT-INV-15'), ('state', '=', 'published')], limit=1) if 'ts.instrument' in request.env else None"/>
+                                    <div class="ts-hero__meta"><span>۲ تا ۸ زمینه</span><span>۱۵ جمله برای هر زمینه</span><span t-out="ts_tal.ts_duration_label() if ts_tal else 'حدود ۲ دقیقه برای هر زمینه'"/></div>
                                     <div class="ts-hero__actions">
                                         <a t-att-href="start_href" class="ts-btn ts-btn--primary ts-btn--lg">شروع سنجه<t t-call="ts_website.icon" ico.f="arrow-left"/></a>
                                         <a t-if="request.env.user._is_public()" href="/signup?next=/my/assessments" class="ts-btn ts-btn--quiet ts-btn--lg">ورود</a>
@@ -487,7 +490,7 @@
                         <section class="ts-section ts-section--tight">
                             <div class="ts-container">
                                 <div class="ts-notice" role="note"><t t-call="ts_website.icon" ico.f="info"/><span>این گزارش رتبه یا قبولی را پیش‌بینی نمی‌کند. فقط زمینه‌های خودت با هم مقایسه می‌شوند، نه با دیگران.</span></div>
-                                <p t-if="catalog_count" class="ts-hint" style="margin: 0">سنجه‌های دیگر را پنل شما می‌تواند برایتان بفرستد. <a href="/assessments?all=1">فهرست همهٔ سنجه‌ها</a></p>
+                                <p t-if="catalog_count" class="ts-hint" style="margin: 0">سنجه‌های دیگر را مشاورت یا مدرسه‌ات می‌تواند برایت بفرستد. <a href="/assessments?all=1">فهرست همهٔ سنجه‌ها</a></p>
                             </div>
                         </section>
                     </div>
@@ -632,7 +635,7 @@
                                         <h2>راه‌های دیگر</h2>
                                         <div class="ts-aside__row"><span>ایمیل</span><a href="mailto:info@eot.ir"><bdi dir="ltr">info@eot.ir</bdi></a></div>
                                         <div class="ts-aside__row"><span>تلفن</span><a href="tel:+982188174100">۰۲۱-۸۸۱۷۴۱۰۰</a></div>
-                                        <div class="ts-aside__note"><t t-call="ts_website.icon" ico.f="first-aid"/>استعدادیاب خدمت اورژانسی نیست. در شرایط اضطراری با ۱۱۵ تماس بگیرید.</div>
+                                        <div class="ts-aside__note"><t t-call="ts_website.icon" ico.f="first-aid"/>استعدادیاب خدمت اورژانسی نیست. در شرایط اضطراری با اورژانس اجتماعی ۱۲۳ یا صدای مشاور ۱۴۸۰ تماس بگیرید.</div>
                                     </div>
                                 </div>
                             </div>

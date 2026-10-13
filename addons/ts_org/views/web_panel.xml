@@ -204,8 +204,18 @@
                             <div class="ts-container">
                                 <div class="ts-section__head"><h1>دعوت به پنل</h1></div>
                                 <p t-if="error" class="ts-notice ts-notice--warn" role="alert" t-out="error"/>
+                                <!-- another account is signed in: the warning and the way out come first (UX T7 P10) -->
+                                <div t-if="state == 'ok' and signed and not fits" class="ts-notice ts-notice--warn ts-acct" role="alert" id="ts-join-account">
+                                    <div class="ts-acct__body">
+                                        <p><t t-if="account['kind'] == 'name'">با حساب «<bdi t-out="account['label']"/>» وارد شده‌اید.</t><t t-elif="account['kind'] == 'phone'">با شمارهٔ <bdi dir="ltr" t-out="account['label']"/> وارد شده‌اید.</t><t t-elif="account['label']">با حساب <bdi dir="ltr" t-out="account['label']"/> وارد شده‌اید.</t><t t-else="">با حساب دیگری وارد شده‌اید.</t>
+                                            این دعوت برای شمارهٔ موبایل یا ایمیل دیگری (<bdi dir="ltr" t-out="bound_to"/>) صادر شده است. با حسابی که دعوت برایش صادر شده وارد شوید.</p>
+                                        <form t-attf-action="/web/session/logout?redirect=/join/#{inv.token}" method="post" class="ts-acct__out"><input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                                            <button type="submit" class="ts-btn ts-btn--primary ts-btn--lg ts-btn--block">خروج از این حساب</button></form>
+                                    </div>
+                                </div>
                                 <t t-if="state != 'ok'">
-                                    <p class="ts-notice ts-notice--warn" role="alert">این دعوت دیگر معتبر نیست. از مالک پنل بخواهید دعوت تازه بفرستد.</p>
+                                    <!-- one dead-end card with a next step (UX T7 X1) -->
+                                    <t t-call="ts_website.state_card" sc_title.f="این دعوت دیگر معتبر نیست" sc_text.f="از مالک پنل بخواهید دعوت تازه بفرستد." sc_public="not signed" sc_login="urls.get('phone_url') or urls.get('login_url')" sc_href.f="/my" sc_label.f="کارهای من"/>
                                 </t>
                                 <t t-else="">
                                     <p>شما به پنل «<strong><bdi t-out="inv.workspace_id.name"/></strong>» با نقش «<strong t-out="role_label"/>» دعوت شده‌اید.</p>
@@ -230,9 +240,7 @@
                                         </p>
                                     </t>
                                     <t t-elif="not fits">
-                                        <p class="ts-notice ts-notice--warn" role="alert">با حساب «<bdi t-out="user_name"/>» وارد شده‌اید. این دعوت برای شمارهٔ موبایل یا ایمیل دیگری (<bdi dir="ltr" t-out="bound_to"/>) صادر شده است. با حسابی که دعوت برایش صادر شده وارد شوید.</p>
-                                        <form t-attf-action="/web/session/logout?redirect=/join/#{inv.token}" method="post"><input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
-                                            <button type="submit" class="ts-btn ts-btn--outline">خروج از این حساب</button></form>
+                                        <p class="ts-hint">پذیرفتن این دعوت فقط با همان شماره یا ایمیلی ممکن است که دعوت برایش صادر شده.</p>
                                     </t>
                                     <form t-else="" t-attf-action="/join/#{inv.token}/accept" method="post" class="ts-form">
                                         <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>

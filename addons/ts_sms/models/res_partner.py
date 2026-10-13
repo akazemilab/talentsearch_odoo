@@ -3,11 +3,18 @@ from odoo import api, fields, models
 FA = str.maketrans('0123456789', '۰۱۲۳۴۵۶۷۸۹')
 
 
+LRM = '\u200e'
+
+
 def fmt_mobile(phone, persian=True):
-    """09123456789 -> «۰۹۱۲ ۳۴۵ ۶۷۸۹» (or Latin digits)."""
+    """09123456789 -> «۰۹۱۲ ۳۴۵ ۶۷۸۹» (or Latin digits).
+    Persian digits are bidi class AN: the spaces between the groups resolve to RTL even inside <bdi dir=ltr>, so the
+    groups showed in reverse order (verify T7). An LRM before each space keeps the groups left to right."""
     p = phone or ''
-    out = '%s %s %s' % (p[:4], p[4:7], p[7:]) if len(p) == 11 else p
-    return out.translate(FA) if persian else out
+    if not persian:
+        return '%s %s %s' % (p[:4], p[4:7], p[7:]) if len(p) == 11 else p
+    out = (LRM + ' ').join((p[:4], p[4:7], p[7:])) if len(p) == 11 else p
+    return out.translate(FA)
 
 
 class ResPartner(models.Model):

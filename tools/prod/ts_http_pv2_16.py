@@ -89,6 +89,15 @@ st, loc, _ = post(te, '/take/%s/consent' % T_TEEN, {'consent_service': '1', 'age
 check('under 18 without a guardian tick: refused', 'error=guardian_ok' in (loc or ''), loc)
 st, page = get(te, '/take/%s?error=guardian_ok' % T_TEEN)
 check('the refusal is explained on the page', 'ولی (پدر، مادر یا سرپرست قانونی)' in page)
+# T7 (B6-1..3, B2-2): the redirect carries the posted ticks back; one error summary under the H1, no generic consent error
+check('…the redirect carries the posted ticks', 'svc=1' in (loc or '') and 'age=no' in (loc or ''), loc)
+st, page = get(te, '/take/' + (loc or '').split('/take/')[-1])
+check('…one focused error summary names the guardian tick, no catch-all consent error',
+      st == 200 and 'id="ts-error-summary"' in page and 'href="#ts-guardian-ok"' in page and 'تیک «متن بالا را خواندم' not in page
+      and 'برای شروع، رضایت برای انجام سنجه لازم است' not in page, st)
+check('…and the boxes ticked before come back ticked', bool(re.search(r'name="consent_service"[^>]*checked', page))
+      and bool(re.search(r'name="age18" value="no"[^>]*checked', page)))
+check('…the consent details are behind one disclosure button (same words)', 'aria-controls="ts-consent-more"' in page and '>محدودیت</dt>' in page)
 st, loc, _ = post(te, '/take/%s/consent' % T_TEEN, {'consent_service': '1', 'age18': 'no', 'guardian_ok': '1'})
 check('under 18 with a guardian tick goes on', st in (302, 303) and 'error=age' not in (loc or '') and 'error=guardian_ok' not in (loc or ''), loc)
 check('a guardian ledger row exists for the teen',

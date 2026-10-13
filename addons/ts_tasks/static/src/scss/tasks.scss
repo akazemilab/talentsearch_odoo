@@ -5,6 +5,19 @@
     .tst-card { padding: var(--space-8); display: flex; flex-direction: column; gap: var(--space-4); }
     .tst-h { font-family: var(--font-text); font-size: 1.3rem; margin: 0; }
     .tst-kicker { color: var(--color-neutral-400); font-size: .9rem; margin: 0; }
+    // programmatic focus (after a redraw) shows no box; keyboard focus keeps its ring (UX audit T7 P13-2)
+    .tst-h:focus:not(:focus-visible), .tst-kicker:focus:not(:focus-visible) { outline: none; }
+    // verify T7: a heading focused by the script on page load matched :focus-visible and looked like an input; an
+    // element with tabindex=-1 is never reached by Tab, so it needs no ring
+    .tst-h[tabindex="-1"]:focus, .tst-kicker[tabindex="-1"]:focus { outline: none; }
+    // overview (verify T7): «جزئیات» folds the secondary rules after the start button
+    .tst-fold { align-self: flex-start; min-height: 44px; }
+    .tst-more[hidden] { display: none; }
+    .tst-accom { margin: 0; }
+    .visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+    .tst-who { margin-block-start: calc(-1 * var(--space-2)); }
+    .tst-rules { margin: 0; padding-inline-start: 1.2rem; display: flex; flex-direction: column; gap: .4rem; line-height: 1.9; }
+    .tst-note { margin: 0; }
     .tst-help { font-size: 1.05rem; margin: 0; }
     .tst-facts { color: var(--color-neutral-400); margin: 0; font-variant-numeric: tabular-nums; }
     .tst-actions, .tst-nav { display: flex; flex-wrap: wrap; gap: var(--space-2); align-items: center; }
@@ -13,11 +26,22 @@
     .tst-dots { display: flex; flex-wrap: wrap; gap: .4rem; list-style: none; padding: 0; margin: 0; font-size: .8rem; }
     .tst-dots__i { padding: .2rem .6rem; border-radius: 999px; border: 1px solid var(--color-neutral-800); color: var(--color-neutral-400); }
     .tst-dots__i.is-done { background: var(--status-ok-soft); border-color: transparent; color: var(--status-ok); }
+    .tst-dots__mark { font-weight: 700; }
     .tst-dots__i.is-current { border-color: var(--color-accent); color: var(--color-accent); font-weight: 700; }
     .tst-run { display: flex; flex-direction: column; gap: var(--space-4); }
+    // the clock stays in view while a long item scrolls (the focus-mode header is static) - UX audit T7 P12-8
+    .tst-timerbar { position: sticky; inset-block-start: 0; z-index: 2; display: flex; flex-wrap: wrap; align-items: center;
+        gap: .25rem .75rem; padding-block: .4rem; background: var(--color-bg); }
     .tst-timer { font-variant-numeric: tabular-nums; font-weight: 700; margin: 0; padding: .4rem .8rem; border-radius: var(--r-8);
-        background: var(--color-neutral-900); align-self: flex-start; }
+        background: var(--color-neutral-900); }
     .tst-timer.is-low { background: var(--status-warn-soft); color: var(--status-warn); }
+    .tst-clock { min-height: 44px; padding-inline: .5rem; border: 0; background: none; color: var(--color-accent); cursor: pointer;
+        font-family: var(--font-text); font-size: .9rem; text-decoration: underline; text-underline-offset: 3px; }
+    .tst-clock:focus-visible { outline: 3px solid var(--color-accent); outline-offset: 2px; }
+    .tst-save { flex-basis: 100%; margin: 0; font-size: .88rem; color: var(--color-neutral-400); }
+    .tst-save:empty { display: none; }
+    .tst-save.is-err { color: var(--status-warn); font-weight: 700; }
+    .tst-save.is-ok { color: var(--status-ok); }
     .tst-svg { display: inline-flex; color: var(--color-text); }
     .tst-matrix { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .4rem; max-width: 300px;
         padding: .6rem; border: 1px solid var(--color-neutral-800); border-radius: var(--r-8); justify-items: center; align-items: center; }
@@ -46,6 +70,7 @@
     .tst-opt:focus-visible { outline: 3px solid var(--color-accent); outline-offset: 2px; }
     .tst-opt.is-chosen { border-width: 2px; border-color: var(--color-accent); background: var(--color-accent-900); }
     .tst-opt.is-key { border-width: 2px; border-color: var(--status-ok); background: var(--status-ok-soft); }
+    .tst-keymark { color: var(--status-ok); font-weight: 700; margin-inline-start: .3rem; }
     .tst-feedback { min-height: 1.6rem; margin: 0; font-weight: 700; }
     .tst-feedback.is-ok { color: var(--status-ok); }
     .tst-feedback.is-bad { color: var(--status-danger); }

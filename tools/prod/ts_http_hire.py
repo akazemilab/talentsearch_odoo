@@ -112,6 +112,13 @@ st, body = get(cand, '/invite/%s' % TOKEN)
 check('the welcome screen names the position, says what the employer sees, «روی کامپیوتر بهتر است» for the timed part, '
       'and asks no fairness question at the start (onb2: they come at the end)',
       st == 200 and 'برای موقعیت' in body and 'خلاصهٔ تناسب' in body and 'روی کامپیوتر بهتر است' in body and 'name="ts_gender"' not in body, str(st))
+# UX T7 P26: one description of what the employer sees (tick, list and card agree with result_level/_row), the timed task
+# is counted in sections (never «۰ پرسش»), and the time is stated once from data (no description minutes beside it)
+check('one truthful disclosure: the tick names factor levels, the job-fit summary and the integrity signals; no «only levels» line',
+      'خلاصهٔ تناسبم با این شغل و نشانه‌های دقت پاسخ‌دهی را ببیند' in body
+      and 'فقط سطح هر عامل (کم، متوسط یا زیاد) را می‌بیند' not in body, str(st))
+check('the timed task is counted in timed sections, never «۰ پرسش», and minutes appear only from data (effort_facts)',
+      'بخش زمان‌دار' in body and not re.search(r'(?<![۰-۹])۰ پرسش', body) and 'استدلال؛ حدود' not in body and 'tso-facts' in body, str(st))
 st, loc, _ = post(cand, '/invite/%s/accept' % TOKEN, {'share': '1'})
 check('accepting opens the player', st in (302, 303) and '/take/' in loc, loc)
 out = shell("a = env['ts.assignment'].sudo().browse(%s); print('DEMO', a.ts_gender or '-', a.ts_age_band or '-', '|'.join(t.access_token for t in a.ts_battery_attempts()))" % AID)
@@ -133,6 +140,10 @@ check('the task player page renders with its config', st == 200 and 'tst-player'
 cfg = json.loads(H.unescape(re.search(r'data-config="([^"]*)"', body).group(1))) if 'data-config=' in body else {}
 check('config has three blocks, practice items with keys, no live items', len(cfg.get('blocks', [])) == 3
       and cfg['blocks'][0]['practice']['keys'] and 'items' not in cfg['blocks'][0], str(list(cfg)[:5]))
+check('the task player names the inviting organisation and what it sees; the overview gets the total minutes',
+      'tst-who' in body and 'data-org=' in body and cfg.get('minutes') == 12 and 'پایین‌چپ' not in body
+      # verify T7: the same who-sees sentence as the invitation and consent, never «فقط خلاصهٔ تناسب»
+      and 'id="ts-who-sees-line"' in body and 'نشانه‌های دقت پاسخ‌دهی' in body and 'فقط خلاصهٔ تناسب' not in body, str(cfg.get('minutes')))
 for i in range(3):
     st, _, rb = post(cand, '/take/%s/task/start' % T2, {'i': str(i)})
     j = json.loads(rb) if st == 200 else {}

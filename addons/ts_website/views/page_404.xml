@@ -1,7 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
     <!-- Persian 404 for website 2 only (core http_routing.404 is English and
-         its tab title falls back to "Page Not Found"). -->
+         its tab title falls back to "Page Not Found").
+         UX T7 (X1, P7-1, P17): a participant link (/invite/, /i/, /take/, /c/, /join/, /j/) that does not open gets its
+         own explanation and a way on (sign in with the invited number, the person's own list, sign out). The page never
+         depends on the token: an unknown token, another account's invitation or a closed link read the same and keep
+         status 404, so a stranger never learns whether a link exists. It renders in the 'auth' layout (no «ذخیره و
+         خروج» of the player header, the slim footer with help). -->
     <record id="page_404_ts" model="ir.ui.view">
         <field name="name">TS: 404 page</field>
         <field name="type">qweb</field>
@@ -12,12 +17,61 @@
         <field name="arch" type="xml">
             <data>
             <xpath expr="//t[@t-call='web.frontend_layout']" position="before">
-                <t t-set="additional_title">این صفحه نیست</t>
+                <t t-set="ts_p404" t-value="request.httprequest.path if request else ''"/>
+                <t t-set="ts_link404" t-value="ts_p404.startswith(('/invite/', '/i/', '/take/', '/c/', '/join/', '/j/'))"/>
+                <t t-set="ts_force_mode" t-value="'auth' if ts_link404 else None"/>
+                <t t-set="additional_title" t-value="'این پیوند باز نمی‌شود' if ts_link404 else 'این صفحه نیست'"/>
             </xpath>
             <xpath expr="//div[@id='wrap']" position="replace">
                 <div id="wrap" class="ts-page">
                     <t t-out="0"/>
-                    <section class="ts-hero ts-hero--tall">
+                    <section t-if="ts_link404" class="ts-section" id="ts-link-404">
+                        <div class="ts-container ts-narrow ts-invite">
+                            <t t-set="ts_u" t-value="request.env.user"/>
+                            <t t-set="ts_out" t-value="ts_u._is_public()"/>
+                            <div class="ts-section__head">
+                                <h1>این پیوند باز نمی‌شود</h1>
+                                <p>شاید برای حساب دیگری است، مهلتش تمام شده یا دیگر فعال نیست.</p>
+                            </div>
+                            <t t-if="ts_out">
+                                <p>اگر این پیوند را برای پاسخ‌دادن به یک سنجه یا پیوستن به یک پنل گرفته‌اید، با همان شمارهٔ موبایلی وارد شوید که دعوت برایش فرستاده شده؛ بعد از ورود به همین پیوند برمی‌گردید.</p>
+                                <div class="ts-state__actions">
+                                    <a t-att-href="'/signup?next=' + ts_p404" class="ts-btn ts-btn--primary ts-btn--lg ts-btn--block">ورود با شمارهٔ موبایل</a>
+                                    <a href="/contact?topic=support" class="ts-btn ts-btn--quiet">تماس با پشتیبانی</a>
+                                </div>
+                            </t>
+                            <t t-else="">
+                                <!-- the account as its owner knows it: name, else the masked mobile (login of a mobile account) or
+                                     e-mail; mirrors res.users.ts_account_label (ts_org), kept here so the 404 needs no higher module -->
+                                <t t-set="ts_name" t-value="ts_u.partner_id.ts_known_name()"/>
+                                <t t-set="ts_login" t-value="ts_u.login or ''"/>
+                                <t t-set="ts_fa" t-value="{48: '۰', 49: '۱', 50: '۲', 51: '۳', 52: '۴', 53: '۵', 54: '۶', 55: '۷', 56: '۸', 57: '۹'}"/>
+                                <div class="ts-notice ts-acct" role="note" id="ts-404-account">
+                                    <div class="ts-acct__body">
+                                        <p>
+                                            <t t-if="ts_name">با حساب «<bdi t-out="ts_name"/>» وارد شده‌اید.</t>
+                                            <t t-elif="ts_login.isdigit() and len(ts_login) &gt;= 7">با شمارهٔ <bdi dir="ltr" t-out="(ts_login[:4] + '\u200e…\u200e' + ts_login[-4:]).translate(ts_fa)"/> وارد شده‌اید.</t>
+                                            <t t-elif="'@' in ts_login">با حساب <bdi dir="ltr" t-out="ts_login[:1] + '…@' + ts_login.split('@', 1)[1]"/> وارد شده‌اید.</t>
+                                            <t t-else="">با حساب دیگری وارد شده‌اید.</t>
+                                            اگر این پیوند برای شمارهٔ دیگری فرستاده شده، از این حساب خارج شوید و با همان شماره وارد شوید.
+                                        </p>
+                                    </div>
+                                </div>
+                                <!-- verify T7: the recovery the copy names (sign out, sign in with the invited number) is the primary,
+                                     same order as the /invite mismatch notice -->
+                                <div class="ts-state__actions">
+                                    <!-- Odoo 20 signs out by POST only; back to the sign-in with this link as the return path -->
+                                    <form t-att-action="'/web/session/logout?redirect=%2Fsignup%3Fnext%3D' + ts_p404" method="post">
+                                        <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                                        <button type="submit" class="ts-btn ts-btn--primary ts-btn--lg ts-btn--block">خروج و ورود با شمارهٔ دیگر</button>
+                                    </form>
+                                    <a href="/my/assessments" class="ts-btn ts-btn--outline">سنجه‌ها و نتیجه‌ها</a>
+                                    <a href="/contact?topic=support" class="ts-btn ts-btn--quiet">تماس با پشتیبانی</a>
+                                </div>
+                            </t>
+                        </div>
+                    </section>
+                    <section t-else="" class="ts-hero ts-hero--tall">
                         <div class="ts-container ts-hero__grid">
                             <div class="ts-hero__words">
                                 <span class="ts-hero__kicker">۴۰۴</span>
@@ -25,7 +79,7 @@
                                 <p class="ts-hero__lead">شاید نشانی اشتباه است یا صفحه جابه‌جا شده.</p>
                                 <div class="ts-hero__actions">
                                     <a href="/" class="ts-btn ts-btn--primary">خانه</a>
-                                    <a href="/contact" class="ts-btn ts-btn--quiet">تماس</a>
+                                    <a href="/contact?topic=support" class="ts-btn ts-btn--quiet">تماس با پشتیبانی</a>
                                 </div>
                             </div>
                         </div>

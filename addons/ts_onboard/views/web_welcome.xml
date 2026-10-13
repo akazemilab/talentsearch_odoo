@@ -17,9 +17,11 @@
                         <section class="ts-section">
                             <div class="ts-container ts-narrow tso-welcome">
                                 <t t-if="mode == 'state'">
+                                    <!-- dead-end states: the same words as ts_org's card (ts_org.controllers.main.invite_card, take1) -->
                                     <p class="ts-tag">دعوت</p>
-                                    <h1 t-out="inv_msg[inv_state][0]"/>
-                                    <p class="ts-lead" t-out="inv_msg[inv_state][1]"/>
+                                    <h1 t-out="what"/>
+                                    <p class="ts-lead"><strong t-out="org"/> <t t-if="tu">تو را</t><t t-else="">شما را</t> به پاسخ‌دادن <t t-if="bat">به این مجموعه</t><t t-else="">به این سنجه</t> دعوت کرده بود.</p>
+                                    <t t-call="ts_website.state_card" sc_title="inv_card['title']" sc_text="inv_card['text']" sc_note="inv_card['note']" sc_public="public"/>
                                 </t>
                                 <t t-else="">
                                     <p class="ts-tag"><t t-if="pos">دعوت به ارزیابی</t><t t-elif="bat">دعوت به مجموعهٔ سنجه‌ها</t><t t-else="">دعوت به سنجه</t></p>
@@ -41,8 +43,8 @@
                                     <div class="ts-card tso-card" id="tso-what">
                                         <h2 class="h5 tso-what" t-out="what"/>
                                         <p class="tso-facts">
-                                            <t t-if="matrix"><t t-if="tu">۱۵ جمله برای هر زمینه؛ ۲ تا ۸ زمینه را خودت می‌نویسی</t><t t-else="">۱۵ جمله برای هر زمینه؛ ۲ تا ۸ زمینه را خودتان می‌نویسید</t><t t-call="ts_website.sep"/>حدود ۲ دقیقه برای هر زمینه</t>
-                                            <t t-else="">حدود <t t-out="fa(minutes)"/> دقیقه<t t-call="ts_website.sep"/><t t-if="parts &gt; 1"><t t-out="fa(parts)"/> بخش</t><t t-else=""><t t-out="fa(items)"/> پرسش</t></t>
+                                            <!-- one source for size and time (ts_org effort_facts, take1): the same numbers as every other page -->
+                                            <t t-out="facts['time']"/><t t-call="ts_website.sep"/><t t-out="facts['size']"/><t t-if="ws.purpose != 'employment' and mode == 'welcome'"><t t-call="ts_website.sep"/>نتیجه بلافاصله پس از پایان آماده است.</t>
                                         </p>
                                         <p t-if="timed" class="tso-device" id="tso-device">روی کامپیوتر بهتر است (بخش زمان‌دار)</p>
                                         <p t-if="a.note and mode == 'welcome' and not pos" class="ts-hint tso-note">یادداشت پنل: <t t-out="a.note"/></p>
@@ -85,7 +87,7 @@
                                             <section class="tso-sees" aria-labelledby="tso-sees-h">
                                                 <h2 class="h6" id="tso-sees-h"><t t-out="org"/> چه چیزی می‌بیند؟</h2>
                                                 <ul class="ts-list-check tso-lines" t-if="pos">
-                                                    <li>اگر اشتراک‌گذاری را بپذیرید، فقط خلاصهٔ تناسب شما با این شغل را می‌بیند؛ نه پاسخ‌ها و نمره‌ها.</li>
+                                                    <li>اگر اجازه دهید، سطح هر عامل، خلاصهٔ تناسب شما با این شغل و نشانه‌های دقت پاسخ‌دهی را می‌بیند؛ نه پاسخ‌ها و نمره‌ها.</li>
                                                     <li>هیچ تصمیمی به‌طور خودکار گرفته نمی‌شود.</li>
                                                     <li>۱۲ ماه پس از دعوت، دسترسی سازمان به نتیجه بسته می‌شود.</li>
                                                 </ul>
@@ -125,7 +127,7 @@
                                                             <dt>دست نگه داشتن</dt>
                                                             <dd t-if="tu">هر وقت بخواهی دست نگه می‌داری. برای پس گرفتن رضایت یا پاک‌کردن داده‌ها به صفحهٔ <a href="/privacy" aria-label="حریم خصوصی">حریم خصوصی</a> برو.</dd>
                                                             <dd t-else="">هر وقت بخواهید دست نگه می‌دارید. برای پس گرفتن رضایت یا پاک‌کردن داده‌ها به صفحهٔ <a href="/privacy" aria-label="حریم خصوصی">حریم خصوصی</a> بروید.</dd>
-                                                            <dt>پشتیبانی</dt><dd><a href="/contact?topic=support" aria-label="تماس با پشتیبانی">تماس با پشتیبانی</a><t t-call="ts_website.sep"/><t t-if="tu">اگر حالت خوب نیست، منتظر نمان: اورژانس ۱۱۵.</t><t t-else="">اگر حالتان خوب نیست، منتظر نمانید: اورژانس ۱۱۵.</t></dd>
+                                                            <dt>پشتیبانی</dt><dd><a href="/contact?topic=support" aria-label="تماس با پشتیبانی">تماس با پشتیبانی</a><t t-call="ts_website.sep"/><t t-if="tu">اگر حالت خوب نیست، منتظر نمان: اورژانس اجتماعی ۱۲۳ یا صدای مشاور ۱۴۸۰.</t><t t-else="">اگر حالتان خوب نیست، منتظر نمانید: اورژانس اجتماعی ۱۲۳ یا صدای مشاور ۱۴۸۰.</t></dd>
                                                         </dl>
                                                         <label class="ts-check"><input type="checkbox" name="consent_research" value="1"/>
                                                             <span>اجازه می‌دهم پاسخ‌هایم بدون نام و به‌صورت تجمیعی برای بهبود سنجه‌ها استفاده شود. <span class="ts-hint">(اختیاری)</span></span></label>
@@ -136,7 +138,8 @@
                                             <label class="ts-check tso-share">
                                                 <input type="checkbox" name="share" value="1" checked="checked" aria-describedby="tso-share-h"/>
                                                 <span t-if="ws.purpose == 'education'">اجازه می‌دهم مدرسه و مشاورم گزارش نتیجه‌ام را در پنل «<bdi t-out="org"/>» ببینند.</span>
-                                                <span t-elif="ws.purpose == 'employment'">اجازه می‌دهم <t t-if="pos">خلاصهٔ تناسب من با این شغل</t><t t-else="">سطح هر عامل</t> با «<bdi t-out="org"/>» به اشتراک گذاشته شود.</span>
+                                                <span t-elif="pos">اجازه می‌دهم «<bdi t-out="org"/>» سطح هر عامل، خلاصهٔ تناسبم با این شغل و نشانه‌های دقت پاسخ‌دهی را ببیند.</span>
+                                                <span t-elif="ws.purpose == 'employment'">اجازه می‌دهم سطح هر عامل با «<bdi t-out="org"/>» به اشتراک گذاشته شود.</span>
                                                 <span t-else="">اجازه می‌دهم گزارش کامل با مشاوران «<bdi t-out="org"/>» به اشتراک گذاشته شود.</span>
                                             </label>
                                             <p id="tso-share-h" class="ts-hint"><t t-if="tu">اگر تیک را برداری هم می‌توانی پاسخ بدهی؛ آن وقت نتیجه فقط برای خودت می‌ماند.</t><t t-else="">اگر تیک را بردارید هم می‌توانید پاسخ دهید؛ آن وقت نتیجه فقط برای خودتان می‌ماند.</t></p>
@@ -187,30 +190,6 @@
                                     <p><a href="/signup?next=/start" class="ts-btn ts-btn--primary">ورود با شمارهٔ موبایل</a></p>
                                 </t>
                                 <p t-else="" class="ts-lead">در یک دقیقه درخواست‌های زیادی از این شبکه رسید. یک دقیقه دیگر دوباره پیوند را باز کنید.</p>
-                            </div>
-                        </section>
-                    </div>
-                </t>
-            </t>
-        </field>
-    </record>
-
-    <!-- an unknown token or code, or the link of a closed panel: one neutral page (it never says whether the link existed) -->
-    <record id="tpl_gone" model="ir.ui.view">
-        <field name="name">TS onb2: link does not open (neutral)</field>
-        <field name="type">qweb</field>
-        <field name="key">ts_onboard.gone</field>
-        <field name="website_id" ref="ts_website.website_ts"/>
-        <field name="arch" type="xml">
-            <t t-name="ts_onboard.gone">
-                <t t-call="website.layout" additional_title.f="این پیوند باز نمی‌شود">
-                    <div id="wrap" class="ts-page">
-                        <section class="ts-section">
-                            <div class="ts-container ts-narrow" id="tso-gone">
-                                <p class="ts-tag">پیوند</p>
-                                <h1>این پیوند باز نمی‌شود</h1>
-                                <p class="ts-lead">شاید نشانی کامل کپی نشده باشد یا پیوند دیگر فعال نباشد. از کسی که پیوند را برایتان فرستاده است، پیوند تازه بخواهید.</p>
-                                <p><a href="/" class="ts-btn ts-btn--quiet">صفحهٔ اصلی استعدادیاب</a></p>
                             </div>
                         </section>
                     </div>

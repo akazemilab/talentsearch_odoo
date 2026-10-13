@@ -10,25 +10,24 @@ the consent text version) and the acceptance:
   * nothing known: the ordinary sign-in first, as before.
 A later open from another browser (no matching ts_dev cookie) sends a code to the invited number (masked) instead.
 A signed-in account that is not the invited number or address sees one clear notice and one action (sign out, then sign
-in with the invited number).
+in with the invited number). An invitation another account accepted answers the site's link 404 (ts_website.page_404,
+take1): the same page as an unknown token, so nobody learns whether the link exists or who holds it.
 Lookups are rate-limited per hashed address and family, then a polite 429 page: the invitation page /invite/ and the
 short links /i/ and /j/ 60 a minute each, the open class link /c/ 120 (a whole class opens it from one school network).
-With 12-character codes this makes guessing hopeless and never slows a real class down. An unknown token or code, or the
-link of a panel that is closed, gets one neutral page that never says whether such a link existed («این پیوند باز
-نمی‌شود»)."""
+The hit is counted in its own transaction, so the 404 of an unknown token or code counts too (models/rate.py).
+Size and time come from ts_org's effort_facts and dead-end states from its invite_card (one source, take1)."""
+from datetime import datetime, time as dtime
 from urllib.parse import quote
-
-import werkzeug.exceptions
 
 from odoo import http
 from odoo.exceptions import UserError
 from odoo.http import request
 
 from odoo.addons.ts_assessment.controllers.main import _ts_site_or_404
-from odoo.addons.ts_assessment.models.attempt import CONSENT_VERSION, fa_digits
+from odoo.addons.ts_assessment.models.attempt import CONSENT_VERSION, fa_digits, jalali_long
 from odoo.addons.ts_battery.controllers.main import battery_url
 from odoo.addons.ts_brand.controllers.main import TsBrandLinks
-from odoo.addons.ts_org.controllers.main import INVITE_MSG, TsOrg
+from odoo.addons.ts_org.controllers.main import TsOrg, effort_facts, invite_card
 from odoo.addons.ts_panel.controllers.campaigns_public import TsPanelCampaignJoin
 from odoo.addons.ts_sms.controllers.signup import mask_mobile, signin_url
 
@@ -44,13 +43,13 @@ GUARDIAN_TEXT = {
     'teen': 'تأیید می‌کنم ولی قانونی نوجوان هستم و پاسخ‌دهی با اطلاع و رضایت من انجام می‌شود.',
     'minor': 'ولی‌ام (پدر، مادر یا سرپرست قانونی) از این سنجه خبر دارد و موافق است.',
 }
+PER_MINUTE = {'invite': 60, 'short': 60, 'campaign': 120}
 
 
 def limited(family):
     """Lookups a minute per hashed address and family (ts_onboard.<family>_per_minute: invite and short 60, campaign
-    120); then a polite 429 page. None when the lookup may go on. The hit is counted in its own transaction, so a miss
-    (404) counts too (models/rate.py)."""
-    default = {'invite': 60, 'short': 60, 'campaign': 120}.get(family, 60)
+    120); then a polite 429 page. None when the lookup may go on."""
+    default = PER_MINUTE.get(family, 60)
     limit = request.env['ir.config_parameter'].sudo().get_int('ts_onboard.%s_per_minute' % family, default) or default
     ip = request.env['ts.audit.event'].sudo()._hash_ip(request.httprequest.remote_addr)
     if request.env['ts.rate.hit'].ts_hit('%s:%s' % (family, ip), limit, 60):
@@ -62,19 +61,6 @@ def limited(family):
 
 def short_limited():
     return limited('short')
-
-
-def gone():
-    """The one neutral page of an unknown or closed link: the same words and status whatever the reason."""
-    return request.render('ts_onboard.gone', {'page_name': 'ts_gone'}, status=404)
-
-
-def neutral(call):
-    """Run a lookup; an unknown token or code (NotFound) answers the neutral page instead of the site's 404."""
-    try:
-        return call()
-    except werkzeug.exceptions.NotFound:
-        return gone()
 
 
 class TsOnbInvite(TsOrg):
@@ -91,25 +77,28 @@ class TsOnbInvite(TsOrg):
                 counselor = m.user_id.partner_id.ts_known_name() or ''
         need = flow.minor_needs(a)
         tu = ws.purpose == 'education'
-        matrix = (inst.current_version_id.mode == 'matrix') if not bat else False
         values = {
             'a': a, 'ws': ws, 'inst': inst, 'bat': bat, 'pos': pos, 'mode': mode, 'tu': tu, 'fa': fa_digits,
             'hello': first_name(a.invitee_name), 'org': ws.ts_public_name(), 'counselor': counselor,
-            'minutes': (bat.est_minutes if bat else inst.duration_minutes) or 0, 'parts': len(insts),
-            'items': (bat.item_count if bat else inst.active_item_count) or 0, 'matrix': matrix,
+            'facts': effort_facts(inst, bat or None, ws.purpose),
             'item_names': [i.ts_title() for i in insts] if bat else [],
             'timed': any(i.ts_is_task_inst() for i in insts if hasattr(i, 'ts_is_task_inst')),
             'need': need, 'guardian_text': GUARDIAN_TEXT.get(need['text']), 'consent_version': CONSENT_VERSION,
-            'inv_msg': INVITE_MSG, 'error': None, 'page_name': 'ts_invite',
+            'public': request.env.user._is_public(), 'inv_card': None, 'error': None, 'page_name': 'ts_invite',
             'logout_url': '/web/session/logout?redirect=%s' % quote('/invite/%s' % a.token),
         }
         values.update(extra)
+        if mode == 'state':
+            ends = a.expires_at if 'expires_at' in a._fields and a.expires_at else a.deadline
+            if ends and not isinstance(ends, datetime):
+                ends = datetime.combine(ends, dtime(12, 0))
+            values['inv_card'] = invite_card(values['inv_state'], values['org'], tu, jalali_long(ends) if ends else None)
         return values
 
     @http.route()
     def invite_page(self, token, **kw):
         _ts_site_or_404()
-        return limited('invite') or neutral(lambda: self._ts_welcome(token, **kw))
+        return limited('invite') or self._ts_welcome(token, **kw)
 
     def _ts_welcome(self, token, **kw):
         a = self._invite(token, paused_ok=True)
@@ -121,13 +110,15 @@ class TsOnbInvite(TsOrg):
             nxt = flow.first_open(a)
             if nxt:
                 return request.redirect('/take/%s' % nxt.access_token)
+        if a.user_id and not public:
+            # accepted by another account: the link 404 of the site (it offers sign-out and sign-in with the invited
+            # number) — the same page as an unknown token, nobody learns who holds the invitation (take1)
+            raise request.not_found()
         inv_state = 'paused' if a.workspace_id.state == 'suspended' else a.invite_state()
         if inv_state not in ('ok', 'used'):
             return request.render('ts_onboard.welcome', self._ts_values(a, 'state', inv_state=inv_state))
         if a.user_id:                                # accepted earlier, by this person on another browser or by someone else
-            if public:
-                return request.render('ts_onboard.welcome', self._ts_values(a, 'continue', done=a.state == 'done'))
-            return request.render('ts_onboard.welcome', self._ts_values(a, 'other', contact=self._ts_contact(a)))
+            return request.render('ts_onboard.welcome', self._ts_values(a, 'continue', done=a.state == 'done'))
         if a.workspace_id.state == 'active':
             a.action_mark_opened()                   # a link preview may count too: the panel says «بازشده»
         error = ERRORS.get(kw.get('error'))
@@ -141,8 +132,7 @@ class TsOnbInvite(TsOrg):
                 name_mismatch = known            # the old notice for links without a number (G2-P12-1)
         request.env['ts.funnel.event'].ts_log(request, 'invite_view', assignment=a, instrument=a.instrument_id)
         return request.render('ts_onboard.welcome', self._ts_values(
-            a, 'welcome', error=error, public=public, name_mismatch=name_mismatch,
-            ask_decline=kw.get('decline') == '1'))
+            a, 'welcome', error=error, name_mismatch=name_mismatch, ask_decline=kw.get('decline') == '1'))
 
     def _ts_contact(self, a):
         via, value = a.ts_proof()
@@ -160,15 +150,12 @@ class TsOnbInvite(TsOrg):
             if request.env.user._is_public():
                 return request.redirect(signin_url('/invite/%s' % token))
             return super().invite_accept(token, **post)
-        return neutral(lambda: self._ts_accept_post(token, post))
-
-    def _ts_accept_post(self, token, post):
         a = self._invite(token)
         user = request.env.user
         public = user._is_public()
         if a.user_id:
             if not public:
-                return request.redirect('/invite/%s' % token)       # the welcome screen answers (player or notice)
+                return request.redirect('/invite/%s' % token)       # the welcome screen answers (player or 404)
             return self._ts_continue(a)
         if a.invite_state() != 'ok':
             return request.redirect('/invite/%s' % token)
@@ -212,10 +199,7 @@ class TsOnbInvite(TsOrg):
     def invite_decline(self, token, **post):
         _ts_site_or_404()
         if not request.env.user._is_public():
-            return neutral(lambda: super(TsOnbInvite, self).invite_decline(token, **post))
-        return neutral(lambda: self._ts_decline_public(token))
-
-    def _ts_decline_public(self, token):
+            return super().invite_decline(token, **post)
         a = self._invite(token)
         if not a.user_id and a.invite_state() == 'ok':
             try:
@@ -230,12 +214,12 @@ class TsOnbShortLinks(TsBrandLinks):
     @http.route()
     def short_invite(self, code, **kw):
         _ts_site_or_404()
-        return short_limited() or neutral(lambda: super(TsOnbShortLinks, self).short_invite(code, **kw))
+        return short_limited() or super().short_invite(code, **kw)
 
     @http.route()
     def short_join(self, code, **kw):
         _ts_site_or_404()
-        return short_limited() or neutral(lambda: super(TsOnbShortLinks, self).short_join(code, **kw))
+        return short_limited() or super().short_join(code, **kw)
 
 
 class TsOnbCampaignJoin(TsPanelCampaignJoin):
@@ -243,4 +227,4 @@ class TsOnbCampaignJoin(TsPanelCampaignJoin):
     @http.route()
     def campaign_page(self, token, **kw):
         _ts_site_or_404()
-        return limited('campaign') or neutral(lambda: super(TsOnbCampaignJoin, self).campaign_page(token, **kw))
+        return limited('campaign') or super().campaign_page(token, **kw)

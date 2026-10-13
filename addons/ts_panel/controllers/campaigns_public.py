@@ -9,10 +9,32 @@ from odoo.exceptions import UserError
 from odoo.http import request
 
 from odoo.addons.ts_assessment.controllers.main import _ts_site_or_404
-from odoo.addons.ts_assessment.models.attempt import fa_digits
-from odoo.addons.ts_org.controllers.main import TsOrg
+from odoo.addons.ts_assessment.models.attempt import fa_digits, jalali
+from odoo.addons.ts_org.controllers.main import TsOrg, effort_facts
 
 from ..models.campaign import JOIN_MSG
+
+# A closed, expired or full open link on the participant page (UX T7 X1, copy W51): (title, text «شما», text «تو»);
+# ts_website.state_card adds the route. JOIN_MSG stays the model's short refusal text.
+JOIN_PAGE = {
+    'closed': ('این دعوت بسته شده است',
+               'اگر هنوز می‌خواهید شرکت کنید، از کسی که پیوند را فرستاده دعوت تازه بخواهید.',
+               'اگر هنوز می‌خواهی شرکت کنی، از کسی که پیوند را فرستاده دعوت تازه بخواه.'),
+    'expired': ('مهلت این دعوت تمام شده است',
+                'اگر هنوز می‌خواهید شرکت کنید، از کسی که پیوند را فرستاده دعوت تازه بخواهید.',
+                'اگر هنوز می‌خواهی شرکت کنی، از کسی که پیوند را فرستاده دعوت تازه بخواه.'),
+    'full': ('همهٔ جاهای این دعوت پر شده است',
+             'از کسی که پیوند را فرستاده بپرسید راه دیگری برای شرکت هست یا نه.',
+             'از کسی که پیوند را فرستاده بپرس راه دیگری برای شرکت هست یا نه.'),
+}
+
+
+def join_card(c, state, student):
+    title, shoma, tu = JOIN_PAGE.get(state) or JOIN_PAGE['closed']
+    note = None
+    if state == 'expired' and c.open_expires_at:
+        note = 'مهلت این دعوت %s تمام شد.' % jalali(c.open_expires_at, with_time=False)
+    return {'title': title, 'text': tu if student else shoma, 'note': note}
 
 
 class TsPanelCampaignJoin(TsOrg):
@@ -33,9 +55,14 @@ class TsPanelCampaignJoin(TsOrg):
         if not user._is_public():
             mine = request.env['ts.assignment'].sudo().search(  # ts-scope-ok: campaign_id is scoped to the campaign workspace
                 [('campaign_id', '=', c.id), ('client_id.user_id', '=', user.id)], limit=1)   # ts-scope-ok: campaign_id is the panel's own
+        ws = c.workspace_id
+        student = ws.purpose == 'education'
+        battery = c.battery_id if 'battery_id' in c._fields else None
         return request.render('ts_panel.campaign_join', {
-            'c': c, 'ws': c.workspace_id, 'inst': c.instrument_id, 'public': user._is_public(), 'fa': fa_digits,
+            'c': c, 'ws': ws, 'inst': c.instrument_id, 'public': user._is_public(), 'fa': fa_digits,
             'flash': request.session.pop('ts_flash', None), 'state': st, 'msg': JOIN_MSG.get(st), 'mine': mine, 'user_name': user.partner_id.ts_known_name() if not user._is_public() else '',
+            'card': join_card(c, st, student) if st != 'ok' else None,
+            'facts': effort_facts(c.instrument_id, battery, ws.purpose),
             **self._auth_urls('/c/%s' % token)})
 
     @http.route('/c/<string:token>/join', type='http', auth='user', website=True, methods=['POST'], sitemap=False)

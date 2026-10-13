@@ -44,10 +44,44 @@ class TsInstrument(models.Model):
             return 'حدود %s دقیقه برای هر زمینه' % fa_digits(self.MATRIX_SECONDS_PER_FIELD // 60)
         return 'حدود %s دقیقه' % fa_digits(self.duration_minutes)
 
+    def ts_minutes_range(self):
+        """(lo, hi) minutes a participant is told for this instrument, the same number as ts_duration_label: a battery
+        total and «… دقیقه مانده» are sums of these, so the total always equals the list (verify T7, R5). The matrix
+        inventory counts the usual 3 to 5 fields (clamped to the version) at MATRIX_SECONDS_PER_FIELD each."""
+        self.ensure_one()
+        v = self.current_version_id
+        if v.mode == 'matrix' and v.field_min and v.field_max:
+            f_lo, f_hi = max(v.field_min, 3), min(v.field_max, 5)
+            if f_lo > f_hi:
+                f_lo, f_hi = v.field_min, v.field_max
+            per = self.MATRIX_SECONDS_PER_FIELD
+            return f_lo * per // 60, f_hi * per // 60
+        m = self.duration_minutes or 0
+        return m, m
+
+    def ts_total_time_label(self):
+        """The whole instrument's time in one short fact: «حدود ۸ دقیقه»; the matrix inventory
+        «۶ تا ۱۰ دقیقه (حدود ۲ دقیقه برای هر زمینه)» (verify T7: the invite fact was 14 words)."""
+        self.ensure_one()
+        lo, hi = self.ts_minutes_range()
+        if self.current_version_id.mode == 'matrix' and lo != hi:
+            return '%s تا %s دقیقه (حدود %s دقیقه برای هر زمینه)' % (
+                fa_digits(lo), fa_digits(hi), fa_digits(self.MATRIX_SECONDS_PER_FIELD // 60))
+        return self.ts_duration_label()
+
+    def ts_detail_tu(self):
+        """The matrix inventory's detail page in the «تو» register of its other pages (UX audit T7 P16-3):
+        {'use', 'limitations'}. A stored text that is not our own default is shown as stored."""
+        self.ensure_one()
+        from .loader import INTENDED_USE, INTENDED_USE_TU, LIMITATIONS, LIMITATIONS_TU
+        use = INTENDED_USE_TU if (self.intended_use or '') == INTENDED_USE else self.ts_intended_use()
+        lim = LIMITATIONS_TU if (self.limitations or '') == LIMITATIONS else (self.limitations or '')
+        return {'use': use, 'limitations': lim}
+
     def ts_audience_label(self):
         self.ensure_one()
         if self.current_version_id.mode == 'matrix':
-            return 'نوجوان ۱۵+ و بزرگسال'
+            return '۱۵ سال به بالا'
         return dict(self._fields['audience'].selection).get(self.audience)
 
 

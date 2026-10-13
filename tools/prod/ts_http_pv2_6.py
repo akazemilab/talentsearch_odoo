@@ -255,7 +255,8 @@ st, body = get(own, W + '/invites?state=opened')
 check('the list filter «بازشده» finds it', 'ویزارد یک' in body)
 shell("a = env['ts.assignment'].sudo().browse(%s); a.write({'expires_at': '2020-01-01 00:00:00'}); env['ts.assignment']._cron_expire_invitations(); env.cr.commit()" % AID)
 st, _, body = anon.req('/invite/' + t)
-check('an expired link tells the participant so', 'مهلت دعوت تمام شده است' in body or 'منقضی' in body)
+check('an expired link tells the participant so, with a next step (UX T7: state card)', 'مهلت این دعوت تمام شده است' in body and 'id="ts-state-card"' in body
+      and ('/signup?next=/my/assessments' in body or 'href="/my/assessments"' in body))
 st, body = get(own, W + '/invites/' + AID)
 check('staff see the state «منقضی» and the extend form', 'منقضی' in body and ('/invites/%s/extend' % AID) in body)
 st, loc, _ = post(own, W + '/invites/%s/extend' % AID, {'days': '99'})
@@ -263,7 +264,7 @@ check('a free number of days is refused', "'expired'" in q("select state from ts
 st, loc, _ = post(own, W + '/invites/%s/extend' % AID, {'days': '14'})
 check('extending clears the expired state', "'opened'" in q("select state from ts_assignment where id = %s" % AID))
 st, _, body = anon.req('/invite/' + t)
-check('and the link works again', 'مهلت دعوت تمام شده است' not in body)
+check('and the link works again', 'مهلت این دعوت تمام شده است' not in body)
 
 # ---- withdraw
 st, loc, _ = post(own, W + '/invites/%s/withdraw' % AID, {})

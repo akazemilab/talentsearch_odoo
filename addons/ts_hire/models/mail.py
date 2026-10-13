@@ -27,8 +27,9 @@ class TsAssignmentMail(models.Model):
 
     def ts_mail_minutes(self):
         self.ensure_one()
-        n = self.battery_id.est_minutes if self.battery_id else self.instrument_id.duration_minutes
-        return fa_digits(n or 0)
+        if self.battery_id:      # the sum of the per-instrument minutes, as on the invite page (verify T7)
+            return self.battery_id.ts_minutes_text() or fa_digits(0)
+        return fa_digits(self.instrument_id.duration_minutes or 0)
 
     def ts_mail_deadline(self):
         self.ensure_one()

@@ -280,7 +280,7 @@ from odoo.addons.ts_sms.models.res_partner import fmt_mobile
 company = env.company.sudo()
 company.write({'kv_enabled': True, 'ts_sms_otp': True})      # no send happens below: every request stops earlier
 check('E01 codes accept Persian/Arabic digits, spaces and dashes', so.clean_code(' ۱۲۳ ٤٥-6 ') == '123456')
-check('E02 the mobile is shown formatted with Persian digits', fmt_mobile('09123456789') == '۰۹۱۲ ۳۴۵ ۶۷۸۹')
+check('E02 the mobile is shown formatted with Persian digits', fmt_mobile('09123456789') == '۰۹۱۲\u200e ۳۴۵\u200e ۶۷۸۹')
 OTP = env['ts.signup.otp'].sudo()
 PH = '09127779901'
 

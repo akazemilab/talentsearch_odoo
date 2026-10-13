@@ -357,6 +357,10 @@
     </record>
 
     <!-- ========================================================== invite -->
+    <!-- UX T7 (2026-10-13): the first phone screen holds who invites, size and time (effort_facts, one source), the
+         instant-result promise, the sharing tick with its privacy line, and the primary button; the details («what
+         the panel sees», battery list, hiring card) follow. Dead-end states use ts_website.state_card. Ids kept for
+         other modules and tests: ts-invite-account, ts_share_note, form.ts-form, ts-decline. -->
     <record id="tpl_invite" model="ir.ui.view">
         <field name="name">TS: invitation</field>
         <field name="type">qweb</field>
@@ -367,75 +371,81 @@
                 <t t-call="website.layout" additional_title.f="دعوت به سنجه">
                     <div id="wrap" class="ts-page">
                         <section class="ts-section">
-                            <div class="ts-container ts-narrow">
+                            <div class="ts-container ts-narrow ts-invite">
                                 <t t-set="matrix" t-value="inst.code == 'TALENT-INV-15'"/>
+                                <t t-set="invitee" t-value="(a.invitee_name or '').strip()"/>
+                                <!-- a link that no longer opens speaks in the past tense (audit P6-1) -->
+                                <t t-set="inv_verb" t-value="'دعوت کرده است' if inv_state == 'ok' else 'دعوت کرده بود'"/>
                                 <div class="ts-section__head">
                                     <p class="ts-tag">دعوت به سنجه</p>
                                     <h1 t-out="inst.title"/>
-                                    <p t-if="student"><strong t-out="ws.ts_public_name()"/> تو را به پاسخ‌دادن به این سنجه دعوت کرده است.</p>
-                                    <p t-else=""><strong t-out="ws.ts_public_name()"/> شما را به پاسخ‌دادن به این سنجه دعوت کرده است.</p>
-                                    <p t-if="matrix and student">زمینه‌هایی را که دوست داری می‌نویسی و می‌بینی در کدام‌ها توانایی بیشتری حس می‌کنی.</p>
-                                    <p t-elif="matrix">زمینه‌هایی را که دوست دارید می‌نویسید و می‌بینید در کدام‌ها توانایی بیشتری حس می‌کنید.</p>
+                                    <p t-if="student"><strong t-out="ws.ts_public_name()"/> تو را به پاسخ‌دادن به این سنجه <t t-out="inv_verb"/>.</p>
+                                    <p t-else=""><strong t-out="ws.ts_public_name()"/> شما را به پاسخ‌دادن به این سنجه <t t-out="inv_verb"/>.</p>
+                                    <p t-if="matrix and student and inv_state == 'ok'">زمینه‌هایی را که دوست داری می‌نویسی و می‌بینی در کدام‌ها توانایی بیشتری حس می‌کنی.</p>
+                                    <p t-elif="matrix and inv_state == 'ok'">زمینه‌هایی را که دوست دارید می‌نویسید و می‌بینید در کدام‌ها توانایی بیشتری حس می‌کنید.</p>
+                                    <p t-if="inv_state == 'ok'" class="ts-invite__facts ts-facts-list" id="ts-invite-facts"><span class="ts-fact"><t t-out="facts['size']"/></span><t t-call="ts_website.sep"/><span class="ts-fact"><t t-out="facts['time']"/></span><t t-call="ts_website.sep"/><span class="ts-fact">نتیجه بلافاصله پس از پایان آماده است.</span></p>
                                 </div>
-                                <div t-if="inv_state != 'ok'" class="ts-card ts-card--soft" role="status">
-                                    <h2 class="h5" t-out="inv_msg[inv_state][0]"/>
-                                    <p t-out="inv_msg[inv_state][1]"/>
-                                </div>
+                                <t t-if="inv_state != 'ok'">
+                                    <t t-call="ts_website.state_card" sc_title="inv_card['title']" sc_text="inv_card['text']" sc_note="inv_card['note']" sc_public="public"/>
+                                </t>
                                 <t t-else="">
-                                    <div t-if="user_name" t-attf-class="ts-notice #{'ts-notice--warn' if mismatch else ''}" t-att-role="'alert' if mismatch else 'status'" id="ts-invite-account">
-                                        <t t-if="student">با حساب «<bdi t-out="user_name"/>» وارد شده‌ای.</t>
-                                        <t t-else="">با حساب «<bdi t-out="user_name"/>» وارد شده‌اید.</t>
-                                        <t t-if="mismatch">
-                                            این دعوت برای «<bdi t-out="(a.invitee_name or '').strip()"/>» است.
-                                            <t t-if="student">اگر این دعوت مال تو نیست، از حساب خارج شو و با حساب درست وارد شو.</t>
-                                            <t t-else="">اگر این دعوت برای شما نیست، از حساب خارج شوید و با حساب درست وارد شوید.</t>
+                                    <!-- another name than the invitee: signing out is the primary way on, accepting stays possible (P24) -->
+                                    <div t-if="mismatch" class="ts-notice ts-notice--warn ts-acct" role="alert" id="ts-invite-account">
+                                        <div class="ts-acct__body">
+                                            <p t-if="student">با حساب «<bdi t-out="user_name"/>» وارد شده‌ای، اما این دعوت برای «<bdi t-out="invitee"/>» است. اگر تو «<bdi t-out="invitee"/>» هستی، همین‌جا ادامه بده. اگر نه، از این حساب خارج شو و با حسابی وارد شو که دعوت برایش فرستاده شده.</p>
+                                            <p t-else="">با حساب «<bdi t-out="user_name"/>» وارد شده‌اید، اما این دعوت برای «<bdi t-out="invitee"/>» است. اگر شما «<bdi t-out="invitee"/>» هستید، همین‌جا ادامه دهید. اگر نه، از این حساب خارج شوید و با حسابی وارد شوید که دعوت برایش فرستاده شده.</p>
                                             <!-- Odoo 20 signs out by POST only -->
-                                            <form t-att-action="logout_url" method="post" class="d-inline"><input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
-                                                <button type="submit" class="ts-btn ts-btn--quiet ts-btn--sm">خروج از این حساب</button></form>
-                                        </t>
+                                            <form t-att-action="logout_url" method="post" class="ts-acct__out"><input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                                                <button type="submit" class="ts-btn ts-btn--primary ts-btn--lg ts-btn--block">خروج از این حساب</button></form>
+                                        </div>
                                     </div>
                                     <dl class="ts-meta">
-                                        <dt>دعوت برای</dt><dd><bdi t-out="(a.invitee_name or '').strip()"/></dd>
-                                        <t t-if="matrix">
-                                            <dt>اندازهٔ کار</dt><dd><t t-if="student">۱۵ جمله برای هر زمینه؛ ۲ تا ۸ زمینه را خودت می‌نویسی</t><t t-else="">۱۵ جمله برای هر زمینه؛ ۲ تا ۸ زمینه را خودتان می‌نویسید</t></dd>
-                                            <dt>زمان تقریبی</dt><dd>حدود ۲ دقیقه برای هر زمینه</dd>
-                                        </t>
-                                        <t t-else="">
-                                            <dt>تعداد پرسش</dt><dd t-out="fa(inst.active_item_count)"/>
-                                            <dt>زمان تقریبی</dt><dd><t t-out="fa(inst.duration_minutes)"/> دقیقه</dd>
+                                        <dt>دعوت برای</dt><dd><bdi t-out="invitee"/><span t-if="user_name and not mismatch" class="ts-hint"> (همین حساب)</span></dd>
+                                        <!-- an account made by mobile code has no name yet: name it by its masked number (X6) -->
+                                        <t t-if="not public and not mismatch and account['label'] and account['kind'] != 'name'">
+                                            <dt>حساب</dt><dd><t t-if="account['kind'] == 'phone'">شمارهٔ </t><bdi dir="ltr" t-out="account['label']"/></dd>
                                         </t>
                                         <t t-if="a.note"><dt>یادداشت پنل</dt><dd t-out="a.note"/></t>
                                     </dl>
-                                    <t t-call="ts_org.share_box" share_ws="ws" share_student="student"/>
-                                    <t t-if="public">
-                                        <p t-if="student">برای شروع وارد حسابت شو یا حساب تازه بساز. گزارش نتیجه در حسابت می‌ماند.</p>
-                                        <p t-else="">برای شروع وارد حساب خود شوید یا حساب تازه بسازید. گزارش نتیجه در حساب شما نگه داشته می‌شود.</p>
-                                        <t t-call="ts_website.auth_choices" phone_url="phone_url" login_url="login_url" signup_url="signup_url"/>
-                                    </t>
-                                    <t t-else="">
-                                        <form t-attf-action="/invite/#{a.token}/accept" method="post" class="ts-form">
-                                            <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
-                                            <label class="ts-check">
-                                                <input type="checkbox" name="share" value="1" checked="checked" aria-describedby="ts_share_note"/>
-                                                <span t-if="ws.purpose == 'education'">اجازه می‌دهم مدرسه و مشاورم گزارش نتیجه‌ام را در پنل «<bdi t-out="ws.ts_public_name()"/>» ببینند.</span>
-                                                <span t-elif="ws.purpose == 'employment'">اجازه می‌دهم سطح هر عامل با پنل «<bdi t-out="ws.ts_public_name()"/>» به اشتراک گذاشته شود.</span>
-                                                <span t-else="">اجازه می‌دهم گزارش کامل با مشاوران «<bdi t-out="ws.ts_public_name()"/>» به اشتراک گذاشته شود.</span>
-                                            </label>
-                                            <p id="ts_share_note" class="ts-hint"><t t-if="student">اگر تیک را برداری هم می‌توانی سنجه را انجام بدهی؛ آن وقت نتیجه فقط برای خودت می‌ماند.</t><t t-else="">اگر تیک را بردارید هم می‌توانید سنجه را انجام دهید؛ آن وقت نتیجه فقط برای خودتان می‌ماند.</t></p>
-                                            <button type="submit" class="ts-btn ts-btn--primary">پذیرفتن دعوت و ادامه</button>
-                                        </form>
-                                        <section t-if="ask_decline" class="ts-confirm" id="ts-decline" aria-labelledby="ts-decline-h">
-                                            <h2 class="h6" id="ts-decline-h"><t t-if="student">دعوت را نمی‌پذیری؟</t><t t-else="">دعوت را نمی‌پذیرید؟</t></h2>
-                                            <p t-if="student">پنل می‌بیند که دعوت را نپذیرفتی. اگر نظرت عوض شد، از مشاورت دعوت تازه بخواه.</p>
-                                            <p t-else="">پنل می‌بیند که دعوت را نپذیرفتید. اگر نظرتان عوض شد، از دعوت‌کننده دعوت تازه بخواهید.</p>
-                                            <form t-attf-action="/invite/#{a.token}/decline" method="post" class="ts-inline-form">
+                                    <div class="ts-invite__act" id="ts-invite-act">
+                                        <t t-if="public">
+                                            <p t-if="student">برای شروع وارد حسابت شو یا حساب تازه بساز. گزارش نتیجه در حسابت می‌ماند.</p>
+                                            <p t-else="">برای شروع وارد حساب خود شوید یا حساب تازه بسازید. گزارش نتیجه در حساب شما نگه داشته می‌شود.</p>
+                                            <t t-call="ts_website.auth_choices" phone_url="phone_url" login_url="login_url" signup_url="signup_url" tu="student"/>
+                                        </t>
+                                        <t t-else="">
+                                            <form t-if="not ask_decline" t-attf-action="/invite/#{a.token}/accept" method="post" class="ts-form" id="ts-invite-form">
                                                 <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
-                                                <button type="submit" class="ts-btn ts-btn--danger ts-btn--sm">بله، دعوت را نمی‌پذیرم</button>
-                                                <a t-attf-href="/invite/#{a.token}" class="ts-btn ts-btn--quiet ts-btn--sm">انصراف</a>
+                                                <label class="ts-check">
+                                                    <input type="checkbox" name="share" value="1" checked="checked" aria-describedby="ts_share_note"/>
+                                                    <span t-if="ws.purpose == 'education'">اجازه می‌دهم مدرسه و مشاورم گزارش نتیجه‌ام را در پنل «<bdi t-out="ws.ts_public_name()"/>» ببینند.</span>
+                                                    <span t-elif="ws.purpose == 'employment'">اجازه می‌دهم سطح هر عامل با پنل «<bdi t-out="ws.ts_public_name()"/>» به اشتراک گذاشته شود.</span>
+                                                    <span t-else="">اجازه می‌دهم گزارش کامل با مشاوران «<bdi t-out="ws.ts_public_name()"/>» به اشتراک گذاشته شود.</span>
+                                                </label>
+                                                <p id="ts_share_note" class="ts-hint"><t t-if="student">اگر تیک را برداری هم می‌توانی سنجه را انجام بدهی؛ آن وقت نتیجه فقط برای خودت می‌ماند.</t><t t-else="">اگر تیک را بردارید هم می‌توانید سنجه را انجام دهید؛ آن وقت نتیجه فقط برای خودتان می‌ماند.</t></p>
+                                                <button type="submit" t-attf-class="ts-btn ts-btn--lg ts-btn--block #{'ts-btn--outline' if mismatch else 'ts-btn--primary'}">پذیرفتن دعوت و ادامه</button>
+                                                <!-- what comes next, so the sharing tick is not mistaken for the consent step (P5-2, R13) -->
+                                                <p class="ts-hint" id="ts-invite-next"><t t-if="student">بعد از این، صفحهٔ کوتاه رضایت را می‌بینی و بعد پرسش‌ها شروع می‌شود.</t><t t-else="">بعد از این، صفحهٔ کوتاه رضایت را می‌بینید و بعد پرسش‌ها شروع می‌شود.</t></p>
                                             </form>
-                                        </section>
-                                        <p t-else=""><a t-attf-href="/invite/#{a.token}?decline=1#ts-decline" class="ts-btn ts-btn--quiet ts-btn--sm">نمی‌خواهم شرکت کنم</a></p>
-                                    </t>
+                                            <!-- decline: the confirmation replaces the accept form (P22-2) -->
+                                            <section t-if="ask_decline" class="ts-confirm" id="ts-decline" aria-labelledby="ts-decline-h">
+                                                <h2 class="h6" id="ts-decline-h"><t t-if="student">دعوت را نمی‌پذیری؟</t><t t-else="">دعوت را نمی‌پذیرید؟</t></h2>
+                                                <p t-if="student">«<bdi t-out="ws.ts_public_name()"/>» می‌بیند که دعوت را نپذیرفتی؛ دلیلی از تو پرسیده نمی‌شود. اگر نظرت عوض شد، از مشاورت دعوت تازه بخواه.</p>
+                                                <p t-else="">«<bdi t-out="ws.ts_public_name()"/>» می‌بیند که دعوت را نپذیرفتید؛ دلیلی از شما پرسیده نمی‌شود. اگر نظرتان عوض شد، از دعوت‌کننده دعوت تازه بخواهید.</p>
+                                                <form t-attf-action="/invite/#{a.token}/decline" method="post" class="ts-inline-form">
+                                                    <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                                                    <button type="submit" class="ts-btn ts-btn--danger">بله، دعوت را نمی‌پذیرم</button>
+                                                    <a t-attf-href="/invite/#{a.token}" class="ts-btn ts-btn--quiet">نه، می‌خواهم شرکت کنم</a>
+                                                </form>
+                                            </section>
+                                            <div t-else="" class="ts-invite__more">
+                                                <a t-attf-href="/invite/#{a.token}?decline=1#ts-decline" class="ts-btn ts-btn--quiet">نمی‌خواهم شرکت کنم</a>
+                                                <form t-if="not mismatch" t-att-action="logout_url" method="post"><input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                                                    <button type="submit" class="ts-btn ts-btn--quiet"><t t-if="student">با حساب دیگری وارد شو</t><t t-else="">ورود با حساب دیگر</t></button></form>
+                                            </div>
+                                        </t>
+                                    </div>
+                                    <t t-call="ts_org.share_box" share_ws="ws" share_student="student" share_pos="a.position_id if 'position_id' in a._fields else False"/>
                                 </t>
                             </div>
                         </section>
@@ -446,7 +456,9 @@
     </record>
 
     <!-- What the panel will see: shown on /invite and on the open link /c (presentation only; consent stays the legal step).
-         Params: share_ws (ts.workspace), share_student (True: «تو» register). -->
+         Folded behind its own heading (button + aria-expanded, ts_nav.js .ts-faq__q; never <details>) so the first phone
+         screen keeps the action; the words are unchanged. Params: share_ws (ts.workspace), share_student (True: «تو»
+         register), share_pos (ts_hire: the position of a job application, else False). -->
     <record id="tpl_share_box" model="ir.ui.view">
         <field name="name">TS: what the panel sees</field>
         <field name="type">qweb</field>
@@ -454,8 +466,15 @@
         <field name="website_id" ref="ts_website.website_ts"/>
         <field name="arch" type="xml">
             <t t-name="ts_org.share_box">
-                <div class="ts-card ts-card--soft ts-share-box">
-                    <h2 class="h5">چه چیزی با پنل «<bdi t-out="share_ws.ts_public_name()"/>» دیده می‌شود؟</h2>
+                <div class="ts-card ts-card--soft ts-share-box" id="ts-share-box">
+                    <h2 class="h6 ts-share-box__h">
+                        <button type="button" class="ts-faq__q ts-share-box__btn" aria-expanded="false" aria-controls="ts-share-list">
+                            <span>چه چیزی با پنل «<bdi t-out="share_ws.ts_public_name()"/>» دیده می‌شود؟</span>
+                            <span class="ts-faq__plus"><t t-call="ts_website.icon" ico.f="plus"/></span>
+                            <span class="ts-faq__minus"><t t-call="ts_website.icon" ico.f="minus"/></span>
+                        </button>
+                    </h2>
+                    <div id="ts-share-list" class="ts-share-box__list" hidden="hidden">
                     <ul class="ts-list-check" t-if="share_ws.purpose == 'education' and share_student">
                         <li>مدرسه و مشاور مسئولت گزارش نتیجه‌ات را می‌بینند.</li>
                         <li>پاسخ‌های خامت را هرگز نمی‌بینند.</li>
@@ -477,6 +496,7 @@
                         <li>اگر اجازه دهید، گزارش کامل همراه با راهنمای مشاور فقط به مشاوران همین مرکز مشاوره نمایش داده می‌شود.</li>
                         <li>هر زمان بخواهید می‌توانید اشتراک‌گذاری را از صفحهٔ گزارش قطع کنید.</li>
                     </ul>
+                    </div>
                 </div>
             </t>
         </field>

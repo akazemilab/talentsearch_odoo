@@ -27,7 +27,8 @@
 #   ts keep DB UPG [INS]    kept clone for hand tests on the slot (default slot 1): clone + apply + serve (job keep_DB)
 #   ts testjob DB FILE...   detached `ts test` (job test_DB) for suites longer than one call
 #   ts shots DB [W,W,...]   detached ui matrix on a served clone of the slot (job shots_DB): fixtures, ts_shot.py at the
-#                           widths (default 375,1280), report + png in /root/share/out/shots_DB; read report.txt first
+#                           widths (default 375,1280), report + png in /root/share/out/shots_DB; read report.txt first.
+#                           W=ux: full UX-audit matrix; W=take: participant journey only (360,390,1280 + dark + _fold.png)
 # Slots: TS_SLOT=0 (default) -> repo /root/talentsearch_odoo, stage /opt/odoo/talentsearch_stage, port 8071.
 #        TS_SLOT=1|2         -> repo /root/ts_wt_sN, stage /opt/odoo/talentsearch_stage_sN, port 8073|8075.
 #        Ships always use slot 0. Each slot has a lock (/root/ts-jobs/slotN.lock) held by its rehearsal.

@@ -18,7 +18,7 @@ from odoo import fields, http
 from odoo.exceptions import UserError
 from odoo.http import request
 
-from odoo.addons.ts_assessment.controllers.main import PAGE_SIZE, _pages, _ts_site_or_404
+from odoo.addons.ts_assessment.controllers.main import _page_of, _page_start, _pages, _ts_site_or_404
 from odoo.addons.ts_assessment.models.attempt import CONSENT_VERSION, fa_digits
 from odoo.addons.ts_assessment.models.instrument import SCALE
 from odoo.addons.ts_sms.controllers.signup import signin_values
@@ -140,14 +140,22 @@ class TsOnbGuest(http.Controller):
             return request.redirect('/start')
         items, n_pages = _pages(at)
         answers = at.answers_map()
+        n_items = len(items)
         if page is None or not str(page).isdigit():
             first_open = next((idx for idx, it in enumerate(items) if it.id not in answers), 0)
-            page = first_open // PAGE_SIZE + 1
+            page = _page_of(first_open, n_items)
         page = min(max(int(page), 1), n_pages)
-        chunk = items[(page - 1) * PAGE_SIZE: page * PAGE_SIZE]
+        # the same balanced paging as /take (5 items per page at most, take1)
+        start, end = _page_start(page, n_items), _page_start(page + 1, n_items) if page < n_pages else n_items
+        chunk = items[start:end]
+        chunk_ids = set(chunk.ids)
+        minutes = at.instrument_id.duration_minutes or 0
         return request.render('ts_assessment.player', self._values(
-            at, items=chunk, answers=answers, page=page, n_pages=n_pages, scale=SCALE, first_index=(page - 1) * PAGE_SIZE,
-            answered=len(answers), total=len(items), error=kw.get('error')))
+            at, items=chunk, answers=answers, page=page, n_pages=n_pages, scale=SCALE, first_index=start,
+            answered=len(answers), total=n_items, error=kw.get('error'),
+            missing_elsewhere=len([it for it in items if it.id not in answers and it.id not in chunk_ids]),
+            show_missing=bool(kw.get('missing')),
+            minutes_left=-(-(n_items - len(answers)) * minutes // n_items) if (n_items and minutes) else 0))
 
     @http.route('/start/q/answer', type='http', auth='public', website=True, methods=['POST'], sitemap=False)
     def guest_answer(self, item=None, value=None, **kw):
@@ -195,9 +203,16 @@ class TsOnbGuest(http.Controller):
             return request.redirect('/start/q' if at else '/start')
         items, n_pages = _pages(at)
         answers = at.answers_map()
-        missing = [(idx + 1, it, idx // PAGE_SIZE + 1) for idx, it in enumerate(items) if it.id not in answers]
+        n_items = len(items)
+        missing = [(idx + 1, it, _page_of(idx, n_items)) for idx, it in enumerate(items) if it.id not in answers]
+        page_rows = []
+        for p in range(1, n_pages + 1):
+            start = _page_start(p, n_items)
+            end = _page_start(p + 1, n_items) if p < n_pages else n_items
+            page_rows.append({'page': p, 'first': start + 1, 'last': end, 'missing': [m for m in missing if m[2] == p]})
         return request.render('ts_assessment.review', self._values(
-            at, missing=missing, total=len(items), answered=len(answers), n_pages=n_pages, error=kw.get('error')))
+            at, missing=missing, total=n_items, answered=len(answers), n_pages=n_pages, page_rows=page_rows,
+            error=kw.get('error')))
 
     @http.route('/start/q/submit', type='http', auth='public', website=True, methods=['POST'], sitemap=False)
     def guest_submit(self, **post):

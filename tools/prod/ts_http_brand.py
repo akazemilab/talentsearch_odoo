@@ -255,6 +255,9 @@ if AB != '0':
     check('panel battery PDF: 404 without access', st == 404, str(st))
     st, body = get(p1, '/my/assessments/battery/' + AB)
     check('participant battery page: institution header', st == 200 and PUBLIC in body and FOOT in body, str(st))
+    # T7: a partial battery has «ادامهٔ مجموعه» (#tsb-continue) and no PDF button; a finished one has the button
+    check('participant battery page: the PDF button only when every instrument is done',
+          ('tsbr-pdf' in body) == ('id="tsb-continue"' not in body), str(st))
 
 # ---------------------------------------------------------------- 5. short links
 anon = Client(TS)

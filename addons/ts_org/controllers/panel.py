@@ -3,7 +3,7 @@ from odoo.exceptions import UserError, ValidationError
 from odoo.http import request
 
 from odoo.addons.ts_assessment.controllers.main import _ts_site_or_404
-from odoo.addons.ts_assessment.models.attempt import fa_digits, jalali
+from odoo.addons.ts_assessment.models.attempt import fa_digits, jalali_long
 from urllib.parse import quote
 
 from odoo.addons.ts_org.controllers.main import _membership
@@ -15,7 +15,7 @@ PANEL_KINDS = ('school', 'org', 'clinic', 'solo')
 def mask_identity(phone, email):
     """Masked contact a colleague invite is bound to, e.g. ۰۹۱۲…۸۹ or a…@example.com (UX audit G1-P10-1)."""
     if phone:
-        return fa_digits(phone[:4] + '…' + phone[-2:])
+        return fa_digits(phone[:4] + '\u200e…\u200e' + phone[-2:])   # LRM: Persian digits (bidi AN) would swap the parts
     if email and '@' in email:
         user, dom = email.split('@', 1)
         return user[:1] + '…@' + dom
@@ -155,8 +155,10 @@ class TsPanel(http.Controller):
             'fits': signed and inv.matches(user), 'role_label': ROLE_LABELS.get(inv.role, inv.role),
             'urls': self._auth_urls('/join/' + token), 'error': _flash(), 'page_name': 'ts_panel',
             'bound_to': mask_identity(inv.phone, inv.email), 'by_phone': bool(inv.phone),
-            'inviter': inv.invited_by_id.sudo().name or '', 'expires_fa': jalali(inv.expires_at, with_time=False),
-            'user_name': user.partner_id.ts_known_name() if signed else '', 'need_name': signed and _need_name()})
+            'inviter': inv.invited_by_id.sudo().name or '', 'expires_fa': jalali_long(inv.expires_at),
+            'user_name': user.partner_id.ts_known_name() if signed else '', 'need_name': signed and _need_name(),
+            # the signed-in account as its owner knows it: the name, else the masked mobile or e-mail (UX T7 X6, P10-1)
+            'account': user.ts_account_label()})
 
     @http.route('/join/<string:token>/accept', type='http', auth='user', website=True, methods=['POST'],
                 sitemap=False)

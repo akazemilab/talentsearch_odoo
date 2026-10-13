@@ -93,7 +93,20 @@ class IrHttpScope(models.AbstractModel):
     @classmethod
     def _post_dispatch(cls, response):
         super()._post_dispatch(response)
+        cls._ts_private_headers(response)
+
+    @classmethod
+    def _handle_error(cls, exception):
+        # the link 404 of an unknown or foreign token (ts_website.page_404) carries the token in its address too
+        response = super()._handle_error(exception)
+        cls._ts_private_headers(response)
+        return response
+
+    @classmethod
+    def _ts_private_headers(cls, response):
         try:
+            if not request:
+                return
             path = request.httprequest.path
             headers = getattr(response, 'headers', None)
             if headers is not None and path.startswith(NO_REFERRER) and on_ts_site():

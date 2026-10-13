@@ -182,6 +182,28 @@ child = pub.filtered(lambda i: i.audience == 'child')[:1]
 c = Attempt.create({'user_id': u1.id, 'instrument_id': child.id, 'version_id': child.current_version_id.id})
 check('child instrument requires guardian respondent', raises(lambda: c.give_consent(role='self'), UserError))
 
+# ------------------------------------------------ player paging and display helpers (UX audit T7, 2026-10-13)
+from odoo.addons.ts_assessment.controllers.main import PAGE_SIZE, _n_pages, _page_of, _page_start, consent_error_url, consent_posted
+from odoo.addons.ts_assessment.models.attempt import jalali_long
+
+
+def _sizes(n):
+    k = _n_pages(n)
+    return [(_page_start(p + 1, n) if p < k else n) - _page_start(p, n) for p in range(1, k + 1)]
+
+
+check('player: 5 items per page, balanced, larger pages first (22 -> 5/5/4/4/4)', PAGE_SIZE == 5 and _sizes(22) == [5, 5, 4, 4, 4]
+      and _sizes(10) == [5, 5] and _sizes(11) == [4, 4, 3] and _sizes(3) == [3], str(_sizes(22)))
+check('player: every published instrument pages within 1 item and every item maps back to its own page',
+      all(max(_sizes(n)) - min(_sizes(n)) <= 1 and max(_sizes(n)) <= PAGE_SIZE and sum(_sizes(n)) == n
+          and all(_page_start(_page_of(i, n), n) <= i for i in range(n))
+          for n in set(pub.mapped('active_item_count')) if n))
+check('consent error redirect echoes only known ticks', consent_error_url('T', 'age', {'consent_service': '1', 'consent_research': 'x', 'age18': 'no'})
+      == '/take/T?error=age&svc=1&age=no' and consent_posted({'svc': '1', 'res': '<b>', 'age': 'no'}) == {'consent_service': '1', 'age18': 'no'})
+import datetime as _dt
+check('participant dates read «۲۱ مهر ۱۴۰۵»', jalali_long(_dt.datetime(2026, 10, 13, 8, 0)) == '۲۱ مهر ۱۴۰۵', jalali_long(_dt.datetime(2026, 10, 13, 8, 0)))
+check('resume line counts items and minutes left', a.ts_progress_line() == '' or 'از' in a.ts_progress_line())
+
 # ------------------------------------------------ privacy
 check('other participant cannot read my attempt', raises(lambda: a.with_user(u2).read(['name']), AccessError))
 check('other participant cannot read my results', raises(lambda: a.result_ids.with_user(u2).read(['score']), AccessError))

@@ -1,3 +1,5 @@
+import re
+from datetime import datetime, time as dtime
 from urllib.parse import quote
 
 from odoo import http
@@ -5,7 +7,7 @@ from odoo.exceptions import UserError, ValidationError
 from odoo.http import request
 
 from odoo.addons.ts_assessment.controllers.main import _ts_site_or_404
-from odoo.addons.ts_assessment.models.attempt import fa_digits
+from odoo.addons.ts_assessment.models.attempt import fa_digits, jalali_long
 from odoo.addons.ts_org.models.assignment import RESPONSIBLE_ROLES
 from odoo.addons.ts_org.models.panel import PURPOSE_LABELS, role_choices
 
@@ -75,14 +77,87 @@ def _unseen(member):
                 if member.can_see(request.env['ts.assignment'].sudo().browse(i))])
 
 
+# Dead-end states of an invitation link (UX T7 X1, copy W10-W13): (title, text «شما», text «تو»). The text says what to
+# do next; ts_website.state_card adds the route («سنجه‌ها و نتیجه‌ها» or sign-in). {org} = the panel's public name.
 INVITE_MSG = {
-    'expired': ('مهلت دعوت تمام شده است', 'از کسی که پیوند را فرستاده بخواهید دعوت تازه بفرستد.'),
-    'used': ('این دعوت قبلاً استفاده شده است', 'این پیوند با یک حساب دیگر پذیرفته شده است. اگر اشتباهی رخ داده، از دعوت‌کننده بخواهید دعوت تازه بفرستد.'),
-    'declined': ('این دعوت رد شده است', 'برای شرکت در سنجه از دعوت‌کننده بخواهید دعوت تازه بفرستد.'),
-    'withdrawn': ('این دعوت دیگر فعال نیست', 'دعوت‌کننده آن را لغو کرده است. برای اطلاعات بیشتر با او تماس بگیرید.'),
-    'paused': ('این دعوت فعلاً در دسترس نیست', 'پنلی که این دعوت را فرستاده موقتاً متوقف شده است و پاسخ‌دهی تازه شروع نمی‌شود. '
-               'نتیجهٔ سنجه‌هایی که پیش‌تر تمام کرده‌اید در «سنجه‌های من» برایتان می‌ماند.'),
+    'expired': ('مهلت این دعوت تمام شده است',
+                'از کسی که پیوند را فرستاده بخواهید دعوت تازه بفرستد.',
+                'از کسی که پیوند را فرستاده بخواه دعوت تازه بفرستد.'),
+    'used': ('این دعوت را حساب دیگری پذیرفته است',
+             'اگر این دعوت مال شماست، با همان شماره‌ای وارد شوید که دعوت را با آن پذیرفتید. اگر نه، از «{org}» دعوت تازه بخواهید.',
+             'اگر این دعوت مال توست، با همان شماره‌ای وارد شو که دعوت را با آن پذیرفتی. اگر نه، از مشاورت دعوت تازه بخواه.'),
+    'declined': ('این دعوت را نپذیرفته‌اید',
+                 'اگر نظرتان عوض شده، از «{org}» دعوت تازه بخواهید.',
+                 'اگر نظرت عوض شده، از مشاورت دعوت تازه بخواه.'),
+    'withdrawn': ('این دعوت دیگر فعال نیست',
+                  '«{org}» این دعوت را پس گرفته است. اگر فکر می‌کنید اشتباهی شده، از همان‌جا بپرسید.',
+                  'فرستنده این دعوت را پس گرفته است. اگر فکر می‌کنی اشتباهی شده، از مشاورت بپرس.'),
+    'paused': ('این دعوت فعلاً در دسترس نیست',
+               '«{org}» موقتاً متوقف شده است و پاسخ‌دهی تازه شروع نمی‌شود. نتیجهٔ سنجه‌هایی که پیش‌تر تمام کرده‌اید در «سنجه‌ها و نتیجه‌ها» می‌ماند.',
+               '«{org}» موقتاً متوقف شده است و پاسخ‌دهی تازه شروع نمی‌شود. نتیجهٔ سنجه‌هایی که پیش‌تر تمام کرده‌ای در «سنجه‌ها و نتیجه‌ها» می‌ماند.'),
 }
+INVITE_DECLINED_TU_TITLE = 'این دعوت را نپذیرفته‌ای'
+
+
+def invite_card(state, org, student, when=None):
+    """Title, text and note of a dead-end invitation state for ts_website.state_card (one pronoun per page)."""
+    title, shoma, tu = INVITE_MSG[state]
+    if student and state == 'declined':
+        title = INVITE_DECLINED_TU_TITLE
+    note = None
+    if state == 'expired' and when:
+        note = ('مهلت این دعوت %s تمام شد.' % when)
+    return {'title': title, 'text': (tu if student else shoma).format(org=org), 'note': note}
+
+
+def _is_task(inst):
+    return inst.current_version_id.mode == 'task'
+
+
+def _strip_minutes(text):
+    """A battery description may still name minutes («…؛ حدود ۳۰ دقیقه.»); the page states time once, from data."""
+    text = re.sub(r'؛\s*حدود\s+[0-9۰-۹]+\s+دقیقه\.', '.', text or '')
+    return re.sub(r'؛\s*حدود\s+[0-9۰-۹]+\s+دقیقه،\s*', '؛ ', text).strip()
+
+
+def effort_facts(inst, battery=None, purpose=None):
+    """One source for the size and time a participant is told before starting (UX T7 X5, copy P3/W15/W20/W21):
+    {'size', 'time', 'lines', 'description'}. Instruments use their own labels (ts_effort_label / ts_duration_label: a
+    timed task says «۳ بخش زمان‌دار», never «۰ پرسش»); the matrix inventory adds a total range; a battery sums its
+    questionnaire items and its timed sections; its time is the sum of the per-instrument minutes listed under it
+    (ts_battery minutes_text; verify T7: the total equals the list)."""
+    if battery:
+        b = battery.sudo()
+        insts = b.ts_lines().mapped('instrument_id') if hasattr(b, 'ts_lines') else b.line_ids.mapped('instrument_id')
+        items = sum(i.active_item_count for i in insts if not _is_task(i))
+        blocks = 0
+        for i in insts.filtered(_is_task):
+            spec = i.ts_task_spec() if hasattr(i, 'ts_task_spec') else None
+            blocks += len(spec['blocks']) if spec else 1
+        parts = []
+        if items:
+            parts.append('%s پرسش' % fa_digits(items))
+        if blocks:
+            parts.append('%s بخش زمان‌دار' % fa_digits(blocks))
+        size = '%s سنجه: %s' % (fa_digits(len(insts)), ' و '.join(parts)) if parts else '%s سنجه' % fa_digits(len(insts))
+        desc = _strip_minutes(b.ts_card()['description'] if hasattr(b, 'ts_card') else b.description)
+        if purpose != 'employment':
+            # a counseling or school client never reads the hiring clause of a shared starter battery (audit P25-2)
+            desc = desc.replace(' و در پنل استخدامی فقط یکی از ورودی‌های گفت‌وگوی شغلی است', '')
+        total = b.ts_minutes_text() if hasattr(b, 'ts_minutes_text') else fa_digits(b.est_minutes)
+        return {'size': size, 'time': 'حدود %s دقیقه' % total,
+                'lines': [{'name': i.ts_title(), 'size': i.ts_effort_label(),
+                           'time': i.ts_total_time_label() if hasattr(i, 'ts_total_time_label') else i.ts_duration_label()}
+                          for i in insts],
+                'description': desc}
+    inst = inst.sudo()
+    size, time = inst.ts_effort_label(), inst.ts_duration_label()
+    v = inst.current_version_id
+    if v.mode == 'matrix' and hasattr(inst, 'ts_total_time_label'):
+        # the usual 3 to 5 fields, clamped to the version (copy W15); verify T7: one short fact
+        # «۶ تا ۱۰ دقیقه (حدود ۲ دقیقه برای هر زمینه)» instead of a 14-word sentence
+        time = inst.ts_total_time_label()
+    return {'size': size, 'time': time, 'lines': [], 'description': ''}
 
 
 class TsOrg(http.Controller):
@@ -281,29 +356,45 @@ class TsOrg(http.Controller):
         _ts_site_or_404()
         a = self._invite(token, paused_ok=True)
         user = request.env.user
-        if a.user_id and not user._is_public() and a.user_id != user:
+        if a.user_id and a.user_id != user:
+            # bound to another account, or opened signed out: the same 404 as an unknown token, so nobody learns whether
+            # the link exists or who holds it; ts_website.page_404 explains and offers sign-in or the person's own list
+            # (UX T7 X1). The owner signs in and lands back here.
             raise request.not_found()
         if a.attempt_id and a.user_id == user and a.state in ('accepted', 'in_progress'):
             return request.redirect('/take/%s' % a.attempt_id.access_token)
         if a.state == 'done' and a.user_id == user:
             return request.redirect('/my/assessments/%s' % a.attempt_id.id)
         inv_state = 'paused' if a.workspace_id.state == 'suspended' else a.invite_state()
+        if inv_state == 'used' and a.user_id == user:
+            inv_state = 'ok'
         public = user._is_public()
+        student = a.workspace_id.purpose == 'education'
         mismatch = False
-        known = '' if public else user.partner_id.ts_known_name()
+        account = user.ts_account_label()
+        known = account['label'] if account['kind'] == 'name' else ''
         if known and not a.user_id:
             # signed in with an account whose name differs from the invitee: say so before accepting (G2-P12-1)
             def norm(x):
                 return ' '.join((x or '').replace('ي', 'ی').replace('ك', 'ک').replace('\u200c', ' ').split()).lower()
             mismatch = norm(a.invitee_name) != norm(user.name)
+        card = None
+        if inv_state != 'ok':
+            ends = a.expires_at if 'expires_at' in a._fields and a.expires_at else a.deadline
+            if ends and not isinstance(ends, datetime):
+                ends = datetime.combine(ends, dtime(12, 0))
+            card = invite_card(inv_state, a.workspace_id.ts_public_name(), student,
+                               jalali_long(ends) if ends else None)   # «۲۸ مهر ۱۴۰۵» (verify T7 date rule)
+        battery = a.battery_id if 'battery_id' in a._fields else None
         return request.render('ts_org.invite', {
             'a': a, 'inst': a.instrument_id, 'ws': a.workspace_id, 'public': public,
             'fa': fa_digits, **self._auth_urls('/invite/%s' % token),
-            'inv_state': inv_state if not (inv_state == 'used' and a.user_id == user) else 'ok',
-            'inv_msg': INVITE_MSG, 'user_name': known, 'mismatch': mismatch,
+            'inv_state': inv_state, 'inv_msg': INVITE_MSG, 'inv_card': card,
+            'facts': effort_facts(a.instrument_id, battery, a.workspace_id.purpose),
+            'user_name': known, 'account': account, 'mismatch': mismatch,
             'logout_url': '/web/session/logout?redirect=%s' % quote('/invite/%s' % token),
             'ask_decline': kw.get('decline') == '1' and not public,
-            'student': a.workspace_id.purpose == 'education',
+            'student': student,
         })
 
     @http.route('/invite/<string:token>/accept', type='http', auth='user', website=True,
@@ -328,7 +419,8 @@ class TsOrg(http.Controller):
             a.action_decline(request.env.user)
         except UserError:
             raise request.not_found()
-        return request.redirect('/my/assessments')
+        # UX T7 P22-1: /my says, as a status message, that it worked
+        return request.redirect('/my?msg=declined')
 
     @http.route('/my/assessments/<int:attempt_id>/unshare', type='http', auth='user', website=True,
                 methods=['POST'], sitemap=False)

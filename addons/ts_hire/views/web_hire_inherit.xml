@@ -1,18 +1,60 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <!-- Invitation page of a position: what the employer sees, decision support, retention. onb2: the optional fairness
-         questions are asked once after the last part (ts_hire.fair), not here. -->
+    <!-- Invitation page of a position (UX T7, audit P26). ONE description of what the employer sees, taken from the code:
+         ts_org result_level() gives an employment member with results:summary the level 'summary' only when the candidate
+         shared; at that level the position pages (controllers/positions.py _row) show the job-fit summary (overall
+         band, each job need as a relative strength / meets the need / lower) and the integrity signals
+         (ts_validity_labels), and the panel's battery result page shows the band of each factor (no scores, answers or
+         texts). Without the tick the employer sees the state and progress only. The tick, the «what is seen» list and
+         the card below say exactly that. onb2: the full list is ts_hire.position_terms (also the «بیشتر» of the welcome
+         screen); the optional fairness questions are asked once after the last part (ts_hire.fair), not here. -->
     <record id="invite_position" model="ir.ui.view">
         <field name="name">ts_hire.invite</field>
         <field name="inherit_id" ref="ts_org.tpl_invite"/>
         <field name="website_id" ref="ts_website.website_ts"/>
         <field name="priority">30</field>
         <field name="arch" type="xml">
-            <xpath expr="//div[hasclass('ts-section__head')]" position="after">
+            <xpath expr="//label[hasclass('ts-check')]/span[@t-elif=&quot;ws.purpose == 'employment'&quot;]" position="before">
+                <span t-elif="ws.purpose == 'employment' and a.position_id">اجازه می‌دهم «<bdi t-out="ws.ts_public_name()"/>» سطح هر عامل، خلاصهٔ تناسبم با این شغل و نشانه‌های دقت پاسخ‌دهی را ببیند.</span>
+            </xpath>
+            <xpath expr="//t[@t-call='ts_org.share_box']" position="after">
                 <section t-if="a.position_id" class="ts-card tsh-invite" aria-labelledby="tsh-inv-h">
                     <h2 class="h5" id="tsh-inv-h">ارزیابی برای موقعیت «<bdi t-out="a.position_id.name"/>»</h2>
                     <t t-call="ts_hire.position_terms"/>
                 </section>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- «What is seen» of a job application: the same facts as the tick and the code (see invite_position above). -->
+    <record id="share_box_position" model="ir.ui.view">
+        <field name="name">ts_hire.share_box</field>
+        <field name="inherit_id" ref="ts_org.tpl_share_box"/>
+        <field name="website_id" ref="ts_website.website_ts"/>
+        <field name="priority">30</field>
+        <field name="arch" type="xml">
+            <xpath expr="//ul[@t-elif=&quot;share_ws.purpose == 'employment'&quot;]" position="before">
+                <ul class="ts-list-check" t-elif="share_ws.purpose == 'employment' and share_pos">
+                    <li>سازمان وضعیت ارزیابی را می‌بیند: شروع‌شده، چند بخش تمام‌شده یا تمام‌شده.</li>
+                    <li>اگر اجازه دهید، این‌ها را هم می‌بیند: سطح هر عامل (کم، متوسط یا زیاد)؛ خلاصهٔ تناسب شما با نیازهای این شغل (سطح تناسب کلی، و اینکه هر نیاز شغل در شما پررنگ است یا کم‌رنگ‌تر)؛ و نشانه‌های دقت پاسخ‌دهی (مثلاً پاسخ‌های بسیار سریع).</li>
+                    <li>پاسخ‌ها، نمره‌ها و متن‌های گزارش شما را نمی‌بیند.</li>
+                    <li>هر زمان بخواهید می‌توانید اشتراک‌گذاری را از صفحهٔ گزارش قطع کنید.</li>
+                </ul>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- Consent/review «who sees» line of a job application (T7 integrator, A handoff W2): the same facts as the tick and
+         the share list above (code: positions.py _row + the battery panel page at level 'summary'). A factual
+         correction of what the page says; the consent version is unchanged. -->
+    <record id="who_sees_position" model="ir.ui.view">
+        <field name="name">ts_hire.who_sees</field>
+        <field name="inherit_id" ref="ts_panel.who_sees_line"/>
+        <field name="website_id" ref="ts_website.website_ts"/>
+        <field name="priority">30</field>
+        <field name="arch" type="xml">
+            <xpath expr="//t[@t-elif=&quot;asg.workspace_id.purpose == 'clinical'&quot;]" position="after">
+                <t t-elif="asg.position_id">شما، و <strong t-out="org"/> سطح هر عامل (کم، متوسط یا زیاد)، خلاصهٔ تناسب شما با این شغل و نشانه‌های دقت پاسخ‌دهی را می‌بیند؛ نه پاسخ‌ها، نه نمره‌ها، نه متن گزارش.</t>
             </xpath>
         </field>
     </record>

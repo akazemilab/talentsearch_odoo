@@ -16,18 +16,20 @@
                         <section class="ts-section tsb-page">
                             <div class="ts-container ts-narrow">
                                 <p class="ts-hero__kicker">مجموعهٔ <t t-out="battery.ts_title()"/></p>
-                                <ol class="tsb-dots" role="img" t-att-aria-label="'%s از %s سنجه انجام شده' % (fa(done_count), fa(total))">
+                                <ol class="tsb-dots" aria-hidden="true">
                                     <li t-foreach="range(1, total + 1)" t-as="k" t-attf-class="tsb-dots__i #{'is-done' if k &lt;= done_count else ''}"/>
                                 </ol>
                                 <h1 class="tsb-title">سنجهٔ <t t-out="fa(n_done)"/> از <t t-out="fa(total)"/> تمام شد</h1>
                                 <p t-if="tu" class="ts-lead">پاسخ‌هایت ذخیره و قفل شد.</p>
                                 <p t-else="" class="ts-lead">پاسخ‌های شما ذخیره و قفل شد.</p>
+                                <!-- T7 (B23-1, R10): the result is the motivator at the riskiest moment -->
+                                <p t-if="attempt.released" class="tsb-ready" id="tsb-ready">نتیجهٔ این سنجه آماده است و در گزارش مجموعه می‌ماند؛ گزارش با هر سنجه کامل‌تر می‌شود. <a t-attf-href="/my/assessments/battery/#{attempt.sudo().assignment_id.id}">دیدن گزارش تا اینجا</a></p>
                                 <section class="ts-card tsb-next" aria-labelledby="tsb-next-h">
                                     <h2 id="tsb-next-h" class="tsb-next__k">سنجهٔ بعدی (<t t-out="fa(nxt.ts_battery_index())"/> از <t t-out="fa(total)"/>)</h2>
                                     <p class="tsb-next__name" t-out="inst.ts_title()"/>
                                     <p class="ts-hint">
-                                        <t t-if="matrix"><t t-out="inst.ts_effort_label()"/>، <t t-out="inst.ts_duration_label()"/></t>
-                                        <t t-else=""><t t-out="fa(items)"/> پرسش، حدود <t t-out="fa(minutes)"/> دقیقه</t>
+                                        <!-- the instrument's own labels: a timed task says «۳ بخش زمان‌دار», never «۰ پرسش» (T7) -->
+                                        <t t-out="inst.ts_effort_label()"/>، <t t-out="inst.ts_duration_label()"/>
                                     </p>
                                     <!-- the whole remaining battery, only when it is more than the next instrument (G6-P14-2) -->
                                     <p t-if="rest_count &gt; 1" class="ts-hint tsb-rest">تا پایان مجموعه: <t t-out="fa(rest_count)"/> سنجه<t t-if="rest_items">، <t t-out="fa(rest_items)"/> پرسش، حدود <t t-out="fa(rest_minutes)"/> دقیقه</t></p>
@@ -60,9 +62,9 @@
                 <h2 id="tsb-consent-h" class="h5">این دعوت یک مجموعه است</h2>
                 <p>با یک بار موافقت در همین صفحه، به همهٔ سنجه‌های این مجموعه پاسخ می‌دهید. رضایت شما برای هر سنجه جداگانه ثبت و پاسخ هر سنجه جدا ذخیره می‌شود؛ هر جا خواستید دست نگه دارید و بعداً از همان‌جا ادامه دهید.</p>
                 <ol class="tsb-list">
-                    <li t-foreach="bat_info['lines']" t-as="ln"><span t-out="ln['name']"/><t t-call="ts_website.sep"/><span class="ts-hint"><t t-out="fa(ln['items'])"/> پرسش</span></li>
+                    <li t-foreach="bat_info['lines']" t-as="ln"><span t-out="ln['name']"/><t t-call="ts_website.sep"/><span class="ts-hint"><t t-if="ln.get('effort')"><t t-out="ln['effort']"/>، <t t-out="ln['duration']"/></t><t t-else=""><t t-out="fa(ln['items'])"/> پرسش، حدود <t t-out="fa(ln['minutes'])"/> دقیقه</t></span></li>
                 </ol>
-                <p class="tsb-total">روی هم <t t-out="fa(bat_info['count'])"/> سنجه، <t t-out="fa(bat_info['items'])"/> پرسش، حدود <t t-out="fa(bat_info['minutes'])"/> دقیقه.</p>
+                <p class="tsb-total">روی هم <t t-out="bat_info['size']"/>، <t t-out="bat_info['time']"/>.</p>
                 <p t-if="bat_info.get('shared')" class="ts-hint">اشتراک‌گذاری‌ای که در صفحهٔ دعوت پذیرفتید، برای گزارش همهٔ سنجه‌های این مجموعه است و از صفحهٔ گزارش مجموعه قطع می‌شود.</p>
             </section>
             </t>
@@ -217,7 +219,14 @@
                                     <h2 id="tsb-received-h" t-else="">پاسخ‌های شما ثبت شد</h2>
                                     <p t-if="tu">همهٔ سنجه‌های این مجموعه انجام شد و نتیجه همین‌جا می‌ماند. پاسخ‌ها پس از ارسال قفل شده‌اند.</p>
                                     <p t-else="">همهٔ سنجه‌های این مجموعه انجام شد و نتیجه همین‌جا می‌ماند. پاسخ‌ها پس از ارسال قفل شده‌اند.</p>
-                                    <p class="ts-received__actions"><a href="#tsb-jump" class="ts-btn ts-btn--primary">خواندن نتیجه</a> <a href="/my" class="ts-btn ts-btn--quiet">بازگشت به کارهای من</a></p>
+                                    <p t-if="sections"><strong>چه کسی این نتیجه را می‌بیند:</strong> <t t-call="ts_panel.who_sees_line" attempt="sections[0]['at']"/></p>
+                                    <p class="ts-received__actions"><a href="#tsb-ov" class="ts-btn ts-btn--primary">خواندن نتیجه</a> <a href="/my" class="ts-btn ts-btn--quiet">بازگشت به کارهای من</a></p>
+                                </section>
+                                <!-- T7 (B24-1): an unfinished battery opens with the way to go on, not with metadata -->
+                                <section t-if="nxt" class="ts-card tsb-continue ts-noprint" id="tsb-continue" aria-labelledby="tsb-continue-h">
+                                    <h2 id="tsb-continue-h" class="h5"><t t-out="fa(done)"/> از <t t-out="fa(total)"/> سنجه انجام شده</h2>
+                                    <p>بعدی: <strong t-out="nxt.instrument_id.ts_title()"/><t t-call="ts_website.sep"/><t t-out="nxt.instrument_id.ts_effort_label()"/>، <t t-out="nxt.instrument_id.ts_duration_label()"/></p>
+                                    <p><a t-attf-href="/take/#{nxt.access_token}" class="ts-btn ts-btn--primary ts-btn--lg">ادامهٔ مجموعه</a></p>
                                 </section>
                                 <article class="ts-doc tsb-doc">
                                     <header class="ts-doc__head">
@@ -251,7 +260,7 @@
                                             </t>
                                             <p t-elif="bs['matrix'] and bs['at'].state == 'done'"><a t-attf-href="/my/assessments/#{bs['at'].id}" class="ts-btn ts-btn--outline ts-btn--sm">دیدن گزارش این سنجه</a></p>
                                             <p t-elif="bs['at'].state == 'done'" class="ts-hint">نتیجهٔ این سنجه در دسترس نیست.</p>
-                                            <p t-else="" class="ts-hint">هنوز به این سنجه پاسخ داده نشده است. <a t-attf-href="/take/#{bs['at'].access_token}">پاسخ‌دادن</a></p>
+                                            <p t-else="" class="ts-hint">هنوز به این سنجه پاسخ داده نشده است. <a t-attf-href="/take/#{bs['at'].access_token}">شروع این سنجه</a></p>
                                         </t>
                                     </t>
                                     <section class="ts-doc__sec ts-noprint" id="tsb-who-sees">
@@ -265,8 +274,14 @@
                                     </section>
                                     <section class="ts-doc__sec ts-doc__foot">
                                         <h2>محدودیت‌ها و گام بعدی</h2>
-                                        <p>هر سنجه تصویری از پاسخ‌های شما در همان روز است. این نتیجه‌ها را با مشاورتان مرور کنید؛ به‌تنهایی مبنای تصمیم نیستند.</p>
-                                        <p>استعدادیاب خدمت اورژانسی نیست؛ اگر حالتان خوب نیست، منتظر نمانید: اورژانس ۱۱۵.</p>
+                                        <t t-if="tu">
+                                            <p>هر سنجه تصویری از پاسخ‌های تو در همان روز است. این نتیجه‌ها را با مشاورت مرور کن؛ به‌تنهایی مبنای تصمیم نیستند.</p>
+                                            <p>استعدادیاب خدمت اورژانسی نیست؛ اگر حالت خوب نیست، منتظر نمان: اورژانس اجتماعی ۱۲۳ یا صدای مشاور ۱۴۸۰.</p>
+                                        </t>
+                                        <t t-else="">
+                                            <p>هر سنجه تصویری از پاسخ‌های شما در همان روز است. این نتیجه‌ها را با مشاورتان مرور کنید؛ به‌تنهایی مبنای تصمیم نیستند.</p>
+                                            <p>استعدادیاب خدمت اورژانسی نیست؛ اگر حالتان خوب نیست، منتظر نمانید: اورژانس اجتماعی ۱۲۳ یا صدای مشاور ۱۴۸۰.</p>
+                                        </t>
                                     </section>
                                 </article>
                             </div>

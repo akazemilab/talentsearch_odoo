@@ -169,10 +169,13 @@ class TsBatteryRunHelpers(models.Model):
         The description is shown without the «… نه تشخیص» sentence: the pages say the limit once (UX audit G6-PT9)."""
         self.ensure_one()
         b = self.sudo()
+        # effort/duration: the instrument's own labels («۳ بخش زمان‌دار», «۲ تا ۸ زمینه…»), never «۰ پرسش» (T7, W20)
         lines = [{'name': l.instrument_id.ts_title(), 'items': l.instrument_id.active_item_count or 0,
-                  'minutes': l.instrument_id.duration_minutes or 0} for l in b.ts_lines()]
+                  'minutes': l.instrument_id.duration_minutes or 0,
+                  'effort': l.instrument_id.ts_effort_label(), 'duration': l.instrument_id.ts_total_time_label()}
+                 for l in b.ts_lines()]
         return {'name': b.name, 'description': ts_strip_limit(b.description), 'count': len(lines), 'items': b.item_count,
-                'minutes': b.est_minutes, 'lines': lines}
+                'minutes': b.ts_minutes_text(), 'lines': lines}   # = sum of the lines (verify T7), not est_minutes
 
     def ts_facts(self):
         """One line for a panel page: «۲ سنجه، ۱۳ پرسش، حدود ۵ دقیقه: فهرست پاکزیستی، فهرست تعهد فردی»."""
@@ -273,6 +276,11 @@ class TsAttemptBattery(models.Model):
             return None
         card = b.ts_card()
         card['shared'] = self.sudo().assignment_id.share_level not in (False, 'none')
+        # size and total time from the same helper as the invitation page (ts_org effort_facts): a timed task is
+        # counted in timed sections, never «۰ پرسش» (T7 integrator, A handoff W20)
+        from odoo.addons.ts_org.controllers.main import effort_facts
+        facts = effort_facts(None, battery=b, purpose=self.sudo().assignment_id.workspace_id.purpose)
+        card['size'], card['time'] = facts['size'], facts['time']
         return card
 
     # ------------------------------------------------------------------ consent once, recorded per attempt

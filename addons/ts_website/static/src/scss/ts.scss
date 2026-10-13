@@ -94,10 +94,19 @@
     // hear a comma (the hidden «، »).
     .ts-sep { display: inline-block; inline-size: 4px; block-size: 4px; border-radius: 50%; background: currentColor; opacity: .55;
         vertical-align: middle; margin-inline: .55em; }
+    // verify T7: the key facts of an invitation (size, time, result) one per line on phones, no dots
+    @media (max-width: 480px) {
+        .ts-facts-list .ts-fact { display: block; }
+        .ts-facts-list .ts-fact + .ts-fact, .ts-facts-list .ts-sep + .ts-fact { margin-block-start: 2px; }
+        .ts-facts-list .ts-sep { display: none; }
+    }
+    .ts-nowrap { white-space: nowrap; }       // a short label that must not break inside («نمره (۱ تا ۵)»)
     bdi[dir="ltr"] { white-space: nowrap; }   // report ids and codes (TSA-000147) never break at the hyphen
     .ts-ico { inline-size: 1.15em; block-size: 1.15em; flex: none; display: inline-block; vertical-align: -.2em; }
 
     // ---------- buttons: primary = accent border + accent-900 fill + accent-300 text; secondary = neutral border; quiet = text ----------
+    // ONE primary style on every page, sign-in included (UX T7 X3; ts_talent .tt-btn--primary mirrors it). Boundary
+    // (--color-accent) vs page and card: 4.9/5.3:1 light, 5.5/4.7:1 dark (WCAG 1.4.11 needs 3:1); text vs fill 6.5 / 9.5:1.
     .ts-btn {
         display: inline-flex; align-items: center; justify-content: center; gap: 8px;
         min-block-size: var(--control-min); padding: 0 18px; border-radius: 10px; border: 1px solid transparent;
@@ -402,9 +411,21 @@
     .ts-quote span { font-size: 15px; line-height: 1.8; color: var(--color-neutral-400); }
     .ts-notice { display: flex; gap: 10px; align-items: flex-start; padding: 14px 16px; margin-block: 12px; border-radius: var(--r-12); background: var(--color-neutral-900); box-shadow: 0 0 0 1px var(--color-neutral-800); color: var(--color-neutral-100); font-size: 14.5px; line-height: 1.85; border: 0; }
     // a one-paragraph notice is running text: as a flex box its inline link became a narrow column of its own (2026-10-12)
-    p.ts-notice:not(:has(> svg)) { display: block; }
+    // a notice without an icon is one text block, also a <div> with several <p> (it split into columns on phones, T7 PT10)
+    .ts-notice:not(:has(> svg)) { display: block; }
     .ts-notice > svg { inline-size: 20px; block-size: 20px; color: var(--color-accent-300); margin-block-start: 3px; flex: none; }
     .ts-notice p:last-child { margin: 0; }
+    // a form inside a notice (sign out and return, resend) sits under the text, never beside it (UX T7 X8)
+    .ts-notice form { margin: 10px 0 0; }
+    // a notice that carries text and a button: one block child, so a flex notice never splits it into columns (X8)
+    .ts-acct__body { flex: 1 1 auto; min-inline-size: 0; display: grid; gap: 10px; }
+    .ts-acct__body p { margin: 0; }
+    .ts-acct__body form, .ts-acct__out { margin: 0; }
+    // the shared state card (components.xml state_card) and the link 404: one row of actions that wraps (UX T7)
+    .ts-state__actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+    .ts-state__actions form { margin: 0; }
+    .ts-state > p { margin: 0; }
+    .ts-header__my { margin-inline-start: 4px; }
     .ts-notice--warn { background: var(--status-warn-soft); box-shadow: 0 0 0 1px color-mix(in srgb, var(--status-warn) 30%, transparent); color: var(--status-warn); }
     .ts-notice--info { background: var(--status-info-soft); box-shadow: 0 0 0 1px color-mix(in srgb, var(--status-info) 25%, transparent); color: var(--status-info); }
     .ts-cta { display: flex; flex-wrap: wrap; gap: 20px 32px; align-items: center; justify-content: space-between; padding: 44px 40px; border-radius: var(--r-24); background: radial-gradient(ellipse at 85% 0%, var(--color-section-glow), var(--color-section) 70%); box-shadow: 0 0 0 1px var(--color-section-ghost); }
@@ -481,8 +502,9 @@
     .ts-report { background: var(--color-surface); box-shadow: var(--shadow-md); border-radius: var(--r-18); overflow: hidden; }
     .ts-report__head { background: var(--color-accent-900); padding: 18px 24px; display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px; }
     .ts-report__body { padding: 24px; display: grid; gap: 18px; }
-    .ts-scale { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 4px; font-size: var(--fs-0); }
-    .ts-scale span { padding: 8px; border-radius: var(--r-8); text-align: center; background: var(--color-neutral-900); color: var(--color-neutral-300); }
+    // the old report legend only: unscoped, these rules put grey pills inside the player's answer tiles (UX audit T7, B8-3)
+    .ts-report .ts-scale { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 4px; font-size: var(--fs-0); }
+    .ts-report .ts-scale span { padding: 8px; border-radius: var(--r-8); text-align: center; background: var(--color-neutral-900); color: var(--color-neutral-300); }
     .ts-meta { display: grid; grid-template-columns: max-content 1fr; gap: 6px 16px; margin: 0; font-size: var(--fs-1); }
     .ts-meta dt { color: var(--color-neutral-400); font-weight: 500; }
     .ts-meta dd { margin: 0; }
@@ -659,7 +681,9 @@
 // Focus and anchors are never hidden behind the sticky header (68px) or a fixed bottom bar (WCAG 2.4.11).
 html { scroll-padding-block-start: 84px; }
 @media (max-width: 767.98px) {
-    html:has(.ts-qnav) { scroll-padding-block-end: 140px; }
+    // the player's one-row bottom bar (12 + 48 + 12 px + the iPhone inset) and its sticky head (T7, B8-5)
+    html:has(.ts-qnav) { scroll-padding-block-end: calc(96px + env(safe-area-inset-bottom)); }
+    html:has(.ts-player) { scroll-padding-block-start: 130px; }
 }
 
 @media (prefers-reduced-motion: reduce) {

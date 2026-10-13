@@ -35,9 +35,11 @@
                             <t t-call="ts_panel.my_nav" active.f="home"/>
                             <section t-if="phone_offer" class="ts-card ts-card--soft" id="ts-home-phone" aria-labelledby="ts-home-phone-h">
                                 <h2 id="ts-home-phone-h" class="h5">شمارهٔ موبایل را به حسابتان وصل کنید</h2>
-                                <p><t t-if="tu">از این به بعد با یک کد پیامکی هم وارد می‌شوی و حساب دومی برایت ساخته نمی‌شود.</t><t t-else="">از این به بعد با یک کد پیامکی هم وارد می‌شوید و حساب دومی برایتان ساخته نمی‌شود.</t></p>
+                                <p><t t-if="tu">از این به بعد با کد تأییدی که پیامک می‌شود هم وارد می‌شوی و حساب دومی برایت ساخته نمی‌شود.</t><t t-else="">از این به بعد با کد تأییدی که پیامک می‌شود هم وارد می‌شوید و حساب دومی برایتان ساخته نمی‌شود.</t></p>
                                 <p class="tsp-row-actions"><a href="/my/phone" class="ts-btn ts-btn--primary">وصل‌کردن موبایل</a></p>
                             </section>
+                            <!-- after «بله، دعوت را نمی‌پذیرم» (UX T7 P22-1): the result of the action, as a status message -->
+                            <p t-if="declined" class="tsp-flash tsp-flash--ok" role="status" id="ts-home-declined"><t t-if="tu">دعوت را نپذیرفتی. پنلی که دعوت کرده بود این را می‌بیند.</t><t t-else="">دعوت را نپذیرفتید. پنلی که دعوت کرده بود این را می‌بیند.</t></p>
                             <!-- the header bell already shows the count on wide screens; on a phone its badge is tiny -->
                             <p t-if="unread" class="tsp-flash tsp-only-narrow" role="status">
                                 <a href="/my/notifications"><t t-out="fa(unread)"/> اعلان تازه <t t-if="tu">داری</t><t t-else="">دارید</t>.</a>
@@ -55,10 +57,14 @@
                                     <t t-elif="next_action['kind'] == 'result'"><t t-if="tu">خودت انجامش دادی</t><t t-else="">خودتان انجامش دادید</t><t t-call="ts_website.sep"/></t>
                                     <t t-if="next_action['kind'] == 'invite'">دعوت در <t t-out="next_action['when']"/><t t-if="next_action.get('deadline')"><t t-call="ts_website.sep"/>مهلت تا <t t-out="next_action['deadline']"/></t></t>
                                     <!-- one state only: answered part of it, or not started yet (it read «half-finished» and «not started» together) -->
-                                    <t t-elif="next_action['kind'] == 'resume' and next_action['progress']"><t t-out="fa(next_action['progress'])"/>٪ پاسخ <t t-if="tu">داده‌ای</t><t t-else="">داده‌اید</t><t t-call="ts_website.sep"/>آخرین ذخیره <t t-out="next_action['when']"/></t>
-                                    <t t-elif="next_action['kind'] == 'resume'">هنوز به هیچ جمله‌ای پاسخ <t t-if="tu">نداده‌ای</t><t t-else="">نداده‌اید</t>؛ هر وقت <t t-if="tu">شروع کنی</t><t t-else="">شروع کنید</t>، پاسخ‌ها خودکار ذخیره می‌شوند.</t>
+                                    <!-- T7 (W44, B7-1): items and minutes left, not a percentage -->
+                                    <t t-elif="next_action['kind'] == 'resume' and next_action['progress']"><t t-if="next_action.get('progress_line')" t-out="next_action['progress_line']"/><t t-else=""><t t-out="fa(next_action['progress'])"/>٪ پاسخ <t t-if="tu">داده‌ای</t><t t-else="">داده‌اید</t></t><t t-call="ts_website.sep"/>آخرین ذخیره <t t-out="next_action['when']"/></t>
+                                    <t t-elif="next_action['kind'] == 'resume'">هنوز شروع <t t-if="tu">نکرده‌ای</t><t t-else="">نکرده‌اید</t>؛ هر وقت <t t-if="tu">شروع کنی</t><t t-else="">شروع کنید</t>، پاسخ‌ها خودکار ذخیره می‌شوند.</t>
                                     <t t-else="">تکمیل در <t t-out="next_action['when']"/></t>
                                 </p>
+                                <!-- T7 (P20-2): size and time (ts_org effort_facts, as on the invitation page) and the panel's note -->
+                                <p t-if="next_action.get('facts')" class="tsp-next__meta ts-facts-list" id="ts-next-facts"><span class="ts-fact"><t t-out="next_action['facts']['size']"/></span><t t-call="ts_website.sep"/><span class="ts-fact"><t t-out="next_action['facts']['time']"/></span></p>
+                                <p t-if="next_action.get('note')" class="tsp-next__meta ts-hint" id="ts-next-note">یادداشت پنل: <t t-out="next_action['note']"/></p>
                                 <a t-att-href="next_action['url']" class="ts-btn ts-btn--primary ts-btn--lg" t-out="next_action['label']"/>
                             </section>
                             <!-- a panel member with nothing to answer: the panel is the next step (UX audit G4 P24-1) -->
@@ -73,15 +79,17 @@
                                     <a href="/my/workspaces" class="ts-btn ts-btn--primary ts-btn--lg">رفتن به پنل‌ها</a>
                                 </t>
                             </section>
-                            <div t-if="invites" class="ts-card" id="ts-home-invites">
-                                <h2>دعوت‌های باز</h2>
+                            <!-- the invitation in the hero above is not listed again (UX T7 P20-1) -->
+                            <t t-set="inv_rest" t-value="invites.filtered(lambda i: not next_action or i.id != next_action.get('invite_id'))"/>
+                            <div t-if="inv_rest" class="ts-card" id="ts-home-invites">
+                                <h2>دعوت‌های باز دیگر</h2>
                                 <ul class="tsp-list tsp-rows">
-                                    <li t-foreach="invites" t-as="inv">
+                                    <li t-foreach="inv_rest" t-as="inv">
                                         <div class="tsp-rows__text">
                                             <strong t-out="inv.instrument_id.title"/>
-                                            <span class="ts-hint">به دعوت <t t-out="inv.workspace_id.ts_public_name()"/><t t-call="ts_website.sep"/><t t-out="jalali(inv.create_date, with_time=False)"/><t t-if="deadlines.get(inv.id)"><t t-call="ts_website.sep"/>مهلت تا <t t-out="deadlines[inv.id]"/></t></span>
+                                            <span class="ts-hint">به دعوت <t t-out="inv.workspace_id.ts_public_name()"/><t t-call="ts_website.sep"/><t t-out="jalali_long(inv.create_date)"/><t t-if="deadlines.get(inv.id)"><t t-call="ts_website.sep"/>مهلت تا <t t-out="deadlines[inv.id]"/></t></span>
                                         </div>
-                                        <a t-attf-href="/invite/#{inv.token}" class="ts-btn ts-btn--outline ts-btn--sm">مشاهدهٔ دعوت</a>
+                                        <a t-attf-href="/invite/#{inv.token}" class="ts-btn ts-btn--outline ts-btn--sm">دیدن دعوت<span class="visually-hidden"> «<t t-out="inv.instrument_id.title"/>»</span></a>
                                     </li>
                                 </ul>
                             </div>
@@ -92,7 +100,7 @@
                                         <t t-set="started" t-value="a.state == 'in_progress' and a.progress"/>
                                         <div class="tsp-rows__text">
                                             <strong t-out="a.instrument_id.title"/>
-                                            <span class="ts-hint"><t t-if="a.workspace_id">به دعوت <t t-out="a.workspace_id.ts_public_name()"/><t t-call="ts_website.sep"/></t><t t-if="started"><t t-out="fa(a.progress)"/>٪ انجام شده<t t-call="ts_website.sep"/></t><t t-else="">هنوز شروع نشده<t t-call="ts_website.sep"/></t>آخرین ذخیره <t t-out="jalali(a.write_date, with_time=False)"/></span>
+                                            <span class="ts-hint"><t t-if="a.workspace_id">به دعوت <t t-out="a.workspace_id.ts_public_name()"/><t t-call="ts_website.sep"/></t><t t-if="started"><t t-set="pline" t-value="a.ts_progress_line(tu)"/><t t-if="pline" t-out="pline"/><t t-else=""><t t-out="fa(a.progress)"/>٪ انجام شده</t><t t-call="ts_website.sep"/></t><t t-else="">هنوز شروع نشده<t t-call="ts_website.sep"/></t>آخرین ذخیره <t t-out="a.jalali_long(a.write_date)"/></span>
                                         </div>
                                         <a t-attf-href="/take/#{a.access_token}" class="ts-btn ts-btn--outline ts-btn--sm"><t t-if="started">ادامه</t><t t-else="">شروع</t></a>
                                     </li>
@@ -104,9 +112,9 @@
                                     <li t-foreach="done" t-as="a">
                                         <div class="tsp-rows__text">
                                             <strong t-out="a.instrument_id.title"/>
-                                            <span class="ts-hint"><t t-out="jalali(a.submitted_at, with_time=False)"/><t t-call="ts_website.sep"/><t t-if="shared_n.get(a.id)">با <t t-out="fa(shared_n[a.id])"/> پنل به اشتراک گذاشته شده</t><t t-elif="tu">فقط تو می‌بینی</t><t t-else="">فقط شما می‌بینید</t></span>
+                                            <span class="ts-hint"><t t-out="a.jalali_long(a.submitted_at)"/><t t-call="ts_website.sep"/><t t-if="shared_n.get(a.id)">با <t t-out="fa(shared_n[a.id])"/> پنل به اشتراک گذاشته شده</t><t t-elif="tu">فقط تو می‌بینی</t><t t-else="">فقط شما می‌بینید</t></span>
                                         </div>
-                                        <a t-attf-href="/my/assessments/#{a.id}" class="ts-btn ts-btn--outline ts-btn--sm">گزارش</a>
+                                        <a t-attf-href="/my/assessments/#{a.id}" class="ts-btn ts-btn--outline ts-btn--sm">دیدن نتیجه<span class="visually-hidden"> «<t t-out="a.instrument_id.title"/>»</span></a>
                                     </li>
                                 </ul>
                                 <p class="ts-hint"><a href="/my/assessments">همهٔ نتیجه‌ها</a> · <a href="/my/sharing">چه کسی نتیجه‌های من را می‌بیند؟</a></p>
@@ -114,15 +122,27 @@
                             <t t-if="not next_action and not invites and not going and not done">
                                 <p t-if="memberships" class="ts-hint" id="ts-home-empty">دعوت یا سنجهٔ نیمه‌تمامی ندارید. نتیجه‌های قبلی در <a href="/my/assessments">سنجه‌ها و نتیجه‌ها</a> می‌مانند.</p>
                                 <div t-else="" class="ts-card ts-card--soft" id="ts-home-empty">
-                                    <t t-if="tu">
-                                        <h2>فعلاً کاری نداری</h2>
-                                        <p>دعوتی منتظرت نیست و سنجهٔ نیمه‌تمامی نداری. نتیجه‌های قبلی در <a href="/my/assessments">سنجه‌ها و نتیجه‌ها</a> می‌مانند؛ هر وقت خواستی می‌توانی یک سنجه را خودت انجام بدهی.</p>
+                                    <!-- T7 (P18-2): a brand-new account (no attempt at all) gets one obvious next step, as a primary button;
+                                         someone with history keeps the pointer to it -->
+                                    <t t-if="has_history">
+                                        <t t-if="tu">
+                                            <h2>فعلاً کاری نداری</h2>
+                                            <p>دعوتی منتظرت نیست و سنجهٔ نیمه‌تمامی نداری. نتیجه‌های قبلی در <a href="/my/assessments">سنجه‌ها و نتیجه‌ها</a> می‌مانند؛ هر وقت خواستی می‌توانی یک سنجه را خودت انجام بدهی.</p>
+                                        </t>
+                                        <t t-else="">
+                                            <h2>فعلاً کاری ندارید</h2>
+                                            <p>دعوتی منتظر شما نیست و سنجهٔ نیمه‌تمامی ندارید. نتیجه‌های قبلی در <a href="/my/assessments">سنجه‌ها و نتیجه‌ها</a> می‌مانند؛ هر وقت خواستید می‌توانید یک سنجه را خودتان انجام دهید.</p>
+                                        </t>
+                                    </t>
+                                    <t t-elif="tu">
+                                        <h2>هنوز سنجه‌ای نداری</h2>
+                                        <p>اگر مشاور یا مدرسه‌ات پیوند دعوت فرستاده، همان پیوند را باز کن؛ یا یک سنجه را برای خودت شروع کن.</p>
                                     </t>
                                     <t t-else="">
-                                        <h2>فعلاً کاری ندارید</h2>
-                                        <p>دعوتی منتظر شما نیست و سنجهٔ نیمه‌تمامی ندارید. نتیجه‌های قبلی در <a href="/my/assessments">سنجه‌ها و نتیجه‌ها</a> می‌مانند؛ هر وقت خواستید می‌توانید یک سنجه را خودتان انجام دهید.</p>
+                                        <h2>هنوز سنجه‌ای ندارید</h2>
+                                        <p>اگر مدرسه، مرکز مشاوره یا سازمانی برایتان پیوند دعوت فرستاده، همان پیوند را باز کنید؛ یا یک سنجه را برای خودتان شروع کنید.</p>
                                     </t>
-                                    <a href="/assessments" class="ts-btn ts-btn--outline">سنجه‌هایی که می‌توان انجام داد</a>
+                                    <a href="/assessments" class="ts-btn ts-btn--primary">دیدن سنجه‌ها</a>
                                 </div>
                             </t>
                             <div t-if="memberships and next_action" class="ts-card" id="ts-home-panels-more">
@@ -164,11 +184,11 @@
                                 <p><strong>نام ورود:</strong> <bdi dir="ltr" class="ts-bdi" t-out="user.login"/></p>
                                 <t t-if="tu">
                                     <p t-if="phone_verified">شمارهٔ موبایلت تأیید شده است. <a href="/my/phone">مدیریت موبایل</a></p>
-                                    <p t-else="">هنوز شمارهٔ موبایل تأییدشده‌ای نداری. موبایل فقط با کد پیامکی تأیید می‌شود. <a href="/my/phone">تأیید موبایل</a></p>
+                                    <p t-else="">هنوز شمارهٔ موبایل تأییدشده‌ای نداری. موبایل فقط با کد تأییدی که به آن پیامک می‌شود تأیید می‌شود. <a href="/my/phone">تأیید موبایل</a></p>
                                 </t>
                                 <t t-else="">
                                     <p t-if="phone_verified">شمارهٔ موبایل شما تأیید شده است. <a href="/my/phone">مدیریت موبایل</a></p>
-                                    <p t-else="">شمارهٔ موبایل تأییدشده‌ای ندارید. موبایل فقط با کد پیامکی تأیید می‌شود. <a href="/my/phone">تأیید موبایل</a></p>
+                                    <p t-else="">شمارهٔ موبایل تأییدشده‌ای ندارید. موبایل فقط با کد تأییدی که به آن پیامک می‌شود تأیید می‌شود. <a href="/my/phone">تأیید موبایل</a></p>
                                 </t>
                             </div>
                             <nav class="ts-card" aria-labelledby="acc-more-h">
@@ -181,7 +201,7 @@
                                     <li><a href="/my/sessions">دستگاه‌های واردشده</a><span class="ts-hint">خروج از دستگاه‌های دیگر</span></li>
                                     <li><a href="/my/security">رمز عبور و امنیت</a><span class="ts-hint">تغییر رمز عبور</span></li>
                                     <li><a href="/help">راهنما و پرسش‌های رایج</a><span class="ts-hint">روند کار و حقوق کاربران</span></li>
-                                    <li><a href="/contact?topic=support">تماس با پشتیبانی</a><span class="ts-hint">پاسخ در ساعت کاری؛ در شرایط اضطراری با اورژانس <bdi dir="ltr">۱۱۵</bdi> تماس بگیرید</span></li>
+                                    <li><a href="/contact?topic=support">تماس با پشتیبانی</a><span class="ts-hint">پاسخ در ساعت کاری؛ در شرایط اضطراری با اورژانس اجتماعی ۱۲۳ یا صدای مشاور ۱۴۸۰ تماس بگیرید</span></li>
                                     <li><form action="/web/session/logout?redirect=/" method="post"><input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
                                         <button type="submit" class="ts-btn ts-btn--quiet ts-btn--sm">خروج از حساب</button></form></li>
                                 </ul>
@@ -218,7 +238,7 @@
                                 <t t-set="att" t-value="b['at']"/>
                                 <t t-set="act" t-value="b['act']"/>
                                 <h2><t t-out="att.instrument_id.title"/></h2>
-                                <p class="ts-hint"><t t-out="att.jalali(att.submitted_at, False)"/> · <a t-attf-href="/my/assessments/#{att.id}">مشاهدهٔ گزارش</a></p>
+                                <p class="ts-hint"><t t-out="att.jalali_long(att.submitted_at)"/> · <a t-attf-href="/my/assessments/#{att.id}">مشاهدهٔ گزارش</a></p>
                                 <p t-if="not act" class="ts-sharing-none">این نتیجه را هیچ پنلی نمی‌بیند. <t t-if="tu">فقط خودت.</t><t t-else="">فقط شما.</t></p>
                                 <ul t-if="act" class="tsp-list">
                                     <li t-foreach="act" t-as="s" class="ts-sharing-row">
@@ -478,17 +498,21 @@
                 <t t-if="attempt.state == 'done' and attempt.user_id == request.env.user">
                     <t t-set="ws_all" t-value="attempt.ts_shares()"/>
                     <t t-set="ws_act" t-value="ws_all.filtered(lambda s: s.share_level != 'none')"/>
+                    <t t-set="tu_ws" t-value="attempt.ts_informal()"/>
                     <section class="ts-doc__sec ts-noprint" id="ts-who-sees">
                         <h2>چه کسی این نتیجه را می‌بیند؟</h2>
-                        <p t-if="not ws_act">هیچ پنلی این نتیجه را نمی‌بیند. فقط شما.</p>
+                        <!-- verify T7 (P10-2): a self-taken result never shared says it in the same sentence as the banner -->
+                        <p t-if="not ws_all and not attempt.workspace_id"><t t-call="ts_panel.who_sees_line" wsl_id="'ts-who-sees-line-foot'"/></p>
+                        <p t-elif="not ws_act and tu_ws">هیچ پنلی این نتیجه را نمی‌بیند. فقط تو.</p>
+                        <p t-elif="not ws_act">هیچ پنلی این نتیجه را نمی‌بیند. فقط شما.</p>
                         <ul t-if="ws_act" class="ts-who-sees__list">
                             <li t-foreach="ws_act" t-as="s">
                                 <strong t-out="s.workspace_id.ts_public_name()"/> — <t t-out="s.ts_level_word()"/>
-                                <t t-if="s.invited_by_id == attempt.user_id"> (خودتان فرستادید)</t><t t-else=""> (به دعوت همین پنل)</t>
+                                <t t-if="s.invited_by_id == attempt.user_id"><t t-if="tu_ws"> (خودت فرستادی)</t><t t-else=""> (خودتان فرستادید)</t></t><t t-else=""> (به دعوت همین پنل)</t>
                                 · <a t-attf-href="/my/sharing/#{s.id}/revoke?back=report">قطع اشتراک‌گذاری</a>
                             </li>
                         </ul>
-                        <p>پاسخ‌های خام شما را هیچ پنلی نمی‌بیند. <a href="/my/sharing">مدیریت اشتراک‌گذاری‌ها و دیدن اینکه چه کسی نتیجه را باز کرده است</a></p>
+                        <p><t t-if="tu_ws">پاسخ‌های خام تو را هیچ پنلی نمی‌بیند.</t><t t-else="">پاسخ‌های خام شما را هیچ پنلی نمی‌بیند.</t> <a href="/my/sharing">مدیریت اشتراک‌گذاری‌ها و دیدن اینکه چه کسی نتیجه را باز کرده است</a></p>
                     </section>
                 </t>
             </t>

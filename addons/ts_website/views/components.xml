@@ -34,7 +34,15 @@
          4. ts_website.sep - separator between parts of a meta line (UX audit 2026-10-12, G6-PT1):
               <t t-out="when"/><t t-call="ts_website.sep"/><t t-out="fa(n)"/> سنجه
             A drawn dot (.ts-sep), never the « · » glyph: next to a Persian digit the middle dot reads as zero
-            («۲ · سنجه» looked like «۲۰ سنجه»). Screen readers hear «، ». In a long headline put counts on their own line. -->
+            («۲ · سنجه» looked like «۲۰ سنجه»). Screen readers hear «، ». In a long headline put counts on their own line.
+
+         5. ts_website.state_card - a participant link that leads nowhere today (invitation expired, withdrawn, declined,
+            panel paused; open link closed or full; colleague invite no longer valid). One card, always with a next step
+            (UX T7 X1): what happened (sc_title), what to do (sc_text), an optional fact (sc_note, e.g. the expiry date),
+            and one button: signed in -> sc_label / sc_href (default «سنجه‌ها و نتیجه‌ها», /my/assessments); signed out ->
+            «ورود» to sc_login (default /signup?next=/my/assessments).
+              <t t-call="ts_website.state_card" sc_title="card['title']" sc_text="card['text']" sc_note="card['note']"
+                 sc_public="public"/> -->
     <record id="tpl_jdate" model="ir.ui.view">
         <field name="name">TS: Solar Hijri date field</field>
         <field name="type">qweb</field>
@@ -62,7 +70,9 @@
         <field name="key">ts_website.sep</field>
         <field name="website_id" ref="website_ts"/>
         <field name="arch" type="xml">
-            <t t-name="ts_website.sep"><span class="ts-sep"><span class="ts-sr">، </span></span></t>
+            <!-- verify T7: a WORD JOINER keeps the dot on the line of the fact before it, so a wrapped meta line never
+                 starts with the separator («• ۶ از ۱۱ پرسش…») -->
+            <t t-name="ts_website.sep">&#8288;<span class="ts-sep"><span class="ts-sr">، </span></span></t>
         </field>
     </record>
 
@@ -91,6 +101,26 @@
         </field>
     </record>
 
+    <record id="tpl_state_card" model="ir.ui.view">
+        <field name="name">TS: participant state card</field>
+        <field name="type">qweb</field>
+        <field name="key">ts_website.state_card</field>
+        <field name="website_id" ref="website_ts"/>
+        <field name="arch" type="xml">
+            <t t-name="ts_website.state_card">
+                <div class="ts-card ts-card--soft ts-state" role="status" id="ts-state-card">
+                    <h2 class="h5" t-out="sc_title"/>
+                    <p t-out="sc_text"/>
+                    <p t-if="sc_note" class="ts-hint" t-out="sc_note"/>
+                    <div class="ts-state__actions">
+                        <a t-if="sc_public" t-att-href="sc_login or '/signup?next=/my/assessments'" class="ts-btn ts-btn--primary">ورود</a>
+                        <a t-else="" t-att-href="sc_href or '/my/assessments'" class="ts-btn ts-btn--primary" t-out="sc_label or 'سنجه‌ها و نتیجه‌ها'"/>
+                    </div>
+                </div>
+            </t>
+        </field>
+    </record>
+
     <record id="tpl_auth_choices" model="ir.ui.view">
         <field name="name">TS: sign-in choices</field>
         <field name="type">qweb</field>
@@ -105,7 +135,8 @@
                     <t t-elif="phone_url">
                         <a t-att-href="phone_url" class="ts-btn ts-btn--primary ts-btn--lg ts-btn--block">ورود یا ثبت‌نام با موبایل</a>
                         <p t-if="login_url and not only" class="ts-authchoice__alt">
-                            <a t-att-href="login_url">با ایمیل ثبت‌نام کرده بودید؟</a>
+                            <!-- verify T7 (X4): «تو» on a student invitation (callers pass tu="student") -->
+                            <a t-att-href="login_url"><t t-if="tu">با ایمیل ثبت‌نام کرده بودی؟</t><t t-else="">با ایمیل ثبت‌نام کرده بودید؟</t></a>
                         </p>
                     </t>
                     <t t-elif="not only">

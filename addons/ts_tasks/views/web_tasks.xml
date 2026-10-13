@@ -11,18 +11,24 @@
                 <t t-call="website.layout" additional_title="inst.title">
                     <div id="wrap" class="ts-page">
                         <section class="ts-section tst-player" t-att-data-token="attempt.access_token"
-                                 t-att-data-csrf="request.csrf_token()" t-att-data-config="cfg_json">
+                                 t-att-data-csrf="request.csrf_token()" t-att-data-config="cfg_json" t-att-data-org="hire_org or None">
                             <div class="ts-container ts-narrow">
                                 <p class="ts-hero__kicker">آزمون زمان‌دار</p>
                                 <h1 class="tst-title" t-out="inst.title"/>
                                 <p class="ts-lead" t-out="cfg['intro']"/>
+                                <!-- hiring battery (ts_hire passes hire_org): who asked for the test and what that organisation sees.
+                                     verify T7: the same sentence as the invitation and consent (ts_panel.who_sees_line, with
+                                     ts_hire.who_sees_position), plus what «نشانه‌های دقت پاسخ‌دهی» means on this page -->
+                                <p class="ts-hint tst-who" t-if="hire_org">این آزمون را <strong t-out="hire_org"/> خواسته است.
+                                    <t t-call="ts_panel.who_sees_line"/>
+                                    <t t-if="hire_shared"> «نشانه‌های دقت پاسخ‌دهی» یعنی مثلاً بیرون رفتن از صفحه در میانهٔ یک بخش.</t></p>
                                 <p class="ts-hint" t-if="cfg['accom'] and cfg['accom'] &gt; 1">برای شما زمان بیشتری در نظر گرفته شده است.</p>
                                 <div class="tst-stage" aria-live="off">
-                                    <noscript><p class="ts-notice ts-notice--warn">این آزمون بدون جاوااسکریپت اجرا نمی‌شود. لطفاً آن را در مرورگر فعال کنید.</p></noscript>
+                                    <noscript><p class="ts-notice ts-notice--warn">این آزمون بدون جاوااسکریپت اجرا نمی‌شود؛ آن را در تنظیمات مرورگر روشن کنید.</p></noscript>
                                     <p class="tst-wait">در حال بارگذاری…</p>
                                 </div>
                                 <p class="tst-live visually-hidden" aria-live="assertive"/>
-                                <p class="ts-hint tst-foot">نتیجه در میانهٔ کار نمایش داده نمی‌شود. اگر صفحه بسته شود، زمانِ بخشِ شروع‌شده ادامه پیدا می‌کند.</p>
+                                <p class="ts-hint tst-foot">زمان هر بخش از لحظهٔ شروع می‌گذرد، حتی اگر صفحه را ببندید؛ پس هر بخش را یک‌جا تمام کنید. نتیجه پس از پایان همهٔ بخش‌ها آماده است.</p>
                             </div>
                         </section>
                     </div>
@@ -30,19 +36,23 @@
             </t>
         </field>
     </record>
-    <!-- Report blocks: task results are percentiles 0-100 (not means on 1-5). Hint, column and meter follow. -->
+    <!-- Report blocks: task results are percentiles 0-100 (not means on 1-5). Hint, column and meter follow.
+         The questionnaire hint stays the ts_assessment one (with its «تو» branch); only task reports get their own. -->
     <record id="report_blocks_task" model="ir.ui.view">
         <field name="name">ts_tasks.report_blocks</field>
         <field name="inherit_id" ref="ts_assessment.tpl_report_blocks"/>
         <field name="website_id" ref="ts_website.website_ts"/>
         <field name="arch" type="xml">
-            <xpath expr="//section[1]/p[hasclass('ts-hint')]" position="replace">
+            <xpath expr="//section[1]/p[hasclass('ts-hint')]" position="before">
                 <p class="ts-hint" t-if="results and results[0].attempt_id.version_id.mode == 'task'">برای هر توانایی، جایگاه شما در مقایسه با دیگر شرکت‌کنندگان (صدک) نشان داده می‌شود؛ تا جمع شدن داده‌های کافی، این جایگاه برآورد موقت است. بازه‌ها: کم، متوسط و زیاد.</p>
-                <p class="ts-hint" t-else="">نمرهٔ هر بُعد میانگین پاسخ‌های شما روی مقیاس ۱ تا ۵ است (عبارت‌های معکوس پیش از میانگین‌گیری برگردانده می‌شوند). بازه‌ها: کم، متوسط و زیاد.</p>
+            </xpath>
+            <xpath expr="//section[1]/p[hasclass('ts-hint')][not(@t-if)]" position="attributes">
+                <attribute name="t-if">not (results and results[0].attempt_id.version_id.mode == 'task')</attribute>
             </xpath>
             <xpath expr="//section[1]//thead/tr/th[2]" position="replace">
-                <th scope="col" t-if="results and results[0].attempt_id.version_id.mode == 'task'">صدک (۰ تا ۱۰۰)</th>
-                <th scope="col" t-else="">نمره (۱ تا ۵)</th>
+                <!-- verify T7: the column name never breaks inside its range («(۱ تا | ۵)» at 390) -->
+                <th scope="col" class="ts-nowrap" t-if="results and results[0].attempt_id.version_id.mode == 'task'">صدک (۰ تا ۱۰۰)</th>
+                <th scope="col" class="ts-nowrap" t-else="">نمره (۱ تا ۵)</th>
             </xpath>
             <xpath expr="//section[1]//span[contains(@t-attf-class, 'ts-meter__seg')]" position="attributes">
                 <attribute name="t-attf-style">width: #{b.ts_seg_pct()}%</attribute>

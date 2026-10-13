@@ -66,7 +66,7 @@
                                         <h2 id="ts-phone-rm-h" class="h5">شمارهٔ <bdi dir="ltr" class="ts-bdi" t-out="masked"/> حذف شود؟</h2>
                                         <ul id="ts-phone-rm-d">
                                             <li>پیامک «نتیجه آماده است» دیگر فرستاده نمی‌شود.</li>
-                                            <li>با این شماره دیگر نمی‌شود با کد پیامکی وارد این حساب شد، تا وقتی دوباره آن را تأیید کنید.</li>
+                                            <li>با این شماره دیگر نمی‌شود با کد تأیید وارد این حساب شد، تا وقتی دوباره آن را تأیید کنید.</li>
                                         </ul>
                                         <form action="/my/phone/remove" method="post" class="ts-confirm__actions">
                                             <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
@@ -97,7 +97,7 @@
                                         </form>
                                         <form t-if="pending" action="/my/phone/verify" method="post" class="ts-form">
                                             <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
-                                            <label for="ts_phone_code">کد ۶ رقمی پیامک‌شده</label>
+                                            <label for="ts_phone_code">کد تأیید ۶ رقمی</label>
                                             <input id="ts_phone_code" name="code" type="text" dir="ltr" inputmode="numeric" required="required" maxlength="6" pattern="[0-9۰-۹]{6}" autocomplete="one-time-code"/>
                                             <div><button type="submit" class="ts-btn ts-btn--primary">تأیید</button></div>
                                         </form>
@@ -128,7 +128,10 @@
                             <div class="ts-auth__card tsa" id="ts-auth" t-att-data-tsa-state="'code' if step == 'code' else 'phone'"
                                  t-att-data-tsa-wait="wait" t-att-data-tsa-resends="resends" t-att-data-tsa-help="help_after">
                                 <h1>ورود یا ثبت‌نام</h1>
-                                <p class="ts-hint ts-auth__intro">با شمارهٔ موبایل و یک کد پیامکی وارد می‌شوید؛ رمز عبور لازم نیست. اگر حساب ندارید، همین‌جا ساخته می‌شود.</p>
+                                <!-- intro and «why» belong to the number step; the code step hides them (signin.scss) so the code
+                                     field and «ورود» stay above the phone keyboard (UX T7 P3-1) -->
+                                <p t-if="tu" class="ts-hint ts-auth__intro">با شمارهٔ موبایل و کد تأییدی که پیامک می‌شود وارد می‌شوی؛ رمز عبور لازم نیست. اگر حساب نداری، همین‌جا ساخته می‌شود.</p>
+                                <p t-else="" class="ts-hint ts-auth__intro">با شمارهٔ موبایل و کد تأییدی که پیامک می‌شود وارد می‌شوید؛ رمز عبور لازم نیست. اگر حساب ندارید، همین‌جا ساخته می‌شود.</p>
                                 <p t-if="why" class="ts-notice ts-notice--info" role="note" id="ts-signup-why"><t t-out="why"/></p>
                                 <p id="tsa-msg" role="status" aria-live="polite" t-att-hidden="None if msg else 'hidden'"
                                    t-attf-class="ts-notice tsa-msg #{'ts-notice--warn' if msg and msg[0] == 'warn' else ''}"><t t-if="msg" t-out="msg[1]"/></p>
@@ -153,13 +156,14 @@
                                                    required="required" maxlength="20" placeholder="۰۹۱۲ ۳۴۵ ۶۷۸۹" class="ts-input tsa-num"
                                                    t-att-value="phone_prefill or None" t-att-autofocus="None if step == 'code' else 'autofocus'"
                                                    aria-describedby="tsa_phone_h" t-att-aria-invalid="'true' if msg_key == 'format' else None"/>
-                                            <p id="tsa_phone_h" class="ts-hint">مثل ۰۹۱۲۳۴۵۶۷۸۹؛ با ۹۸+ یا رقم فارسی هم درست است.</p>
+                                            <p id="tsa_phone_h" class="ts-hint">مثل ۰۹۱۲۳۴۵۶۷۸۹؛ با <bdi dir="ltr">+۹۸</bdi> یا رقم فارسی هم درست است.</p>
                                         </div>
                                         <label class="ts-check tsa-personal"><input type="checkbox" name="personal" value="1" t-att-checked="'checked' if personal else None" aria-describedby="tsa_personal_h"/>
                                             <span>این دستگاه شخصی من است</span></label>
-                                        <p id="tsa_personal_h" class="ts-hint tsa-personal__hint">تا ۳۰ روز وارد می‌مانید. روی رایانه یا گوشی مشترک تیک را بردارید تا با بستن مرورگر از حساب خارج شوید.</p>
+                                        <p t-if="tu" id="tsa_personal_h" class="ts-hint tsa-personal__hint">تا ۳۰ روز وارد می‌مانی. روی رایانهٔ مدرسه یا گوشی مشترک تیک را بردار تا با بستن مرورگر از حساب خارج شوی.</p>
+                                        <p t-else="" id="tsa_personal_h" class="ts-hint tsa-personal__hint">تا ۳۰ روز وارد می‌مانید. روی رایانه یا گوشی مشترک تیک را بردارید تا با بستن مرورگر از حساب خارج شوید.</p>
                                         <button type="submit" class="ts-btn ts-btn--primary ts-btn--lg ts-btn--block">دریافت کد</button>
-                                        <p class="ts-hint tsa-terms">با ادامه، <a href="/privacy">حریم خصوصی و شرایط استفاده</a> را می‌پذیرید.</p>
+                                        <p class="ts-hint tsa-terms">با ادامه، <a href="/privacy">حریم خصوصی و شرایط استفاده</a> را <t t-if="tu">می‌پذیری</t><t t-else="">می‌پذیرید</t>.</p>
                                     </form>
 
                                     <!-- state 2: the code -->
@@ -171,12 +175,13 @@
                                             <a t-if="not (known_fa and phone_fa == known_fa)" class="tsa-edit" t-attf-href="/signup?edit=1&amp;next=#{next_q}" data-tsa-edit="1">ویرایش شماره</a>
                                             <a t-else="" class="tsa-edit" id="tsa-other" t-attf-href="/signup?other=1&amp;next=#{next_q}">شمارهٔ دیگری دارم</a></p>
                                         <div>
-                                            <label for="tsa_code">کد ۶ رقمی</label>
+                                            <label for="tsa_code">کد تأیید ۶ رقمی</label>
                                             <input id="tsa_code" name="code" type="text" dir="ltr" inputmode="numeric" autocomplete="one-time-code"
                                                    maxlength="6" pattern="[0-9۰-۹٠-٩]{6}" required="required" class="ts-input tsa-num tsa-code"
                                                    t-att-autofocus="'autofocus' if step == 'code' else None" aria-describedby="tsa_code_h"
                                                    t-att-aria-invalid="'true' if msg_key in ('short', 'wrong', 'expired', 'attempts') else None"/>
-                                            <p id="tsa_code_h" class="ts-hint">کد پیامک‌شده را بنویسید یا بچسبانید؛ با شش رقم خودبه‌خود ادامه می‌دهیم.</p>
+                                            <p t-if="tu" id="tsa_code_h" class="ts-hint">کد را بنویس یا بچسبان؛ با رقم ششم خودبه‌خود وارد می‌شوی.</p>
+                                            <p t-else="" id="tsa_code_h" class="ts-hint">کد را بنویسید یا بچسبانید؛ با رقم ششم خودبه‌خود وارد می‌شوید.</p>
                                         </div>
                                         <button type="submit" class="ts-btn ts-btn--primary ts-btn--lg ts-btn--block">ورود</button>
                                     </form>
@@ -197,7 +202,7 @@
                                             <li>گاهی پیامک یکی‌دو دقیقه دیر می‌رسد. اگر باز هم نرسید، <a href="/contact?topic=support">به پشتیبانی پیام بدهید</a>.</li>
                                         </ul>
                                     </details>
-                                    <p class="ts-auth__alt"><a t-att-href="email_url">با ایمیل ثبت‌نام کرده بودید؟</a></p>
+                                    <p class="ts-auth__alt"><a t-att-href="email_url"><t t-if="tu">با ایمیل ثبت‌نام کرده بودی؟</t><t t-else="">با ایمیل ثبت‌نام کرده بودید؟</t></a></p>
                                 </t>
                             </div>
                         </div>

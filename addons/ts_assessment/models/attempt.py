@@ -54,6 +54,19 @@ def jalali(dt, env=None, with_time=True):
     return fa_digits(s)
 
 
+JALALI_MONTHS = ('فروردین', 'اردیبهشت', 'خرداد', 'تیر', 'مرداد', 'شهریور', 'مهر', 'آبان', 'آذر', 'دی', 'بهمن', 'اسفند')
+
+
+def jalali_long(dt):
+    """UTC datetime -> «۲۱ مهر ۱۴۰۵» (Asia/Tehran, month name, Persian digits) for participant pages (UX audit T7, PT7)."""
+    if not dt:
+        return ''
+    from zoneinfo import ZoneInfo
+    local = dt.replace(tzinfo=ZoneInfo('UTC')).astimezone(ZoneInfo('Asia/Tehran'))
+    y, m, d = g2j(local.year, local.month, local.day)
+    return fa_digits('%d %s %d' % (d, JALALI_MONTHS[m - 1], y))
+
+
 # Owner decision 2026-10-11: the product speaks the language of counseling. The book's band texts are stored verbatim
 # (never edited); these explicit phrases are mapped only when a text is shown. Each pattern needs a non-letter on both
 # sides, so درماندگی / درمانده / درمانی / بیماری / بیمارستان are never touched. Order matters (longest first).
@@ -263,6 +276,27 @@ class TsAttempt(models.Model):
 
     def jalali(self, dt, with_time=True):
         return jalali(dt, self.env, with_time)
+
+    def jalali_long(self, dt):
+        return jalali_long(dt)
+
+    def ts_progress_line(self, tu=False):
+        """«۶ از ۲۲ پرسش را پاسخ داده‌اید؛ حدود ۲ دقیقه مانده» for the resume rows (/my, /my/assessments; W44, PT8).
+        Likert attempts only; '' for others (the talent inventory and timed tasks have their own counters)."""
+        self.ensure_one()
+        v = self.version_id
+        if 'mode' in v._fields and v.mode not in (False, 'single'):     # matrix (ts_talent) / task (ts_tasks)
+            return ''
+        total = self.version_id.active_item_count or 0
+        if not total:
+            return ''
+        n = len(self.answer_ids)
+        line = '%s از %s پرسش را پاسخ %s' % (fa_digits(n), fa_digits(total), 'داده‌ای' if tu else 'داده‌اید')
+        minutes = self.instrument_id.duration_minutes or 0
+        left = -(-(total - n) * minutes // total) if minutes else 0
+        if left and n < total:
+            line += '؛ حدود %s دقیقه مانده' % fa_digits(left)
+        return line
 
     def ts_informal(self):
         """Copy register only (voice.md §2): True -> «تو» (students), False -> «شما» (adults, parents).

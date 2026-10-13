@@ -45,6 +45,11 @@
 .tsh-demo { border: 1px solid var(--color-neutral-800); border-radius: var(--r-12); padding: var(--space-3) var(--space-4); margin-block: var(--space-3);
     display: grid; gap: var(--space-2); }
 .tsh-demo legend { font-weight: 700; font-size: var(--fs-2); padding-inline: var(--space-1); float: none; inline-size: auto; }
+// UX T7: the optional fairness questions are folded behind their own button (ts_nav.js .ts-faq__q), inside the form
+.tsh-demo[hidden] { display: none; }
+.tsh-demo-wrap { border-radius: var(--r-12); background: var(--color-neutral-900); }
+#wrapwrap .tsh-demo-wrap .ts-faq__q { min-block-size: var(--control-min); padding: 8px 14px; font-size: var(--fs-1); }
+.tsh-demo-wrap .tsh-demo { margin: 0; border: 0; padding-block-start: 0; }
 .tsh-feedback { margin-block: var(--space-4); }
 .tsh-ab--high { background: var(--status-ok-soft); color: var(--status-ok); }
 .tsh-ab--medium { background: var(--status-info-soft); color: var(--status-info); }

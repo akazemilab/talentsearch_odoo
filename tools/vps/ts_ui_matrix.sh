@@ -5,11 +5,16 @@
 # `ts shots DB ux` (TS_SHOT_WIDTHS=ux): the full UX-audit matrix instead (ts_ux_seed.py: every page route in its main
 # states, roles owner / counselor / participant / player states / clinician / reviewer / public), widths 375,1280
 # plus a dark-theme pass at 375 (TS_SHOT_DARK).
+# `ts shots DB take` (TS_SHOT_WIDTHS=take): the same seed steps, but ts_ux_seed.py (TS_UX_ONLY=take) emits only the
+# participant (test-taker) matrix: every page and state of the test-taking journey, signed out and signed in; widths
+# 360,390,1280, dark pass at 390, and a viewport-only <stem>_fold.png per phone width (TS_SHOT_FOLD=1).
 set -u
 DB=$1; PORT=$2; OUT=$3; SLOT=${TS_SLOT:-0}
 if [ "$SLOT" = 0 ]; then STAGE=/opt/odoo/talentsearch_stage; REPO=/root/talentsearch_odoo
 else STAGE=/opt/odoo/talentsearch_stage_s$SLOT; REPO=/root/ts_wt_s$SLOT; fi
-SHELL_CMD="cd /tmp && sudo -u odoo env HOME=/opt/odoo /opt/odoo/venv/bin/python3 /opt/odoo/odoo/odoo-bin shell -c /etc/odoo20.conf -d $DB --db-filter='^$DB\$' --addons-path=$STAGE/addons,/opt/odoo/themes,/opt/odoo/enterprise,/opt/odoo/odoo/addons --no-http --log-level=error"
+MODE=${TS_SHOT_WIDTHS:-}
+SEED_ENV=; [ "$MODE" = take ] && SEED_ENV='TS_UX_ONLY=take'     # sudo drops the caller's environment: pass it explicitly
+SHELL_CMD="cd /tmp && sudo -u odoo env HOME=/opt/odoo $SEED_ENV /opt/odoo/venv/bin/python3 /opt/odoo/odoo/odoo-bin shell -c /etc/odoo20.conf -d $DB --db-filter='^$DB\$' --addons-path=$STAGE/addons,/opt/odoo/themes,/opt/odoo/enterprise,/opt/odoo/odoo/addons --no-http --log-level=error"
 case "$DB" in eot_ts*) ;; *) echo "!! shots run on eot_ts* clones only"; exit 2 ;; esac
 # onb1: the mobile sign-in (S-AUTH) renders only while codes can be sent. On the clone SMS is switched on with Kavenegar
 # pointed at the discard port of the clone host (nothing listens there) and a dummy key, so no SMS can ever leave it;
@@ -35,8 +40,12 @@ print('SHOTSMS on: kavenegar -> 127.0.0.1:9 (dead), otp', bool(c.kv_enabled and 
 PY
 echo "=== $(date +%T) seed"
 ssh -n eot-odoo-prod "TS_SLOT=$SLOT PYTHONIOENCODING=utf-8 python3 -u $STAGE/tools/prod/ts_http_pv2_19.py $DB $PORT 2>&1 | grep -E '^(FAIL|SUMMARY)'"
-if [ "${TS_SHOT_WIDTHS:-}" = ux ]; then
-  export TS_SHOT_WIDTHS=375,1280 TS_SHOT_DARK=${TS_SHOT_DARK:-375}
+if [ "$MODE" = ux ] || [ "$MODE" = take ]; then
+  if [ "$MODE" = take ]; then
+    export TS_SHOT_WIDTHS=360,390,1280 TS_SHOT_DARK=${TS_SHOT_DARK:-390} TS_SHOT_FOLD=1 TS_UX_ONLY=take
+  else
+    export TS_SHOT_WIDTHS=375,1280 TS_SHOT_DARK=${TS_SHOT_DARK:-375}
+  fi
   scp -q $REPO/tools/prod/pv2_fixtures.py $REPO/tools/vps/ts_ux_seed.py $REPO/tools/vps/ts_onb2_seed.py eot-odoo-prod:/tmp/
   ssh -n eot-odoo-prod "$SHELL_CMD < /tmp/pv2_fixtures.py 2>&1 | grep -E '^FIXTURES|Error' | tail -3"
   ssh -n eot-odoo-prod "$SHELL_CMD < /tmp/ts_ux_seed.py 2>&1 | grep -E '^(UXMATRIX|SEED-SKIP)|Error' | tail -20"

@@ -20,9 +20,9 @@
     .tsa-help ul { margin: 0 0 10px; padding-inline-start: 18px; line-height: 1.9; font-size: var(--fs-1); }
     .ts-auth__alt { margin: 0; text-align: center; }
     .ts-auth__alt a { display: inline-flex; align-items: center; min-block-size: 44px; color: var(--color-neutral-300); }
-    // the one action of each state («دریافت کد», «ورود») is solid (screenshot review); light and dark themes alike
 }
-// #wrapwrap: ts.scss styles .ts-btn--primary under #wrapwrap, so the solid variant needs the same id to win
-#wrapwrap .tsa .tsa-step .ts-btn--primary { background: var(--color-accent-300); border-color: var(--color-accent-300); color: var(--color-surface); }
-#wrapwrap .tsa .tsa-step .ts-btn--primary:hover { background: var(--color-accent-200); border-color: var(--color-accent-200); color: var(--color-surface); }
-#wrapwrap .tsa .tsa-step .ts-btn--primary:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 2px; }
+// UX T7 (X3): the one action of each state («دریافت کد», «ورود») uses the project primary of ts.scss, like the invite, /c
+// and /my that follow it; the solid override that made those read as secondary is gone (one primary style)
+// code step: the intro and the «why» box were read on the number step; hiding them keeps the code field and «ورود» above
+// the phone keyboard (UX T7 P3-1). signin.js sets data-tsa-state; «ویرایش شماره» brings them back with the number step.
+#wrapwrap .tsa[data-tsa-state='code'] .ts-auth__intro, #wrapwrap .tsa[data-tsa-state='code'] #ts-signup-why { display: none; }

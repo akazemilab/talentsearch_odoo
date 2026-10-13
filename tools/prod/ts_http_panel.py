@@ -72,6 +72,9 @@ oth = Client(TS)
 check('other person login', oth.login(OTH, oth_pw))
 st, _, jp = oth.req('/join/' + tok)
 check('wrong identity cannot accept', st == 200 and 'برای شمارهٔ موبایل یا ایمیل دیگری' in jp and '/accept' not in jp)
+check('...the warning and «خروج از این حساب» come first and name the account (UX T7 P10, never «»)',
+      'id="ts-join-account"' in jp and 'خروج از این حساب' in jp and '«<bdi></bdi>»' not in jp
+      and jp.index('id="ts-join-account"') < jp.index('class="ts-meta"'))
 st, _, homepg = oth.req('/my/workspaces/new')
 st, loc4, _ = oth.req('/join/%s/accept' % tok, {'csrf_token': oth.csrf(homepg)})
 check('direct accept POST by wrong identity refused', st in (302, 303) and '/join/' in loc4, loc4)

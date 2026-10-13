@@ -119,6 +119,7 @@
     .tsp-head__help { color: var(--color-neutral-400); font-size: 14px; margin: var(--space-1) 0 0; max-width: 64ch; }
     .tsp-head__actions { display: flex; flex-wrap: wrap; gap: var(--space-2); align-items: center; }
     .tsp-flash { margin: 0; padding: 12px 14px; border-radius: var(--r-12); border: 0; background: var(--color-neutral-900); box-shadow: 0 0 0 1px var(--color-neutral-800); }
+    .tsp-flash + .tsp-flash { margin-block-start: 12px; }   // verify T7: stacked notices (/my?msg=declined) never touch
     .tsp-flash--ok { background: var(--success-soft); box-shadow: 0 0 0 1px color-mix(in srgb, var(--success) 30%, transparent); color: var(--success); }
     .tsp-flash--danger { background: var(--danger-soft); box-shadow: 0 0 0 1px color-mix(in srgb, var(--danger) 30%, transparent); color: var(--danger); }
     .tsp-empty { padding: var(--space-8) var(--space-6); background: var(--color-surface); border: 1px dashed var(--color-neutral-700); border-radius: var(--r-18); text-align: start; display: grid; gap: var(--space-3); justify-items: start; }

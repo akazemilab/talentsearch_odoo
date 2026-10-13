@@ -110,6 +110,8 @@ if t.state == 'consent':
 check('H14 task attempt in progress after the battery consent', t.state == 'in_progress', t.state)
 cfg = t.ts_task_config()
 check('H15 extra time 1.5 scales every limit', cfg['blocks'][0]['limit'] == 360 and cfg['accom'] == 1.5, cfg['blocks'][0]['limit'])
+check('H15b player config states the whole effort with the extra time and the answered count (display only)',
+      cfg['minutes'] == 18 and cfg['blocks'][0]['answered'] == 0, (cfg.get('minutes'), cfg['blocks'][0].get('answered')))
 st = t.ts_task_start(0)
 check('H16 live items carry no answers', st['items'] and all('key' not in i for i in st['items']) and 'keys' not in st)
 check('H17 blocks run in order', raises(lambda: t.ts_task_start(2), UserError))
@@ -120,6 +122,8 @@ for i in range(3):
     items, keys = t._ts_items(json.loads(t.task_json), i)
     for idx, k in enumerate(keys):
         out = t.ts_task_answer(i, idx, k, 4000)
+    if i == 0:
+        check('H17b the resume screen counts the answers already saved', t.ts_task_config()['blocks'][0]['answered'] == len(keys))
     t.ts_task_finish(i, focus_lost=0)
 check('H18 all blocks closed -> scored with three abilities', t.state == 'done' and len(t.result_ids) == 3, t.state)
 check('H19 all correct -> high percentiles', all(r.score > 85 and r.band == 'high' for r in t.result_ids), t.result_ids.mapped('score'))
