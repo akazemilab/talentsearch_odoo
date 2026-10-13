@@ -30,7 +30,8 @@ def raises(fn, exc):
 # ------------------------------------------------------------------ catalog
 Inst = env['ts.instrument']
 pub = Inst.search([('state', '=', 'published'), ('code', '!=', 'TALENT-INV-15'), ('code', 'not like', 'TASK-%'),
-                   ('code', '!=', 'HR-HEXACO-1')])  # source instruments; the matrix one and the HR ones (ts_tasks, ts_hire) have their own tests
+                   ('code', '!=', 'HR-HEXACO-1'), ('code', 'not like', 'CAREER-%')])  # source instruments; the matrix one, the HR ones
+# (ts_tasks, ts_hire) and the free career ones (ts_career) have their own tests
 ret = Inst.search([('state', '=', 'retired')])
 check('33 instruments published', len(pub) == 33, str(len(pub)))
 check('3 instruments retired (009, 011, 024)', sorted(ret.mapped('code')) == ['inventory_009', 'inventory_011', 'inventory_024'])
@@ -40,6 +41,7 @@ check('every published instrument approved with intended use + rights', all(i.ap
 V = pub.mapped('current_version_id')
 # current versions only: a content v2 version repeats the same items and bands with new texts (superseded = not current)
 check('1,340 source items imported', env['ts.instrument.item'].search_count([('version_id.mode', '!=', 'matrix'), ('version_id.instrument_id.code', '!=', 'HR-HEXACO-1'),
+                                                                            ('version_id.instrument_id.code', 'not like', 'CAREER-%'),
                                                                             ('version_id.superseded', '=', False)]) == 1340)
 check('393 bands imported and approved', env['ts.instrument.band'].search_count([('approved_at', '!=', False), ('factor_id.version_id.superseded', '=', False)]) == 393)
 check('exactly one current (not superseded) version per instrument', all(
