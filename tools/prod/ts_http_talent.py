@@ -44,6 +44,13 @@ st, _, ep = u.req(path_of(loc))
 check('the refusal shows one error summary and keeps the posted age answer ticked',
       'error=consent' in loc and 'age=yes' in loc and 'id="ts-error-summary"' in ep and 'href="#tt-consent-service"' in ep
       and re.search(r'id="ts-age-yes"[^>]*checked', ep) is not None, loc)
+# verify T7: the consent error sits next to its checkbox (age box first), and an age error is named in the summary
+check('the consent error sits between the age box and its checkbox',
+      'id="ts-age-box"' in ep and 'id="tt-err-consent"' in ep
+      and ep.index('id="ts-age-box"') < ep.index('id="tt-err-consent"') < ep.index('id="tt-consent-service"'))
+st, _, ap = u.req('/take/%s?error=age&svc=1' % token)
+check('an age error is listed in the error summary (never an empty summary)',
+      st == 200 and 'id="ts-error-summary"' in ap and 'href="#ts-age-yes"' in ap, st)
 u.req('/take/%s/consent' % token, {'csrf_token': u.csrf(page), 'consent_service': '1', 'age18': 'yes'})
 st, _, page = u.req('/take/' + token)
 check('name step shown after consent', st == 200 and 'name="label"' in page and 'tt-input' in page)
@@ -96,6 +103,11 @@ st, _, page = u.req('/take/' + token)
 check('two fields: the 3-5 advice stays, adding a field is still primary and finishing is offered as the second action',
       'معمولاً ۳ تا ۵ زمینه' in page and 'tt-btn tt-btn--primary tt-btn--block' in page and 'tt-finish' in page
       and bool(re.search(r'class="tt-btn tt-btn--ghost"[^>]*>پایان و دیدن نتیجه', page)))
+# verify T7: after a failed finish, finishing is the primary action, the error sits above it, no «✓ … کامل شد»
+st, _, fp = u.req('/take/%s?error=finish' % token)
+check('a failed finish makes «پایان» primary, keeps the error next to it and drops the ✓ heading',
+      st == 200 and bool(re.search(r'class="tt-btn tt-btn--primary"[^>]*>پایان و دیدن نتیجه', fp)) and 'id="tt-err-finish"' in fp
+      and 'پایان هنوز ثبت نشده است' in fp and 'tt-badge' not in fp and 'با پشتیبانی تماس بگیر' in fp, st)
 loc = take_field('هنر', lambda k: str(5 - k % 5))
 st, _, page = u.req('/take/' + token)
 st, loc, _ = u.req('/take/%s/finish' % token, {'csrf_token': u.csrf(page)})

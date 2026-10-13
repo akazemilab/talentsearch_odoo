@@ -383,7 +383,7 @@
                                     <p t-else=""><strong t-out="ws.ts_public_name()"/> شما را به پاسخ‌دادن به این سنجه <t t-out="inv_verb"/>.</p>
                                     <p t-if="matrix and student and inv_state == 'ok'">زمینه‌هایی را که دوست داری می‌نویسی و می‌بینی در کدام‌ها توانایی بیشتری حس می‌کنی.</p>
                                     <p t-elif="matrix and inv_state == 'ok'">زمینه‌هایی را که دوست دارید می‌نویسید و می‌بینید در کدام‌ها توانایی بیشتری حس می‌کنید.</p>
-                                    <p t-if="inv_state == 'ok'" class="ts-invite__facts" id="ts-invite-facts"><t t-out="facts['size']"/><t t-call="ts_website.sep"/><t t-out="facts['time']"/><t t-call="ts_website.sep"/>نتیجه بلافاصله پس از پایان آماده است.</p>
+                                    <p t-if="inv_state == 'ok'" class="ts-invite__facts ts-facts-list" id="ts-invite-facts"><span class="ts-fact"><t t-out="facts['size']"/></span><t t-call="ts_website.sep"/><span class="ts-fact"><t t-out="facts['time']"/></span><t t-call="ts_website.sep"/><span class="ts-fact">نتیجه بلافاصله پس از پایان آماده است.</span></p>
                                 </div>
                                 <t t-if="inv_state != 'ok'">
                                     <t t-call="ts_website.state_card" sc_title="inv_card['title']" sc_text="inv_card['text']" sc_note="inv_card['note']" sc_public="public"/>
@@ -411,7 +411,7 @@
                                         <t t-if="public">
                                             <p t-if="student">برای شروع وارد حسابت شو یا حساب تازه بساز. گزارش نتیجه در حسابت می‌ماند.</p>
                                             <p t-else="">برای شروع وارد حساب خود شوید یا حساب تازه بسازید. گزارش نتیجه در حساب شما نگه داشته می‌شود.</p>
-                                            <t t-call="ts_website.auth_choices" phone_url="phone_url" login_url="login_url" signup_url="signup_url"/>
+                                            <t t-call="ts_website.auth_choices" phone_url="phone_url" login_url="login_url" signup_url="signup_url" tu="student"/>
                                         </t>
                                         <t t-else="">
                                             <form t-if="not ask_decline" t-attf-action="/invite/#{a.token}/accept" method="post" class="ts-form" id="ts-invite-form">

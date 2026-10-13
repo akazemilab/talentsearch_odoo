@@ -207,8 +207,9 @@ class TsTalent(TsAssessment):
         reason = request.session.pop('tt_finish_error', None) if kw.get('error') == 'finish' else None
         enough = len(done) >= v.field_min
         if enough:
-            finish_err = 'پایان ثبت نشد%s. دوباره «پایان و دیدن نتیجه» را %s؛ اگر باز هم نشد، با پشتیبانی تماس %s.' % (
-                (': ' + reason.rstrip('.')) if reason else '', 'بزن' if tu else 'بزنید', 'بگیر' if tu else 'بگیرید')
+            # the support sentence is rendered next to it as a link (verify T7: no extra «تماس با پشتیبانی» link text)
+            finish_err = 'پایان ثبت نشد%s. دوباره «پایان و دیدن نتیجه» را %s.' % (
+                (': ' + reason.rstrip('.')) if reason else '', 'بزن' if tu else 'بزنید')
         else:
             finish_err = 'هنوز نمی‌شود پایان را زد: برای مقایسه دست‌کم %s زمینهٔ کامل لازم است.' % fa_digits(v.field_min)
         errors = {

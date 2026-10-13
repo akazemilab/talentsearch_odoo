@@ -62,8 +62,44 @@ for _spec in STARTER:
 
 
 def est_minutes(items):
-    """8 s per item, rounded up to the next 5 minutes (0 items -> 0)."""
+    """8 s per item, rounded up to the next 5 minutes (0 items -> 0). Stored on ts.battery for the back office; pages
+    a participant reads use minutes_text() so the total equals the per-instrument list (verify T7)."""
     return int(math.ceil(items * SECONDS_PER_ITEM / 60 / 5) * 5) if items else 0
+
+
+def _fa(n):
+    return str(n).translate(str.maketrans('0123456789', '۰۱۲۳۴۵۶۷۸۹'))
+
+
+def _range_text(lo, hi):
+    """(29, 29) -> «۲۹»; (6, 10) -> «۶ تا ۱۰»: used as «حدود … دقیقه»."""
+    return _fa(lo) if lo == hi else '%s تا %s' % (_fa(lo), _fa(hi))
+
+
+def minutes_text(insts):
+    """Display only (verify T7, R5): the minutes of a set of instruments as the sum of the numbers each instrument's
+    own label shows (ts_minutes_range: questionnaire = duration_minutes, timed task = its minutes, matrix inventory =
+    the usual 3 to 5 fields). Every participant page (invite, consent, /my, transition) uses this one sum."""
+    lo = hi = 0
+    for i in insts:
+        a, b = i.ts_minutes_range() if hasattr(i, 'ts_minutes_range') else (i.duration_minutes or 0,) * 2
+        lo, hi = lo + a, hi + b
+    return _range_text(lo, hi) if hi else ''
+
+
+def rest_minutes_text(attempts):
+    """Minutes left of a battery's unfinished attempts: an attempt in progress counts what is left of it with the
+    player's own formula (ceil(unanswered x minutes / items)), so /my and the player say the same number."""
+    lo = hi = 0
+    for at in attempts:
+        inst = at.instrument_id
+        a, b = inst.ts_minutes_range() if hasattr(inst, 'ts_minutes_range') else (inst.duration_minutes or 0,) * 2
+        mode = at.version_id.mode if 'version_id' in at._fields and at.version_id else 'questionnaire'
+        if a == b and at.state == 'in_progress' and mode not in ('matrix', 'task') and at.answered_count:
+            total = len(at.active_items())
+            a = b = math.ceil((total - at.answered_count) * (inst.duration_minutes or 0) / total) if total else a
+        lo, hi = lo + a, hi + b
+    return _range_text(lo, hi) if hi else ''
 
 
 class TsBattery(models.Model):
@@ -104,6 +140,11 @@ class TsBattery(models.Model):
     def _compute_has_retired(self):
         for b in self:
             b.has_retired = any(s == 'retired' for s in b.line_ids.mapped('instrument_id.state'))
+
+    def ts_minutes_text(self):
+        """«۲۹» or «۶ تا ۱۰»: the battery total shown to participants = the sum of its instruments' own labels."""
+        self.ensure_one()
+        return minutes_text(self.sudo().line_ids.mapped('instrument_id'))
 
     def ts_title(self):
         """The name people see (same helper as ts.instrument.ts_title()): a battery has no separate title field."""

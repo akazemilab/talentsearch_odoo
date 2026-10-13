@@ -63,7 +63,7 @@
                                     <t t-else="">تکمیل در <t t-out="next_action['when']"/></t>
                                 </p>
                                 <!-- T7 (P20-2): size and time (ts_org effort_facts, as on the invitation page) and the panel's note -->
-                                <p t-if="next_action.get('facts')" class="tsp-next__meta" id="ts-next-facts"><t t-out="next_action['facts']['size']"/><t t-call="ts_website.sep"/><t t-out="next_action['facts']['time']"/></p>
+                                <p t-if="next_action.get('facts')" class="tsp-next__meta ts-facts-list" id="ts-next-facts"><span class="ts-fact"><t t-out="next_action['facts']['size']"/></span><t t-call="ts_website.sep"/><span class="ts-fact"><t t-out="next_action['facts']['time']"/></span></p>
                                 <p t-if="next_action.get('note')" class="tsp-next__meta ts-hint" id="ts-next-note">یادداشت پنل: <t t-out="next_action['note']"/></p>
                                 <a t-att-href="next_action['url']" class="ts-btn ts-btn--primary ts-btn--lg" t-out="next_action['label']"/>
                             </section>
@@ -87,7 +87,7 @@
                                     <li t-foreach="inv_rest" t-as="inv">
                                         <div class="tsp-rows__text">
                                             <strong t-out="inv.instrument_id.title"/>
-                                            <span class="ts-hint">به دعوت <t t-out="inv.workspace_id.ts_public_name()"/><t t-call="ts_website.sep"/><t t-out="jalali(inv.create_date, with_time=False)"/><t t-if="deadlines.get(inv.id)"><t t-call="ts_website.sep"/>مهلت تا <t t-out="deadlines[inv.id]"/></t></span>
+                                            <span class="ts-hint">به دعوت <t t-out="inv.workspace_id.ts_public_name()"/><t t-call="ts_website.sep"/><t t-out="jalali_long(inv.create_date)"/><t t-if="deadlines.get(inv.id)"><t t-call="ts_website.sep"/>مهلت تا <t t-out="deadlines[inv.id]"/></t></span>
                                         </div>
                                         <a t-attf-href="/invite/#{inv.token}" class="ts-btn ts-btn--outline ts-btn--sm">دیدن دعوت<span class="visually-hidden"> «<t t-out="inv.instrument_id.title"/>»</span></a>
                                     </li>
@@ -238,7 +238,7 @@
                                 <t t-set="att" t-value="b['at']"/>
                                 <t t-set="act" t-value="b['act']"/>
                                 <h2><t t-out="att.instrument_id.title"/></h2>
-                                <p class="ts-hint"><t t-out="att.jalali(att.submitted_at, False)"/> · <a t-attf-href="/my/assessments/#{att.id}">مشاهدهٔ گزارش</a></p>
+                                <p class="ts-hint"><t t-out="att.jalali_long(att.submitted_at)"/> · <a t-attf-href="/my/assessments/#{att.id}">مشاهدهٔ گزارش</a></p>
                                 <p t-if="not act" class="ts-sharing-none">این نتیجه را هیچ پنلی نمی‌بیند. <t t-if="tu">فقط خودت.</t><t t-else="">فقط شما.</t></p>
                                 <ul t-if="act" class="tsp-list">
                                     <li t-foreach="act" t-as="s" class="ts-sharing-row">
@@ -501,7 +501,9 @@
                     <t t-set="tu_ws" t-value="attempt.ts_informal()"/>
                     <section class="ts-doc__sec ts-noprint" id="ts-who-sees">
                         <h2>چه کسی این نتیجه را می‌بیند؟</h2>
-                        <p t-if="not ws_act and tu_ws">هیچ پنلی این نتیجه را نمی‌بیند. فقط تو.</p>
+                        <!-- verify T7 (P10-2): a self-taken result never shared says it in the same sentence as the banner -->
+                        <p t-if="not ws_all and not attempt.workspace_id"><t t-call="ts_panel.who_sees_line" wsl_id="'ts-who-sees-line-foot'"/></p>
+                        <p t-elif="not ws_act and tu_ws">هیچ پنلی این نتیجه را نمی‌بیند. فقط تو.</p>
                         <p t-elif="not ws_act">هیچ پنلی این نتیجه را نمی‌بیند. فقط شما.</p>
                         <ul t-if="ws_act" class="ts-who-sees__list">
                             <li t-foreach="ws_act" t-as="s">

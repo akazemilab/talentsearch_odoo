@@ -196,7 +196,7 @@
                                             <li>گاهی پیامک یکی‌دو دقیقه دیر می‌رسد. اگر باز هم نرسید، <a href="/contact?topic=support">به پشتیبانی پیام بدهید</a>.</li>
                                         </ul>
                                     </details>
-                                    <p class="ts-auth__alt"><a t-att-href="email_url">با ایمیل ثبت‌نام کرده بودید؟</a></p>
+                                    <p class="ts-auth__alt"><a t-att-href="email_url"><t t-if="tu">با ایمیل ثبت‌نام کرده بودی؟</t><t t-else="">با ایمیل ثبت‌نام کرده بودید؟</t></a></p>
                                 </t>
                             </div>
                         </div>

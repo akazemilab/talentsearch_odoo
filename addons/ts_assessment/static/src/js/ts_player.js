@@ -79,7 +79,7 @@
             return !li.querySelector('input[type="radio"]:checked');
         });
     }
-    function skipNote(form, missing) {
+    function skipNote(form, missing, go) {
         var box = document.getElementById('ts-skip-note');
         if (!box) { return false; }
         var tu = isTu();
@@ -111,7 +111,7 @@
         var btn = document.createElement('button');
         btn.type = 'submit';
         btn.name = 'go';
-        btn.value = 'next';
+        btn.value = go || 'next';      // the same way on: «صفحهٔ بعد» or, on the last page, «مرور و ارسال» (verify T7)
         btn.className = 'ts-btn ts-btn--outline ts-skip-note__go';
         btn.textContent = 'ادامه بدون پاسخ';
         box.appendChild(p1);
@@ -128,10 +128,11 @@
         if (!form.classList) { return; }
         if (form.id === 'ts-qform') {
             var sub = ev.submitter;
-            if (!sub || sub.value !== 'next' || form.getAttribute('data-skip-shown')) { return; }
+            // verify T7: the last page's «مرور و ارسال» names this page's gaps once too
+            if (!sub || (sub.value !== 'next' && sub.value !== 'review') || form.getAttribute('data-skip-shown')) { return; }
             var missing = unanswered(form);
             if (!missing.length) { return; }
-            if (skipNote(form, missing)) {
+            if (skipNote(form, missing, sub.value)) {
                 ev.preventDefault();
                 form.setAttribute('data-skip-shown', '1');
             }
@@ -183,8 +184,46 @@
         if (ev.target && ev.target.name === 'age18') { syncGuardian(); }
     });
 
+    // ------------------------------------------------------------------ report on a phone (verify T7, B15-3/B16-2):
+    // each factor's long texts fold behind one button; the summary table's links open the factor they point to;
+    // printing shows everything. Without JS (and in the PDF) every text stays open and the button hidden.
+    function setFactor(btn, open) {
+        var body = document.getElementById(btn.getAttribute('aria-controls'));
+        btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+        if (btn.firstChild && btn.firstChild.nodeType === 3) {
+            btn.firstChild.textContent = btn.getAttribute(open ? 'data-open' : 'data-closed');
+        }
+        if (body) { if (open) { body.removeAttribute('hidden'); } else { body.setAttribute('hidden', 'hidden'); } }
+    }
+    function openFactor(id) {
+        var sec = id && document.getElementById(id);
+        var btn = sec && sec.querySelector('.ts-factor__tog');
+        if (btn && btn.getAttribute('aria-expanded') === 'false') { setFactor(btn, true); }
+    }
+    document.addEventListener('click', function (ev) {
+        var tog = ev.target.closest && ev.target.closest('.ts-factor__tog');
+        if (tog) { setFactor(tog, tog.getAttribute('aria-expanded') !== 'true'); return; }
+        var jump = ev.target.closest && ev.target.closest('a[href^="#f-"]');
+        if (jump) { openFactor(jump.getAttribute('href').slice(1)); }
+    });
+    window.addEventListener('hashchange', function () { openFactor(location.hash.slice(1)); });
+    window.addEventListener('beforeprint', function () {
+        document.querySelectorAll('.ts-factor__tog[aria-expanded="false"]').forEach(function (b) { b.setAttribute('data-reclose', '1'); setFactor(b, true); });
+    });
+    window.addEventListener('afterprint', function () {
+        document.querySelectorAll('.ts-factor__tog[data-reclose]').forEach(function (b) { b.removeAttribute('data-reclose'); setFactor(b, false); });
+    });
+
     document.addEventListener('DOMContentLoaded', function () {
         syncGuardian();
+        var phone = window.matchMedia && window.matchMedia('(max-width: 575.98px)').matches;
+        if (phone) {
+            document.querySelectorAll('.ts-factor__tog').forEach(function (b) {
+                b.removeAttribute('hidden');
+                var sec = b.closest('.ts-factor');
+                if (!(sec && location.hash === '#' + sec.id)) { setFactor(b, false); }
+            });
+        }
         document.querySelectorAll('.ts-q').forEach(function (li) {
             if (li.querySelector('input:checked')) { li.classList.add('is-answered'); }
         });
@@ -198,7 +237,7 @@
         // after an error redirect: focus the summary under the H1 (B2-1, B4-2); pages without a summary (talent consent)
         // focus their first inline error
         var summary = document.getElementById('ts-error-summary');
-        var err = summary || document.querySelector('form .ts-form__error[tabindex]');
+        var err = summary || document.getElementById('tt-err-finish') || document.querySelector('form .ts-form__error[tabindex]');
         if (err) {
             err.scrollIntoView({ block: 'center' });
             err.focus({ preventScroll: true });

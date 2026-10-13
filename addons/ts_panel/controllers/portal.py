@@ -12,7 +12,7 @@ from odoo.http import request
 
 from odoo.addons.portal.controllers.portal import CustomerPortal
 from odoo.addons.ts_assessment.controllers.main import _ts_site_or_404
-from odoo.addons.ts_assessment.models.attempt import fa_digits, jalali
+from odoo.addons.ts_assessment.models.attempt import fa_digits, jalali, jalali_long
 from odoo.addons.ts_org.controllers.main import effort_facts
 from odoo.addons.ts_org.models.panel import ROLE_LABELS
 
@@ -77,7 +77,7 @@ class TsPanelPortal(CustomerPortal):
             bat = inv.battery_id if 'battery_id' in inv._fields else None
             facts = effort_facts(inv.instrument_id, bat or None, inv.workspace_id.purpose)
             nxt = {'kind': 'invite', 'title': inv.instrument_id.title, 'org': inv.workspace_id.ts_public_name(),
-                   'when': jalali(inv.create_date, with_time=False), 'deadline': jalali(datetime.combine(inv.deadline, time()), with_time=False) if inv.deadline else None,
+                   'when': jalali_long(inv.create_date), 'deadline': jalali_long(datetime.combine(inv.deadline, time())) if inv.deadline else None,
                    'facts': facts, 'note': inv.note or '', 'invite_id': inv.id,
                    'url': '/invite/%s' % inv.token, 'label': 'دیدن دعوت و شروع'}
         elif going:
@@ -103,8 +103,8 @@ class TsPanelPortal(CustomerPortal):
         return request.render('ts_panel.my_home', {
             'phone_offer': phone_offer,
             'tu': _is_student(env, user), 'invites': invites, 'going': going, 'done': done, 'shared_n': shared_n, 'memberships': memberships, 'unread': unread,
-            'next_action': nxt, 'has_history': bool(mine), 'declined': kw.get('msg') == 'declined', 'deadlines': {i.id: jalali(datetime.combine(i.deadline, time()), with_time=False) for i in invites if i.deadline},
-            'fa': fa_digits, 'jalali': jalali, 'page_name': 'ts_my_home'})
+            'next_action': nxt, 'has_history': bool(mine), 'declined': kw.get('msg') == 'declined', 'deadlines': {i.id: jalali_long(datetime.combine(i.deadline, time())) for i in invites if i.deadline},
+            'fa': fa_digits, 'jalali': jalali, 'jalali_long': jalali_long, 'page_name': 'ts_my_home'})
 
     # ------------------------------------------------------------------ ACC-1, ACC-2 account
     @http.route()
@@ -161,7 +161,7 @@ class TsPanelPortal(CustomerPortal):
                 resp = a.client_id.responsible_id.user_id.name if a.client_id.responsible_id else False
                 shares.append({'a': a, 'aid': a.id, 'panel': a.workspace_id.ts_public_name(), 'resp': resp, 'level': a.ts_level_word(),
                                'purpose': a.workspace_id.purpose, 'resp_word': RESP_WORD.get(a.workspace_id.purpose, 'کارشناس مسئول'),
-                               'since': jalali(since.at or a.create_date, with_time=False), 'active': a.share_level != 'none',
+                               'since': jalali_long(since.at or a.create_date), 'active': a.share_level != 'none',
                                'views': self._views(a) if a.share_level != 'none' else []})
             can_share = (not at.workspace_id and at.source != 'import')
             blocks.append({'at': at, 'shares': shares, 'can_share': can_share, 'act': [x for x in shares if x['active']]})

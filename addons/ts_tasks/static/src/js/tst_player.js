@@ -52,17 +52,25 @@
     window.addEventListener('blur', leave);
     window.addEventListener('focus', function () { if (!document.hidden) { back(); } });
 
-    // The focus-mode header link «ذخیره و خروج» must not suggest a pause while a block's clock runs.
+    // The focus-mode header link «ذخیره و خروج» must not suggest a pause while a block's clock runs. verify T7: the
+    // label fits a 360 px header, and it (with the confirmation) applies whenever a started block's clock runs, the
+    // resume screen included (clockOn); `running` (counting time away) is only the live block.
+    var EXIT_RUNNING = 'بازگشت (زمان می‌گذرد)';
     var exitLink = document.querySelector('.ts-header a.ts-btn[href="/my/assessments"]');
     var exitLabel = exitLink ? exitLink.textContent : '';
+    var clockOn = false;
+    function setClock(v) {
+        clockOn = v;
+        if (exitLink) { exitLink.textContent = v ? EXIT_RUNNING : exitLabel; }
+    }
     function setRunning(v) {
         running = v;
         if (v) { away = !!document.hidden; }
-        if (exitLink) { exitLink.textContent = v ? 'بازگشت به فهرست (زمان بخش ادامه دارد)' : exitLabel; }
+        setClock(v);
     }
     if (exitLink) {
         exitLink.addEventListener('click', function (ev) {
-            if (!running) { return; }
+            if (!clockOn) { return; }
             confirming = true;
             var ok = window.confirm('زمان این بخش متوقف نمی‌شود و تا پایانش می‌گذرد. با این حال خارج می‌شوید؟');
             confirming = false;
@@ -131,7 +139,10 @@
         });
     }
 
+    var foot = root.querySelector('.tst-foot');
+    function setFoot(v) { if (foot) { foot.hidden = !v; } }
     function clear() {
+        setFoot(true);
         stage.innerHTML = '';
         saveLine = null;
         if (timerId) { clearInterval(timerId); timerId = null; }
@@ -193,25 +204,44 @@
         if (power.length === blocks.length && nItems) { facts.push(fa(nItems) + ' پرسش'); }
         if (cfg.minutes) { facts.push('روی هم حدود ' + fa(cfg.minutes) + ' دقیقه'); }
         box.appendChild(el('p', 'tst-facts', facts.join(' · ')));
+        // verify T7: at most 4 rules up front, the start button on the first phone screen, the rest behind «جزئیات»
+        // (button + aria-expanded, never <details>); the page footer note repeats rule 1, so it hides here
         var ul = el('ul', 'tst-rules');
-        function li(t) { ul.appendChild(el('li', '', t)); }
+        function li(t, list) { (list || ul).appendChild(el('li', '', t)); }
+        var speedy = blocks.some(function (b) { return b.key === 'arith' || b.key === 'compare'; });
         li('زمان هر بخش با «شروع بخش» آغاز می‌شود و با بستن صفحه متوقف نمی‌شود؛ پس هر بخش را یک‌جا تمام کنید.');
-        li('پیش از هر بخش می‌توانید با چند پرسش نمونه، بدون نمره، تمرین کنید.');
         if (power.length) {
-            li('با انتخاب یک گزینه، پاسخ ثبت می‌شود و پرسش بعدی می‌آید. با «پرسش قبلی» برمی‌گردید و می‌توانید پاسخ را عوض کنید؛ با «رد شدن» از پرسشی می‌گذرید و بعد برمی‌گردید.');
-            li('پرسش بی‌پاسخ نادرست حساب می‌شود؛ اگر مطمئن نیستید، بهترین حدس خود را بزنید.');
-        }
-        if (blocks.some(function (b) { return b.key === 'arith' || b.key === 'compare'; })) {
+            li('پرسش بی‌پاسخ نادرست حساب می‌شود؛ اگر مطمئن نیستید، بهترین حدس خود را بزنید.'
+                + (speedy ? ' فقط در بخش‌های سرعتی پاسخ نادرست از نمره کم می‌کند.' : ''));
+        } else if (speedy) {
             li('در بخش‌های سرعتی، پاسخ نادرست از نمره کم می‌کند.');
         }
-        li('جای آرامی انتخاب کنید و اعلان‌های گوشی را خاموش کنید.');
         li('اگر در میانهٔ یک بخش از صفحه یا برنامه بیرون بروید یا صفحه را دوباره باز کنید، این کار ثبت می‌شود و ممکن است سازمان دعوت‌کننده آن را ببیند.');
-        if (!(cfg.accom > 1)) { li(accomText()); }
         box.appendChild(ul);
         var row = el('div', 'tst-actions');
         row.appendChild(btn('ادامه به بخش ' + fa(1), 'ts-btn--primary', showIntro));
         box.appendChild(row);
+        var more = el('ul', 'tst-rules tst-more');
+        more.id = 'tst-overview-more';
+        more.hidden = true;
+        li('پیش از هر بخش می‌توانید با چند پرسش نمونه، بدون نمره، تمرین کنید.', more);
+        if (power.length) {
+            li('با انتخاب یک گزینه، پاسخ ثبت می‌شود و پرسش بعدی می‌آید. با «پرسش قبلی» برمی‌گردید و می‌توانید پاسخ را عوض کنید؛ با «رد شدن» از پرسشی می‌گذرید و بعد برمی‌گردید.', more);
+        }
+        li('جای آرامی انتخاب کنید و اعلان‌های گوشی را خاموش کنید.', more);
+        li('نتیجه پس از پایان همهٔ بخش‌ها آماده است.', more);
+        var tog = btn('جزئیات', 'ts-btn--quiet tst-fold', function () {
+            var open = tog.getAttribute('aria-expanded') === 'true';
+            tog.setAttribute('aria-expanded', open ? 'false' : 'true');
+            more.hidden = open;
+        });
+        tog.setAttribute('aria-expanded', 'false');
+        tog.setAttribute('aria-controls', more.id);
+        box.appendChild(tog);
+        box.appendChild(more);
+        if (!(cfg.accom > 1)) { box.appendChild(el('p', 'ts-hint tst-accom', accomText())); }
         stage.appendChild(box);
+        setFoot(false);
         var h = box.querySelector('.tst-h');
         if (h) { h.setAttribute('tabindex', '-1'); h.focus(); }
     }
@@ -226,28 +256,42 @@
         box.appendChild(el('h2', 'tst-h', b.title));
         box.appendChild(el('p', 'tst-help', b.help));
         var row = el('div', 'tst-actions');
-        if (b.started && !b.done) {
-            // resume: the block's clock has been running since it started; show what is left, live
+        var resumeEnd = (b.started && !b.done && b.remaining !== null && b.remaining !== undefined)
+            ? (b.endsAt || (b.endsAt = Date.now() + b.remaining * 1000)) : null;
+        var done = (!b.speed && b.n) ? fa(b.answered || 0) + ' پرسش از ' + fa(b.n) + ' پاسخ داده شده' : '';
+        if (b.started && !b.done && resumeEnd !== null && resumeEnd <= Date.now()) {
+            // verify T7: the clock ran out while the person was away: one clear message and a way on (the server
+            // closes the block; power answers were saved one by one, speed trials are sent only at the end)
+            setClock(false);
+            box.appendChild(el('p', 'ts-notice', b.speed ? 'زمان این بخش تمام شد.'
+                : 'زمان این بخش تمام شد؛ پاسخ‌هایی که داده بودید ثبت شده است.'));
+            if (done) { box.appendChild(el('p', 'tst-facts', done)); }
+            var last = b.i >= cfg.blocks.length - 1;
+            row.appendChild(btn(last ? 'ادامه' : 'بخش بعد', 'ts-btn--primary', function () { endBlock(b, {}, true); }));
+        } else if (b.started && !b.done) {
+            // resume: the block's clock has been running since it started; show what is left, live. The header exit
+            // carries the time warning and its confirmation here too (verify T7).
+            setClock(true);
             box.appendChild(el('p', 'ts-notice ts-notice--warn', 'این بخش پیش‌تر شروع شده است و زمانش در حال گذر است.'));
             var facts = el('p', 'tst-facts');
             facts.setAttribute('aria-live', 'off');
-            var end = (b.remaining !== null && b.remaining !== undefined) ? Date.now() + b.remaining * 1000 : null;
-            var done = (!b.speed && b.n) ? fa(b.answered || 0) + ' پرسش از ' + fa(b.n) + ' پاسخ داده شده' : '';
             var paint = function () {
                 var parts = [];
-                if (end !== null) {
-                    var left = (end - Date.now()) / 1000;
-                    parts.push(left > 0 ? 'زمان باقی‌مانده: ' + mmss(left) + ' (در حال گذر)' : 'زمان این بخش تمام شده است؛ با «ادامهٔ بخش» پاسخ‌ها ثبت می‌شود.');
+                if (resumeEnd !== null) {
+                    var left = (resumeEnd - Date.now()) / 1000;
+                    if (left <= 0) { showIntro(); return; }      // time ran out on this screen: the message above
+                    parts.push('زمان باقی‌مانده: ' + mmss(left) + ' (در حال گذر)');
                 }
                 if (done) { parts.push(done); }
                 facts.textContent = parts.join(' · ');
                 facts.hidden = !parts.length;
             };
-            paint();
-            if (end !== null) { timerId = setInterval(paint, 1000); }
             box.appendChild(facts);
+            paint();
+            if (resumeEnd !== null) { timerId = setInterval(paint, 1000); }
             row.appendChild(btn('ادامهٔ بخش', 'ts-btn--primary', function () { startBlock(b); }));
         } else {
+            setClock(false);
             var f = [];
             if (b.n && b.key !== 'span') { f.push(fa(b.n) + (b.speed ? ' مورد' : ' پرسش')); }
             if (b.limit) { f.push(dur(b.limit)); } else { f.push('بدون محدودیت زمانی کلی؛ سرعت هر پاسخ ثبت می‌شود'); }
@@ -304,7 +348,10 @@
                 } else if (it.kind === 'span') {
                     fb.textContent = 'نادرست بود؛ عددها به این ترتیب بودند: ' + fa(key);
                 } else {
-                    fb.textContent = 'نادرست بود؛ پاسخ درست با علامت ✓ نشان داده شد.';
+                    // verify T7: the ✓ is aria-hidden, so the text names the right answer too
+                    var kb = opts[key];
+                    var keyLabel = kb ? (kb.getAttribute('aria-label') || kb.textContent || '').trim() : '';
+                    fb.textContent = 'نادرست بود؛ پاسخ درست: ' + (keyLabel || 'گزینهٔ ' + fa(key + 1)) + ' (با علامت ✓ نشان داده شد).';
                 }
                 fb.className = 'tst-feedback ' + (ok ? 'is-ok' : 'is-bad');
                 if (opts.length && it.kind !== 'span' && opts[key]) {

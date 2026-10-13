@@ -50,20 +50,22 @@
                                     <div class="ts-acct__body">
                                         <p>
                                             <t t-if="ts_name">با حساب «<bdi t-out="ts_name"/>» وارد شده‌اید.</t>
-                                            <t t-elif="ts_login.isdigit() and len(ts_login) &gt;= 7">با شمارهٔ <bdi dir="ltr" t-out="(ts_login[:4] + '…' + ts_login[-4:]).translate(ts_fa)"/> وارد شده‌اید.</t>
+                                            <t t-elif="ts_login.isdigit() and len(ts_login) &gt;= 7">با شمارهٔ <bdi dir="ltr" t-out="(ts_login[:4] + '\u200e…\u200e' + ts_login[-4:]).translate(ts_fa)"/> وارد شده‌اید.</t>
                                             <t t-elif="'@' in ts_login">با حساب <bdi dir="ltr" t-out="ts_login[:1] + '…@' + ts_login.split('@', 1)[1]"/> وارد شده‌اید.</t>
                                             <t t-else="">با حساب دیگری وارد شده‌اید.</t>
                                             اگر این پیوند برای شمارهٔ دیگری فرستاده شده، از این حساب خارج شوید و با همان شماره وارد شوید.
                                         </p>
                                     </div>
                                 </div>
+                                <!-- verify T7: the recovery the copy names (sign out, sign in with the invited number) is the primary,
+                                     same order as the /invite mismatch notice -->
                                 <div class="ts-state__actions">
-                                    <a href="/my/assessments" class="ts-btn ts-btn--primary ts-btn--lg ts-btn--block">سنجه‌ها و نتیجه‌ها</a>
                                     <!-- Odoo 20 signs out by POST only; back to the sign-in with this link as the return path -->
                                     <form t-att-action="'/web/session/logout?redirect=%2Fsignup%3Fnext%3D' + ts_p404" method="post">
                                         <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
-                                        <button type="submit" class="ts-btn ts-btn--outline">خروج و ورود با شمارهٔ دیگر</button>
+                                        <button type="submit" class="ts-btn ts-btn--primary ts-btn--lg ts-btn--block">خروج و ورود با شمارهٔ دیگر</button>
                                     </form>
+                                    <a href="/my/assessments" class="ts-btn ts-btn--outline">سنجه‌ها و نتیجه‌ها</a>
                                     <a href="/contact?topic=support" class="ts-btn ts-btn--quiet">تماس با پشتیبانی</a>
                                 </div>
                             </t>

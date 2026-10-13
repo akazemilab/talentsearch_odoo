@@ -92,6 +92,13 @@
     // hear a comma (the hidden «، »).
     .ts-sep { display: inline-block; inline-size: 4px; block-size: 4px; border-radius: 50%; background: currentColor; opacity: .55;
         vertical-align: middle; margin-inline: .55em; }
+    // verify T7: the key facts of an invitation (size, time, result) one per line on phones, no dots
+    @media (max-width: 480px) {
+        .ts-facts-list .ts-fact { display: block; }
+        .ts-facts-list .ts-fact + .ts-fact, .ts-facts-list .ts-sep + .ts-fact { margin-block-start: 2px; }
+        .ts-facts-list .ts-sep { display: none; }
+    }
+    .ts-nowrap { white-space: nowrap; }       // a short label that must not break inside («نمره (۱ تا ۵)»)
     bdi[dir="ltr"] { white-space: nowrap; }   // report ids and codes (TSA-000147) never break at the hyphen
     .ts-ico { inline-size: 1.15em; block-size: 1.15em; flex: none; display: inline-block; vertical-align: -.2em; }
 

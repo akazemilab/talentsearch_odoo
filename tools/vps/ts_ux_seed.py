@@ -423,10 +423,21 @@ if ONLY == 'take':
                 a.ts_task_finish(0)
             if not a._ts_state()['blocks'][1]['started']:
                 a.ts_task_start(1)
+        if state == 'run':                         # block 1 started, its clock still running when the shots open it
+            if not a._ts_state()['blocks'][0]['started']:
+                a.ts_task_start(0)
+            st = a._ts_state()
+            b0 = st['blocks'][0]
+            if not b0['done']:
+                import time as _t
+                b0['started'], b0['deadline'] = _t.time(), _t.time() + 3600   # an hour left: the clock runs at shot time
+                a._ts_save(st)
         return a
     if tinst:
         step('task.new', lambda: task('task.new', 'آرمان آزمایشی', 'new'))
         step('task.mid', lambda: task('task.mid', 'سحر آزمایشی', 'mid'))
+        # verify T7: a section whose clock still runs (resume screen, header «بازگشت (زمان می‌گذرد)» at 320/360)
+        step('task.run', lambda: task('task.run', 'نیما آزمایشی', 'run'))
     else:
         print('SEED-SKIP task: ts_tasks (TASK-REASON) is not installed')
     step('fresh', lambda: tuser('fresh', 'پریسا آزمایشی'))   # an account with nothing yet (empty /my and /my/assessments)
@@ -461,9 +472,11 @@ if ONLY == 'take':
         m[TK('fresh')] = ['/my', '/my/assessments']
     if 'inv_mine' in R:
         t = R['inv_mine'].token
-        # /my?msg=declined: the status line after «بله، دعوت را نمی‌پذیرم» (T7 P22-1), shown without declining
-        m[TK('inv')] = ['/my', '/invite/%s' % t, '/invite/%s?decline=1' % t, '/my?msg=declined'] + (
+        m[TK('inv')] = ['/my', '/invite/%s' % t, '/invite/%s?decline=1' % t] + (
             ['/c/%s' % R['camp_ok'].open_token] if 'camp_ok' in R else [])
+    if 'inv_declined' in R:
+        # /my?msg=declined (T7 P22-1) as the account that really declined (verify T7: no pending invite below it)
+        m[TK('declined')] = ['/my?msg=declined']
     if 'inv_other' in R:
         # another signed-in account on someone else's invitation and on someone else's player link (T7 X9)
         m[TK('other')] = ['/invite/%s' % R['inv_other'].token] + (
@@ -523,7 +536,7 @@ if ONLY == 'take':
         rest = R['hire.task'].ts_battery_attempts()[1:2]
         if rest:
             m[TK('hire.task')] = ['/take/%s' % rest.access_token]
-    for k in ('task.new', 'task.mid'):
+    for k in ('task.new', 'task.mid', 'task.run'):
         if k in R:
             m[TK(k)] = ['/take/%s' % tok(k)]
     env.cr.commit()                                # ts_short_code() may have written a short code

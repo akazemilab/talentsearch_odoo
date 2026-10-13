@@ -89,6 +89,14 @@
     .ts-review__title { font-size: var(--fs-5, 1.5rem); }
     .ts-review__go { margin-block: 14px 22px; }
     .ts-review__pages { margin-block-start: 22px; }
+    // report on a phone: one button per factor folds its texts (verify T7, B15-3)
+    .ts-factor__tog { display: inline-flex; align-items: center; min-block-size: 44px; padding-inline: 2px; border: 0; background: none;
+        color: var(--color-accent-300, var(--color-accent)); font-family: var(--font-text); font-size: var(--fs-1); font-weight: 600;
+        text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
+    .ts-factor__tog[hidden], .ts-factor__body[hidden] { display: none; }
+    .ts-factor__tog:focus-visible { outline: 3px solid var(--color-accent); outline-offset: 2px; }
+    // verify T7: the H2s sit below the H1 (fs-5) in size and weight; the bare h5 class was unstyled here
+    .ts-review__pages > .ts-review__h2 { font-family: var(--font-text); font-size: var(--fs-3, 1.125rem); font-weight: 600; line-height: 1.6; margin-block: 0 8px; }
     .ts-review__page + .ts-review__page { margin-block-start: 14px; }
     .ts-review__page-h { font-size: var(--fs-2, 1rem); margin-block: 0 4px; }
     .ts-review__list { list-style: none; padding: 0; margin: 0; }
@@ -214,6 +222,7 @@
     #wrapwrap .tsp-collapse[data-js] > * { display: revert !important; }
     #wrapwrap .tsp-collapse__btn::after { display: none; }
     #wrapwrap .ts-factor { break-inside: avoid-page; }
+    #wrapwrap .ts-factor__body[hidden] { display: block !important; }
     #wrapwrap .ts-summary__bar { display: table-cell !important; }
     #wrapwrap .ts-barnote { display: inline !important; }
     #wrapwrap a { color: inherit; text-decoration: none; }

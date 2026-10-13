@@ -136,7 +136,8 @@
                                     <p t-if="page == n_pages and missing_elsewhere" class="ts-notice ts-notice--info ts-qnote" id="ts-missing-elsewhere">
                                         <t t-out="fa(missing_elsewhere)"/> پرسش در صفحه‌های دیگر بی‌پاسخ مانده است؛ با «مرور و ارسال» <t t-if="tu">فهرستشان را می‌بینی و می‌توانی به هر کدام برگردی.</t><t t-else="">فهرستشان را می‌بینید و می‌توانید به هر کدام برگردید.</t>
                                     </p>
-                                    <!-- filled by ts_player.js the first time «صفحهٔ بعد» is pressed with unanswered items here (B8-4a) -->
+                                    <!-- filled by ts_player.js the first time «صفحهٔ بعد» (or «مرور و ارسال») is pressed with unanswered
+                                         items here (B8-4a, verify T7) -->
                                     <div id="ts-skip-note" class="ts-notice ts-notice--warn ts-skip-note" tabindex="-1" hidden="hidden"/>
                                     <div t-attf-class="ts-qnav #{'ts-qnav--two' if page &gt; 1 else ''}">
                                         <button t-if="page &gt; 1" type="submit" name="go" value="prev" class="ts-btn ts-btn--outline">صفحهٔ قبل</button>
@@ -166,7 +167,8 @@
                     <div id="wrap" class="ts-page">
                         <section class="ts-section">
                             <div class="ts-container ts-narrow">
-                                <a t-attf-href="/take/#{attempt.access_token}?page=#{n_pages}" class="ts-back">برگشت به پرسش‌ها</a>
+                                <!-- verify T7: one way back, one verb («بازگشت»); the outline duplicate under «ارسال» is gone -->
+                                <a t-attf-href="/take/#{attempt.access_token}?page=#{n_pages}" class="ts-back">بازگشت به پرسش‌ها</a>
                                 <span class="ts-hero__kicker" t-out="inst.ts_title()"/>
                                 <h1 class="ts-review__title">مرور پاسخ‌ها پیش از ارسال</h1>
                                 <p class="ts-lead"><t t-out="fa(answered)"/> از <t t-out="fa(total)"/> پرسش پاسخ داده شده است.</p>
@@ -178,7 +180,7 @@
                                     </div>
                                     <p class="ts-review__go"><a t-attf-href="/take/#{attempt.access_token}?page=#{missing[0][2]}&amp;missing=1#q-#{missing[0][1].id}" class="ts-btn ts-btn--primary ts-btn--lg">رفتن به اولین پرسش بی‌پاسخ</a></p>
                                     <section class="ts-review__pages" aria-labelledby="ts-review-pages-h">
-                                        <h2 id="ts-review-pages-h" class="h5">پرسش‌های بی‌پاسخ، صفحه به صفحه</h2>
+                                        <h2 id="ts-review-pages-h" class="ts-review__h2">پرسش‌های بی‌پاسخ، صفحه به صفحه</h2>
                                         <t t-foreach="page_rows" t-as="pr">
                                             <div t-if="pr['missing']" class="ts-review__page">
                                                 <h3 class="ts-review__page-h">صفحهٔ <t t-out="fa(pr['page'])"/> <span class="ts-hint">(<t t-out="fa(len(pr['missing']))"/> پرسش بی‌پاسخ)</span></h3>
@@ -199,10 +201,9 @@
                                         <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
                                         <input type="hidden" name="submission_key" t-att-value="attempt.access_token"/>
                                         <button type="submit" class="ts-btn ts-btn--primary ts-btn--lg">ارسال و دیدن نتیجه</button>
-                                        <a t-attf-href="/take/#{attempt.access_token}?page=#{n_pages}" class="ts-btn ts-btn--outline">برگشت به پرسش‌ها</a>
                                     </form>
                                     <section t-if="n_pages &gt; 1" class="ts-review__pages" aria-labelledby="ts-review-change-h">
-                                        <h2 id="ts-review-change-h" class="h5">تغییر یک پاسخ</h2>
+                                        <h2 id="ts-review-change-h" class="ts-review__h2">تغییر یک پاسخ</h2>
                                         <ul class="ts-review__list">
                                             <li t-foreach="page_rows" t-as="pr">
                                                 <span>صفحهٔ <t t-out="fa(pr['page'])"/> <span class="ts-hint">(پرسش <t t-out="fa(pr['first'])"/> تا <t t-out="fa(pr['last'])"/>)</span></span>
@@ -235,6 +236,9 @@
                                 <div class="ts-card ts-card--soft" id="ts-error-card">
                                     <p t-if="tu">پاسخ‌هایت ذخیره شده و چیزی از دست نرفته است؛ فقط ساختن نتیجه با خطا روبه‌رو شد. همکاران ما آن را بررسی می‌کنند و لازم نیست دوباره پاسخ بدهی. برای پیگیری، این شناسه را به پشتیبانی بده.</p>
                                     <p t-else="">پاسخ‌هایتان ذخیره شده و چیزی از دست نرفته است؛ فقط ساختن نتیجه با خطا روبه‌رو شد. همکاران ما آن را بررسی می‌کنند و لازم نیست دوباره پاسخ دهید. برای پیگیری، این شناسه را به پشتیبانی بدهید.</p>
+                                    <!-- verify T7 (B20-1): where the result will show, without a time promise -->
+                                    <p t-if="tu" id="ts-error-where">وقتی نتیجه آماده شد، آن را در «سنجه‌ها و نتیجه‌ها» می‌بینی.</p>
+                                    <p t-else="" id="ts-error-where">وقتی نتیجه آماده شد، آن را در «سنجه‌ها و نتیجه‌ها» می‌بینید.</p>
                                     <p class="ts-hint">شناسهٔ پیگیری: <bdi dir="ltr" class="ts-bdi" t-out="attempt.name"/></p>
                                     <p class="ts-error-card__actions"><a href="/my/assessments" class="ts-btn ts-btn--primary">سنجه‌ها و نتیجه‌ها</a> <a href="/contact?topic=support" class="ts-btn ts-btn--outline">تماس با پشتیبانی</a></p>
                                 </div>

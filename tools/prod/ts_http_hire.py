@@ -140,7 +140,9 @@ cfg = json.loads(H.unescape(re.search(r'data-config="([^"]*)"', body).group(1)))
 check('config has three blocks, practice items with keys, no live items', len(cfg.get('blocks', [])) == 3
       and cfg['blocks'][0]['practice']['keys'] and 'items' not in cfg['blocks'][0], str(list(cfg)[:5]))
 check('the task player names the inviting organisation and what it sees; the overview gets the total minutes',
-      'tst-who' in body and 'data-org=' in body and cfg.get('minutes') == 12 and 'پایین‌چپ' not in body, str(cfg.get('minutes')))
+      'tst-who' in body and 'data-org=' in body and cfg.get('minutes') == 12 and 'پایین‌چپ' not in body
+      # verify T7: the same who-sees sentence as the invitation and consent, never «فقط خلاصهٔ تناسب»
+      and 'id="ts-who-sees-line"' in body and 'نشانه‌های دقت پاسخ‌دهی' in body and 'فقط خلاصهٔ تناسب' not in body, str(cfg.get('minutes')))
 for i in range(3):
     st, _, rb = post(cand, '/take/%s/task/start' % T2, {'i': str(i)})
     j = json.loads(rb) if st == 200 else {}

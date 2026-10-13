@@ -243,7 +243,7 @@ tok = start(c1, '/invite/' + TOK_INV)
 st, h, j = ajax(c1, '/signup/send', {'csrf_token': tok, 'phone': fa(PH['new']), 'next': '/invite/' + TOK_INV,
                                      'personal_shown': '1', 'personal': '1'})
 check('J01 a number in Persian digits -> JSON: code state, the number shown formatted, about 60 s to resend',
-      st == 200 and j.get('ok') and j.get('state') == 'code' and j.get('phone_fa') == '۰۹۱۲ ۷۷۷ ۸۸۰۱' and 50 <= (j.get('wait') or 0) <= 60, str(j)[:200])
+      st == 200 and j.get('ok') and j.get('state') == 'code' and j.get('phone_fa') == '۰۹۱۲\u200e ۷۷۷\u200e ۸۸۰۱' and 50 <= (j.get('wait') or 0) <= 60, str(j)[:200])
 code, body = last_code(PH['new'])
 lines = body.split('\n')
 check('J02 the SMS: «استعدادیاب / کد ورود: … / این کد را به کسی ندهید.» and the last line «@talentsearch.ir #code», <= 140 characters',

@@ -7,6 +7,13 @@
     .tst-kicker { color: var(--color-neutral-400); font-size: .9rem; margin: 0; }
     // programmatic focus (after a redraw) shows no box; keyboard focus keeps its ring (UX audit T7 P13-2)
     .tst-h:focus:not(:focus-visible), .tst-kicker:focus:not(:focus-visible) { outline: none; }
+    // verify T7: a heading focused by the script on page load matched :focus-visible and looked like an input; an
+    // element with tabindex=-1 is never reached by Tab, so it needs no ring
+    .tst-h[tabindex="-1"]:focus, .tst-kicker[tabindex="-1"]:focus { outline: none; }
+    // overview (verify T7): «جزئیات» folds the secondary rules after the start button
+    .tst-fold { align-self: flex-start; min-height: 44px; }
+    .tst-more[hidden] { display: none; }
+    .tst-accom { margin: 0; }
     .visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
     .tst-who { margin-block-start: calc(-1 * var(--space-2)); }
     .tst-rules { margin: 0; padding-inline-start: 1.2rem; display: flex; flex-direction: column; gap: .4rem; line-height: 1.9; }

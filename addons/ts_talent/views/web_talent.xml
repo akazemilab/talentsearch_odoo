@@ -233,10 +233,15 @@
                          action below 3 fields (the usual 3-5); errors sit on top in tt-error. -->
                     <t t-set="can_finish" t-value="len(done) &gt;= field_min"/>
                     <t t-set="can_add" t-value="len(done) &lt; field_max"/>
-                    <t t-set="add_first" t-value="can_add and (not can_finish or len(done) &lt; 3)"/>
-                    <p t-if="error" class="tt-error" role="alert"><t t-out="error"/> <a t-if="error_support" href="/contact?topic=support">تماس با پشتیبانی</a></p>
-                    <div class="tt-badge" aria-hidden="true">✓</div>
-                    <h1 class="tt-title">زمینهٔ «<t t-out="last.label"/>» کامل شد</h1>
+                    <!-- verify T7: when the final submit failed (error_support), finishing is the primary action, the error
+                         sits right above that button and the page does not open with «✓ … کامل شد» -->
+                    <t t-set="add_first" t-value="can_add and not error_support and (not can_finish or len(done) &lt; 3)"/>
+                    <p t-if="error and not error_support" class="tt-error" role="alert"><t t-out="error"/></p>
+                    <h1 class="tt-title" t-if="error_support">پایان هنوز ثبت نشده است</h1>
+                    <t t-else="">
+                        <div class="tt-badge" aria-hidden="true">✓</div>
+                        <h1 class="tt-title">زمینهٔ «<t t-out="last.label"/>» کامل شد</h1>
+                    </t>
                     <t t-if="not can_finish">
                         <p class="tt-mini tt-next-step" t-if="tu">برای مقایسه دست‌کم <t t-out="fa(field_min)"/> زمینه لازم است؛ <t t-if="field_min - len(done) == 1">یک</t><t t-else="" t-out="fa(field_min - len(done))"/> زمینهٔ دیگر بنویس: ۱۵ جمله، حدود ۲ دقیقه.</p>
                         <p class="tt-mini tt-next-step" t-else="">برای مقایسه دست‌کم <t t-out="fa(field_min)"/> زمینه لازم است؛ <t t-if="field_min - len(done) == 1">یک</t><t t-else="" t-out="fa(field_min - len(done))"/> زمینهٔ دیگر بنویسید: ۱۵ جمله، حدود ۲ دقیقه.</p>
@@ -258,6 +263,8 @@
                             <p><strong>پس از پایان، پاسخ‌ها قفل می‌شوند</strong> و دیگر نمی‌شود آن‌ها را تغییر داد.</p>
                             <p id="tt-who-sees-finish"><t t-if="tu">نتیجه را فقط خودت می‌بینی.</t><t t-else="">نتیجه را فقط خودتان می‌بینید.</t></p>
                         </div>
+                        <p t-if="error_support" id="tt-err-finish" class="tt-error" role="alert" tabindex="-1"><t t-out="error"/>
+                            <t t-if="tu">اگر باز هم نشد، <a href="/contact?topic=support">با پشتیبانی تماس بگیر</a>.</t><t t-else="">اگر باز هم نشد، <a href="/contact?topic=support">با پشتیبانی تماس بگیرید</a>.</t></p>
                         <button type="submit" t-attf-class="tt-btn #{'tt-btn--ghost' if add_first else 'tt-btn--primary'}">پایان و دیدن نتیجه</button>
                     </form>
                     <h2 class="tt-h2">زمینه‌های کامل‌شده</h2>
@@ -443,7 +450,7 @@
                                             <t t-if="programs">
                                                 <h3>برنامه‌های پیشنهادی کتاب</h3>
                                                 <ul class="tt-programs">
-                                                    <li t-foreach="programs" t-as="p"><span t-out="p[0]"/><strong t-out="p[1]"/></li>
+                                                    <li t-foreach="programs" t-as="p"><span t-out="p[0]"/><strong t-out="p[1]"/><small t-if="len(p) &gt; 2 and p[2]" class="tt-programs__plain" t-out="p[2]"/></li>
                                                 </ul>
                                             </t>
                                         </t>
@@ -464,7 +471,7 @@
                                                 <h3 t-if="tu">فعالیت‌هایی که می‌توانی با مشاورت بررسی کنی</h3>
                                                 <h3 t-else="">فعالیت‌هایی که می‌توانید با یک مشاور بررسی کنید</h3>
                                                 <ul class="tt-programs">
-                                                    <li t-foreach="programs" t-as="p"><span t-out="p[0]"/><strong t-out="p[1]"/></li>
+                                                    <li t-foreach="programs" t-as="p"><span t-out="p[0]"/><strong t-out="p[1]"/><small t-if="len(p) &gt; 2 and p[2]" class="tt-programs__plain" t-out="p[2]"/></li>
                                                 </ul>
                                                 <p class="tt-mini">نام فعالیت‌ها از کتاب است. این گزارش خودشناسی است و جایگزین ارزیابی مدرسه یا مشاور نیست.</p>
                                             </t>
@@ -497,6 +504,8 @@
                                                 </tbody>
                                             </table>
                                         </div>
+                                        <!-- verify T7 (P9-1): the composite row in plain words -->
+                                        <p class="tt-mini" id="tt-table-plain">«ترکیب آموزشی» یعنی کنش و هوشی که در هر زمینه بالاترین نمره را دارند.</p>
                                     </t>
 
                                     <section class="ts-doc__sec ts-noprint" t-if="not org_view" id="tt-sec-raw">

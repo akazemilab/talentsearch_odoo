@@ -180,7 +180,7 @@
                                         <h2 t-else="">خلاصهٔ نتیجه‌ها</h2>
                                         <p class="ts-hint">نمرهٔ هر عامل میانگین پاسخ‌های <t t-if="tu">تو</t><t t-else="">شما</t> از ۱ تا ۵ است. سطح‌ها: کم، متوسط و زیاد.<span class="ts-barnote"> نوار، جایگاه نمره را روی مقیاس نشان می‌دهد: ۱ در راست، ۵ در چپ؛ سه رنگ نوار همان سه سطح است.</span> <a t-if="results" t-att-href="'/assessments/%s#ts-how-scored' % results[:1].attempt_id.instrument_id.slug" class="ts-noprint">نمره چگونه حساب می‌شود</a></p>
                                         <table class="ts-table ts-summary">
-                                            <thead><tr><th scope="col">عامل</th><th scope="col">نمره (۱ تا ۵)</th><th scope="col">سطح</th><th scope="col" class="ts-summary__bar">جایگاه روی مقیاس ۱ تا ۵</th></tr></thead>
+                                            <thead><tr><th scope="col">عامل</th><th scope="col" class="ts-nowrap">نمره (۱ تا ۵)</th><th scope="col">سطح</th><th scope="col" class="ts-summary__bar">جایگاه روی مقیاس ۱ تا ۵</th></tr></thead>
                                             <tbody>
                                                 <t t-foreach="results" t-as="r">
                                                     <tr>
@@ -212,13 +212,19 @@
                                                 <h2 t-else="" t-out="r.factor_id.name"/>
                                                 <div class="ts-factor__score"><span class="ts-num" t-out="r.score_fa()"/> <span t-attf-class="ts-band ts-band--#{r.band}" t-out="r.band_fa()"/></div>
                                             </div>
-                                            <t t-foreach="r.client_sections()" t-as="sec">
-                                                <t t-if="sec[0]">
-                                                    <h4 t-if="blk_sub" t-out="sec[0]"/>
-                                                    <h3 t-else="" t-out="sec[0]"/>
+                                            <!-- verify T7 (B15-3, B16-2): on a phone each factor's texts fold behind one button (ts_player.js;
+                                                 open without JS, in print and when reached from the summary table's link) -->
+                                            <button type="button" class="ts-factor__tog ts-noprint" aria-expanded="true" t-attf-aria-controls="f-#{r.factor_id.id}-b" hidden="hidden"
+                                                    data-open="بستن توضیح‌ها" data-closed="خواندن توضیح‌ها">بستن توضیح‌ها<span class="ts-sr"> «<t t-out="r.factor_id.name"/>»</span></button>
+                                            <div class="ts-factor__body" t-attf-id="f-#{r.factor_id.id}-b">
+                                                <t t-foreach="r.client_sections()" t-as="sec">
+                                                    <t t-if="sec[0]">
+                                                        <h4 t-if="blk_sub" t-out="sec[0]"/>
+                                                        <h3 t-else="" t-out="sec[0]"/>
+                                                    </t>
+                                                    <div class="ts-doc__text" t-out="sec[1]"/>
                                                 </t>
-                                                <div class="ts-doc__text" t-out="sec[1]"/>
-                                            </t>
+                                            </div>
                                         </section>
                                     </t>
             </t>

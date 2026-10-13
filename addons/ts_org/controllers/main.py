@@ -7,7 +7,7 @@ from odoo.exceptions import UserError, ValidationError
 from odoo.http import request
 
 from odoo.addons.ts_assessment.controllers.main import _ts_site_or_404
-from odoo.addons.ts_assessment.models.attempt import fa_digits, jalali
+from odoo.addons.ts_assessment.models.attempt import fa_digits, jalali_long
 from odoo.addons.ts_org.models.assignment import RESPONSIBLE_ROLES
 from odoo.addons.ts_org.models.panel import PURPOSE_LABELS, role_choices
 
@@ -124,7 +124,8 @@ def effort_facts(inst, battery=None, purpose=None):
     """One source for the size and time a participant is told before starting (UX T7 X5, copy P3/W15/W20/W21):
     {'size', 'time', 'lines', 'description'}. Instruments use their own labels (ts_effort_label / ts_duration_label: a
     timed task says «۳ بخش زمان‌دار», never «۰ پرسش»); the matrix inventory adds a total range; a battery sums its
-    questionnaire items, its timed sections and its stored estimate (est_minutes)."""
+    questionnaire items and its timed sections; its time is the sum of the per-instrument minutes listed under it
+    (ts_battery minutes_text; verify T7: the total equals the list)."""
     if battery:
         b = battery.sudo()
         insts = b.ts_lines().mapped('instrument_id') if hasattr(b, 'ts_lines') else b.line_ids.mapped('instrument_id')
@@ -143,20 +144,19 @@ def effort_facts(inst, battery=None, purpose=None):
         if purpose != 'employment':
             # a counseling or school client never reads the hiring clause of a shared starter battery (audit P25-2)
             desc = desc.replace(' و در پنل استخدامی فقط یکی از ورودی‌های گفت‌وگوی شغلی است', '')
-        return {'size': size, 'time': 'حدود %s دقیقه' % fa_digits(b.est_minutes),
-                'lines': [{'name': i.ts_title(), 'size': i.ts_effort_label(), 'time': i.ts_duration_label()} for i in insts],
+        total = b.ts_minutes_text() if hasattr(b, 'ts_minutes_text') else fa_digits(b.est_minutes)
+        return {'size': size, 'time': 'حدود %s دقیقه' % total,
+                'lines': [{'name': i.ts_title(), 'size': i.ts_effort_label(),
+                           'time': i.ts_total_time_label() if hasattr(i, 'ts_total_time_label') else i.ts_duration_label()}
+                          for i in insts],
                 'description': desc}
     inst = inst.sudo()
     size, time = inst.ts_effort_label(), inst.ts_duration_label()
     v = inst.current_version_id
-    per_field = getattr(type(inst), 'MATRIX_SECONDS_PER_FIELD', 0)
-    if v.mode == 'matrix' and per_field and v.field_min and v.field_max:
-        # the usual 3 to 5 fields (the field-name page and the talent consent say the same; copy W15), clamped to the version
-        f_lo, f_hi = max(v.field_min, 3), min(v.field_max, 5)
-        if f_lo > f_hi:
-            f_lo, f_hi = v.field_min, v.field_max
-        lo, hi = f_lo * per_field // 60, f_hi * per_field // 60
-        time = '%s؛ معمولاً %s تا %s زمینه، یعنی %s تا %s دقیقه' % (time, fa_digits(f_lo), fa_digits(f_hi), fa_digits(lo), fa_digits(hi))
+    if v.mode == 'matrix' and hasattr(inst, 'ts_total_time_label'):
+        # the usual 3 to 5 fields, clamped to the version (copy W15); verify T7: one short fact
+        # «۶ تا ۱۰ دقیقه (حدود ۲ دقیقه برای هر زمینه)» instead of a 14-word sentence
+        time = inst.ts_total_time_label()
     return {'size': size, 'time': time, 'lines': [], 'description': ''}
 
 
@@ -384,7 +384,7 @@ class TsOrg(http.Controller):
             if ends and not isinstance(ends, datetime):
                 ends = datetime.combine(ends, dtime(12, 0))
             card = invite_card(inv_state, a.workspace_id.ts_public_name(), student,
-                               jalali(ends, with_time=False) if ends else None)
+                               jalali_long(ends) if ends else None)   # «۲۸ مهر ۱۴۰۵» (verify T7 date rule)
         battery = a.battery_id if 'battery_id' in a._fields else None
         return request.render('ts_org.invite', {
             'a': a, 'inst': a.instrument_id, 'ws': a.workspace_id, 'public': public,

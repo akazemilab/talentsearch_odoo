@@ -7,8 +7,10 @@ from odoo.addons.ts_tasks.controllers.main import TsTaskPlayer
 
 from ..models.hexaco import HEXACO_CODE
 
+# verify T7: what the organisation sees, in the words of the invitation and consent (ts_hire.who_sees_position)
 HR_NOTE = ('این گزارش بازخورد برای خود شماست. سازمان پاسخ‌ها و نمره‌های شما را نمی‌بیند؛ اگر اشتراک‌گذاری را پذیرفته باشید، '
-           'فقط خلاصهٔ تناسب شما با نیازهای این شغل را می‌بیند. هیچ تصمیمی به‌طور خودکار از این نتیجه گرفته نمی‌شود.')
+           'سطح هر عامل (کم، متوسط یا زیاد)، خلاصهٔ تناسب شما با این شغل و نشانه‌های دقت پاسخ‌دهی را می‌بیند. '
+           'هیچ تصمیمی به‌طور خودکار از این نتیجه گرفته نمی‌شود.')
 
 
 class TsHirePlayer(TsTaskPlayer):

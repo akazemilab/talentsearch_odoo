@@ -26,7 +26,8 @@ class ResUsers(models.Model):
         login = user.login or ''
         phone = phones[0] if phones else (login if login.isdigit() else '')
         if len(phone) >= 7:
-            return {'label': (phone[:4] + '…' + phone[-4:]).translate(FA), 'kind': 'phone'}
+            # LRM around the ellipsis: Persian digits are bidi AN and would otherwise show the two parts swapped
+            return {'label': (phone[:4] + '\u200e…\u200e' + phone[-4:]).translate(FA), 'kind': 'phone'}
         email = user.email or (login if '@' in login else '')
         if email and '@' in email:
             local, dom = email.split('@', 1)

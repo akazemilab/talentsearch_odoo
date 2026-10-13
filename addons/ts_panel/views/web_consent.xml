@@ -69,8 +69,16 @@
         <field name="mode">extension</field>
         <field name="website_id" ref="ts_website.website_ts"/>
         <field name="arch" type="xml">
-            <xpath expr="//input[@name='consent_service']/.." position="before">
+            <!-- verify T7: the age box comes right after the csrf input, so the consent error stays next to its checkbox
+                 (age box -> consent error -> checkbox) -->
+            <xpath expr="//form[hasclass('tt-form')]/input[@name='csrf_token']" position="after">
                 <t t-call="ts_panel.consent_age_ass"/>
+            </xpath>
+            <!-- verify T7 (B2-1): the error summary under the H1 names the age / guardian / assent errors too -->
+            <xpath expr="//ul[@id='ts-error-list']" position="inside">
+                <li t-if="error == 'age'"><a href="#ts-age-yes"><t t-if="tu">سنت را مشخص کن.</t><t t-else="">سن خود را مشخص کنید.</t></a></li>
+                <li t-if="error == 'guardian_ok'"><a href="#ts-guardian-ok">برای زیر ۱۸ سال، موافقت ولی (پدر، مادر یا سرپرست قانونی) لازم است.</a></li>
+                <li t-if="error == 'assent'"><a href="#ts-assent">اگر خودت هم موافقی، تیک «خودم هم موافقم» را بزن.</a> اگر نمی‌خواهی، لازم نیست ادامه بدهی.</li>
             </xpath>
         </field>
     </record>
@@ -82,7 +90,8 @@
         <t t-set="asg" t-value="attempt.ts_org_assignment()"/>
         <t t-set="org" t-value="asg.workspace_id.ts_public_name() if asg else ''"/>
         <t t-set="tu_w" t-value="attempt.ts_informal()"/>
-        <span id="ts-who-sees-line" t-att-data-level="asg.share_level if asg else 'self'">
+        <!-- wsl_id: a second call on the same page passes its own id (no duplicate ids) -->
+        <span t-att-id="wsl_id or 'ts-who-sees-line'" t-att-data-level="asg.share_level if asg else 'self'">
             <t t-if="asg and asg.share_level != 'none'">
                 <t t-if="asg.workspace_id.purpose == 'education'">
                     <t t-if="tu_w">تو، و مشاورت در <strong t-out="org"/> گزارش نتیجه را می‌بینید؛ پاسخ‌های خام را فقط خودت می‌بینی.</t>
@@ -90,8 +99,9 @@
                 </t>
                 <t t-elif="asg.workspace_id.purpose == 'clinical'">شما، و فقط مشاوران <strong t-out="org"/> گزارش کامل را همراه با راهنمای مشاور می‌بینید.</t>
                 <t t-else="">شما، و <strong t-out="org"/> فقط سطح هر عامل (کم، متوسط یا زیاد) را می‌بیند؛ نه پاسخ‌ها، نه نمره‌ها، نه متن تفسیر.</t>
-                <span class="ts-hint" t-if="tu_w"> هر وقت بخواهی می‌توانی اشتراک‌گذاری را از صفحهٔ گزارش قطع کنی.</span>
-                <span class="ts-hint" t-else=""> هر وقت بخواهید می‌توانید اشتراک‌گذاری را از صفحهٔ گزارش قطع کنید.</span>
+                <!-- verify T7: same colour as the rest of the sentence (a grey tail read as a different, minor message) -->
+                <span class="ts-who-sees__revoke" t-if="tu_w"> هر وقت بخواهی می‌توانی اشتراک‌گذاری را از صفحهٔ گزارش قطع کنی.</span>
+                <span class="ts-who-sees__revoke" t-else=""> هر وقت بخواهید می‌توانید اشتراک‌گذاری را از صفحهٔ گزارش قطع کنید.</span>
             </t>
             <t t-elif="asg">
                 <t t-if="tu_w">فقط تو. <strong t-out="org"/> فقط وضعیت انجام (شروع‌شده یا تکمیل‌شده) را می‌بیند، چون اشتراک‌گذاری نتیجه را نپذیرفته‌ای.</t>

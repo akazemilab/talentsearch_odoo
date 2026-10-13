@@ -330,9 +330,29 @@ def programs_list(interp):
     return out
 
 
+# Plain meaning of the book's programme kinds, one short line under each programme (verify T7, P9-1). The programme
+# names stay the book's; longest prefix first («غنی‌سازی تحلیلی» before «غنی‌سازی»).
+PROGRAM_PLAIN = (
+    ('تسریعی', 'یعنی جلوتر رفتن از برنامهٔ درسی در این زمینه.'),
+    ('غنی‌سازی تحلیلی', 'یعنی فعالیت‌های عمیق‌تر کنار درس، با تکیه بر فهمیدن و تجزیه کردن.'),
+    ('غنی‌سازی تجربی', 'یعنی فعالیت‌های عمیق‌تر کنار درس، با تکیه بر آزمودن و تجربه کردن.'),
+    ('غنی‌سازی', 'یعنی فعالیت‌های عمیق‌تر و متنوع‌تر کنار درس.'),
+    ('آموزش جبرانی', 'یعنی کمک و تمرین بیشتر در این زمینه.'),
+    ('پرورش تقویّتی', 'یعنی تمرین برای قوی‌تر شدن یک توانایی.'),
+)
+
+
+def program_plain(name):
+    for prefix, text in PROGRAM_PLAIN:
+        if (name or '').startswith(prefix):
+            return text
+    return ''
+
+
 def programs_view(interp, voice='shoma'):
     """programs_list for display: a program built on an arbitrary pick from a tie is left out (the engine picks the
-    first of tied fields/abilities); participant views use growth wording for the two remedial kinds."""
+    first of tied fields/abilities); participant views use growth wording for the two remedial kinds.
+    Each row is (kind label, programme name, plain meaning)."""
     out = []
     w = interp.get('weak') or {}
     b = interp.get('brief') or {}
@@ -348,7 +368,7 @@ def programs_view(interp, voice='shoma'):
             if drop_reinf:
                 continue
             label = label if org else 'برای رشد یک توانایی'
-        out.append((label, name))
+        out.append((label, name, program_plain(name)))
     return out
 
 

@@ -173,6 +173,11 @@ b2 = B.create({'code': 'BAT-TEST-2', 'name': 'باتری آزمون دو', 'audi
                             Command.create({'sequence': 2, 'instrument_id': f1.id})]})
 check('B17 item_count / est_minutes on a new battery',
       b2.item_count == f0.active_item_count + f1.active_item_count and b2.est_minutes == est_minutes(b2.item_count))
+# verify T7: the minutes a participant reads for a battery = the sum of its per-instrument labels (display only)
+_fa = str.maketrans('0123456789', '۰۱۲۳۴۵۶۷۸۹')
+check('B17b the shown battery total equals the per-instrument minutes',
+      b2.ts_minutes_text() == str(f0.duration_minutes + f1.duration_minutes).translate(_fa)
+      and b2.ts_card()['minutes'] == b2.ts_minutes_text(), (b2.ts_minutes_text(), f0.duration_minutes, f1.duration_minutes))
 f1.write({'state': 'retired'})
 check('B18 retiring an instrument flags the battery (has_retired), state unchanged', b2.has_retired and b2.state == 'draft')
 msg = error_text(b2.action_publish)

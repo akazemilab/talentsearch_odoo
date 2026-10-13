@@ -13,7 +13,7 @@ from odoo.exceptions import UserError, ValidationError
 from odoo.http import request
 
 from odoo.addons.ts_assessment.controllers.main import _my_attempt, _ts_site_or_404
-from odoo.addons.ts_assessment.models.attempt import fa_digits, jalali
+from odoo.addons.ts_assessment.models.attempt import fa_digits, jalali_long
 from odoo.addons.ts_org.controllers.main import TsOrg
 from odoo.addons.ts_panel.controllers.base import (deny, flash_error, flash_ok, forbidden, member_or_404,
                                                    render_in_shell, require)
@@ -25,7 +25,7 @@ from odoo.addons.ts_panel.controllers.portal import TsPanelPortal
 from odoo.addons.ts_panel.controllers.reports import LEVEL_KIND
 from odoo.addons.ts_talent.controllers.main import TsTalent
 
-from ..models.battery import est_minutes
+from ..models.battery import rest_minutes_text
 from ..models.catalog import BATTERY_NOT_IN_CATALOG
 
 LIMIT_NOTE = 'این مجموعه برای کمک به گفت‌وگوی مشاوره است، نه تشخیص.'
@@ -117,11 +117,12 @@ class TsBatteryPlayer(TsTalent):
         rest = sib.filtered(lambda t: t.state != 'done')
         rest_matrix = any(hasattr(t, 'ts_is_matrix') and t.ts_is_matrix() for t in rest)
         rest_items = 0 if rest_matrix else sum(rest.mapped('instrument_id.active_item_count'))
+        # minutes = the sum the per-instrument labels show (verify T7), the same number as /my and the player
         return request.render('ts_battery.transition', {
             'attempt': attempt, 'battery': b, 'n_done': attempt.ts_battery_index(), 'total': len(sib),
             'done_count': len(sib.filtered(lambda t: t.state == 'done')), 'nxt': nxt, 'inst': inst, 'matrix': matrix,
             'items': inst.active_item_count or 0, 'minutes': inst.duration_minutes or 0,
-            'rest_count': len(rest), 'rest_items': rest_items, 'rest_minutes': est_minutes(rest_items),
+            'rest_count': len(rest), 'rest_items': rest_items, 'rest_minutes': rest_minutes_text(rest),
             'tu': attempt.ts_informal(), 'fa': fa_digits, 'page_name': 'ts_assessments'})
 
     # ------------------------------------------------------------------ /my/assessments: a battery is one row
@@ -152,19 +153,17 @@ class TsBatteryPlayer(TsTalent):
             done, total = a.ts_battery_progress()
             nxt = a.ts_battery_attempts().filtered(lambda x: x.state != 'done')[:1]
             row = {'a': a, 'name': a.battery_id.ts_title(), 'org': a.workspace_id.ts_public_name(),
-                   'done': done, 'total': total, 'when': jalali(a.accepted_at or a.create_date, with_time=False)}
+                   'done': done, 'total': total, 'when': jalali_long(a.accepted_at or a.create_date)}
             if nxt:
                 rest = a.ts_battery_attempts().filtered(lambda x: x.state != 'done')
-                rest_matrix = any(hasattr(x, 'ts_is_matrix') and x.ts_is_matrix() for x in rest)
                 # T7 (B26-1): which instrument is next and about how long the rest takes
                 row.update(url='/take/%s' % nxt.access_token, fresh=nxt.state == 'consent',
                            next_name=nxt.instrument_id.ts_title(),
-                           minutes_left=sum(rest.mapped('instrument_id.duration_minutes')) if rest_matrix else
-                           est_minutes(sum(rest.mapped('instrument_id.active_item_count'))))
+                           minutes_left=rest_minutes_text(rest))   # same sum as the player and the invite (verify T7)
                 qc['batteries_going'].append(row)
             else:
-                row.update(url=battery_url(a), shared=a.share_level != 'none', when=jalali(
-                    max([d for d in a.ts_battery_attempts().mapped('submitted_at') if d] or [a.create_date]), with_time=False))
+                row.update(url=battery_url(a), shared=a.share_level != 'none', when=jalali_long(
+                    max([d for d in a.ts_battery_attempts().mapped('submitted_at') if d] or [a.create_date])))
                 qc['batteries_done'].append(row)
         return res
 
@@ -190,7 +189,7 @@ class TsBatteryPlayer(TsTalent):
         return request.render('ts_battery.my_battery', {
             'a': a, 'battery': a.battery_id, 'sections': sections, 'done': done, 'total': total,
             'org': a.workspace_id.ts_public_name(), 'counselor': resp,
-            'when': jalali(max(rows.filtered(lambda t: t.submitted_at).mapped('submitted_at') or [a.create_date]), with_time=False),
+            'when': jalali_long(max(rows.filtered(lambda t: t.submitted_at).mapped('submitted_at') or [a.create_date])),   # «۲۱ مهر ۱۴۰۵» (PT7)
             'submitted': kw.get('submitted'), 'limit_note': LIMIT_NOTE, 'tu': rows[:1].ts_informal(),
             'nxt': rows.filtered(lambda t: t.state != 'done')[:1],     # T7 B24-1: «ادامهٔ مجموعه» near the top
             'fa': fa_digits, 'page_name': 'ts_assessments'})
@@ -258,9 +257,7 @@ class TsBatteryPortal(TsPanelPortal):
                 # the headline is the battery name only; the progress is part of the meta line (G6-P16-1).
                 # T7 (B25-1/2): «ادامهٔ مجموعه» once anything is answered; next instrument with its place, time left.
                 rest = a.ts_battery_attempts().filtered(lambda x: x.state != 'done')
-                rest_matrix = any(hasattr(x, 'ts_is_matrix') and x.ts_is_matrix() for x in rest)
-                rest_min = sum(rest.mapped('instrument_id.duration_minutes')) if rest_matrix else \
-                    est_minutes(sum(rest.mapped('instrument_id.active_item_count')))
+                rest_min = rest_minutes_text(rest)   # same sum as the player and the invite (verify T7)
                 nxt.update(title='مجموعهٔ %s' % a.battery_id.name,
                            battery_progress='%s از %s سنجه انجام شده' % (fa_digits(done), fa_digits(total)),
                            url='/take/%s' % cur.access_token, progress=pct, attempt_id=cur.id, battery=True,
@@ -292,7 +289,7 @@ class TsBatteryPortal(TsPanelPortal):
                 if d == n:
                     qc['done_batteries'].append({
                         'a': a, 'name': a.battery_id.name, 'url': battery_url(a), 'shared': a.share_level != 'none',
-                        'when': jalali(max(a.attempt_ids.mapped('submitted_at') or [a.create_date]), with_time=False)})
+                        'when': jalali_long(max(a.attempt_ids.mapped('submitted_at') or [a.create_date]))})
         return res
 
 

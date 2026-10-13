@@ -16,10 +16,12 @@
                                 <p class="ts-hero__kicker">آزمون زمان‌دار</p>
                                 <h1 class="tst-title" t-out="inst.title"/>
                                 <p class="ts-lead" t-out="cfg['intro']"/>
-                                <!-- hiring battery (ts_hire passes hire_org): who asked for the test and what that organisation sees -->
+                                <!-- hiring battery (ts_hire passes hire_org): who asked for the test and what that organisation sees.
+                                     verify T7: the same sentence as the invitation and consent (ts_panel.who_sees_line, with
+                                     ts_hire.who_sees_position), plus what «نشانه‌های دقت پاسخ‌دهی» means on this page -->
                                 <p class="ts-hint tst-who" t-if="hire_org">این آزمون را <strong t-out="hire_org"/> خواسته است.
-                                    <t t-if="hire_shared">این سازمان پاسخ‌ها و نمره‌های شما را نمی‌بیند و فقط خلاصهٔ تناسب شما با نیازهای این شغل را می‌بیند.</t>
-                                    <t t-else="">چون اشتراک‌گذاری نتیجه را نپذیرفته‌اید، این سازمان فقط می‌بیند که آزمون را شروع یا تمام کرده‌اید.</t></p>
+                                    <t t-call="ts_panel.who_sees_line"/>
+                                    <t t-if="hire_shared"> «نشانه‌های دقت پاسخ‌دهی» یعنی مثلاً بیرون رفتن از صفحه در میانهٔ یک بخش.</t></p>
                                 <p class="ts-hint" t-if="cfg['accom'] and cfg['accom'] &gt; 1">برای شما زمان بیشتری در نظر گرفته شده است.</p>
                                 <div class="tst-stage" aria-live="off">
                                     <noscript><p class="ts-notice ts-notice--warn">این آزمون بدون جاوااسکریپت اجرا نمی‌شود؛ آن را در تنظیمات مرورگر روشن کنید.</p></noscript>
@@ -48,8 +50,9 @@
                 <attribute name="t-if">not (results and results[0].attempt_id.version_id.mode == 'task')</attribute>
             </xpath>
             <xpath expr="//section[1]//thead/tr/th[2]" position="replace">
-                <th scope="col" t-if="results and results[0].attempt_id.version_id.mode == 'task'">صدک (۰ تا ۱۰۰)</th>
-                <th scope="col" t-else="">نمره (۱ تا ۵)</th>
+                <!-- verify T7: the column name never breaks inside its range («(۱ تا | ۵)» at 390) -->
+                <th scope="col" class="ts-nowrap" t-if="results and results[0].attempt_id.version_id.mode == 'task'">صدک (۰ تا ۱۰۰)</th>
+                <th scope="col" class="ts-nowrap" t-else="">نمره (۱ تا ۵)</th>
             </xpath>
             <xpath expr="//section[1]//span[contains(@t-attf-class, 'ts-meter__seg')]" position="attributes">
                 <attribute name="t-attf-style">width: #{b.ts_seg_pct()}%</attribute>

@@ -70,7 +70,9 @@
         <field name="key">ts_website.sep</field>
         <field name="website_id" ref="website_ts"/>
         <field name="arch" type="xml">
-            <t t-name="ts_website.sep"><span class="ts-sep"><span class="ts-sr">، </span></span></t>
+            <!-- verify T7: a WORD JOINER keeps the dot on the line of the fact before it, so a wrapped meta line never
+                 starts with the separator («• ۶ از ۱۱ پرسش…») -->
+            <t t-name="ts_website.sep">&#8288;<span class="ts-sep"><span class="ts-sr">، </span></span></t>
         </field>
     </record>
 
@@ -133,7 +135,8 @@
                     <t t-elif="phone_url">
                         <a t-att-href="phone_url" class="ts-btn ts-btn--primary ts-btn--lg ts-btn--block">ورود یا ثبت‌نام با موبایل</a>
                         <p t-if="login_url and not only" class="ts-authchoice__alt">
-                            <a t-att-href="login_url">با ایمیل ثبت‌نام کرده بودید؟</a>
+                            <!-- verify T7 (X4): «تو» on a student invitation (callers pass tu="student") -->
+                            <a t-att-href="login_url"><t t-if="tu">با ایمیل ثبت‌نام کرده بودی؟</t><t t-else="">با ایمیل ثبت‌نام کرده بودید؟</t></a>
                         </p>
                     </t>
                     <t t-elif="not only">

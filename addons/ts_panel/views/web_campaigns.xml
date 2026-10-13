@@ -342,7 +342,7 @@
                                     <h1 t-out="inst.title"/>
                                     <p t-if="student"><strong t-out="ws.ts_public_name()"/> تو را به پاسخ‌دادن به این سنجه <t t-out="inv_verb"/>.</p>
                                     <p t-else=""><strong t-out="ws.ts_public_name()"/> شما را به پاسخ‌دادن به این سنجه <t t-out="inv_verb"/>.</p>
-                                    <p t-if="open_ok" class="ts-invite__facts" id="ts-invite-facts"><t t-out="facts['size']"/><t t-call="ts_website.sep"/><t t-out="facts['time']"/><t t-call="ts_website.sep"/>نتیجه بلافاصله پس از پایان آماده است.</p>
+                                    <p t-if="open_ok" class="ts-invite__facts ts-facts-list" id="ts-invite-facts"><span class="ts-fact"><t t-out="facts['size']"/></span><t t-call="ts_website.sep"/><span class="ts-fact"><t t-out="facts['time']"/></span><t t-call="ts_website.sep"/><span class="ts-fact">نتیجه بلافاصله پس از پایان آماده است.</span></p>
                                 </div>
                                 <p t-if="flash" class="ts-notice" role="alert" t-out="flash"/>
                                 <t t-if="not open_ok">
@@ -356,7 +356,7 @@
                                         <t t-if="public">
                                             <p t-if="student">برای شروع وارد حسابت شو یا حساب تازه بساز. گزارش نتیجه در حسابت می‌ماند.</p>
                                             <p t-else="">برای شروع وارد حساب خود شوید یا حساب تازه بسازید. گزارش نتیجه در حساب شما نگه داشته می‌شود.</p>
-                                            <t t-call="ts_website.auth_choices" phone_url="phone_url" login_url="login_url" signup_url="signup_url"/>
+                                            <t t-call="ts_website.auth_choices" phone_url="phone_url" login_url="login_url" signup_url="signup_url" tu="student"/>
                                         </t>
                                         <form t-else="" t-attf-action="/c/#{c.open_token}/join" method="post" class="ts-form">
                                             <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>

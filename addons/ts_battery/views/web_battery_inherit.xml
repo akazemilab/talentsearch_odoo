@@ -303,7 +303,7 @@
                 <dt t-else="">سنجه</dt>
             </xpath>
             <xpath expr="//dd[@t-out='inst.name']" position="replace">
-                <dd t-if="bat"><t t-out="bat.ts_title()"/> (<t t-out="fa(len(bat.line_ids))"/> سنجه، حدود <t t-out="fa(bat.est_minutes)"/> دقیقه)</dd>
+                <dd t-if="bat"><t t-out="bat.ts_title()"/> (<t t-out="fa(len(bat.line_ids))"/> سنجه، حدود <t t-out="bat.ts_minutes_text()"/> دقیقه)</dd>
                 <dd t-else="" t-out="inst.ts_title()"/>
             </xpath>
         </field>

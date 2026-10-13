@@ -172,10 +172,10 @@ class TsBatteryRunHelpers(models.Model):
         # effort/duration: the instrument's own labels («۳ بخش زمان‌دار», «۲ تا ۸ زمینه…»), never «۰ پرسش» (T7, W20)
         lines = [{'name': l.instrument_id.ts_title(), 'items': l.instrument_id.active_item_count or 0,
                   'minutes': l.instrument_id.duration_minutes or 0,
-                  'effort': l.instrument_id.ts_effort_label(), 'duration': l.instrument_id.ts_duration_label()}
+                  'effort': l.instrument_id.ts_effort_label(), 'duration': l.instrument_id.ts_total_time_label()}
                  for l in b.ts_lines()]
         return {'name': b.name, 'description': ts_strip_limit(b.description), 'count': len(lines), 'items': b.item_count,
-                'minutes': b.est_minutes, 'lines': lines}
+                'minutes': b.ts_minutes_text(), 'lines': lines}   # = sum of the lines (verify T7), not est_minutes
 
     def ts_facts(self):
         """One line for a panel page: «۲ سنجه، ۱۳ پرسش، حدود ۵ دقیقه: فهرست پاکزیستی، فهرست تعهد فردی»."""
