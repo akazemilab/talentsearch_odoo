@@ -149,9 +149,12 @@ clone databases. Two layers:
    message fails at once with «sms_server», no network call) and `ts.notification._send_sms`.
 
 Suites that need a gateway start a local fake first (`ts_flowlib.fake_kavenegar()`, or their own) and put the clone back to
-the state above at the end. **Recommendation for the owner (ops, not done here):** pin the live server to its database
-(`db_name = eot_main` and `dbfilter = ^eot_main$` in /etc/odoo20.conf), so the live server no longer runs crons on clone
-databases at all.
+the state above at the end. The live server also runs its scheduled actions on every clone database, with the live code
+against the schema under test (rehearsal eot_ts1004: the live import-job cron took a clone's queued job and failed on a
+column onb3 removed), so `ts_db.sh` switches every cron of a clone off after the restore and again before each serve; the
+suites call the cron methods themselves. **Recommendation for the owner (ops, not done here):** pin the live server to
+its database (`db_name = eot_main` and `dbfilter = ^eot_main$` in /etc/odoo20.conf), so the live server never touches a
+clone database at all.
 
 ## Measures and money
 

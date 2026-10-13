@@ -27,6 +27,12 @@ guard_db(){
   if [[ $DB != eot_main && $DB != eot_ts* ]]; then echo "!! clone names must start with eot_ts"; exit 2; fi
 }
 odoo(){ sudo -u odoo env HOME=/opt/odoo $PY $BIN -c /etc/odoo20.conf -d "$DB" --db-filter="^$DB\$" --addons-path=$AP --workers=0 --max-cron-threads=0 "$@"; }
+# A clone runs no scheduled action: its own server has no cron thread, and the LIVE server (no dbfilter) would otherwise
+# run its crons on every clone database with the live code, against a schema the release under test may have changed
+# (rehearsal eot_ts1004: the live import-job cron took a queued job of a clone and failed on a removed column). Every
+# cron of a clone is switched off after the restore and again before each serve (an upgrade may switch some back on).
+# Suites call the cron methods directly. Recommended ops change for the owner: pin the live server to eot_main.
+crons_off(){ [[ $DB == eot_ts* ]] || return 0; sudo -u postgres psql -d "$DB" -Atc "WITH c AS (UPDATE ir_cron SET active = false WHERE active RETURNING 1) SELECT 'crons off: '||count(*) FROM c" 2>&1 | tail -1; }
 guard_db
 case $CMD in
   clone)
@@ -57,6 +63,7 @@ SELECT 'sms: kavenegar on '||(SELECT count(*) FROM res_company WHERE kv_enabled 
 SQL
     rc_sms=$?; tail -1 /tmp/ts_clone_sms_$DB.log
     [ $rc_sms -ne 0 ] && { echo "!! could not switch the clone's SMS off"; cat /tmp/ts_clone_sms_$DB.log | head -5; exit 1; }
+    crons_off
     step done; sudo -u postgres psql -d "$DB" -Atc "select 'websites='||count(*) from website" ;;
   install|upgrade)
     MODS=${3:?modules}; FLAG=-i; [[ $CMD == upgrade ]] && FLAG=-u
@@ -80,6 +87,7 @@ SQL
     if [ -n "$holder" ]; then echo "!! port $PORT is held by: $(tr '\0' ' ' < /proc/$holder/cmdline | grep -o -- '-d [^ ]*')"; exit 3; fi
     avail=$(awk '/MemAvailable/{print int($2/1024)}' /proc/meminfo)
     [ "$avail" -lt 1500 ] && { echo "!! only ${avail} MB RAM available on prod; stop a clone first (ts db halt|stop)"; exit 3; }
+    crons_off >/dev/null
     sudo -u odoo setsid nohup $PY $BIN -c /etc/odoo20.conf -d "$DB" --db-filter="^$DB\$" --addons-path=$AP --http-port=$PORT --gevent-port=$((PORT+1000)) --workers=0 --max-cron-threads=0 --no-database-list > "/tmp/ts_serve_$DB.log" 2>&1 &
     for i in $(seq 1 25); do curl -s -o /dev/null -H "Host: www.eot.ir" "http://127.0.0.1:$PORT/web/login" && break; sleep 2; done
     echo "serving $DB on :$PORT (code $CODE)" ;;
