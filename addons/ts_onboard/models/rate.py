@@ -1,5 +1,9 @@
-"""Rate limits of onb2 per hashed network address: short-link lookups (/i/, /j/, /c/: 30 a minute) and new guest attempts
-(3 an hour). A row holds a key such as 'short:<ip hash>' and its time, nothing else; rows older than a day are dropped."""
+"""Rate limits of onb2 per hashed network address: invitation and short-link lookups (/invite/, /i/, /j/, /c/: 30 a minute
+each family), new guest attempts (5 an hour) and guest answers (200 a minute). A row holds a key such as
+'short:<ip hash>' and its time, nothing else; rows older than a day are dropped.
+
+A hit is counted in its own short transaction, committed at once: a lookup of an unknown code ends in a 404 (the request's
+own transaction is rolled back), and that miss must still count, or guessing codes would never be slowed down."""
 from datetime import timedelta
 
 from odoo import api, fields, models
@@ -16,11 +20,13 @@ class TsRateHit(models.Model):
     @api.model
     def ts_hit(self, key, limit, seconds):
         """Count one hit of `key`; False when `limit` hits already happened within `seconds` (the hit is not counted)."""
-        since = fields.Datetime.now() - timedelta(seconds=seconds)
-        S = self.sudo()
-        if S.search_count([('key', '=', key), ('at', '>=', since)]) >= limit:
-            return False
-        S.create({'key': key})
+        now = fields.Datetime.now()
+        since = now - timedelta(seconds=seconds)
+        with self.env.registry.cursor() as cr:
+            cr.execute('SELECT count(*) FROM ts_rate_hit WHERE key = %s AND at >= %s', [key, since])
+            if cr.fetchone()[0] >= limit:
+                return False
+            cr.execute('INSERT INTO ts_rate_hit (key, at) VALUES (%s, %s)', [key, now])
         return True
 
     @api.autovacuum

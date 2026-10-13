@@ -7,9 +7,11 @@ research box, and «کمتر از ۱۸ سال دارم» (no guest attempt for m
 counselor). A signed-in visitor goes straight into an ordinary attempt.
 
 The guest player /start/q* renders the ordinary player and review pages with this address; the attempt is found only
-through the signed HttpOnly cookie (never a token in an address). Limits: 3 new guest attempts per hashed address per
-hour, one open guest attempt per browser. At the end /start/result shows «نتیجه‌تان آماده است.» with the sign-in inline;
-the sign-in claims the attempt (controllers/auth.py) and opens the report."""
+through the signed HttpOnly cookie (never a token in an address). Limits per hashed address: 5 new guest attempts an hour
+(ts_onboard.guest_per_hour), 200 saved answers a minute (ts_onboard.answers_per_minute); one open guest attempt per
+browser. At the end /start/result shows «نتیجه‌تان آماده است.» with the sign-in inline; the sign-in claims the attempt
+(controllers/auth.py) and opens the report. The first answer and the end are counted in the funnel by the attempt model
+(models/attempt.py), for every player."""
 from urllib.parse import quote
 
 from odoo import fields, http
@@ -22,14 +24,32 @@ from odoo.addons.ts_assessment.models.instrument import SCALE
 from odoo.addons.ts_sms.controllers.signup import signin_values
 from odoo.addons.ts_tasks.controllers.main import TsTaskPlayer
 
-from ..models.common import GUEST_COOKIE, GUEST_COOKIE_AGE, digest, new_token, set_cookie
+from ..models.common import GUEST_COOKIE, GUEST_COOKIE_AGE, digest, drop_cookie, new_token, set_cookie
 from .auth import claim_url, guest_attempt
 
-GUEST_PER_HOUR = 3
+GUEST_PER_HOUR = 5
+ANSWERS_PER_MINUTE = 200
 
 
 def _funnel(step, inst):
     request.env['ts.funnel.event'].ts_log(request, step, instrument=inst)
+
+
+def _ip():
+    return request.env['ts.audit.event'].sudo()._hash_ip(request.httprequest.remote_addr)
+
+
+def _answers_ok():
+    """200 saved guest answers a minute per hashed address (a person answers far slower; a script does not)."""
+    limit = request.env['ir.config_parameter'].sudo().get_int('ts_onboard.answers_per_minute', ANSWERS_PER_MINUTE) \
+        or ANSWERS_PER_MINUTE
+    return request.env['ts.rate.hit'].ts_hit('answer:%s' % _ip(), limit, 60)
+
+
+def _slow(**values):
+    resp = request.render('ts_onboard.slow', dict({'page_name': 'ts_slow'}, **values), status=429)
+    resp.headers['Retry-After'] = '60'
+    return resp
 
 
 def _instrument(slug=None):
@@ -85,10 +105,9 @@ class TsOnbGuest(http.Controller):
             return request.redirect('/start/q')           # one open guest attempt per browser
         if open_guest and open_guest.state == 'done':
             return request.redirect('/start/result')
-        ip = request.env['ts.audit.event'].sudo()._hash_ip(request.httprequest.remote_addr)
         limit = request.env['ir.config_parameter'].sudo().get_int('ts_onboard.guest_per_hour', GUEST_PER_HOUR) or GUEST_PER_HOUR
-        if not request.env['ts.rate.hit'].ts_hit('guest:%s' % ip, limit, 3600):
-            return request.render('ts_onboard.slow', {'page_name': 'ts_slow', 'guest_limit': True}, status=429)
+        if not request.env['ts.rate.hit'].ts_hit('guest:%s' % _ip(), limit, 3600):
+            return _slow(guest_limit=True)
         raw, cookie = new_token(request.env, 'guest')
         at = Att.create({'user_id': user.id, 'instrument_id': inst.id, 'version_id': inst.current_version_id.id,
                          'ts_guest': True, 'ts_guest_hash': digest(raw), 'ts_guest_seen': fields.Datetime.now()})
@@ -108,10 +127,6 @@ class TsOnbGuest(http.Controller):
                   'tu': False, 'page_name': 'ts_start'}
         values.update(extra)
         return values
-
-    def _q1(self, at, before):
-        if not before and at.answer_ids:
-            _funnel('q1', at.instrument_id)
 
     @http.route('/start/q', type='http', auth='public', website=True, methods=['GET'], sitemap=False)
     def guest_take(self, page=None, **kw):
@@ -140,13 +155,13 @@ class TsOnbGuest(http.Controller):
         at = self._mine()
         if not at:
             return request.make_json_response({'ok': False, 'error': 'no attempt'}, status=404)
-        before = len(at.answer_ids)
+        if not _answers_ok():
+            return request.make_json_response({'ok': False, 'error': 'slow'}, headers=[('Retry-After', '60')], status=429)
         try:
             at.save_answer(int(item), int(value))
         except (UserError, ValueError, TypeError) as e:
             return request.make_json_response({'ok': False, 'error': str(e)}, status=400)
         at.ts_guest_touch()
-        self._q1(at, before)
         return request.make_json_response({'ok': True, 'answered': len(at.answer_ids), 'total': at.version_id.active_item_count})
 
     @http.route('/start/q/page', type='http', auth='public', website=True, methods=['POST'], sitemap=False)
@@ -155,7 +170,8 @@ class TsOnbGuest(http.Controller):
         at = self._mine()
         if not at or at.state != 'in_progress':
             return request.redirect('/start/q' if at else '/start')
-        before = len(at.answer_ids)
+        if not _answers_ok():
+            return _slow()
         for key, value in post.items():
             if key.startswith('q_') and value:
                 try:
@@ -163,7 +179,6 @@ class TsOnbGuest(http.Controller):
                 except (UserError, ValueError):
                     pass
         at.ts_guest_touch()
-        self._q1(at, before)
         page = int(post.get('page') or 1) if str(post.get('page') or '1').isdigit() else 1
         go = post.get('go')
         if go == 'prev':
@@ -198,7 +213,6 @@ class TsOnbGuest(http.Controller):
             if not ok:
                 return request.redirect('/start/q')
             at.ts_guest_touch()
-            _funnel('finish', at.instrument_id)
         return request.redirect('/start/result')
 
     # ------------------------------------------------------------------ the result gate
@@ -225,9 +239,8 @@ class TsOnbGuest(http.Controller):
         at = guest_attempt()
         if not at:
             return request.redirect('/my/assessments')
-        at.ts_guest_claim(request.env.user)
-        _funnel('gate_signed_in', at.instrument_id)
-        from ..models.common import drop_cookie
+        if at.ts_guest_claim(request.env.user):
+            _funnel('gate_signed_in', at.instrument_id)
         return drop_cookie(request.redirect(claim_url(at)), request, GUEST_COOKIE)
 
 

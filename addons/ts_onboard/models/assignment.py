@@ -1,18 +1,19 @@
 """O2: how an invitation reached the person, and the browser it is bound to.
 
-* `delivered_via`: sms / email / manual (a copied link, a QR code, an open link, a panel that typed no number). Set by the
-  existing SMS and e-mail send paths when they report success (invitation or reminder); the number or address the link
-  went to is kept (`delivered_phone`, `delivered_email`), because the link in that message proves that number or address.
+* `delivered_via`: sms / email / manual (a link or QR code the panel copied, a panel that typed no number) / campaign (the
+  person joined through an open link or a class code). sms and email are set by the existing SMS and e-mail send paths
+  when they report success (invitation or reminder); the number or address the link went to is kept (`delivered_phone`,
+  `delivered_email`), because the link in that message proves that number or address.
 * `device_hash`: sha256 of the browser token of the first accept (cookie ts_dev, HttpOnly, SameSite=Lax). The raw token
   is never stored.
 * The welcome screen's POST is the consent: `welcome_version` (the consent text version) and `welcome_at`.
 """
-from odoo import fields, models
+from odoo import api, fields, models
 from odoo.exceptions import UserError
 
 from odoo.addons.ts_sms.models.phone_otp import iran_mobile
 
-DELIVERY = [('manual', 'پیوند یا کد QR'), ('sms', 'پیامک'), ('email', 'ایمیل')]
+DELIVERY = [('manual', 'پیوند یا کد QR'), ('sms', 'پیامک'), ('email', 'ایمیل'), ('campaign', 'پیوند باز یا کد کلاس')]
 
 
 class TsAssignmentDelivery(models.Model):
@@ -26,6 +27,23 @@ class TsAssignmentDelivery(models.Model):
     device_hash = fields.Char(readonly=True, copy=False, index=True, groups='base.group_system')
     welcome_version = fields.Char('نسخهٔ متن رضایت (صفحهٔ خوش‌آمد)', readonly=True, copy=False)
     welcome_at = fields.Datetime('زمان رضایت (صفحهٔ خوش‌آمد)', readonly=True, copy=False)
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        for vals in vals_list:
+            if vals.get('campaign_id') and not vals.get('delivered_via'):
+                vals['delivered_via'] = 'campaign'
+        return super().create(vals_list)
+
+    @api.model
+    def _ts_seed_delivery(self):
+        """Data step (install and every update, idempotent): invitations made by joining a campaign are «campaign»."""
+        self.env.flush_all()
+        self.env.cr.execute("UPDATE ts_assignment SET delivered_via = 'campaign' "
+                            "WHERE campaign_id IS NOT NULL AND delivered_via = 'manual'")
+        n = self.env.cr.rowcount
+        self.env.invalidate_all()
+        return n
 
     # ------------------------------------------------------------------ the send paths report delivery
     def _ts_mark_delivered(self, via, phone=None, email=None):

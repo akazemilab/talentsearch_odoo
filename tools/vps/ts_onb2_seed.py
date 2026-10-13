@@ -78,17 +78,36 @@ try:
             at.save_answer(it.id, 1 + it.id % 5)
         if done:
             at.action_submit()
-        return cookie
+        return cookie, at
 
-    gate_cookie, play_cookie = _guest(True), _guest(False)
+    (gate_cookie, _g1), (play_cookie, _g2) = _guest(True), _guest(False)
+    # the claimed report: a signed-in account whose name is still unknown (the optional name field shows). Its password
+    # is the one of the matrix login ONB2_PW_FROM (ts_ui_seed.py sets it; clones only), so ts_shot.py can sign in.
+    ONB2_USERS = {}
+    src = globals().get('ONB2_PW_FROM')
+    if src:
+        CL = 'ts.onb2.shot.claim@example.invalid'
+        cu = U.search([('login', '=', CL)], limit=1) or U.with_context(ts_name_placeholder=True).create(
+            {'name': CL, 'login': CL, 'email': CL, 'group_ids': [(6, 0, [env.ref('base.group_portal').id])]})
+        cu.partner_id.sudo().with_context(ts_name_placeholder=True).write({'name': CL, 'ts_name_unknown': True})
+        env.flush_all()
+        env.cr.execute('UPDATE res_users SET password = (SELECT password FROM res_users WHERE login = %s) WHERE id = %s',
+                       [src, cu.id])
+        env.invalidate_all()
+        claimed = Att.search([('user_id', '=', cu.id), ('ts_guest_claimed_at', '!=', False), ('state', '=', 'done')], limit=1)
+        if not claimed:
+            _c, claimed = _guest(True)
+            claimed.ts_guest_claim(cu)
+        ONB2_USERS = {CL: ['/my/assessments/%s?claimed=1' % claimed.id]}
     env.cr.commit()
     ONB2 = ['/invite/%s' % clinic.token, '/invite/%s' % emp.token, '/invite/%s' % minor.token,
             '/start', '/start/under-18',
             'COOKIE ts_guest %s' % play_cookie, '/start/q',
             'COOKIE ts_guest %s' % gate_cookie, '/start/result',
             'POSTSHOT /invite/%s/accept welcome=1' % bound.token]
-    print('ONB2SEED', len(ONB2))
+    print('ONB2SEED', len(ONB2), 'claimed report' if ONB2_USERS else 'no claimed report')
 except Exception as e:      # noqa: BLE001 - the rest of the matrix still runs
     env.cr.rollback()
     print('SEED-SKIP onb2', type(e).__name__, str(e)[:160])
     ONB2 = []
+    ONB2_USERS = {}

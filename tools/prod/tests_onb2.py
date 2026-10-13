@@ -124,8 +124,30 @@ R = env['ts.rate.hit']
 key = 'test:onb2:%d' % a4.id
 oks = [R.ts_hit(key, 3, 60) for _ in range(5)]
 check('R01 a key is let through up to the limit, then refused', oks == [True, True, True, False, False], oks)
-R.sudo().search([('key', '=', key)]).write({'at': fields.Datetime.now() - timedelta(minutes=2)})
+with env.registry.cursor() as c2:       # hits live in their own committed transaction (a 404 must still count)
+    c2.execute('UPDATE ts_rate_hit SET at = at - interval %s WHERE key = %s', ['2 minutes', key])
 check('R02 after the window the key is let through again', R.ts_hit(key, 3, 60))
+key2 = 'test:onb2:rb:%d' % a4.id
+try:
+    with env.cr.savepoint():
+        R.ts_hit(key2, 1, 60)
+        raise ValueError('the request fails after the lookup (an unknown code answers 404)')
+except ValueError:
+    pass
+check('R03 a hit counts even when the request itself is rolled back (guessing unknown codes is slowed down too)',
+      not R.ts_hit(key2, 1, 60))
+with env.registry.cursor() as c2:
+    c2.execute("DELETE FROM ts_rate_hit WHERE key LIKE 'test:onb2:%%'")
+camp = None
+try:
+    with env.cr.savepoint():
+        camp = env['ts.campaign'].sudo().create({'workspace_id': wcl.id, 'name': 'onb2 پیوند باز', 'instrument_id': adult.id,
+                                                 'kind': 'open_link'})
+        a_c = A.create({'workspace_id': wcl.id, 'instrument_id': adult.id, 'invitee_name': 'کلاس onb2', 'campaign_id': camp.id})
+except Exception as e:      # noqa: BLE001 - reported by the check below
+    camp, a_c = None, str(e)[:120]
+check('D06 an invitation made by joining an open link or class code is «campaign» (no proof, the ordinary sign-in)',
+      camp and a_c.delivered_via == 'campaign' and a_c.ts_proof() == (None, None), a_c if not camp else a_c.delivered_via)
 
 # ================================================================ C. minors on one screen
 from odoo.addons.ts_onboard.controllers.flow import minor_needs, consent_from
@@ -232,8 +254,11 @@ check('G10 ...and keeps a younger guest attempt, a claimed one and every ordinar
 F = env['ts.funnel.event']
 MAGIC = {'id', 'create_date', 'create_uid', 'write_date', 'write_uid', 'display_name'}
 fields_f = set(F._fields) - MAGIC
-check('F01 a funnel row holds the step, instrument / invitation, a salted hash, the website and the time; no phone, IP or name',
-      fields_f == {'step', 'instrument_id', 'assignment_id', 'session_hash', 'website_id'}, sorted(fields_f))
+check('F01 a funnel row holds the step, the kind of entry, instrument / invitation, a salted hash, the website and the time; '
+      'no phone, IP or name', fields_f == {'step', 'entry', 'instrument_id', 'assignment_id', 'session_hash', 'website_id'},
+      sorted(fields_f))
+check('F05 the kinds of entry: guest, signed in, and how the invitation came (sms, email, manual, campaign)',
+      set(dict(F._fields['entry'].selection)) == {'guest', 'user', 'sms', 'email', 'manual', 'campaign'})
 check('F02 the steps are the nine of the plan', set(dict(F._fields['step'].selection)) == {
     'start_view', 'start', 'q1', 'finish', 'gate_view', 'gate_signed_in', 'report_view', 'invite_view', 'invite_accept'})
 f_old = F.sudo().create({'step': 'start', 'session_hash': 'onb2old'})

@@ -77,6 +77,8 @@ c.write({'kv_enabled': True, 'kv_api_key': 'FAKEKEY', 'kv_sender': '10004346', '
          'ts_sms_invite': False, 'ts_sms_result': False})
 ICP = env['ir.config_parameter'].sudo()
 ICP.set_str('ts_onboard.short_per_minute', '30'); ICP.set_str('ts_onboard.guest_per_hour', '3')
+ICP.set_str('ts_onboard.invite_per_minute', '60'); ICP.set_str('ts_onboard.campaign_per_minute', '120')
+ICP.set_str('ts_onboard.answers_per_minute', '200')
 ICP.set_str('ts_panel.invites_per_hour', '200')
 env['ts.rate.hit'].sudo().search([]).unlink()
 U = env['res.users'].with_context(active_test=False)
@@ -237,7 +239,8 @@ check('W01 the welcome screen: «سلام مریم», who invites, minutes, thre
 check('W02 one primary action «موافقم و شروع می‌کنم» and a quiet «نمی‌خواهم شرکت کنم»; no sign-in step, no number field',
       page.count('ts-btn--primary') == 1 and 'موافقم و شروع می‌کنم' in page and 'نمی‌خواهم شرکت کنم' in page
       and 'name="phone"' not in page and 'tsa_phone' not in page)
-check('W03 the invitation page sends Referrer-Policy: no-referrer', h.get('Referrer-Policy') == 'no-referrer', h.get('Referrer-Policy'))
+check('W03 the invitation page sends Referrer-Policy: no-referrer and Cache-Control: no-store',
+      h.get('Referrer-Policy') == 'no-referrer' and 'no-store' in (h.get('Cache-Control') or ''), '%s %s' % (h.get('Referrer-Policy'), h.get('Cache-Control')))
 raw(pub, '/invite/%s' % T_SMS)
 info = q("a = env['ts.assignment'].sudo().search([('token', '=', '%s')]); print('G', bool(a.user_id), bool(a.attempt_id), bool(a.device_hash), a.state)" % T_SMS)
 check('W04 opening the link twice (a messenger preview) accepts, binds and signs in nothing; the panel sees «بازشده»',
@@ -248,6 +251,16 @@ st, h, page = raw(pub, '/i/%s' % SHORT)
 check('W06 the short link redirects to the invitation with no-referrer', st == 302 and h.get('Location', '').endswith('/invite/' + T_SMS)
       and h.get('Referrer-Policy') == 'no-referrer', '%s %s' % (st, h.get('Location')))
 check('W07 new short codes have 12 characters', re.fullmatch(r'[a-z0-9]{12}', SHORT) is not None, SHORT)
+nb = client()
+gone = [raw(nb, p) for p in ('/invite/%s' % ('x' * 43), '/i/zzzzzzzzzzzz', '/j/zzzzzzzzzzzz', '/c/no-such-open-link')]
+check('W08 an unknown invitation, short code or open link: one neutral 404 page «این پیوند باز نمی‌شود», never the site 404',
+      all(st == 404 and 'این پیوند باز نمی‌شود' in pg and 'tso-gone' in pg for st, _h, pg in gone), [x[0] for x in gone])
+check('W09 ...the same words for each (nothing tells whether such a link existed), with no-store',
+      len({re.sub(r'\s+', ' ', re.search(r'<h1>(.*?)</h1>', pg, re.S).group(1)) for _s, _h, pg in gone if '<h1>' in pg}) == 1
+      and all('no-store' in (hh.get('Cache-Control') or '') for _s, hh, _p in gone))
+st, h, page = raw(nb, '/start')
+check('W10 the guest pages carry no-referrer and no-store too', h.get('Referrer-Policy') == 'no-referrer'
+      and 'no-store' in (h.get('Cache-Control') or ''), '%s %s' % (st, h.get('Cache-Control')))
 
 # ================================================================ 2. one tap: scoped sign-in by the SMS proof, consent, binding
 st, _, page = pub.req('/invite/%s' % T_SMS)
@@ -270,6 +283,10 @@ TAKE1 = path_of(loc)
 st, h, page = raw(pub, TAKE1)
 check('A05 the player opens directly (no second consent screen), with no-referrer', st == 200 and 'ts-qform' in page
       and 'consent_service' not in page and h.get('Referrer-Policy') == 'no-referrer', str(st))
+t_items = re.findall(r'name="q_(\d+)"', page)
+st, h, j = ajax(pub, TAKE1 + '/answer', {'csrf_token': pub.csrf(page), 'item': t_items[0] if t_items else '0', 'value': '3'})
+check('A06 the scoped session saves answers through the player (its own endpoint)', st == 200 and j.get('ok'),
+      '%s %s' % (st, str(j)[:80]))
 
 # ================================================================ 3. the scope: only this invitation
 info = q("a = env['ts.assignment'].sudo().search([('token', '=', '%s')]); print('ATT', a.attempt_id.id)" % T_SMS)
@@ -326,8 +343,8 @@ other_browser.req('/web/session/logout', {'csrf_token': other_browser.csrf(other
 oc = client()
 assert oc.login(L['other'], pw[L['other']])
 st, _, page = oc.req('/invite/%s' % T_MIS)
-check('M01 another account: one clear notice with the invited number masked and one action «خروج و ادامه با این دعوت»',
-      st == 200 and masked(PH['mis']) in page and 'خروج و ادامه با این دعوت' in page and 'موافقم و شروع می‌کنم' not in page
+check('M01 another account: one clear notice with the invited number masked and one action «خروج و ورود با شمارهٔ دعوت‌شده»',
+      st == 200 and masked(PH['mis']) in page and 'خروج و ورود با شمارهٔ دعوت‌شده' in page and 'موافقم و شروع می‌کنم' not in page
       and page.count('ts-btn--primary') == 1, str(st))
 st, loc, _ = oc.req('/invite/%s/accept' % T_MIS, {'csrf_token': oc.csrf(page), 'welcome': '1', 'share': '1'})
 info = q("a = env['ts.assignment'].sudo().search([('token', '=', '%s')]); print('MIS', bool(a.user_id))" % T_MIS)
@@ -417,8 +434,18 @@ st, h, page = raw(rl, '/j/abcdabcdabcd')
 check('R01 short-link lookups are limited per address: then a polite 429 page with Retry-After',
       codes[:5] == [302] * 5 and codes[5] == 429 and st == 429 and 'کمی صبر کنید' in page and h.get('Retry-After') == '60', str(codes + [st]))
 st, _, _ = raw(rl, '/c/nothing-here')
-check('R02 the open link /c/ counts too', st == 429, str(st))
-shell("env['ir.config_parameter'].sudo().set_str('ts_onboard.short_per_minute', '30'); env['ts.rate.hit'].sudo().search([]).unlink(); env.cr.commit()")
+check('R02 the open class link /c/ has its own, larger allowance (a whole class opens it from one school network)',
+      st == 404, str(st))
+shell("ICP = env['ir.config_parameter'].sudo(); ICP.set_str('ts_onboard.invite_per_minute', '3'); "
+      "ICP.set_str('ts_onboard.campaign_per_minute', '2'); env['ts.rate.hit'].sudo().search([]).unlink(); env.cr.commit()")
+inv = [raw(rl, '/invite/%s' % ('y' * 43))[0] for _ in range(4)]
+check('R03 /invite/ lookups are limited per address too, and unknown tokens count (404 404 404, then 429)',
+      inv == [404, 404, 404, 429], str(inv))
+cc = [raw(rl, '/c/nothing-here')[0] for _ in range(3)]
+check('R04 /c/ lookups are limited with their own allowance', cc == [404, 404, 429], str(cc))
+shell("ICP = env['ir.config_parameter'].sudo(); ICP.set_str('ts_onboard.short_per_minute', '30'); "
+      "ICP.set_str('ts_onboard.invite_per_minute', '60'); ICP.set_str('ts_onboard.campaign_per_minute', '120'); "
+      "env['ts.rate.hit'].sudo().search([]).unlink(); env.cr.commit()")
 
 # ================================================================ 10. test first: start, guest attempt, gate, claim
 g = client()
@@ -426,6 +453,10 @@ st, h, page = raw(g, '/')
 check('P01 home: the primary action is «شروع سنجهٔ رایگان» to /start, with «حدود N دقیقه · بدون ثبت‌نام برای شروع · نتیجه فقط برای خودتان»',
       st == 200 and re.search(r'href="/start"[^>]*>شروع سنجهٔ رایگان', page) and ('حدود %s دقیقه' % SMIN.translate(FA)) in page
       and 'بدون ثبت‌نام برای شروع' in page, str(st))
+hero = page.split('id="tso-hero-links"', 1)[1][:900] if 'id="tso-hero-links"' in page else ''
+check('P01b ...then three quiet text links for organisations (centres, companies, schools), no second hero button',
+      'برای مراکز مشاوره' in hero and 'برای شرکت‌ها و استخدام' in hero and 'href="/schools">برای مدرسه‌ها' in hero
+      and page.split('id="tso-hero-start"', 1)[1].split('</div>', 1)[0].count('ts-btn') == 0, hero[:120])
 st, h, page = raw(g, '/start')
 check('P02 /start: the starter, statements and minutes, the promise, the age button, «کمتر از ۱۸ سال دارم», an unticked research box',
       st == 200 and SCODE == 'inventory_002' and ('%s جمله' % SITEMS.translate(FA)) in page
@@ -438,6 +469,9 @@ check('P03 under 18: no guest attempt; the school or counselor path, a link to /
 st, page = get(g, '/assessments/%s' % SLUG)
 check('P04 the detail page\'s «شروع سنجه» goes to the start screen, not to a sign-in', st == 200
       and ('href="/start/%s"' % urllib.parse.quote(SLUG)) in page and '/signup?next=/assessments' not in page, str(st))
+st, page = get(g, '/assessments?all=1')
+check('P04b the catalog card of the starter opens its start screen («شروع بدون ثبت‌نام»)', st == 200
+      and ('href="/start/%s"' % SLUG) in page and 'شروع بدون ثبت‌نام' in page, str(st))
 st, page = get(g, '/start')
 st, h, _ = raw(g, '/start/%s/go' % SLUG, {'csrf_token': g.csrf(page), 'consent_research': '1'})
 gck = [c for c in cookies(h) if c.startswith('ts_guest=')]
@@ -492,6 +526,20 @@ st, _, p2 = g.req(path_of(loc))
 check('P17 ...whose player opens directly', st == 200 and 'consent_service' not in p2, str(st))
 st, h, j = ajax(g, '/web/session/logout', {'csrf_token': g.csrf(p2)})
 
+# cross-token isolation: a forged or a spent browser token reaches nothing; another account never opens a guest attempt
+xc = client()
+forged = GTOKEN.split('.')[0] + '.' + '0' * 32
+st, h, _ = raw(xc, '/start/q', headers={'Cookie': 'ts_guest=%s' % forged})
+check('X01 a forged guest cookie (right token, wrong signature) reaches no attempt: back to /start',
+      st in (302, 303) and path_of(h.get('Location', '')) == '/start', '%s %s' % (st, h.get('Location')))
+st, h, _ = raw(xc, '/start/result', headers={'Cookie': 'ts_guest=%s' % GTOKEN})
+check('X02 the cookie of a claimed attempt is spent: its gate and result do not open again from that browser token',
+      st in (302, 303) and path_of(h.get('Location', '')) == '/start', '%s %s' % (st, h.get('Location')))
+check('X03 another signed-in account cannot open the claimed attempt\'s player or report',
+      oc.req('/take/%s' % GACCESS)[0] in (403, 404) and oc.req('/my/assessments/%s' % GID)[0] in (403, 404))
+st, h, _ = raw(xc, '/start/q', headers={'Cookie': 'ts_guest=%s' % GTOKEN.replace('.', '')})
+check('X04 a malformed cookie reaches nothing either', st in (302, 303) and path_of(h.get('Location', '')) == '/start', str(st))
+
 # keep both: the same person claims a second result of the same instrument
 g2 = client()
 st, page = get(g2, '/start')
@@ -520,6 +568,20 @@ g4 = client()
 st, page = get(g4, '/start')
 st, h, p4 = raw(g4, '/start/%s/go' % SLUG, {'csrf_token': g4.csrf(page)})
 check('L02 the fourth new guest attempt from one address within the hour gets the polite 429 page', st == 429 and 'کمی صبر کنید' in p4, str(st))
+G3TOK = next((c.value for c in g3.jar if c.name == 'ts_guest'), '')
+st_ok, _h, _p = raw(client(), '/start/q', headers={'Cookie': 'ts_guest=%s' % G3TOK})
+st_bad, hb, _p = raw(client(), '/start/q', headers={'Cookie': 'ts_guest=%s.%s' % (G3TOK.rsplit('.', 1)[0], '0' * 32)})
+check('X05 an open guest attempt is reached with its own signed cookie only: the same token with a forged signature gets nothing',
+      G3TOK and st_ok == 200 and st_bad in (302, 303) and path_of(hb.get('Location', '')) == '/start', '%s %s' % (st_ok, st_bad))
+shell("env['ir.config_parameter'].sudo().set_str('ts_onboard.answers_per_minute', '2'); "
+      "env['ts.rate.hit'].sudo().search([('key', '=like', 'answer:%')]).unlink(); env.cr.commit()")
+st, page = get(g3, '/start/q')
+its = re.findall(r'name="q_(\d+)"', page)
+ans = [ajax(g3, '/start/q/answer', {'csrf_token': g3.csrf(page), 'item': its[k % len(its)] if its else '0', 'value': '3'})[0]
+       for k in range(3)]
+check('L03 guest answers are limited per address (200 a minute; here 2): then 429', ans == [200, 200, 429], str(ans))
+shell("env['ir.config_parameter'].sudo().set_str('ts_onboard.answers_per_minute', '200'); "
+      "env['ts.rate.hit'].sudo().search([('key', '=like', 'answer:%')]).unlink(); env.cr.commit()")
 
 # the 48-hour clean-up
 out = shell("t = env['ts.attempt'].sudo().search([('ts_guest', '=', True)], order='id desc', limit=1)\nenv.flush_all()\n"
@@ -532,10 +594,33 @@ check('C03 no address of this suite ever carried the guest token', not any(GTOKE
       len(LOCS))
 
 # ================================================================ 11. funnel, eot.ir
+# an invitation answered to the end through the player (the invitation path of the funnel: first answer, finished)
+info = q("a = env['ts.assignment'].sudo().search([('token', '=', '%s')]); t = a.attempt_id; "
+         "print('MT', t.access_token, ','.join(str(i.id) for i in t.active_items()))" % T_MANUAL)
+mt = re.search(r'MT (\S+) ([\d,]+)', info)
+MTOK, mids = (mt.group(1), mt.group(2).split(',')) if mt else ('x', [])
+st, page = get(mc, '/take/%s' % MTOK)
+for k in range(0, len(mids), 10):
+    mc.req('/take/%s/page' % MTOK, [('csrf_token', mc.csrf(page)), ('page', str(k // 10 + 1)), ('go', 'next')]
+           + [('q_%s' % i, '3') for i in mids[k:k + 10]])
+st, page = get(mc, '/take/%s/review' % MTOK)
+st, loc, _ = mc.req('/take/%s/submit' % MTOK, {'csrf_token': mc.csrf(page)})
+check('F00 the invitation the panel copied (a number typed, no SMS) is answered to the end', st in (302, 303) and mt, '%s %s' % (st, loc))
 out = shell("F = env['ts.funnel.event'].sudo(); print('FUN', ' '.join('%s=%d' % (s, F.search_count([('step', '=', s)])) for s in "
             "['start_view', 'start', 'q1', 'finish', 'gate_view', 'gate_signed_in', 'report_view', 'invite_view', 'invite_accept']))")
 fm = dict(re.findall(r'(\w+)=(\d+)', out))
 check('F01 every funnel step of these flows was counted', len(fm) == 9 and all(int(v) > 0 for v in fm.values()), out.strip()[-200:])
+out = shell("F = env['ts.funnel.event'].sudo(); A = env['ts.assignment'].sudo(); m = A.search([('token', '=', '%s')]); "
+            "s = A.search([('token', '=', '%s')]); c = lambda d: F.search_count(d); "
+            "print('INV', c([('step', '=', 'q1'), ('assignment_id', '=', m.id), ('entry', '=', 'manual')]), "
+            "c([('step', '=', 'finish'), ('assignment_id', '=', m.id), ('entry', '=', 'manual')]), "
+            "c([('step', '=', 'invite_view'), ('assignment_id', '=', s.id), ('entry', '=', 'sms')]), "
+            "c([('step', '=', 'q1'), ('assignment_id', '=', s.id), ('entry', '=', 'sms')]), "
+            "c([('step', '=', 'q1'), ('assignment_id', '=', False), ('entry', '=', 'guest')]), "
+            "c([('step', 'in', ('q1', 'finish')), ('assignment_id', '=', False), ('instrument_id.ts_guest_ok', '=', False)]))" % (T_MANUAL, T_SMS))
+check('F03 the invitation path counts welcome viewed, first answer and finished by how the link came (sms, manual); '
+      'the guest path its first answer; self-started attempts of other instruments are never counted',
+      re.search(r'INV 1 1 [1-9]\d* 1 [1-9]\d* 0', out), out.strip()[-80:])
 e = client(EOT)
 check('F02 eot.ir has no /start, no welcome screen and no /i/', e.req('/start')[0] == 404 and e.req('/invite/%s' % T_LINK)[0] == 404
       and e.req('/i/%s' % SHORT)[0] == 404)

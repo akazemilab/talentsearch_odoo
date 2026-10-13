@@ -11,8 +11,9 @@ reach:
 Anything else answers 303 to the sign-in with the number shown masked («۰۹۱۲***۴۵۶۷»); after the code the session is an
 ordinary full session. A session whose user no longer matches the scope drops it.
 
-Every response of the invitation, player and short-link families carries `Referrer-Policy: no-referrer` (the token or
-code in the address must not leak to another site)."""
+Every response of the invitation, player, guest and short-link families carries `Referrer-Policy: no-referrer` (the token
+or code in the address must not leak to another site) and `Cache-Control: no-store` (no shared cache or browser history
+copy of a personal page)."""
 import logging
 from urllib.parse import quote
 
@@ -96,5 +97,6 @@ class IrHttpScope(models.AbstractModel):
             headers = getattr(response, 'headers', None)
             if headers is not None and path.startswith(NO_REFERRER) and on_ts_site():
                 headers['Referrer-Policy'] = 'no-referrer'
+                headers['Cache-Control'] = 'no-store'
         except Exception:        # noqa: BLE001 - a header must never break a response
             _logger.exception('ts_onboard: referrer header not set')

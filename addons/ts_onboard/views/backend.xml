@@ -20,6 +20,7 @@
             <list create="false" edit="false" delete="false">
                 <field name="create_date" string="زمان"/>
                 <field name="step"/>
+                <field name="entry"/>
                 <field name="instrument_id"/>
                 <field name="assignment_id"/>
                 <field name="session_hash"/>
@@ -33,6 +34,7 @@
         <field name="arch" type="xml">
             <pivot string="قیف ورود">
                 <field name="step" type="row"/>
+                <field name="entry" type="row"/>
                 <field name="create_date" interval="week" type="col"/>
             </pivot>
         </field>
@@ -43,12 +45,14 @@
         <field name="arch" type="xml">
             <search>
                 <field name="step"/>
+                <field name="entry"/>
                 <field name="instrument_id"/>
                 <filter name="last30" string="۳۰ روز اخیر" domain="[('create_date', '&gt;=', (context_today() - relativedelta(days=30)).strftime('%Y-%m-%d'))]"/>
-                <filter name="guest" string="سنجهٔ بدون حساب" domain="[('step', 'in', ('start_view', 'start', 'q1', 'finish', 'gate_view', 'gate_signed_in', 'report_view'))]"/>
-                <filter name="invite" string="دعوت‌ها" domain="[('step', 'in', ('invite_view', 'invite_accept'))]"/>
+                <filter name="guest" string="سنجهٔ آغاز (بدون دعوت)" domain="[('assignment_id', '=', False)]"/>
+                <filter name="invite" string="دعوت‌ها" domain="[('assignment_id', '!=', False)]"/>
                 <group>
                     <filter name="by_step" string="گام" context="{'group_by': 'step'}"/>
+                    <filter name="by_entry" string="نوع ورود" context="{'group_by': 'entry'}"/>
                     <filter name="by_inst" string="سنجه" context="{'group_by': 'instrument_id'}"/>
                 </group>
             </search>

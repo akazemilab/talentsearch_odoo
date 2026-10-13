@@ -9,9 +9,16 @@ the consent text version) and the acceptance:
   * not signed in, no proof but a number on the invitation: a code to that number, shown masked; then accept;
   * nothing known: the ordinary sign-in first, as before.
 A later open from another browser (no matching ts_dev cookie) sends a code to the invited number (masked) instead.
-A signed-in account that is not the invited number or address sees one clear notice and one action (sign out and go on).
-Short links /i/, /j/ and the open link /c/ are rate-limited per hashed address (30 a minute, then a polite 429 page)."""
+A signed-in account that is not the invited number or address sees one clear notice and one action (sign out, then sign
+in with the invited number).
+Lookups are rate-limited per hashed address and family, then a polite 429 page: the invitation page /invite/ and the
+short links /i/ and /j/ 60 a minute each, the open class link /c/ 120 (a whole class opens it from one school network).
+With 12-character codes this makes guessing hopeless and never slows a real class down. An unknown token or code, or the
+link of a panel that is closed, gets one neutral page that never says whether such a link existed («این پیوند باز
+نمی‌شود»)."""
 from urllib.parse import quote
+
+import werkzeug.exceptions
 
 from odoo import http
 from odoo.exceptions import UserError
@@ -39,15 +46,35 @@ GUARDIAN_TEXT = {
 }
 
 
-def short_limited():
-    """30 short-link lookups a minute per hashed address (ts_onboard.short_per_minute); then a polite 429 page."""
-    limit = request.env['ir.config_parameter'].sudo().get_int('ts_onboard.short_per_minute', 30) or 30
+def limited(family):
+    """Lookups a minute per hashed address and family (ts_onboard.<family>_per_minute: invite and short 60, campaign
+    120); then a polite 429 page. None when the lookup may go on. The hit is counted in its own transaction, so a miss
+    (404) counts too (models/rate.py)."""
+    default = {'invite': 60, 'short': 60, 'campaign': 120}.get(family, 60)
+    limit = request.env['ir.config_parameter'].sudo().get_int('ts_onboard.%s_per_minute' % family, default) or default
     ip = request.env['ts.audit.event'].sudo()._hash_ip(request.httprequest.remote_addr)
-    if request.env['ts.rate.hit'].ts_hit('short:%s' % ip, limit, 60):
+    if request.env['ts.rate.hit'].ts_hit('%s:%s' % (family, ip), limit, 60):
         return None
     resp = request.render('ts_onboard.slow', {'page_name': 'ts_slow'}, status=429)
     resp.headers['Retry-After'] = '60'
     return resp
+
+
+def short_limited():
+    return limited('short')
+
+
+def gone():
+    """The one neutral page of an unknown or closed link: the same words and status whatever the reason."""
+    return request.render('ts_onboard.gone', {'page_name': 'ts_gone'}, status=404)
+
+
+def neutral(call):
+    """Run a lookup; an unknown token or code (NotFound) answers the neutral page instead of the site's 404."""
+    try:
+        return call()
+    except werkzeug.exceptions.NotFound:
+        return gone()
 
 
 class TsOnbInvite(TsOrg):
@@ -82,6 +109,9 @@ class TsOnbInvite(TsOrg):
     @http.route()
     def invite_page(self, token, **kw):
         _ts_site_or_404()
+        return limited('invite') or neutral(lambda: self._ts_welcome(token, **kw))
+
+    def _ts_welcome(self, token, **kw):
         a = self._invite(token, paused_ok=True)
         user = request.env.user
         public = user._is_public()
@@ -130,6 +160,9 @@ class TsOnbInvite(TsOrg):
             if request.env.user._is_public():
                 return request.redirect(signin_url('/invite/%s' % token))
             return super().invite_accept(token, **post)
+        return neutral(lambda: self._ts_accept_post(token, post))
+
+    def _ts_accept_post(self, token, post):
         a = self._invite(token)
         user = request.env.user
         public = user._is_public()
@@ -179,7 +212,10 @@ class TsOnbInvite(TsOrg):
     def invite_decline(self, token, **post):
         _ts_site_or_404()
         if not request.env.user._is_public():
-            return super().invite_decline(token, **post)
+            return neutral(lambda: super(TsOnbInvite, self).invite_decline(token, **post))
+        return neutral(lambda: self._ts_decline_public(token))
+
+    def _ts_decline_public(self, token):
         a = self._invite(token)
         if not a.user_id and a.invite_state() == 'ok':
             try:
@@ -194,12 +230,12 @@ class TsOnbShortLinks(TsBrandLinks):
     @http.route()
     def short_invite(self, code, **kw):
         _ts_site_or_404()
-        return short_limited() or super().short_invite(code, **kw)
+        return short_limited() or neutral(lambda: super(TsOnbShortLinks, self).short_invite(code, **kw))
 
     @http.route()
     def short_join(self, code, **kw):
         _ts_site_or_404()
-        return short_limited() or super().short_join(code, **kw)
+        return short_limited() or neutral(lambda: super(TsOnbShortLinks, self).short_join(code, **kw))
 
 
 class TsOnbCampaignJoin(TsPanelCampaignJoin):
@@ -207,4 +243,4 @@ class TsOnbCampaignJoin(TsPanelCampaignJoin):
     @http.route()
     def campaign_page(self, token, **kw):
         _ts_site_or_404()
-        return short_limited() or super().campaign_page(token, **kw)
+        return limited('campaign') or neutral(lambda: super(TsOnbCampaignJoin, self).campaign_page(token, **kw))

@@ -4,8 +4,10 @@
   masked and «دریافت کد»; after the code the session is an ordinary full session (the scope ends).
 * A session scoped to an e-mail invitation has no number yet: a verified number that nobody holds joins that account
   (one person, one account) instead of making a second one.
-* After a successful code: a guest attempt of this browser is claimed (O3), and an invitation waiting in this session
-  (new browser, or a link without proof) is accepted or continued (O2).
+* After a successful code at the result gate (next=/start…): the guest attempt of this browser is claimed (O3). A sign-in
+  anywhere else never claims it (a shared computer: the next person's account must not receive someone else's answers);
+  the gate then offers one explicit button. An invitation waiting in this session (new browser, or a link without proof)
+  is accepted or continued (O2).
 * An e-mail/password sign-in ends any scope too."""
 from odoo import fields, http
 from odoo.http import request
@@ -79,12 +81,12 @@ class TsOnbSignup(TsSignup):
         nxt = safe_next(post.get('next'))
         url, drop, bound = None, False, None
         at = guest_attempt()
-        if at:
-            at.ts_guest_claim(user)
-            request.env['ts.funnel.event'].ts_log(request, 'gate_signed_in', instrument=at.instrument_id)
+        if at and nxt.startswith('/start'):
+            if at.ts_guest_claim(user):
+                request.env['ts.funnel.event'].ts_log(request, 'gate_signed_in', instrument=at.instrument_id,
+                                                      entry='guest')
             drop = True
-            if nxt.startswith('/start'):
-                url = claim_url(at)
+            url = claim_url(at)
         inv_url, bound = flow.after_code(user)
         url = inv_url or url
         if not (url or drop):

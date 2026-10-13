@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <!-- O3 entry points. Home hero: the primary action is the free starter test (release 3 redesigns the rest of the page). -->
+    <!-- O3 entry points. Home hero: one primary action, the free starter test, then three quiet text links for
+         organisations (release 3 adds audience pages and redesigns the rest of the page). -->
     <record id="home_hero_start" model="ir.ui.view">
         <field name="name">ts_onboard.home.hero</field>
         <field name="inherit_id" ref="ts_website.page_home_view"/>
@@ -11,14 +12,39 @@
                 <div class="ts-hero__actions">
                     <t t-if="ts_starter">
                         <a href="/start" class="ts-btn ts-btn--primary ts-btn--lg" id="tso-hero-start">شروع سنجهٔ رایگان<t t-call="ts_website.icon" ico.f="arrow-left"/></a>
-                        <a href="/panel" class="ts-btn ts-btn--quiet ts-btn--lg">ساخت پنل رایگان</a>
                     </t>
                     <t t-else="">
                         <a href="/panel" class="ts-btn ts-btn--primary ts-btn--lg">ساخت پنل رایگان<t t-call="ts_website.icon" ico.f="arrow-left"/></a>
                         <a href="/assessments#sample" class="ts-btn ts-btn--quiet ts-btn--lg">نمونهٔ گزارش</a>
                     </t>
                 </div>
-                <p t-if="ts_starter" class="tso-hero-sub" id="tso-hero-sub">حدود <t t-out="ts_starter.ts_minutes_fa()"/> دقیقه<t t-call="ts_website.sep"/>بدون ثبت‌نام برای شروع<t t-call="ts_website.sep"/>نتیجه فقط برای خودتان</p>
+                <t t-if="ts_starter">
+                    <p class="tso-hero-sub" id="tso-hero-sub">حدود <t t-out="ts_starter.ts_minutes_fa()"/> دقیقه<t t-call="ts_website.sep"/>بدون ثبت‌نام برای شروع<t t-call="ts_website.sep"/>نتیجه فقط برای خودتان</p>
+                    <nav class="tso-hero-links" id="tso-hero-links" aria-label="برای سازمان‌ها">
+                        <a href="/panel">برای مراکز مشاوره</a>
+                        <span class="tso-dot" aria-hidden="true">·</span>
+                        <a href="/panel">برای شرکت‌ها و استخدام</a>
+                        <span class="tso-dot" aria-hidden="true">·</span>
+                        <a href="/schools">برای مدرسه‌ها</a>
+                    </nav>
+                </t>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- the catalog card of the starter opens its start screen (no sign-in first) -->
+    <record id="catalog_guest_card" model="ir.ui.view">
+        <field name="name">ts_onboard.catalog.guest</field>
+        <field name="inherit_id" ref="ts_assessment.tpl_catalog"/>
+        <field name="website_id" ref="ts_website.website_ts"/>
+        <field name="priority">40</field>
+        <field name="arch" type="xml">
+            <xpath expr="//a[hasclass('ts-inst')]" position="attributes">
+                <attribute name="t-attf-href">#{'/start/' + inst.slug if inst.ts_guest_ready() else '/assessments/' + inst.slug}</attribute>
+            </xpath>
+            <xpath expr="//a[hasclass('ts-inst')]//span[hasclass('ts-card__link')]" position="replace">
+                <span t-if="inst.ts_guest_ready()" class="ts-card__link">شروع بدون ثبت‌نام</span>
+                <span t-else="" class="ts-card__link">جزئیات و شروع</span>
             </xpath>
         </field>
     </record>

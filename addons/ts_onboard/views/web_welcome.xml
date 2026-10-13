@@ -58,7 +58,10 @@
                                         </div>
                                         <form t-att-action="logout_url" method="post" class="ts-form tso-solid">
                                             <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
-                                            <button type="submit" class="ts-btn ts-btn--primary ts-btn--lg ts-btn--block">خروج و ادامه با این دعوت</button>
+                                            <button type="submit" class="ts-btn ts-btn--primary ts-btn--lg ts-btn--block">
+                                                <t t-if="mode == 'mismatch' and contact and contact['kind'] == 'phone'">خروج و ورود با شمارهٔ دعوت‌شده</t>
+                                                <t t-else="">خروج و ادامه با این دعوت</t>
+                                            </button>
                                         </form>
                                     </t>
 
@@ -184,6 +187,30 @@
                                     <p><a href="/signup?next=/start" class="ts-btn ts-btn--primary">ورود با شمارهٔ موبایل</a></p>
                                 </t>
                                 <p t-else="" class="ts-lead">در یک دقیقه درخواست‌های زیادی از این شبکه رسید. یک دقیقه دیگر دوباره پیوند را باز کنید.</p>
+                            </div>
+                        </section>
+                    </div>
+                </t>
+            </t>
+        </field>
+    </record>
+
+    <!-- an unknown token or code, or the link of a closed panel: one neutral page (it never says whether the link existed) -->
+    <record id="tpl_gone" model="ir.ui.view">
+        <field name="name">TS onb2: link does not open (neutral)</field>
+        <field name="type">qweb</field>
+        <field name="key">ts_onboard.gone</field>
+        <field name="website_id" ref="ts_website.website_ts"/>
+        <field name="arch" type="xml">
+            <t t-name="ts_onboard.gone">
+                <t t-call="website.layout" additional_title.f="این پیوند باز نمی‌شود">
+                    <div id="wrap" class="ts-page">
+                        <section class="ts-section">
+                            <div class="ts-container ts-narrow" id="tso-gone">
+                                <p class="ts-tag">پیوند</p>
+                                <h1>این پیوند باز نمی‌شود</h1>
+                                <p class="ts-lead">شاید نشانی کامل کپی نشده باشد یا پیوند دیگر فعال نباشد. از کسی که پیوند را برایتان فرستاده است، پیوند تازه بخواهید.</p>
+                                <p><a href="/" class="ts-btn ts-btn--quiet">صفحهٔ اصلی استعدادیاب</a></p>
                             </div>
                         </section>
                     </div>

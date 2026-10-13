@@ -43,3 +43,12 @@
 .tso-next { display: flex; flex-wrap: wrap; gap: var(--space-2); margin: 0; }
 .tso-hero-sub { margin-block: var(--space-2) 0; color: var(--color-neutral-400); font-size: var(--fs-1); }
 .tsa-known { margin: 0; }
+// the three quiet links for organisations under the home hero's one action (44 px targets, wrap on a phone)
+.tso-hero-links {
+    display: flex; flex-wrap: wrap; align-items: center; column-gap: var(--space-2); margin-block-start: var(--space-2);
+    font-size: var(--fs-1);
+}
+.tso-hero-links a {
+    display: inline-flex; align-items: center; min-block-size: 44px; text-decoration: underline; text-underline-offset: 3px;
+}
+.tso-hero-links .tso-dot { color: var(--color-neutral-400); }

@@ -3,4 +3,6 @@
     <!-- O3: the starter («سنجهٔ آغاز») gets the guest flag once (inventory_002 «فهرست ارجمندی», 17 statements; the choice
          is explained in docs/onboarding/02_invites_and_guest.md). Later back-office changes are never undone. -->
     <function model="ts.instrument" name="_ts_seed_starter"/>
+    <!-- O2: invitations made by joining an open link or a class code are «campaign» (idempotent) -->
+    <function model="ts.assignment" name="_ts_seed_delivery"/>
 </odoo>
