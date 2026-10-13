@@ -253,8 +253,8 @@ check('W06 the short link redirects to the invitation with no-referrer', st == 3
 check('W07 new short codes have 12 characters', re.fullmatch(r'[a-z0-9]{12}', SHORT) is not None, SHORT)
 nb = client()
 gone = [raw(nb, p) for p in ('/invite/%s' % ('x' * 43), '/i/zzzzzzzzzzzz', '/j/zzzzzzzzzzzz', '/c/no-such-open-link')]
-check('W08 an unknown invitation, short code or open link: one neutral 404 page «این پیوند باز نمی‌شود», never the site 404',
-      all(st == 404 and 'این پیوند باز نمی‌شود' in pg and 'tso-gone' in pg for st, _h, pg in gone), [x[0] for x in gone])
+check('W08 an unknown invitation, short code or open link: the one explained link 404 «این پیوند باز نمی‌شود» (sign-in back to it)',
+      all(st == 404 and 'این پیوند باز نمی‌شود' in pg and 'id="ts-link-404"' in pg for st, _h, pg in gone), [x[0] for x in gone])
 check('W09 ...the same words for each (nothing tells whether such a link existed), with no-store',
       len({re.sub(r'\s+', ' ', re.search(r'<h1>(.*?)</h1>', pg, re.S).group(1)) for _s, _h, pg in gone if '<h1>' in pg}) == 1
       and all('no-store' in (hh.get('Cache-Control') or '') for _s, hh, _p in gone))
@@ -367,7 +367,8 @@ st, loc, _ = oc.req('/invite/%s/accept' % T_MIS, {'csrf_token': oc.csrf(page), '
 info = q("a = env['ts.assignment'].sudo().search([('token', '=', '%s')]); print('MIS', bool(a.user_id))" % T_MIS)
 check('M02 a POST from that account accepts nothing', 'MIS False' in info and st == 303, '%s %s' % (st, info.strip()[-20:]))
 st, loc, _ = oc.req('/invite/%s' % T_SMS)
-check('M03 an invitation accepted by someone else: the same notice instead of a bare 404', st == 200, str(st))
+check('M03 an invitation accepted by someone else: the explained link 404 (same as an unknown token; sign out, sign in)',
+      st == 404 and 'id="ts-link-404"' in _ and 'خروج و ورود با شمارهٔ دیگر' in _, str(st))
 
 # ================================================================ 6. other proofs: e-mail, a typed number, a plain link
 ec = client()

@@ -1,17 +1,22 @@
 # onb2 — one-tap invitations and test first (release 2 of onboarding)
 
 Branch `onb2`, module `ts_onboard` (new) plus small changes in ts_sms, ts_assessment, ts_brand, ts_website and ts_hire.
-Design: Project doc `claude/ONBOARDING_RESEARCH_AND_DESIGN.md` §4–§5 (P1, P2, P3, minors) and §8. eot.ir (website 1),
-the back office and internal users are not changed: every website behaviour is gated to talentsearch.ir.
+Merged with main after take1 (test-taking UX pass, live 2026-10-13): the welcome screen uses take1's size/time source, its
+dead-end cards and its explained link 404. Design: Project doc `claude/ONBOARDING_RESEARCH_AND_DESIGN.md` §4–§5 (P1, P2,
+P3, minors) and §8. eot.ir (website 1), the back office and internal users are not changed: every website behaviour is
+gated to talentsearch.ir.
 
 ## O2. One-tap invitations
 
 **Welcome screen** (`/invite/<token>`, also reached by `/i/<code>`): «سلام {first name the panel wrote}» (or «سلام»), who
 invites (centre + the responsible counselor when the centre shows counselors on reports; for employment «{company} برای
-موقعیت «…» از شما دعوت کرده است.»), minutes and parts (or statements), «روی کامپیوتر بهتر است (بخش زمان‌دار)» when the
-battery has a timed task, what the inviter sees in three lines plus «بیشتر» (the existing full text: `ts_org.share_box`, or
-`ts_hire.position_terms` for a position, the parts of a battery, save/stop/support, the optional research box, the consent
-version), the share tick (ticked, as before), one primary button «موافقم و شروع می‌کنم» and a quiet «نمی‌خواهم شرکت کنم».
+موقعیت «…» از شما دعوت کرده است.»), time and size from take1's `effort_facts` (one source for every page) and, outside
+hiring, «نتیجه بلافاصله پس از پایان آماده است.», «روی کامپیوتر بهتر است (بخش زمان‌دار)» when the battery has a timed task,
+what the inviter sees in three lines plus «بیشتر» (the existing full text: `ts_org.share_box`, or `ts_hire.position_terms`
+for a position, the parts of a battery, save/stop/support with the crisis line «اورژانس اجتماعی ۱۲۳ یا صدای مشاور ۱۴۸۰»,
+the optional research box, the consent version), the share tick (ticked, as before), one primary button «موافقم و شروع
+می‌کنم» and a quiet «نمی‌خواهم شرکت کنم». Dead ends (expired, declined, withdrawn, paused) use take1's `invite_card` words in
+`ts_website.state_card`.
 
 - **GET never consumes, accepts or binds anything** (messenger previews open links). It only marks the invitation as
   opened, as before (the panel says «بازشده», not «خوانده‌شده»).
@@ -20,7 +25,7 @@ version), the share tick (ticked, as before), one primary button «موافقم 
   not shown any more for these attempts. A POST without the welcome field (older forms, attempts accepted before the
   release) keeps the old way: sign in, then the consent page.
 - **Headers.** Responses of `/invite/`, `/take/`, `/i/`, `/j/`, `/c/` and `/start` carry `Referrer-Policy: no-referrer` and
-  `Cache-Control: no-store`.
+  `Cache-Control: no-store`, their error pages too (`ir.http._handle_error`).
 
 **Delivery proof.** `ts.assignment.delivered_via` = sms / email / manual / campaign. sms and email are set by the existing
 send paths only when they report success (invitation SMS, invitation e-mail, a reminder by SMS or e-mail);
@@ -44,27 +49,31 @@ sign-in follows). The scoped session follows the normal session rules and is nev
 HttpOnly, SameSite=Lax, Secure on https, 90 days, one per browser); the server stores only sha256 of its random part
 (`device_hash`). A later open of an accepted invitation by a visitor who is not signed in shows «ادامه»: the bound browser
 goes on (scoped again, no code); another browser gets «برای ادامه، کدی به ۰۹۱۲***۴۵۶۷ فرستادیم» — a code to the invited
-number (the code page never shows the number in full, «ویرایش شماره» is hidden) and after the code it continues. The same
-code-first path applies to a manual invitation that has a number. No number and no address: the ordinary sign-in first.
+number (the code page never shows the number in full) and after the code it continues. «شمارهٔ دیگری دارم» on that page
+(and on the masked sign-in of a scoped session) opens the ordinary sign-in with any number (`/signup?other=1`); the
+invitation still checks who may accept it. The same code-first path applies to a manual invitation that has a number. No
+number and no address: the ordinary sign-in first.
 
 **Mismatch.** A signed-in account that does not hold the invited number sees one notice («این دعوت برای شمارهٔ
 ۰۹۱۲***۴۵۶۷ فرستاده شده است و شما با حساب دیگری وارد شده‌اید.») and one action «خروج و ورود با شمارهٔ دعوت‌شده» (sign-out
 returns to the invitation, whose tap then signs in with the invited number); the POST accepts nothing. An e-mailed
-invitation, or one accepted by another account, shows the same notice with «خروج و ادامه با این دعوت» instead of a bare
-404. Links without a number keep the old name notice.
+invitation shows the same notice with «خروج و ادامه با این دعوت». An invitation already accepted by another account
+answers take1's explained link 404 (`ts_website.page_404`: sign out and sign in with the invited number), the same page as
+an unknown token, so nobody learns who holds it. Links without a number keep the old name notice.
 
 **Link hygiene.** New short codes have 12 characters of [a-z0-9]; the 8-character codes of earlier invitations keep
 working. Lookups are limited per hashed address and family, then a polite 429 page «کمی صبر کنید» with `Retry-After: 60`:
 `/invite/` and the short links `/i/`, `/j/` 60 a minute each, the open class link `/c/` 120 (a whole class opens it from one
 school network); parameters `ts_onboard.{invite,short,campaign}_per_minute`. A hit is counted in its own committed
 transaction (`ts.rate.hit`, rows kept one day), so the 404 of an unknown code counts too — otherwise guessing would never
-slow down. An unknown token or code, or the link of a closed panel, answers one neutral 404 page «این پیوند باز نمی‌شود»
-with the same words whatever the reason.
+slow down. An unknown token or code, or the link of a closed panel, answers the one explained link 404 «این پیوند باز
+نمی‌شود» (status 404, sign-in back to the link) with the same words whatever the reason.
 
 **Fairness questions at the end.** The optional gender and age questions left the invitation page. After the last part of a
 position battery the candidate sees them once (`/my/assessments/battery/<id>/about`) before the feedback card, with «رد
 شدن». Same fields (`ts_gender`, `ts_age_band`, EOT team only), same use. `ts_fair_asked`; the ts_hire migration marks every
-candidate who accepted before the release as asked (they saw the questions on the invitation page).
+candidate who accepted before the release as asked (they saw the questions on the invitation page). What the employer sees
+is take1's one truthful description (factor levels, job-fit summary, integrity signals) everywhere.
 
 **Minors: one screen.** The welcome screen carries the guardian tick and, for a minor client who answers himself, the
 button is his own «من هم موافقم». A child instrument (BAT-CHILD-1: the parent answers) has the parent's tick and the
@@ -94,11 +103,12 @@ signed-in visitor goes straight into an ordinary attempt (the same one-tap conse
 
 **Guest attempt.** An ordinary `ts.attempt` of the website's public user with `ts_guest`, keyed by the digest of a signed
 random token in the HttpOnly SameSite=Lax cookie `ts_guest` (never in an address: the player is `/start/q`, `/start/q/answer`,
-`/start/q/page`, `/start/q/review`, `/start/q/submit`, the same templates with `take_url`). Same autosave and player. Limits
-per hashed address: 5 new guest attempts an hour (`ts_onboard.guest_per_hour`) and 200 saved answers a minute
-(`ts_onboard.answers_per_minute`); one open guest attempt per browser (a second tap returns to it). No panel, no
-invitation: never billed, never visible to a panel; nothing is sent at the end. Consent is stored on the attempt; the
-ledger rows (service, research) are written at the claim. A forged, malformed or spent cookie reaches nothing.
+`/start/q/page`, `/start/q/review`, `/start/q/submit`, the same templates and take1's balanced 5-per-page paging with
+`take_url`). Same autosave and player. Limits per hashed address: 5 new guest attempts an hour (`ts_onboard.guest_per_hour`)
+and 200 saved answers a minute (`ts_onboard.answers_per_minute`); one open guest attempt per browser (a second tap returns
+to it). No panel, no invitation: never billed, never visible to a panel; nothing is sent at the end. Consent is stored on
+the attempt; the ledger rows (service, research) are written at the claim. A forged, malformed or spent cookie reaches
+nothing.
 
 **Result gate** (`/start/result`): «نتیجه‌تان آماده است.» with the mobile sign-in inline and «شماره‌تان را بزنید تا نتیجه را
 ببینید و برای همیشه داشته باشید.» (number, then code, as in onb1). A successful code at the gate claims the attempt
@@ -132,25 +142,27 @@ managers only). Kept 180 days (daily cron).
 12-character codes, rate limit (a rolled-back request still counts), minors, the scope rules on every route family, guest
 consent / submit without notices / claim and ledger / clean-up of guest rows only, funnel fields, kinds of entry and
 retention, fairness migration, anonymous decline. `tools/prod/ts_http_onb2.py` (HTTP, fake Kavenegar on 18097 + 10 × slot):
-GET not consuming, no-referrer and no-store, the neutral page for unknown links, one-tap accept with the device cookie,
+GET not consuming, no-referrer and no-store, the explained 404 for unknown links, one-tap accept with the device cookie,
 answers through the player in the scoped session, the scope on /my, /my/assessments, /my/account, panels, other
 invitations, /web, /odoo, the catalog, /start and the share page, the masked code to leave the scope, device binding (same
-browser goes on, another gets the masked code), mismatch, e-mail proof, typed number, plain link, anonymous decline, minors'
-one screen (and BAT-CHILD-1), fairness at the end, rate limits (short links, /invite/ with unknown tokens counted, /c/),
-home hero and its text links, catalog card, start screen, under-18, detail start, guest player without tokens, gate,
-claim, name, cross-token isolation (forged, malformed and spent cookies; another account), keep both, one open guest
-attempt, guest and answer limits, 48-hour clean-up, no token in any address, funnel (both paths, kinds of entry), eot.ir
-404. Older suites updated: ts_http_hire (welcome screen, questions at the end), ts_http_org and ts_http_signup (welcome
-screen, notice instead of 404, «ادامه»), ts_http_panel (home hero), tests_brand, ts_http_pv2_6 and ts_http_sms (12-character
-codes). Shots matrix: welcome (clinic, employment), minors, /start, under-18, guest player, result gate (`COOKIE name
-value` directive in ts_shot.py), masked-code screen, and the claimed report with the optional name
-(tools/vps/ts_onb2_seed.py; its own login with the matrix owner's password).
+browser goes on, another gets the masked code, «شمارهٔ دیگری دارم» accepts nothing for another number), mismatch, an
+invitation accepted by another account (404), e-mail proof, typed number, plain link, anonymous decline, minors' one screen
+(and BAT-CHILD-1), fairness at the end, rate limits (short links, /invite/ with unknown tokens counted, /c/), home hero and
+its text links, catalog card, start screen, under-18, detail start, guest player without tokens, gate, claim, name,
+cross-token isolation (forged, malformed and spent cookies; another account), keep both, one open guest attempt, guest and
+answer limits, 48-hour clean-up, no token in any address, funnel (both paths, kinds of entry), eot.ir 404. Older suites
+updated: ts_http_hire (welcome screen, take1's truthful disclosure, questions at the end), ts_http_org (take1's 404 for a
+taken invite), ts_http_signup (welcome screen, «ادامه», unknown token 404), ts_http_panel (home hero), tests_brand,
+ts_http_pv2_6 and ts_http_sms (12-character codes). Shots matrix: welcome (clinic, employment), minors, /start, under-18,
+guest player, result gate (`COOKIE name value` directive in ts_shot.py), masked-code screen, and the claimed report with
+the optional name (tools/vps/ts_onb2_seed.py; its own login with the matrix owner's password); `ts shots DB take` includes
+the onb2 screens too.
 
 ## Notes and decisions
 
-- A visitor who is not signed in and opens an accepted invitation sees «ادامه», not «این دعوت قبلاً استفاده شده است»: he may
-  be the invited person on another browser. The tap sends a code to the invited number (or the ordinary sign-in when there
-  is none); a stranger gets no further.
+- A visitor who is not signed in and opens an accepted invitation sees «ادامه», not the link 404: he may be the invited
+  person on another browser. The tap sends a code to the invited number (or the ordinary sign-in when there is none); a
+  stranger gets no further.
 - An e-mailed invitation opened later on another browser has no number to send a code to: the ordinary sign-in follows; a
   number verified while the e-mail session was scoped joins that account.
 - Odoo's session cookie is not marked Secure by Odoo; the onb2 cookies are (on https).

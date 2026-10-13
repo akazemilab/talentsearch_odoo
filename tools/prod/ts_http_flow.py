@@ -72,7 +72,8 @@ def path_of(loc):
 TS = 'talentsearch.ir'
 anon = Client(TS)
 st, _, page = anon.req('/assessments?all=1')
-slugs = re.findall(r'href="/assessments/([^"/]+)"', page)
+# onb2: the card of the starter (a guest-ok instrument) opens its start screen /start/<slug>
+slugs = re.findall(r'href="/(?:assessments|start)/([^"/]+)"', page)
 check('catalog 200 with 33 source instruments + the talent inventory', st == 200 and len(set(slugs)) == 34, '%s %d' % (st, len(set(slugs))))
 eot = Client('www.eot.ir')
 check('catalog is 404 on eot.ir', eot.req('/assessments')[0] == 404)

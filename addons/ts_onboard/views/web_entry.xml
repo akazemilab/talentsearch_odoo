@@ -67,11 +67,12 @@
                     </form>
                 </div>
             </xpath>
-            <xpath expr="//p[@t-if='request.env.user._is_public()']" position="after">
+            <!-- the sign-in hint is located by its link id (ts_talent switches its t-if for the «تو» inventory, take1) -->
+            <xpath expr="//p[a[@id='ts-detail-signup']]" position="after">
                 <p t-if="ts_guest_start and request.env.user._is_public()" class="ts-muted" id="tso-detail-note">بدون ثبت‌نام شروع می‌کنید؛ در پایان با شمارهٔ موبایل نتیجه را می‌بینید و نگه می‌دارید.</p>
             </xpath>
-            <xpath expr="//p[@t-if='request.env.user._is_public()']" position="attributes">
-                <attribute name="t-if">request.env.user._is_public() and not ts_guest_start</attribute>
+            <xpath expr="//p[a[@id='ts-detail-signup']]" position="attributes">
+                <attribute name="t-if">request.env.user._is_public() and version.mode != 'matrix' and not ts_guest_start</attribute>
             </xpath>
         </field>
     </record>

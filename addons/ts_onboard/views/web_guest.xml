@@ -126,13 +126,16 @@
                 <h1 t-if="gate">نتیجه‌تان آماده است.</h1>
                 <h1 t-else="">ورود یا ثبت‌نام</h1>
             </xpath>
+            <!-- the intro is two paragraphs since take1 («تو» / «شما»): drop the second, replace the first with the whole chain -->
+            <xpath expr="//p[hasclass('ts-auth__intro')][@t-else]" position="replace"/>
             <xpath expr="//p[hasclass('ts-auth__intro')]" position="replace">
                 <t t-if="gate">
                     <p class="ts-auth__intro tso-gate-intro">شماره‌تان را بزنید تا نتیجه را ببینید و برای همیشه داشته باشید.</p>
                     <p class="ts-hint tso-gate-inst" t-if="gate_inst">سنجه: <t t-out="gate_inst.ts_title()"/></p>
                 </t>
                 <p t-elif="known_fa" class="ts-hint ts-auth__intro">برای ادامه با یک کد پیامکی وارد می‌شوید؛ رمز عبور لازم نیست.</p>
-                <p t-else="" class="ts-hint ts-auth__intro">با شمارهٔ موبایل و یک کد پیامکی وارد می‌شوید؛ رمز عبور لازم نیست. اگر حساب ندارید، همین‌جا ساخته می‌شود.</p>
+                <p t-elif="tu" class="ts-hint ts-auth__intro">با شمارهٔ موبایل و کد تأییدی که پیامک می‌شود وارد می‌شوی؛ رمز عبور لازم نیست. اگر حساب نداری، همین‌جا ساخته می‌شود.</p>
+                <p t-else="" class="ts-hint ts-auth__intro">با شمارهٔ موبایل و کد تأییدی که پیامک می‌شود وارد می‌شوید؛ رمز عبور لازم نیست. اگر حساب ندارید، همین‌جا ساخته می‌شود.</p>
             </xpath>
         </field>
     </record>

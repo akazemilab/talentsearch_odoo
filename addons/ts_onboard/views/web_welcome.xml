@@ -42,7 +42,7 @@
 
                                     <div class="ts-card tso-card" id="tso-what">
                                         <h2 class="h5 tso-what" t-out="what"/>
-                                        <p class="tso-facts">
+                                        <p class="tso-facts" id="ts-invite-facts">
                                             <!-- one source for size and time (ts_org effort_facts, take1): the same numbers as every other page -->
                                             <t t-out="facts['time']"/><t t-call="ts_website.sep"/><t t-out="facts['size']"/><t t-if="ws.purpose != 'employment' and mode == 'welcome'"><t t-call="ts_website.sep"/>نتیجه بلافاصله پس از پایان آماده است.</t>
                                         </p>
