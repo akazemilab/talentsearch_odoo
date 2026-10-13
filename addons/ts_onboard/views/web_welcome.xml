@@ -139,16 +139,11 @@
                                                     </div>
                                                 </details>
                                             </section>
-                                            <label class="ts-check tso-share">
-                                                <!-- owner decision 2026-10-13 (take2): signed in under another name than the invitee, the
-                                                     tick starts unticked (sharing is chosen, never assumed for someone else) -->
-                                                <input type="checkbox" name="share" value="1" t-att-checked="None if name_mismatch else 'checked'" aria-describedby="tso-share-h"/>
-                                                <span t-if="ws.purpose == 'education'">اجازه می‌دهم مدرسه و مشاورم گزارش نتیجه‌ام را در پنل «<bdi t-out="org"/>» ببینند.</span>
-                                                <span t-elif="pos">اجازه می‌دهم «<bdi t-out="org"/>» سطح هر عامل، خلاصهٔ تناسبم با این شغل و نشانه‌های دقت پاسخ‌دهی را ببیند.</span>
-                                                <span t-elif="ws.purpose == 'employment'">اجازه می‌دهم سطح هر عامل با «<bdi t-out="org"/>» به اشتراک گذاشته شود.</span>
-                                                <span t-else="">اجازه می‌دهم گزارش کامل با مشاوران «<bdi t-out="org"/>» به اشتراک گذاشته شود.</span>
-                                            </label>
-                                            <p id="tso-share-h" class="ts-hint"><t t-if="tu">اگر تیک را برداری هم می‌توانی پاسخ بدهی؛ آن وقت نتیجه فقط برای خودت می‌ماند.</t><t t-else="">اگر تیک را بردارید هم می‌توانید پاسخ دهید؛ آن وقت نتیجه فقط برای خودتان می‌ماند.</t></p>
+                                            <!-- the one sharing tick of /invite and /c (ts_org.share_tick, take2): the same words on every
+                                                 page; signed in under another name than the invitee, it starts unticked (owner decision
+                                                 2026-10-13: sharing is chosen, never assumed for someone else) -->
+                                            <t t-call="ts_org.share_tick" share_ws="ws" share_student="tu" share_checked="not name_mismatch"
+                                               share_pos="pos or False" share_battery="bat or False"/>
                                             <label t-if="need['guardian']" class="ts-check tso-guardian" id="tso-guardian">
                                                 <input type="checkbox" name="guardian_confirm" value="1" required="required"/>
                                                 <span><t t-out="guardian_text"/> <span class="ts-hint">(لازم)</span></span>
