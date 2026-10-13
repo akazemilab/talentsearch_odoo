@@ -14,7 +14,7 @@ Every weight and threshold is a labelled hypothesis (not validated, not O*NET's)
 import bisect
 import math
 
-MODEL = 'CAREER-MATCH-v1-2026-10-13'
+MODEL = 'CAREER-MATCH-v2-2026-10-13'
 RIASEC = ['Realistic', 'Investigative', 'Artistic', 'Social', 'Enterprising', 'Conventional']
 VALUES = ['Achievement', 'Independence', 'Recognition', 'Relationships', 'Support', 'Working Conditions']
 W = {'I': 0.30, 'WS': 0.20, 'AB': 0.20, 'SK': 0.10, 'KN': 0.10, 'V': 0.10}     # W-v0
@@ -25,6 +25,35 @@ AB_MIN_IM = 1.5
 CLINIC_MIN_IM = 2.5
 CLINIC_DEX = ['Arm-Hand Steadiness', 'Manual Dexterity', 'Finger Dexterity', 'Speed of Limb Movement']
 JZ_RULE = 'JZ-v0: education level 1-5, +1 with 5 or more years of related work (max 5)'
+SHORT_N = 10            # SHORT-v1: the main list is at most 10 occupations ...
+SHORT_MIN = 5           # ... and at least 5 (filled from the ranking when the gates leave fewer)
+AREA_MAX = 4            # at most 4 from one occupational area (SOC major group), so other strong areas show too
+GATE_I = 0.85           # interest fit among the person's top 15 %
+GATE_WS = 0.50          # work styles: the job's important styles lean toward the person's stronger side
+GATE_AB = 0.70          # abilities: no large shortfall on the job's important measured abilities
+AREA_FA = {'11': 'مدیریت', '13': 'کسب‌وکار و امور مالی', '15': 'رایانه و ریاضیات', '17': 'معماری و مهندسی',
+           '19': 'علوم زیستی، فیزیکی و اجتماعی', '21': 'خدمات اجتماعی و مشاوره', '23': 'حقوق', '25': 'آموزش و کتابخانه',
+           '27': 'هنر، طراحی، رسانه و ورزش', '29': 'پزشکی و سلامت', '31': 'پشتیبانی سلامت', '33': 'خدمات حفاظتی و ایمنی',
+           '35': 'غذا و پذیرایی', '37': 'نگهداری ساختمان و فضای سبز', '39': 'خدمات شخصی', '41': 'فروش',
+           '43': 'امور اداری و دفتری', '45': 'کشاورزی، ماهیگیری و جنگل', '47': 'ساخت‌وساز', '49': 'نصب، تعمیر و نگهداری',
+           '51': 'تولید', '53': 'حمل‌ونقل', '55': 'نظامی'}
+
+
+def hex_dist(a, b):
+    d = abs(a - b)
+    return min(d, 6 - d)
+
+
+def c_index(person_code, job_ih):
+    """C-INDEX-v0 (Brown & Gore 1994): congruence of the person's top-3 interest letters with the job's high-point
+    codes on Holland's hexagon; 3*first + 2*second + 1*third, each 3 - hexagon distance; 0..1 over the letters present."""
+    got = mx = 0.0
+    for w, p, j in zip((3, 2, 1), person_code, job_ih):
+        if not j:
+            continue
+        got += w * (3 - hex_dist(p, j - 1))
+        mx += w * 3
+    return got / mx if mx else None
 
 
 def pearson(x, y):
@@ -79,7 +108,10 @@ def fit_interests(riasec, occ):
     if r is None:
         return None, 0.0, {}
     top = sorted(range(6), key=lambda i: (-oi[i], i))[:2]
-    return (1 + r) / 2, 1.0, {'r': round(r, 4), 'job_top': [RIASEC[i] for i in top]}
+    pcode = [RIASEC.index(k) for k in person_top(riasec, 3)]
+    c = c_index(pcode, occ.get('ih') or [])
+    f = (1 + r) / 2 if c is None else 0.5 * (1 + r) / 2 + 0.5 * c       # INT-v2: profile shape + top-code congruence
+    return f, 1.0, {'r': round(r, 4), 'c': None if c is None else round(c, 4), 'job_top': [RIASEC[i] for i in top]}
 
 
 def fit_values(values, occ):
@@ -166,10 +198,14 @@ def _percentiles(rows):
                 r['pct'][d] = (lo + 0.5 * (hi - lo)) / n
 
 
-def _combine(pct, cov):
+def _combine(pct, cov, measured=()):
+    """NEUTRAL-v1: a domain the person completed but the job has no data for counts as the middle (0.5), so a job
+    cannot rise to the top by missing the evidence that would have checked it."""
     num = den = 0.0
     for d, w in W.items():
         f, c = pct.get(d), cov.get(d, 0.0)
+        if (f is None or c <= 0) and d in measured and d != 'I':
+            f, c = 0.5, 1.0
         if f is None or c <= 0:
             continue
         num += w * c * f
@@ -199,8 +235,9 @@ def match(person, data, ref):
         rows.append({'code': code, 'fit': fit, 'cov': cov, 'pct': {}, 'info': info, 'jz': int(occ['jz']) if occ.get('jz') else None,
                      'ready': readiness(person.get('jz'), occ.get('jz'))})
     _percentiles(rows)
+    measured = {d for d in ('I', 'WS', 'AB', 'V') if any(x['cov'][d] > 0 for x in rows)}
     for r in rows:
-        f, e = _combine(r['pct'], r['cov'])
+        f, e = _combine(r['pct'], r['cov'], measured)
         r['FIT'], r['evidence'] = f, e
         r['status'] = 'NOT_SCOREABLE' if f is None else ('LOW_EVIDENCE' if e < EVIDENCE_MIN - 1e-9 else 'RANKED')
     ranked = [r for r in rows if r['status'] == 'RANKED']
@@ -212,16 +249,37 @@ def match(person, data, ref):
     else:
         order = sorted((r for r in rows if r['fit']['I'] is not None), key=lambda r: (-r['fit']['I'], r['code']))
         for r in order:
-            r['score'] = r['info']['I']['r']
+            r['score'] = r['fit']['I']
+    short, per_area = [], {}
+    for r in order:
+        p = r['pct']
+        if per_area.get(r['code'][:2], 0) >= AREA_MAX:
+            continue
+        if (p.get('I') or 0) < GATE_I:
+            continue
+        if (r['fit']['WS'] is not None and r['fit']['WS'] < GATE_WS) or (r['fit']['AB'] is not None and r['fit']['AB'] < GATE_AB):
+            continue
+        short.append(r['code'])
+        per_area[r['code'][:2]] = per_area.get(r['code'][:2], 0) + 1
+        if len(short) >= SHORT_N:
+            break
+    for r in order:
+        if len(short) >= SHORT_MIN:
+            break
+        if r['code'] not in short:
+            short.append(r['code'])
+    short = set(short)
     out = []
     for i, r in enumerate(order):
         out.append({'rank': i + 1, 'code': r['code'], 'score': round(r['score'], 4), 'level': level(r['score'], tier),
+                    'short': r['code'] in short, 'area': r['code'][:2],
                     'ready': r['ready'], 'jz': r['jz'], 'evidence': round(r['evidence'], 3),
                     'fit': {d: (round(v, 4) if v is not None else None) for d, v in r['fit'].items() if d in ('I', 'WS', 'AB', 'V')},
                     'I': r['info']['I'], 'WS': r['info']['WS'], 'AB': r['info']['AB'],
                     'clinic': clinic_demands(data['occ'][r['code']], ref)})
     domains = [d for d in ('I', 'WS', 'AB', 'V') if any(x['cov'][d] > 0 for x in rows)]
-    return {'model': MODEL, 'data': data.get('version'), 'tier': tier, 'domains': domains, 'n': len(out), 'rows': out}
+    return {'model': MODEL, 'data': data.get('version'), 'tier': tier, 'domains': domains, 'n': len(out), 'rows': out,
+            'n_short': sum(1 for x in out if x['short'])}
 
 
 def person_top(riasec, n=3):

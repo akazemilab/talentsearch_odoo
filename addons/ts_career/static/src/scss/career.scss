@@ -57,3 +57,5 @@
 .tsc-next p { margin-block: 0 var(--space-3); }
 .tsc-opt { display: inline-block; vertical-align: middle; font-size: var(--fs-0); font-weight: 600; padding: .1rem .55rem; border-radius: 999px; background: var(--color-surface); color: var(--color-neutral-400); margin-inline-start: var(--space-2); }
 .tsc-consent { margin: var(--space-2) 0 0 !important; font-size: var(--fs-0); color: var(--color-neutral-400); }
+.tsc-area { margin-block: var(--space-4); }
+.tsc-area__h { font-size: var(--fs-2); margin-block: 0 var(--space-2); color: var(--color-neutral-400); font-weight: 700; }

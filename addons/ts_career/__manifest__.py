@@ -3,7 +3,7 @@
     'summary': 'Free personal career match (person -> 923 O*NET occupations): Persian O*NET Interest Profiler (60), '
                'education and experience (job zone), optional work styles (personal IPIP-HEXACO copy) and ability tasks, '
                'CAREER-MATCH engine (quick and full tiers), /career pages, daily cap of new free runs',
-    'version': '20.0.1.0.0',
+    'version': '20.0.1.1.0',
     'category': 'Services/Talent Search',
     'author': 'EOT',
     'license': 'LGPL-3',

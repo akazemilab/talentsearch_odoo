@@ -60,6 +60,11 @@ check('full ranking differs from quick', [r['code'] for r in f['rows'][:10]] != 
 fa = {'riasec': {k: k for k in E.RIASEC}, 'ws': {}, 'ab': {}}
 why, watch = E.explain_fa(f['rows'][0], p_full, fa)
 check('explanations', len(why) >= 1 and all(isinstance(x, str) for x in why + watch))
+check('c-index: same top code = 1, opposite = low', E.c_index([1, 0, 4], [2, 1, 5]) == 1.0 and E.c_index([1, 0, 4], [4, 3, 1]) < 0.4)
+check('short list of 5-10', 5 <= f['n_short'] <= 10 and 5 <= a['n_short'] <= 10)
+from collections import Counter
+check('at most 4 per area', max(Counter(r['area'] for r in f['rows'] if r['short']).values()) <= E.AREA_MAX)
+check('every area has a Persian name', all(r['area'] in E.AREA_FA for r in f['rows']))
 check('clinic list is short', all(len(r['clinic']) <= 6 for r in f['rows']))
 
 print('SUMMARY %d/%d passed' % (sum(RES), len(RES)))
