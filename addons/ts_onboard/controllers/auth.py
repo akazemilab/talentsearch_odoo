@@ -42,6 +42,9 @@ class TsOnbSignup(TsSignup):
         if request.session.get(SCOPE_KEY) and not request.env.user._is_public():
             # signed in for one invitation only: the sign-in page itself (the number masked), not a redirect loop
             _ts_site_or_404()
+            phone = request.session[SCOPE_KEY].get('phone')
+            if phone:
+                request.session[KNOWN_KEY] = phone
             nxt = safe_next(kw.get('next'))
             if step == 'code' and request.session.get('ts_signup_phone'):
                 return self._page('code', msg, nxt)
