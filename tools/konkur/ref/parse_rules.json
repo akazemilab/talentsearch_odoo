@@ -1,0 +1,5 @@
+{
+ "_doc": "Set after `ts konkur peek`. booklet.name_rx must have a (?P<name>...) group; curriculum *_index = position in the numbers list of a row (negative = from the end).",
+ "booklet": {"layout": true, "code_rx": "(?<!\\d)(\\d{4,5})(?!\\d)"},
+ "curriculum": {"layout": true, "units_index": 0}
+}

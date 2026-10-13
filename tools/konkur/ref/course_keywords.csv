@@ -1,0 +1,222 @@
+keyword,area
+اندیشه اسلامی,general
+انسان در اسلام,general
+حقوق اجتماعی و سیاسی در اسلام,general
+فلسفه اخلاق,general
+اخلاق اسلامی,general
+آیین زندگی,general
+عرفان عملی,general
+انقلاب اسلامی,general
+آشنایی با قانون اساسی,general
+اندیشه سیاسی امام,general
+تاریخ فرهنگ و تمدن اسلام,general
+تاریخ تحلیلی صدر اسلام,general
+تاریخ امامت,general
+تفسیر موضوعی,general
+تحلیلی بر نهج البلاغه,general
+دانش خانواده,general
+تربیت بدنی,general
+ورزش,general
+فارسی عمومی,general
+زبان عمومی,general
+زبان خارجی عمومی,general
+کارآفرینی,admin_mgmt
+مدیریت,admin_mgmt
+سازمان,admin_mgmt
+حسابداری,econ_acc
+اقتصاد,econ_acc
+مالی,econ_acc
+مالیه,econ_acc
+بانکداری,econ_acc
+بیمه,econ_acc
+بازاریابی,sales_mkt
+فروش,sales_mkt
+تبلیغات,sales_mkt
+منابع انسانی,hr
+کارگزینی,hr
+ریاضی,mathematics
+ریاضیات,mathematics
+حسابان,mathematics
+جبر,mathematics
+آنالیز,mathematics
+هندسه,mathematics
+معادلات دیفرانسیل,mathematics
+آمار,mathematics
+احتمال,mathematics
+محاسبات عددی,mathematics
+ریاضیات گسسته,mathematics
+توپولوژی,mathematics
+داده ها,mathematics
+تحلیل داده,mathematics
+بهینه سازی,mathematics
+سری های زمانی,mathematics
+رگرسیون,mathematics
+نمونه گیری,mathematics
+استنباط,mathematics
+نظریه بازی,mathematics
+تحلیل بقا,mathematics
+مصورسازی,computers
+حساب های ملی,econ_acc
+بازار سرمایه,econ_acc
+فیزیک,physics
+الکتریسیته و مغناطیس,physics
+اپتیک,physics
+ترمودینامیک,physics
+مکانیک کوانتومی,physics
+الکترومغناطیس,physics
+شیمی,chemistry
+بیوشیمی,biology
+زیست,biology
+زیست شناسی,biology
+سلولی,biology
+مولکولی,biology
+ژنتیک,biology
+میکروبیولوژی,biology
+میکروب شناسی,biology
+فیزیولوژی,biology
+گیاه شناسی,biology
+جانورشناسی,biology
+بوم شناسی,biology
+اکولوژی,biology
+ایمنی شناسی,biology
+آناتومی,medicine
+تشریح,medicine
+بافت شناسی,medicine
+پاتولوژی,medicine
+آسیب شناسی,medicine
+فارماکولوژی,medicine
+داروشناسی,medicine
+بالینی,medicine
+کارآموزی بالینی,medicine
+پزشکی,medicine
+دندان,medicine
+بیماری,medicine
+پرستاری,medicine
+بهداشت,medicine
+تغذیه,food
+کشاورزی,food
+زراعت,food
+باغبانی,food
+خاک,food
+دام,food
+علوم دامی,food
+صنایع غذایی,food
+فیزیوتراپی,therapy
+گفتاردرمانی,therapy
+کاردرمانی,therapy
+مشاوره,therapy
+روان درمانی,therapy
+روانشناسی,psychology
+روان شناسی,psychology
+رشد,psychology
+یادگیری,psychology
+شخصیت,psychology
+آزمون های روانی,psychology
+جامعه شناسی,sociology
+انسان شناسی,sociology
+مردم شناسی,sociology
+مددکاری,sociology
+علوم اجتماعی,sociology
+جمعیت شناسی,sociology
+جغرافیا,geography
+زمین شناسی,geography
+اقلیم,geography
+نقشه,geography
+سنجش از دور,geography
+تاریخ,history
+باستان شناسی,history
+فلسفه,philosophy
+منطق,philosophy
+کلام,philosophy
+الهیات,philosophy
+عرفان,philosophy
+علوم قرآن,philosophy
+حدیث,philosophy
+فقه,law
+اصول فقه,law
+حقوق,law
+قانون,law
+آیین دادرسی,law
+جزا,law
+علوم سیاسی,law
+روابط بین الملل,law
+سیاست,law
+آموزش,education
+تدریس,education
+برنامه درسی,education
+تعلیم و تربیت,education
+علوم تربیتی,education
+زبان و ادبیات فارسی,native_lang
+ادبیات فارسی,native_lang
+متون نظم,native_lang
+متون نثر,native_lang
+عروض,native_lang
+دستور زبان فارسی,native_lang
+نگارش,native_lang
+زبان انگلیسی,foreign_lang
+انگلیسی,foreign_lang
+ترجمه,foreign_lang
+زبان عربی,foreign_lang
+عربی,foreign_lang
+فرانسه,foreign_lang
+آلمانی,foreign_lang
+زبان شناسی,foreign_lang
+برنامه نویسی,computers
+برنامه سازی,computers
+کامپیوتر,computers
+رایانه,computers
+الگوریتم,computers
+ساختمان داده,computers
+پایگاه داده,computers
+سیستم عامل,computers
+شبکه های کامپیوتری,computers
+هوش مصنوعی,computers
+الکترونیک,computers
+مدار,computers
+مدارهای الکتریکی,computers
+مدارهای منطقی,computers
+ریزپردازنده,computers
+مخابرات,telecom
+آنتن,telecom
+سیگنال,telecom
+کنترل,engineering
+مهندسی,engineering
+مقاومت مصالح,building
+استاتیک,mechanical
+دینامیک,mechanical
+مکانیک,mechanical
+ماشین,mechanical
+سیالات,mechanical
+انتقال حرارت,mechanical
+ساخت و تولید,production
+فرآیند,production
+عملیات واحد,production
+متالورژی,production
+مواد,production
+سازه,building
+بتن,building
+فولاد,building
+ساختمان,building
+راه سازی,transport
+حمل و نقل,transport
+ترافیک,transport
+نقشه کشی,design
+نقشه کشی صنعتی,design
+طراحی,design
+معماری,design
+طراحی معماری,design
+گرافیک,fine_arts
+نقاشی,fine_arts
+موسیقی,fine_arts
+هنر,fine_arts
+عکاسی,fine_arts
+سینما,fine_arts
+تئاتر,fine_arts
+مجسمه سازی,fine_arts
+خوشنویسی,fine_arts
+رسانه,media
+روزنامه نگاری,media
+ارتباطات,media
+خبر,media
+ایمنی,safety
+آتش نشانی,safety
