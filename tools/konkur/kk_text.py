@@ -21,8 +21,9 @@ def norm(s):
 
 
 def key(s):
-    """Matching key: norm + no punctuation + no spaces. Two spellings of one major name give one key."""
-    return SPACES.sub('', PUNCT.sub(' ', norm(s)))
+    """Matching key: norm + no punctuation + no spaces. Two spellings of one major name give one key.
+    pdftotext splits the lam-alef ligature as 'ال' (اطلاع -> اطالع), so keys fold 'لا' to 'ال' on both sides."""
+    return SPACES.sub('', PUNCT.sub(' ', norm(s))).replace('لا', 'ال')
 
 
 def is_rtl_reversed(line):
