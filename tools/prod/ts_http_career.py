@@ -110,6 +110,8 @@ st, loc, body = q.req('/career')
 check('cap reached: no start button', st == 200 and 'tsc-full' in body and 'tsc-start' not in body, str(st))
 st, loc, _ = q.req('/career/start')
 check('cap reached: start refused', path_of(loc) == '/career', loc)
+st, loc, _ = q.req('/take/%s' % T)
+check("another person's interest module is not reachable", st in (403, 404), str(st))
 st, loc, body = p.req('/career/r')
 check('existing run still opens', st == 200 and 'tsc-jobs' in body, str(st))
 shell(r"""

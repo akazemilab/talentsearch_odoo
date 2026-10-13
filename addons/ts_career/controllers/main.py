@@ -113,6 +113,7 @@ class TsCareer(TsOnbCatalog):
 
     @http.route()
     def my_report(self, attempt_id, **kw):
+        _ts_site_or_404()
         attempt = _my_attempt(attempt_id=attempt_id)
         if attempt.career_run_id and attempt.state == 'done':
             nxt = attempt.career_run_id.ts_next_task() if attempt.instrument_id.code.startswith('TASK-') else None

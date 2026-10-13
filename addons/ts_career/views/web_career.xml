@@ -134,11 +134,13 @@
                                         <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
                                         <p>با ۱۲۰ جملهٔ کوتاه دربارهٔ شیوهٔ کارتان، فهرست بر پایهٔ علایق و سبک کاری شما چیده می‌شود. حدود ۱۵ دقیقه، روی گوشی.</p>
                                         <button type="submit" class="ts-btn ts-btn--primary" id="tsc-go-personality"><t t-if="st['hex']">ادامهٔ سبک‌های کاری</t><t t-else="">افزودن سبک‌های کاری</t></button>
+                                        <p class="tsc-consent">با شروع، رضایتی که در آغاز دادید برای این بخش هم ثبت می‌شود.</p>
                                     </form>
                                     <form t-else="" action="/career/more/abilities" method="post">
                                         <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
                                         <p>با ۳ بخش زمان‌دار کوتاه، توانایی‌های شما هم در فهرست اثر می‌گذارد. حدود ۲۳ دقیقه؛ روی رایانه راحت‌تر است.<t t-if="st['tasks_done']"> <t t-out="fa(st['tasks_done'])"/> از <t t-out="fa(st['tasks_total'])"/> بخش انجام شد.</t></p>
                                         <button type="submit" class="ts-btn ts-btn--primary" id="tsc-go-abilities"><t t-if="st['tasks_done']">ادامهٔ توانایی‌ها</t><t t-else="">افزودن توانایی‌ها</t></button>
+                                        <p class="tsc-consent">با شروع، رضایتی که در آغاز دادید برای این بخش هم ثبت می‌شود.</p>
                                     </form>
                                 </section>
                                 <nav class="tsc-filter" aria-label="فیلتر فهرست">
@@ -215,11 +217,13 @@
                                     <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
                                     <p>برای دقیق‌تر شدن این تصویر، سبک‌های کاری‌تان را هم اضافه کنید (حدود ۱۵ دقیقه).</p>
                                     <button type="submit" class="ts-btn ts-btn--primary">افزودن سبک‌های کاری</button>
+                                    <p class="tsc-consent">با شروع، رضایتی که در آغاز دادید برای این بخش هم ثبت می‌شود.</p>
                                 </form>
                                 <form t-elif="st['tasks_done'] &lt; st['tasks_total']" action="/career/more/abilities" method="post" class="tsc-jobnext">
                                     <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
                                     <p>با ۳ بخش زمان‌دار کوتاه، توانایی‌هایتان هم در تناسب اثر می‌گذارد (حدود ۲۳ دقیقه).</p>
                                     <button type="submit" class="ts-btn ts-btn--primary">افزودن توانایی‌ها</button>
+                                    <p class="tsc-consent">با شروع، رضایتی که در آغاز دادید برای این بخش هم ثبت می‌شود.</p>
                                 </form>
                                 <a href="/career/r" class="ts-btn ts-btn--quiet">بازگشت به فهرست</a>
                             </div>

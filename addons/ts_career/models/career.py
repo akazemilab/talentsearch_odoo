@@ -61,6 +61,39 @@ class TsAttemptCareer(models.Model):
 
     career_run_id = fields.Many2one('ts.career.run', 'مسیر شغلی', index=True, ondelete='set null')
 
+    def _ts_notify_result_ready(self):
+        # the career list is one page the person is already on: no result-ready SMS per module
+        if self.sudo().career_run_id:
+            return False
+        return super()._ts_notify_result_ready()
+
+    def ts_erase_content(self):
+        # an erase request removes the whole career profile (result cache, education, experience) with the answers
+        run = self.sudo().career_run_id
+        res = super().ts_erase_content()
+        if run:
+            run.unlink()
+        return res
+
+
+class TsTaskNormCareer(models.Model):
+    _inherit = 'ts.task.norm'
+
+    @api.model
+    def _ts_rebuild(self):
+        """Hiring norms stay built from hiring and panel takes only: free career task attempts are left out."""
+        At = self.env['ts.attempt'].sudo()
+        vals = {}
+        for at in At.search([('state', '=', 'done'), ('task_result_json', '!=', False), ('career_run_id', '=', False)]):
+            res = json.loads(at.task_result_json or '{}')
+            for b, r in (res.get('blocks') or {}).items():
+                if r.get('raw') is not None and not r.get('practice_only'):
+                    vals.setdefault(b, []).append(r['raw'])
+        for b, v in vals.items():
+            rec = self.sudo().search([('block', '=', b)], limit=1) or self.sudo().create({'block': b})
+            rec.write({'n': len(v), 'values_json': json.dumps(sorted(v)), 'built_at': fields.Datetime.now()})
+        return {b: len(v) for b, v in vals.items()}
+
 
 class TsCareerRun(models.Model):
     _name = 'ts.career.run'
@@ -81,7 +114,10 @@ class TsCareerRun(models.Model):
     # ---------------------------------------------------------------- access helpers
     @api.model
     def ts_cap_reached(self):
-        cap = int(self.env['ir.config_parameter'].sudo().get_str(CAP_PARAM) or CAP_DEFAULT)
+        try:
+            cap = int(self.env['ir.config_parameter'].sudo().get_str(CAP_PARAM) or CAP_DEFAULT)
+        except (TypeError, ValueError):
+            cap = CAP_DEFAULT
         since = fields.Datetime.now() - timedelta(hours=24)
         return self.sudo().search_count([('create_date', '>=', since)]) >= cap
 
@@ -89,7 +125,11 @@ class TsCareerRun(models.Model):
     def ts_for_user(self, user, create=False):
         run = self.sudo().search([('user_id', '=', user.id)], limit=1)
         if not run and create:
-            run = self.sudo().create({'user_id': user.id})
+            try:
+                with self.env.cr.savepoint():
+                    run = self.sudo().create({'user_id': user.id})
+            except Exception:           # a parallel request created it first (unique user)
+                run = self.sudo().search([('user_id', '=', user.id)], limit=1)
         return run
 
     def _inst(self, code):
@@ -117,7 +157,8 @@ class TsCareerRun(models.Model):
                                                     'version_id': inst.current_version_id.id, 'career_run_id': self.id})
         first = self.ts_attempt(IP_CODE)
         if code != IP_CODE and first and first.consent_service and at.state == 'consent':
-            at.give_consent(research=first.consent_research)
+            # the start button of every later module says the first consent is recorded for it too (service only)
+            at.give_consent(research=False)
             if 'ts.consent.record' in self.env:
                 Rec = self.env['ts.consent.record'].sudo()
                 if Rec.search_count([('attempt_id', '=', first.id), ('kind', '=', 'guardian')], limit=1):
