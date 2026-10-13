@@ -8,6 +8,7 @@ assert DB.startswith('eot_ts'), 'clones only'
 spec = importlib.util.spec_from_file_location('flowlib', os.path.join(os.path.dirname(os.path.abspath(__file__)), 'ts_flowlib.py'))
 lib = importlib.util.module_from_spec(spec); spec.loader.exec_module(lib)
 lib.setup(DB, PORT)
+lib.fake_kavenegar()     # the mobile sign-in (S-AUTH) needs an SMS gateway: a local fake, never a live route
 Client, check, ensure_user, summary, shell, path_of = lib.Client, lib.check, lib.ensure_user, lib.summary, lib.shell, lib.path_of
 TS = 'talentsearch.ir'
 NAMES = ('staff', 'part')
