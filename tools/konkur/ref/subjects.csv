@@ -1,0 +1,17 @@
+code,name_fa,groups
+math,ریاضی,riazi|tajrobi|ensani
+physics,فیزیک,riazi|tajrobi
+chemistry,شیمی,riazi|tajrobi
+biology,زیست‌شناسی,tajrobi
+geology,زمین‌شناسی,riazi|tajrobi
+persian,ادبیات فارسی,riazi|tajrobi|ensani|honar|zaban
+arabic,عربی,riazi|tajrobi|ensani|honar|zaban
+religion,دین و زندگی,riazi|tajrobi|ensani|honar|zaban
+english,زبان انگلیسی,riazi|tajrobi|ensani|honar|zaban
+economics,اقتصاد,ensani
+literary,علوم و فنون ادبی,ensani
+sociology,جامعه‌شناسی,ensani
+history,تاریخ,ensani
+geography,جغرافیا,ensani
+philosophy,فلسفه و منطق,ensani
+psychology,روان‌شناسی,ensani

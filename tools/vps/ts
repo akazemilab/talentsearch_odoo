@@ -29,6 +29,8 @@
 #   ts shots DB [W,W,...]   detached ui matrix on a served clone of the slot (job shots_DB): fixtures, ts_shot.py at the
 #                           widths (default 375,1280), report + png in /root/share/out/shots_DB; read report.txt first.
 #                           W=ux: full UX-audit matrix; W=take: participant journey only (360,390,1280 + dark + _fold.png)
+#   ts konkur SUB ...       konkur major-fit data tools on this VPS (tools/konkur/konkur.py; `ts konkur` lists SUBs)
+#   ts konkur bg NAME SUB.. same, detached as job kk_NAME (follow with ts wait kk_NAME)
 # Slots: TS_SLOT=0 (default) -> repo /root/talentsearch_odoo, stage /opt/odoo/talentsearch_stage, port 8071.
 #        TS_SLOT=1|2         -> repo /root/ts_wt_sN, stage /opt/odoo/talentsearch_stage_sN, port 8073|8075.
 #        Ships always use slot 0. Each slot has a lock (/root/ts-jobs/slotN.lock) held by its rehearsal.
@@ -65,6 +67,9 @@ case $cmd in
       esac
     done ;;
   bg)    name=$1; shift; ( TS_JOB=$name TS_SLOT=$SLOT setsid nohup bash -c "export TS_JOB=$name TS_SLOT=$SLOT; $* ; echo \"[rc=\$?]\"" > $J/$name.log 2>&1 & ); echo "started $name (slot $SLOT)" ;;
+  konkur) KK=/root/talentsearch_odoo/tools/konkur/konkur.py
+         if [ "${1:-}" = bg ]; then n=${2:?name}; shift 2; ts bg "kk_$n" python3 -u $KK $(q "$@")
+         else python3 -u $KK "$@"; fi ;;
   job)   f=$J/$1.log; if grep -q '^\[rc=' $f 2>/dev/null; then echo "[$1] done $(grep -o 'rc=[0-9]*' $f | tail -1)"; else echo "[$1] running"; fi; tail -n ${2:-25} $f ;;
   status) python3 $TOOLS/ts_digest.py $J/$1.log ;;
   wait)   python3 $TOOLS/ts_digest.py $J/$1.log ${2:-45} ;;
