@@ -2,24 +2,30 @@
 
 * A session scoped to one invitation that reaches another page lands here (ir_http): the page shows the invited number
   masked and «دریافت کد»; after the code the session is an ordinary full session (the scope ends).
-* A session scoped to an e-mail invitation has no number yet: a verified number that nobody holds joins that account
-  (one person, one account) instead of making a second one.
-* After a successful code at the result gate (next=/start…): the guest attempt of this browser is claimed (O3). A sign-in
+* A number is never linked to or written onto an account from a scoped session (risk review HIGH 2), with one exception:
+  the account the one-tap flow made moments ago for that invitation (an e-mail link to an address that had no account)
+  and that holds nothing else. Otherwise the code for number P signs into P's own account, or makes a phone-only one; the
+  invitation stays where it is, and one calm page says so (/my/invitation-elsewhere).
+* After a successful code at the result gate: the guest attempt of this browser is claimed (O3) only when this session
+  was shown the gate of that attempt and the code was asked for from the gate (next == /start/result). A sign-in
   anywhere else never claims it (a shared computer: the next person's account must not receive someone else's answers);
-  the gate then offers one explicit button. An invitation waiting in this session (new browser, or a link without proof)
-  is accepted or continued (O2).
+  the gate then offers one explicit button. An invitation waiting in this session (new browser, or a link without the
+  message's secret) is accepted or continued (O2).
 * An e-mail/password sign-in ends any scope too."""
 from odoo import fields, http
 from odoo.http import request
 
 from odoo.addons.ts_assessment.controllers.main import _ts_site_or_404
-from odoo.addons.ts_sms.controllers.signup import KNOWN_KEY, TsAuthSiteHome, TsSignup, safe_next
+from odoo.addons.ts_sms.controllers.signup import KNOWN_KEY, TsAuthSiteHome, TsSignup, mask_mobile, safe_next
 
-from ..models.common import GUEST_COOKIE, digest, drop_cookie, read_token
+from ..models.common import GUEST_COOKIE, digest, drop_cookie, mask_email, read_token
 from ..models.ir_http import OTHER_KEY, SCOPE_KEY
 from . import flow
 
 LOGGED_KEY = 'ts_onb_logged'         # set by _login for the rest of this request only (popped in verify)
+GATE_KEY = 'ts_onb_gate'             # the guest attempt whose result gate this session showed
+GATE_PATH = '/start/result'
+ELSEWHERE_KEY = 'ts_onb_elsewhere'   # what /my/invitation-elsewhere tells once
 
 
 def guest_attempt(any_state=True):
@@ -35,6 +41,18 @@ def claim_url(at):
     if at.state == 'done':
         return '/my/assessments/%s?submitted=1&claimed=1' % at.id
     return '/take/%s' % at.access_token
+
+
+def _elsewhere(scope):
+    """What the calm page says about the invitation of an ended scope: where its message went (masked)."""
+    a = request.env['ts.assignment'].sudo().browse(int(scope.get('aid') or 0)).exists()
+    if not a:
+        return None
+    via, value = a.ts_proof()
+    if via == 'email':
+        return {'kind': 'email', 'masked': mask_email(value)}
+    phone = a.ts_invite_phone()
+    return {'kind': 'phone', 'masked': mask_mobile(phone)} if phone else {'kind': 'link', 'masked': ''}
 
 
 class TsOnbSignup(TsSignup):
@@ -68,7 +86,10 @@ class TsOnbSignup(TsSignup):
         scope = request.session.get(SCOPE_KEY)
         if scope and not scope.get('phone'):
             u = request.env['res.users'].sudo().browse(int(scope.get('uid') or 0)).exists()
-            if u and u.share and u.active and not u.partner_id.ts_phone \
+            a = request.env['ts.assignment'].sudo().browse(int(scope.get('aid') or 0)).exists()
+            # the only exception: the account made moments ago for this invitation, holding nothing else
+            if u and a and u.share and u.active and not u.partner_id.ts_phone \
+                    and flow.made_here(u, a, minutes=flow.FRESH_MINUTES) \
                     and not request.env['res.users'].ts_phone_owner(phone):
                 u.partner_id.sudo().write({'ts_phone': phone, 'ts_phone_verified_at': fields.Datetime.now()})
                 request.env['ts.audit.event'].sudo().log('account.phone_linked', u, via='invite_email')
@@ -77,6 +98,8 @@ class TsOnbSignup(TsSignup):
 
     @http.route()
     def verify(self, code=None, **post):
+        prev = dict(request.session.get(SCOPE_KEY) or {})
+        gate_aid = request.session.get(GATE_KEY)
         res = super().verify(code=code, **post)
         uid = request.session.pop(LOGGED_KEY, None)
         if not uid:
@@ -84,27 +107,43 @@ class TsOnbSignup(TsSignup):
         request.session.pop(SCOPE_KEY, None)          # an ordinary full session from now on
         request.session.pop(KNOWN_KEY, None)
         request.session.pop(OTHER_KEY, None)
+        request.session.pop(GATE_KEY, None)
         request.update_env(user=uid)
         user = request.env.user
         nxt = safe_next(post.get('next'))
-        url, drop, bound = None, False, None
+        url, drop = None, False
         at = guest_attempt()
-        if at and nxt.startswith('/start'):
+        if at and nxt == GATE_PATH and gate_aid and gate_aid == at.id:
             if at.ts_guest_claim(user):
                 request.env['ts.funnel.event'].ts_log(request, 'gate_signed_in', instrument=at.instrument_id,
                                                       entry='guest')
             drop = True
             url = claim_url(at)
-        inv_url, bound = flow.after_code(user)
+        inv_url, bound, personal = flow.after_code(user)
         url = inv_url or url
+        if not url and prev.get('uid') and prev['uid'] != uid:
+            # the code was for another account than the one of the invitation: nothing moves; say so once, calmly
+            note = _elsewhere(prev)
+            if note:
+                request.session[ELSEWHERE_KEY] = note
+                url = '/my/invitation-elsewhere'
         if not (url or drop):
             return res
         out = self._reply(True, 'done', None, url or nxt, url=url or nxt)
         if drop:
             drop_cookie(out, request, GUEST_COOKIE)
         if bound:
-            flow.bind_device(bound, out)
+            flow.bind_device(bound, out, personal=personal)
         return out
+
+    @http.route('/my/invitation-elsewhere', type='http', auth='user', website=True, methods=['GET'], sitemap=False)
+    def invitation_elsewhere(self, **kw):
+        _ts_site_or_404()
+        note = request.session.pop(ELSEWHERE_KEY, None)
+        if not note:
+            return request.redirect('/my')
+        return request.render('ts_onboard.elsewhere', {
+            'note': note, 'me': mask_mobile(request.env.user.partner_id.ts_phone or ''), 'page_name': 'ts_signup'})
 
 
 class TsOnbAuthSiteHome(TsAuthSiteHome):

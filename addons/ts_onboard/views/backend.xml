@@ -18,13 +18,12 @@
         <field name="model">ts.funnel.event</field>
         <field name="arch" type="xml">
             <list create="false" edit="false" delete="false">
-                <field name="create_date" string="زمان"/>
+                <field name="day"/>
+                <field name="hour"/>
                 <field name="step"/>
                 <field name="entry"/>
                 <field name="instrument_id"/>
-                <field name="assignment_id"/>
                 <field name="session_hash"/>
-                <field name="website_id"/>
             </list>
         </field>
     </record>
@@ -35,7 +34,7 @@
             <pivot string="قیف ورود">
                 <field name="step" type="row"/>
                 <field name="entry" type="row"/>
-                <field name="create_date" interval="week" type="col"/>
+                <field name="day" interval="week" type="col"/>
             </pivot>
         </field>
     </record>
@@ -47,9 +46,9 @@
                 <field name="step"/>
                 <field name="entry"/>
                 <field name="instrument_id"/>
-                <filter name="last30" string="۳۰ روز اخیر" domain="[('create_date', '&gt;=', (context_today() - relativedelta(days=30)).strftime('%Y-%m-%d'))]"/>
-                <filter name="guest" string="سنجهٔ آغاز (بدون دعوت)" domain="[('assignment_id', '=', False)]"/>
-                <filter name="invite" string="دعوت‌ها" domain="[('assignment_id', '!=', False)]"/>
+                <filter name="last30" string="۳۰ روز اخیر" domain="[('day', '&gt;=', (context_today() - relativedelta(days=30)).strftime('%Y-%m-%d'))]"/>
+                <filter name="guest" string="سنجهٔ آغاز (بدون دعوت)" domain="[('entry', 'in', ('guest', 'user'))]"/>
+                <filter name="invite" string="دعوت‌ها" domain="[('entry', 'not in', ('guest', 'user'))]"/>
                 <group>
                     <filter name="by_step" string="گام" context="{'group_by': 'step'}"/>
                     <filter name="by_entry" string="نوع ورود" context="{'group_by': 'entry'}"/>

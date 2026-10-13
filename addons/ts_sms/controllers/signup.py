@@ -8,8 +8,9 @@ code. «این دستگاه شخصی من است» (default on) keeps a portal s
 (models/ir_http.py). Website 4 only: stock /web/login (email) stays reachable as the quiet second way.
 
 onb2: a number the server already knows (KNOWN_KEY: the invited number of an invitation, or the number of a session
-scoped to one invitation) is shown masked («۰۹۱۲***۴۵۶۷», the mask of /my/phone: bullets read as Persian zeros) and the
-visitor types nothing but the code.
+scoped to one invitation) is shown masked, its last four digits only («•••• ۴۵۶۷»; risk review: a link's holder must not
+learn the operator prefix either) and the visitor types nothing but the code. A number the visitor typed is shown in
+full (it is theirs).
 """
 import re
 from urllib.parse import quote
@@ -50,11 +51,11 @@ _FA = str.maketrans('0123456789', '۰۱۲۳۴۵۶۷۸۹')
 
 
 def mask_mobile(phone):
-    """«۰۹۱۲***۴۵۶۷»: the first four and the last four digits of a normalised mobile number, in Persian digits."""
+    """«•••• ۴۵۶۷»: only the last four digits of a normalised mobile number, in Persian digits."""
     phone = phone or ''
     if len(phone) < 8:
         return ''
-    return (phone[:4] + '***' + phone[-4:]).translate(_FA)
+    return '•••• ' + phone[-4:].translate(_FA)
 
 
 def _shown(phone):

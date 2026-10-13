@@ -25,7 +25,7 @@ from odoo.addons.ts_sms.controllers.signup import signin_values
 from odoo.addons.ts_tasks.controllers.main import TsTaskPlayer
 
 from ..models.common import GUEST_COOKIE, GUEST_COOKIE_AGE, digest, drop_cookie, new_token, set_cookie
-from .auth import claim_url, guest_attempt
+from .auth import GATE_KEY, GATE_PATH, claim_url, guest_attempt
 
 GUEST_PER_HOUR = 5
 ANSWERS_PER_MINUTE = 200
@@ -243,7 +243,9 @@ class TsOnbGuest(http.Controller):
         if not request.env.user._is_public():
             return request.render('ts_onboard.gate_signed', {'at': at, 'inst': at.instrument_id, 'page_name': 'ts_start'})
         st = 'code' if (step == 'code' and request.session.get('ts_signup_phone')) else 'phone'
-        values = signin_values(st, msg, '/start/result')
+        # the code asked for from this gate (and only from it) claims this attempt (controllers/auth.py)
+        request.session[GATE_KEY] = at.id
+        values = signin_values(st, msg, GATE_PATH)
         values.update(gate=True, gate_inst=at.instrument_id, why=None)
         return request.render('ts_sms.signup', values)
 

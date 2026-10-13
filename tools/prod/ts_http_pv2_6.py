@@ -180,11 +180,14 @@ AID = m.group(1) if m else '0'
 st, page = get(own, W + '/invites/' + AID + '?new=1')
 tok = re.search(r'value="https://talentsearch\.ir/invite/([0-9a-f]{32})"', page)
 check('the page shows the link, a copy button, the QR image and the state', st == 200 and bool(tok) and 'data-tsp-copy' in page and '/qr.png' in page and 'دعوت‌شده' in page)
-# with ts_brand (clinic phase 5) the SMS carries the short link /i/<code> of this invitation instead of the token
+# with ts_brand (clinic phase 5) the SMS carries the short link /i/<code> of this invitation instead of the token; since
+# onb2's risk review also the message's own delivery secret /i/<code>/<secret>, which the panel page never shows
 sc = re.search(r"\('([a-z0-9]{8}|[a-z0-9]{12})',\)", q("select short_code from ts_assignment where id = %s" % AID))   # no column without ts_brand
+dsec = re.search(r'/i/[a-z0-9]{8,12}/([A-Za-z0-9_-]{22,})$', SMS[-1]['message']) if len(SMS) > n0 else None
 check('the SMS went out exactly once and carries the link', len(SMS) == n0 + 1 and tok
-      and (tok.group(1) in SMS[-1]['message'] or bool(sc and SMS[-1]['message'].endswith('/i/' + sc.group(1))))
+      and (tok.group(1) in SMS[-1]['message'] or bool(sc and re.search(r'/i/%s(/[A-Za-z0-9_-]{22,})?$' % sc.group(1), SMS[-1]['message'])))
       and SMS[-1]['receptor'] == '09125551111', str(len(SMS) - n0))
+check('the panel page and its copy button never carry the delivery secret of the SMS', not dsec or dsec.group(1) not in page)
 check('the page says the SMS was sent', 'پیامک دعوت ارسال شد' in page)
 st, ctype, png = raw(own, W + '/invites/%s/qr.png' % AID)
 check('the QR answers 200 as a PNG', st == 200 and ctype.startswith('image/png') and png[:4] == b'\x89PNG' and len(png) > 300, '%s %s %s' % (st, ctype, len(png)))

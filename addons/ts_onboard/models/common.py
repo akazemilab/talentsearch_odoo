@@ -2,15 +2,24 @@
 
 A browser token is `raw.signature`: `raw` is 24 random bytes (url-safe), the signature an HMAC of raw with the database
 secret and a purpose ('guest', 'device'). Only sha256(raw) is ever stored on the server; the raw token lives only in the
-HttpOnly cookie and never appears in an address, a redirect or a log line."""
+HttpOnly cookie and never appears in an address, a redirect or a log line.
+
+The delivery secret of an invitation message (models/assignment.py) is kept the same way: only its digest is stored, and
+every comparison is constant-time."""
 import hashlib
 import hmac
+import re
 import secrets
+from datetime import datetime, timedelta, timezone
 
 GUEST_COOKIE = 'ts_guest'          # the guest attempt of this browser (O3)
 DEVICE_COOKIE = 'ts_dev'           # this browser, for invitation device binding (O2)
 GUEST_COOKIE_AGE = 3 * 24 * 3600   # the attempt itself is deleted 48 h after its last activity
-DEVICE_COOKIE_AGE = 90 * 24 * 3600
+DEVICE_DAYS = 30                   # «این دستگاه شخصی من است» ticked: the binding lasts 30 days at most
+DEVICE_COOKIE_AGE = DEVICE_DAYS * 24 * 3600
+DEVICE_SHARED_HOURS = 12           # unticked: a browser-session cookie, and the server side ends after 12 hours
+DLV_BYTES = 16                     # the delivery secret of a message: 16 random bytes = 22 url-safe characters
+DLV_RE = re.compile(r'^[A-Za-z0-9_-]{22,64}$')
 
 
 def _secret(env):
@@ -42,13 +51,27 @@ def digest(raw):
     return hashlib.sha256(('ts-onb2-token:' + (raw or '')).encode()).hexdigest()
 
 
+def same(raw, stored):
+    """Is `stored` the digest of `raw`? Constant-time; False when either is missing."""
+    return bool(raw and stored) and hmac.compare_digest(digest(raw), stored)
+
+
+def dlv_digest(raw):
+    """What the server stores of a delivery secret (never the secret itself)."""
+    return digest('dlv:' + (raw or ''))
+
+
 def https(request):
     req = request.httprequest
     return req.scheme == 'https' or req.headers.get('X-Forwarded-Proto') == 'https'
 
 
 def set_cookie(response, request, name, value, max_age):
-    response.set_cookie(name, value, max_age=max_age, path='/', secure=https(request), httponly=True, samesite='Lax')
+    """max_age None: a browser-session cookie (gone when the browser closes). Odoo's Response.set_cookie would add a
+    one-year Expires by default: the expiry is always given explicitly."""
+    expires = None if max_age is None else datetime.now(timezone.utc) + timedelta(seconds=max_age)
+    response.set_cookie(name, value, max_age=max_age, expires=expires, path='/', secure=https(request), httponly=True,
+                        samesite='Lax')
     return response
 
 

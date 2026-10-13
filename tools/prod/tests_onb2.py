@@ -1,8 +1,9 @@
-# onb2 (release 2 of onboarding): one-tap invitations (delivery proof, scope, device binding, short codes, fairness at
-# the end, minors on one screen) and test first for individuals (guest attempts, claim, 48-hour clean-up, funnel).
-# Run ONLY on an eot_ts* clone via odoo-bin shell. Never commits; never sends an SMS or an e-mail (every send path below
-# is patched to report success without reaching a provider).
+# onb2 (release 2 of onboarding): one-tap invitations (delivery secret, accounts that may be signed in without a code,
+# scope, device binding, short codes, fairness at the end, minors on one screen) and test first for individuals (guest
+# attempts, claim, 48-hour clean-up, funnel). Run ONLY on an eot_ts* clone via odoo-bin shell. Never commits; never sends
+# an SMS or an e-mail (every send path below is patched to report success without reaching a provider).
 import importlib.util
+import logging
 import os
 import re
 from datetime import timedelta
@@ -34,7 +35,8 @@ portal = env.ref('base.group_portal')
 U = env['res.users'].with_context(no_reset_password=True)
 W, A, Att = env['ts.workspace'], env['ts.assignment'].sudo(), env['ts.attempt'].sudo()
 _n = [0]
-PH = {'a': '09126654381', 'b': '09126654382', 'c': '09126654383'}
+PH = {'a': '09126654381', 'b': '09126654382', 'c': '09126654383', 'k': '09126654384', 'n': '09126654385',
+      'e': '09126654386', 's': '09126654387'}
 
 
 def puser(phone=None):
@@ -70,7 +72,7 @@ for p in PH.values():
     for u in U.with_context(active_test=False).search([('login', '=', p)]):
         u.write({'login': 'old.onb2.%d' % u.id})
 
-# ================================================================ D. delivery proof (the send paths report it)
+# ================================================================ D. delivery (the send paths report it)
 from odoo.addons.ts_sms.models.assignment import TsAssignment as SmsAsg
 from odoo.addons.ts_hire.models.mail import TsAssignmentMail
 a1 = A.create({'workspace_id': wcl.id, 'instrument_id': adult.id, 'invitee_name': 'مریم آزمایشی onb2'})
@@ -86,19 +88,121 @@ with patch.object(TsAssignmentMail, '_ts_send_invite_email', lambda self: True):
     a2._ts_send_invite_email()
     a1.invitee_email = 'other.onb2@example.invalid'
     a1._ts_send_invite_email()
-check('D03 a successful e-mail marks «email» (address lower-cased); an SMS proof stays the stronger one',
+check('D03 a successful e-mail marks «email» (address lower-cased); an SMS stays the invitation\'s channel',
       a2.delivered_via == 'email' and a2.delivered_email == 'cand.onb2@example.invalid'
       and a1.delivered_via == 'sms' and a1.delivered_email == 'other.onb2@example.invalid')
 a3 = A.create({'workspace_id': wcl.id, 'instrument_id': adult.id, 'invitee_name': 'بی‌پیامک onb2', 'invitee_phone': PH['b']})
 with patch.object(SmsAsg, '_ts_send_invite_sms', lambda self: False):
     a3.sms_consent = True
     a3._ts_send_invite_sms()
-check('D04 a failed SMS proves nothing (still «manual»), the typed number stays the invitation\'s number',
+check('D04 a failed SMS reaches nobody (still «manual»), the typed number stays the invitation\'s number',
       a3.delivered_via == 'manual' and a3.ts_invite_phone() == PH['b'] and a3.ts_proof() == (None, None))
 from odoo.addons.ts_panel.models.notify import TsAssignmentNotify
 with patch.object(TsAssignmentNotify, '_ts_do_reminder', lambda self: {'sms'}):
     a3._ts_do_reminder()
-check('D05 a reminder SMS that went out is a proof too', a3.delivered_via == 'sms' and a3.delivered_phone == PH['b'])
+check('D05 a reminder SMS that went out counts as delivery too', a3.delivered_via == 'sms' and a3.delivered_phone == PH['b'])
+
+# ================================================================ K. the delivery secret (risk review HIGH 1)
+from odoo.addons.ts_onboard.models.common import dlv_digest
+from odoo.addons.ts_onboard.models.ir_http import _RedactSecrets
+k = A.create({'workspace_id': wcl.id, 'instrument_id': adult.id, 'invitee_name': 'راز onb2', 'invitee_phone': PH['k'],
+              'invitee_email': 'k.onb2@example.invalid'})
+k._ts_mark_delivered('sms', phone=PH['k'])
+k._ts_mark_delivered('email', email='k.onb2@example.invalid')
+plain_long, plain_short = k.invite_url(), k.ts_short_url()
+with k._ts_dlv_window():
+    long1, short1, short1b = k.invite_url(), k.ts_short_url(), k.with_context(ts_sms_short=True).invite_url()
+raw_e = long1.split('?d=', 1)[1] if '?d=' in long1 else ''
+raw_s = short1.rsplit('/', 1)[1]
+check('K01 outside a send window every link is the plain one (panel pages, copy buttons, QR codes, exports)',
+      '?d=' not in plain_long and plain_short.count('/') == 4 and k.invite_url() == plain_long and k.ts_short_url() == plain_short,
+      (plain_long[-20:], plain_short[-20:]))
+check('K02 inside a window: the e-mail link carries ?d=<secret>, the SMS short link /<secret>; 22+ url-safe characters, one '
+      'per channel', re.fullmatch(r'[A-Za-z0-9_-]{22,}', raw_e) and re.fullmatch(r'[A-Za-z0-9_-]{22,}', raw_s) and raw_e != raw_s
+      and short1b == short1, (len(raw_e), len(raw_s)))
+env.flush_all()
+env.cr.execute('SELECT count(*) FROM ts_assignment t WHERE t::text LIKE %s OR t::text LIKE %s', ['%' + raw_s + '%', '%' + raw_e + '%'])
+check('K03 only digests are stored (no column of the invitation holds a secret)',
+      env.cr.fetchone()[0] == 0 and k.dlv_sms_hash == dlv_digest(raw_s) and k.dlv_email_hash == dlv_digest(raw_e))
+check('K04 the secret proves its own channel only; anything else proves nothing',
+      k.ts_dlv_channel(raw_s) == 'sms' and k.ts_dlv_channel(raw_e) == 'email' and k.ts_dlv_channel('x' * 22) is None
+      and k.ts_dlv_channel('') is None and k.ts_dlv_channel(raw_s + '/') is None and a1.ts_dlv_channel(raw_s) is None)
+
+
+def _render_sms(self):
+    return bool(self.ts_short_url())
+
+
+with patch.object(SmsAsg, '_ts_send_invite_sms', lambda self: _render_sms(self) and False):
+    k._ts_send_invite_sms()
+check('K05 a message that did not go out keeps the previous secret valid', k.ts_dlv_channel(raw_s) == 'sms')
+with patch.object(SmsAsg, '_ts_send_invite_sms', lambda self: _render_sms(self)):
+    k._ts_send_invite_sms()
+check('K06 a new message replaces the secret of its channel (the older SMS link then gets a code); e-mail unchanged',
+      k.ts_dlv_channel(raw_s) is None and k.ts_dlv_channel(raw_e) == 'email')
+with k._ts_dlv_window():
+    s_in = env['sms.sms'].sudo().create({'number': PH['k'], 'body': 'x'})
+s_out = env['sms.sms'].sudo().create({'number': PH['k'], 'body': 'y'})
+check('K07 an SMS written inside a send window is masked in the Kavenegar log (kv_secret); others are not',
+      s_in.kv_secret and not s_out.kv_secret)
+(s_in | s_out).unlink()
+rec = logging.LogRecord('werkzeug', logging.INFO, '', 0, '%s - - "%s" 302 -', (
+    '1.2.3.4', 'GET /i/abcdabcdabcd/%s HTTP/1.1 GET /invite/tok?d=%s' % (raw_s, raw_e)), None)
+_RedactSecrets().filter(rec)
+check('K08 the access log line never keeps a secret (/i/<code>/*** and d=***)',
+      raw_s not in rec.getMessage() and raw_e not in rec.getMessage() and '/i/abcdabcdabcd/***' in rec.getMessage()
+      and 'd=***' in rec.getMessage(), rec.getMessage()[-60:])
+
+# ================================================================ N. who may be signed in without a code
+from odoo.addons.ts_onboard.controllers.flow import link_user, phone_only, made_here, only_this_invitation, eot_activity
+un, made = link_user(env, 'sms', PH['n'])
+check('N01 an SMS secret for a number nobody holds: a new phone-only account (made)', un and made and phone_only(un, PH['n']))
+un2, made2 = link_user(env, 'sms', PH['n'])
+check('N02 ...the same number again: that phone-only account, not made again', un2 == un and not made2)
+ue_ph = puser(PH['e'])
+check('N03 an e-mail account that holds the number is never signed in without a code',
+      link_user(env, 'sms', PH['e']) == (None, False) and not phone_only(ue_ph, PH['e']))
+from odoo.addons.ts_sms.controllers.signup import create_phone_user
+us = create_phone_user(env, PH['s'])
+check('N04 a phone-only account without eot.ir activity qualifies', phone_only(us, PH['s']) and not eot_activity(us))
+eot_site = env['website'].sudo().search([('id', '!=', env.ref('ts_website.website_ts').id)], order='id', limit=1)   # eot.ir
+assert eot_site, 'no other website'
+fx = False
+try:
+    with env.cr.savepoint():
+        visitor = env['website.visitor'].sudo().create({'access_token': '%d' % us.partner_id.id, 'website_id': eot_site.id})
+        env.flush_all()          # the visitor of this account (a signed-in visitor's token is its partner id)
+        env.cr.execute('UPDATE website_visitor SET partner_id = %s WHERE id = %s', [us.partner_id.id, visitor.id])
+        env.invalidate_all()
+        fx = bool(visitor.partner_id == us.partner_id)
+        check('N05 ...but not once it has eot.ir activity (a visit of eot.ir as this account): then a code',
+              fx and eot_activity(us) and not phone_only(us, PH['s']) and link_user(env, 'sms', PH['s']) == (None, False),
+              (fx, visitor.partner_id.id))
+        raise UserError('roll back the visit')
+except UserError:
+    pass
+check('N05b an account bound to another website (eot.ir) is never signed in without a code',
+      not eot_activity(us) and (us.sudo().write({'website_id': eot_site.id}) or True) and eot_activity(us) and not phone_only(us, PH['s']))
+uxb = U.create({'name': 'onb2 uxb', 'login': 'onb2.uxb.k@example.invalid', 'email': 'onb2.uxb.k@example.invalid',
+                'group_ids': [(6, 0, [portal.id])]})
+uu, made_u = link_user(env, 'email', 'onb2.u_b.k@example.invalid')
+check('N06 e-mail: «_» is not a wildcard (onb2.u_b… never finds onb2.uxb…); an address without an account gets a new one',
+      uu and made_u and uu != uxb and uu.login == 'onb2.u_b.k@example.invalid', uu.login if uu else None)
+check('N07 an address that already has an account (any letter case) is never signed in without a code',
+      link_user(env, 'email', 'ONB2.UXB.K@example.invalid') == (None, False)
+      and link_user(env, 'email', 'onb2.u_b.k@example.invalid') == (None, False))
+am = A.create({'workspace_id': wcl.id, 'instrument_id': adult.id, 'invitee_name': 'ساخته onb2'})
+am.action_accept(uu, share=True)
+am.write({'ts_account_made': True})
+check('N08 the account the flow made for this invitation, holding nothing else, counts as «made here» (moments ago too)',
+      only_this_invitation(uu, am) and made_here(uu, am) and made_here(uu, am, minutes=60))
+env.flush_all()
+env.cr.execute("UPDATE res_users SET create_date = now() - interval '2 hours' WHERE id = %s", [uu.id])
+env.invalidate_all()
+check('N09 ...not «moments ago» after an hour', made_here(uu, am) and not made_here(uu, am, minutes=60))
+am2 = A.create({'workspace_id': wcl.id, 'instrument_id': adult.id, 'invitee_name': 'دومی onb2'})
+am2.action_accept(uu, share=True)
+check('N10 ...and not once it holds another invitation', not only_this_invitation(uu, am) and not made_here(uu, am))
 
 # ================================================================ M. who matches the invitation
 ua, ub = puser(PH['a']), puser()
@@ -110,6 +214,9 @@ check('M01 the SMS number: its holder matches, another account does not',
 check('M02 the e-mail address: its account matches (any letter case), another does not',
       a2.ts_contact_matches(ue) is True and a2.ts_contact_matches(ub) is False)
 check('M03 a link without a number or address checks nothing (None)', a4.ts_contact_matches(ub) is None)
+from odoo.addons.ts_sms.controllers.signup import mask_mobile
+check('M04 a known number is shown by its last four digits only («•••• ۴۳۸۱»)', mask_mobile(PH['a']) == '•••• ۴۳۸۱',
+      mask_mobile(PH['a']))
 
 # ================================================================ S. short codes
 from odoo.addons.ts_brand.models.short import CODE_RE
@@ -124,20 +231,22 @@ R = env['ts.rate.hit']
 key = 'test:onb2:%d' % a4.id
 oks = [R.ts_hit(key, 3, 60) for _ in range(5)]
 check('R01 a key is let through up to the limit, then refused', oks == [True, True, True, False, False], oks)
-with env.registry.cursor() as c2:       # hits live in their own committed transaction (a 404 must still count)
-    c2.execute('UPDATE ts_rate_hit SET at = at - interval %s WHERE key = %s', ['2 minutes', key])
+env.cr.execute('UPDATE ts_rate_hit SET at = at - interval %s WHERE key = %s', ['2 minutes', key])
 check('R02 after the window the key is let through again', R.ts_hit(key, 3, 60))
 key2 = 'test:onb2:rb:%d' % a4.id
-try:
-    with env.cr.savepoint():
-        R.ts_hit(key2, 1, 60)
-        raise ValueError('the request fails after the lookup (an unknown code answers 404)')
-except ValueError:
-    pass
-check('R03 a hit counts even when the request itself is rolled back (guessing unknown codes is slowed down too)',
-      not R.ts_hit(key2, 1, 60))
-with env.registry.cursor() as c2:
-    c2.execute("DELETE FROM ts_rate_hit WHERE key LIKE 'test:onb2:%%'")
+second = []
+
+
+def _no_second_cursor(*a, **kw):
+    second.append(1)
+    raise AssertionError('a second cursor')
+
+
+with patch.object(type(env.registry), 'cursor', _no_second_cursor):
+    R.ts_hit(key2, 1, 60)
+check('R03 a hit is written in the request\'s own transaction (no second cursor; a miss answers its 404 inside the request '
+      'and is committed with the hit)', not second and R.search_count([('key', '=', key2)]) == 1 and not R.ts_hit(key2, 1, 60))
+env.cr.execute("DELETE FROM ts_rate_hit WHERE key LIKE 'test:onb2:%%'")
 camp = None
 try:
     with env.cr.savepoint():
@@ -146,7 +255,7 @@ try:
         a_c = A.create({'workspace_id': wcl.id, 'instrument_id': adult.id, 'invitee_name': 'کلاس onb2', 'campaign_id': camp.id})
 except Exception as e:      # noqa: BLE001 - reported by the check below
     camp, a_c = None, str(e)[:120]
-check('D06 an invitation made by joining an open link or class code is «campaign» (no proof, the ordinary sign-in)',
+check('D06 an invitation made by joining an open link or class code is «campaign» (no message, the ordinary sign-in)',
       camp and a_c.delivered_via == 'campaign' and a_c.ts_proof() == (None, None), a_c if not camp else a_c.delivered_via)
 
 # ================================================================ C. minors on one screen
@@ -169,6 +278,8 @@ check('C04 the POST without the required tick is refused; with it, the consent c
       consent_from({}, A.new({'workspace_id': wcl.id, 'instrument_id': adult.id, 'invitee_name': 'x', 'client_id': minor.id})) == 'guardian'
       and consent_from({'guardian_confirm': '1', 'share': '1'},
                        A.new({'workspace_id': wcl.id, 'instrument_id': adult.id, 'invitee_name': 'x', 'client_id': minor.id}))['assent'])
+check('C05 «این دستگاه شخصی من است» travels with the consent (binding for 30 days only when ticked)',
+      consent_from({'personal': '1'}, a4)['personal'] and not consent_from({}, a4)['personal'])
 
 # ================================================================ Q. the scope of a session for one invitation
 from odoo.addons.ts_onboard.models.ir_http import scope_allows
@@ -179,15 +290,17 @@ other = A.create({'workspace_id': wcl.id, 'instrument_id': adult.id, 'invitee_na
 sc = {'aid': aq.id, 'uid': uq.id, 'phone': PH['c']}
 ok_paths = ['/invite/%s' % aq.token, '/invite/%s/accept' % aq.token, '/take/%s' % tq.access_token,
             '/take/%s/answer' % tq.access_token, '/take/%s/task/start' % tq.access_token, '/my/assessments/%s' % tq.id,
-            '/my/assessments/%s/pdf' % tq.id, '/i/%s' % aq.short_code, '/web/assets/1/web.assets_frontend.min.css',
-            '/web/session/logout', '/signup', '/signup/verify']
+            '/my/assessments/%s/pdf' % tq.id, '/i/%s' % aq.short_code, '/i/%s/%s' % (aq.short_code, 'x' * 22),
+            '/web/assets/1/web.assets_frontend.min.css', '/web/session/logout', '/signup', '/signup/verify']
 bad_paths = ['/my', '/my/assessments', '/my/account', '/my/workspaces', '/my/workspaces/%s' % wcl.id,
              '/invite/%s' % other.token, '/i/%s' % other.short_code, '/take/x%s' % tq.access_token[1:],
              '/my/assessments/%s/share' % tq.id, '/my/assessments/%s' % (tq.id + 100000), '/web', '/odoo', '/assessments',
-             '/start', '/', '/my/assessments/battery/%s' % other.id, '/web/login']
+             '/start', '/', '/my/assessments/battery/%s' % other.id, '/web/login', '/websocket',
+             '/web/image/res.partner/%s/avatar_128' % uq.partner_id.id, '/web/dataset/call_kw', '/web/session/get_session_info',
+             '/json/2/res.partner/search_read', '/mail/data', '/web/content/1', '/contactus']
 check('Q01 a scoped session reaches its invitation, its player, its own result, assets, sign-in and sign-out',
       all(scope_allows(env, sc, p) for p in ok_paths), [p for p in ok_paths if not scope_allows(env, sc, p)])
-check('Q02 ...and nothing else: /my, other invitations, panels, the back office, the catalog',
+check('Q02 ...and nothing else: /my, other invitations, panels, the back office, JSON, images, the websocket, pages',
       not any(scope_allows(env, sc, p) for p in bad_paths), [p for p in bad_paths if scope_allows(env, sc, p)])
 check('Q03 a scope whose invitation went to another account allows only the open pages',
       not scope_allows(env, dict(sc, uid=ub.id), '/take/%s' % tq.access_token) and scope_allows(env, dict(sc, uid=ub.id), '/signup'))
@@ -228,6 +341,7 @@ check('G07 the ledger gets the start consent at the claim (service + research), 
       sorted(kinds) == ['research', 'service'], kinds)
 check('G08 a second claim does nothing', not g.ts_guest_claim(puser()) and g.user_id == uc)
 
+
 # clean-up: 48 hours after the last activity, guest rows only
 def mk_guest(hours_ago):
     at = Att.create({'user_id': pub.id, 'instrument_id': starter.id, 'version_id': starter.current_version_id.id,
@@ -237,6 +351,8 @@ def mk_guest(hours_ago):
     env.flush_all()      # raw SQL below: the ORM's pending writes first (they would overwrite it later)
     env.cr.execute('UPDATE ts_attempt SET ts_guest_seen = %s WHERE id = %s', [fields.Datetime.now() - timedelta(hours=hours_ago), at.id])
     return at
+
+
 old, young = mk_guest(49), mk_guest(47)
 normal = Att.create({'user_id': uc.id, 'instrument_id': starter.id, 'version_id': starter.current_version_id.id})
 env.flush_all()
@@ -251,26 +367,36 @@ check('G10 ...and keeps a younger guest attempt, a claimed one and every ordinar
       young.exists() and g.exists() and normal.exists())
 
 # ================================================================ F. funnel events (no personal data)
+from odoo.addons.ts_onboard.models.funnel import is_bot
 F = env['ts.funnel.event']
-MAGIC = {'id', 'create_date', 'create_uid', 'write_date', 'write_uid', 'display_name'}
+MAGIC = {'id', 'display_name'}
 fields_f = set(F._fields) - MAGIC
-check('F01 a funnel row holds the step, the kind of entry, instrument / invitation, a salted hash, the website and the time; '
-      'no phone, IP or name', fields_f == {'step', 'entry', 'instrument_id', 'assignment_id', 'session_hash', 'website_id'},
+check('F01 a funnel row holds only the step, the channel, the instrument, a salted hash, the day and the hour; no invitation, '
+      'account, website, address or create/write user', fields_f == {'step', 'entry', 'instrument_id', 'session_hash', 'day', 'hour'},
       sorted(fields_f))
-check('F05 the kinds of entry: guest, signed in, and how the invitation came (sms, email, manual, campaign)',
+check('F05 the channels: guest, signed in, and how the invitation came (sms, email, manual, campaign)',
       set(dict(F._fields['entry'].selection)) == {'guest', 'user', 'sms', 'email', 'manual', 'campaign'})
 check('F02 the steps are the nine of the plan', set(dict(F._fields['step'].selection)) == {
     'start_view', 'start', 'q1', 'finish', 'gate_view', 'gate_signed_in', 'report_view', 'invite_view', 'invite_accept'})
 f_old = F.sudo().create({'step': 'start', 'session_hash': 'onb2old'})
 f_new = F.sudo().create({'step': 'start', 'session_hash': 'onb2new'})
-env.flush_all()
-env.cr.execute("UPDATE ts_funnel_event SET create_date = now() - interval '181 days' WHERE id = %s", [f_old.id])
-env.invalidate_all()
+f_old.write({'day': fields.Date.today() - timedelta(days=181)})
 F._cron_retention()
 check('F03 the retention cron removes rows older than 180 days only', not f_old.exists() and f_new.exists())
 act = env.ref('ts_onboard.ts_funnel_event_action')
 check('F04 the back office pivot/list is for platform managers only',
       'pivot' in act.view_mode and env.ref('ts_core.group_ts_manager') in env.ref('ts_onboard.menu_ts_funnel').group_ids)
+
+
+class _Req:
+    def __init__(self, ua):
+        self.headers = {'User-Agent': ua} if ua is not None else {}
+
+
+check('F06 obvious robots are not counted (empty agent, crawlers, link previews, command-line clients); browsers are',
+      is_bot(_Req('')) and is_bot(_Req(None)) and is_bot(_Req('Mozilla/5.0 (compatible; Googlebot/2.1)'))
+      and is_bot(_Req('TelegramBot (like TwitterBot)')) and is_bot(_Req('WhatsApp/2.23')) and is_bot(_Req('curl/8.0'))
+      and not is_bot(_Req('Mozilla/5.0 (Linux; Android 14) AppleWebKit/537.36 Chrome/126 Mobile Safari/537.36')))
 
 # ================================================================ H. fairness questions at the end
 from odoo.addons.ts_hire.controllers.public import fair_due

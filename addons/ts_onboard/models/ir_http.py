@@ -1,26 +1,35 @@
-"""O2: a session scoped to ONE invitation, enforced centrally (talentsearch.ir only; eot.ir never sees such a session).
+"""O2: a session scoped to ONE invitation, enforced centrally and failing closed.
 
-When an invitation reached the person by SMS (or e-mail) and they tap «موافقم و شروع می‌کنم» without being signed in, they
-are signed in as the account of that number (or address) — but only for that invitation: the session carries
-`ts_scope = {aid, uid, phone}`. Before every request (`_pre_dispatch`, after authentication) a scoped session may only
-reach:
-  * this invitation (/invite/<its token>[/...], its short link /i/<its code>);
-  * the player of its attempts (/take/<token>[/...], the ts_tasks endpoints live under it);
-  * the participant's own result of those attempts (/my/assessments/<id>[/pdf|/unshare], /my/assessments/battery/<id>[/...]);
-  * static assets, sign-out, and the sign-in (/signup, /login).
-Anything else answers 303 to the sign-in with the number shown masked («۰۹۱۲***۴۵۶۷»); after the code the session is an
-ordinary full session. A session whose user no longer matches the scope drops it.
+When an invitation's own message (SMS or e-mail, with its delivery secret) is opened and «موافقم و شروع می‌کنم» tapped
+without being signed in, the person is signed in as the account of that number (or address) — but only for that
+invitation: the session carries `ts_scope = {aid, uid, phone}`. Before every request (`_pre_dispatch`, after
+authentication) and before a website page or attachment is served (`_serve_fallback`), a scoped session:
+  * seen on any other website than talentsearch.ir (eot.ir), or where the website cannot be told, is signed out at once
+    (the session is destroyed): a GET is sent to the same address as a visitor, anything else answers 403;
+  * on talentsearch.ir may only reach
+      - this invitation (/invite/<its token>[/...], its short links /i/<its code>[/<secret>]);
+      - the player of its attempts (/take/<token>[/...], the ts_tasks endpoints live under it);
+      - the participant's own result of those attempts (/my/assessments/<id>[/pdf|/unshare],
+        /my/assessments/battery/<id>[/...]);
+      - static assets (never /web/image or /websocket), sign-out, and the sign-in (/signup, /login).
+    Any other GET page answers 303 to the sign-in with the number shown masked («•••• ۴۵۶۷»); after the code the session
+    is an ordinary full session. Anything else (JSON-RPC, /json, /mail, /web/dataset, /web/session/*, a POST) answers 403.
+A session whose user no longer matches the scope drops it.
 
 Every response of the invitation, player, guest and short-link families carries `Referrer-Policy: no-referrer` (the token
 or code in the address must not leak to another site) and `Cache-Control: no-store` (no shared cache or browser history
-copy of a personal page)."""
+copy of a personal page).
+
+The access log never keeps a delivery secret: the werkzeug request line is redacted (/i/<code>/*** and d=***)."""
 import logging
+import re
 from urllib.parse import quote
 
 import werkzeug.exceptions
 
 from odoo import models
 from odoo.http import request
+from odoo.http.session import logout as session_logout
 
 from odoo.addons.ts_core.safe_url import local_path
 from odoo.addons.ts_panel.models.security import on_ts_site
@@ -29,10 +38,31 @@ _logger = logging.getLogger(__name__)
 SCOPE_KEY = 'ts_scope'
 KNOWN_KEY = 'ts_auth_known'        # ts_sms.controllers.signup.KNOWN_KEY
 OTHER_KEY = 'ts_auth_other'        # «شمارهٔ دیگری دارم» chosen: the known number is no longer offered in this session
-STATIC = ('/web/assets/', '/web/image/', '/web/static/', '/website/static/', '/web/webclient/translations',
-          '/website/translations', '/web/manifest.webmanifest', '/favicon.ico', '/robots.txt', '/websocket')
+STATIC = ('/web/assets/', '/web/static/', '/website/static/', '/web/webclient/translations',
+          '/website/translations', '/web/manifest.webmanifest', '/favicon.ico', '/robots.txt')
 OPEN = {'/signup', '/signup/send', '/signup/verify', '/login', '/web/session/logout'}
 NO_REFERRER = ('/invite/', '/take/', '/i/', '/j/', '/c/', '/start')
+_SECRET_RE = re.compile(r'(/i/[a-z0-9]{8,12}/)[A-Za-z0-9_-]{22,64}|([?&]d=)[A-Za-z0-9_-]{22,64}')
+
+
+class _RedactSecrets(logging.Filter):
+    """Request lines of the access log: the delivery secret of an invitation link becomes ***."""
+
+    def filter(self, record):
+        try:
+            msg = record.getMessage()
+            if '/i/' in msg or 'd=' in msg:
+                red = _SECRET_RE.sub(lambda m: (m.group(1) or m.group(2)) + '***', msg)
+                if red != msg:
+                    record.msg, record.args = red, ()
+        except Exception:        # noqa: BLE001 - a log line must never break a request
+            pass
+        return True
+
+
+_wz = logging.getLogger('werkzeug')
+if not any(isinstance(f, _RedactSecrets) for f in _wz.filters):
+    _wz.addFilter(_RedactSecrets())
 
 
 def scope_allows(env, scope, path):
@@ -45,7 +75,7 @@ def scope_allows(env, scope, path):
     parts = [p for p in path.split('/') if p]
     if len(parts) >= 2 and parts[0] == 'invite':
         return parts[1] == a.token
-    if len(parts) == 2 and parts[0] == 'i':
+    if len(parts) in (2, 3) and parts[0] == 'i':
         return bool(a.short_code) and parts[1] == a.short_code
     attempts = a.ts_battery_attempts() if hasattr(a, 'ts_battery_attempts') else a.attempt_id
     if len(parts) >= 2 and parts[0] == 'take':
@@ -57,16 +87,27 @@ def scope_allows(env, scope, path):
     return False
 
 
+def _forbidden():
+    werkzeug.exceptions.abort(request.make_response('403 Forbidden', headers=[('Content-Type', 'text/plain')], status=403))
+
+
 class IrHttpScope(models.AbstractModel):
     _inherit = 'ir.http'
 
     @classmethod
     def _pre_dispatch(cls, rule, args):
         super()._pre_dispatch(rule, args)
-        cls._ts_scope_guard()
+        kind = (getattr(getattr(rule, 'endpoint', None), 'routing', None) or {}).get('type', 'http')
+        cls._ts_scope_guard(kind)
 
     @classmethod
-    def _ts_scope_guard(cls):
+    def _serve_fallback(cls):
+        # website pages, redirects and attachments have no route: the same rule as every route (risk review LOW)
+        cls._ts_scope_guard('http')
+        return super()._serve_fallback()
+
+    @classmethod
+    def _ts_scope_guard(cls, kind='http'):
         sess = request.session
         scope = sess.get(SCOPE_KEY)
         if not scope:
@@ -74,9 +115,15 @@ class IrHttpScope(models.AbstractModel):
         if not sess.uid or sess.uid != scope.get('uid'):
             sess.pop(SCOPE_KEY, None)        # signed out, or signed in as someone else: the scope is over
             return
-        if not on_ts_site():
-            return
         hr = request.httprequest
+        page = kind == 'http' and hr.method in ('GET', 'HEAD')
+        if not on_ts_site():
+            # eot.ir (or a website that cannot be told): a session for one invitation never works here — destroyed
+            session_logout(sess, keep_db=True)
+            _logger.info('ts_onboard: a session scoped to one invitation reached another website; signed out')
+            if page:
+                werkzeug.exceptions.abort(request.redirect(local_path(hr.full_path.rstrip('?'), '/'), code=303, local=True))
+            _forbidden()
         try:
             allowed = scope_allows(request.env, scope, hr.path)
         except Exception:        # noqa: BLE001 - a scope that cannot be checked allows nothing
@@ -84,10 +131,11 @@ class IrHttpScope(models.AbstractModel):
             allowed = False
         if allowed:
             return
+        if not page:
+            _forbidden()
         if scope.get('phone') and not sess.get(OTHER_KEY):
             sess[KNOWN_KEY] = scope['phone']
-        target = hr.full_path if hr.method in ('GET', 'HEAD') else hr.path
-        nxt = local_path(target.rstrip('?'), '/my')
+        nxt = local_path(hr.full_path.rstrip('?'), '/my')
         werkzeug.exceptions.abort(request.redirect('/signup?next=%s' % quote(nxt, safe='/'), code=303, local=True))
 
     @classmethod

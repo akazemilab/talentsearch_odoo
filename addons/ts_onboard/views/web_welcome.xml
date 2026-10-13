@@ -71,6 +71,7 @@
                                     <form t-if="mode == 'continue'" t-attf-action="/invite/#{a.token}/accept" method="post" class="ts-form tso-form" id="tso-form">
                                         <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
                                         <input type="hidden" name="welcome" t-att-value="consent_version"/>
+                                        <input t-if="dlv" type="hidden" name="d" t-att-value="dlv"/>
                                         <button type="submit" class="ts-btn ts-btn--primary ts-btn--lg ts-btn--block">ادامه</button>
                                         <p class="ts-hint tso-after">اگر در دستگاه یا مرورگر دیگری شروع کرده‌اید، برای امنیت کدی به شمارهٔ همین دعوت می‌فرستیم.</p>
                                     </form>
@@ -84,6 +85,8 @@
                                         <form t-attf-action="/invite/#{a.token}/accept" method="post" class="ts-form tso-form" id="tso-form">
                                             <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
                                             <input type="hidden" name="welcome" t-att-value="consent_version"/>
+                                            <!-- the delivery secret of the system's own message (never in a panel page) -->
+                                            <input t-if="dlv" type="hidden" name="d" t-att-value="dlv"/>
                                             <section class="tso-sees" aria-labelledby="tso-sees-h">
                                                 <h2 class="h6" id="tso-sees-h"><t t-out="org"/> چه چیزی می‌بیند؟</h2>
                                                 <ul class="ts-list-check tso-lines" t-if="pos">
@@ -148,6 +151,11 @@
                                                 <input type="checkbox" name="guardian_confirm" value="1" required="required"/>
                                                 <span><t t-out="guardian_text"/> <span class="ts-hint">(لازم)</span></span>
                                             </label>
+                                            <!-- the same choice as the sign-in page (S-AUTH): binds the invitation to this browser for 30 days -->
+                                            <label class="ts-check tsa-personal tso-personal" id="tso-personal"><input type="checkbox" name="personal" value="1" checked="checked" aria-describedby="tso-personal-h"/>
+                                                <span>این دستگاه شخصی من است</span></label>
+                                            <p t-if="tu" id="tso-personal-h" class="ts-hint tsa-personal__hint">تا ۳۰ روز وارد می‌مانی. روی رایانهٔ مدرسه یا گوشی مشترک تیک را بردار تا با بستن مرورگر از حساب خارج شوی.</p>
+                                            <p t-else="" id="tso-personal-h" class="ts-hint tsa-personal__hint">تا ۳۰ روز وارد می‌مانید. روی رایانه یا گوشی مشترک تیک را بردارید تا با بستن مرورگر از حساب خارج شوید.</p>
                                             <p t-if="error" class="ts-form__error" role="alert" t-out="error"/>
                                             <button type="submit" class="ts-btn ts-btn--primary ts-btn--lg ts-btn--block tso-go"><t t-if="need['assent']">من هم موافقم</t><t t-else="">موافقم و شروع می‌کنم</t></button>
                                             <p class="ts-hint tso-after"><t t-if="need['assent'] and tu">این دکمه یعنی خودت هم موافقی؛ هر وقت بخواهی می‌توانی دست نگه داری.</t><t t-elif="need['assent']">این دکمه یعنی خودتان هم موافقید؛ هر وقت بخواهید می‌توانید دست نگه دارید.</t><t t-elif="tu">با این دکمه رضایتت ثبت می‌شود و پاسخ‌دادن شروع می‌شود.</t><t t-else="">با این دکمه رضایت شما ثبت می‌شود و پاسخ‌دادن شروع می‌شود.</t></p>
@@ -199,6 +207,32 @@
         </field>
     </record>
 
+    <!-- after a code for another number than the invitation's account (controllers/auth.py, risk review HIGH 2): nothing
+         moved; one calm page says where the invitation is and how to get back to it -->
+    <record id="tpl_elsewhere" model="ir.ui.view">
+        <field name="name">TS onb2: the invitation stays in its own account</field>
+        <field name="type">qweb</field>
+        <field name="key">ts_onboard.elsewhere</field>
+        <field name="website_id" ref="ts_website.website_ts"/>
+        <field name="arch" type="xml">
+            <t t-name="ts_onboard.elsewhere">
+                <t t-call="website.layout" additional_title.f="دعوت در حساب دیگری است">
+                    <div id="wrap" class="ts-page">
+                        <section class="ts-section">
+                            <div class="ts-container ts-narrow" id="tso-elsewhere">
+                                <h1>دعوت در حساب دیگری است</h1>
+                                <p class="ts-lead">با شمارهٔ <bdi dir="ltr" class="ts-bdi" t-out="me or '—'"/> وارد شدید. این حساب با حسابی که دعوت در آن باز شد یکی نیست.</p>
+                                <p t-if="note['kind'] == 'email'">دعوتی که با ایمیل <bdi dir="ltr" class="ts-bdi" t-out="note['masked']"/> باز کردید، با پاسخ‌هایش در همان حساب می‌ماند و چیزی از آن جابه‌جا نشده است. برای ادامه، پیوند همان ایمیل را دوباره باز کنید.</p>
+                                <p t-elif="note['kind'] == 'phone'">دعوتی که برای شمارهٔ <bdi dir="ltr" class="ts-bdi" t-out="note['masked']"/> فرستاده شد، با پاسخ‌هایش در حساب همان شماره می‌ماند و چیزی از آن جابه‌جا نشده است. برای ادامه، با همان شماره وارد شوید.</p>
+                                <p t-else="">دعوتی که باز کردید، با پاسخ‌هایش در حساب خودش می‌ماند و چیزی از آن جابه‌جا نشده است. برای ادامه، پیوند دعوت را دوباره باز کنید.</p>
+                                <p><a href="/my" class="ts-btn ts-btn--primary ts-btn--lg">رفتن به حساب من</a></p>
+                            </div>
+                        </section>
+                    </div>
+                </t>
+            </t>
+        </field>
+    </record>
     <!-- ts_org.share_box with share_open: the list is shown open under a plain heading (the welcome screen already folds
          it behind «بیشتر»; a second toggle inside would hide it twice) -->
     <record id="share_box_open" model="ir.ui.view">
