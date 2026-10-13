@@ -81,10 +81,12 @@ class TsTaskNormCareer(models.Model):
 
     @api.model
     def _ts_rebuild(self):
-        """Hiring norms stay built from hiring and panel takes only: free career task attempts are left out."""
+        """Hiring norms stay built from hiring and panel takes only: free career task attempts, a member's own try-out
+        and sample reports (ts_preview, onb3) and voided attempts are all left out."""
         At = self.env['ts.attempt'].sudo()
         vals = {}
-        for at in At.search([('state', '=', 'done'), ('task_result_json', '!=', False), ('career_run_id', '=', False)]):
+        for at in At.search([('state', '=', 'done'), ('task_result_json', '!=', False), ('career_run_id', '=', False),
+                             ('ts_preview', '=', False), ('voided', '=', False)]):
             res = json.loads(at.task_result_json or '{}')
             for b, r in (res.get('blocks') or {}).items():
                 if r.get('raw') is not None and not r.get('practice_only'):
