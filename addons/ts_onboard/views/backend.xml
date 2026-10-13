@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- O3: the guest flag on the instrument form -->
+    <record id="ts_instrument_view_form_guest" model="ir.ui.view">
+        <field name="name">ts.instrument.form.guest</field>
+        <field name="model">ts.instrument</field>
+        <field name="inherit_id" ref="ts_assessment.ts_instrument_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='purpose']" position="after">
+                <field name="ts_guest_ok"/>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- funnel events (no personal data), EOT team only -->
+    <record id="ts_funnel_event_view_list" model="ir.ui.view">
+        <field name="name">ts.funnel.event.list</field>
+        <field name="model">ts.funnel.event</field>
+        <field name="arch" type="xml">
+            <list create="false" edit="false" delete="false">
+                <field name="create_date" string="زمان"/>
+                <field name="step"/>
+                <field name="instrument_id"/>
+                <field name="assignment_id"/>
+                <field name="session_hash"/>
+                <field name="website_id"/>
+            </list>
+        </field>
+    </record>
+    <record id="ts_funnel_event_view_pivot" model="ir.ui.view">
+        <field name="name">ts.funnel.event.pivot</field>
+        <field name="model">ts.funnel.event</field>
+        <field name="arch" type="xml">
+            <pivot string="قیف ورود">
+                <field name="step" type="row"/>
+                <field name="create_date" interval="week" type="col"/>
+            </pivot>
+        </field>
+    </record>
+    <record id="ts_funnel_event_view_search" model="ir.ui.view">
+        <field name="name">ts.funnel.event.search</field>
+        <field name="model">ts.funnel.event</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="step"/>
+                <field name="instrument_id"/>
+                <filter name="last30" string="۳۰ روز اخیر" domain="[('create_date', '&gt;=', (context_today() - relativedelta(days=30)).strftime('%Y-%m-%d'))]"/>
+                <filter name="guest" string="سنجهٔ بدون حساب" domain="[('step', 'in', ('start_view', 'start', 'q1', 'finish', 'gate_view', 'gate_signed_in', 'report_view'))]"/>
+                <filter name="invite" string="دعوت‌ها" domain="[('step', 'in', ('invite_view', 'invite_accept'))]"/>
+                <group>
+                    <filter name="by_step" string="گام" context="{'group_by': 'step'}"/>
+                    <filter name="by_inst" string="سنجه" context="{'group_by': 'instrument_id'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+    <record id="ts_funnel_event_action" model="ir.actions.act_window">
+        <field name="name">قیف ورود (بدون دادهٔ شخصی)</field>
+        <field name="res_model">ts.funnel.event</field>
+        <field name="view_mode">pivot,list</field>
+        <field name="context">{'search_default_last30': 1}</field>
+        <field name="help" type="html"><p>هر ردیف یک گام از مسیر ورود است: بدون شماره، نشانی شبکه یا نام. ردیف‌ها پس از ۱۸۰ روز پاک می‌شوند.</p></field>
+    </record>
+    <menuitem id="menu_ts_funnel" name="قیف ورود" parent="ts_assessment.menu_ts_assessments" action="ts_funnel_event_action"
+              sequence="40" groups="ts_core.group_ts_manager"/>
+</odoo>

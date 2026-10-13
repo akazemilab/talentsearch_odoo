@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="1">
+    <record id="cron_guest_cleanup" model="ir.cron">
+        <field name="name">استعدادیاب: پاک‌کردن پاسخ‌های مهمان پس از ۴۸ ساعت</field>
+        <field name="model_id" ref="ts_assessment.model_ts_attempt"/>
+        <field name="state">code</field>
+        <field name="code">model._cron_guest_cleanup()</field>
+        <field name="interval_number">1</field>
+        <field name="interval_type">hours</field>
+    </record>
+    <record id="cron_funnel_retention" model="ir.cron">
+        <field name="name">استعدادیاب: پاک‌کردن رویدادهای قیف پس از ۱۸۰ روز</field>
+        <field name="model_id" ref="model_ts_funnel_event"/>
+        <field name="state">code</field>
+        <field name="code">model._cron_retention()</field>
+        <field name="interval_number">1</field>
+        <field name="interval_type">days</field>
+    </record>
+</odoo>

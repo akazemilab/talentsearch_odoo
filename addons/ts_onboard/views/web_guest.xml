@@ -1,0 +1,187 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- O3: the start screen (/start, /start/<slug>). One screen: what it measures, statements, minutes, the promise, the
+         button that is the adult's consent, an unticked research box, the way for under-18s. -->
+    <record id="tpl_start" model="ir.ui.view">
+        <field name="name">TS onb2: start screen</field>
+        <field name="type">qweb</field>
+        <field name="key">ts_onboard.start</field>
+        <field name="website_id" ref="ts_website.website_ts"/>
+        <field name="arch" type="xml">
+            <t t-name="ts_onboard.start">
+                <t t-call="website.layout" additional_title="inst.ts_title()">
+                    <div id="wrap" class="ts-page">
+                        <section class="ts-section">
+                            <div class="ts-container ts-narrow tso-start">
+                                <p class="ts-tag">سنجهٔ رایگان</p>
+                                <h1 t-out="inst.ts_title()"/>
+                                <p class="ts-lead" t-out="inst.ts_intended_use()"/>
+                                <p class="tso-facts" id="tso-start-facts"><t t-out="fa(inst.active_item_count)"/> جمله<t t-call="ts_website.sep"/>حدود <t t-out="fa(inst.duration_minutes)"/> دقیقه</p>
+                                <t t-if="guest and guest.state == 'done'">
+                                    <div class="ts-card tso-card"><p>نتیجهٔ سنجه‌ای که در همین مرورگر پاسخ دادید آماده است.</p></div>
+                                    <p><a href="/start/result" class="ts-btn ts-btn--primary ts-btn--lg ts-btn--block">دیدن نتیجه</a></p>
+                                </t>
+                                <t t-elif="guest">
+                                    <div class="ts-card tso-card"><p>پاسخ‌های سنجه‌ای که شروع کرده‌اید در همین مرورگر ذخیره شده است.</p></div>
+                                    <p><a href="/start/q" class="ts-btn ts-btn--primary ts-btn--lg ts-btn--block">ادامهٔ پاسخ‌دادن</a></p>
+                                </t>
+                                <t t-elif="mine">
+                                    <p><a t-attf-href="/take/#{mine.access_token}" class="ts-btn ts-btn--primary ts-btn--lg ts-btn--block">ادامهٔ پاسخ‌دادن (<t t-out="fa(mine.progress)"/>٪)</a></p>
+                                </t>
+                                <t t-else="">
+                                    <p class="tso-promise" t-if="public">پاسخ‌ها فقط برای خودتان است؛ در پایان با شمارهٔ موبایل نتیجه را می‌بینید و نگه می‌دارید.</p>
+                                    <p class="tso-promise" t-else="">پاسخ‌ها و نتیجه فقط در حساب خودتان می‌ماند.</p>
+                                    <form t-attf-action="/start/#{inst.slug}/go" method="post" class="ts-form tso-form" id="tso-start-form">
+                                        <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                                        <label class="ts-check"><input type="checkbox" name="consent_research" value="1"/>
+                                            <span>اجازه می‌دهم پاسخ‌هایم بدون نام و به‌صورت تجمیعی برای بهبود سنجه‌ها استفاده شود. <span class="ts-hint">(اختیاری)</span></span></label>
+                                        <button type="submit" class="ts-btn ts-btn--primary ts-btn--lg ts-btn--block tso-go">۱۸ سال یا بیشتر دارم؛ موافقم و شروع می‌کنم</button>
+                                    </form>
+                                    <p class="tso-minor"><a href="/start/under-18" class="ts-btn ts-btn--quiet">کمتر از ۱۸ سال دارم</a></p>
+                                </t>
+                                <details class="tso-more" id="tso-start-more">
+                                    <summary>پیش از شروع، بیشتر بدانید</summary>
+                                    <div class="tso-more__body">
+                                        <dl class="ts-meta tso-terms">
+                                            <dt>چه کسی نتیجه را می‌بیند</dt><dd>فقط خودتان. نتیجه با هیچ مرکز یا کارفرمایی به اشتراک گذاشته نمی‌شود، مگر خودتان بعداً بفرستید.</dd>
+                                            <dt t-if="public">نگه‌داری پاسخ‌ها</dt><dd t-if="public">پاسخ‌ها در همین مرورگر و تا ۴۸ ساعت نگه داشته می‌شود. اگر در این مدت با شمارهٔ موبایل نتیجه را نگیرید، پاک می‌شود.</dd>
+                                            <dt>ذخیره و ادامه</dt><dd>هر پاسخ خودکار ذخیره می‌شود؛ هر وقت خواستید از همان‌جا ادامه می‌دهید.</dd>
+                                            <dt>محدودیت</dt><dd t-out="inst.limitations"/>
+                                            <dt>پشتیبانی</dt><dd><a href="/contact?topic=support">تماس با پشتیبانی</a><t t-call="ts_website.sep"/>اگر حالتان خوب نیست، منتظر نمانید: اورژانس ۱۱۵.</dd>
+                                        </dl>
+                                        <p class="ts-hint">نسخهٔ متن رضایت: <bdi dir="ltr" class="ts-bdi" t-out="consent_version"/><t t-call="ts_website.sep"/><a href="/privacy">حریم خصوصی</a></p>
+                                    </div>
+                                </details>
+                            </div>
+                        </section>
+                    </div>
+                </t>
+            </t>
+        </field>
+    </record>
+
+    <!-- «کمتر از ۱۸ سال دارم»: no guest attempt for minors; school or counselor -->
+    <record id="tpl_under18" model="ir.ui.view">
+        <field name="name">TS onb2: under 18</field>
+        <field name="type">qweb</field>
+        <field name="key">ts_onboard.under18</field>
+        <field name="website_id" ref="ts_website.website_ts"/>
+        <field name="arch" type="xml">
+            <t t-name="ts_onboard.under18">
+                <t t-call="website.layout" additional_title.f="کمتر از ۱۸ سال">
+                    <div id="wrap" class="ts-page">
+                        <section class="ts-section">
+                            <div class="ts-container ts-narrow">
+                                <h1>کمتر از ۱۸ سال داری؟</h1>
+                                <p class="ts-lead">سنجه‌های استعدادیاب برای کمتر از ۱۸ سال از راه مدرسه یا مشاورت انجام می‌شود؛ این‌طور ولی‌ات در جریان است و کسی هست که نتیجه را با تو بخواند.</p>
+                                <p>از مدرسه یا مشاورت بخواه از پنل استعدادیاب برایت دعوت بفرستد. دعوت با پیامک یا یک پیوند می‌رسد.</p>
+                                <p><a href="/schools" class="ts-btn ts-btn--primary">استعدادیاب برای مدرسه‌ها</a></p>
+                                <p><a href="/" class="ts-btn ts-btn--quiet">بازگشت به صفحهٔ اصلی</a></p>
+                            </div>
+                        </section>
+                    </div>
+                </t>
+            </t>
+        </field>
+    </record>
+
+    <!-- the result gate for someone already signed in (another tab): keep the result in this account -->
+    <record id="tpl_gate_signed" model="ir.ui.view">
+        <field name="name">TS onb2: result gate (signed in)</field>
+        <field name="type">qweb</field>
+        <field name="key">ts_onboard.gate_signed</field>
+        <field name="website_id" ref="ts_website.website_ts"/>
+        <field name="arch" type="xml">
+            <t t-name="ts_onboard.gate_signed">
+                <t t-call="website.layout" additional_title.f="نتیجه‌تان آماده است">
+                    <div id="wrap" class="ts-page">
+                        <section class="ts-section">
+                            <div class="ts-container ts-narrow">
+                                <h1>نتیجه‌تان آماده است.</h1>
+                                <p class="ts-lead">نتیجهٔ «<t t-out="inst.ts_title()"/>» را در حسابی که اکنون با آن وارد شده‌اید نگه دارید.</p>
+                                <form action="/start/claim" method="post" class="ts-form">
+                                    <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                                    <button type="submit" class="ts-btn ts-btn--primary ts-btn--lg ts-btn--block">دیدن نتیجه</button>
+                                </form>
+                            </div>
+                        </section>
+                    </div>
+                </t>
+            </t>
+        </field>
+    </record>
+
+    <!-- the sign-in page as the result gate (/start/result), and with a number the server holds (masked) -->
+    <record id="signup_gate" model="ir.ui.view">
+        <field name="name">ts_onboard.signup.gate</field>
+        <field name="inherit_id" ref="ts_sms.tpl_signup"/>
+        <field name="website_id" ref="ts_website.website_ts"/>
+        <field name="arch" type="xml">
+            <xpath expr="//t[@t-call='website.layout']" position="attributes">
+                <attribute name="additional_title.f"/>
+                <attribute name="additional_title">'نتیجه‌تان آماده است' if gate else 'ورود یا ثبت‌نام'</attribute>
+            </xpath>
+            <xpath expr="//div[@id='ts-auth']/h1" position="replace">
+                <h1 t-if="gate">نتیجه‌تان آماده است.</h1>
+                <h1 t-else="">ورود یا ثبت‌نام</h1>
+            </xpath>
+            <xpath expr="//p[hasclass('ts-auth__intro')]" position="replace">
+                <t t-if="gate">
+                    <p class="ts-auth__intro tso-gate-intro">شماره‌تان را بزنید تا نتیجه را ببینید و برای همیشه داشته باشید.</p>
+                    <p class="ts-hint tso-gate-inst" t-if="gate_inst">سنجه: <t t-out="gate_inst.ts_title()"/></p>
+                </t>
+                <p t-elif="known_fa" class="ts-hint ts-auth__intro">برای ادامه با یک کد پیامکی وارد می‌شوید؛ رمز عبور لازم نیست.</p>
+                <p t-else="" class="ts-hint ts-auth__intro">با شمارهٔ موبایل و یک کد پیامکی وارد می‌شوید؛ رمز عبور لازم نیست. اگر حساب ندارید، همین‌جا ساخته می‌شود.</p>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- the review page of the guest player: what happens after sending -->
+    <record id="review_guest" model="ir.ui.view">
+        <field name="name">ts_onboard.review.guest</field>
+        <field name="inherit_id" ref="ts_assessment.tpl_review"/>
+        <field name="website_id" ref="ts_website.website_ts"/>
+        <field name="priority">40</field>
+        <field name="arch" type="xml">
+            <xpath expr="//div[@id='ts-review-lock']/p[1]" position="attributes">
+                <attribute name="t-if">not guest</attribute>
+            </xpath>
+            <xpath expr="//div[@id='ts-review-lock']/p[1]" position="after">
+                <p t-if="guest"><strong>پس از ارسال، پاسخ‌ها قفل می‌شوند</strong> و با شمارهٔ موبایل نتیجه را می‌بینید و نگه می‌دارید.</p>
+            </xpath>
+            <xpath expr="//p[@id='ts-review-who']" position="attributes">
+                <attribute name="t-if">not guest</attribute>
+            </xpath>
+            <xpath expr="//p[@id='ts-review-who']" position="after">
+                <p t-if="guest" id="tso-review-who"><strong>چه کسی نتیجه را می‌بیند:</strong> فقط خودتان.</p>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- the report of a claimed guest attempt: the optional name, the next instrument, sending to a counselor -->
+    <record id="report_claimed" model="ir.ui.view">
+        <field name="name">ts_onboard.report.claimed</field>
+        <field name="inherit_id" ref="ts_assessment.tpl_report"/>
+        <field name="website_id" ref="ts_website.website_ts"/>
+        <field name="priority">40</field>
+        <field name="arch" type="xml">
+            <xpath expr="//article[hasclass('ts-doc')]" position="before">
+                <section t-if="ts_claimed" class="ts-card tso-claimed ts-noprint" id="tso-claimed" aria-labelledby="tso-claimed-h">
+                    <h2 class="h6" id="tso-claimed-h">این نتیجه در حساب شما نگه داشته شد</h2>
+                    <form t-if="ts_name_unknown" t-attf-action="/my/assessments/#{attempt.id}/name" method="post" class="ts-form tso-name">
+                        <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                        <label for="tso-name-in">نامی که روی گزارش بیاید (اختیاری)</label>
+                        <div class="tso-name__row">
+                            <input id="tso-name-in" type="text" name="name" maxlength="80" autocomplete="name" dir="auto" class="form-control"/>
+                            <button type="submit" class="ts-btn ts-btn--outline">ذخیره</button>
+                        </div>
+                    </form>
+                    <p class="tso-next">
+                        <a t-att-href="ts_next_url or '/assessments'" class="ts-btn ts-btn--outline">سنجهٔ بعدی</a>
+                        <a t-attf-href="/my/assessments/#{attempt.id}/share" class="ts-btn ts-btn--outline">فرستادن نتیجه برای مشاورتان</a>
+                    </p>
+                </section>
+            </xpath>
+        </field>
+    </record>
+</odoo>

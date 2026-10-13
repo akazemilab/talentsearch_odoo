@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- O3 entry points. Home hero: the primary action is the free starter test (release 3 redesigns the rest of the page). -->
+    <record id="home_hero_start" model="ir.ui.view">
+        <field name="name">ts_onboard.home.hero</field>
+        <field name="inherit_id" ref="ts_website.page_home_view"/>
+        <field name="website_id" ref="ts_website.website_ts"/>
+        <field name="arch" type="xml">
+            <xpath expr="//section[hasclass('ts-hero')]//div[hasclass('ts-hero__actions')]" position="replace">
+                <t t-set="ts_starter" t-value="request.env['ts.instrument'].sudo().ts_starter()"/>
+                <div class="ts-hero__actions">
+                    <t t-if="ts_starter">
+                        <a href="/start" class="ts-btn ts-btn--primary ts-btn--lg" id="tso-hero-start">شروع سنجهٔ رایگان<t t-call="ts_website.icon" ico.f="arrow-left"/></a>
+                        <a href="/panel" class="ts-btn ts-btn--quiet ts-btn--lg">ساخت پنل رایگان</a>
+                    </t>
+                    <t t-else="">
+                        <a href="/panel" class="ts-btn ts-btn--primary ts-btn--lg">ساخت پنل رایگان<t t-call="ts_website.icon" ico.f="arrow-left"/></a>
+                        <a href="/assessments#sample" class="ts-btn ts-btn--quiet ts-btn--lg">نمونهٔ گزارش</a>
+                    </t>
+                </div>
+                <p t-if="ts_starter" class="tso-hero-sub" id="tso-hero-sub">حدود <t t-out="ts_starter.ts_minutes_fa()"/> دقیقه<t t-call="ts_website.sep"/>بدون ثبت‌نام برای شروع<t t-call="ts_website.sep"/>نتیجه فقط برای خودتان</p>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- the detail page of a guest-ok instrument: «شروع سنجه» opens its start screen, no sign-in first -->
+    <record id="detail_guest_start" model="ir.ui.view">
+        <field name="name">ts_onboard.detail.guest</field>
+        <field name="inherit_id" ref="ts_assessment.tpl_detail"/>
+        <field name="website_id" ref="ts_website.website_ts"/>
+        <field name="priority">40</field>
+        <field name="arch" type="xml">
+            <xpath expr="//div[hasclass('ts-hero__actions')]" position="replace">
+                <div class="ts-hero__actions">
+                    <t t-set="open_attempt" t-value="mine.filtered(lambda a: a.state in ('consent', 'in_progress'))[:1]"/>
+                    <a t-if="open_attempt" t-attf-href="/take/#{open_attempt.access_token}" class="ts-btn ts-btn--primary">ادامهٔ پاسخ‌دهی (<t t-out="fa(open_attempt.progress)"/>٪)</a>
+                    <a t-elif="ts_guest_start" t-att-href="start_url" class="ts-btn ts-btn--primary" id="tso-detail-start">شروع سنجه</a>
+                    <form t-else="" t-att-action="start_url" method="post">
+                        <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                        <button type="submit" class="ts-btn ts-btn--primary">شروع سنجه</button>
+                    </form>
+                </div>
+            </xpath>
+            <xpath expr="//p[@t-if='request.env.user._is_public()']" position="after">
+                <p t-if="ts_guest_start and request.env.user._is_public()" class="ts-muted" id="tso-detail-note">بدون ثبت‌نام شروع می‌کنید؛ در پایان با شمارهٔ موبایل نتیجه را می‌بینید و نگه می‌دارید.</p>
+            </xpath>
+            <xpath expr="//p[@t-if='request.env.user._is_public()']" position="attributes">
+                <attribute name="t-if">request.env.user._is_public() and not ts_guest_start</attribute>
+            </xpath>
+        </field>
+    </record>
+</odoo>

@@ -1,0 +1,190 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- O2: the invitation welcome screen (controllers/invite.py). One screen, one primary action; the button is the
+         consent. Modes: welcome (not accepted yet), continue (accepted on another browser or earlier; a visitor not signed
+         in), mismatch / other (signed in with another account: one clear notice, one action), state (expired, used,
+         declined, withdrawn, paused). -->
+    <record id="tpl_welcome" model="ir.ui.view">
+        <field name="name">TS onb2: invitation welcome</field>
+        <field name="type">qweb</field>
+        <field name="key">ts_onboard.welcome</field>
+        <field name="website_id" ref="ts_website.website_ts"/>
+        <field name="arch" type="xml">
+            <t t-name="ts_onboard.welcome">
+                <t t-set="what" t-value="('مجموعهٔ ' + bat.ts_title()) if bat else inst.ts_title()"/>
+                <t t-call="website.layout" additional_title="('دعوت به مجموعهٔ ' + bat.ts_title()) if bat else 'دعوت به سنجه'">
+                    <div id="wrap" class="ts-page">
+                        <section class="ts-section">
+                            <div class="ts-container ts-narrow tso-welcome">
+                                <t t-if="mode == 'state'">
+                                    <p class="ts-tag">دعوت</p>
+                                    <h1 t-out="inv_msg[inv_state][0]"/>
+                                    <p class="ts-lead" t-out="inv_msg[inv_state][1]"/>
+                                </t>
+                                <t t-else="">
+                                    <p class="ts-tag"><t t-if="pos">دعوت به ارزیابی</t><t t-elif="bat">دعوت به مجموعهٔ سنجه‌ها</t><t t-else="">دعوت به سنجه</t></p>
+                                    <h1><t t-if="hello">سلام <t t-out="hello"/></t><t t-else="">سلام</t></h1>
+                                    <p class="ts-lead tso-who" t-if="mode in ('welcome', 'mismatch')">
+                                        <t t-if="pos"><strong t-out="org"/> برای موقعیت «<bdi t-out="pos.name"/>» از شما دعوت کرده است.</t>
+                                        <t t-elif="ws.purpose == 'employment'"><strong t-out="org"/> از شما دعوت کرده است در این ارزیابی شرکت کنید.</t>
+                                        <t t-elif="tu"><strong t-out="org"/> از تو خواسته است <t t-if="bat">سنجه‌های این مجموعه را</t><t t-else="">این سنجه را</t> پر کنی.</t>
+                                        <t t-elif="counselor"><strong t-out="org"/> و <strong t-out="counselor"/> از شما خواسته‌اند <t t-if="bat">سنجه‌های این مجموعه را</t><t t-else="">این سنجه را</t> پر کنید.</t>
+                                        <t t-else=""><strong t-out="org"/> از شما خواسته است <t t-if="bat">سنجه‌های این مجموعه را</t><t t-else="">این سنجه را</t> پر کنید.</t>
+                                    </p>
+                                    <p class="ts-lead tso-who" t-elif="mode == 'continue'">
+                                        <t t-if="done and tu">این دعوت را پیش‌تر تمام کرده‌ای؛ برای دیدن نتیجه ادامه بده.</t>
+                                        <t t-elif="done">این دعوت را پیش‌تر تمام کرده‌اید؛ برای دیدن نتیجه ادامه دهید.</t>
+                                        <t t-elif="tu">پاسخ‌دادن به این دعوت را شروع کرده‌ای؛ از همان‌جا ادامه بده.</t>
+                                        <t t-else="">پاسخ‌دادن به این دعوت را شروع کرده‌اید؛ از همان‌جا ادامه دهید.</t>
+                                    </p>
+
+                                    <div class="ts-card tso-card" id="tso-what">
+                                        <h2 class="h5 tso-what" t-out="what"/>
+                                        <p class="tso-facts">
+                                            <t t-if="matrix"><t t-if="tu">۱۵ جمله برای هر زمینه؛ ۲ تا ۸ زمینه را خودت می‌نویسی</t><t t-else="">۱۵ جمله برای هر زمینه؛ ۲ تا ۸ زمینه را خودتان می‌نویسید</t><t t-call="ts_website.sep"/>حدود ۲ دقیقه برای هر زمینه</t>
+                                            <t t-else="">حدود <t t-out="fa(minutes)"/> دقیقه<t t-call="ts_website.sep"/><t t-if="parts &gt; 1"><t t-out="fa(parts)"/> بخش</t><t t-else=""><t t-out="fa(items)"/> پرسش</t></t>
+                                        </p>
+                                        <p t-if="timed" class="tso-device" id="tso-device">روی کامپیوتر بهتر است (بخش زمان‌دار)</p>
+                                        <p t-if="a.note and mode == 'welcome'" class="ts-hint tso-note">یادداشت پنل: <t t-out="a.note"/></p>
+                                    </div>
+
+                                    <!-- signed in with another account than the invited number / address: one notice, one action -->
+                                    <t t-if="mode in ('mismatch', 'other')">
+                                        <div class="ts-notice ts-notice--warn tso-mismatch" role="alert" id="tso-mismatch">
+                                            <p t-if="mode == 'other'">این دعوت با حساب دیگری پذیرفته شده است و شما با حساب دیگری وارد شده‌اید.</p>
+                                            <p t-elif="contact and contact['kind'] == 'email'">این دعوت برای نشانی <bdi dir="ltr" class="ts-bdi" t-out="contact['masked']"/> فرستاده شده است و شما با حساب دیگری وارد شده‌اید.</p>
+                                            <p t-elif="contact">این دعوت برای شمارهٔ <bdi dir="ltr" class="ts-bdi" t-out="contact['masked']"/> فرستاده شده است و شما با حساب دیگری وارد شده‌اید.</p>
+                                            <p>برای ادامه از این حساب خارج شوید؛ همین دعوت دوباره باز می‌شود.</p>
+                                        </div>
+                                        <form t-att-action="logout_url" method="post" class="ts-form">
+                                            <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                                            <button type="submit" class="ts-btn ts-btn--primary ts-btn--lg ts-btn--block">خروج و ادامه با این دعوت</button>
+                                        </form>
+                                    </t>
+
+                                    <!-- accepted earlier: this browser goes on; another one gets a code to the invited number -->
+                                    <form t-if="mode == 'continue'" t-attf-action="/invite/#{a.token}/accept" method="post" class="ts-form tso-form" id="tso-form">
+                                        <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                                        <input type="hidden" name="welcome" t-att-value="consent_version"/>
+                                        <button type="submit" class="ts-btn ts-btn--primary ts-btn--lg ts-btn--block">ادامه</button>
+                                        <p class="ts-hint tso-after">اگر در دستگاه یا مرورگر دیگری شروع کرده‌اید، برای امنیت کدی به شمارهٔ همین دعوت می‌فرستیم.</p>
+                                    </form>
+
+                                    <t t-if="mode == 'welcome'">
+                                        <div t-if="name_mismatch" class="ts-notice ts-notice--warn" role="alert" id="ts-invite-account">
+                                            <p>با حساب «<bdi t-out="name_mismatch"/>» وارد شده‌اید و این دعوت برای «<bdi t-out="(a.invitee_name or '').strip()"/>» است. اگر این دعوت برای شما نیست، از حساب خارج شوید.</p>
+                                            <form t-att-action="logout_url" method="post" class="d-inline"><input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                                                <button type="submit" class="ts-btn ts-btn--quiet ts-btn--sm">خروج از این حساب</button></form>
+                                        </div>
+                                        <form t-attf-action="/invite/#{a.token}/accept" method="post" class="ts-form tso-form" id="tso-form">
+                                            <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                                            <input type="hidden" name="welcome" t-att-value="consent_version"/>
+                                            <section class="tso-sees" aria-labelledby="tso-sees-h">
+                                                <h2 class="h6" id="tso-sees-h"><t t-out="org"/> چه چیزی می‌بیند؟</h2>
+                                                <ul class="ts-list-check tso-lines" t-if="pos">
+                                                    <li>اگر اشتراک‌گذاری را بپذیرید، فقط خلاصهٔ تناسب شما با این شغل را می‌بیند؛ نه پاسخ‌ها و نمره‌ها.</li>
+                                                    <li>هیچ تصمیمی به‌طور خودکار گرفته نمی‌شود.</li>
+                                                    <li>۱۲ ماه پس از دعوت، دسترسی سازمان به نتیجه بسته می‌شود.</li>
+                                                </ul>
+                                                <ul class="ts-list-check tso-lines" t-elif="ws.purpose == 'employment'">
+                                                    <li>وضعیت دعوت (شروع‌شده یا تکمیل‌شده) را می‌بیند.</li>
+                                                    <li>اگر اجازه دهید، فقط سطح هر عامل را می‌بیند؛ نه پاسخ‌ها و نمره‌ها.</li>
+                                                    <li>هر وقت بخواهید اشتراک‌گذاری را قطع می‌کنید.</li>
+                                                </ul>
+                                                <ul class="ts-list-check tso-lines" t-elif="tu">
+                                                    <li>مدرسه و مشاورت گزارش نتیجه‌ات را می‌بینند.</li>
+                                                    <li>پاسخ‌هایت را هیچ‌کس جز خودت نمی‌بیند.</li>
+                                                    <li>هر وقت بخواهی اشتراک‌گذاری را قطع می‌کنی.</li>
+                                                </ul>
+                                                <ul class="ts-list-check tso-lines" t-elif="ws.purpose == 'education'">
+                                                    <li>مدرسه و مشاور مسئول شما گزارش نتیجه را می‌بینند.</li>
+                                                    <li>پاسخ‌های شما را هیچ‌کس جز خودتان نمی‌بیند.</li>
+                                                    <li>هر وقت بخواهید اشتراک‌گذاری را قطع می‌کنید.</li>
+                                                </ul>
+                                                <ul class="ts-list-check tso-lines" t-else="">
+                                                    <li>وضعیت دعوت (شروع‌شده یا تکمیل‌شده) را می‌بیند.</li>
+                                                    <li>اگر اجازه دهید، گزارش کامل فقط به مشاوران همین مرکز نشان داده می‌شود.</li>
+                                                    <li>هر وقت بخواهید اشتراک‌گذاری را قطع می‌کنید.</li>
+                                                </ul>
+                                                <details class="tso-more" id="tso-more">
+                                                    <summary>بیشتر</summary>
+                                                    <div class="tso-more__body">
+                                                        <t t-if="pos" t-call="ts_hire.position_terms"/>
+                                                        <t t-else="" t-call="ts_org.share_box"><t t-set="share_ws" t-value="ws"/><t t-set="share_student" t-value="tu"/></t>
+                                                        <t t-if="item_names">
+                                                            <p><strong>بخش‌های این مجموعه</strong> (یکی پس از دیگری، با همین یک بار موافقت):</p>
+                                                            <ol class="tso-parts"><li t-foreach="item_names" t-as="nm" t-out="nm"/></ol>
+                                                        </t>
+                                                        <dl class="ts-meta tso-terms">
+                                                            <dt>ذخیره و ادامه</dt><dd>پاسخ‌ها خودکار ذخیره می‌شوند و هر وقت خواستید از همان‌جا ادامه می‌دهید.</dd>
+                                                            <dt>دست نگه داشتن</dt><dd>هر وقت بخواهید دست نگه می‌دارید. برای پس گرفتن رضایت یا پاک‌کردن داده‌ها به صفحهٔ <a href="/privacy">حریم خصوصی</a> بروید.</dd>
+                                                            <dt>پشتیبانی</dt><dd><a href="/contact?topic=support">تماس با پشتیبانی</a><t t-call="ts_website.sep"/>اگر حالتان خوب نیست، منتظر نمانید: اورژانس ۱۱۵.</dd>
+                                                        </dl>
+                                                        <label class="ts-check"><input type="checkbox" name="consent_research" value="1"/>
+                                                            <span>اجازه می‌دهم پاسخ‌هایم بدون نام و به‌صورت تجمیعی برای بهبود سنجه‌ها استفاده شود. <span class="ts-hint">(اختیاری)</span></span></label>
+                                                        <p class="ts-hint">نسخهٔ متن رضایت: <bdi dir="ltr" class="ts-bdi" t-out="consent_version"/></p>
+                                                    </div>
+                                                </details>
+                                            </section>
+                                            <label class="ts-check tso-share">
+                                                <input type="checkbox" name="share" value="1" checked="checked" aria-describedby="tso-share-h"/>
+                                                <span t-if="ws.purpose == 'education'">اجازه می‌دهم مدرسه و مشاورم گزارش نتیجه‌ام را در پنل «<bdi t-out="org"/>» ببینند.</span>
+                                                <span t-elif="ws.purpose == 'employment'">اجازه می‌دهم <t t-if="pos">خلاصهٔ تناسب من با این شغل</t><t t-else="">سطح هر عامل</t> با «<bdi t-out="org"/>» به اشتراک گذاشته شود.</span>
+                                                <span t-else="">اجازه می‌دهم گزارش کامل با مشاوران «<bdi t-out="org"/>» به اشتراک گذاشته شود.</span>
+                                            </label>
+                                            <p id="tso-share-h" class="ts-hint"><t t-if="tu">اگر تیک را برداری هم می‌توانی پاسخ بدهی؛ آن وقت نتیجه فقط برای خودت می‌ماند.</t><t t-else="">اگر تیک را بردارید هم می‌توانید پاسخ دهید؛ آن وقت نتیجه فقط برای خودتان می‌ماند.</t></p>
+                                            <label t-if="need['guardian']" class="ts-check tso-guardian" id="tso-guardian">
+                                                <input type="checkbox" name="guardian_confirm" value="1" required="required"/>
+                                                <span><t t-out="guardian_text"/> <span class="ts-hint">(لازم)</span></span>
+                                            </label>
+                                            <p t-if="error" class="ts-form__error" role="alert" t-out="error"/>
+                                            <button type="submit" class="ts-btn ts-btn--primary ts-btn--lg ts-btn--block tso-go"><t t-if="need['assent']">من هم موافقم</t><t t-else="">موافقم و شروع می‌کنم</t></button>
+                                            <p class="ts-hint tso-after"><t t-if="need['assent']">این دکمه یعنی خودت هم موافقی؛ هر وقت بخواهی می‌توانی دست نگه داری.</t><t t-elif="tu">با این دکمه رضایتت ثبت می‌شود و پاسخ‌دادن شروع می‌شود.</t><t t-else="">با این دکمه رضایت شما ثبت می‌شود و پاسخ‌دادن شروع می‌شود.</t></p>
+                                        </form>
+                                        <section t-if="ask_decline" class="ts-confirm" id="tso-decline" aria-labelledby="tso-decline-h">
+                                            <h2 class="h6" id="tso-decline-h"><t t-if="tu">دعوت را نمی‌پذیری؟</t><t t-else="">دعوت را نمی‌پذیرید؟</t></h2>
+                                            <p t-if="tu">پنل می‌بیند که دعوت را نپذیرفتی. اگر نظرت عوض شد، از مشاورت دعوت تازه بخواه.</p>
+                                            <p t-else="">پنل می‌بیند که دعوت را نپذیرفتید. اگر نظرتان عوض شد، از دعوت‌کننده دعوت تازه بخواهید.</p>
+                                            <form t-attf-action="/invite/#{a.token}/decline" method="post" class="ts-inline-form">
+                                                <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                                                <button type="submit" class="ts-btn ts-btn--danger ts-btn--sm">بله، دعوت را نمی‌پذیرم</button>
+                                                <a t-attf-href="/invite/#{a.token}" class="ts-btn ts-btn--quiet ts-btn--sm">انصراف</a>
+                                            </form>
+                                        </section>
+                                        <p t-else="" class="tso-decline"><a t-attf-href="/invite/#{a.token}?decline=1#tso-decline" class="ts-btn ts-btn--quiet ts-btn--sm">نمی‌خواهم شرکت کنم</a></p>
+                                    </t>
+                                </t>
+                            </div>
+                        </section>
+                    </div>
+                </t>
+            </t>
+        </field>
+    </record>
+
+    <!-- 429: too many short-link lookups (or new guest attempts) from one network address -->
+    <record id="tpl_slow" model="ir.ui.view">
+        <field name="name">TS onb2: please wait (rate limit)</field>
+        <field name="type">qweb</field>
+        <field name="key">ts_onboard.slow</field>
+        <field name="website_id" ref="ts_website.website_ts"/>
+        <field name="arch" type="xml">
+            <t t-name="ts_onboard.slow">
+                <t t-call="website.layout" additional_title.f="کمی صبر کنید">
+                    <div id="wrap" class="ts-page">
+                        <section class="ts-section">
+                            <div class="ts-container ts-narrow">
+                                <h1>کمی صبر کنید</h1>
+                                <t t-if="guest_limit">
+                                    <p class="ts-lead">در یک ساعت گذشته از این شبکه چند سنجهٔ بدون حساب شروع شده است. کمی بعد دوباره امتحان کنید، یا با شمارهٔ موبایل وارد شوید و همین حالا شروع کنید.</p>
+                                    <p><a href="/signup?next=/start" class="ts-btn ts-btn--primary">ورود با شمارهٔ موبایل</a></p>
+                                </t>
+                                <p t-else="" class="ts-lead">در یک دقیقه درخواست‌های زیادی از این شبکه رسید. یک دقیقه دیگر دوباره پیوند را باز کنید.</p>
+                            </div>
+                        </section>
+                    </div>
+                </t>
+            </t>
+        </field>
+    </record>
+</odoo>

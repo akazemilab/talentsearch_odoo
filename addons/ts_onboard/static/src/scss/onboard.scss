@@ -1,0 +1,37 @@
+// onb2 (ts_onboard): invitation welcome, start screen, result gate. Tokens: ts_website/static/src/scss/tokens.scss; prefix tso-.
+.tso-welcome h1, .tso-start h1 { margin-block-end: var(--space-2); }
+.tso-who { margin-block-end: var(--space-4); }
+.tso-card { margin-block: 0 var(--space-4); }
+.tso-card > :last-child { margin-block-end: 0; }
+.tso-what { margin-block-end: var(--space-1); }
+.tso-facts { margin: 0; color: var(--color-neutral-400); font-variant-numeric: tabular-nums; }
+.tso-device { margin: var(--space-2) 0 0; font-weight: 600; color: var(--status-warn); }
+.tso-note { margin: var(--space-2) 0 0; }
+.tso-form { display: grid; gap: var(--space-3); }
+.tso-sees h2 { margin-block-end: var(--space-2); }
+.tso-lines { margin: 0 0 var(--space-2); }
+.tso-more { border-radius: var(--r-12); }
+.tso-more > summary {
+    display: inline-flex; align-items: center; min-block-size: 44px; padding-inline: var(--space-2); cursor: pointer;
+    font-weight: 600; color: var(--color-accent-300); border-radius: var(--r-12);
+}
+.tso-more > summary:focus-visible { outline: 2px solid currentColor; outline-offset: 2px; }
+.tso-more__body { display: grid; gap: var(--space-3); padding-block: var(--space-2); }
+.tso-more__body .ts-card { margin: 0; }
+.tso-parts { margin: 0; padding-inline-start: 1.2rem; }
+.tso-terms { margin: 0; }
+.tso-share, .tso-guardian { min-block-size: 44px; }
+.tso-after { margin: 0; text-align: center; }
+.tso-decline { margin-block-start: var(--space-3); text-align: center; }
+.tso-mismatch { margin-block-end: var(--space-3); }
+.tso-mismatch p { margin: 0 0 var(--space-1); }
+.tso-promise { font-weight: 600; margin-block: var(--space-3); }
+.tso-minor { text-align: center; margin-block: var(--space-2) var(--space-4); }
+.tso-claimed { margin-block-end: var(--space-4); display: grid; gap: var(--space-3); }
+.tso-claimed h2 { margin: 0; }
+.tso-name { display: grid; gap: var(--space-1); }
+.tso-name__row { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+.tso-name__row input { flex: 1 1 14rem; min-width: 0; min-block-size: 44px; }
+.tso-next { display: flex; flex-wrap: wrap; gap: var(--space-2); margin: 0; }
+.tso-hero-sub { margin-block: var(--space-2) 0; color: var(--color-neutral-400); font-size: var(--fs-1); }
+.tsa-known { margin: 0; }
