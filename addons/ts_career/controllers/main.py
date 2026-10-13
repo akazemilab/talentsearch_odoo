@@ -14,8 +14,13 @@ PAGE = 20
 
 def _sitemap_career(env, rule, qs):
     """/career is listed in talentsearch.ir's sitemap only (routes are global: sitemap=True would add it to eot.ir's)."""
-    site = env['website'].get_current_website()
-    if site and site == env.ref('ts_website.website_ts', raise_if_not_found=False) and (not qs or qs.lower() in '/career'):
+    try:
+        site = getattr(env, 'website', None) or env['website'].browse(env.context.get('website_id') or [])
+        ts = env.ref('ts_website.website_ts', raise_if_not_found=False)
+        ok = bool(site) and bool(ts) and site.id == ts.id
+    except Exception:                                   # noqa: BLE001  (never break a sitemap)
+        ok = False
+    if ok and (not qs or qs.lower() in '/career'):
         yield {'loc': '/career'}
 
 
