@@ -215,8 +215,8 @@ check('M02 the e-mail address: its account matches (any letter case), another do
       a2.ts_contact_matches(ue) is True and a2.ts_contact_matches(ub) is False)
 check('M03 a link without a number or address checks nothing (None)', a4.ts_contact_matches(ub) is None)
 from odoo.addons.ts_sms.controllers.signup import mask_mobile
-check('M04 a known number is shown by its last four digits only («•••• ۴۳۸۱»)', mask_mobile(PH['a']) == '•••• ۴۳۸۱',
-      mask_mobile(PH['a']))
+check('M04 a known number is shown by its last four digits only («*** ۴۳۸۱»: asterisks, bullets read as Persian zeros)',
+      mask_mobile(PH['a']) == '*** ۴۳۸۱', mask_mobile(PH['a']))
 
 # ================================================================ S. short codes
 from odoo.addons.ts_brand.models.short import CODE_RE

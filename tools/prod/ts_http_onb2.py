@@ -263,8 +263,8 @@ def q(code):
 
 
 def masked(phone):
-    """The mask of a known number: its last four digits only («•••• ۴۳۹۱»)."""
-    return '•••• ' + phone[-4:].translate(FA)
+    """The mask of a known number: its last four digits only («*** ۴۳۹۱»; asterisks: bullets read as Persian zeros)."""
+    return '*** ' + phone[-4:].translate(FA)
 
 
 def in_full(phone, page):
@@ -416,7 +416,7 @@ check('Q23 a website page or attachment (no route, served by the fallback) follo
 st, _, _ = pub.req('/take/%s' % TOK1)
 check('Q24 ...and on talentsearch.ir the session itself goes on (its own pages still open)', st == 200, str(st))
 st, h, page = raw(pub, '/signup?next=/my')
-check('Q15 the sign-in shows the invited number by its last four digits («•••• ۴۳۹۱») with «دریافت کد», no number field',
+check('Q15 the sign-in shows the invited number by its last four digits («*** ۴۳۹۱») with «دریافت کد», no number field',
       st == 200 and masked(PH['sms']) in page and 'name="known"' in page and 'id="tsa_phone"' not in page
       and not in_full(PH['sms'], page), str(st))
 st, h, j = ajax(pub, '/signup/send', {'csrf_token': pub.csrf(page), 'known': '1', 'phone': '', 'next': '/my'})
@@ -456,7 +456,7 @@ st, loc, _ = other_browser.req('/invite/%s/accept' % T_SMS, {'csrf_token': other
 check('D04 another browser gets no session: a code goes to the invited number', st == 303 and path_of(loc).startswith('/signup?step=code')
       and sms_count(PH['sms']) == n + 1, loc)
 st, page = get(other_browser, path_of(loc))
-check('D05 «برای ادامه، کدی به •••• ۴۳۹۱ فرستادیم»: the last four digits only, never in full, nothing to type but the code',
+check('D05 «برای ادامه، کدی به *** ۴۳۹۱ فرستادیم»: the last four digits only, never in full, nothing to type but the code',
       st == 200 and 'برای ادامه، کدی به' in page and masked(PH['sms']) in page and not in_full(PH['sms'], page)
       and 'ویرایش شماره' not in page and 'id="tsa_code"' in page, str(st))
 st, h, j = ajax(other_browser, '/signup/verify', {'csrf_token': other_browser.csrf(page), 'code': last_code(PH['sms']),

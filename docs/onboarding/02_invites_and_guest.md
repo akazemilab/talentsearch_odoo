@@ -62,7 +62,7 @@ cookie. `ir.http._pre_dispatch`, and `_serve_fallback` for website pages and att
 - on talentsearch.ir it reaches only this invitation and its short links, the player of its attempts (`/take/<token>/…`, the
   timed-task endpoints included), the participant's own result of those attempts (`/my/assessments/<id>`, `/pdf`,
   `/unshare`, `/my/assessments/battery/<id>/…`), static assets (never `/web/image` or `/websocket`), sign-out and `/signup`.
-  Any other page answers 303 to `/signup?next=…` with the number by its last four digits («•••• ۴۵۶۷») and «دریافت کد»;
+  Any other page answers 303 to `/signup?next=…` with the number by its last four digits («*** ۴۵۶۷») and «دریافت کد»;
   anything else (JSON-RPC, `/json`, `/mail`, `/web/dataset`, `/web/session/*`, a POST) answers 403.
 After the code the session is an ordinary full session. A number is never linked to or written onto an account from a
 scoped session, with one exception: the account the flow made for this invitation within the last hour that holds nothing
@@ -75,18 +75,18 @@ HttpOnly, SameSite=Lax, Secure on https, one per browser); the server stores onl
 and the end of the binding (`device_until`). With «این دستگاه شخصی من است» ticked: 30 days. Unticked: a browser-session
 cookie and 12 hours on the server. The binding also ends when the invitation is finished. A later open of an accepted
 invitation by a visitor who is not signed in shows «ادامه»: the bound browser (or the message's secret) goes on without a
-code when the account may be signed in so (the rules above); anything else gets «برای ادامه، کدی به •••• ۴۵۶۷ فرستادیم» —
+code when the account may be signed in so (the rules above); anything else gets «برای ادامه، کدی به *** ۴۵۶۷ فرستادیم» —
 a code to the invited number — and continues after it. «شمارهٔ دیگری دارم» on that page (and on the masked sign-in of a
 scoped session) opens the ordinary sign-in with any number (`/signup?other=1`); the invitation still checks who may accept
 it. Every comparison of a token or secret is constant-time.
 
-**Mismatch.** A signed-in account that does not hold the invited number sees one notice («این دعوت برای شمارهٔ •••• ۴۵۶۷
+**Mismatch.** A signed-in account that does not hold the invited number sees one notice («این دعوت برای شمارهٔ *** ۴۵۶۷
 فرستاده شده است و شما با حساب دیگری وارد شده‌اید.») and one action «خروج و ورود با شمارهٔ دعوت‌شده» (sign-out returns to
 the invitation); the POST accepts nothing. An e-mailed invitation shows the same notice with «خروج و ادامه با این دعوت». An
 invitation already accepted by another account answers take1's explained link 404 (`ts_website.page_404`: sign out and sign
 in with the invited number), the same page as an unknown token, so nobody learns who holds it. Links without a number keep
-the old name notice. A known number is always shown by its last four digits; a number the visitor typed is shown in full
-(it is theirs).
+the old name notice. A known number is always shown by its last four digits after three asterisks (bullets would read as
+Persian zeros in Vazirmatn, seen in the shots); a number the visitor typed is shown in full (it is theirs).
 
 **Link hygiene.** New short codes have 12 characters of [a-z0-9]; the 8-character codes of earlier invitations keep
 working. Lookups are limited per hashed address and family, then a polite 429 page «کمی صبر کنید» with `Retry-After: 60`:
@@ -176,7 +176,8 @@ WhatsApp, Telegram, Slack, command-line clients) are not counted. q1 and finish 
 player (one indexed probe at the first answer, one insert), only for guest attempts, signed-in attempts of a guest-ok
 instrument and invitations (q1 of its first part, finish when every part is done). At most one row per hash, step,
 channel and instrument. Back office «سنجش › قیف ورود» (pivot by step and channel, per week; list; platform managers only).
-Kept 180 days (daily cron).
+Kept 180 days (daily cron). Odoo itself still answers a first visit with a session cookie; the session is only stored when
+something writes into it, and the funnel no longer does for cookie-less GETs.
 
 ## Tests
 
@@ -207,10 +208,11 @@ minors' one screen (and BAT-CHILD-1); fairness at the end; rate limits (short li
 cross-token isolation, keep both, one open guest attempt, guest and answer limits, a sign-in outside the gate claims nothing
 (then the explicit button), 48-hour clean-up, no token in any address, funnel (both paths, channels, robots, cookie-less
 visits), eot.ir 404. Older suites updated: ts_http_hire, ts_http_org, ts_http_signup, ts_http_panel, tests_brand,
-ts_http_pv2_6 (12-character codes; the SMS link with its secret, never on the panel page) and ts_http_sms. Shots matrix:
-welcome (clinic, employment; with the device tick), minors, /start, under-18, guest player, result gate (`COOKIE name value`
-directive in ts_shot.py), masked-code screen, and the claimed report with the optional name (tools/vps/ts_onb2_seed.py; its
-own login with the matrix owner's password); `ts shots DB take` includes the onb2 screens too.
+ts_http_pv2_6 (12-character codes; the SMS link with its secret, never on the panel page) and ts_http_sms (the SMS link with
+its secret). Shots matrix: welcome (clinic, employment; with the device tick), minors, /start, under-18, guest player,
+result gate (`COOKIE name value` directive in ts_shot.py), masked-code screen, and the claimed report with the optional
+name (tools/vps/ts_onb2_seed.py; its own login with the matrix owner's password); `ts shots DB take` includes the onb2
+screens too.
 
 ## Notes and decisions
 
@@ -226,6 +228,8 @@ own login with the matrix owner's password); `ts shots DB take` includes the onb
 - The SMS link with its secret is about 61 characters (`https://talentsearch.ir/i/` + 12 + `/` + 22), longer than the 34
   of docs/clinic/05_sms_texts.md rule 2: ts_brand's drop order (counselor, minutes, deadline, then the `_short` template)
   still keeps the institution name and the link; an invitation SMS may take one part more.
+- The clone's threaded server refuses every websocket upgrade itself (400); on production websockets go through the gevent
+  port, which dispatches through the same ir.http and its scope guard.
 
 ## Risk review fixes (2026-10-13)
 
@@ -237,6 +241,6 @@ own login with the matrix owner's password); `ts shots DB take` includes the onb
 | M1 | `=ilike` on the e-mail let `%`/`_` act as wildcards | Escaped, then an exact lower-case comparison |
 | M2 | Device cookie bound every browser for 90 days | Only when «این دستگاه شخصی من است» is ticked (30 days); otherwise a session cookie and 12 hours; ends when finished; constant-time comparisons |
 | L1 | /websocket and /web/image in the allow-list | Removed; website pages guarded |
-| L2 | The mask showed the operator prefix | Last four digits only («•••• ۴۵۶۷») on the sign-in, welcome and mismatch screens |
+| L2 | The mask showed the operator prefix | Last four digits only («*** ۴۵۶۷») on the sign-in, welcome and mismatch screens |
 | L3 | The claim needed only next=/start… | Needs the gate's session mark and next == /start/result |
 | L4 | Funnel rows held the invitation, website and access columns; robots counted; a second cursor for rate hits | Step, channel, instrument, hash, day/hour only; robots and cookie-less repeats skipped; hits in the request's own transaction with the 404 rendered inside it |

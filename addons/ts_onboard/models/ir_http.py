@@ -12,8 +12,9 @@ authentication) and before a website page or attachment is served (`_serve_fallb
       - the participant's own result of those attempts (/my/assessments/<id>[/pdf|/unshare],
         /my/assessments/battery/<id>[/...]);
       - static assets (never /web/image or /websocket), sign-out, and the sign-in (/signup, /login).
-    Any other GET page answers 303 to the sign-in with the number shown masked («•••• ۴۵۶۷»); after the code the session
-    is an ordinary full session. Anything else (JSON-RPC, /json, /mail, /web/dataset, /web/session/*, a POST) answers 403.
+    Any other GET page answers 303 to the sign-in with the number by its last four digits («*** ۴۵۶۷»); after the code
+    the session is an ordinary full session. Anything else (JSON-RPC, /json, /mail, /web/dataset, /web/session/*, a POST)
+    answers 403.
 A session whose user no longer matches the scope drops it.
 
 Every response of the invitation, player, guest and short-link families carries `Referrer-Policy: no-referrer` (the token
