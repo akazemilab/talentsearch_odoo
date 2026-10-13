@@ -75,9 +75,14 @@ def report_ctx(attempt, org_view=False, ws=None, submitted=None, panel_actions=N
         raw = [{'label': f['label'],
                 'rows': [(item_segments(it.text, f['label']), labels.get(cells.get(f['label'], {}).get(it.id), '—'))
                          for it in items]} for f in fields]
-    defs = [(EM.NAMES[c], t['scales'][c]['definition']) for c in EM.SCALES]
-    defs += [(EM.NAMES[c], t['composites'][c]['definition']) for c in ('INT', 'CRE', 'SCH', 'CRT', 'CRP') if c in t['composites']]
+    # definitions and glosses come from the attempt's own version (content v2: an older report keeps its texts)
+    version = attempt.version_id
+    by_code = {f.code: f for f in version.factor_ids}
+    defs = [(by_code[c].name, by_code[c].definition) for c in EM.SCALES if c in by_code and by_code[c].definition]
+    defs += [(by_code[c].name, by_code[c].definition) for c in ('INT', 'CRE', 'SCH', 'CRT', 'CRP')
+             if c in by_code and by_code[c].definition]
     defs = [(name, R.norm_text(text)) for name, text in R.split_pair_definition(defs)]
+    gl = version.ts_report_glosses()
     single = R.single_field_lines(interp, voice) if interp['n_fields'] < 2 else None
     multi = interp['n_fields'] >= 2
     flagged = interp.get('flagged') or [f['label'] for f in fields if f['flags'].get('straight') or f['flags'].get('fast')]
@@ -89,15 +94,15 @@ def report_ctx(attempt, org_view=False, ws=None, submitted=None, panel_actions=N
         limitations = LIMITATIONS_TU
     ctx = {
         'attempt': attempt, 'inst': attempt.instrument_id, 'version': attempt.version_id, 'limitations': limitations,
-        'tiles': R.tiles(interp, profile, voice, digits), 'fields': fields,
+        'tiles': R.tiles(interp, profile, voice, digits, plain=gl['plain']), 'fields': fields,
         'charts': {f['label']: R.field_chart(f, digits) for f in fields},
         'legend': [EM.NAMES[c] for c in EM.SCALES], 'single': single,
-        'lv': R.levels(interp, profile, voice, digits) if not single else [], 'interp': interp,
-        'programs': R.programs_view(interp, voice), 'rows': R.table_rows(profile, gap), 'raw': raw,
+        'lv': R.levels(interp, profile, voice, digits, glosses=gl) if not single else [], 'interp': interp,
+        'programs': R.programs_view(interp, voice, programs=gl['programs']), 'rows': R.table_rows(profile, gap), 'raw': raw,
         'cmp_rows': R.compare_rows(profile, gap) if multi else [],
         'cmp_cards': R.field_cards(profile, gap) if multi else [],
         'cmp_lines': R.compare_lines(interp, voice, digits) if multi else [],
-        'summary': R.summary(interp, profile, voice, digits),
+        'summary': R.summary(interp, profile, voice, digits, plain=gl['plain']),
         'flagged': flagged, 'all_flagged': bool(fields) and len(flagged) >= len(fields),
         'fields_tied': R.fields_all_tied(interp),
         'gap': int(gap), 'org_view': org_view, 'ws': ws, 'who': attempt.person_id.name or attempt.partner_id.ts_known_name() or '',

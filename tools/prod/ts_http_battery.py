@@ -158,7 +158,11 @@ IDS = [p[0] for p in pairs]
 st, body = get(p1, '/take/' + T[0])
 check('ONE consent page: names the battery, lists every instrument with the total time',
       st == 200 and 'consent_service' in body and 'این دعوت یک مجموعه است' in body and all(t in body for t in INST_TITLES)
-      and 'روی هم' in body and 'TS-CONSENT-1405-07-20-v5' in body, str(st))
+      and 'روی هم' in body and 'TS-CONSENT-1405-07-21-v6' in body, str(st))
+# CONSENT v5 plain language (owner 2026-10-13): the summary names the whole battery; the card opens the folded full text
+check('v5: the summary says one agreement covers the whole battery, then the full text follows behind one button',
+      'id="ts-consent-summary"' in body and 'یک بار موافقت در همین صفحه برای همه کافی است' in body and 'برای همهٔ مجموعه' in body
+      and body.find('id="ts-consent-summary"') < body.find('aria-controls="ts-consent-more"') < body.find('این دعوت یک مجموعه است'))
 st, loc, _ = p1.req('/take/' + T[1])
 check('a sibling never shows its own consent page (redirect to the first)', st in (302, 303) and T[0] in loc, '%s %s' % (st, loc))
 post(p1, '/take/%s/consent' % T[0], {'consent_service': '1'})

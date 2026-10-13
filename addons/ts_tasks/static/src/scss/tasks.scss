@@ -51,6 +51,9 @@
     .tst-q { font-weight: 700; margin: 0; }
     .tst-pair { display: flex; gap: var(--space-6); flex-wrap: wrap; }
     .tst-pair .tst-svg { padding: .5rem; border: 1px solid var(--color-neutral-800); border-radius: var(--r-8); }
+    // a drawing and its visually hidden text alternative (2026-10-13); the wrapper adds no box of its own
+    .tst-fig { position: relative; }
+    .tst-fig > .visually-hidden { margin: 0; }
     .tst-big { font-size: 2rem; font-weight: 700; margin: 0; font-variant-numeric: tabular-nums; }
     .tst-cmp { display: flex; flex-direction: column; gap: .4rem; font-size: 1.8rem; letter-spacing: .25em; font-weight: 700; }
     .tst-flank { font-size: 3rem; letter-spacing: .2em; margin: 0; text-align: center; }

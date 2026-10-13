@@ -13,7 +13,9 @@ from odoo.http import request
 from odoo.addons.ts_assessment.controllers.main import TsAssessment, _my_attempt, _ts_site_or_404, consent_error_url
 
 # v2 (1405-07-19, UX audit 2026-10-11): reworded age, guardian and assent lines
-TEXT_VERSION = 'TS-MINOR-1405-07-19-v2'
+# v3 (1405-07-21, consent v5 plain language, owner 2026-10-13): the assent line says «می‌دانم این سنجه چیست» instead of
+# «برایم توضیح داده‌اند این سنجه چیست» (same facts: knows what it is, may stop any time, agrees)
+TEXT_VERSION = 'TS-MINOR-1405-07-21-v3'
 
 
 class TsPanelConsent(TsAssessment):

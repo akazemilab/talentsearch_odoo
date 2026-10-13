@@ -29,7 +29,8 @@
         </field>
     </record>
 
-    <!-- Consent (CONSENT_VERSION v2): what you do, autosave, locking at the end, who sees, how to stop/withdraw (G1-P12-1) -->
+    <!-- Consent (CONSENT_VERSION v2): what you do, autosave, locking at the end, who sees, how to stop/withdraw (G1-P12-1).
+         v5 (owner 2026-10-13, TS-CONSENT-1405-07-21-v5): plain-language summary first, the full text folded. -->
     <record id="tpl_consent" model="ir.ui.view">
         <field name="name">TS talent: consent</field>
         <field name="type">qweb</field>
@@ -48,29 +49,42 @@
                             <li t-if="error == 'consent'"><a href="#tt-consent-service"><t t-if="tu">تیک «این توضیح‌ها را خواندم…» را بزن.</t><t t-else="">تیک «این توضیح‌ها را خواندم…» را بزنید.</t></a></li>
                         </ul>
                     </div>
-                    <p class="tt-mini" t-if="tu">پیش از شروع، این چند خط را بخوان.</p>
-                    <p class="tt-mini" t-else="">پیش از شروع، این چند خط را بخوانید.</p>
-                    <!-- UX audit T7 P1-1/P1-2: total effort up front; what to do, who sees and how to stop stay open, the two
-                         practical sections fold behind one button (same words; open without JS, tt_player.js folds them) -->
-                    <dl class="tt-dl">
-                        <dt>چه کار می‌کنی؟</dt>
-                        <dd t-if="tu"><t t-out="fa(v.field_min)"/> تا <t t-out="fa(v.field_max)"/> زمینه (مثل یک درس، هنر، ورزش یا مهارت) را خودت می‌نویسی و برای هر کدام ۱۵ جمله را پاسخ می‌دهی. هر زمینه حدود ۲ دقیقه طول می‌کشد؛ معمولاً ۳ تا ۵ زمینه، روی هم ۶ تا ۱۰ دقیقه.</dd>
-                        <dd t-else=""><t t-out="fa(v.field_min)"/> تا <t t-out="fa(v.field_max)"/> زمینه (مثل یک درس، هنر، ورزش، مهارت یا شغل) را خودتان می‌نویسید و برای هر کدام ۱۵ جمله را پاسخ می‌دهید. هر زمینه حدود ۲ دقیقه طول می‌کشد؛ معمولاً ۳ تا ۵ زمینه، روی هم ۶ تا ۱۰ دقیقه.</dd>
-                        <dt>چه کسی نتیجه را می‌بیند؟</dt>
-                        <dd id="tt-who-sees"><t t-if="tu">فقط خودت، در حساب کاربری‌ات.</t><t t-else="">فقط خودتان، در حساب کاربری‌تان.</t></dd>
-                        <dt>دست نگه داشتن و انصراف</dt>
-                        <dd t-if="tu">هر وقت بخواهی می‌توانی دست نگه داری. این موافقت فقط برای ساختن گزارش خودت است، نه برای پژوهش. برای پس گرفتن موافقت یا پاک کردن داده‌ها به صفحهٔ <a href="/my/privacy">حریم خصوصی</a> برو.</dd>
-                        <dd t-else="">هر وقت بخواهید می‌توانید دست نگه دارید. این موافقت فقط برای ساختن گزارش خودتان است، نه برای پژوهش. برای پس گرفتن موافقت یا پاک کردن داده‌ها به صفحهٔ <a href="/my/privacy">حریم خصوصی</a> بروید.</dd>
+                    <p class="tt-mini" t-if="tu">پیش از شروع، این خلاصه را بخوان.</p>
+                    <p class="tt-mini" t-else="">پیش از شروع، این خلاصه را بخوانید.</p>
+                    <!-- CONSENT v5 (owner 2026-10-13, plain language): five short lines first (what you do, how long, who sees
+                         what, stopping, deleting your data), then the full v4 text behind one button (same words; open
+                         without JS, tt_player.js folds it). ts_panel replaces dd#tt-sum-who and dd#tt-who-sees. -->
+                    <dl class="tt-dl tt-dl--sum" id="tt-consent-summary">
+                        <dt>کار</dt>
+                        <dd id="tt-sum-do"><t t-if="tu"><t t-out="fa(v.field_min)"/> تا <t t-out="fa(v.field_max)"/> زمینه را خودت می‌نویسی و برای هر کدام ۱۵ جمله را پاسخ می‌دهی.</t><t t-else=""><t t-out="fa(v.field_min)"/> تا <t t-out="fa(v.field_max)"/> زمینه را خودتان می‌نویسید و برای هر کدام ۱۵ جمله را پاسخ می‌دهید.</t></dd>
+                        <dt>زمان</dt>
+                        <dd id="tt-sum-time">هر زمینه حدود ۲ دقیقه؛ معمولاً ۳ تا ۵ زمینه، روی هم ۶ تا ۱۰ دقیقه.</dd>
+                        <dt>چه کسی چه می‌بیند</dt>
+                        <dd id="tt-sum-who"><t t-if="tu">فقط خودت، در حسابت.</t><t t-else="">فقط خودتان، در حسابتان.</t></dd>
+                        <dt>دست نگه داشتن</dt>
+                        <dd id="tt-sum-stop"><t t-if="tu">هر وقت بخواهی می‌توانی دست نگه داری؛ هر پاسخ خودکار ذخیره می‌شود و بعداً از همان‌جا ادامه می‌دهی.</t><t t-else="">هر وقت بخواهید می‌توانید دست نگه دارید؛ هر پاسخ خودکار ذخیره می‌شود و بعداً از همان‌جا ادامه می‌دهید.</t></dd>
+                        <dt>پاک کردن داده‌ها</dt>
+                        <dd id="tt-sum-data"><t t-if="tu">هر وقت بخواهی می‌توانی در صفحهٔ <a href="/my/privacy">حریم خصوصی</a> موافقتت را پس بگیری یا داده‌هایت را پاک کنی.</t><t t-else="">هر وقت بخواهید می‌توانید در صفحهٔ <a href="/my/privacy">حریم خصوصی</a> موافقت را پس بگیرید یا داده‌هایتان را پاک کنید.</t></dd>
                     </dl>
-                    <button type="button" class="tt-fold" aria-expanded="true" aria-controls="tt-consent-more" data-tt-fold="1">جزئیات بیشتر: ذخیره و پیش از پایان</button>
-                    <dl class="tt-dl tt-dl--more" id="tt-consent-more">
-                        <dt>ذخیره و ادامه</dt>
-                        <dd t-if="tu">هر پاسخ خودکار ذخیره می‌شود. هر وقت خواستی بیرون برو و بعد از همان‌جا ادامه بده.</dd>
-                        <dd t-else="">هر پاسخ خودکار ذخیره می‌شود. هر وقت خواستید بیرون بروید و بعد از همان‌جا ادامه دهید.</dd>
-                        <dt>پیش از پایان</dt>
-                        <dd t-if="tu">پاسخ‌هایت را مرور می‌کنی و می‌توانی هر زمینه را دوباره باز کنی. پس از پایان، پاسخ‌ها قفل می‌شوند.</dd>
-                        <dd t-else="">پاسخ‌هایتان را مرور می‌کنید و می‌توانید هر زمینه را دوباره باز کنید. پس از پایان، پاسخ‌ها قفل می‌شوند.</dd>
-                    </dl>
+                    <button type="button" class="tt-fold" aria-expanded="true" aria-controls="tt-consent-more" data-tt-fold="1">متن کامل موافقت</button>
+                    <div id="tt-consent-more" class="tt-more-box">
+                        <dl class="tt-dl tt-dl--more">
+                            <dt>چه کار می‌کنی؟</dt>
+                            <dd t-if="tu"><t t-out="fa(v.field_min)"/> تا <t t-out="fa(v.field_max)"/> زمینه (مثل یک درس، هنر، ورزش یا مهارت) را خودت می‌نویسی و برای هر کدام ۱۵ جمله را پاسخ می‌دهی. هر زمینه حدود ۲ دقیقه طول می‌کشد؛ معمولاً ۳ تا ۵ زمینه، روی هم ۶ تا ۱۰ دقیقه.</dd>
+                            <dd t-else=""><t t-out="fa(v.field_min)"/> تا <t t-out="fa(v.field_max)"/> زمینه (مثل یک درس، هنر، ورزش، مهارت یا شغل) را خودتان می‌نویسید و برای هر کدام ۱۵ جمله را پاسخ می‌دهید. هر زمینه حدود ۲ دقیقه طول می‌کشد؛ معمولاً ۳ تا ۵ زمینه، روی هم ۶ تا ۱۰ دقیقه.</dd>
+                            <dt>چه کسی نتیجه را می‌بیند؟</dt>
+                            <dd id="tt-who-sees"><t t-if="tu">فقط خودت، در حساب کاربری‌ات.</t><t t-else="">فقط خودتان، در حساب کاربری‌تان.</t></dd>
+                            <dt>دست نگه داشتن و انصراف</dt>
+                            <dd t-if="tu">هر وقت بخواهی می‌توانی دست نگه داری. این موافقت فقط برای ساختن گزارش خودت است، نه برای پژوهش. برای پس گرفتن موافقت یا پاک کردن داده‌ها به صفحهٔ <a href="/my/privacy">حریم خصوصی</a> برو.</dd>
+                            <dd t-else="">هر وقت بخواهید می‌توانید دست نگه دارید. این موافقت فقط برای ساختن گزارش خودتان است، نه برای پژوهش. برای پس گرفتن موافقت یا پاک کردن داده‌ها به صفحهٔ <a href="/my/privacy">حریم خصوصی</a> بروید.</dd>
+                            <dt>ذخیره و ادامه</dt>
+                            <dd t-if="tu">هر پاسخ خودکار ذخیره می‌شود. هر وقت خواستی بیرون برو و بعد از همان‌جا ادامه بده.</dd>
+                            <dd t-else="">هر پاسخ خودکار ذخیره می‌شود. هر وقت خواستید بیرون بروید و بعد از همان‌جا ادامه دهید.</dd>
+                            <dt>پیش از پایان</dt>
+                            <dd t-if="tu">پاسخ‌هایت را مرور می‌کنی و می‌توانی هر زمینه را دوباره باز کنی. پس از پایان، پاسخ‌ها قفل می‌شوند.</dd>
+                            <dd t-else="">پاسخ‌هایتان را مرور می‌کنید و می‌توانید هر زمینه را دوباره باز کنید. پس از پایان، پاسخ‌ها قفل می‌شوند.</dd>
+                        </dl>
+                    </div>
                     <form t-attf-action="/take/#{attempt.access_token}/consent" method="post" class="tt-form">
                         <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
                         <p t-if="error == 'consent'" id="tt-err-consent" class="tt-error" tabindex="-1"><t t-if="tu">برای شروع، تیک «این توضیح‌ها را خواندم…» را بزن.</t><t t-else="">برای شروع، تیک «این توضیح‌ها را خواندم…» را بزنید.</t></p>

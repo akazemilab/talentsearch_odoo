@@ -363,9 +363,12 @@
                                             <label class="ts-field"><span>نام و نام خانوادگی</span><input type="text" name="name" required="required" minlength="2" maxlength="120" t-att-value="user_name" class="form-control" autocomplete="name" aria-describedby="ts-c-name-h"/></label>
                                             <!-- who sees the name (W52) -->
                                             <p id="ts-c-name-h" class="ts-hint">«<bdi t-out="ws.ts_public_name()"/>» <t t-if="student">تو را با این نام می‌شناسد.</t><t t-else="">شما را با این نام می‌شناسد.</t></p>
-                                            <button type="submit" class="ts-btn ts-btn--primary ts-btn--lg ts-btn--block">ادامه</button>
-                                            <!-- the next screen is the invitation (tick + accept), then consent (audit P11-1, interim copy) -->
-                                            <p class="ts-hint" id="ts-invite-next"><t t-if="student">بعد از «ادامه»، دعوت را می‌پذیری و صفحهٔ کوتاه رضایت را می‌بینی؛ بعد پرسش‌ها شروع می‌شود.</t><t t-else="">بعد از «ادامه»، دعوت را می‌پذیرید و صفحهٔ کوتاه رضایت را می‌بینید؛ بعد پرسش‌ها شروع می‌شود.</t></p>
+                                            <!-- owner decision 2026-10-13: joining accepts the invitation in the same POST, so the sharing
+                                                 tick lives here, with the same words as /invite (ts_org.share_tick); next comes consent -->
+                                            <t t-call="ts_org.share_tick" share_ws="ws" share_student="student" share_checked="True"
+                                               share_pos="False" share_battery="c.battery_id if 'battery_id' in c._fields else False"/>
+                                            <button type="submit" class="ts-btn ts-btn--primary ts-btn--lg ts-btn--block">پذیرفتن دعوت و ادامه</button>
+                                            <p class="ts-hint" id="ts-invite-next"><t t-if="student">بعد از این، صفحهٔ کوتاه رضایت را می‌بینی و بعد پرسش‌ها شروع می‌شود.</t><t t-else="">بعد از این، صفحهٔ کوتاه رضایت را می‌بینید و بعد پرسش‌ها شروع می‌شود.</t></p>
                                         </form>
                                     </div>
                                     <t t-call="ts_org.share_box" share_ws="ws" share_student="student"/>

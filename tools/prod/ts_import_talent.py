@@ -30,7 +30,8 @@ if db == 'eot_main':
 
 inst = env['ts.instrument'].search([('code', '=', 'TALENT-INV-15')])
 assert len(inst) == 1 and inst.state == 'published', 'talent instrument missing or unpublished'
-version = inst.current_version_id
+# historical rows were answered on the book statements: version 1.0 (content v2 adds later versions with new wording)
+version = inst.version_ids.filtered(lambda v: v.contract_version == '1.0')[:1]
 assert version.mode == 'matrix' and version.contract_version == '1.0'
 items = version.item_ids.filtered(lambda i: not i.disabled).sorted(lambda i: (i.sequence, i.source_question_id, i.id))
 assert len(items) == 15

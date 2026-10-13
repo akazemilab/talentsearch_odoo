@@ -98,6 +98,22 @@ it, ks = G.gen_logic('x')
 check('G04 logic items have the key among the options', all(0 <= k < len(i['options']) for i, k in zip(it, ks)))
 it, ks = G.gen_numeric('x')
 check('G05 numeric options are distinct', all(len(set(i['options'])) == len(i['options']) for i in it))
+# text alternatives (owner 2026-10-13): display only, built from the drawn structure; the items and keys never change
+it, ks = G.gen_matrices('x')
+check('G06 every matrix item describes its 8 cells in 3 rows (the 9th is the empty one) and names each option',
+      all(len(__import__('re').findall('ردیف [۱-۳]:', i['cells_text'])) == 3 and 'خانهٔ خالی' in i['cells_text'] and len(i['options_text']) == len(i['options'])
+          and len(set(i['options_text'])) == len(i['options_text']) for i in it), it[0]['cells_text'])
+it, ks = G.gen_rotation('x')
+check('G07 every rotation figure is described row by row (squares in words), both figures',
+      all(i['left_text'].count('پر') >= 4 and i['right_text'].startswith('شکلی از') for i in it), it[0]['left_text'])
+golden = {}
+for k, g in G.GENERATORS.items():
+    for sd in ('a', 'b', 'c-1', 'x-practice'):
+        for pr in (False, True):
+            golden['%s|%s|%s' % (k, sd, pr)] = (g(sd, practice=pr) if pr else g(sd))[1]
+digest = __import__('hashlib').sha256(json.dumps(golden, sort_keys=True).encode()).hexdigest()
+check('G08 the keys of every generator are unchanged by the text alternatives (golden of 2026-10-13)',
+      digest == 'f5994bed3879b260113331b6dc4534a995f2638ddbd0fd607a1235e9d9fcdc39', digest)
 
 # ---- scoring
 keys = [1, 2, 3, 0]

@@ -10,7 +10,8 @@
                 <!-- UX audit T7 (2026-10-13, B3-1/PT1): a short first screen — size, who sees the result, saving, stopping,
                      support — then the same words of «هدف», «پاسخ‌دهنده», «محدودیت» and «پیش از ارسال» behind one disclosure
                      button (no-JS: open). Errors: one summary under the H1, focused on load, naming the exact problem
-                     (B4-2/B5-1/PT2); posted ticks come back ticked (`posted`, B4-3). Consent wording unchanged (v5). -->
+                     (B4-2/B5-1/PT2); posted ticks come back ticked (`posted`, B4-3).
+                     CONSENT v5 plain language (owner 2026-10-13, TS-CONSENT-1405-07-21-v5): summary first, full text folded. -->
                 <t t-call="website.layout" additional_title.f="پیش از شروع">
                     <div id="wrap" class="ts-page">
                         <section class="ts-section">
@@ -25,22 +26,37 @@
                                         <li t-if="error == 'guardian'"><a href="#ts-guardian-confirm">برای این سنجه تأیید ولی (پدر، مادر یا سرپرست قانونی) لازم است.</a></li>
                                     </ul>
                                 </div>
-                                <p class="ts-lead">پیش از شروع، این موارد را بخوانید.</p>
-                                <dl class="ts-meta ts-meta--card" id="ts-consent-key">
-                                    <dt>زمان تقریبی</dt><dd><t t-out="fa(inst.active_item_count)"/> پرسش، حدود <t t-out="fa(inst.duration_minutes)"/> دقیقه</dd>
-                                    <dt>چه کسی نتیجه را می‌بیند</dt><dd>فقط شما، در حسابتان. نتیجه با هیچ کارفرما یا مرکزی به اشتراک گذاشته نمی‌شود.</dd>
-                                    <dt>ذخیره و ادامه</dt><dd>پاسخ‌ها خودکار ذخیره می‌شوند؛ هر وقت خواستید می‌توانید از همان‌جا ادامه دهید.</dd>
-                                    <dt>انصراف</dt><dd>هر وقت بخواهید می‌توانید دست نگه دارید. برای پس گرفتن رضایت یا پاک کردن داده‌ها به صفحهٔ <a href="/my/privacy">حریم خصوصی</a> بروید.</dd>
-                                    <dt>پشتیبانی</dt><dd><a href="/contact?topic=support">تماس با پشتیبانی</a><t t-call="ts_website.sep"/>اگر حالتان خوب نیست، منتظر نمانید: اورژانس اجتماعی ۱۲۳ یا صدای مشاور ۱۴۸۰.</dd>
+                                <p class="ts-lead"><t t-if="tu">پیش از شروع، این خلاصه را بخوان.</t><t t-else="">پیش از شروع، این خلاصه را بخوانید.</t></p>
+                                <!-- CONSENT v5 (owner 2026-10-13, plain language): five short lines first (what you do, how long, who
+                                     sees what, stopping, deleting your data), then the full text behind one button. Every fact of v4
+                                     stays in the full text (mapping: /home/claude/ux7/done_U.json). Other modules replace the dd ids
+                                     ts-sum-do / ts-sum-time / ts-sum-who / ts-sum-stop. -->
+                                <dl class="ts-meta ts-meta--card ts-consent-sum" id="ts-consent-summary">
+                                    <dt>کار</dt>
+                                    <dd id="ts-sum-do"><t t-if="tu">به <t t-out="fa(inst.active_item_count)"/> پرسش این سنجه پاسخ می‌دهی.</t><t t-else="">به <t t-out="fa(inst.active_item_count)"/> پرسش این سنجه <t t-if="inst.audience == 'child'">دربارهٔ کودک </t>پاسخ می‌دهید.</t></dd>
+                                    <dt>زمان</dt>
+                                    <dd id="ts-sum-time">حدود <t t-out="fa(inst.duration_minutes)"/> دقیقه.</dd>
+                                    <dt>چه کسی چه می‌بیند</dt>
+                                    <dd id="ts-sum-who"><t t-if="tu">فقط خودت، در حسابت.</t><t t-else="">فقط شما، در حسابتان.</t></dd>
+                                    <dt>دست نگه داشتن</dt>
+                                    <dd id="ts-sum-stop"><t t-if="tu">هر وقت بخواهی می‌توانی دست نگه داری؛ پاسخ‌ها خودکار ذخیره می‌شوند و بعداً از همان‌جا ادامه می‌دهی.</t><t t-else="">هر وقت بخواهید می‌توانید دست نگه دارید؛ پاسخ‌ها خودکار ذخیره می‌شوند و بعداً از همان‌جا ادامه می‌دهید.</t></dd>
+                                    <dt>پاک کردن داده‌ها</dt>
+                                    <dd id="ts-sum-data"><t t-if="tu">هر وقت بخواهی می‌توانی در صفحهٔ <a href="/my/privacy">حریم خصوصی</a> رضایتت را پس بگیری یا داده‌هایت را پاک کنی.</t><t t-else="">هر وقت بخواهید می‌توانید در صفحهٔ <a href="/my/privacy">حریم خصوصی</a> رضایت را پس بگیرید یا داده‌هایتان را پاک کنید.</t></dd>
                                 </dl>
+                                <!-- support and the crisis lines never fold -->
+                                <p class="ts-hint ts-consent-help" id="ts-consent-help"><a href="/contact?topic=support">تماس با پشتیبانی</a><t t-call="ts_website.sep"/><t t-if="tu">اگر حالت خوب نیست، منتظر نمان: اورژانس اجتماعی ۱۲۳ یا صدای مشاور ۱۴۸۰.</t><t t-else="">اگر حالتان خوب نیست، منتظر نمانید: اورژانس اجتماعی ۱۲۳ یا صدای مشاور ۱۴۸۰.</t></p>
                                 <div class="ts-more" id="ts-consent-more-box">
-                                    <button type="button" class="ts-more__btn" aria-expanded="true" aria-controls="ts-consent-more" hidden="hidden">جزئیات بیشتر: هدف، محدودیت و پیش از ارسال</button>
+                                    <button type="button" class="ts-more__btn" aria-expanded="true" aria-controls="ts-consent-more" hidden="hidden">متن کامل رضایت</button>
                                     <div id="ts-consent-more" class="ts-more__body">
-                                        <dl class="ts-meta ts-meta--card">
+                                        <dl class="ts-meta ts-meta--card" id="ts-consent-key">
+                                            <dt>زمان تقریبی</dt><dd><t t-out="fa(inst.active_item_count)"/> پرسش، حدود <t t-out="fa(inst.duration_minutes)"/> دقیقه</dd>
+                                            <dt>چه کسی نتیجه را می‌بیند</dt><dd><t t-if="tu">فقط خودت، در حسابت. نتیجه با هیچ کارفرما یا مرکزی به اشتراک گذاشته نمی‌شود.</t><t t-else="">فقط شما، در حسابتان. نتیجه با هیچ کارفرما یا مرکزی به اشتراک گذاشته نمی‌شود.</t></dd>
+                                            <dt>ذخیره و ادامه</dt><dd id="ts-full-save"><t t-if="tu">پاسخ‌ها خودکار ذخیره می‌شوند؛ هر وقت خواستی از همان‌جا ادامه بده.</t><t t-else="">پاسخ‌ها خودکار ذخیره می‌شوند؛ هر وقت خواستید می‌توانید از همان‌جا ادامه دهید.</t></dd>
+                                            <dt>انصراف</dt><dd><t t-if="tu">هر وقت بخواهی می‌توانی دست نگه داری. برای پس گرفتن رضایت یا پاک کردن داده‌ها به صفحهٔ <a href="/my/privacy">حریم خصوصی</a> برو.</t><t t-else="">هر وقت بخواهید می‌توانید دست نگه دارید. برای پس گرفتن رضایت یا پاک کردن داده‌ها به صفحهٔ <a href="/my/privacy">حریم خصوصی</a> بروید.</t></dd>
                                             <dt>هدف</dt><dd t-out="inst.ts_intended_use()"/>
                                             <dt>پاسخ‌دهنده</dt><dd t-out="dict(inst._fields['audience'].selection).get(inst.audience)"/>
                                             <dt>محدودیت</dt><dd t-out="inst.limitations"/>
-                                            <dt>پیش از ارسال</dt><dd>پیش از ارسال، پاسخ‌ها را مرور می‌کنید. پس از ارسال، پاسخ‌ها قفل می‌شوند.</dd>
+                                            <dt>پیش از ارسال</dt><dd><t t-if="tu">پیش از ارسال، پاسخ‌هایت را مرور می‌کنی. پس از ارسال، پاسخ‌ها قفل می‌شوند.</t><t t-else="">پیش از ارسال، پاسخ‌ها را مرور می‌کنید. پس از ارسال، پاسخ‌ها قفل می‌شوند.</t></dd>
                                         </dl>
                                     </div>
                                 </div>

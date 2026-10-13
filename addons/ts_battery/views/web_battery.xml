@@ -50,7 +50,9 @@
 
     <!-- Consent page of the first attempt of a battery: names the battery, lists its instruments, total size and time.
          Sentence added with CONSENT_VERSION v3; v4 (G6-P12-2): «نه تشخیص» only once, in «محدودیت»; what the invitation's
-         sharing covers. -->
+         sharing covers. v5 (owner 2026-10-13, plain language; copy W23): one subject per verb, «موافقت» for the person's
+         own click (glossary), «تو» where the page speaks «تو»; same facts. The card now opens the folded full text; the
+         summary above names the battery (web_battery_inherit). -->
     <record id="consent_battery_block" model="ir.ui.view">
         <field name="name">TS battery: block on the consent page</field>
         <field name="type">qweb</field>
@@ -60,12 +62,16 @@
             <t t-name="ts_battery.consent_battery_block">
             <section t-if="bat_info" class="ts-card tsb-consent" aria-labelledby="tsb-consent-h">
                 <h2 id="tsb-consent-h" class="h5">این دعوت یک مجموعه است</h2>
-                <p>با یک بار موافقت در همین صفحه، به همهٔ سنجه‌های این مجموعه پاسخ می‌دهید. رضایت شما برای هر سنجه جداگانه ثبت و پاسخ هر سنجه جدا ذخیره می‌شود؛ هر جا خواستید دست نگه دارید و بعداً از همان‌جا ادامه دهید.</p>
+                <p t-if="tu">با یک بار موافقت در همین صفحه، به همهٔ سنجه‌های این مجموعه پاسخ می‌دهی. موافقتت برای هر سنجه جدا ثبت می‌شود و پاسخ هر سنجه هم جدا ذخیره می‌شود. هر جا خواستی دست نگه دار؛ بعداً از همان‌جا ادامه می‌دهی.</p>
+                <p t-else="">با یک بار موافقت در همین صفحه، به همهٔ سنجه‌های این مجموعه پاسخ می‌دهید. موافقت شما برای هر سنجه جدا ثبت می‌شود و پاسخ هر سنجه هم جدا ذخیره می‌شود. هر جا خواستید دست نگه دارید؛ بعداً از همان‌جا ادامه می‌دهید.</p>
                 <ol class="tsb-list">
                     <li t-foreach="bat_info['lines']" t-as="ln"><span t-out="ln['name']"/><t t-call="ts_website.sep"/><span class="ts-hint"><t t-if="ln.get('effort')"><t t-out="ln['effort']"/>، <t t-out="ln['duration']"/></t><t t-else=""><t t-out="fa(ln['items'])"/> پرسش، حدود <t t-out="fa(ln['minutes'])"/> دقیقه</t></span></li>
                 </ol>
                 <p class="tsb-total">روی هم <t t-out="bat_info['size']"/>، <t t-out="bat_info['time']"/>.</p>
-                <p t-if="bat_info.get('shared')" class="ts-hint">اشتراک‌گذاری‌ای که در صفحهٔ دعوت پذیرفتید، برای گزارش همهٔ سنجه‌های این مجموعه است و از صفحهٔ گزارش مجموعه قطع می‌شود.</p>
+                <t t-if="bat_info.get('shared')">
+                    <p t-if="tu" class="ts-hint">اشتراک‌گذاری‌ای که در صفحهٔ دعوت پذیرفتی، برای گزارش همهٔ سنجه‌های این مجموعه است و از صفحهٔ گزارش مجموعه قطع می‌شود.</p>
+                    <p t-else="" class="ts-hint">اشتراک‌گذاری‌ای که در صفحهٔ دعوت پذیرفتید، برای گزارش همهٔ سنجه‌های این مجموعه است و از صفحهٔ گزارش مجموعه قطع می‌شود.</p>
+                </t>
             </section>
             </t>
         </field>

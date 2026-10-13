@@ -5,6 +5,9 @@ from odoo import api, fields, models
 from odoo.exceptions import UserError
 
 BANDS = [('low', 'کم'), ('medium', 'متوسط'), ('high', 'زیاد')]
+# Report text format of a band / result: 'book' = the source book texts (split at display time by textfmt), 'v2' = the
+# content v2 overlay (data/content_v2/<code>.json): plain participant + counselor texts, a factor definition, talk points.
+CONTENT_FORMATS = [('book', 'متن کتاب'), ('v2', 'محتوای نسخهٔ ۲')]
 AUDIENCES = [
     ('adult', 'بزرگسال (پاسخ‌دهی شخصی)'),
     ('adolescent', 'نوجوان (با اطلاع و رضایت ولی)'),
@@ -63,6 +66,7 @@ class TsInstrument(models.Model):
     factor_count = fields.Integer(related='current_version_id.scored_factor_count', string='تعداد بُعد')
     duration_minutes = fields.Integer('زمان تقریبی (دقیقه)', compute='_compute_duration', store=True)
     intended_use = fields.Text('کاربرد مجاز')
+    summary = fields.Text('خلاصه', help='یک جملهٔ کوتاه زیر عنوان صفحهٔ سنجه؛ از فایل محتوای نسخهٔ ۲ (content_v2) خوانده می‌شود.')
     limitations = fields.Text('محدودیت‌ها')
     rights_note = fields.Text('مالکیت و حق استفاده')
     evidence_note = fields.Text('شواهد')
@@ -160,6 +164,8 @@ class TsInstrumentVersion(models.Model):
     contract_version = fields.Char('نسخهٔ قرارداد نمره‌گذاری', required=True)
     engine_version = fields.Char('نسخهٔ موتور نمره‌گذاری', required=True, default='S09-V3.0-multi-inventory')
     content_hash = fields.Char('اثر محتوا', required=True, index=True)
+    content_version = fields.Char('نسخهٔ محتوای گزارش', readonly=True,
+                                  help='خالی = متن‌های کتاب؛ مثلاً TS-CONTENT-2.0 برای محتوای نسخهٔ ۲.')
     locked = fields.Boolean('قفل', default=True)
     superseded = fields.Boolean('جایگزین‌شده')
     scale_min = fields.Integer(default=1)
@@ -267,6 +273,8 @@ class TsInstrumentBand(models.Model):
     client_text = fields.Text('تفسیر برای شرکت‌کننده')
     therapist_text = fields.Text('راهنمای مشاور')
     content_version = fields.Char('نسخهٔ متن تفسیر')
+    content_format = fields.Selection(CONTENT_FORMATS, 'قالب متن', default='book', required=True)
+    talk_points = fields.Text('پیشنهاد برای گفت‌وگو', help='یک پرسش در هر سطر (فقط قالب v2).')
     source_approved_by = fields.Char('تأییدکنندهٔ منبع', readonly=True)
     source_approved_at = fields.Char('زمان تأیید منبع', readonly=True)
     approved_by_id = fields.Many2one('res.users', 'تأییدکنندهٔ استعدادیاب', readonly=True)

@@ -33,6 +33,9 @@
     .tt-dl dt { font-weight: 600; color: var(--color-text); margin-block-start: 8px; }
     .tt-dl dd { margin: 0; color: var(--color-neutral-300); }
     .tt-dl[hidden] { display: none; }
+    // CONSENT v5 (2026-10-13): the plain-language summary is a card; the full text folds as one box
+    .tt-dl--sum { background: var(--tt-sub); border-radius: 12px; padding: 10px 16px 14px; }
+    .tt-more-box[hidden] { display: none; }
     // consent details behind one button (same words; button + aria-expanded + hidden)
     .tt-fold { display: flex; width: 100%; justify-content: space-between; align-items: center; gap: 10px; min-height: 44px; padding: 4px 0; margin: -8px 0 10px;
         border: 0; background: none; color: var(--tt-hero2); font: 600 .92rem var(--font-text); text-align: start; cursor: pointer; }

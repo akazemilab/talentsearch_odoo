@@ -18,7 +18,17 @@
                 <h1 t-if="bat_info" t-out="bat_info['name']"/>
                 <h1 t-else="" t-out="inst.title"/>
             </xpath>
-            <!-- T7: the error summary stays right under the H1; the battery card comes just before the key facts -->
+            <!-- CONSENT v5 (owner 2026-10-13): the summary names the whole battery (one agreement for all, its size and
+                 total time); the battery card opens the full text, before the key facts. A single instrument's summary
+                 uses its own labels (a timed task: «۳ بخش زمان‌دار», never «۰ پرسش», W20). -->
+            <xpath expr="//dd[@id='ts-sum-do']" position="replace">
+                <dd id="ts-sum-do" t-if="bat_info"><t t-if="tu">به سنجه‌های این مجموعه یکی پس از دیگری پاسخ می‌دهی (<t t-out="bat_info['size']"/>)؛ یک بار موافقت در همین صفحه برای همه کافی است.</t><t t-else="">به سنجه‌های این مجموعه یکی پس از دیگری پاسخ می‌دهید (<t t-out="bat_info['size']"/>)؛ یک بار موافقت در همین صفحه برای همه کافی است.</t></dd>
+                <dd id="ts-sum-do" t-else=""><t t-if="tu">به <t t-out="inst.ts_effort_label()"/> این سنجه پاسخ می‌دهی.</t><t t-else="">به <t t-out="inst.ts_effort_label()"/> این سنجه <t t-if="inst.audience == 'child'">دربارهٔ کودک </t>پاسخ می‌دهید.</t></dd>
+            </xpath>
+            <xpath expr="//dd[@id='ts-sum-time']" position="replace">
+                <dd id="ts-sum-time" t-if="bat_info"><t t-out="bat_info['time']"/> برای همهٔ مجموعه.</dd>
+                <dd id="ts-sum-time" t-else=""><t t-out="inst.ts_duration_label()"/>.</dd>
+            </xpath>
             <xpath expr="//dl[@id='ts-consent-key']" position="before">
                 <t t-call="ts_battery.consent_battery_block"/>
             </xpath>
@@ -47,8 +57,17 @@
         <field name="website_id" ref="ts_website.website_ts"/>
         <field name="priority">40</field>
         <field name="arch" type="xml">
-            <xpath expr="//dl[hasclass('tt-dl')]" position="before">
+            <!-- CONSENT v5: bat_info is set before the summary (which names the whole battery); the card opens the full text -->
+            <xpath expr="//dl[@id='tt-consent-summary']" position="before">
                 <t t-set="bat_info" t-value="attempt.ts_battery_info()"/>
+            </xpath>
+            <xpath expr="//dd[@id='tt-sum-do']" position="after">
+                <t t-if="bat_info">
+                    <dt>مجموعه</dt>
+                    <dd id="tt-sum-battery">این سنجه بخشی از یک مجموعه است (<t t-out="bat_info['size']"/>، <t t-out="bat_info['time']"/> برای همه)؛ یک بار موافقت در همین صفحه برای همه کافی است.</dd>
+                </t>
+            </xpath>
+            <xpath expr="//div[@id='tt-consent-more']/dl" position="before">
                 <t t-call="ts_battery.consent_battery_block"/>
             </xpath>
         </field>
@@ -170,6 +189,21 @@
         </field>
     </record>
 
+    <!-- ===================================================== the sharing tick (ts_org.share_tick: /invite and /c)
+         The tick stays ticked (owner decision 2026-10-12; unticked only under another name, 2026-10-13); for a battery it
+         says that one tick covers every instrument's report (G6-P11-1). share_battery = the invitation's / open link's
+         battery. -->
+    <record id="share_tick_battery" model="ir.ui.view">
+        <field name="name">ts_battery.share_tick</field>
+        <field name="inherit_id" ref="ts_org.tpl_share_tick"/>
+        <field name="website_id" ref="ts_website.website_ts"/>
+        <field name="arch" type="xml">
+            <xpath expr="//p[@id='ts_share_note']" position="replace">
+                <p id="ts_share_note" class="ts-hint"><t t-if="share_battery"><t t-if="share_student">این تیک برای گزارش همهٔ سنجه‌های این مجموعه است. </t><t t-else="">این تیک برای گزارش همهٔ سنجه‌های این مجموعه است<t t-if="share_ws.purpose == 'clinical'">، همراه با راهنمای مشاور</t>. </t></t><t t-if="share_student">اگر تیک را برداری هم می‌توانی <t t-if="share_battery">به سنجه‌های مجموعه پاسخ بدهی</t><t t-else="">سنجه را انجام بدهی</t>؛ آن وقت نتیجه فقط برای خودت می‌ماند.</t><t t-else="">اگر تیک را بردارید هم می‌توانید <t t-if="share_battery">به سنجه‌های مجموعه پاسخ دهید</t><t t-else="">سنجه را انجام دهید</t>؛ آن وقت نتیجه فقط برای خودتان می‌ماند.</t></p>
+            </xpath>
+        </field>
+    </record>
+
     <!-- ===================================================== the invitation link names the battery -->
     <record id="invite_battery" model="ir.ui.view">
         <field name="name">ts_battery.invite</field>
@@ -192,11 +226,6 @@
                 <p t-if="a.battery_id and student"><strong t-out="ws.ts_public_name()"/> تو را به پاسخ‌دادن به سنجه‌های این مجموعه <t t-out="inv_verb"/>.</p>
                 <p t-elif="a.battery_id"><strong t-out="ws.ts_public_name()"/> شما را به پاسخ‌دادن به سنجه‌های این مجموعه <t t-out="inv_verb"/>.</p>
                 <p t-elif="student"><strong t-out="ws.ts_public_name()"/> تو را به پاسخ‌دادن به این سنجه <t t-out="inv_verb"/>.</p>
-            </xpath>
-            <!-- the sharing tick stays ticked (owner decision 2026-10-12); for a battery it says that one tick covers every
-                 instrument's report (G6-P11-1) -->
-            <xpath expr="//p[@id='ts_share_note']" position="replace">
-                <p id="ts_share_note" class="ts-hint"><t t-if="a.battery_id"><t t-if="student">این تیک برای گزارش همهٔ سنجه‌های این مجموعه است. </t><t t-else="">این تیک برای گزارش همهٔ سنجه‌های این مجموعه است<t t-if="ws.purpose == 'clinical'">، همراه با راهنمای مشاور</t>. </t></t><t t-if="student">اگر تیک را برداری هم می‌توانی <t t-if="a.battery_id">به سنجه‌های مجموعه پاسخ بدهی</t><t t-else="">سنجه را انجام بدهی</t>؛ آن وقت نتیجه فقط برای خودت می‌ماند.</t><t t-else="">اگر تیک را بردارید هم می‌توانید <t t-if="a.battery_id">به سنجه‌های مجموعه پاسخ دهید</t><t t-else="">سنجه را انجام دهید</t>؛ آن وقت نتیجه فقط برای خودتان می‌ماند.</t></p>
             </xpath>
             <!-- UX T7: the instruments come after the action (the first phone screen keeps the button); size and time per
                  instrument from its own labels (a timed task says «۳ بخش زمان‌دار», never «۰ پرسش»; P26-2, W20). The

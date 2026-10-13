@@ -1,8 +1,13 @@
 """The open link of a campaign, participant side (S7, INV-6): /c/<token>.
-A signed-in participant types a name and joins; the invitation that results is the ordinary one, so the consent and
-sharing steps of /invite/<token> follow. Joining is capped by the campaign (open_max, expiry, closed) and by an IP-hash
-rate limit; the page tells nothing about the panel except its name, the instrument and the note."""
+A signed-in participant types a name, chooses sharing (the tick of /invite, ts_org.share_tick) and joins; the
+invitation that results is the ordinary one. Owner decision 2026-10-13: the join POST also accepts it, through the very
+code of POST /invite/<token>/accept (self.invite_accept, with every module's override), and lands on the consent page of
+the new attempt instead of showing /invite again. A signed-out visitor signs in and comes back to /c (_auth_urls), then
+the same. Joining is capped by the campaign (open_max, expiry, closed) and by an IP-hash rate limit; the page tells
+nothing about the panel except its name, the instrument and the note."""
 from datetime import timedelta
+
+from werkzeug.exceptions import NotFound
 
 from odoo import fields, http
 from odoo.exceptions import UserError
@@ -83,4 +88,14 @@ class TsPanelCampaignJoin(TsOrg):
             request.session['ts_flash'] = str(e.args[0] if e.args else e)
             return request.redirect('/c/%s' % token)
         Audit.log('campaign.join', a, workspace=c.workspace_id, campaign_id=c.id)
-        return request.redirect('/invite/%s' % a.token)
+        # accept in the same step (owner decision 2026-10-13): POST /invite/<t>/accept's own code path, the sharing choice
+        # from this page's tick (one this account already accepted: action_accept returns its attempt). An invitation
+        # that cannot be accepted is shown by /invite, which explains its state. So is another open invitation that
+        # ts_join returned instead (same person and instrument, not of this link): its own page asks its own question.
+        if a.campaign_id != c or ('position_id' in a._fields and a.position_id):
+            return request.redirect('/invite/%s' % a.token)
+        try:
+            with request.env.cr.savepoint():
+                return self.invite_accept(a.token, share='1' if post.get('share') == '1' else '0')
+        except NotFound:
+            return request.redirect('/invite/%s' % a.token)

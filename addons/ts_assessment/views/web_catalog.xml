@@ -57,6 +57,8 @@
                                 <a href="/assessments" class="ts-back">همهٔ سنجه‌ها</a>
                                 <span class="ts-hero__kicker" t-out="inst.category"/>
                                 <h1 t-out="inst.title"/>
+                                <!-- content v2: one sentence from data/content_v2/<code>.json (what the instrument helps you see) -->
+                                <p t-if="inst.summary" class="ts-hero__lead ts-inst__summary" t-out="inst.summary"/>
                                 <p class="ts-inst__meta ts-inst__meta--hero">
                                     <span><t t-out="fa(inst.active_item_count)"/> پرسش</span>
                                     <span>حدود <t t-out="fa(inst.duration_minutes)"/> دقیقه</span>

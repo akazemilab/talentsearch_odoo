@@ -36,6 +36,23 @@
             </t>
         </field>
     </record>
+    <!-- CONSENT v5 (owner 2026-10-13): on a timed task's consent page, «stop any time» says what the player footer says:
+         the clock of a started section keeps running (task.py: deadline = start + limit), so a section is done in one go.
+         A correction of what the page said vs what the code does; every v4 fact stays. -->
+    <record id="consent_task" model="ir.ui.view">
+        <field name="name">ts_tasks.consent</field>
+        <field name="inherit_id" ref="ts_assessment.tpl_consent"/>
+        <field name="website_id" ref="ts_website.website_ts"/>
+        <field name="priority">45</field>
+        <field name="arch" type="xml">
+            <xpath expr="//dd[@id='ts-sum-stop']" position="inside">
+                <t t-if="inst.ts_is_task_inst()"><t t-if="tu"> اما زمان هر بخش از لحظهٔ شروع می‌گذرد، حتی اگر صفحه را ببندی؛ پس هر بخش را یک‌جا تمام کن.</t><t t-else=""> اما زمان هر بخش از لحظهٔ شروع می‌گذرد، حتی اگر صفحه را ببندید؛ پس هر بخش را یک‌جا تمام کنید.</t></t>
+            </xpath>
+            <xpath expr="//dd[@id='ts-full-save']" position="inside">
+                <t t-if="inst.ts_is_task_inst()"><t t-if="tu"> زمان هر بخش از لحظهٔ شروع می‌گذرد، حتی اگر صفحه را ببندی.</t><t t-else=""> زمان هر بخش از لحظهٔ شروع می‌گذرد، حتی اگر صفحه را ببندید.</t></t>
+            </xpath>
+        </field>
+    </record>
     <!-- Report blocks: task results are percentiles 0-100 (not means on 1-5). Hint, column and meter follow.
          The questionnaire hint stays the ts_assessment one (with its «تو» branch); only task reports get their own. -->
     <record id="report_blocks_task" model="ir.ui.view">
