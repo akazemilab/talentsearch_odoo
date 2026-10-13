@@ -164,7 +164,8 @@ def otp_then(a, phone, pending):
     if ok or (reason in ('cooldown', 'limit', 'locked') and norm):
         sess['ts_signup_phone'] = norm
         sess[RESENDS_KEY] = 0
-        return request.redirect('/signup?step=code&msg=%s&next=%s' % ('' if ok else reason, quote(nxt, safe='/')))
+        msg = '' if (ok or reason == 'cooldown') else reason       # a code sent a moment ago is still the code to type
+        return request.redirect('/signup?step=code&msg=%s&next=%s' % (msg, quote(nxt, safe='/')))
     return request.redirect('/signup?msg=%s&next=%s' % (reason or 'send', quote(nxt, safe='/')))
 
 

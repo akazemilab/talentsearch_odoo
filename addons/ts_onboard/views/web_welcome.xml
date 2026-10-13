@@ -45,7 +45,7 @@
                                             <t t-else="">حدود <t t-out="fa(minutes)"/> دقیقه<t t-call="ts_website.sep"/><t t-if="parts &gt; 1"><t t-out="fa(parts)"/> بخش</t><t t-else=""><t t-out="fa(items)"/> پرسش</t></t>
                                         </p>
                                         <p t-if="timed" class="tso-device" id="tso-device">روی کامپیوتر بهتر است (بخش زمان‌دار)</p>
-                                        <p t-if="a.note and mode == 'welcome'" class="ts-hint tso-note">یادداشت پنل: <t t-out="a.note"/></p>
+                                        <p t-if="a.note and mode == 'welcome' and not pos" class="ts-hint tso-note">یادداشت پنل: <t t-out="a.note"/></p>
                                     </div>
 
                                     <!-- signed in with another account than the invited number / address: one notice, one action -->
@@ -110,7 +110,7 @@
                                                     <summary>بیشتر</summary>
                                                     <div class="tso-more__body">
                                                         <t t-if="pos" t-call="ts_hire.position_terms"/>
-                                                        <t t-else="" t-call="ts_org.share_box"><t t-set="share_ws" t-value="ws"/><t t-set="share_student" t-value="tu"/></t>
+                                                        <t t-else="" t-call="ts_org.share_box" share_ws="ws" share_student="tu"/>
                                                         <t t-if="item_names">
                                                             <p><strong>بخش‌های این مجموعه</strong> (یکی پس از دیگری، با همین یک بار موافقت):</p>
                                                             <ol class="tso-parts"><li t-foreach="item_names" t-as="nm" t-out="nm"/></ol>
