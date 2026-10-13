@@ -12,13 +12,20 @@ from ..models.career import (EDU, EXP, HEX_CODE, IP_CODE, ONET_NOTICE, RIASEC_FA
 PAGE = 20
 
 
+def _sitemap_career(env, rule, qs):
+    """/career is listed in talentsearch.ir's sitemap only (routes are global: sitemap=True would add it to eot.ir's)."""
+    site = env['website'].get_current_website()
+    if site and site == env.ref('ts_website.website_ts', raise_if_not_found=False) and (not qs or qs.lower() in '/career'):
+        yield {'loc': '/career'}
+
+
 def _run(create=False):
     return request.env['ts.career.run'].ts_for_user(request.env.user, create=create)
 
 
 class TsCareer(TsOnbCatalog):
 
-    @http.route('/career', type='http', auth='public', website=True, sitemap=True)
+    @http.route('/career', type='http', auth='public', website=True, sitemap=_sitemap_career)
     def career_home(self, **kw):
         _ts_site_or_404()
         public = request.env.user._is_public()
