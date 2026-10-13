@@ -1,0 +1,537 @@
+#!/usr/bin/env python3
+"""onb2 over HTTP against a served CLONE with a LOCAL fake Kavenegar (no SMS or e-mail leaves the machine):
+one-tap invitations (welcome screen, GET never consumes, the POST is the consent, scoped sign-in by the SMS / e-mail that
+carried the link, scope enforcement on every route family, device binding with a masked-number code, mismatch, minors on
+one screen, fairness questions at the end, 12-character short links, rate limits, no-referrer) and test first for
+individuals (start screen, guest attempt keyed by an HttpOnly cookie never in an address, result gate, claim at sign-in,
+48-hour clean-up, funnel). eot.ir must stay exactly as it was.
+    ts_http_onb2.py DB PORT"""
+import http.cookiejar, http.server, importlib.util, json, os, re, sys, threading, urllib.error, urllib.parse, urllib.request
+
+FAKE_PORT = 18097 + 10 * int(os.environ.get('TS_SLOT', '0'))   # one fake Kavenegar per rehearsal slot (onb1 uses 18094)
+DB, PORT = sys.argv[1], sys.argv[2]
+assert DB.startswith('eot_ts'), 'clones only'
+spec = importlib.util.spec_from_file_location('flowlib', os.path.join(os.path.dirname(os.path.abspath(__file__)), 'ts_flowlib.py'))
+lib = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(lib)
+lib.setup(DB, PORT)
+Client, check, summary, shell, ensure_user, path_of = lib.Client, lib.check, lib.summary, lib.shell, lib.ensure_user, lib.path_of
+TS, EOT = 'talentsearch.ir', 'www.eot.ir'
+REQS, MID = [], [910000]
+
+
+class Fake(http.server.BaseHTTPRequestHandler):
+    def log_message(self, *a):
+        pass
+
+    def _do(self):
+        n = int(self.headers.get('Content-Length') or 0)
+        body = self.rfile.read(n).decode() if n else ''
+        q = dict(urllib.parse.parse_qsl(urllib.parse.urlsplit(self.path).query))
+        q.update(dict(urllib.parse.parse_qsl(body)))
+        path = urllib.parse.urlsplit(self.path).path.split('/v1/', 1)[1].split('/', 1)[1][:-5]
+        REQS.append((path, q))
+        ent = []
+        if path == 'sms/send':
+            for r in q['receptor'].split(','):
+                MID[0] += 1
+                ent.append({'messageid': MID[0], 'message': q['message'], 'status': 1, 'statustext': 'q', 'sender': '10004346',
+                            'receptor': r, 'cost': 100})
+        out = json.dumps({'return': {'status': 200, 'message': 'ok'}, 'entries': ent}).encode()
+        self.send_response(200); self.send_header('Content-Type', 'application/json'); self.end_headers(); self.wfile.write(out)
+
+    do_GET = do_POST = do_DELETE = _do
+
+
+srv = http.server.ThreadingHTTPServer(('127.0.0.1', FAKE_PORT), Fake)
+threading.Thread(target=srv.serve_forever, daemon=True).start()
+
+
+class AnyScheme(http.cookiejar.DefaultCookiePolicy):
+    """The clone is reached over plain http behind a forwarded https header: send the Secure cookies back anyway."""
+    def return_ok_secure(self, cookie, request):
+        return True
+
+
+def client(host=TS):
+    c = Client(host)
+    c.jar.set_policy(AnyScheme())
+    return c
+
+
+FA = str.maketrans('0123456789', '۰۱۲۳۴۵۶۷۸۹')
+PH = {'sms': '09127779921', 'manual': '09127779922', 'mis': '09127779923', 'other': '09127779924', 'guest': '09127779925',
+      'guest2': '09127779926'}
+EMAIL = 'ts.onb2.cand.http@example.invalid'
+L = {n: 'ts.onb2.%s.http@example.invalid' % n for n in ('other', 'minor')}
+pw = {u: ensure_user(u) for u in L.values()}
+
+out = shell(r"""
+L, PH, EMAIL = %r, %r, %r
+from odoo import fields
+assert env.cr.dbname.startswith('eot_ts')
+env['ir.config_parameter'].sudo().set_str('ts_kavenegar.api_base', 'http://127.0.0.1:%d/v1/%%s/%%s.json')
+c = env.company.sudo()
+c.write({'kv_lines': '10004346'})
+c.write({'kv_enabled': True, 'kv_api_key': 'FAKEKEY', 'kv_sender': '10004346', 'ts_sms_otp': True, 'ts_sms_otp_template_id': False,
+         'ts_sms_invite': False, 'ts_sms_result': False})
+ICP = env['ir.config_parameter'].sudo()
+ICP.set_str('ts_onboard.short_per_minute', '30'); ICP.set_str('ts_onboard.guest_per_hour', '3')
+ICP.set_str('ts_panel.invites_per_hour', '200')
+env['ts.rate.hit'].sudo().search([]).unlink()
+U = env['res.users'].with_context(active_test=False)
+for ph in PH.values():
+    for u in U.search([('login', '=', ph)]):
+        u.partner_id.sudo().write({'ts_phone': False, 'ts_phone_verified_at': False})
+        u.sudo().write({'active': False, 'login': 'old.onb2.%%d' %% u.id})
+env['res.partner'].with_context(active_test=False).search([('ts_phone', 'in', list(PH.values()))]).write({'ts_phone': False})
+for u in U.search(['|', ('login', '=', EMAIL), ('email', '=', EMAIL)]):
+    u.sudo().write({'active': False, 'login': 'old.onb2.%%d' %% u.id, 'email': False})
+env['ts.signup.otp'].sudo().search([('phone', 'in', list(PH.values()))]).unlink()
+env['ts.signup.lock'].sudo().search([('phone', 'in', list(PH.values()))]).unlink()
+env.cr.execute("update ts_signup_otp set create_date = create_date - interval '2 hours'")
+other = env['res.users'].search([('login', '=', L['other'])])
+other.partner_id.write({'ts_phone': PH['other'], 'ts_phone_verified_at': fields.Datetime.now()})
+W, A = env['ts.workspace'], env['ts.assignment'].sudo()
+def bo(name, purpose):
+    p = env['res.partner'].search([('name', '=', name), ('is_company', '=', True)], limit=1) or env['res.partner'].create({'name': name, 'is_company': True})
+    w = W.search([('partner_id', '=', p.id)], limit=1) or W.create({'name': name, 'purpose': purpose, 'partner_id': p.id,
+                                                                     **({'escalation_contact_id': p.id} if purpose == 'clinical' else {})})
+    w.state = 'active'
+    return w
+wcl = bo('مرکز onb2 وب', 'clinical')
+adult = env['ts.instrument'].search([('state', '=', 'published'), ('audience', '=', 'adult'), ('purpose', '!=', 'employment'),
+                                     ('code', 'not in', ('TALENT-INV-15', 'inventory_002'))], order='id', limit=1)
+def inv(name, **kw):
+    return A.create(dict({'workspace_id': wcl.id, 'instrument_id': adult.id, 'invitee_name': name}, **kw))
+t_sms = inv('مریم آزمایشی')
+t_sms._ts_mark_delivered('sms', phone=PH['sms'])
+t_sms2 = inv('مریم آزمایشی دوم')
+t_sms2._ts_mark_delivered('sms', phone=PH['sms'])
+t_email = inv('داوطلب ایمیلی', invitee_email=EMAIL)
+t_email._ts_mark_delivered('email', email=EMAIL)
+t_manual = inv('شمارهٔ دستی', invitee_phone=PH['manual'])
+t_link = inv('پیوند ساده')
+t_mis = inv('ناهمخوان')
+t_mis._ts_mark_delivered('sms', phone=PH['mis'])
+t_dec = inv('نمی‌خواهد')
+minor = env['ts.panel.client'].sudo().create({'workspace_id': wcl.id, 'name': 'نوجوان آزمایشی onb2', 'age_group': 'minor'})
+t_minor = inv('نوجوان آزمایشی onb2', client_id=minor.id)
+t_child = ''
+bc = env['ts.battery'].sudo().search([('code', '=', 'BAT-CHILD-1'), ('state', '=', 'published')], limit=1)
+if bc:
+    try:
+        with env.cr.savepoint():
+            ch = env['ts.panel.client'].sudo().create({'workspace_id': wcl.id, 'name': 'کودک آزمایشی onb2', 'age_group': 'minor'})
+            t_child = A.create({'workspace_id': wcl.id, 'battery_id': bc.id, 'instrument_id': bc.ts_first_instrument().id,
+                                'invitee_name': 'ولی کودک آزمایشی', 'client_id': ch.id}).token
+    except Exception as e:
+        print('NOCHILD', type(e).__name__, str(e)[:100])
+# an employment panel with an open position; a candidate whose battery is finished (for the fairness questions)
+org = bo('شرکت onb2 وب', 'employment')
+occ = env['ts.onet.occupation'].search([], limit=1)
+P = env['ts.hire.position'].sudo()
+P.search([('workspace_id', '=', org.id)]).write({'state': 'closed'})
+hrm = env['ts.workspace.member'].sudo().with_context(active_test=False).search([('workspace_id', '=', org.id), ('role', '=', 'hr_admin')], limit=1) \
+    or env['ts.workspace.member'].sudo().create({'workspace_id': org.id, 'user_id': env['res.users'].search([('login', '=', L['minor'])]).id, 'role': 'hr_admin'})
+pos = P.create({'name': 'کارشناس آزمون onb2', 'workspace_id': org.id, 'occupation_id': occ.id, 'battery_choice': 'short',
+                'created_by_id': hrm.user_id.id})
+pos.state = 'open'
+def pinv(name):
+    return A.with_user(hrm.user_id).sudo().create({'workspace_id': org.id, 'battery_id': pos.battery_id.id, 'position_id': pos.id,
+        'instrument_id': pos.battery_id.ts_first_instrument().id, 'invitee_name': name, 'invited_by_id': hrm.user_id.id,
+        'note': 'ارزیابی برای موقعیت «%%s»' %% pos.name})
+t_emp = pinv('داوطلب onb2')
+t_emp._ts_mark_delivered('sms', phone=PH['guest2'])
+t_fair = pinv('داوطلب پایان onb2')
+cand = env['res.users'].search([('login', '=', L['other'])])
+t_fair.action_accept(cand, share=True)
+for t in t_fair.ts_battery_attempts():
+    t.sudo().write({'state': 'done', 'submitted_at': fields.Datetime.now(), 'released': True})
+t_fair.invalidate_recordset()
+env.cr.commit()
+print('TOK', t_sms.token, t_sms2.token, t_email.token, t_manual.token, t_link.token, t_mis.token, t_dec.token, t_minor.token,
+      t_child or '-', t_emp.token, t_fair.id, t_sms.short_code, t_fair.state)
+st = env['ts.instrument'].sudo().ts_starter()
+print('STARTER', st.slug, st.code, st.active_item_count, st.duration_minutes)
+""" % (L, PH, EMAIL, FAKE_PORT))
+m = re.search(r'TOK (\S+) (\S+) (\S+) (\S+) (\S+) (\S+) (\S+) (\S+) (\S+) (\S+) (\d+) (\S+) (\S+)', out)
+assert m, out[-2500:]
+T_SMS, T_SMS2, T_EMAIL, T_MANUAL, T_LINK, T_MIS, T_DEC, T_MINOR, T_CHILD, T_EMP, FAIR_ID, SHORT, FAIR_STATE = m.groups()
+sm = re.search(r'STARTER (\S+) (\S+) (\d+) (\d+)', out)
+SLUG, SCODE, SITEMS, SMIN = sm.groups() if sm else ('x', 'x', '0', '0')
+
+
+def raw(c, path, data=None, headers=None):
+    """One request with extra headers -> (status, headers, body)."""
+    body = urllib.parse.urlencode(data).encode() if data is not None else None
+    h = {'Host': c.host, 'X-Forwarded-Proto': 'https'}
+    h.update(headers or {})
+    r = urllib.request.Request(lib.BASE + urllib.parse.quote(path, safe="/?=&%:#;,+"), data=body, headers=h)
+    try:
+        resp = c.op.open(r, timeout=60)
+        return resp.status, resp.headers, resp.read().decode('utf-8', 'ignore')
+    except urllib.error.HTTPError as e:
+        return e.code, e.headers, e.read().decode('utf-8', 'ignore')
+
+
+def ajax(c, path, data):
+    st, h, body = raw(c, path, data, {'X-TS-Auth': '1'})
+    try:
+        return st, h, json.loads(body)
+    except ValueError:
+        return st, h, {}
+
+
+LOCS = []          # every Location header seen in this suite (the guest token must never appear in one)
+
+
+def get(c, path, hops=4):
+    st, loc, body = c.req(path)
+    for _ in range(hops):
+        if st in (301, 302, 303) and loc:
+            LOCS.append(loc)
+            st, loc, body = c.req(path_of(loc))
+            continue
+        break
+    return st, body
+
+
+def last_code(phone):
+    for path, q in reversed(REQS):
+        if path == 'sms/send' and q.get('receptor') == phone:
+            mm = re.search(r'#(\d{6})\s*$', q.get('message', '')) or re.search(r'(\d{6})', q.get('message', ''))
+            if mm:
+                return mm.group(1)
+    return None
+
+
+def sms_count(phone):
+    return sum(1 for p, q in REQS if p == 'sms/send' and q.get('receptor') == phone)
+
+
+def q(code):
+    return shell(code)
+
+
+def masked(phone):
+    return (phone[:4] + '•••' + phone[-4:]).translate(FA)
+
+
+def cookies(h):
+    return h.get_all('Set-Cookie') or []
+
+
+# ================================================================ 1. the welcome screen; GET never consumes
+pub = client()
+st, h, page = raw(pub, '/invite/%s' % T_SMS)
+check('W01 the welcome screen: «سلام مریم», who invites, minutes, three lines of what the centre sees and «بیشتر»',
+      st == 200 and 'سلام مریم' in page and 'مرکز onb2 وب' in page and 'دقیقه' in page and 'tso-lines' in page
+      and '<summary>بیشتر</summary>' in page, str(st))
+check('W02 one primary action «موافقم و شروع می‌کنم» and a quiet «نمی‌خواهم شرکت کنم»; no sign-in step, no number field',
+      page.count('ts-btn--primary') == 1 and 'موافقم و شروع می‌کنم' in page and 'نمی‌خواهم شرکت کنم' in page
+      and 'name="phone"' not in page and 'tsa_phone' not in page)
+check('W03 the invitation page sends Referrer-Policy: no-referrer', h.get('Referrer-Policy') == 'no-referrer', h.get('Referrer-Policy'))
+raw(pub, '/invite/%s' % T_SMS)
+info = q("a = env['ts.assignment'].sudo().search([('token', '=', '%s')]); print('G', bool(a.user_id), bool(a.attempt_id), bool(a.device_hash), a.state)" % T_SMS)
+check('W04 opening the link twice (a messenger preview) accepts, binds and signs in nothing; the panel sees «بازشده»',
+      'G False False False opened' in info, info.strip()[-60:])
+st, loc, _ = pub.req('/my')
+check('W05 ...and the visitor is still not signed in', st in (302, 303) and ('/signup' in loc or '/web/login' in loc), loc)
+st, h, page = raw(pub, '/i/%s' % SHORT)
+check('W06 the short link redirects to the invitation with no-referrer', st == 302 and h.get('Location', '').endswith('/invite/' + T_SMS)
+      and h.get('Referrer-Policy') == 'no-referrer', '%s %s' % (st, h.get('Location')))
+check('W07 new short codes have 12 characters', re.fullmatch(r'[a-z0-9]{12}', SHORT) is not None, SHORT)
+
+# ================================================================ 2. one tap: scoped sign-in by the SMS proof, consent, binding
+st, _, page = pub.req('/invite/%s' % T_SMS)
+n_sms = sms_count(PH['sms'])
+st, h, _ = raw(pub, '/invite/%s/accept' % T_SMS, {'csrf_token': pub.csrf(page), 'welcome': '1', 'share': '1'})
+loc = h.get('Location', '')
+LOCS.append(loc)
+dev = [c for c in cookies(h) if c.startswith('ts_dev=')]
+check('A01 one tap (no number typed, no code): straight to the first question', st == 303 and '/take/' in loc, '%s %s' % (st, loc))
+check('A02 no second SMS was needed', sms_count(PH['sms']) == n_sms)
+check('A03 the invitation is bound to this browser: a signed HttpOnly SameSite=Lax cookie',
+      len(dev) == 1 and 'HttpOnly' in dev[0] and 'SameSite=Lax' in dev[0] and re.match(r'ts_dev=[\w-]+\.[0-9a-f]{32};', dev[0]), str(dev)[:160])
+info = q("a = env['ts.assignment'].sudo().search([('token', '=', '%s')]); u = a.user_id; t = a.attempt_id; "
+         "print('A', u.login, u.partner_id.ts_name_unknown, u.name == a.invitee_name, t.state, bool(t.consent_version), a.welcome_version == t.consent_version, "
+         "len(a.device_hash or ''), a.share_level)" % T_SMS)
+check('A04 the account of the number is made without the panel\'s name; the POST is the consent (version recorded); the '
+      'attempt starts without a consent page; only a digest of the browser token is stored',
+      ('A %s True False in_progress True True 64 clinical' % PH['sms']) in info, info.strip()[-120:])
+TAKE1 = path_of(loc)
+st, h, page = raw(pub, TAKE1)
+check('A05 the player opens directly (no second consent screen), with no-referrer', st == 200 and 'ts-qform' in page
+      and 'consent_service' not in page and h.get('Referrer-Policy') == 'no-referrer', str(st))
+
+# ================================================================ 3. the scope: only this invitation
+info = q("a = env['ts.assignment'].sudo().search([('token', '=', '%s')]); print('ATT', a.attempt_id.id)" % T_SMS)
+ATT1 = re.search(r'ATT (\d+)', info).group(1)
+for i, path in enumerate(['/my', '/my/assessments', '/my/account', '/my/workspaces', '/my/workspaces/1', '/invite/' + T_LINK,
+                          '/i/zzzzzzzzzzzz', '/web', '/odoo', '/assessments?all=1', '/start', '/my/assessments/%s/share' % ATT1]):
+    st, loc, _ = pub.req(path)
+    check('Q%02d a session scoped to one invitation is sent to the sign-in from %s' % (i + 1, path),
+          st == 303 and path_of(loc).startswith('/signup?next='), '%s %s' % (st, loc))
+st, _, _ = pub.req('/my/assessments/%s' % ATT1)
+check('Q13 ...while its own result page stays reachable (the attempt is not finished: back to the player)', st in (200, 302, 303))
+st, loc, _ = pub.req('/take/%s' % TAKE1.split('/take/')[1].split('/')[0])
+check('Q14 ...and its player', st == 200, str(st))
+st, h, page = raw(pub, '/signup?next=/my')
+check('Q15 the sign-in shows the invited number masked («۰۹۱۲•••») with «دریافت کد», no number field',
+      st == 200 and masked(PH['sms']) in page and 'name="known"' in page and 'id="tsa_phone"' not in page
+      and '0912 777 9921' not in page and PH['sms'] not in page, str(st))
+st, h, j = ajax(pub, '/signup/send', {'csrf_token': pub.csrf(page), 'known': '1', 'phone': '', 'next': '/my'})
+check('Q16 «دریافت کد» sends the code to the invited number; the answer shows it masked',
+      j.get('state') == 'code' and j.get('phone_fa') == masked(PH['sms']) and last_code(PH['sms']), str(j)[:160])
+st, h, j = ajax(pub, '/signup/verify', {'csrf_token': pub.csrf(page), 'code': last_code(PH['sms']), 'next': '/my'})
+st2, loc2, _ = pub.req('/my')
+check('Q17 after the code the session is an ordinary full session (/my opens)', j.get('ok') and st2 == 200, '%s %s' % (j, st2))
+pub.req('/web/session/logout', {'csrf_token': pub.csrf(pub.req('/my')[2])})
+
+# ================================================================ 4. device binding: the same browser goes on, another gets a code
+st, _, page = pub.req('/invite/%s' % T_SMS)
+check('D01 the bound browser, signed out: the welcome says «ادامه»', st == 200 and '>ادامه<' in page, str(st))
+n = sms_count(PH['sms'])
+st, loc, _ = pub.req('/invite/%s/accept' % T_SMS, {'csrf_token': pub.csrf(page), 'welcome': '1'})
+check('D02 ...and goes on without a code (scoped again)', st == 303 and sms_count(PH['sms']) == n and path_of(loc) == '/invite/' + T_SMS, loc)
+st, loc, _ = pub.req(path_of(loc))
+check('D03 ...to its player', st in (302, 303) and '/take/' in loc, loc)
+pub.req('/web/session/logout', {'csrf_token': pub.csrf(pub.req(path_of(loc))[2])})
+shell("env.cr.execute(\"update ts_signup_otp set create_date = create_date - interval '2 hours'\"); env.cr.commit()")
+other_browser = client()
+st, _, page = other_browser.req('/invite/%s' % T_SMS)
+n = sms_count(PH['sms'])
+st, loc, _ = other_browser.req('/invite/%s/accept' % T_SMS, {'csrf_token': other_browser.csrf(page), 'welcome': '1'})
+check('D04 another browser gets no session: a code goes to the invited number', st == 303 and path_of(loc).startswith('/signup?step=code')
+      and sms_count(PH['sms']) == n + 1, loc)
+st, page = get(other_browser, path_of(loc))
+check('D05 «برای ادامه، کدی به ۰۹۱۲•••۹۹۲۱ فرستادیم»: the number masked, never in full, nothing to type but the code',
+      st == 200 and 'برای ادامه، کدی به' in page and masked(PH['sms']) in page and '0912 777 9921' not in page
+      and 'ویرایش شماره' not in page and 'id="tsa_code"' in page, str(st))
+st, h, j = ajax(other_browser, '/signup/verify', {'csrf_token': other_browser.csrf(page), 'code': last_code(PH['sms']),
+                                                  'next': '/invite/%s' % T_SMS})
+check('D06 after the code it goes on', j.get('ok') and j.get('redirect') == '/invite/%s' % T_SMS, str(j)[:160])
+st, loc, _ = other_browser.req('/invite/%s' % T_SMS)
+check('D07 ...to the same invitation\'s player', st in (302, 303) and '/take/' in loc, loc)
+other_browser.req('/web/session/logout', {'csrf_token': other_browser.csrf(other_browser.req('/my')[2])})
+
+# ================================================================ 5. a signed-in account that is not the invited number
+oc = client()
+assert oc.login(L['other'], pw[L['other']])
+st, _, page = oc.req('/invite/%s' % T_MIS)
+check('M01 another account: one clear notice with the invited number masked and one action «خروج و ادامه با این دعوت»',
+      st == 200 and masked(PH['mis']) in page and 'خروج و ادامه با این دعوت' in page and 'موافقم و شروع می‌کنم' not in page
+      and page.count('ts-btn--primary') == 1, str(st))
+st, loc, _ = oc.req('/invite/%s/accept' % T_MIS, {'csrf_token': oc.csrf(page), 'welcome': '1', 'share': '1'})
+info = q("a = env['ts.assignment'].sudo().search([('token', '=', '%s')]); print('MIS', bool(a.user_id))" % T_MIS)
+check('M02 a POST from that account accepts nothing', 'MIS False' in info and st == 303, '%s %s' % (st, info.strip()[-20:]))
+st, loc, _ = oc.req('/invite/%s' % T_SMS)
+check('M03 an invitation accepted by someone else: the same notice instead of a bare 404', st == 200, str(st))
+
+# ================================================================ 6. other proofs: e-mail, a typed number, a plain link
+ec = client()
+st, _, page = ec.req('/invite/%s' % T_EMAIL)
+st, loc, _ = ec.req('/invite/%s/accept' % T_EMAIL, {'csrf_token': ec.csrf(page), 'welcome': '1', 'share': '1'})
+info = q("a = env['ts.assignment'].sudo().search([('token', '=', '%s')]); print('EM', a.user_id.login, a.attempt_id.state)" % T_EMAIL)
+check('E01 an e-mailed link: one tap signs in as the account of that address (made when missing), for this invitation',
+      st == 303 and '/take/' in loc and ('EM %s in_progress' % EMAIL) in info, '%s %s' % (loc, info.strip()[-60:]))
+st, loc, _ = ec.req('/my')
+st2, page = get(ec, '/my')
+check('E02 ...and /my asks for the sign-in (no number known yet: the number field)', st == 303 and 'id="tsa_phone"' in page, '%s' % st)
+mc = client()
+st, _, page = mc.req('/invite/%s' % T_MANUAL)
+n = sms_count(PH['manual'])
+st, loc, _ = mc.req('/invite/%s/accept' % T_MANUAL, {'csrf_token': mc.csrf(page), 'welcome': '1', 'share': '1'})
+check('E03 a link the panel copied, with a number on the invitation: a code to that number first (masked)',
+      st == 303 and path_of(loc).startswith('/signup?step=code') and sms_count(PH['manual']) == n + 1, loc)
+st, page = get(mc, path_of(loc))
+st, h, j = ajax(mc, '/signup/verify', {'csrf_token': mc.csrf(page), 'code': last_code(PH['manual']), 'next': '/invite/%s' % T_MANUAL})
+info = q("a = env['ts.assignment'].sudo().search([('token', '=', '%s')]); print('MAN', a.user_id.login, a.attempt_id.state, a.welcome_version or '-')" % T_MANUAL)
+check('E04 ...then the invitation is accepted with the consent of the first tap', j.get('ok') and '/take/' in (j.get('redirect') or '')
+      and ('MAN %s in_progress TS-CONSENT' % PH['manual']) in info, '%s %s' % (j, info.strip()[-60:]))
+lc = client()
+st, _, page = lc.req('/invite/%s' % T_LINK)
+st, loc, _ = lc.req('/invite/%s/accept' % T_LINK, {'csrf_token': lc.csrf(page), 'welcome': '1'})
+check('E05 a plain link (no number, no address): the ordinary sign-in first, as before', st in (302, 303)
+      and path_of(loc) == '/signup?next=/invite/%s' % T_LINK, loc)
+dc = client()
+st, _, page = dc.req('/invite/%s?decline=1' % T_DEC)
+st, loc, _ = dc.req('/invite/%s/decline' % T_DEC, {'csrf_token': dc.csrf(page)})
+info = q("a = env['ts.assignment'].sudo().search([('token', '=', '%s')]); print('DEC', a.state, bool(a.user_id))" % T_DEC)
+check('E06 «نمی‌خواهم شرکت کنم» works without an account and ties the invitation to none', 'DEC declined False' in info, info.strip()[-30:])
+
+# ================================================================ 7. minors: one screen
+yc = client()
+assert yc.login(L['minor'], pw[L['minor']])
+st, _, page = yc.req('/invite/%s' % T_MINOR)
+check('N01 a minor client: the guardian tick and the child\'s own button «من هم موافقم» on the one screen',
+      st == 200 and 'name="guardian_confirm"' in page and 'من هم موافقم' in page and 'موافقم و شروع می‌کنم' not in page, str(st))
+st, loc, _ = yc.req('/invite/%s/accept' % T_MINOR, {'csrf_token': yc.csrf(page), 'welcome': '1', 'share': '1'})
+check('N02 without the tick the screen comes back with one line', st == 303 and 'error=guardian' in loc, loc)
+st, loc, _ = yc.req('/invite/%s/accept' % T_MINOR, {'csrf_token': yc.csrf(page), 'welcome': '1', 'share': '1', 'guardian_confirm': '1'})
+st2, _, p2 = yc.req(path_of(loc)) if '/take/' in loc else (0, '', '')
+info = q("a = env['ts.assignment'].sudo().search([('token', '=', '%s')]); R = env['ts.consent.record'].sudo().search([('attempt_id', '=', a.attempt_id.id)]); "
+         "print('MIN', a.attempt_id.state, ','.join(sorted(R.mapped('kind'))))" % T_MINOR)
+check('N03 with it: straight to the questions, never a second consent screen; the ledger has guardian + assent + service + share',
+      '/take/' in loc and st2 == 200 and 'consent_service' not in p2 and 'assent_ok' not in p2
+      and re.search(r'MIN in_progress assent,guardian,service', info), '%s %s' % (loc, info.strip()[-80:]))
+if T_CHILD != '-':
+    st, _, page = yc.req('/invite/%s' % T_CHILD)
+    check('N04 BAT-CHILD-1 for a minor client: the parent\'s one tick, the ordinary button, no child assent',
+          st == 200 and 'name="guardian_confirm"' in page and 'موافقم و شروع می‌کنم' in page and 'من هم موافقم' not in page, str(st))
+    st, loc, _ = yc.req('/invite/%s/accept' % T_CHILD, {'csrf_token': yc.csrf(page), 'welcome': '1', 'share': '1', 'guardian_confirm': '1'})
+    st2, _, p2 = yc.req(path_of(loc)) if '/take/' in loc else (0, '', '')
+    check('N05 ...and the first child instrument opens without another consent page', st2 == 200 and 'consent_service' not in p2, loc)
+else:
+    check('N04 BAT-CHILD-1 fixture', False, 'no BAT-CHILD-1 invitation could be made')
+
+# ================================================================ 8. employment: company, position, timed line; fairness at the end
+ac = client()
+st, _, page = ac.req('/invite/%s' % T_EMP)
+check('H01 a candidate: the company «برای موقعیت «…»», «روی کامپیوتر بهتر است (بخش زمان‌دار)», no fairness questions',
+      st == 200 and 'شرکت onb2 وب' in page and 'برای موقعیت «' in page and 'روی کامپیوتر بهتر است (بخش زمان‌دار)' in page
+      and 'name="ts_gender"' not in page, str(st))
+oc2 = client()
+assert oc2.login(L['other'], pw[L['other']])
+st, page = get(oc2, '/my/assessments/battery/%s' % FAIR_ID)
+check('H02 after the last part: the two optional questions once, before the feedback, with «رد شدن»',
+      st == 200 and 'name="ts_gender"' in page and 'رد شدن' in page and 'بازخورد شما' not in page, '%s %s' % (st, FAIR_STATE))
+st, loc, _ = oc2.req('/my/assessments/battery/%s/about/save' % FAIR_ID, {'csrf_token': oc2.csrf(page), 'skip': '1', 'ts_gender': 'male'})
+info = q("a = env['ts.assignment'].sudo().browse(%s); print('FAIR', a.ts_gender or '-', a.ts_fair_asked)" % FAIR_ID)
+check('H03 «رد شدن» stores nothing and the questions are not asked again', 'FAIR - True' in info and st == 303, info.strip()[-30:])
+st, page = get(oc2, '/my/assessments/battery/%s' % FAIR_ID)
+check('H04 the feedback page opens directly afterwards', st == 200 and 'name="ts_gender"' not in page, str(st))
+
+# ================================================================ 9. short links: rate limit
+shell("env['ir.config_parameter'].sudo().set_str('ts_onboard.short_per_minute', '5'); env['ts.rate.hit'].sudo().search([]).unlink(); env.cr.commit()")
+rl = client()
+codes = [rl.req('/i/%s' % SHORT)[0] for _ in range(6)]
+st, h, page = raw(rl, '/j/abcdabcdabcd')
+check('R01 short-link lookups are limited per address: then a polite 429 page with Retry-After',
+      codes[:5] == [302] * 5 and codes[5] == 429 and st == 429 and 'کمی صبر کنید' in page and h.get('Retry-After') == '60', str(codes + [st]))
+st, _, _ = raw(rl, '/c/nothing-here')
+check('R02 the open link /c/ counts too', st == 429, str(st))
+shell("env['ir.config_parameter'].sudo().set_str('ts_onboard.short_per_minute', '30'); env['ts.rate.hit'].sudo().search([]).unlink(); env.cr.commit()")
+
+# ================================================================ 10. test first: start, guest attempt, gate, claim
+g = client()
+st, h, page = raw(g, '/')
+check('P01 home: the primary action is «شروع سنجهٔ رایگان» to /start, with «حدود N دقیقه · بدون ثبت‌نام برای شروع · نتیجه فقط برای خودتان»',
+      st == 200 and re.search(r'href="/start"[^>]*>شروع سنجهٔ رایگان', page) and ('حدود %s دقیقه' % SMIN.translate(FA)) in page
+      and 'بدون ثبت‌نام برای شروع' in page, str(st))
+st, h, page = raw(g, '/start')
+check('P02 /start: the starter, statements and minutes, the promise, the age button, «کمتر از ۱۸ سال دارم», an unticked research box',
+      st == 200 and SCODE == 'inventory_002' and ('%s جمله' % SITEMS.translate(FA)) in page
+      and 'پاسخ‌ها فقط برای خودتان است؛ در پایان با شمارهٔ موبایل نتیجه را می‌بینید و نگه می‌دارید.' in page
+      and '۱۸ سال یا بیشتر دارم؛ موافقم و شروع می‌کنم' in page and 'href="/start/under-18"' in page
+      and re.search(r'name="consent_research" value="1"/>', page) and 'checked' not in re.search(r'<input type="checkbox" name="consent_research"[^>]*>', page).group(0), str(st))
+st, page = get(g, '/start/under-18')
+check('P03 under 18: no guest attempt; the school or counselor path, a link to /schools', st == 200 and 'href="/schools"' in page
+      and 'action="/start/' not in page, str(st))
+st, page = get(g, '/assessments/%s' % SLUG)
+check('P04 the detail page\'s «شروع سنجه» goes to the start screen, not to a sign-in', st == 200
+      and ('href="/start/%s"' % urllib.parse.quote(SLUG)) in page and '/signup?next=/assessments' not in page, str(st))
+st, page = get(g, '/start')
+st, h, _ = raw(g, '/start/%s/go' % SLUG, {'csrf_token': g.csrf(page), 'consent_research': '1'})
+gck = [c for c in cookies(h) if c.startswith('ts_guest=')]
+GTOKEN = gck[0].split(';')[0].split('=', 1)[1] if gck else 'none'
+LOCS.append(h.get('Location', ''))
+check('P05 the tap starts a guest attempt: /start/q, a signed HttpOnly SameSite=Lax cookie, no token in the address',
+      st == 303 and path_of(h.get('Location', '')) == '/start/q' and gck and 'HttpOnly' in gck[0] and 'SameSite=Lax' in gck[0]
+      and GTOKEN.split('.')[0] not in h.get('Location', ''), '%s %s' % (st, h.get('Location')))
+info = q("t = env['ts.attempt'].sudo().search([('ts_guest', '=', True)], order='id desc', limit=1); print('GA', t.id, t.user_id._is_public(), t.state, "
+         "t.consent_research, bool(t.workspace_id), len(t.ts_guest_hash or ''), t.access_token)")
+gm = re.search(r'GA (\d+) True in_progress True False 64 (\w+)', info)
+check('P06 the guest attempt: owned by the public user, consent and research recorded, no panel, only the digest stored', gm, info.strip()[-120:])
+GID, GACCESS = gm.groups() if gm else ('0', 'none')
+st, h, page = raw(g, '/start/q')
+check('P07 the same player (focus header), autosave address /start/q/answer, no token anywhere in the page',
+      st == 200 and 'ts-qform' in page and 'data-answer-url="/start/q/answer"' in page and GACCESS not in page
+      and GTOKEN.split('.')[0] not in page and h.get('Referrer-Policy') == 'no-referrer', str(st))
+items = re.findall(r'name="q_(\d+)"', page)
+first = sorted(set(items), key=items.index)
+st, h, j = ajax(g, '/start/q/answer', {'csrf_token': g.csrf(page), 'item': first[0], 'value': '4'})
+check('P08 autosave answers JSON', j.get('ok') and j.get('answered') == 1, str(j)[:80])
+allitems = q("t = env['ts.attempt'].sudo().browse(%s); print('IT', ','.join(str(i.id) for i in t.active_items()))" % GID)
+ids = re.search(r'IT ([\d,]+)', allitems).group(1).split(',')
+for k in range(0, len(ids), 10):
+    g.req('/start/q/page', [('csrf_token', g.csrf(page)), ('page', str(k // 10 + 1)), ('go', 'next')] + [('q_%s' % i, '3') for i in ids[k:k + 10]])
+st, page = get(g, '/start/q/review')
+check('P09 the review says the result is seen with the mobile number', st == 200 and 'با شمارهٔ موبایل نتیجه را می‌بینید' in page, str(st))
+st, loc, _ = g.req('/start/q/submit', {'csrf_token': g.csrf(page)})
+LOCS.append(loc)
+check('P10 sending leads to the result gate', st == 303 and path_of(loc) == '/start/result', loc)
+st, h, page = raw(g, '/start/result')
+check('P11 the gate: «نتیجه‌تان آماده است.» with the mobile sign-in inline and the gate sentence',
+      st == 200 and 'نتیجه‌تان آماده است.' in page and 'شماره‌تان را بزنید تا نتیجه را ببینید و برای همیشه داشته باشید.' in page
+      and 'id="tsa_phone"' in page and GTOKEN.split('.')[0] not in page, str(st))
+st, h, j = ajax(g, '/signup/send', {'csrf_token': g.csrf(page), 'phone': PH['guest'], 'next': '/start/result', 'personal_shown': '1', 'personal': '1'})
+st, h, j = ajax(g, '/signup/verify', {'csrf_token': g.csrf(page), 'code': last_code(PH['guest']), 'next': '/start/result'})
+drop = [c for c in cookies(h) if c.startswith('ts_guest=')]
+check('P12 the code claims the attempt and opens its report; the guest cookie is dropped',
+      j.get('ok') and (j.get('redirect') or '').startswith('/my/assessments/%s?' % GID) and drop and 'Max-Age=0' in drop[0], str(j)[:120])
+info = q("t = env['ts.attempt'].sudo().browse(%s); print('CL', t.user_id.login, t.ts_guest, bool(t.ts_guest_hash), bool(t.ts_guest_claimed_at))" % GID)
+check('P13 the attempt now belongs to the account; the browser token is invalid', ('CL %s False False True' % PH['guest']) in info, info.strip()[-60:])
+st, page = get(g, j.get('redirect') or '/my')
+check('P14 the report: «نامی که روی گزارش بیاید (اختیاری)», «سنجهٔ بعدی», «فرستادن نتیجه برای مشاورتان»',
+      st == 200 and 'نامی که روی گزارش بیاید (اختیاری)' in page and 'سنجهٔ بعدی' in page and 'فرستادن نتیجه برای مشاورتان' in page, str(st))
+st, loc, _ = g.req('/my/assessments/%s/name' % GID, {'csrf_token': g.csrf(page), 'name': 'سارا آزمایشی'})
+info = q("u = env['res.users'].search([('login', '=', '%s')]); print('NM', u.partner_id.ts_name_unknown, u.name)" % PH['guest'])
+check('P15 the optional name is the person\'s own entry: it names the account that had none', 'NM False سارا آزمایشی' in info, info.strip()[-40:])
+st, page = get(g, '/start')
+st, loc, _ = g.req('/start/%s/go' % SLUG, {'csrf_token': g.csrf(page)})
+check('P16 a signed-in visitor goes straight into an ordinary attempt (no consent page)', st == 303 and '/take/' in loc, loc)
+st, _, p2 = g.req(path_of(loc))
+check('P17 ...whose player opens directly', st == 200 and 'consent_service' not in p2, str(st))
+st, h, j = ajax(g, '/web/session/logout', {'csrf_token': g.csrf(p2)})
+
+# keep both: the same person claims a second result of the same instrument
+g2 = client()
+st, page = get(g2, '/start')
+st, loc, _ = g2.req('/start/%s/go' % SLUG, {'csrf_token': g2.csrf(page)})
+info = q("t = env['ts.attempt'].sudo().search([('ts_guest', '=', True)], order='id desc', limit=1)\nfor it in t.active_items(): t.save_answer(it.id, 2)\n"
+         "t.action_submit(); env.cr.commit(); print('G2', t.id)")
+G2 = re.search(r'G2 (\d+)', info).group(1)
+st, page = get(g2, '/start/result')
+shell("env.cr.execute(\"update ts_signup_otp set create_date = create_date - interval '2 hours'\"); env.cr.commit()")
+ajax(g2, '/signup/send', {'csrf_token': g2.csrf(page), 'phone': PH['guest'], 'next': '/start/result'})
+st, h, j = ajax(g2, '/signup/verify', {'csrf_token': g2.csrf(page), 'code': last_code(PH['guest']) or '000000', 'next': '/start/result'})
+info = q("u = env['res.users'].search([('login', '=', '%s')]); print('BOTH', env['ts.attempt'].sudo().search_count([('user_id', '=', u.id), "
+         "('instrument_id.code', '=', 'inventory_002'), ('state', '=', 'done')]))" % PH['guest'])
+check('P18 a second claim of the same instrument keeps both results', j.get('ok') and 'BOTH 2' in info, '%s %s' % (j, info.strip()[-20:]))
+
+# limits: one open guest attempt per browser, three new ones per address and hour
+g3 = client()
+st, page = get(g3, '/start')
+st, loc, _ = g3.req('/start/%s/go' % SLUG, {'csrf_token': g3.csrf(page)})
+n1 = q("print('N', env['ts.attempt'].sudo().search_count([('ts_guest', '=', True)]))")
+st, loc2, _ = g3.req('/start/%s/go' % SLUG, {'csrf_token': g3.csrf(page)})
+n2 = q("print('N', env['ts.attempt'].sudo().search_count([('ts_guest', '=', True)]))")
+check('L01 one open guest attempt per browser: a second tap goes back to it', path_of(loc2) == '/start/q' and n1.strip()[-6:] == n2.strip()[-6:],
+      '%s %s %s' % (loc2, n1.strip()[-6:], n2.strip()[-6:]))
+g4 = client()
+st, page = get(g4, '/start')
+st, h, p4 = raw(g4, '/start/%s/go' % SLUG, {'csrf_token': g4.csrf(page)})
+check('L02 the fourth new guest attempt from one address within the hour gets the polite 429 page', st == 429 and 'کمی صبر کنید' in p4, str(st))
+
+# the 48-hour clean-up
+out = shell("t = env['ts.attempt'].sudo().search([('ts_guest', '=', True)], order='id desc', limit=1)\nenv.flush_all()\n"
+            "env.cr.execute(\"update ts_attempt set ts_guest_seen = now() - interval '49 hours' where id = %s\", [t.id])\n"
+            "env.invalidate_all()\nn = env['ts.attempt']._cron_guest_cleanup()\nenv.cr.commit()\nprint('CLEAN', n, t.exists() and 'kept' or 'gone')")
+check('C01 48 hours after the last activity an unclaimed guest attempt and its answers are gone', re.search(r'CLEAN [1-9]\d* gone', out), out.strip()[-40:])
+st, loc, _ = g3.req('/start/q')
+check('C02 ...and its browser starts again at /start', st in (302, 303) and path_of(loc) == '/start', loc)
+check('C03 no address of this suite ever carried the guest token', not any(GTOKEN.split('.')[0] in (x or '') for x in LOCS) and len(LOCS) >= 3,
+      len(LOCS))
+
+# ================================================================ 11. funnel, eot.ir
+out = shell("F = env['ts.funnel.event'].sudo(); print('FUN', ' '.join('%s=%d' % (s, F.search_count([('step', '=', s)])) for s in "
+            "['start_view', 'start', 'q1', 'finish', 'gate_view', 'gate_signed_in', 'report_view', 'invite_view', 'invite_accept']))")
+fm = dict(re.findall(r'(\w+)=(\d+)', out))
+check('F01 every funnel step of these flows was counted', len(fm) == 9 and all(int(v) > 0 for v in fm.values()), out.strip()[-200:])
+e = client(EOT)
+check('F02 eot.ir has no /start, no welcome screen and no /i/', e.req('/start')[0] == 404 and e.req('/invite/%s' % T_LINK)[0] == 404
+      and e.req('/i/%s' % SHORT)[0] == 404)
+shell("env['ts.rate.hit'].sudo().search([]).unlink(); env.cr.commit()")
+summary()

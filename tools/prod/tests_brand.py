@@ -194,7 +194,7 @@ check('P03 the PDF actions never store an attachment', not rep.attachment and no
       and not env.ref('ts_brand.action_battery_pdf').attachment and rep.report_type == 'qweb-pdf')
 
 # ================================================================ 4. short codes
-check('S01 a new invitation gets an 8-character [a-z0-9] short code', re.fullmatch(r'[a-z0-9]{8}', a1.short_code or ''), a1.short_code)
+check('S01 a new invitation gets a 12-character [a-z0-9] short code (onb2)', re.fullmatch(r'[a-z0-9]{12}', a1.short_code or ''), a1.short_code)
 a2 = A.create({'workspace_id': ws.id, 'instrument_id': inst.id, 'invitee_name': 'دوم', 'invited_by_id': c1.user_id.id})
 env.flush_all()
 check('S02 short codes are unique', a1.short_code != a2.short_code and raises(

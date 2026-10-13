@@ -71,6 +71,8 @@ has ts_brand && NOCOMMIT+=(tests_brand.py)       # clinic phase 5; HTTP companio
 has ts_hire && NOCOMMIT+=(tests_hire.py)         # HR hiring (ts_onet, ts_tasks, ts_hire); HTTP companion: ts_http_hire.py (below)
 # onb1: no approval (+ migration), first-week invite limit, suspend, licence badge, S-AUTH models; HTTP companion: ts_http_onb1.py
 { has ts_core || has ts_org || has ts_panel || has ts_sms; } && NOCOMMIT+=(tests_onb1.py)
+# onb2: invitation proof, scope, minors, short codes, guest attempts (claim, 48 h clean-up), funnel; HTTP companion: ts_http_onb2.py
+has ts_onboard && NOCOMMIT+=(tests_onb2.py)
 for f in "${NOCOMMIT[@]}"; do
   [ -f $REPO_DIR/tools/prod/$f ] || continue
   grep -q "cr.commit" $REPO_DIR/tools/prod/$f && { echo "!! $f commits; it cannot run beside the guard"; continue; }
@@ -144,6 +146,8 @@ has ts_brand && { echo "=== $(date +%T) http clinic phase 5 (branding, PDF, SMS 
 has ts_hire && { echo "=== $(date +%T) http HR hiring (positions, job fit, tasks, feedback)"; http ts_http_hire.py; }
 # onb1: mobile sign-in (JSON states, WebOTP line, cookie length, staff numbers, lock), names, invite limit, suspend, badge
 { has ts_sms || has ts_panel; } && { echo "=== $(date +%T) http onb1 (S-AUTH sign-in, no approval, suspend, licence badge)"; http ts_http_onb1.py; }
+# onb2: one-tap invitations (welcome, scope, device binding, minors, fairness at the end, short links) and test first (guest, gate, claim)
+has ts_onboard && { echo "=== $(date +%T) http onb2 (one-tap invitations, test first)"; http ts_http_onb2.py; }
 if has ts_kavenegar; then
   echo "=== $(date +%T) kavenegar tests (fake API, commits)"; orm tests_kavenegar.py
   echo "=== $(date +%T) kavenegar webhooks (http)"; http ts_http_kv.py

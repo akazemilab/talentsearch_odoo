@@ -37,13 +37,13 @@ echo "=== $(date +%T) seed"
 ssh -n eot-odoo-prod "TS_SLOT=$SLOT PYTHONIOENCODING=utf-8 python3 -u $STAGE/tools/prod/ts_http_pv2_19.py $DB $PORT 2>&1 | grep -E '^(FAIL|SUMMARY)'"
 if [ "${TS_SHOT_WIDTHS:-}" = ux ]; then
   export TS_SHOT_WIDTHS=375,1280 TS_SHOT_DARK=${TS_SHOT_DARK:-375}
-  scp -q $REPO/tools/prod/pv2_fixtures.py $REPO/tools/vps/ts_ux_seed.py eot-odoo-prod:/tmp/
+  scp -q $REPO/tools/prod/pv2_fixtures.py $REPO/tools/vps/ts_ux_seed.py $REPO/tools/vps/ts_onb2_seed.py eot-odoo-prod:/tmp/
   ssh -n eot-odoo-prod "$SHELL_CMD < /tmp/pv2_fixtures.py 2>&1 | grep -E '^FIXTURES|Error' | tail -3"
   ssh -n eot-odoo-prod "$SHELL_CMD < /tmp/ts_ux_seed.py 2>&1 | grep -E '^(UXMATRIX|SEED-SKIP)|Error' | tail -20"
   ssh -n eot-odoo-prod "TS_SLOT=$SLOT python3 $STAGE/tools/prod/ts_ux_users.py $DB $PORT /tmp/ux_matrix.json; cat /tmp/ux_matrix.json" > /tmp/ui_matrix_out_$DB.txt
 else
-  scp -q $REPO/tools/vps/ts_ui_seed.py eot-odoo-prod:/tmp/ts_ui_seed.py
-  ssh -n eot-odoo-prod "$SHELL_CMD < /tmp/ts_ui_seed.py 2>&1 | grep -E '^(MATRIX|consent)'; cat /tmp/ui_matrix.json" > /tmp/ui_matrix_out_$DB.txt
+  scp -q $REPO/tools/vps/ts_ui_seed.py $REPO/tools/vps/ts_onb2_seed.py eot-odoo-prod:/tmp/
+  ssh -n eot-odoo-prod "chmod 644 /tmp/ts_onb2_seed.py; $SHELL_CMD < /tmp/ts_ui_seed.py 2>&1 | grep -E '^(MATRIX|consent|ONB2SEED|SEED-SKIP)'; cat /tmp/ui_matrix.json" > /tmp/ui_matrix_out_$DB.txt
 fi
 head -1 /tmp/ui_matrix_out_$DB.txt
 tail -1 /tmp/ui_matrix_out_$DB.txt > /root/ts-jobs/ui_matrix_$DB.json

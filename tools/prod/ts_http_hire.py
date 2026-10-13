@@ -109,13 +109,14 @@ check('a reviewer can open the candidate before results (status only, no band)',
 
 # ---------------------------------------------------------------- 3. candidate side
 st, body = get(cand, '/invite/%s' % TOKEN)
-check('the invitation page explains the position and what the employer sees',
-      st == 200 and 'ارزیابی برای موقعیت' in body and 'خلاصهٔ تناسب' in body and 'name="ts_gender"' in body, str(st))
-st, loc, _ = post(cand, '/invite/%s/accept' % TOKEN, {'share': '1', 'ts_gender': 'female', 'ts_age_band': '25-34'})
+check('the welcome screen names the position, says what the employer sees, «روی کامپیوتر بهتر است» for the timed part, '
+      'and asks no fairness question at the start (onb2: they come at the end)',
+      st == 200 and 'برای موقعیت' in body and 'خلاصهٔ تناسب' in body and 'روی کامپیوتر بهتر است' in body and 'name="ts_gender"' not in body, str(st))
+st, loc, _ = post(cand, '/invite/%s/accept' % TOKEN, {'share': '1'})
 check('accepting opens the player', st in (302, 303) and '/take/' in loc, loc)
-out = shell("a = env['ts.assignment'].sudo().browse(%s); print('DEMO', a.ts_gender, a.ts_age_band, '|'.join(t.access_token for t in a.ts_battery_attempts()))" % AID)
+out = shell("a = env['ts.assignment'].sudo().browse(%s); print('DEMO', a.ts_gender or '-', a.ts_age_band or '-', '|'.join(t.access_token for t in a.ts_battery_attempts()))" % AID)
 dm = re.search(r'DEMO (\S+) (\S+) (\S+)', out)
-check('the optional answers are stored', dm and dm.group(1) == 'female' and dm.group(2) == '25-34', out[-200:])
+check('nothing about gender or age is stored at the start', dm and dm.group(1) == '-' and dm.group(2) == '-', out[-200:])
 T1, T2 = dm.group(3).split('|') if dm else ('x', 'y')
 st, body = get(cand, '/take/%s' % T1)
 check('one consent page for the battery', st == 200 and 'consent_service' in body, str(st))
@@ -143,7 +144,18 @@ for i in range(3):
 fin = json.loads(rb) if st == 200 else {}
 check('the last block returns the battery result URL', fin.get('url', '').startswith('/my/assessments/battery/'), rb[-200:])
 st, body = get(cand, fin.get('url', '/my'))
-check('the candidate sees the feedback card and the percentile column', st == 200 and 'بازخورد شما' in body and 'صدک' in body, str(st))
+check('after the last part the two optional fairness questions come once, before the feedback, with «رد شدن»',
+      st == 200 and 'name="ts_gender"' in body and 'name="ts_age_band"' in body and 'رد شدن' in body and 'بازخورد شما' not in body, str(st))
+st, loc, _ = post(cand, '/my/assessments/battery/%s/about/save' % AID, {'ts_gender': 'female', 'ts_age_band': '25-34'})
+out = shell("a = env['ts.assignment'].sudo().browse(%s); print('DEMO', a.ts_gender or '-', a.ts_age_band or '-', a.ts_fair_asked)" % AID)
+check('the optional answers are stored as before (same fields, EOT team only)', 'DEMO female 25-34 True' in out, out[-200:])
+st, body = get(cand, path_of(loc) if loc else '/my')
+check('then the candidate sees the feedback card and the percentile column', st == 200 and 'بازخورد شما' in body and 'صدک' in body, str(st))
+st, body = get(cand, '/my/assessments/battery/%s' % AID)
+check('the questions are asked once: the battery page opens directly the next time', st == 200 and 'name="ts_gender"' not in body
+      and 'بازخورد شما' in body, str(st))
+st, loc, _ = post(cand, '/my/assessments/battery/%s/about/save' % AID, {'ts_gender': 'male'})
+check('a second answer is not taken', 'DEMO female' in shell("a = env['ts.assignment'].sudo().browse(%s); print('DEMO', a.ts_gender)" % AID))
 st, body = get(cand, '/assessments?all=1')
 check('the public catalog does not list the invite-only instruments', st == 200 and 'پرسش‌نامهٔ سبک‌های کاری' not in body
       and 'آزمون استدلال' not in body, str(st))

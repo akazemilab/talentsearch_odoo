@@ -12,6 +12,7 @@ spec = importlib.util.spec_from_file_location('flowlib', os.path.join(os.path.di
 lib = importlib.util.module_from_spec(spec); spec.loader.exec_module(lib)
 lib.setup(DB, PORT)
 Client, check, summary, shell = lib.Client, lib.check, lib.summary, lib.shell
+path_of = lib.path_of
 REQS, MID = [], [800000]
 
 
@@ -125,7 +126,9 @@ c3 = Client(TS)
 st, _, page = c3.req('/invite/%s' % tok_old)
 check('expired invite explains itself (200, no accept button)', st == 200 and 'مهلت دعوت تمام شده' in page and '/accept' not in page, str(st))
 st, _, page = c3.req('/invite/%s' % tok)
-check('used invite tells a stranger it is used', st == 200 and 'قبلاً استفاده' in page and '/accept' not in page)
+# onb2: a visitor who is not signed in may be the invited person on another browser: «ادامه», then a code or the sign-in
+check('a used invite opened by a visitor who is not signed in offers «ادامه» only (no consent form, no share tick)',
+      st == 200 and '>ادامه<' in page and 'name="share"' not in page and 'موافقم و شروع می‌کنم' not in page)
 a2 = shell("""
 ws = env['ts.workspace'].search([('name','=','سازمان ثبت‌نام HTTP')], limit=1)
 a = env['ts.assignment'].create({'workspace_id': ws.id, 'instrument_id': env['ts.instrument'].search([('state','=','published'),('purpose','=','employment')], limit=1).id, 'invitee_name': 'تازه HTTP'})
@@ -133,7 +136,10 @@ env.cr.commit(); print('TOK2', a.token)
 """)
 tok2 = re.search(r'TOK2 (\S+)', a2).group(1)
 st, _, page = c3.req('/invite/%s' % tok2)
-check('fresh invite offers mobile sign-in with next=/invite/…', st == 200 and '/signup?next=/invite/%s' % tok2 in page and 'ورود یا ثبت‌نام با موبایل' in page, str(st))
+check('fresh invite: the one-tap welcome screen', st == 200 and 'موافقم و شروع می‌کنم' in page, str(st))
+st, loc, _ = c3.req('/invite/%s/accept' % tok2, {'csrf_token': c3.csrf(page), 'welcome': '1', 'share': '1'})
+check('...a link without a number: the tap leads to the mobile sign-in with next=/invite/…', st in (302, 303)
+      and path_of(loc) == '/signup?next=/invite/%s' % tok2, loc)
 # rate limit through the real endpoint
 for i in range(6):
     bypass_cooldown()

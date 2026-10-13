@@ -224,6 +224,13 @@ def audit(p, login, paths):
         print(('signed in as %s' % login.split('@')[0]) if ok else '!! sign-in failed for %s' % login.split('@')[0], flush=True)
         bad += 0 if ok else 1
     for path in paths:
+        if path.startswith('COOKIE '):
+            # «COOKIE name value» (onb2): a browser cookie for the pages after it (the guest attempt of this browser)
+            _c, cname, cvalue = (path.split(' ', 2) + ['', ''])[:3]
+            ctx.add_cookies([{'name': cname, 'value': cvalue, 'domain': 'talentsearch.ir', 'path': '/', 'httpOnly': True,
+                              'sameSite': 'Lax'}])
+            print('cookie %s set' % cname, flush=True)
+            continue
         if path.startswith('POST '):
             # «POST path urlencoded-body»: a form post that sets up the next page (wizard draft), no screenshot
             _p, url, data = (path.split(' ', 2) + [''])[:3]

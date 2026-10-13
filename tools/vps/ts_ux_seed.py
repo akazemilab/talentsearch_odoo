@@ -462,5 +462,11 @@ if 'center' in R:
         # the branded report and its print mode (the PDF route's fallback; ts_shot.py also writes a _print.png, G8-P10-7)
         m[CK('p1')] = ['/my/assessments/%s' % cat.id, '/my/assessments/%s?print=1' % cat.id]
     pub.append('/help/panel#center-setup')
+# onb2: the welcome screens, the minors' screen, /start, the guest player, the result gate, the masked-number code screen
+ONB2 = []
+import os as _os
+if _os.path.exists('/tmp/ts_onb2_seed.py'):
+    exec(open('/tmp/ts_onb2_seed.py').read())
+pub += ONB2
 json.dump(m, open('/tmp/ux_matrix.json', 'w'))
 print('UXMATRIX', ' '.join('%s=%d' % ((k or 'public').split('@')[0], len(v)) for k, v in m.items()), 'total', sum(len(v) for v in m.values()))

@@ -51,7 +51,9 @@ check('invite with a foreign instrument id refused', 'error=form' in loc, loc)
 
 anon = Client(TS)
 st, _, page = anon.req('/invite/' + tok)
-check('anonymous invite page offers sign-up and login', st == 200 and ('/web/signup?redirect=' in page or '/signup?next=' in page) and '/web/login?redirect=' in page)
+# onb2: the welcome screen; a link without a number or address leads to the sign-in after the tap (ts_http_onb2 E05)
+check('anonymous invite page is the one-tap welcome screen', st == 200 and ('/invite/%s/accept' % tok) in page
+      and 'موافقم و شروع می‌کنم' in page and 'name="welcome"' in page)
 check('invite page explains what is shared', 'سطح هر عامل' in page)
 
 p = Client(TS)
@@ -97,7 +99,9 @@ o = Client(TS)
 o.login('ts.flow.b@example.invalid', ensure_user('ts.flow.b@example.invalid'))
 check('non-member gets 404 on the workspace', o.req('/my/workspaces/%s/legacy' % ws_id)[0] == 404)
 check('non-member gets 404 on the assignment', o.req('/my/workspaces/%s/a/%s' % (ws_id, aid.group(1)))[0] == 404)
-check('other account cannot use a taken invite', o.req('/invite/' + tok)[0] == 404)
+st, _, page = o.req('/invite/' + tok)
+check('other account cannot use a taken invite (onb2: one notice and «خروج و ادامه», no accept form)',
+      st == 200 and 'خروج و ادامه با این دعوت' in page and 'name="welcome"' not in page and '/accept' not in page, str(st))
 e = Client('www.eot.ir')
 e.login(HR, hr_pw)
 check('eot.ir /my/workspaces is 404', e.req('/my/workspaces')[0] == 404)

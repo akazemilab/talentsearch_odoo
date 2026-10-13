@@ -181,7 +181,7 @@ st, page = get(own, W + '/invites/' + AID + '?new=1')
 tok = re.search(r'value="https://talentsearch\.ir/invite/([0-9a-f]{32})"', page)
 check('the page shows the link, a copy button, the QR image and the state', st == 200 and bool(tok) and 'data-tsp-copy' in page and '/qr.png' in page and 'دعوت‌شده' in page)
 # with ts_brand (clinic phase 5) the SMS carries the short link /i/<code> of this invitation instead of the token
-sc = re.search(r"\('([a-z0-9]{8})',\)", q("select short_code from ts_assignment where id = %s" % AID))   # no column without ts_brand
+sc = re.search(r"\('([a-z0-9]{8}|[a-z0-9]{12})',\)", q("select short_code from ts_assignment where id = %s" % AID))   # no column without ts_brand
 check('the SMS went out exactly once and carries the link', len(SMS) == n0 + 1 and tok
       and (tok.group(1) in SMS[-1]['message'] or bool(sc and SMS[-1]['message'].endswith('/i/' + sc.group(1))))
       and SMS[-1]['receptor'] == '09125551111', str(len(SMS) - n0))

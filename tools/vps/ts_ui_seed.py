@@ -32,5 +32,11 @@ own = [W, W + '/clients', W + '/clients/new', W + '/invites', W + '/invites/new'
 if done:
     own.append('/my/assessments/%s' % done.id)
 cns = [W, W + '/clients', W + '/reports', '/my']
+# onb2: the welcome screens, the minors' screen, /start, the guest player, the result gate, the masked-number code screen
+ONB2 = []
+import os as _os
+if _os.path.exists('/tmp/ts_onb2_seed.py'):
+    exec(open('/tmp/ts_onb2_seed.py').read())
+pub += ONB2
 json.dump({'': pub, L['owner']: own, L['cns']: cns}, open('/tmp/ui_matrix.json', 'w'))
 print('MATRIX', len(pub), len(own), len(cns), W)
