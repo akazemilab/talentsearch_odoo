@@ -2,6 +2,16 @@
 <odoo>
     <!-- Free career match (ts_career). Mobile first, one primary action per screen, «شما» register, Persian digits,
          levels not verdicts (docs/ux_writing/voice.md). -->
+    <record id="tpl_notice" model="ir.ui.view">
+        <field name="name">TS career: O*NET notice</field>
+        <field name="type">qweb</field>
+        <field name="key">ts_career.notice</field>
+        <field name="website_id" ref="ts_website.website_ts"/>
+        <field name="arch" type="xml">
+            <t t-name="ts_career.notice">بخش علایق ترجمه و اقتباسی از <bdi dir="ltr">O*NET Interest Profiler</bdi> است. وزارت کار آمریکا (<bdi dir="ltr">USDOL/ETA</bdi>) این تغییرات را تأیید یا آزمایش نکرده است. داده‌های شغلی از <bdi dir="ltr">O*NET 31.0</bdi> با مجوز <bdi dir="ltr">CC BY 4.0</bdi>.</t>
+        </field>
+    </record>
+
     <record id="tpl_home" model="ir.ui.view">
         <field name="name">TS career: start</field>
         <field name="type">qweb</field>
@@ -9,12 +19,12 @@
         <field name="website_id" ref="ts_website.website_ts"/>
         <field name="arch" type="xml">
             <t t-name="ts_career.home">
-                <t t-call="website.layout" additional_title.f="کشف شغل‌های هم‌خوان با علایق شما">
+                <t t-call="website.layout" additional_title.f="شغل‌های هم‌خوان با علایق شما">
                     <div id="wrap" class="ts-page">
                         <section class="ts-section tsc-home">
                             <div class="ts-container ts-narrow">
                                 <p class="ts-tag">رایگان<t t-call="ts_website.sep"/>نسخهٔ آزمایشی</p>
-                                <h1>کدام شغل‌ها با علایق شما جورند؟</h1>
+                                <h1>کدام شغل‌ها با علایق شما هم‌خوان‌اند؟</h1>
                                 <p class="ts-lead">به ۶۰ کار کوتاه بگویید چقدر دوست دارید انجامشان دهید. از میان ۹۲۳ شغل، آن‌هایی را می‌بینید که با علایق شما هم‌خوان‌اند.</p>
                                 <p class="tsc-meta">حدود ۸ دقیقه<t t-call="ts_website.sep"/>روی گوشی<t t-call="ts_website.sep"/>نتیجه فقط برای خودتان</p>
                                 <ol class="tsc-steps">
@@ -34,7 +44,7 @@
                                     <a href="/career/start" class="ts-btn ts-btn--primary ts-btn--lg" id="tsc-start">شروع رایگان<t t-call="ts_website.icon" ico.f="arrow-left"/></a>
                                     <p t-if="public" class="ts-hint">برای نگه‌داشتن نتیجه، با شمارهٔ همراه وارد می‌شوید.</p>
                                 </t>
-                                <p class="tsc-small">این فهرست برای خودشناسی شغلی است، نه تصمیم استخدام. <t t-out="notice"/></p>
+                                <p class="tsc-small">این فهرست برای خودشناسی شغلی است، نه تصمیم استخدام. <t t-call="ts_career.notice"/></p>
                             </div>
                         </section>
                     </div>
@@ -118,6 +128,19 @@
                                     </ul>
                                 </section>
 
+                                <section t-if="not st['hex_done'] or st['tasks_done'] &lt; st['tasks_total']" class="tsc-next" aria-labelledby="tsc-ref-h">
+                                    <h2 id="tsc-ref-h">فهرست را دقیق‌تر کنید <span class="tsc-opt">اختیاری</span></h2>
+                                    <form t-if="not st['hex_done']" action="/career/more/personality" method="post">
+                                        <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                                        <p>با ۱۲۰ جملهٔ کوتاه دربارهٔ شیوهٔ کارتان، فهرست بر پایهٔ علایق و سبک کاری شما چیده می‌شود. حدود ۱۵ دقیقه، روی گوشی.</p>
+                                        <button type="submit" class="ts-btn ts-btn--primary" id="tsc-go-personality"><t t-if="st['hex']">ادامهٔ سبک‌های کاری</t><t t-else="">افزودن سبک‌های کاری</t></button>
+                                    </form>
+                                    <form t-else="" action="/career/more/abilities" method="post">
+                                        <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                                        <p>با ۳ بخش زمان‌دار کوتاه، توانایی‌های شما هم در فهرست اثر می‌گذارد. حدود ۲۳ دقیقه؛ روی رایانه راحت‌تر است.<t t-if="st['tasks_done']"> <t t-out="fa(st['tasks_done'])"/> از <t t-out="fa(st['tasks_total'])"/> بخش انجام شد.</t></p>
+                                        <button type="submit" class="ts-btn ts-btn--primary" id="tsc-go-abilities"><t t-if="st['tasks_done']">ادامهٔ توانایی‌ها</t><t t-else="">افزودن توانایی‌ها</t></button>
+                                    </form>
+                                </section>
                                 <nav class="tsc-filter" aria-label="فیلتر فهرست">
                                     <a t-attf-href="/career/r" t-att-aria-current="'page' if not ready_only else None" class="tsc-chip">همهٔ شغل‌ها</a>
                                     <a t-attf-href="/career/r?ready=1" t-att-aria-current="'page' if ready_only else None" class="tsc-chip">شغل‌هایی که برایشان آماده‌اید</a>
@@ -131,41 +154,16 @@
                                     <li t-foreach="rows" t-as="j" class="tsc-job">
                                         <a t-attf-href="/career/job/#{j['code']}" class="tsc-job__link">
                                             <span class="tsc-job__title" t-out="j['fa']"/>
-                                            <bdi dir="ltr" class="tsc-job__en" t-out="j['en']"/>
+                                            <span t-attf-class="tsc-pill tsc-pill--#{j['ready'].lower()}">آمادگی: <t t-out="j['ready_fa']"/></span>
+                                            <span class="tsc-job__go" aria-hidden="true"><t t-call="ts_website.icon" ico.f="arrow-left"/></span>
                                         </a>
-                                        <span class="tsc-job__tags">
-                                            <span t-attf-class="tsc-pill tsc-pill--#{j['level']}" t-out="j['level_fa']"/>
-                                            <span t-attf-class="tsc-pill tsc-pill--#{j['ready'].lower()}" t-out="j['ready_fa']"/>
-                                        </span>
                                     </li>
                                 </ol>
                                 <a t-if="more" t-attf-href="/career/r?n=#{n + 20}#{'&amp;ready=1' if ready_only else ''}" class="ts-btn ts-btn--quiet" id="tsc-more-rows">نمایش ۲۰ شغل دیگر</a>
 
-                                <section class="tsc-refine" aria-labelledby="tsc-ref-h">
-                                    <h2 id="tsc-ref-h">نتیجه را دقیق‌تر کنید</h2>
-                                    <p>هر بخش اختیاری است. پس از هر کدام، همین فهرست به‌روز می‌شود.</p>
-                                    <div class="tsc-cards">
-                                        <form action="/career/more/personality" method="post" class="tsc-card">
-                                            <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
-                                            <h3>سبک‌های کاری</h3>
-                                            <p>۱۲۰ جملهٔ کوتاه<t t-call="ts_website.sep"/>حدود ۱۵ دقیقه<t t-call="ts_website.sep"/>روی گوشی</p>
-                                            <p t-if="st['hex_done']" class="tsc-done">انجام شد</p>
-                                            <button t-else="" type="submit" class="ts-btn ts-btn--primary" id="tsc-go-personality"><t t-if="st['hex']">ادامهٔ سبک‌های کاری</t><t t-else="">شروع سبک‌های کاری</t></button>
-                                        </form>
-                                        <form action="/career/more/abilities" method="post" class="tsc-card">
-                                            <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
-                                            <h3>توانایی‌ها</h3>
-                                            <p>۳ آزمون زمان‌دار کوتاه<t t-call="ts_website.sep"/>حدود ۲۳ دقیقه<t t-call="ts_website.sep"/>روی رایانه راحت‌تر است</p>
-                                            <p t-if="st['tasks_done'] == st['tasks_total']" class="tsc-done">انجام شد</p>
-                                            <t t-else="">
-                                                <p t-if="st['tasks_done']" class="tsc-meta"><t t-out="fa(st['tasks_done'])"/> از <t t-out="fa(st['tasks_total'])"/> بخش انجام شد</p>
-                                                <button type="submit" class="ts-btn ts-btn--primary" id="tsc-go-abilities"><t t-if="st['tasks_done']">ادامهٔ توانایی‌ها</t><t t-else="">شروع توانایی‌ها</t></button>
-                                            </t>
-                                        </form>
-                                    </div>
-                                </section>
+
                                 <p class="tsc-small"><a href="/career/r?edit=1">ویرایش تحصیلات و سابقه</a></p>
-                                <p class="tsc-small">این فهرست برای خودشناسی شغلی است، نه تصمیم استخدام. <t t-out="notice"/></p>
+                                <p class="tsc-small">این فهرست برای خودشناسی شغلی است، نه تصمیم استخدام. <t t-call="ts_career.notice"/></p>
                             </div>
                         </section>
                     </div>
@@ -199,18 +197,18 @@
                                 <section class="tsc-panel" aria-labelledby="tsc-p2">
                                     <h2 id="tsc-p2">آمادگی</h2>
                                     <p><span t-attf-class="tsc-pill tsc-pill--#{j['ready'].lower()}" t-out="j['ready_fa']"/></p>
-                                    <p t-if="j['jz']">سطح آمادگی این شغل <t t-out="fa(j['jz'])"/> از ۵: <t t-out="j['jz_fa']"/>.</p>
+                                    <p t-if="j['jz']">سطح آمادگی این شغل: <t t-out="fa(j['jz'])"/> از ۵ (۵ بیشترین). <t t-out="j['jz_fa']"/>.</p>
                                 </section>
                                 <section t-if="j['clinic_fa']" class="tsc-panel" aria-labelledby="tsc-p3">
                                     <h2 id="tsc-p3">معاینات شغلی</h2>
                                     <p>این شغل به این توانایی‌های جسمی و حسی تکیه دارد. استعدادیاب آن‌ها را نمی‌سنجد؛ در صورت نیاز، پزشک طب کار بررسی می‌کند.</p>
-                                    <ul class="tsc-tags"><li t-foreach="j['clinic_fa']" t-as="c" t-out="c"/></ul>
+                                    <ul class="tsc-watch"><li t-foreach="j['clinic_fa']" t-as="c" t-out="c"/></ul>
                                 </section>
                                 <section class="tsc-panel" aria-labelledby="tsc-p4">
                                     <h2 id="tsc-p4">دلایل و عدم‌قطعیت</h2>
                                     <ul t-if="j['watch']" class="tsc-watch"><li t-foreach="j['watch']" t-as="w" t-out="w"/></ul>
                                     <ul t-if="missing" class="tsc-watch"><li t-foreach="missing" t-as="m" t-out="m"/></ul>
-                                    <p class="tsc-small">هم‌خوانی بر پایهٔ داده‌های شغلی O*NET (آمریکا) است و بازار کار ایران ممکن است فرق داشته باشد. <t t-out="notice"/></p>
+                                    <p class="tsc-small">هم‌خوانی بر پایهٔ داده‌های شغلی O*NET (آمریکا) است و بازار کار ایران ممکن است فرق داشته باشد. <t t-call="ts_career.notice"/></p>
                                 </section>
                                 <a href="/career/r" class="ts-btn ts-btn--quiet">بازگشت به فهرست</a>
                             </div>
