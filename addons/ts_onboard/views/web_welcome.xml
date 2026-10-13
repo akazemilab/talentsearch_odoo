@@ -115,7 +115,8 @@
                                                     <summary>بیشتر</summary>
                                                     <div class="tso-more__body">
                                                         <t t-if="pos" t-call="ts_hire.position_terms"/>
-                                                        <t t-else="" t-call="ts_org.share_box" share_ws="ws" share_student="tu"/>
+                                                        <!-- already behind «بیشتر»: the list is shown open, never a second toggle (share_open) -->
+                                                        <t t-else="" t-call="ts_org.share_box" share_ws="ws" share_student="tu" share_open="True"/>
                                                         <t t-if="item_names">
                                                             <p><strong>بخش‌های این مجموعه</strong> (یکی پس از دیگری، با همین یک بار موافقت):</p>
                                                             <ol class="tso-parts"><li t-foreach="item_names" t-as="nm" t-out="nm"/></ol>
@@ -195,6 +196,27 @@
                     </div>
                 </t>
             </t>
+        </field>
+    </record>
+
+    <!-- ts_org.share_box with share_open: the list is shown open under a plain heading (the welcome screen already folds
+         it behind «بیشتر»; a second toggle inside would hide it twice) -->
+    <record id="share_box_open" model="ir.ui.view">
+        <field name="name">ts_onboard.share_box.open</field>
+        <field name="inherit_id" ref="ts_org.tpl_share_box"/>
+        <field name="website_id" ref="ts_website.website_ts"/>
+        <field name="priority">40</field>
+        <field name="arch" type="xml">
+            <xpath expr="//button[hasclass('ts-share-box__btn')]" position="attributes">
+                <attribute name="t-if">not share_open</attribute>
+            </xpath>
+            <xpath expr="//button[hasclass('ts-share-box__btn')]" position="after">
+                <span t-if="share_open">چه چیزی با پنل «<bdi t-out="share_ws.ts_public_name()"/>» دیده می‌شود؟</span>
+            </xpath>
+            <xpath expr="//div[@id='ts-share-list']" position="attributes">
+                <attribute name="hidden"/>
+                <attribute name="t-att-hidden">None if share_open else 'hidden'</attribute>
+            </xpath>
         </field>
     </record>
 </odoo>
