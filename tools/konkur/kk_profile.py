@@ -70,10 +70,12 @@ def course_profile(courses, clf, know_rows):
             continue
         total += u
         practice += float(c.get('units_practice') or 0)
-        if PROJECT_RX.search(key(c['course'])):
+        is_project = bool(PROJECT_RX.search(key(c['course'])))
+        if is_project:
             project += u
         if a is None:
-            unclassified.append(norm(c['course']))
+            if not is_project:
+                unclassified.append(norm(c['course']))
             continue
         units[a] = units.get(a, 0.0) + u
     classified = sum(units.values())
