@@ -278,7 +278,7 @@ def c_classify(a):
             ar = clf.area(r['course'])
             if ar == 'general':
                 gen += 1
-            elif ar is None:
+            elif ar is None and not kk_profile.PROJECT_RX.search(key(r['course'])):
                 un.setdefault(norm(r['course']), set()).add(fam)
     rows = [{'course': k, 'families': '|'.join(sorted(v)), 'area': ''} for k, v in sorted(un.items())]
     dirs()
