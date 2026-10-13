@@ -12,7 +12,7 @@ The owner's decisions:
 |---|---|---|
 | onb1 | Approval removed (50 invites/day in week 1, suspend, new-panels list); licence badge; unified mobile-OTP sign-in (WebOTP line, 30-day session, locks) | LIVE (main 6152b42) |
 | onb2 | One-tap invites (delivery secret, scoped session, device binding); guest starter inventory_002 with a result gate; funnel events; module ts_onboard | LIVE (main a1562a8) |
-| onb3 | Panel first session (one-form creation, per-kind starter, HR sample position, preview self-test, sample reports, «شروع کار», one-screen invite + permanent /c/ link, live status), SMS nudges, join SMS, help, /clinics /hiring /schools /pricing, activation funnel, welcome-credit setting (0 = off); clone SMS neutralised (ts_db.sh) + code guard | BUILT, risk-reviewed and fixed. Branch onb3, head = merge of main career1 (7b3aba9 + this doc). NOT SHIPPED |
+| onb3 | Panel first session (one-form creation, per-kind starter, HR sample position, preview self-test, sample reports, «شروع کار», one-screen invite + permanent /c/ link, live status), SMS nudges, join SMS, help, /clinics /hiring /schools /pricing, activation funnel, welcome-credit setting (0 = off); clone SMS neutralised (ts_db.sh) + code guard | LIVE (main d5f60a4). Merged with career1: the norm rebuild excludes career takes, previews and voided attempts; the career entry on the home hero is a quiet text link in the organisation links |
 
 Design notes: docs/onboarding/01, 02, 03. Details in docs/IMPLEMENTATION_LOG.md.
 
