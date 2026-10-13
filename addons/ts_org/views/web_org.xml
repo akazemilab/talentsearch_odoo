@@ -329,7 +329,7 @@
                                                 </div>
                                                 <h3>راهنمای مشاور</h3>
                                                 <t t-foreach="r.therapist_sections()" t-as="sec">
-                                                    <h4 t-if="sec[0]" t-out="sec[0]"/>
+                                                    <h4 t-if="sec[0] and sec[0] != 'راهنمای مشاور'" t-out="sec[0]"/>
                                                     <div class="ts-doc__text" t-out="sec[1]"/>
                                                 </t>
                                                 <details class="ts-noprint-open">
@@ -416,13 +416,11 @@
                                         <t t-else="">
                                             <form t-if="not ask_decline" t-attf-action="/invite/#{a.token}/accept" method="post" class="ts-form" id="ts-invite-form">
                                                 <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
-                                                <label class="ts-check">
-                                                    <input type="checkbox" name="share" value="1" checked="checked" aria-describedby="ts_share_note"/>
-                                                    <span t-if="ws.purpose == 'education'">اجازه می‌دهم مدرسه و مشاورم گزارش نتیجه‌ام را در پنل «<bdi t-out="ws.ts_public_name()"/>» ببینند.</span>
-                                                    <span t-elif="ws.purpose == 'employment'">اجازه می‌دهم سطح هر عامل با پنل «<bdi t-out="ws.ts_public_name()"/>» به اشتراک گذاشته شود.</span>
-                                                    <span t-else="">اجازه می‌دهم گزارش کامل با مشاوران «<bdi t-out="ws.ts_public_name()"/>» به اشتراک گذاشته شود.</span>
-                                                </label>
-                                                <p id="ts_share_note" class="ts-hint"><t t-if="student">اگر تیک را برداری هم می‌توانی سنجه را انجام بدهی؛ آن وقت نتیجه فقط برای خودت می‌ماند.</t><t t-else="">اگر تیک را بردارید هم می‌توانید سنجه را انجام دهید؛ آن وقت نتیجه فقط برای خودتان می‌ماند.</t></p>
+                                                <!-- owner decision 2026-10-13: signed in under another name than the invitee, the tick starts
+                                                     unticked (sharing is chosen, never assumed for someone else); ticked otherwise -->
+                                                <t t-call="ts_org.share_tick" share_ws="ws" share_student="student" share_checked="not mismatch"
+                                                   share_pos="a.position_id if 'position_id' in a._fields else False"
+                                                   share_battery="a.battery_id if 'battery_id' in a._fields else False"/>
                                                 <button type="submit" t-attf-class="ts-btn ts-btn--lg ts-btn--block #{'ts-btn--outline' if mismatch else 'ts-btn--primary'}">پذیرفتن دعوت و ادامه</button>
                                                 <!-- what comes next, so the sharing tick is not mistaken for the consent step (P5-2, R13) -->
                                                 <p class="ts-hint" id="ts-invite-next"><t t-if="student">بعد از این، صفحهٔ کوتاه رضایت را می‌بینی و بعد پرسش‌ها شروع می‌شود.</t><t t-else="">بعد از این، صفحهٔ کوتاه رضایت را می‌بینید و بعد پرسش‌ها شروع می‌شود.</t></p>
@@ -498,6 +496,29 @@
                     </ul>
                     </div>
                 </div>
+            </t>
+        </field>
+    </record>
+
+    <!-- The sharing tick and its note, one text for /invite/<token> and the open link /c/<token> (owner decision
+         2026-10-13: joining by the open link accepts in the same step, so both pages must ask the same question).
+         Params: share_ws, share_student («تو»), share_checked (False when signed in under another name than the
+         invitee), share_pos (ts_hire: the position, else False), share_battery (ts_battery: the battery, else False).
+         ts_hire and ts_battery extend THIS template (tick of a position, note of a battery). -->
+    <record id="tpl_share_tick" model="ir.ui.view">
+        <field name="name">TS: sharing tick</field>
+        <field name="type">qweb</field>
+        <field name="key">ts_org.share_tick</field>
+        <field name="website_id" ref="ts_website.website_ts"/>
+        <field name="arch" type="xml">
+            <t t-name="ts_org.share_tick">
+                <label class="ts-check ts-share-tick">
+                    <input type="checkbox" name="share" value="1" t-att-checked="'checked' if share_checked else None" aria-describedby="ts_share_note"/>
+                    <span t-if="share_ws.purpose == 'education'">اجازه می‌دهم مدرسه و مشاورم گزارش نتیجه‌ام را در پنل «<bdi t-out="share_ws.ts_public_name()"/>» ببینند.</span>
+                    <span t-elif="share_ws.purpose == 'employment'">اجازه می‌دهم سطح هر عامل با پنل «<bdi t-out="share_ws.ts_public_name()"/>» به اشتراک گذاشته شود.</span>
+                    <span t-else="">اجازه می‌دهم گزارش کامل با مشاوران «<bdi t-out="share_ws.ts_public_name()"/>» به اشتراک گذاشته شود.</span>
+                </label>
+                <p id="ts_share_note" class="ts-hint"><t t-if="share_student">اگر تیک را برداری هم می‌توانی سنجه را انجام بدهی؛ آن وقت نتیجه فقط برای خودت می‌ماند.</t><t t-else="">اگر تیک را بردارید هم می‌توانید سنجه را انجام دهید؛ آن وقت نتیجه فقط برای خودتان می‌ماند.</t></p>
             </t>
         </field>
     </record>

@@ -5,6 +5,8 @@
 // The server keeps the keys and the deadline; this script only shows items and measures response times.
 // UX audit T7 (2026-10-13): rules before the clock, honest save state, one focus-loss event per time away, a header
 // exit that never suggests a pause, live time left on the resume screen.
+// 2026-10-13 (owner): every drawing has a Persian text alternative (matrices, rotation figures, flanker arrows, the
+// reaction-time circle) and drawn answer options are named by what they show. Scoring and timing are unchanged.
 (function () {
     'use strict';
     if (document.readyState === 'loading') { document.addEventListener('DOMContentLoaded', main); } else { main(); }
@@ -571,7 +573,19 @@
     }
 
     // ------------------------------------------------------------------ one trial of any kind
-    function choiceButtons(wrap, labels, onPick, selected, html) {
+    // A drawing with its text alternative (owner decision 2026-10-13, WCAG 1.1.1): the figure is hidden from assistive
+    // technology and a visually hidden description, built by the server from the same structure (generators.py
+    // *_text), is read instead. Items served before the texts existed fall back to the drawing alone.
+    function described(node, text) {
+        if (!text) { return node; }
+        var box = el('div', 'tst-fig');
+        node.setAttribute('aria-hidden', 'true');
+        box.appendChild(el('p', 'visually-hidden', text));
+        box.appendChild(node);
+        return box;
+    }
+
+    function choiceButtons(wrap, labels, onPick, selected, html, names) {
         var g = el('div', 'tst-opts' + (html ? ' tst-opts--fig' : ''));
         var picked = false;                       // one pick per drawing (a second quick tap changes nothing)
         g.setAttribute('role', 'group');
@@ -579,7 +593,8 @@
             var b = el('button', 'tst-opt' + (selected === n ? ' is-chosen' : ''));
             b.type = 'button';
             b.setAttribute('aria-pressed', selected === n ? 'true' : 'false');
-            if (html) { b.appendChild(svg(lab)); b.setAttribute('aria-label', 'گزینهٔ ' + fa(n + 1)); }
+            // a drawn option is named by what it shows («گزینهٔ ۲: دو مربع توپر»), not by its number alone
+            if (html) { b.appendChild(svg(lab)); b.setAttribute('aria-label', 'گزینهٔ ' + fa(n + 1) + (names && names[n] ? ': ' + names[n] : '')); }
             else { b.textContent = lab; }
             b.addEventListener('click', function () {
                 if (picked) { return; }
@@ -603,8 +618,8 @@
             grid.setAttribute('dir', 'ltr');
             it.cells.forEach(function (c) { grid.appendChild(svg(c)); });
             grid.appendChild(el('span', 'tst-matrix__q', '؟'));
-            wrap.appendChild(grid);
-            choiceButtons(wrap, it.options, answer, selected, true);
+            wrap.appendChild(described(grid, it.cells_text));
+            choiceButtons(wrap, it.options, answer, selected, true, it.options_text);
         } else if (it.kind === 'series') {
             var s = el('p', 'tst-series');
             s.textContent = it.terms.join('،  ') + '،  ؟';
@@ -616,8 +631,8 @@
             choiceButtons(wrap, it.options, answer, selected);
         } else if (it.kind === 'rotation') {
             var pair = el('div', 'tst-pair');
-            pair.appendChild(svg(it.left));
-            pair.appendChild(svg(it.right));
+            pair.appendChild(described(svg(it.left), it.left_text && ('شکل اول: ' + it.left_text)));
+            pair.appendChild(described(svg(it.right), it.right_text && ('شکل دوم: ' + it.right_text)));
             wrap.appendChild(pair);
             choiceButtons(wrap, it.options, answer, selected);
         } else if (it.kind === 'arith') {
@@ -640,12 +655,17 @@
             if (it.kind === 'flanker') {
                 var f = el('p', 'tst-flank', it.stim);
                 f.setAttribute('dir', 'ltr');
+                // text alternative: the five arrows in words, in drawing order (not only the middle one)
+                f.setAttribute('role', 'img');
+                f.setAttribute('aria-label', 'پیکان‌ها از چپ به راست: ' + it.stim.split('').map(function (c) { return c === '←' ? 'چپ' : 'راست'; }).join('، '));
                 wrap.appendChild(f);
             } else {
                 var field = el('div', 'tst-rt');
                 field.setAttribute('dir', 'ltr');
                 var dot = el('span', 'tst-rt__dot');
                 dot.style.marginInlineStart = it.side ? 'auto' : '0';
+                field.setAttribute('role', 'img');
+                field.setAttribute('aria-label', it.side ? 'دایره در سمت راست' : 'دایره در سمت چپ');
                 field.appendChild(dot);
                 wrap.appendChild(field);
             }

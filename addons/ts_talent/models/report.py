@@ -42,9 +42,11 @@ PLAIN = {
 }
 
 
-def ab_plain(codes):
-    """«کنش نوسودمندی (ارائهٔ راه‌حل‌های تازه و سودمند)» for each code, joined."""
-    return joinfa(['%s (%s)' % (NAMES[c], PLAIN[c]) if c in PLAIN else NAMES[c] for c in codes])
+def ab_plain(codes, plain=None):
+    """«کنش نوسودمندی (ارائهٔ راه‌حل‌های تازه و سودمند)» for each code, joined. plain: the version's glosses
+    (report_glosses()['plain']); default PLAIN."""
+    plain = PLAIN if plain is None else plain
+    return joinfa(['%s (%s)' % (NAMES[c], plain[c]) if plain.get(c) else NAMES[c] for c in codes])
 
 
 # ------------------------------------------------------------------ charts
@@ -124,7 +126,7 @@ def weak_title(voice):
     return 'جایی که به خودت نمرهٔ کمتری دادی' if voice == 'tu' else 'جایی که به خودتان نمرهٔ کمتری دادید'
 
 
-def levels(interp, profile, voice='shoma', digits=1):
+def levels(interp, profile, voice='shoma', digits=1, glosses=None):
     """[{key, title, gloss, lines:[str], near:[str]}] for the seven levels (book names).
 
     Ties are explicit: an element of a tied list is never picked as 'the' highest or lowest, and the same
@@ -141,7 +143,7 @@ def levels(interp, profile, voice='shoma', digits=1):
         'میانگین کلّی %s در %s زمینه %s از ۱۰۰ است (بازهٔ ممکن ۲۰ تا ۱۰۰).' % (V['poss'], fa(n), f(interp['overall']['score']))],
         'near': []}]
     if n < 2:
-        return _glossed(out)
+        return _glossed(out, glosses)
     b = interp['brief']
     if all_a:
         ab_txt = 'میانگین هر پنج توانایی برابر است (%s)' % f(b['ability_score'])
@@ -238,12 +240,17 @@ def levels(interp, profile, voice='shoma', digits=1):
     out.append({'key': 'weak', 'title': weak_title(voice), 'lines': lines,
                 'near': [x for x in ((not all_a) and w['abilities_near'] and 'توانایی‌های نزدیک: ' + ab_names(w['abilities_near']),
                                      (not all_f) and w['fields_near'] and 'زمینه‌های نزدیک: ' + joinfa(w['fields_near'], True)) if x]})
-    return _glossed(out)
+    return _glossed(out, glosses)
 
 
-def _glossed(out):
+def _glossed(out, glosses=None):
+    """Gloss of each level; glosses = the version's report_glosses() (content v2 may also retitle a level)."""
+    gl = (glosses or {}).get('levels') or LEVEL_GLOSS
+    titles = (glosses or {}).get('level_titles') or {}
     for lv in out:
-        lv['gloss'] = LEVEL_GLOSS.get(lv['key'], '')
+        lv['gloss'] = gl.get(lv['key'], '')
+        if titles.get(lv['key']):
+            lv['title'] = titles[lv['key']]
     return out
 
 
@@ -256,7 +263,7 @@ def single_field_lines(interp, voice='shoma'):
             'برای مقایسهٔ زمینه‌ها دست‌کم دو زمینه لازم است.']
 
 
-def summary(interp, profile, voice='shoma', digits=0):
+def summary(interp, profile, voice='shoma', digits=0, plain=None):
     """At most three plain sentences for the top of the report (UX audit G2-P3-3), from the same interpretation."""
     V = _v(voice)
 
@@ -272,14 +279,14 @@ def summary(interp, profile, voice='shoma', digits=0):
         if len(best) == len(SCALES):
             out.append('در «%s» به هر پنج توانایی نمرهٔ برابر (%s) %s.' % (fld['label'], f(top), V['gave']))
         else:
-            out.append('در «%s» بیشترین نمره در %s است (%s از ۱۰۰).' % (fld['label'], ab_plain(best), f(top)))
+            out.append('در «%s» بیشترین نمره در %s است (%s از ۱۰۰).' % (fld['label'], ab_plain(best, plain), f(top)))
         out.append('برای مقایسهٔ زمینه‌ها دست‌کم دو زمینه لازم است.')
     else:
         b = interp['brief']
         if abilities_all_tied(interp):
             out.append('به هر پنج توانایی به‌طور میانگین نمرهٔ برابر (%s) %s.' % (f(b['ability_score']), V['gave']))
         else:
-            out.append('بیشترین نمره را به %s %s (%s از ۱۰۰).' % (ab_plain(b['abilities']), V['gave'], f(b['ability_score'])))
+            out.append('بیشترین نمره را به %s %s (%s از ۱۰۰).' % (ab_plain(b['abilities'], plain), V['gave'], f(b['ability_score'])))
         if fields_all_tied(interp):
             out.append('میانگین همهٔ %s برابر است (%s)؛ این سنجه بین آن‌ها فرقی نشان نمی‌دهد.' % (V['fields'], f(b['field_score'])))
         elif len(b['fields']) > 1:
@@ -342,17 +349,33 @@ PROGRAM_PLAIN = (
 )
 
 
-def program_plain(name):
-    for prefix, text in PROGRAM_PLAIN:
+def report_glosses(data=None):
+    """The glosses a report uses, from a version's report_texts (content v2) over the defaults of this module:
+    {'plain': {code: text}, 'programs': [(prefix, text)] longest prefix first, 'levels': {key: gloss},
+    'level_titles': {key: title}}. A version without report_texts (book content) gets exactly the defaults."""
+    data = data or {}
+    plain = dict(PLAIN)
+    plain.update({k: v for k, v in (data.get('plain') or {}).items() if v})
+    prog = dict(PROGRAM_PLAIN)
+    prog.update({k: v for k, v in (data.get('programs') or {}).items() if v})
+    levels = dict(LEVEL_GLOSS)
+    levels.update({k: v for k, v in (data.get('levels') or {}).items() if v})
+    return {'plain': plain, 'programs': sorted(prog.items(), key=lambda kv: -len(kv[0])), 'levels': levels,
+            'level_titles': {k: v for k, v in (data.get('level_titles') or {}).items() if v}}
+
+
+def program_plain(name, programs=None):
+    """Plain meaning of a programme name: the first (longest) matching prefix of programs (default PROGRAM_PLAIN)."""
+    for prefix, text in (PROGRAM_PLAIN if programs is None else programs):
         if (name or '').startswith(prefix):
             return text
     return ''
 
 
-def programs_view(interp, voice='shoma'):
+def programs_view(interp, voice='shoma', programs=None):
     """programs_list for display: a program built on an arbitrary pick from a tie is left out (the engine picks the
     first of tied fields/abilities); participant views use growth wording for the two remedial kinds.
-    Each row is (kind label, programme name, plain meaning)."""
+    Each row is (kind label, programme name, plain meaning); programs = the version's [(prefix, text)] glosses."""
     out = []
     w = interp.get('weak') or {}
     b = interp.get('brief') or {}
@@ -368,12 +391,13 @@ def programs_view(interp, voice='shoma'):
             if drop_reinf:
                 continue
             label = label if org else 'برای رشد یک توانایی'
-        out.append((label, name, program_plain(name)))
+        out.append((label, name, program_plain(name, programs)))
     return out
 
 
-def tiles(interp, profile, voice='shoma', digits=1):
+def tiles(interp, profile, voice='shoma', digits=1, plain=None):
     """Headline tiles: [{k, v, s}]."""
+    plain = PLAIN if plain is None else plain
     out = [{'k': 'میانگین کلّی', 'v': fmt(interp['overall']['score'], digits), 's': 'از ۱۰۰'}]
     if 'brief' in interp:
         b = interp['brief']
@@ -381,7 +405,7 @@ def tiles(interp, profile, voice='shoma', digits=1):
             out.append({'k': 'برجسته‌ترین توانایی', 'v': 'هر پنج برابر', 's': fmt(b['ability_score'], digits)})
         else:
             out.append({'k': 'برجسته‌ترین توانایی', 'v': ab_names(b['abilities']), 's': fmt(b['ability_score'], digits),
-                        'g': PLAIN.get(b['abilities'][0]) if len(b['abilities']) == 1 else ''})
+                        'g': plain.get(b['abilities'][0]) if len(b['abilities']) == 1 else ''})
         if fields_all_tied(interp):
             out.append({'k': 'زمینه‌ها', 'v': 'همه برابر', 's': fmt(b['field_score'], digits)})
         else:
@@ -394,7 +418,7 @@ def tiles(interp, profile, voice='shoma', digits=1):
         best = [NAMES[c] for c in SCALES if abs(fld[c] - top) < 1e-9]
         top_codes = [c for c in SCALES if abs(fld[c] - top) < 1e-9]
         out.append({'k': 'برجسته‌ترین توانایی', 'v': 'هر پنج برابر' if len(best) == len(SCALES) else joinfa(best),
-                    's': 'در «%s»' % pf['label'], 'g': PLAIN.get(top_codes[0]) if len(top_codes) == 1 else ''})
+                    's': 'در «%s»' % pf['label'], 'g': plain.get(top_codes[0]) if len(top_codes) == 1 else ''})
     return out
 
 

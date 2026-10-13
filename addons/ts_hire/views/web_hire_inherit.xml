@@ -14,14 +14,24 @@
         <field name="website_id" ref="ts_website.website_ts"/>
         <field name="priority">30</field>
         <field name="arch" type="xml">
-            <xpath expr="//label[hasclass('ts-check')]/span[@t-elif=&quot;ws.purpose == 'employment'&quot;]" position="before">
-                <span t-elif="ws.purpose == 'employment' and a.position_id">اجازه می‌دهم «<bdi t-out="ws.ts_public_name()"/>» سطح هر عامل، خلاصهٔ تناسبم با این شغل و نشانه‌های دقت پاسخ‌دهی را ببیند.</span>
-            </xpath>
             <xpath expr="//t[@t-call='ts_org.share_box']" position="after">
                 <section t-if="a.position_id" class="ts-card tsh-invite" aria-labelledby="tsh-inv-h">
                     <h2 class="h5" id="tsh-inv-h">ارزیابی برای موقعیت «<bdi t-out="a.position_id.name"/>»</h2>
                     <t t-call="ts_hire.position_terms"/>
                 </section>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- The tick of a job application (ts_org.share_tick, shared by /invite and the open link /c; share_pos = the position) -->
+    <record id="share_tick_position" model="ir.ui.view">
+        <field name="name">ts_hire.share_tick</field>
+        <field name="inherit_id" ref="ts_org.tpl_share_tick"/>
+        <field name="website_id" ref="ts_website.website_ts"/>
+        <field name="priority">30</field>
+        <field name="arch" type="xml">
+            <xpath expr="//label[hasclass('ts-check')]/span[@t-elif=&quot;share_ws.purpose == 'employment'&quot;]" position="before">
+                <span t-elif="share_ws.purpose == 'employment' and share_pos">اجازه می‌دهم «<bdi t-out="share_ws.ts_public_name()"/>» سطح هر عامل، خلاصهٔ تناسبم با این شغل و نشانه‌های دقت پاسخ‌دهی را ببیند.</span>
             </xpath>
         </field>
     </record>
@@ -53,8 +63,9 @@
         <field name="website_id" ref="ts_website.website_ts"/>
         <field name="priority">30</field>
         <field name="arch" type="xml">
+            <!-- CONSENT v5 (2026-10-13, plain language, as ts_panel.who_sees_line): the object first, one subject per verb -->
             <xpath expr="//t[@t-elif=&quot;asg.workspace_id.purpose == 'clinical'&quot;]" position="after">
-                <t t-elif="asg.position_id">شما، و <strong t-out="org"/> سطح هر عامل (کم، متوسط یا زیاد)، خلاصهٔ تناسب شما با این شغل و نشانه‌های دقت پاسخ‌دهی را می‌بیند؛ نه پاسخ‌ها، نه نمره‌ها، نه متن گزارش.</t>
+                <t t-elif="asg.position_id">گزارش کامل را خودتان می‌بینید؛ <strong t-out="org"/> سطح هر عامل (کم، متوسط یا زیاد)، خلاصهٔ تناسب شما با این شغل و نشانه‌های دقت پاسخ‌دهی را می‌بیند، نه پاسخ‌ها، نمره‌ها یا متن گزارش.</t>
             </xpath>
         </field>
     </record>

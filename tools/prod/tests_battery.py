@@ -339,7 +339,8 @@ check('G05 consent given once is copied to every sibling with the same values',
       set(rows.mapped('state')) == {'in_progress'} and all(r.consent_service and r.consent_research and r.consent_version == CONSENT_VERSION
                                                         and r.respondent_role == 'self' for r in rows),
       str(rows.mapped('state')))
-check('G05 CONSENT_VERSION is v5 (onb1: the clinical sharing line names «مشاوران همین مرکز»)', CONSENT_VERSION.endswith('-v5') and CONSENT_VERSION.startswith('TS-CONSENT-'))
+check('G05 CONSENT_VERSION is the plain-language v5 of 1405-07-21 (owner 2026-10-13: summary first, full text folded)',
+      CONSENT_VERSION == 'TS-CONSENT-1405-07-21-v6', CONSENT_VERSION)
 Rec = env['ts.consent.record']
 check('G05 the consent ledger keeps one service row per attempt',
       Rec.search_count([('attempt_id', 'in', rows.ids), ('kind', '=', 'service')]) == N)

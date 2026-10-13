@@ -82,7 +82,7 @@
                                             <h4 t-if="blk_sub" class="h6" t-out="sec[0]"/>
                                             <h3 t-else="" class="h6" t-out="sec[0]"/>
                                         </t>
-                                        <div t-out="sec[1]"/>
+                                        <div class="ts-doc__text" t-out="sec[1]"/>
                                     </t>
                                 </section>
                             </t>

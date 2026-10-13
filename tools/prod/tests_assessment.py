@@ -38,14 +38,24 @@ check('every published version passed exhaustive band validation', all(i.current
       str([i.code for i in pub if not i.current_version_id.validation_ok]))
 check('every published instrument approved with intended use + rights', all(i.approved_at and i.intended_use and i.rights_note for i in pub))
 V = pub.mapped('current_version_id')
-check('1,340 source items imported', env['ts.instrument.item'].search_count([('version_id.mode', '!=', 'matrix'), ('version_id.instrument_id.code', '!=', 'HR-HEXACO-1')]) == 1340)
-check('393 bands imported and approved', env['ts.instrument.band'].search_count([('approved_at', '!=', False)]) == 393)
+# current versions only: a content v2 version repeats the same items and bands with new texts (superseded = not current)
+check('1,340 source items imported', env['ts.instrument.item'].search_count([('version_id.mode', '!=', 'matrix'), ('version_id.instrument_id.code', '!=', 'HR-HEXACO-1'),
+                                                                            ('version_id.superseded', '=', False)]) == 1340)
+check('393 bands imported and approved', env['ts.instrument.band'].search_count([('approved_at', '!=', False), ('factor_id.version_id.superseded', '=', False)]) == 393)
+check('exactly one current (not superseded) version per instrument', all(
+    i.version_ids.filtered(lambda v: not v.superseded) == i.current_version_id for i in pub | ret))
 check('versions locked', all(V.mapped('locked')))
 check('locked version refuses contract edits', raises(lambda: V[0].write({'reverse_rule': 'x'}), UserError))
 stats = Inst._ts_load_source()
 slugs = pub.mapped('slug')
 check('instrument URLs and titles are unique', len(set(slugs)) == len(slugs) and len(set(pub.mapped('title'))) == len(pub))
-check('loader is idempotent (second run creates nothing)', stats['created'] == 0 and stats['versions'] == 0, str(stats))
+check('loader is idempotent (second run creates nothing, approved content v2 included)',
+      stats['created'] == 0 and stats['versions'] == 0 and stats['moved_attempts'] == 0, str(stats))
+check('no content v2 file refused (approved files cover every scored factor and band)', stats['content_errors'] == 0, str(stats))
+check('every current version: band format matches its content version (v2 file applied or book texts)',
+      all(b.content_format == ('v2' if i.current_version_id.content_version else 'book')
+          for i in pub for b in i.current_version_id.factor_ids.band_ids)
+      and stats['content_v2'] == len(pub.filtered(lambda i: i.current_version_id.content_version)), str(stats.get('content_v2')))
 
 # ------------------------------------------------ independent reference engine
 src = json.load(open(file_path('ts_assessment/data/source/psy_source.json')))
@@ -203,6 +213,81 @@ check('consent error redirect echoes only known ticks', consent_error_url('T', '
 import datetime as _dt
 check('participant dates read «۲۱ مهر ۱۴۰۵»', jalali_long(_dt.datetime(2026, 10, 13, 8, 0)) == '۲۱ مهر ۱۴۰۵', jalali_long(_dt.datetime(2026, 10, 13, 8, 0)))
 check('resume line counts items and minutes left', a.ts_progress_line() == '' or 'از' in a.ts_progress_line())
+
+# ------------------------------------------------ content v2 overlay (fixture passed in the context, never a file)
+from odoo.addons.ts_assessment.models.attempt import COUNSELOR_HEADING, DEF_HEADING, PARTICIPANT_HEADING, TALK_HEADING
+from odoo.addons.ts_assessment.models.loader import scoring_fingerprint
+env['ir.config_parameter'].sudo().set_str('ts_assessment.content_v2', '1')
+code = 'inventory_014'
+inst = pub.filtered(lambda i: i.code == code)
+old_v = inst.current_version_id
+done_old, _ = run(inst, u1, lambda it: 4)                    # finished before the switch
+split_old = done_old.result_ids[0].client_sections()
+fmt_old = 'v2' if old_v.content_version else 'book'           # the real approved file may already be applied here
+open_a = Attempt.create({'user_id': u2.id, 'instrument_id': inst.id, 'version_id': old_v.id})
+open_a.give_consent(role='guardian' if inst.audience in ('child', 'adolescent') else 'self')
+for it in open_a.active_items()[:3]:
+    open_a.save_answer(it.id, 2)
+open_by_qid = {x.item_id.source_question_id: x.value for x in open_a.answer_ids}
+fixture = {'schema': 'ts-content/2', 'instrument': code, 'content_version': 'TS-CONTENT-TEST', 'status': 'approved',
+           'register': 'shoma', 'summary': 'خلاصهٔ آزمون محتوای نسخهٔ ۲.', 'factors': [
+               {'code': f.code, 'name': '', 'definition': 'تعریف آزمون %s.' % f.code, 'ref_definition': 'ignored',
+                'bands': {b.band: {'participant': 'متن شرکت‌کننده %s %s.' % (f.code, b.band),
+                                   'counselor': 'راهنمای آزمون %s %s.' % (f.code, b.band),
+                                   'talk_points': ['پرسش نخست %s؟' % b.band, 'پرسش دوم؟'], 'ref_range': 'x'}
+                          for b in f.band_ids}}
+               for f in old_v.factor_ids.filtered('scored')]}
+n_versions = len(inst.version_ids)
+L = Inst.with_context(ts_content_v2_files={code: fixture})
+st1 = L._ts_load_source()
+new_v = inst.current_version_id
+check('v2: an approved overlay makes one new current version with v2 bands',
+      st1['versions'] == 1 and len(inst.version_ids) == n_versions + 1 and new_v != old_v and new_v.content_version == 'TS-CONTENT-TEST'
+      and all(b.content_format == 'v2' and b.talk_points for b in new_v.factor_ids.band_ids), str(st1))
+check('v2: superseded = not current, on every version', old_v.superseded and not new_v.superseded
+      and all(v.superseded == (v != new_v) for v in inst.version_ids))
+check('v2: scoring fingerprint (items by qid) equals the previous version', scoring_fingerprint(new_v) == scoring_fingerprint(old_v))
+check('v2: definitions and summary from the file', inst.summary == fixture['summary']
+      and all(f.definition == 'تعریف آزمون %s.' % f.code for f in new_v.factor_ids.filtered('scored')))
+check('v2: open attempt moved, answers remapped by source question', open_a.version_id == new_v and st1['moved_attempts'] >= 1
+      and all(x.item_id.version_id == new_v for x in open_a.answer_ids)
+      and {x.item_id.source_question_id: x.value for x in open_a.answer_ids} == open_by_qid)
+st2 = L._ts_load_source()
+check('v2: second load creates nothing', st2['versions'] == 0 and st2['created'] == 0 and inst.current_version_id == new_v, str(st2))
+rng = random.Random('v2-%s' % code)
+a2, by_qid = run(inst, u1, lambda it: rng.randint(1, 5))
+check('v2: attempt on the v2 version scores like the source engine', a2.state == 'done' and a2.version_id == new_v
+      and {r.factor_id.code: (round(r.score, 4), r.band) for r in a2.result_ids} == reference(code, by_qid))
+check('v2: results store content_format v2, talk points and the definition',
+      all(r.content_format == 'v2' and 'پرسش نخست' in (r.talk_points or '') and r.definition for r in a2.result_ids))
+r2 = a2.result_ids[:1]
+check('v2: participant sections = definition + text', [h for h, b in r2.client_sections()] == [DEF_HEADING, PARTICIPANT_HEADING]
+      and r2.client_sections()[1][1] == r2.client_text)
+check('v2: counselor sections = guide + bulleted talk points', [h for h, b in r2.therapist_sections()] == [COUNSELOR_HEADING, TALK_HEADING]
+      and r2.therapist_sections()[1][1].startswith('• پرسش نخست'))
+check('v2: the earlier attempt is unchanged', done_old.version_id == old_v and all(r.content_format == fmt_old for r in done_old.result_ids)
+      and done_old.rescore_matches() and done_old.result_ids[0].client_sections() == split_old)
+for it in open_a.active_items():
+    if it.id not in open_a.answers_map():
+        open_a.save_answer(it.id, 3)
+open_a.action_submit()
+check('v2: the moved attempt finishes on the v2 version', open_a.state == 'done' and all(r.content_format == 'v2' for r in open_a.result_ids))
+if 'ts.group.report' in env:
+    rows = env['ts.group.report']._factors(done_old | a2, 1)
+    check('group report: one row per factor code across versions', len(rows) == len(new_v.factor_ids.filtered('scored'))
+          and all(r['total'] == 2 for r in rows), str([(r['name'], r['total']) for r in rows]))
+bad = dict(fixture, factors=fixture['factors'][1:] if len(fixture['factors']) > 1 else [dict(fixture['factors'][0], definition='')])
+st3 = Inst.with_context(ts_content_v2_files={code: bad})._ts_load_source()
+book_v = inst.current_version_id
+check('v2: a file missing a factor is refused, the instrument goes back to the book texts',
+      st3['content_errors'] == st2['content_errors'] + 1 and not book_v.content_version and not inst.summary and st3['versions'] == 0
+      and scoring_fingerprint(book_v) == scoring_fingerprint(new_v), str(st3))
+L._ts_load_source()
+env['ir.config_parameter'].sudo().set_str('ts_assessment.content_v2', '0')
+st4 = L._ts_load_source()
+check("v2: ts_assessment.content_v2 = '0' switches back to the book version, nothing created",
+      inst.current_version_id == book_v and st4['versions'] == 0 and not book_v.superseded and new_v.superseded, str(st4))
+env['ir.config_parameter'].sudo().set_str('ts_assessment.content_v2', '1')
 
 # ------------------------------------------------ privacy
 check('other participant cannot read my attempt', raises(lambda: a.with_user(u2).read(['name']), AccessError))

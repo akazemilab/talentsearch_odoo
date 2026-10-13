@@ -52,6 +52,30 @@ def cell_svg(cell, uid, size=72):
         size, size, size, size, pat, body)
 
 
+# Text alternatives (owner decision 2026-10-13, WCAG 1.1.1): every drawing has a Persian description built from the same
+# structure the SVG is drawn from, so a screen-reader user meets the same item. Display only: they draw no random numbers
+# (the items, their order and the keys stay exactly as before) and say nothing a sighted person does not see.
+SHAPE_EZ = {'circle': 'دایرهٔ', 'square': 'مربع', 'triangle': 'مثلث', 'diamond': 'لوزی'}
+FILL_FA = {'none': 'توخالی', 'solid': 'توپر', 'half': 'هاشوردار'}
+COUNT_FA = {1: 'یک', 2: 'دو', 3: 'سه'}
+
+
+def cell_text(cell):
+    """«دو مربع توپر»: one matrix cell or answer option in words."""
+    return '%s %s %s' % (COUNT_FA[cell['count']], SHAPE_EZ[cell['shape']], FILL_FA[cell['fill']])
+
+
+def matrix_text(cells):
+    """The 8 drawn cells row by row (the grid is drawn left to right), the ninth is the empty one."""
+    rows = []
+    for r_ in range(3):
+        parts = [cell_text(c) for c in cells[r_ * 3:r_ * 3 + 3]]
+        if r_ == 2:
+            parts.append('خانهٔ خالی (؟)')
+        rows.append('ردیف %s: %s' % (fa(r_ + 1), '، '.join(parts)))
+    return 'جدول سه در سه؛ خانه‌های هر ردیف از چپ به راست. %s.' % '؛ '.join(rows)
+
+
 def _matrix(rnd, n_vary):
     attrs = list(ATTRS)
     rnd.shuffle(attrs)
@@ -107,7 +131,8 @@ def gen_matrices(seed, n=8, practice=False):
         uid = '%s%d' % ('p' if practice else 'm', i)
         items.append({'kind': 'matrix',
                       'cells': [cell_svg(c, '%sc%d' % (uid, j)) for j, c in enumerate(cells)],
-                      'options': [cell_svg(o, '%so%d' % (uid, j)) for j, o in enumerate(opts)]})
+                      'options': [cell_svg(o, '%so%d' % (uid, j)) for j, o in enumerate(opts)],
+                      'cells_text': matrix_text(cells), 'options_text': [cell_text(o) for o in opts]})
         keys.append(k)
     return items, keys
 
@@ -258,6 +283,17 @@ def poly_svg(cells, size=120):
     return '<svg viewBox="0 0 %d %d" width="%d" height="%d" aria-hidden="true">%s</svg>' % (size, size, size, size, rects)
 
 
+def poly_text(cells):
+    """A rotation figure in words: its squares on their grid, row by row from the top, each row left to right (the
+    drawing's own coordinates, so a mirror image reads mirrored)."""
+    w = max(x for x, _ in cells) + 1
+    h = max(y for _, y in cells) + 1
+    on = set(cells)
+    rows = ['ردیف %s: %s' % (fa(y + 1), '، '.join('پر' if (x, y) in on else 'خالی' for x in range(w))) for y in range(h)]
+    return 'شکلی از %s مربع در شبکه‌ای با %s ستون و %s ردیف؛ از بالا، خانه‌های هر ردیف از چپ به راست. %s.' % (
+        fa(len(cells)), fa(w), fa(h), '؛ '.join(rows))
+
+
 # only chiral shapes: an achiral one equals its own mirror image after some rotation, so "mirror" would be unanswerable
 CHIRAL = [p for p in POLYS if _mirror(_norm(p)) not in [_rot(_norm(p), k) for k in range(4)]]
 
@@ -271,6 +307,7 @@ def gen_rotation(seed, n=16, practice=False):
         mirrored = (i % 2 == 1) if not practice else (i == 1)
         right = _rot(_mirror(base) if mirrored else base, rnd.randint(1, 3))
         items.append({'kind': 'rotation', 'left': poly_svg(left), 'right': poly_svg(right),
+                      'left_text': poly_text(left), 'right_text': poly_text(right),
                       'options': ['همان شکل است (فقط چرخیده)', 'قرینهٔ آینه‌ای است']})
         keys.append(1 if mirrored else 0)
     order = list(range(n))

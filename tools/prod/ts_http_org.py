@@ -60,6 +60,19 @@ p = Client(TS)
 check('participant login', p.login(PART, part_pw))
 st, _, page = p.req('/invite/' + tok)
 check('signed-in invite page has accept form', st == 200 and '/accept' in page)
+# owner decision 2026-10-13 (U3): signed in as «آزمون جریان», the invitation is for «شرکت‌کنندهٔ HTTP»: the name-mismatch
+# notice shows and the sharing tick starts unticked (sharing is chosen, never assumed for someone else)
+share_in = re.search(r'<input type="checkbox" name="share"[^>]*>', page)
+check('U3: another name than the invitee: notice shown, sharing tick NOT pre-checked',
+      'id="ts-invite-account"' in page and share_in and 'checked' not in share_in.group(0), share_in.group(0) if share_in else 'no tick')
+st, _, dpage = hr.req('/my/workspaces/%s/legacy' % ws_id)
+st, loc, _ = hr.req('/my/workspaces/%s/invite' % ws_id, {'csrf_token': hr.csrf(dpage), 'invitee_name': 'آزمون جریان', 'instrument_id': opts[0]})
+st, _, dpage = lib.follow(hr, loc)
+m2 = re.search(r'value="https://talentsearch\.ir/invite/([0-9a-f]{32})"', dpage)
+st, _, page2 = p.req('/invite/' + m2.group(1)) if m2 else (0, '', '')
+share_in = re.search(r'<input type="checkbox" name="share"[^>]*>', page2)
+check('U3: the invitee\'s own name: no notice, sharing tick pre-checked as before',
+      st == 200 and 'id="ts-invite-account"' not in page2 and share_in and 'checked' in share_in.group(0), share_in.group(0) if share_in else str(st))
 st, loc, _ = p.req('/invite/%s/accept' % tok, {'csrf_token': p.csrf(page), 'share': '1'})
 token = path_of(loc).split('/take/')[-1]
 check('accept -> player', st in (302, 303) and len(token) == 32, loc)

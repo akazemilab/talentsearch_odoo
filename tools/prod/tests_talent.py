@@ -184,6 +184,72 @@ check('Persian digits in a stamp', str(IM.parse_stamp('۱۴۰۳/۰۵/۱۷ ۱۴:�
 check('phone forms all normalize alike', {IM.norm_phone(x) for x in ('09121234567', '9121234567', '+98 912 123 4567', '۰۹۱۲۱۲۳۴۵۶۷', '00989121234567')} == {'+989121234567'})
 check('bad phone / e-mail rejected', IM.norm_phone('12345') is None and IM.norm_email('abc') is None and IM.norm_email(' A@B.co ') == 'a@b.co')
 
+# ---- content v2 (fixture passed in the context, never a file)
+import json as _json
+from odoo.addons.ts_assessment.models.loader import scoring_fingerprint
+from odoo.addons.ts_talent.controllers.main import report_ctx
+env['ir.config_parameter'].sudo().set_str('ts_assessment.content_v2', '1')
+Inst = env['ts.instrument']
+v_old = inst.current_version_id
+from odoo.tools.misc import file_path as _fp
+book_items = _json.load(open(_fp('ts_talent/data/talent_items.json'), encoding='utf-8'))
+book_texts = _json.load(open(_fp('ts_talent/data/talent_texts.json'), encoding='utf-8'))
+s1 = 'به‌سادگی می‌توانم مباحث این زمینه را تحلیل کنم و ریشه‌اش را پیدا کنم (آزمون).'
+tfix = {'schema': 'ts-content/2', 'instrument': 'TALENT-INV-15', 'content_version': 'TS-CONTENT-TEST', 'status': 'approved',
+        'summary': 'خلاصهٔ آزمون فهرست.', 'register': 'shoma',
+        'scales': [{'code': 'ANA', 'name': '', 'definition': 'تعریف آزمون تحلیلی.', 'plain': 'معنای سادهٔ آزمون'}],
+        'composites': [{'code': 'CRE', 'parts': ['ANA', 'EXP', 'NOV'], 'name': '', 'definition': 'تعریف آزمون خلّاقیّت.'}],
+        'levels': [{'key': 'overall', 'title': '', 'gloss': 'توضیح آزمون سطح کلّی.'}],
+        'statements': [{'n': 1, 'scale': 'ANA', 'text': s1, 'ref_text': 'x'}] + [
+            {'n': n, 'scale': EM.SCALES[(n - 1) % 5], 'text': ''} for n in range(2, 16)],
+        'glosses': {'field_guidance': {'text': 'راهنمای آزمون نوشتن زمینه.'},
+                    'programs': [{'prefix': 'تسریعی', 'text': 'معنای آزمون تسریعی.'}]}}
+n_v = len(inst.version_ids)
+TL = Inst.with_context(ts_content_v2_files={'TALENT-INV-15': tfix})
+TL._ts_load_talent()
+v_new = inst.current_version_id
+check('talent v2: a new current version with the new statement and texts', len(inst.version_ids) == n_v + 1 and v_new != v_old
+      and v_new.content_version == 'TS-CONTENT-TEST' and v_new.item_ids.sorted('sequence')[0].text == s1
+      and v_new.field_guidance == 'راهنمای آزمون نوشتن زمینه.' and inst.summary == tfix['summary'])
+check('talent v2: superseded = not current', all(x.superseded == (x != v_new) for x in inst.version_ids))
+check('talent v2: scoring fingerprint unchanged', scoring_fingerprint(v_new) == scoring_fingerprint(v_old) and v_new.validation_ok)
+fac = {f.code: f for f in v_new.factor_ids}
+check('talent v2: definitions on the version (scale + composite), others from the book',
+      fac['ANA'].definition == 'تعریف آزمون تحلیلی.' and fac['CRE'].definition == 'تعریف آزمون خلّاقیّت.'
+      and fac['EXP'].definition == book_texts['scales']['EXP']['definition'])
+g = v_new.ts_report_glosses()
+check('talent v2: glosses stored on the version over the defaults', g['plain']['ANA'] == 'معنای سادهٔ آزمون' and g['plain']['EXP'] == R.PLAIN['EXP']
+      and R.program_plain('تسریعی در ریاضی', g['programs']) == 'معنای آزمون تسریعی.' and g['levels']['overall'] == 'توضیح آزمون سطح کلّی.')
+check('talent v2: the open attempt moved with its cells', att2.version_id == v_new and all(c.item_id.version_id == v_new for c in att2.cell_ids))
+n_v = len(inst.version_ids)
+TL._ts_load_talent()
+check('talent v2: second load creates nothing', len(inst.version_ids) == n_v and inst.current_version_id == v_new)
+att3 = env['ts.attempt'].create({'user_id': user.id, 'instrument_id': inst.id, 'version_id': v_new.id})
+att3.give_consent()
+items3 = att3.active_items()        # the v2 version's own items (the module-level `items` belong to the old version)
+for lbl, pat in (('ریاضی', p1), ('هنر', p3)):
+    fx = att3.ts_add_field(lbl)
+    for it, val in zip(items3, pat):
+        att3.ts_save_cell(fx, it.id, val)
+    att3.ts_finish_field(fx)
+check('talent v2: attempt on v2 scores like the pure engine', att3.action_submit() and att3.state == 'done' and att3.rescore_matches()
+      and [f['scales'] for f in att3.ts_profile()['fields']] == [f['scales'] for f in EM.score_matrix(
+          [{'label': 'ریاضی', 'answers': p1, 'seconds': None}, {'label': 'هنر', 'answers': p3, 'seconds': None}])['fields']])
+ctx_new, ctx_old = report_ctx(att3, org_view=True), report_ctx(att, org_view=True)
+d_new, d_old = dict(ctx_new['defs']), dict(ctx_old['defs'])
+check('talent v2: report definitions come from the attempt version', any('تعریف آزمون خلّاقیّت' in t for t in d_new.values())
+      and not any('تعریف آزمون' in t for t in d_old.values()))
+check('talent v2: the older report keeps its own version\'s glosses',
+      all(l['gloss'] == v_old.ts_report_glosses()['levels'][l['key']] for l in ctx_old['lv'])
+      and next(l for l in ctx_new['lv'] if l['key'] == 'overall')['gloss'] == 'توضیح آزمون سطح کلّی.')
+check('talent v2: the earlier submitted attempt stays on its version', att.version_id == v_old and att.rescore_matches())
+bad_t = dict(tfix, statements=[{'n': 1, 'scale': 'ANA', 'text': 'به‌سادگی می‌توانم مباحث را تحلیل کنم.'}])
+Inst.with_context(ts_content_v2_files={'TALENT-INV-15': bad_t})._ts_load_talent()
+book_t = inst.current_version_id
+check('talent v2: a statement without «این زمینه» refuses the file (book content)', not book_t.content_version
+      and [i.text for i in book_t.item_ids.sorted('sequence')] == book_items
+      and not inst.summary and len(inst.version_ids) == n_v)
+
 failed = [n for n, ok in results if not ok]
 env.cr.rollback()
 print('SUMMARY %d/%d passed' % (len(results) - len(failed), len(results)))

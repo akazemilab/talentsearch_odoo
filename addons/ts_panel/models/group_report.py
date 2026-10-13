@@ -12,6 +12,7 @@ from odoo import api, fields, models
 TALENT_CODE = 'TALENT-INV-15'
 SCALES = ('ANA', 'EXP', 'ACA', 'NOV', 'DUT')
 BANDS = ('low', 'mid', 'high')
+BAND_KEY = {'medium': 'mid'}     # ts.attempt.result.band says 'medium'; the report's middle column is 'mid'
 THRESHOLD_TEXT = 'برای گزارش گروهی دست‌کم %s نتیجهٔ به‌اشتراک‌گذاشته‌شده لازم است.'
 
 
@@ -91,14 +92,24 @@ class TsGroupReport(models.AbstractModel):
 
     @api.model
     def _factors(self, attempts, k):
+        """One row per (instrument, factor code): results taken on different versions of an instrument (a new content
+        version keeps the factor codes) are counted together. Name and order come from the instrument's current version
+        when it still has the factor, else from the newest version seen."""
         res = self.env['ts.attempt.result'].sudo().search([('attempt_id', 'in', attempts.ids)])
-        by = {}
+        by, label = {}, {}
         for r in res:
-            by.setdefault(r.factor_id, {b: 0 for b in BANDS})
-            if r.band in BANDS:
-                by[r.factor_id][r.band] += 1
-        return [{'name': f.name, 'total': sum(c.values()), 'cells': suppress(c, k)}
-                for f, c in sorted(by.items(), key=lambda kv: (kv[0].sequence, kv[0].id))]
+            f = r.factor_id
+            key = (r.attempt_id.instrument_id.id, f.code)
+            by.setdefault(key, {b: 0 for b in BANDS})
+            band = BAND_KEY.get(r.band, r.band)
+            if band in BANDS:
+                by[key][band] += 1
+            cur = f.version_id == f.instrument_id.current_version_id
+            old = label.get(key)
+            if not old or (cur, f.version_id.id) > (old.version_id == old.instrument_id.current_version_id, old.version_id.id):
+                label[key] = f
+        return [{'name': label[key].name, 'total': sum(c.values()), 'cells': suppress(c, k)}
+                for key, c in sorted(by.items(), key=lambda kv: (label[kv[0]].sequence, kv[0][1]))]
 
     @api.model
     def _talent(self, attempts, k):

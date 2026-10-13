@@ -73,6 +73,18 @@ class TsAttempt(models.Model):
         if self.state != 'in_progress':
             raise UserError('این سنجه دیگر قابل ویرایش نیست.')
 
+    def _ts_remap_items(self, item_map):
+        """Matrix cells move with the answers when the loader switches an open attempt to a new version."""
+        cells = self.sudo().cell_ids
+        if any(c.item_id.id not in item_map for c in cells):
+            return None
+        n = super()._ts_remap_items(item_map)
+        if n is None:
+            return None
+        for c in cells:
+            c.write({'item_id': item_map[c.item_id.id].id})
+        return n + len(cells)
+
     # ------------------------------------------------------------ fields
     def ts_add_field(self, raw_label):
         self._ts_check_open()

@@ -226,16 +226,41 @@ e.login(L['owner'], pw[L['owner']])
 check('eot.ir does not serve the open link', e.req('/c/' + tok)[0] == 404)
 st, body = get(p1, '/c/' + tok)
 check('signed in: the page asks for a name', st == 200 and 'name="name"' in body, str(st))
-st, loc, _ = post(p1, '/c/%s/join' % tok, {'name': 'شرکت‌کنندهٔ یک'})
-check('joining leads to the ordinary invitation page', st in (302, 303) and '/invite/' in (loc or ''), loc)
+
+
+def tick_of(page):
+    """(input tag, label text, note) of the sharing tick (ts_org.share_tick)."""
+    m = re.search(r'(<input type="checkbox" name="share"[^>]*>)\s*(<span[^>]*>.*?</span>)', page, re.S)
+    n = re.search(r'<p id="ts_share_note"[^>]*>.*?</p>', page, re.S)
+    return (m.group(1), m.group(2), n.group(0)) if m and n else (None, None, None)
+
+
+# owner decision 2026-10-13 (U2): the open link asks the sharing question itself, in the words of /invite, ticked
+c_in, c_lab, c_note = tick_of(body)
+check('U2: the open link carries the sharing tick, ticked, with its note', c_in and 'checked' in c_in and 'مدرسه و مشاورم' in (c_lab or ''), str(c_in))
+itok = re.search(r"'([0-9a-f]{32})'", q("select token from ts_assignment where campaign_id = %s order by id limit 1" % camp))
+st, ibody = get(p3, '/invite/' + itok.group(1)) if itok else (0, '')
+i_in, i_lab, i_note = tick_of(ibody)
+check('U2: ...with the same words as the tick and note of an invitation of the same panel', st == 200 and i_lab and i_lab == c_lab and i_note == c_note,
+      '%s | %s' % ((c_lab or '')[:80], (i_lab or '')[:80]))
+check('U2: the button of the open link says it accepts', 'پذیرفتن دعوت و ادامه' in body)
+st, loc, _ = post(p1, '/c/%s/join' % tok, {'name': 'شرکت‌کنندهٔ یک', 'share': '1'})
+check('U2: joining accepts in the same step and opens the consent page (no second /invite screen)', st in (302, 303) and '/take/' in (loc or ''), loc)
 inv1 = loc
 st, body = get(p1, path_of(loc))
-check('the invitation page offers the accept button', st == 200 and '/accept' in body and 'شرکت‌کنندهٔ یک' in body, str(st))
+check('U2: ...the consent page of the new attempt', st == 200 and 'name="consent_service"' in body and 'consent-summary"' in body, str(st))
+check('U2: ...the invitation is accepted by this account with the sharing ticked (audited as an accept)',
+      count("ts_assignment where campaign_id = %s and user_id is not null and share_level <> 'none'" % oc) == '[(1,)]'
+      and count("ts_audit_event where event_type = 'assignment.accept' and workspace_id = %s" % A) != '[(0,)]')
 check('a client of the open_link source was created for the account', count("ts_panel_client where workspace_id = %s and source = 'open_link'" % A) == '[(1,)]')
-st, loc, _ = post(p1, '/c/%s/join' % tok, {'name': 'شرکت‌کنندهٔ یک'})
-check('joining twice returns the same invitation', loc == inv1, str(loc))
+st, loc, _ = post(p1, '/c/%s/join' % tok, {'name': 'شرکت‌کنندهٔ یک', 'share': '1'})
+check('joining twice returns the same attempt', loc == inv1, str(loc))
+ptok = re.search(r"'([0-9a-f]{32})'", q("select token from ts_assignment where campaign_id = %s and user_id is not null" % oc))
+st, loc, _ = p1.req('/invite/' + ptok.group(1)) if ptok else (0, '', '')
+check('U2: the invitation link of an accepted join forwards to the attempt', st in (302, 303) and (loc or '').endswith(path_of(inv1)), loc)
 st, loc, _ = post(p2, '/c/%s/join' % tok, {'name': 'شرکت‌کنندهٔ دو'})
-check('the second person joins', st in (302, 303) and '/invite/' in (loc or ''), loc)
+check('the second person joins (no tick: accepted without sharing)', st in (302, 303) and '/take/' in (loc or ''), loc)
+check('U2: ...the untick is the sharing choice', count("ts_assignment where campaign_id = %s and user_id is not null and share_level = 'none'" % oc) == '[(1,)]')
 st, loc, _ = post(p3, '/c/%s/join' % tok, {'name': 'شرکت‌کنندهٔ سه'})
 check('at the cap the third is sent back to the page', st in (302, 303) and (loc or '').endswith('/c/' + tok), loc)
 st, body = get(p3, '/c/' + tok)
@@ -261,7 +286,7 @@ check('closing with the tick closes the campaign', count("ts_campaign where id =
 st, body = get(p3, '/c/' + tok)
 check('a closed link says so', 'این دعوت بسته شده است' in body)
 st, body = get(p1, path_of(inv1))
-check('a person who already joined can still open the invitation', st == 200 and '/accept' in body)
+check('a person who already joined can still open the attempt (consent page)', st == 200 and 'name="consent_service"' in body)
 check('closing withdrew nothing', count('ts_assignment where campaign_id = %s and withdrawn is not true' % oc) == '[(2,)]')
 check('the audit has the create, join and close events', count("ts_audit_event where event_type in ('campaign.create','campaign.join','campaign.close') and workspace_id = %s" % A) not in ('[(0,)]', '[(1,)]'))
 

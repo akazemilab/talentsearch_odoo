@@ -95,9 +95,18 @@ class TsInstrumentVersion(models.Model):
     field_max = fields.Integer('بیشترین تعداد زمینه', default=8)
     field_guidance = fields.Text('راهنمای نوشتن زمینه')
     noise_gap = fields.Float('فاصلهٔ «تقریباً برابر» (نمره)', default=10.0)
+    # content v2: the report glosses of this version ({'plain', 'programs', 'levels', 'level_titles'}), part of its
+    # content hash; empty on book-content versions (the report then uses report.py's defaults, as before)
+    report_texts = fields.Json('متن‌های راهنمای گزارش', readonly=True)
+
+    def ts_report_glosses(self):
+        """The glosses the matrix report of an attempt on this version uses (report.report_glosses)."""
+        self.ensure_one()
+        from .report import report_glosses
+        return report_glosses(self.report_texts or {})
 
     def write(self, vals):
-        protected = {'mode', 'field_min', 'field_max', 'noise_gap'}
+        protected = {'mode', 'field_min', 'field_max', 'noise_gap', 'report_texts'}
         if any(v.locked for v in self) and protected & set(vals) and not self.env.context.get('ts_loader'):
             raise UserError('نسخهٔ قفل‌شده قابل تغییر نیست؛ نسخهٔ جدید بسازید.')
         return super().write(vals)

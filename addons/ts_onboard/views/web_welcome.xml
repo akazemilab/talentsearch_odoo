@@ -140,7 +140,9 @@
                                                 </details>
                                             </section>
                                             <label class="ts-check tso-share">
-                                                <input type="checkbox" name="share" value="1" checked="checked" aria-describedby="tso-share-h"/>
+                                                <!-- owner decision 2026-10-13 (take2): signed in under another name than the invitee, the
+                                                     tick starts unticked (sharing is chosen, never assumed for someone else) -->
+                                                <input type="checkbox" name="share" value="1" t-att-checked="None if name_mismatch else 'checked'" aria-describedby="tso-share-h"/>
                                                 <span t-if="ws.purpose == 'education'">اجازه می‌دهم مدرسه و مشاورم گزارش نتیجه‌ام را در پنل «<bdi t-out="org"/>» ببینند.</span>
                                                 <span t-elif="pos">اجازه می‌دهم «<bdi t-out="org"/>» سطح هر عامل، خلاصهٔ تناسبم با این شغل و نشانه‌های دقت پاسخ‌دهی را ببیند.</span>
                                                 <span t-elif="ws.purpose == 'employment'">اجازه می‌دهم سطح هر عامل با «<bdi t-out="org"/>» به اشتراک گذاشته شود.</span>

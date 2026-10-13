@@ -1,20 +1,22 @@
-import re
 import uuid
 
 from odoo import api, fields, models
 from odoo.exceptions import AccessError, UserError
 
 from .engine import ScoringError, contract_from_version, score as engine_score
-from .instrument import BANDS
+from .instrument import BANDS, CONTENT_FORMATS
+from .textfmt import (BAND_WORDS, DEF_HEADING, PARTICIPANT_HEADING, counseling_terms,  # noqa: F401 (re-exported)
+                      split_interpretation)
 
 # v2 (1405-07-19, UX audit 2026-10-11): consent pages explain autosave, stop/continue, locking, withdrawal and who sees
 # v3 (1405-07-19, clinic phase 3): a battery invitation is agreed to once, on the first instrument's page, which names the
 # battery and lists its instruments (ts_battery adds that block); the same consent is recorded on every instrument of it
 # v4 (1405-07-20, UX audit 2026-10-12 G6): «در حسابم» / «در حسابتان» (glossary §7), a battery shows one battery-level
 # limitation instead of the first instrument's, «نه تشخیص» once, who-sees wording «اشتراک‌گذاری» and «عامل»
-CONSENT_VERSION = 'TS-CONSENT-1405-07-20-v5'   # v5 (onb1): «مشاوران همین مرکز» (the licence no longer gates results)
+CONSENT_VERSION = 'TS-CONSENT-1405-07-21-v6'   # v6 (take2): plain-language summary on top; v5 (onb1): «مشاوران همین مرکز»
 BAND_FA = dict(BANDS)
-BAND_WORDS = {'Low': 'کم', 'Medium': 'متوسط', 'High': 'زیاد'}
+COUNSELOR_HEADING = 'راهنمای مشاور'             # content v2 counselor sections
+TALK_HEADING = 'پیشنهاد برای گفت‌وگو'
 PERSIAN_DIGITS = str.maketrans('0123456789', '۰۱۲۳۴۵۶۷۸۹')
 
 
@@ -65,142 +67,6 @@ def jalali_long(dt):
     local = dt.replace(tzinfo=ZoneInfo('UTC')).astimezone(ZoneInfo('Asia/Tehran'))
     y, m, d = g2j(local.year, local.month, local.day)
     return fa_digits('%d %s %d' % (d, JALALI_MONTHS[m - 1], y))
-
-
-# Owner decision 2026-10-11: the product speaks the language of counseling. The book's band texts are stored verbatim
-# (never edited); these explicit phrases are mapped only when a text is shown. Each pattern needs a non-letter on both
-# sides, so درماندگی / درمانده / درمانی / بیماری / بیمارستان are never touched. Order matters (longest first).
-# Persian/Arabic letters, diacritics, ZWNJ/ZWJ; NOT punctuation (، ؛ ؟) or digits, which count as boundaries.
-_FA_LETTER = '\u0620-\u065F\u066E-\u06D3\u06D5\u06EE\u06EF\u06FA-\u06FC\u0750-\u077F\uFB50-\uFDFF\uFE70-\uFEFF\u200c\u200d'
-_COUNSELING_TERMS = [
-    (r'روان[\u200c ]?درمانگران', 'مشاوران'),
-    (r'روان[\u200c ]?درمانگر', 'مشاور'),
-    (r'روان[\u200c ]?درمانی', 'مشاوره'),
-    (r'درمانگران', 'مشاوران'),
-    (r'درمانگر', 'مشاور'),
-    (r'جلسات درمان', 'جلسات مشاوره'),
-    (r'جلسه(?:ٔ|\u200cی| ی)? درمان', 'جلسهٔ مشاوره'),
-    (r'(فرا?یند|فرآیند) درمان', r'\1 مشاوره'),
-    (r'درمان[\u200c]?جویان', 'مراجعان'),
-    (r'درمان[\u200c]?جو', 'مراجع'),
-    (r'بیماران', 'مراجعان'),
-    (r'بیمار', 'مراجع'),
-    # UX audit 2026-10-12 (G6-P7-5, owner approved): the counselor guide's «پروتکل پیشنهادی» is medical register
-    (r'پروتکل پیشنهادی', 'پیشنهادهای کاربردی برای جلسه'),
-]
-_COUNSELING_RE = [(re.compile(r'(?<![%s])%s(?![%s])' % (_FA_LETTER, pat, _FA_LETTER)), rep)
-                  for pat, rep in _COUNSELING_TERMS]
-
-
-def counseling_terms(text):
-    """Display-time wording map for book texts (headings and bodies); the stored text is unchanged."""
-    if not text:
-        return text
-    for rx, rep in _COUNSELING_RE:
-        text = rx.sub(rep, text)
-    return text
-
-
-DEF_HEADING = 'این عامل چه چیزی را توصیف می‌کند'      # «تعریف عامل» (glossary §4: عامل, never بُعد)
-PARTICIPANT_HEADING = 'تفسیر نتیجهٔ شما'             # «تفسیر سطح X» and, for the participant, its «تحلیل» / «تفسیر» parts
-_SUB_HEADS = ('تحلیل', 'تفسیر')
-_RANGE_HEAD = re.compile(r'نمرات\s*[\d۰-۹]')          # «تحلیل و تفسیر نمرات 60-80»: a block of the source's older 5-range scheme
-_GLUED_HEAD = re.compile(r'(?<=[^\s#])\s*(?=#{2,}\s)')    # «… راهکارها### تحلیل و تفسیر نمرات 80-100:» (heading glued to a line)
-
-
-def _heading_of(line):
-    """A short line ending with ':' is a heading; markdown marks around it (#### / **) are ignored. None otherwise."""
-    core = re.sub(r'^[#\s]+', '', line.strip()).replace('**', '').strip()
-    if core.endswith(':') and len(core) < 60:
-        return core[:-1].strip()
-    return None
-
-
-def _is_band_head(h):
-    return bool(h) and (h.startswith('تفسیر سطح') or h.startswith('تحلیل و تفسیر سطح'))
-
-
-def split_interpretation(text, participant=False):
-    """The approved source texts follow a fixed shape:
-        تفسیر نتیجه برای مراجع | راهنمای تخصصی درمانگر   (title line)
-        عامل: <name>                                       (dropped: the factor heading is already on the page)
-        تعریف عامل:  <definition>
-        تفسیر سطح Low: / تحلیل و تفسیر سطح Low:  <body>, sometimes split into «تحلیل:» / «تفسیر:» parts
-        پروتکل پیشنهادی: <counselor suggestions>           (therapist text only)
-    Returns [(heading, body)], headings in Persian, bodies verbatim except the counseling word map (counseling_terms)
-    and markdown marks (** and leading #).
-
-    Display-time clean-up of the book texts (UX audit 2026-10-12, G6-PT3; data facts in docs/clinic/06_data_issues.md),
-    the stored text is never changed:
-    * Many band texts hold TWO variants of the band text (the source system had five score ranges and merged them into
-      three bands): a band body of two blank-line-separated paragraphs, or a second «تحلیل:» / «تفسیر:» pair. Only the
-      first variant is shown; it is the one written for the band.
-    * A stray «تحلیل و تفسیر نمرات 60-80:» block (older range scheme) is not shown.
-    * participant=True (the participant's own report): the band text and its «تحلیل» / «تفسیر» parts are one section
-      «تفسیر نتیجهٔ شما» (one heading, one voice for the reader)."""
-    if not text:
-        return []
-    lines = text.replace('\r', '').split('\n')
-    lines = lines[1:] if lines and ':' not in lines[0] else lines
-    flat = []
-    for line in lines:
-        flat.extend(_GLUED_HEAD.split(line) if '##' in line else [line])
-    sections, head, buf = [], None, []
-    for line in flat:
-        s = line.strip()
-        if re.match(r'^عامل\s*:', s) or re.fullmatch(r'-{3,}', s):
-            continue
-        h = _heading_of(s)
-        if h is not None:
-            if head is not None or buf:
-                sections.append((head, '\n'.join(buf).strip()))
-            head, buf = h, []
-        else:
-            buf.append(line.replace('**', ''))
-    if head is not None or buf:
-        sections.append((head, '\n'.join(buf).strip()))
-
-    kept, in_band, seen_sub, dropping = [], False, set(), False
-    for h, body in sections:
-        if h and _RANGE_HEAD.search(h):
-            dropping = True
-            continue
-        if h in _SUB_HEADS:
-            if dropping or not body:       # an empty «تحلیل:» line is not a variant of its own
-                continue
-            if in_band:
-                if h in seen_sub:          # second «تحلیل» / «تفسیر»: the next variant starts here
-                    dropping = True
-                    continue
-                seen_sub.add(h)
-            kept.append((h, body, in_band))
-            continue
-        dropping = False
-        in_band = _is_band_head(h)
-        seen_sub = set()
-        if in_band:
-            paras = [p.strip() for p in re.split(r'\n\s*\n', body) if p.strip()]
-            body = paras[0] if paras else ''
-        kept.append((h, body, False))
-
-    out = []
-    for h, body, band_part in kept:
-        if not body:
-            continue
-        if h:
-            for en, fa in BAND_WORDS.items():
-                h = re.sub(r'\b%s\b' % en, fa, h)
-            if h.startswith('تعریف عامل'):
-                h = DEF_HEADING
-            elif h.startswith('تفسیر سطح'):
-                h = PARTICIPANT_HEADING
-            elif participant and band_part:
-                if out and out[-1][0] == PARTICIPANT_HEADING:
-                    out[-1] = (PARTICIPANT_HEADING, out[-1][1] + '\n\n' + counseling_terms(body))
-                    continue
-                h = PARTICIPANT_HEADING
-        out.append((counseling_terms(h), counseling_terms(body)))
-    return out
 
 
 class TsAttempt(models.Model):
@@ -382,7 +248,8 @@ class TsAttempt(models.Model):
                 'attempt_id': self.id, 'factor_id': f.id, 'score': r['score'], 'band': r['band'], 'band_id': band.id,
                 'item_count': r['item_count'], 'answered_count': r['answered'], 'raw_total': r['raw_total'],
                 'client_text': band.client_text, 'therapist_text': band.therapist_text,
-                'content_version': band.content_version,
+                'content_version': band.content_version, 'content_format': band.content_format or 'book',
+                'talk_points': band.talk_points or False, 'definition': f.definition or False,
             })
         now = fields.Datetime.now()
         self.write({'state': 'done', 'submitted_at': now, 'submission_key': submission_key or uuid.uuid4().hex,
@@ -391,6 +258,18 @@ class TsAttempt(models.Model):
         self.env['ts.audit.event'].log('attempt.submit', self, instrument=self.instrument_id.code,
                                        version=self.version_id.contract_version, output_hash=out['output_hash'])
         return True
+
+    def _ts_remap_items(self, item_map):
+        """Move this open attempt's answers to another version's items ({old item id: new item}); the loader calls it
+        before switching version_id. Returns the number of rows remapped, or None (nothing changed) when an answer has
+        no counterpart."""
+        self.ensure_one()
+        answers = self.sudo().answer_ids
+        if any(a.item_id.id not in item_map for a in answers):
+            return None
+        for a in answers:
+            a.write({'item_id': item_map[a.item_id.id].id})
+        return len(answers)
 
     def rescore_matches(self):
         """Historical reproducibility: re-run the engine on stored answers."""
@@ -432,6 +311,11 @@ class TsAttemptResult(models.Model):
     client_text = fields.Text()
     therapist_text = fields.Text()
     content_version = fields.Char()
+    # content v2 (1405-07-21): the report format of the band at submit time, its talk points and the factor definition,
+    # copied like the texts so a result reads the same after a later content version
+    content_format = fields.Selection(CONTENT_FORMATS, default='book', required=True)
+    talk_points = fields.Text()
+    definition = fields.Text()
 
     def score_fa(self):
         return fa_digits('%.2f' % self.score).replace('.', '٫')
@@ -444,8 +328,18 @@ class TsAttemptResult(models.Model):
         return BAND_FA.get(self.band, '')
 
     def client_sections(self, participant=True):
-        """The participant text; participant=False keeps the «تحلیل» / «تفسیر» sub-headings (counselor view)."""
+        """The participant text; participant=False keeps the «تحلیل» / «تفسیر» sub-headings (counselor view).
+        Content v2: [(DEF_HEADING, definition), (PARTICIPANT_HEADING, text)], the same for both views."""
+        if self.content_format == 'v2':
+            return [(h, counseling_terms(b.strip())) for h, b in ((DEF_HEADING, self.definition or ''),
+                                                                  (PARTICIPANT_HEADING, self.client_text or '')) if b.strip()]
         return split_interpretation(self.client_text, participant=participant)
 
     def therapist_sections(self):
+        """Book texts: the parsed counselor guide. Content v2: the guide and the talk points as a bulleted list."""
+        if self.content_format == 'v2':
+            points = '\n'.join('• ' + line.strip().lstrip('•-* ').strip()
+                                for line in (self.talk_points or '').splitlines() if line.strip())
+            return [(h, counseling_terms(b.strip())) for h, b in ((COUNSELOR_HEADING, self.therapist_text or ''),
+                                                                  (TALK_HEADING, points)) if b.strip()]
         return split_interpretation(self.therapist_text)
