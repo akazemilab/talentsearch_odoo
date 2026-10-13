@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- What the employer of a position sees (the full list): the old invitation page and the «بیشتر» of the onb2 welcome
+         screen call the same list. -->
+    <record id="tpl_position_terms" model="ir.ui.view">
+        <field name="name">TS hire: what the employer sees (full list)</field>
+        <field name="type">qweb</field>
+        <field name="key">ts_hire.position_terms</field>
+        <field name="website_id" ref="ts_website.website_ts"/>
+        <field name="arch" type="xml">
+            <t t-name="ts_hire.position_terms">
+                <ul class="ts-list-check">
+                    <li>اگر اشتراک‌گذاری را بپذیرید، سازمان خلاصهٔ تناسب شما با نیازهای این شغل را می‌بیند: سطح تناسب کلی (کم، متوسط یا زیاد)، اینکه هر نیاز شغل در شما پررنگ است یا کم‌رنگ‌تر، و نشانه‌های دقت اجرای آزمون (مثلاً پاسخ‌های بسیار سریع). پاسخ‌ها، نمره‌ها و متن‌های گزارش شما را نمی‌بیند.</li>
+                    <li>این نتیجه فقط یکی از ورودی‌های تصمیم سازمان است؛ هیچ تصمیمی به‌طور خودکار گرفته نمی‌شود و می‌توانید توضیح بخواهید.</li>
+                    <li>در پایان، گزارش بازخورد خودتان را می‌بینید.</li>
+                    <li>بخشی از ارزیابی آزمون زمان‌دار است؛ آن را در جایی آرام و ترجیحاً با رایانه انجام دهید.</li>
+                    <li>۱۲ ماه پس از دعوت، دسترسی سازمان به نتیجه بسته و داده‌های این موقعیت از پنل سازمان پاک می‌شود؛ گزارش در حساب خودتان می‌ماند تا خودتان حذفش کنید.</li>
+                </ul>
+            </t>
+        </field>
+    </record>
+
+    <!-- onb2: the two optional fairness questions, once, after the last part and before the feedback card
+         (controllers/public.py). Same storage and visibility as before (ts_gender / ts_age_band, EOT team only). -->
+    <record id="tpl_fair" model="ir.ui.view">
+        <field name="name">TS hire: optional fairness questions</field>
+        <field name="type">qweb</field>
+        <field name="key">ts_hire.fair</field>
+        <field name="website_id" ref="ts_website.website_ts"/>
+        <field name="arch" type="xml">
+            <t t-name="ts_hire.fair">
+                <t t-call="website.layout" additional_title.f="دو پرسش اختیاری">
+                    <div id="wrap" class="ts-page">
+                        <section class="ts-section">
+                            <div class="ts-container ts-narrow">
+                                <p class="ts-tag">پایان ارزیابی</p>
+                                <h1>همهٔ بخش‌ها تمام شد</h1>
+                                <p class="ts-lead">پیش از دیدن بازخوردتان، دو پرسش اختیاری داریم. پاسخ‌دادن یا ندادن هیچ اثری بر نتیجه و تصمیم سازمان ندارد.</p>
+                                <form t-attf-action="/my/assessments/battery/#{a.id}/about/save" method="post" class="ts-form" id="tsh-fair">
+                                    <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                                    <fieldset class="tsh-demo">
+                                        <legend>دو پرسش اختیاری برای بررسی منصفانه بودن</legend>
+                                        <p class="ts-hint">سازمان این پاسخ‌ها را برای هیچ فردی نمی‌بیند؛ فقط پس از بستن موقعیت، نرخ انتخاب گروه‌های ده‌نفره یا بزرگ‌تر نشان داده می‌شود.</p>
+                                        <label class="tsp-field"><span class="tsp-field__label">جنسیت</span>
+                                            <select name="ts_gender" class="form-select">
+                                                <option value="">بدون پاسخ</option>
+                                                <option t-foreach="genders" t-as="g" t-att-value="g[0]" t-out="g[1]"/>
+                                            </select></label>
+                                        <label class="tsp-field"><span class="tsp-field__label">گروه سنی</span>
+                                            <select name="ts_age_band" class="form-select">
+                                                <option value="">بدون پاسخ</option>
+                                                <option t-foreach="ages" t-as="g" t-att-value="g[0]" t-out="g[1]"/>
+                                            </select></label>
+                                    </fieldset>
+                                    <div class="tsh-link">
+                                        <button type="submit" class="ts-btn ts-btn--primary">ثبت و دیدن بازخورد</button>
+                                        <button type="submit" name="skip" value="1" class="ts-btn ts-btn--quiet">رد شدن</button>
+                                    </div>
+                                </form>
+                            </div>
+                        </section>
+                    </div>
+                </t>
+            </t>
+        </field>
+    </record>
+</odoo>

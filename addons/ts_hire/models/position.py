@@ -191,6 +191,8 @@ class TsAssignmentHire(models.Model):
     decision_at = fields.Datetime('زمان تصمیم', readonly=True)
     ts_gender = fields.Selection(GENDERS, 'جنسیت (اختیاری)', readonly=True, groups='ts_core.group_ts_manager')
     ts_age_band = fields.Selection(AGE_BANDS, 'گروه سنی (اختیاری)', readonly=True, groups='ts_core.group_ts_manager')
+    # onb2: the two optional questions are asked once, after the last part (controllers/public.py)
+    ts_fair_asked = fields.Boolean('پرسش‌های اختیاری پرسیده شد', readonly=True, copy=False)
     jobfit_json = fields.Text(readonly=True, copy=False)
     jobfit_band = fields.Selection([('strong', 'تناسب زیاد'), ('moderate', 'تناسب متوسط'), ('limited', 'تناسب کم')],
                                    'تناسب شغلی', readonly=True, copy=False, index=True)

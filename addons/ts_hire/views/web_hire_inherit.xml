@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <!-- Invitation page of a position: what the employer sees, decision support, retention; optional fairness questions. -->
+    <!-- Invitation page of a position: what the employer sees, decision support, retention. onb2: the optional fairness
+         questions are asked once after the last part (ts_hire.fair), not here. -->
     <record id="invite_position" model="ir.ui.view">
         <field name="name">ts_hire.invite</field>
         <field name="inherit_id" ref="ts_org.tpl_invite"/>
@@ -10,30 +11,8 @@
             <xpath expr="//div[hasclass('ts-section__head')]" position="after">
                 <section t-if="a.position_id" class="ts-card tsh-invite" aria-labelledby="tsh-inv-h">
                     <h2 class="h5" id="tsh-inv-h">ارزیابی برای موقعیت «<bdi t-out="a.position_id.name"/>»</h2>
-                    <ul class="ts-list-check">
-                        <li>اگر اشتراک‌گذاری را بپذیرید، سازمان خلاصهٔ تناسب شما با نیازهای این شغل را می‌بیند: سطح تناسب کلی (کم، متوسط یا زیاد)، اینکه هر نیاز شغل در شما پررنگ است یا کم‌رنگ‌تر، و نشانه‌های دقت اجرای آزمون (مثلاً پاسخ‌های بسیار سریع). پاسخ‌ها، نمره‌ها و متن‌های گزارش شما را نمی‌بیند.</li>
-                        <li>این نتیجه فقط یکی از ورودی‌های تصمیم سازمان است؛ هیچ تصمیمی به‌طور خودکار گرفته نمی‌شود و می‌توانید توضیح بخواهید.</li>
-                        <li>در پایان، گزارش بازخورد خودتان را می‌بینید.</li>
-                        <li>بخشی از ارزیابی آزمون زمان‌دار است؛ آن را در جایی آرام و ترجیحاً با رایانه انجام دهید.</li>
-                        <li>۱۲ ماه پس از دعوت، دسترسی سازمان به نتیجه بسته و داده‌های این موقعیت از پنل سازمان پاک می‌شود؛ گزارش در حساب خودتان می‌ماند تا خودتان حذفش کنید.</li>
-                    </ul>
+                    <t t-call="ts_hire.position_terms"/>
                 </section>
-            </xpath>
-            <xpath expr="//p[@id='ts_share_note']" position="after">
-                <fieldset t-if="a.position_id and hire_genders" class="tsh-demo">
-                    <legend>دو پرسش اختیاری برای بررسی منصفانه بودن</legend>
-                    <p class="ts-hint">پاسخ ندادن هیچ اثری ندارد. سازمان این پاسخ‌ها را برای هیچ فردی نمی‌بیند؛ فقط پس از بستن موقعیت، نرخ انتخاب گروه‌های ده‌نفره یا بزرگ‌تر نشان داده می‌شود.</p>
-                    <label class="tsp-field"><span class="tsp-field__label">جنسیت</span>
-                        <select name="ts_gender" class="form-select">
-                            <option value="">بدون پاسخ</option>
-                            <option t-foreach="hire_genders" t-as="g" t-att-value="g[0]" t-out="g[1]"/>
-                        </select></label>
-                    <label class="tsp-field"><span class="tsp-field__label">گروه سنی</span>
-                        <select name="ts_age_band" class="form-select">
-                            <option value="">بدون پاسخ</option>
-                            <option t-foreach="hire_ages" t-as="g" t-att-value="g[0]" t-out="g[1]"/>
-                        </select></label>
-                </fieldset>
             </xpath>
         </field>
     </record>

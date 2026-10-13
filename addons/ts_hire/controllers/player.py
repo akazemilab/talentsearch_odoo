@@ -1,11 +1,13 @@
 """Candidate feedback on the battery result page of a position (benchmark practice and ITC 2.8.10: constructive
-feedback to every candidate). The candidate always sees their own report; the employer never sees this page."""
+feedback to every candidate). The candidate always sees their own report; the employer never sees this page.
+onb2: the optional fairness questions come once before this page (controllers/public.py)."""
 from odoo import http
 from odoo.http import request
 
 from odoo.addons.ts_tasks.controllers.main import TsTaskPlayer
 
 from ..models.hexaco import HEXACO_CODE
+from .public import fair_due
 
 HR_NOTE = ('این گزارش بازخورد برای خود شماست. سازمان پاسخ‌ها و نمره‌های شما را نمی‌بیند؛ اگر اشتراک‌گذاری را پذیرفته باشید، '
            'فقط خلاصهٔ تناسب شما با نیازهای این شغل را می‌بیند. هیچ تصمیمی به‌طور خودکار از این نتیجه گرفته نمی‌شود.')
@@ -15,6 +17,10 @@ class TsHirePlayer(TsTaskPlayer):
 
     @http.route()
     def my_battery(self, assignment_id, **kw):
+        mine = request.env['ts.assignment'].sudo().search([
+            ('id', '=', int(assignment_id)), ('user_id', '=', request.env.user.id), ('position_id', '!=', False)], limit=1)
+        if mine and fair_due(mine):
+            return request.redirect('/my/assessments/battery/%s/about' % mine.id)
         res = super().my_battery(assignment_id, **kw)
         qc = getattr(res, 'qcontext', None)
         a = qc and qc.get('a')

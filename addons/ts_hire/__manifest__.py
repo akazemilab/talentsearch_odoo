@@ -3,7 +3,7 @@
     'summary': 'Employment panels: positions tied to O*NET occupations, the HR personality questionnaire (IPIP-HEXACO), '
                'two HR batteries, candidate job fit (JOBFIT-v1, bands, never a cut-off), response-validity signals, '
                'decisions, four-fifths fairness view, verification test, email invitations (docs/hr/01_architecture.md)',
-    'version': '20.0.1.0.0',
+    'version': '20.0.1.1.0',
     'category': 'Services/Talent Search',
     'author': 'EOT',
     'license': 'LGPL-3',
@@ -12,6 +12,7 @@
         'security/ir.access.csv',
         'views/position_views.xml',
         'views/web_hire.xml',
+        'views/web_hire_fair.xml',
         'views/web_hire_inherit.xml',
         'data/mail_templates.xml',
         'data/load.xml',
