@@ -226,9 +226,11 @@ TL._ts_load_talent()
 check('talent v2: second load creates nothing', len(inst.version_ids) == n_v and inst.current_version_id == v_new)
 att3 = env['ts.attempt'].create({'user_id': user.id, 'instrument_id': inst.id, 'version_id': v_new.id})
 att3.give_consent()
+items3 = att3.active_items()        # the v2 version's own items (the module-level `items` belong to the old version)
 for lbl, pat in (('ریاضی', p1), ('هنر', p3)):
     fx = att3.ts_add_field(lbl)
-    answer(fx, pat)
+    for it, val in zip(items3, pat):
+        att3.ts_save_cell(fx, it.id, val)
     att3.ts_finish_field(fx)
 check('talent v2: attempt on v2 scores like the pure engine', att3.action_submit() and att3.state == 'done' and att3.rescore_matches()
       and [f['scales'] for f in att3.ts_profile()['fields']] == [f['scales'] for f in EM.score_matrix(
