@@ -31,6 +31,9 @@ on prod, changed only by `ts ship`.
   rail without code / «تغییر پنل» (unless several panels); dashboard without help text, role note, period chips; client page
   «مشاور», no groups card, archive folded; four client chips; «خدمات» with jump chips and a card grid; tighter rhythm
   (.tsp-shell--flat, rules under #wrapwrap). Tests: ts_http_clin8 is re-runnable on one clone.
+- 2026-10-14 clin10: the panel identity card (avatar with logo or initial, name, role chip, quiet links; no frame).
+  Prices (owner, same day): talent inventory 1,500,000 toman; intake battery 800,000 and the other clinic batteries in the
+  same ratio (tests_zlive_sepehr_prepaid.py is the single source, limited to the clinic catalog).
 - No build phase is pending. What remains is owner input and hardening (below).
 
 ## UX review tools (clin9)
@@ -40,6 +43,8 @@ on prod, changed only by `ts ship`.
   Read gaps.txt first; look at one sheet per role, not page by page.
 - `TS_SHOT_GAPS=1 tools/vps/ts_shot.py ...` prints the gap line per page; `tools/vps/ts_sheet.py OUT COLS TILE PNG...` builds a sheet.
 - `ts db reload DB MODULES` now restarts the clone on the slot's own port (was always 8071).
+- `tools/vps/ts_crop.py IN OUT X Y W H [SCALE]` cuts one region of a shot (negative X from the right edge); the clinic run
+  also writes `rails.png` (each role's side box and menu side by side).
 
 ## Open items
 Owner: Kavenegar Verify Lookup template (`@talentsearch.ir #%token`); look at the Kavenegar outbox for 2026-10-13 13:48-13:56
