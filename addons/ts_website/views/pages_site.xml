@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <!-- Website 4 pages, redesign 2026-10. Copy is final and comes verbatim from "Talent Search Website.html":
+    <!-- Website 4 pages, redesign 2026-10. Copy: UX writing pass 2026-10-14 (tools/content/ux_public_20261014.txt; owner: everyday words on public pages);
          short, direct, «شما» for adults, «تو» for students. Bound to website 4 like every other ts_website view. -->
 
     <!-- Inner-page hero used by product pages (catalog, help): kicker, title, lead. -->
@@ -35,17 +35,17 @@
                 <div class="ts-phone ts-cmock" aria-hidden="true">
                     <div class="ts-phone__frame">
                         <div class="ts-phone__screen ts-cmock__screen">
-                            <div class="ts-phone__top"><strong class="ts-cmock__h">سه علاقهٔ پررنگ‌تر شما</strong><span class="ts-phone__field">نمونه</span></div>
+                            <div class="ts-phone__top"><strong class="ts-cmock__h">سه علاقهٔ اصلی شما</strong><span class="ts-phone__field">نمونه</span></div>
                             <div class="ts-cmock__bars">
                                 <div><span>اجتماعی</span><b><i style="inline-size: 92%"/></b></div>
                                 <div><span>جست‌وجوگر</span><b><i class="c2" style="inline-size: 74%"/></b></div>
                                 <div><span>هنری</span><b><i class="c3" style="inline-size: 58%"/></b></div>
                             </div>
-                            <strong class="ts-cmock__h">شغل‌های هم‌خوان با شما</strong>
+                            <strong class="ts-cmock__h">شغل‌های مناسب شما</strong>
                             <ol class="ts-cmock__jobs">
                                 <li><b>۱</b><span>مشاور تحصیلی و شغلی<small>بیشتر اجتماعی و جست‌وجوگر</small></span><em class="is-ok">آماده</em></li>
                                 <li><b>۲</b><span>معلم دبیرستان<small>بیشتر اجتماعی و هنری</small></span><em class="is-ok">آماده</em></li>
-                                <li><b>۳</b><span>روان‌شناس بالینی<small>بیشتر جست‌وجوگر و اجتماعی</small></span><em>یک پله فاصله</em></li>
+                                <li><b>۳</b><span>روان‌شناس مدرسه<small>بیشتر جست‌وجوگر و اجتماعی</small></span><em>یک پله فاصله</em></li>
                                 <li><b>۴</b><span>طراح تجربهٔ کاربری<small>بیشتر هنری و جست‌وجوگر</small></span><em>یک پله فاصله</em></li>
                             </ol>
                         </div>
@@ -76,31 +76,31 @@
                             <select id="ts-topic" name="topic">
                                 <option value="demo" t-att-selected="topic == 'demo' or None">جلسهٔ معرفی پنل</option>
                                 <option value="partner" t-att-selected="topic == 'partner' or None">سازمان یا مرکز مشاوره هستم</option>
-                                <option value="question" t-att-selected="topic == 'question' or None">پرسش</option>
+                                <option value="question" t-att-selected="topic == 'question' or None">سؤال</option>
                                 <option value="support" t-att-selected="topic == 'support' or None">پشتیبانی</option>
                                 <option value="credit" t-att-selected="topic == 'credit' or None">شارژ اعتبار پنل</option>
-                                <option value="pro" t-att-selected="topic == 'pro' or None">خبرم کنید: همیار تفسیر</option>
+                                <option value="pro" t-att-selected="topic == 'pro' or None">وقتی «همیار تفسیر» آماده شد، خبرم کنید</option>
                             </select>
                         </div>
                         <div class="ts-form__row">
-                            <div><label for="ts-name">نام شما</label><input id="ts-name" type="text" name="name" required="required" maxlength="120" autocomplete="name"/></div>
-                            <div><label for="ts-contact">ایمیل یا موبایل</label><input id="ts-contact" type="text" name="contact" dir="ltr" required="required" maxlength="160" autocomplete="email" inputmode="email"/></div>
-                            <div><label for="ts-org">مرکز، شرکت یا مدرسه (اختیاری)</label><input id="ts-org" type="text" name="company" maxlength="160" autocomplete="organization"/></div>
+                            <div><label for="ts-name">نام و نام خانوادگی</label><input id="ts-name" type="text" name="name" required="required" maxlength="120" autocomplete="name"/></div>
+                            <div><label for="ts-contact">ایمیل یا شمارهٔ موبایل</label><input id="ts-contact" type="text" name="contact" dir="ltr" required="required" maxlength="160" autocomplete="email" inputmode="email"/></div>
+                            <div><label for="ts-org">نام مرکز، شرکت یا مدرسه (اختیاری)</label><input id="ts-org" type="text" name="company" maxlength="160" autocomplete="organization"/></div>
                         </div>
                         <div><label for="ts-msg">پیام</label><textarea id="ts-msg" name="message" rows="4" maxlength="3000" t-out="(q.get('message') or (('کد پنل: %s\nمبلغ شارژ: ' % q.get('panel')[:40]) if (topic == 'credit' and q.get('panel')) else ''))[:500]"/></div>
-                        <label class="ts-check"><input type="checkbox" name="consent_contact" value="1" required="required"/><span>برای پاسخ به همین پیام با من تماس بگیرید.</span></label>
-                        <p t-if="q.get('error')" class="ts-form__error" role="alert"><t t-call="ts_website.icon" ico.f="warning-circle"/>نام و راه تماس را بنویسید و گزینهٔ تماس را علامت بزنید.</p>
+                        <label class="ts-check"><input type="checkbox" name="consent_contact" value="1" required="required"/><span>موافقم که برای پاسخ به این پیام با من تماس بگیرید.</span></label>
+                        <p t-if="q.get('error')" class="ts-form__error" role="alert"><t t-call="ts_website.icon" ico.f="warning-circle"/>نام و ایمیل یا شمارهٔ موبایل خود را بنویسید و گزینهٔ موافقت با تماس را تیک بزنید.</p>
                         <div class="ts-form__foot">
-                            <button type="submit" class="ts-btn ts-btn--primary ts-btn--lg">ارسال درخواست</button>
-                            <small>اطلاعات این فرم فقط برای پاسخ به درخواست شما استفاده می‌شود. <a href="/privacy">حریم خصوصی</a></small>
+                            <button type="submit" class="ts-btn ts-btn--primary ts-btn--lg">ارسال پیام</button>
+                            <small>از این اطلاعات فقط برای پاسخ به پیام شما استفاده می‌کنیم. <a href="/privacy">حریم خصوصی</a></small>
                         </div>
                     </form>
                     <div class="ts-aside">
-                        <h2>راه‌های دیگر</h2>
+                        <h2>راه‌های دیگر تماس</h2>
                         <div class="ts-aside__row"><span>ایمیل</span><a href="mailto:info@eot.ir"><bdi dir="ltr">info@eot.ir</bdi></a></div>
                         <div class="ts-aside__row"><span>تلفن</span><a href="tel:+982188174100">۰۲۱-۸۸۱۷۴۱۰۰</a></div>
                         <div class="ts-aside__row"><span>مؤسسه</span><a href="https://www.eot.ir/">هیجان اندیشه&#160;(<bdi dir="ltr">EOT</bdi>)</a></div>
-                        <div class="ts-aside__note"><t t-call="ts_website.icon" ico.f="first-aid"/>استعدادیاب خدمت اورژانسی نیست. در شرایط اضطراری با اورژانس اجتماعی ۱۲۳ یا صدای مشاور ۱۴۸۰ تماس بگیرید.</div>
+                        <div class="ts-aside__note"><t t-call="ts_website.icon" ico.f="first-aid"/>استعدادیاب برای شرایط اضطراری نیست. اگر در وضعیت اضطراری هستید، با اورژانس اجتماعی ۱۲۳ یا صدای مشاور ۱۴۸۰ تماس بگیرید.</div>
                     </div>
                 </div>
             </t>
@@ -121,14 +121,14 @@
         <field name="arch" type="xml">
             <t t-name="ts_website.home">
                 <t t-set="faqs" t-value="[
-                    ('q1', 'آزمون شغلی واقعاً رایگان است؟', 'بله. فقط برای نگه‌داشتن نتیجه، پیش از شروع با شمارهٔ همراه وارد می‌شوید و یک کد پیامکی وارد می‌کنید.'),
-                    ('q2', 'نتیجهٔ آزمون شغلی را چه کسی می‌بیند؟', 'فقط خودتان. نتیجه در حساب شما می‌ماند و هر وقت بخواهید دوباره آن را می‌بینید.'),
-                    ('q3', 'آزمون شغلی می‌گوید چه شغلی انتخاب کنم؟', 'نه. فهرستی از شغل‌های هم‌خوان با علایق شما می‌دهد، با دلیل هر کدام. برای خودشناسی شغلی است، نه تصمیم استخدام؛ تصمیم با خودتان است و می‌توانید با مشاور دربارهٔ آن گفت‌وگو کنید.'),
-                    ('q4', 'پنل سازمانی چه هزینه‌ای دارد؟', 'ساخت پنل رایگان است و در دورهٔ آزمایشی سنجه‌ها هم رایگان‌اند. مراکزی که با ما قرارداد دارند با اعتبار پیش‌پرداخت کار می‌کنند و تعرفهٔ هر سنجه را در پنل خود می‌بینند. اگر تعرفه‌ای تعیین شود، پیش از اعمال خبر می‌دهیم.'),
-                    ('q5', 'سازمان یا مشاور از شرکت‌کننده چه می‌بیند؟', 'فقط اگر شرکت‌کننده پیش از شروع اجازه بدهد، گزارش او را؛ و او هر وقت بخواهد اشتراک‌گذاری را قطع می‌کند. پاسخ‌های خام را هیچ‌کس جز خود او نمی‌بیند.'),
-                    ('q6', 'می‌شود نیمه‌کاره رها کرد؟', 'بله. پاسخ‌ها خودکار ذخیره می‌شوند و از همان‌جا ادامه می‌دهید. اگر اینترنت قطع شد، همان پیوند را دوباره باز کنید.'),
-                    ('q7', 'چطور رضایتم را پس بگیرم یا داده‌ام را پاک کنم؟', 'از صفحهٔ «حریم خصوصی» در حساب خودتان. درخواست حذف داده ظرف ۳۰ روز بررسی می‌شود.'),
-                    ('q8', 'پیوند دعوت منقضی شده؛ چه کنم؟', 'از کسی که دعوت را فرستاده بخواهید دعوت تازه بفرستد.'),
+                    ('q1', 'آزمون شغلی واقعاً رایگان است؟', 'بله. فقط برای ذخیرهٔ نتیجه، پیش از شروع با شمارهٔ موبایل وارد می‌شوید و کد تأییدی را که برایتان پیامک می‌شود می‌زنید.'),
+                    ('q2', 'نتیجهٔ آزمون شغلی را چه کسی می‌بیند؟', 'فقط خودتان. نتیجه در حساب شما ذخیره می‌شود و هر وقت بخواهید می‌توانید دوباره آن را ببینید.'),
+                    ('q3', 'آزمون شغلی به من می‌گوید چه شغلی را انتخاب کنم؟', 'نه. فهرستی از شغل‌های متناسب با علایق شما می‌دهد، همراه با دلیل هر کدام. این آزمون برای شناخت بهتر خودتان است، نه برای تصمیم استخدام. تصمیم با خود شماست و می‌توانید دربارهٔ آن با مشاور صحبت کنید.'),
+                    ('q4', 'پنل سازمانی چه هزینه‌ای دارد؟', 'ساخت پنل رایگان است و در دورهٔ آزمایشی، آزمون‌ها هم رایگان است. مراکزی که با ما قرارداد دارند با اعتبار پیش‌پرداخت کار می‌کنند و قیمت هر آزمون را در پنل خود می‌بینند. اگر برای آزمون‌ها هزینه تعیین شود، پیش از اجرا به شما خبر می‌دهیم.'),
+                    ('q5', 'سازمان یا مشاور از نتیجهٔ من چه چیزی می‌بیند؟', 'فقط گزارش شما را، آن هم اگر پیش از شروع اجازه داده باشید. هر وقت بخواهید می‌توانید این اجازه را پس بگیرید. پاسخ شما به تک‌تک سؤال‌ها را هیچ‌کس جز خودتان نمی‌بیند.'),
+                    ('q6', 'می‌توانم آزمون را نیمه‌کاره بگذارم و بعداً ادامه بدهم؟', 'بله. پاسخ‌ها خودکار ذخیره می‌شوند و بعداً از همان‌جا ادامه می‌دهید. اگر اینترنت قطع شد، همان لینک را دوباره باز کنید.'),
+                    ('q7', 'چطور اجازه‌ام را پس بگیرم یا اطلاعاتم را پاک کنم؟', 'از بخش «حریم خصوصی» در حساب خودتان. درخواست حذف اطلاعات ظرف ۳۰ روز بررسی می‌شود.'),
+                    ('q8', 'مهلت لینک دعوت تمام شده؛ چه کار کنم؟', 'از کسی که دعوت را فرستاده بخواهید یک دعوت تازه برایتان بفرستد.'),
                 ]"/>
                 <t t-call="website.layout" pageName.f="homepage" additional_title.f="آزمون شغلی رایگان و پنل سنجش برای مراکز و سازمان‌ها">
                     <div id="wrap" class="ts-page ts-one">
@@ -138,18 +138,18 @@
                             <div class="ts-container ts-hero__grid ts-hero__grid--split">
                                 <div class="ts-hero__words">
                                     <span class="ts-hero__kicker">آزمون شغلی رایگان</span>
-                                    <h1 id="ts-h-career">کدام شغل‌ها با علایق شما هم‌خوان‌اند؟</h1>
-                                    <p class="ts-hero__lead">به ۶۰ کار کوتاه بگویید چقدر دوست دارید انجامشان دهید. از میان ۹۲۳ شغل، آن‌هایی را می‌بینید که با علایق شما هم‌خوان‌اند، با دلیل هر کدام.</p>
+                                    <h1 id="ts-h-career">چه شغل‌هایی با علایق شما متناسب است؟</h1>
+                                    <p class="ts-hero__lead">برای ۶۰ فعالیت ساده مشخص کنید چقدر به انجامشان علاقه دارید. بعد، از میان ۹۲۳ شغل، شغل‌های متناسب با علایقتان را می‌بینید؛ همراه با دلیل هر کدام.</p>
                                     <div class="ts-hero__actions">
                                         <a href="/career/start" class="ts-btn ts-btn--primary ts-btn--lg" id="ts-hero-career">شروع آزمون رایگان<t t-call="ts_website.icon" ico.f="arrow-left"/></a>
                                         <a href="#orgs" class="ts-btn ts-btn--quiet ts-btn--lg" id="ts-hero-orgs">برای مراکز و سازمان‌ها</a>
                                     </div>
                                     <ul class="ts-hero__note">
                                         <li><t t-call="ts_website.icon" ico.f="check-circle"/>حدود ۸ دقیقه</li>
-                                        <li><t t-call="ts_website.icon" ico.f="check-circle"/>روی گوشی، بدون نصب</li>
-                                        <li><t t-call="ts_website.icon" ico.f="check-circle"/>نتیجه فقط برای خودتان</li>
+                                        <li><t t-call="ts_website.icon" ico.f="check-circle"/>با گوشی، بدون نصب برنامه</li>
+                                        <li><t t-call="ts_website.icon" ico.f="check-circle"/>نتیجه را فقط خودتان می‌بینید</li>
                                     </ul>
-                                    <p t-if="request.env.user._is_public()" class="ts-hero__hint" id="ts-hero-hint">برای نگه‌داشتن نتیجه، اول با شمارهٔ همراه وارد می‌شوید.</p>
+                                    <p t-if="request.env.user._is_public()" class="ts-hero__hint" id="ts-hero-hint">برای ذخیرهٔ نتیجه، اول با شمارهٔ موبایل وارد می‌شوید.</p>
                                 </div>
                                 <t t-call="ts_website.career_mock"/>
                             </div>
@@ -159,10 +159,10 @@
                         <section class="ts-trust" aria-label="پشتوانه">
                             <div class="ts-container">
                                 <ul class="ts-trust__list">
-                                    <li><strong>۹۲۳ شغل</strong><span>با دادهٔ شغلی <bdi dir="ltr">O*NET 31.0</bdi></span></li>
-                                    <li><strong>مدل <bdi dir="ltr">RIASEC</bdi></strong><span>شش گونهٔ علاقهٔ شغلی هالند</span></li>
-                                    <li><strong>با اجازهٔ شما</strong><span>بی‌اجازه کسی نتیجه را نمی‌بیند</span></li>
-                                    <li><strong>هیجان اندیشه</strong><span>استعدادیاب از خانوادهٔ <bdi dir="ltr">EOT</bdi></span></li>
+                                    <li><strong>۹۲۳ شغل</strong><span>بر اساس داده‌های شغلی <bdi dir="ltr">O*NET 31.0</bdi></span></li>
+                                    <li><strong>مدل <bdi dir="ltr">RIASEC</bdi></strong><span>شش تیپ علاقهٔ شغلی هالند</span></li>
+                                    <li><strong>با اجازهٔ شما</strong><span>بدون اجازهٔ شما کسی نتیجه را نمی‌بیند</span></li>
+                                    <li><strong>هیجان اندیشه</strong><span>استعدادیاب زیرمجموعهٔ مؤسسهٔ هیجان اندیشه است</span></li>
                                 </ul>
                             </div>
                         </section>
@@ -171,19 +171,19 @@
                             <div class="ts-container">
                                 <div class="ts-section__head">
                                     <span class="ts-kick">آزمون شغلی</span>
-                                    <h2 id="ts-h-how">سه گام تا فهرست شغل‌های هم‌خوان.</h2>
-                                    <p>این فهرست برای خودشناسی شغلی است، نه تصمیم استخدام.</p>
+                                    <h2 id="ts-h-how">در سه مرحله به فهرست شغل‌های مناسب خود می‌رسید</h2>
+                                    <p>این فهرست برای شناخت بهتر خودتان است، نه برای تصمیم استخدام.</p>
                                 </div>
                                 <ol class="ts-steps">
-                                    <li><strong>علایق</strong><span>به ۶۰ کار کوتاه می‌گویید چقدر دوست دارید انجامشان دهید.</span></li>
-                                    <li><strong>دو پرسش</strong><span>تحصیلات و سابقهٔ کار، تا آمادگی شما برای هر شغل روشن شود.</span></li>
-                                    <li><strong>نتیجه</strong><span>شغل‌های هم‌خوان، گروه‌بندی‌شده، با دلیل هر کدام.</span></li>
+                                    <li><strong>علایق</strong><span>برای ۶۰ فعالیت مشخص می‌کنید چقدر به انجامشان علاقه دارید.</span></li>
+                                    <li><strong>دو سؤال</strong><span>تحصیلات و سابقهٔ کارتان را می‌گویید تا معلوم شود برای هر شغل چقدر آماده‌اید.</span></li>
+                                    <li><strong>نتیجه</strong><span>فهرست شغل‌های مناسب، دسته‌بندی‌شده و همراه با دلیل هر کدام.</span></li>
                                 </ol>
                                 <div class="ts-more">
-                                    <p class="ts-more__head">اگر خواستید، فهرست را دقیق‌تر کنید <span class="ts-optional">اختیاری</span></p>
+                                    <p class="ts-more__head">اگر بخواهید، می‌توانید فهرست را دقیق‌تر کنید <span class="ts-optional">اختیاری</span></p>
                                     <div class="ts-more__grid">
-                                        <div class="ts-more__item"><strong>سبک‌های کاری</strong><span>۱۲۰ جملهٔ کوتاه دربارهٔ شیوهٔ کارتان؛ حدود ۱۵ دقیقه، روی گوشی.</span></div>
-                                        <div class="ts-more__item"><strong>توانایی‌ها</strong><span>۳ بخش زمان‌دار کوتاه؛ حدود ۲۳ دقیقه، روی رایانه راحت‌تر است.</span></div>
+                                        <div class="ts-more__item"><strong>سبک‌های کاری</strong><span>۱۲۰ جملهٔ کوتاه دربارهٔ شیوهٔ کار کردنتان؛ حدود ۱۵ دقیقه، با گوشی.</span></div>
+                                        <div class="ts-more__item"><strong>توانایی‌ها</strong><span>سه بخش کوتاه زمان‌دار؛ حدود ۲۳ دقیقه. با کامپیوتر راحت‌تر است.</span></div>
                                     </div>
                                 </div>
                                 <div class="ts-rowacts"><a href="/career/start" class="ts-btn ts-btn--primary ts-btn--lg">شروع آزمون رایگان<t t-call="ts_website.icon" ico.f="arrow-left"/></a></div>
@@ -195,67 +195,67 @@
                             <div class="ts-container">
                                 <div class="ts-section__head">
                                     <span class="ts-kick">پنل سازمانی</span>
-                                    <h2 id="ts-h-orgs">یک پنل برای مراکز مشاوره، استخدام و مدرسه‌ها.</h2>
-                                    <p>پنل را خودتان در چند دقیقه می‌سازید. سنجه را با پیامک یا پیوند می‌فرستید و گزارش هر نفر، با اجازهٔ خودش، در پنل شما می‌ماند.</p>
+                                    <h2 id="ts-h-orgs">یک پنل برای مراکز مشاوره، استخدام و مدرسه‌ها</h2>
+                                    <p>پنل را در چند دقیقه خودتان می‌سازید و آزمون را با پیامک یا لینک برای افراد می‌فرستید. گزارش هر نفر، با اجازهٔ خودش، در پنل شما ذخیره می‌شود.</p>
                                 </div>
                                 <div class="ts-aud">
                                     <article class="ts-aud__card" id="clinics">
                                         <span class="ts-card__icon"><t t-call="ts_website.icon" ico.f="id-card"/></span>
                                         <h3>مراکز مشاوره و مشاوران مستقل</h3>
-                                        <p>مراجع پیش از جلسه در خانه پاسخ می‌دهد؛ شما با گزارش وارد جلسه می‌شوید.</p>
+                                        <p>مراجع پیش از جلسه، در خانه به آزمون پاسخ می‌دهد و شما با گزارش آماده وارد جلسه می‌شوید.</p>
                                         <ul class="ts-ticks">
-                                            <li><t t-call="ts_website.icon" ico.f="check"/>مجموعه‌های آماده، مثل «ارزیابی آغاز مشاوره»</li>
-                                            <li><t t-call="ts_website.icon" ico.f="check"/>دفتر می‌فرستد، مشاور هر مراجع گزارش را می‌بیند</li>
-                                            <li><t t-call="ts_website.icon" ico.f="check"/>نام و لوگوی مرکز بالای گزارش</li>
+                                            <li><t t-call="ts_website.icon" ico.f="check"/>بسته‌های آمادهٔ آزمون، مثل «ارزیابی آغاز مشاوره»</li>
+                                            <li><t t-call="ts_website.icon" ico.f="check"/>پذیرش مرکز دعوت را می‌فرستد و مشاورِ هر مراجع گزارش او را می‌بیند</li>
+                                            <li><t t-call="ts_website.icon" ico.f="check"/>نام و لوگوی مرکز روی گزارش</li>
                                         </ul>
                                         <div class="ts-aud__foot">
                                             <a href="/panel?kind=clinic" class="ts-btn ts-btn--outline">ساخت پنل مرکز</a>
-                                            <a href="/sample/clinic" class="ts-card__link">نمونهٔ گزارش</a>
+                                            <a href="/sample/clinic" class="ts-card__link">دیدن نمونهٔ گزارش</a>
                                         </div>
-                                        <a href="/panel?kind=solo" class="ts-aud__alt">تنها کار می‌کنید؟ پنل یک‌نفره بسازید</a>
+                                        <a href="/panel?kind=solo" class="ts-aud__alt">مشاور مستقل هستید؟ پنل شخصی بسازید</a>
                                     </article>
                                     <article class="ts-aud__card" id="hiring">
                                         <span class="ts-card__icon"><t t-call="ts_website.icon" ico.f="users"/></span>
                                         <h3>استخدام و منابع انسانی</h3>
-                                        <p>داوطلب‌ها را بر پایهٔ نیازهای همان شغل ببینید، نه فقط رزومه.</p>
+                                        <p>متقاضیان را با نیازهای همان شغل مقایسه کنید، نه فقط با رزومه.</p>
                                         <ul class="ts-ticks">
-                                            <li><t t-call="ts_website.icon" ico.f="check"/>۹۲۳ شغل با نیازهای سبک کاری و توانایی</li>
-                                            <li><t t-call="ts_website.icon" ico.f="check"/>داوطلب‌ها به ترتیب تناسب، بی‌نمرهٔ برش</li>
-                                            <li><t t-call="ts_website.icon" ico.f="check"/>برای هر نفر: آنچه در مصاحبه بپرسید</li>
+                                            <li><t t-call="ts_website.icon" ico.f="check"/>نیازهای سبک کار و توانایی برای ۹۲۳ شغل</li>
+                                            <li><t t-call="ts_website.icon" ico.f="check"/>مرتب‌سازی متقاضیان بر اساس تناسب، بدون حد نصاب</li>
+                                            <li><t t-call="ts_website.icon" ico.f="check"/>پیشنهاد سؤال مصاحبه برای هر نفر</li>
                                         </ul>
                                         <div class="ts-aud__foot">
                                             <a href="/panel?kind=org" class="ts-btn ts-btn--outline">ساخت پنل استخدام</a>
-                                            <a href="/sample/hr" class="ts-card__link">نمونهٔ گزارش</a>
+                                            <a href="/sample/hr" class="ts-card__link">دیدن نمونهٔ گزارش</a>
                                         </div>
                                     </article>
                                     <article class="ts-aud__card" id="schools">
                                         <span class="ts-card__icon"><t t-call="ts_website.icon" ico.f="buildings"/></span>
                                         <h3>مدرسه‌ها</h3>
-                                        <p>یک پیوند برای کل کلاس؛ تصویر کلاس و گزارش هر دانش‌آموز.</p>
+                                        <p>با یک لینک کل کلاس را دعوت کنید و هم گزارش کلی کلاس را ببینید، هم گزارش هر دانش‌آموز را.</p>
                                         <ul class="ts-ticks">
-                                            <li><t t-call="ts_website.icon" ico.f="check"/>پیوند و QR برای کل کلاس</li>
+                                            <li><t t-call="ts_website.icon" ico.f="check"/>لینک و کد QR برای کل کلاس</li>
                                             <li><t t-call="ts_website.icon" ico.f="check"/>گزارش فردی با اجازهٔ دانش‌آموز</li>
-                                            <li><t t-call="ts_website.icon" ico.f="check"/>گزارش کلاس، بدون نام افراد</li>
+                                            <li><t t-call="ts_website.icon" ico.f="check"/>گزارش کلی کلاس، بدون نام دانش‌آموزان</li>
                                         </ul>
                                         <div class="ts-aud__foot">
                                             <a href="/panel?kind=school" class="ts-btn ts-btn--outline">ساخت پنل مدرسه</a>
-                                            <a href="/sample/school" class="ts-card__link">نمونهٔ گزارش</a>
+                                            <a href="/sample/school" class="ts-card__link">دیدن نمونهٔ گزارش</a>
                                         </div>
                                     </article>
                                 </div>
-                                <h3 class="ts-sub">در همهٔ پنل‌ها</h3>
+                                <h3 class="ts-sub">امکانات همهٔ پنل‌ها</h3>
                                 <ul class="ts-feats">
-                                    <li><span class="ts-card__icon"><t t-call="ts_website.icon" ico.f="envelope"/></span><div><strong>پیامک یا پیوند</strong><span>دعوت تکی یا گروهی. پیامک نام سنجه یا نتیجه را نمی‌آورد.</span></div></li>
-                                    <li><span class="ts-card__icon"><t t-call="ts_website.icon" ico.f="clipboard"/></span><div><strong>مجموعه‌های آماده</strong><span>چند سنجه در یک دعوت، با یک گزارش.</span></div></li>
-                                    <li><span class="ts-card__icon"><t t-call="ts_website.icon" ico.f="id-card"/></span><div><strong>نام و نشان شما</strong><span>نام و لوگوی مجموعه بالای هر گزارش.</span></div></li>
-                                    <li><span class="ts-card__icon"><t t-call="ts_website.icon" ico.f="users"/></span><div><strong>تیم و نقش‌ها</strong><span>هر کس فقط آنچه نقشش اجازه می‌دهد می‌بیند.</span></div></li>
-                                    <li><span class="ts-card__icon"><t t-call="ts_website.icon" ico.f="lock"/></span><div><strong>دفتر ممیزی</strong><span>هر بار که گزارشی باز یا چاپ شود، ثبت می‌شود.</span></div></li>
-                                    <li><span class="ts-card__icon"><t t-call="ts_website.icon" ico.f="chart-bar"/></span><div><strong>اعتبار پیش‌پرداخت</strong><span>برای مراکز با قرارداد: موجودی و هزینهٔ هر دعوت روشن.</span></div></li>
+                                    <li><span class="ts-card__icon"><t t-call="ts_website.icon" ico.f="envelope"/></span><div><strong>پیامک یا لینک</strong><span>دعوت تکی یا گروهی. در پیامک نه نام آزمون می‌آید، نه نتیجه.</span></div></li>
+                                    <li><span class="ts-card__icon"><t t-call="ts_website.icon" ico.f="clipboard"/></span><div><strong>بسته‌های آماده</strong><span>چند آزمون با یک دعوت، در یک گزارش.</span></div></li>
+                                    <li><span class="ts-card__icon"><t t-call="ts_website.icon" ico.f="id-card"/></span><div><strong>نام و لوگوی شما</strong><span>نام و لوگوی مجموعهٔ شما روی هر گزارش.</span></div></li>
+                                    <li><span class="ts-card__icon"><t t-call="ts_website.icon" ico.f="users"/></span><div><strong>همکاران و سطح دسترسی</strong><span>هر همکار فقط چیزی را می‌بیند که نقشش اجازه می‌دهد.</span></div></li>
+                                    <li><span class="ts-card__icon"><t t-call="ts_website.icon" ico.f="lock"/></span><div><strong>سابقهٔ دسترسی</strong><span>ثبت می‌شود چه کسی و چه زمانی هر گزارش را باز یا چاپ کرده است.</span></div></li>
+                                    <li><span class="ts-card__icon"><t t-call="ts_website.icon" ico.f="chart-bar"/></span><div><strong>اعتبار پیش‌پرداخت</strong><span>برای مراکز طرف قرارداد: موجودی و هزینهٔ هر دعوت را همیشه می‌بینید.</span></div></li>
                                 </ul>
                                 <ol class="ts-steps">
-                                    <li><strong>پنل بسازید</strong><span>چند دقیقه طول می‌کشد و همان لحظه فعال است.</span></li>
-                                    <li><strong>بفرستید</strong><span>سنجه یا مجموعه را با پیامک یا پیوند برای هر نفر بفرستید.</span></li>
-                                    <li><strong>گزارش را بخوانید</strong><span>پس از اجازهٔ هر نفر، گزارش او در پنل شماست.</span></li>
+                                    <li><strong>پنل بسازید</strong><span>چند دقیقه بیشتر طول نمی‌کشد و پنل همان لحظه فعال می‌شود.</span></li>
+                                    <li><strong>دعوت بفرستید</strong><span>آزمون یا بستهٔ آزمون را با پیامک یا لینک برای افراد بفرستید.</span></li>
+                                    <li><strong>گزارش را ببینید</strong><span>هر نفر که اجازه بدهد، گزارشش در پنل شما نمایش داده می‌شود.</span></li>
                                 </ol>
                                 <div class="ts-rowacts">
                                     <a href="/panel" class="ts-btn ts-btn--primary ts-btn--lg" id="ts-orgs-build">ساخت پنل رایگان<t t-call="ts_website.icon" ico.f="arrow-left"/></a>
@@ -270,12 +270,12 @@
                                 <div class="ts-science">
                                     <div class="ts-science__words">
                                         <span class="ts-kick">پشتوانهٔ علمی</span>
-                                        <h2 id="ts-h-science">بر پایهٔ مدل‌های شناخته‌شده، با مرز روشن.</h2>
+                                        <h2 id="ts-h-science">بر پایهٔ مدل‌های علمی شناخته‌شده</h2>
                                         <ul class="ts-flasks">
-                                            <li><t t-call="ts_website.icon" ico.f="flask"/><span>آزمون شغلی: علایق بر پایهٔ مدل <bdi dir="ltr">RIASEC</bdi> هالند، ترجمه و اقتباس از <bdi dir="ltr">O*NET Interest Profiler</bdi>، با دادهٔ ۹۲۳ شغل.</span></li>
-                                            <li><t t-call="ts_website.icon" ico.f="flask"/><span>فهرست تعاملی استعداد: بر پایهٔ مدل کتاب «آموزش و پرورش برای استعداد و تیزهوشی»؛ هر کس با خودش مقایسه می‌شود، نه با دیگران.</span></li>
-                                            <li><t t-call="ts_website.icon" ico.f="flask"/><span>نشانه‌های دقت پاسخ‌دهی، مثل پاسخ یکسان یا خیلی سریع، در گزارش علامت می‌خورد.</span></li>
-                                            <li><t t-call="ts_website.icon" ico.f="flask"/><span>گزارش رتبه یا قبولی را پیش‌بینی نمی‌کند و کسی را خودکار رد نمی‌کند. تصمیم با انسان است، نه با نمره.</span></li>
+                                            <li><t t-call="ts_website.icon" ico.f="flask"/><span>آزمون شغلی بر پایهٔ مدل <bdi dir="ltr">RIASEC</bdi> هالند ساخته شده است. بخش علایق، ترجمه و اقتباسی از <bdi dir="ltr">O*NET Interest Profiler</bdi> است و از داده‌های ۹۲۳ شغل استفاده می‌کند.</span></li>
+                                            <li><t t-call="ts_website.icon" ico.f="flask"/><span>فهرست تعاملی استعداد بر پایهٔ مدل کتاب «آموزش و پرورش برای استعداد و تیزهوشی» است. در آن، هر کس با خودش مقایسه می‌شود، نه با دیگران.</span></li>
+                                            <li><t t-call="ts_website.icon" ico.f="flask"/><span>اگر کسی بی‌دقت پاسخ داده باشد، مثلاً همه را یکسان یا خیلی سریع زده باشد، گزارش آن را نشان می‌دهد.</span></li>
+                                            <li><t t-call="ts_website.icon" ico.f="flask"/><span>گزارش، رتبه یا قبولی را پیش‌بینی نمی‌کند و هیچ‌کس را خودکار رد نمی‌کند. تصمیم نهایی با انسان است، نه با نمره.</span></li>
                                         </ul>
                                         <p class="ts-fine">بخش علایق ترجمه و اقتباسی از <bdi dir="ltr">O*NET Interest Profiler</bdi> است. وزارت کار آمریکا (<bdi dir="ltr">USDOL/ETA</bdi>) این تغییرات را تأیید یا آزمایش نکرده است. داده‌های شغلی از <bdi dir="ltr">O*NET 31.0</bdi> با مجوز <bdi dir="ltr">CC BY 4.0</bdi>.</p>
                                     </div>
@@ -285,16 +285,16 @@
                                             <div>
                                                 <small>پشتوانهٔ علمی</small>
                                                 <strong>دکتر ناصرالدین کاظمی حقیقی</strong>
-                                                <span>طراح مدل تعاملی استعداد و بنیان‌گذار <bdi dir="ltr">EOT</bdi></span>
+                                                <span>طراح مدل تعاملی استعداد و بنیان‌گذار مؤسسهٔ هیجان اندیشه</span>
                                             </div>
                                         </div>
                                         <ul>
                                             <li><t t-call="ts_website.icon" ico.f="seal-check"/>دکترای روان‌شناسی و آموزش کودکان استثنایی</li>
                                             <li><t t-call="ts_website.icon" ico.f="seal-check"/>دارای پروانهٔ اشتغال از سازمان نظام روان‌شناسی و مشاورهٔ ایران</li>
-                                            <li><t t-call="ts_website.icon" ico.f="seal-check"/>مدرس دانشگاه و نویسندهٔ کتاب‌هایی در هوش، استعداد و خلّاقیّت</li>
+                                            <li><t t-call="ts_website.icon" ico.f="seal-check"/>مدرس دانشگاه و نویسندهٔ کتاب‌هایی دربارهٔ هوش، استعداد و خلاقیت</li>
                                         </ul>
                                         <div class="ts-book"><i/><div><small>کتاب مرجع مدل</small><strong>آموزش و پرورش برای استعداد و تیزهوشی</strong></div></div>
-                                        <a class="ts-person__link" href="https://www.eot.ir/%DA%A9%D8%AA%D8%A8/%D8%A7%D9%85%D9%88%D8%B2%D8%B4-%D9%88-%D9%BE%D8%B1%D9%88%D8%B1%D8%B4-%D8%A8%D8%B1%D8%A7%DB%8C-%D8%A7%D8%B3%D8%AA%D8%B9%D8%AF%D8%A7%D8%AF-%D9%88-%D8%AA%DB%8C%D8%B2%D9%87%D9%88%D8%B4%DB%8C">دربارهٔ کتاب در <bdi dir="ltr">EOT</bdi><t t-call="ts_website.icon" ico.f="arrow-up-left"/></a>
+                                        <a class="ts-person__link" href="https://www.eot.ir/%DA%A9%D8%AA%D8%A8/%D8%A7%D9%85%D9%88%D8%B2%D8%B4-%D9%88-%D9%BE%D8%B1%D9%88%D8%B1%D8%B4-%D8%A8%D8%B1%D8%A7%DB%8C-%D8%A7%D8%B3%D8%AA%D8%B9%D8%AF%D8%A7%D8%AF-%D9%88-%D8%AA%DB%8C%D8%B2%D9%87%D9%88%D8%B4%DB%8C">دربارهٔ کتاب در سایت هیجان اندیشه<t t-call="ts_website.icon" ico.f="arrow-up-left"/></a>
                                     </aside>
                                 </div>
                             </div>
@@ -304,15 +304,15 @@
                             <div class="ts-container">
                                 <div class="ts-section__head">
                                     <span class="ts-kick">حریم خصوصی</span>
-                                    <h2 id="ts-h-privacy">دادهٔ شما، تصمیم شما.</h2>
+                                    <h2 id="ts-h-privacy">اطلاعات شما، در اختیار خودتان</h2>
                                 </div>
                                 <ul class="ts-feats">
-                                    <li><span class="ts-card__icon"><t t-call="ts_website.icon" ico.f="user"/></span><div><strong>در حساب خودتان</strong><span>پاسخ‌ها و نتیجه در حساب خود شما می‌ماند.</span></div></li>
-                                    <li><span class="ts-card__icon"><t t-call="ts_website.icon" ico.f="seal-check"/></span><div><strong>با اجازه، قابل پس‌گرفتن</strong><span>پنل فقط با اجازهٔ شما گزارش را می‌بیند و هر وقت بخواهید قطعش می‌کنید.</span></div></li>
-                                    <li><span class="ts-card__icon"><t t-call="ts_website.icon" ico.f="lock"/></span><div><strong>پاسخ خام پیش خودتان</strong><span>پاسخ‌های خام را هیچ‌کس جز خود شما نمی‌بیند.</span></div></li>
-                                    <li><span class="ts-card__icon"><t t-call="ts_website.icon" ico.f="x"/></span><div><strong>حذف داده</strong><span>درخواست حذف را از حساب خودتان می‌دهید؛ ظرف ۳۰ روز بررسی می‌شود.</span></div></li>
+                                    <li><span class="ts-card__icon"><t t-call="ts_website.icon" ico.f="user"/></span><div><strong>در حساب خودتان</strong><span>پاسخ‌ها و نتیجه در حساب خود شما ذخیره می‌شود.</span></div></li>
+                                    <li><span class="ts-card__icon"><t t-call="ts_website.icon" ico.f="seal-check"/></span><div><strong>فقط با اجازهٔ شما</strong><span>پنل فقط با اجازهٔ شما گزارش را می‌بیند و هر وقت بخواهید می‌توانید این اجازه را پس بگیرید.</span></div></li>
+                                    <li><span class="ts-card__icon"><t t-call="ts_website.icon" ico.f="lock"/></span><div><strong>پاسخ‌ها فقط برای خودتان</strong><span>پاسخ شما به تک‌تک سؤال‌ها را هیچ‌کس جز خودتان نمی‌بیند.</span></div></li>
+                                    <li><span class="ts-card__icon"><t t-call="ts_website.icon" ico.f="x"/></span><div><strong>حذف اطلاعات</strong><span>از داخل حساب خودتان درخواست حذف بدهید؛ ظرف ۳۰ روز بررسی می‌شود.</span></div></li>
                                 </ul>
-                                <a href="/privacy" class="ts-card__link">متن کامل حریم خصوصی و رضایت<t t-call="ts_website.icon" ico.f="arrow-left"/></a>
+                                <a href="/privacy" class="ts-card__link">متن کامل حریم خصوصی و رضایت‌نامه<t t-call="ts_website.icon" ico.f="arrow-left"/></a>
                             </div>
                         </section>
 
@@ -321,16 +321,16 @@
                             <div class="ts-container">
                                 <div class="ts-section__head">
                                     <span class="ts-kick">هزینه</span>
-                                    <h2 id="ts-h-pricing">آزمون شغلی رایگان است؛ ساخت پنل هم.</h2>
+                                    <h2 id="ts-h-pricing">آزمون شغلی و ساخت پنل، هر دو رایگان است</h2>
                                 </div>
                                 <div class="ts-plans">
                                     <div class="ts-plan ts-plan--free">
                                         <div class="ts-plan__top"><h3>آزمون شغلی</h3></div>
                                         <span class="ts-plan__price">رایگان</span>
-                                        <span class="ts-plan__for">برای هر کسی که به شغل و مسیر کاری‌اش فکر می‌کند</span>
+                                        <span class="ts-plan__for">برای هر کسی که دربارهٔ شغل و مسیر کاری‌اش فکر می‌کند</span>
                                         <ul>
-                                            <li>۶۰ پرسش علایق، حدود ۸ دقیقه</li>
-                                            <li>فهرست شغل‌های هم‌خوان، با دلیل هر کدام</li>
+                                            <li>۶۰ سؤال دربارهٔ علایق؛ حدود ۸ دقیقه</li>
+                                            <li>فهرست شغل‌های مناسب، همراه با دلیل هر کدام</li>
                                             <li>دو بخش اختیاری برای دقیق‌تر شدن فهرست</li>
                                         </ul>
                                         <div class="ts-plan__foot"><a href="/career/start" class="ts-btn ts-btn--primary ts-btn--lg">شروع آزمون رایگان</a></div>
@@ -338,11 +338,11 @@
                                     <div class="ts-plan">
                                         <div class="ts-plan__top"><h3>پنل سازمانی</h3></div>
                                         <span class="ts-plan__price">ساخت رایگان</span>
-                                        <span class="ts-plan__for">مرکز مشاوره، مشاور مستقل، استخدام و مدرسه</span>
+                                        <span class="ts-plan__for">برای مراکز مشاوره، مشاوران مستقل، واحدهای استخدام و مدرسه‌ها</span>
                                         <ul>
-                                            <li>در دورهٔ آزمایشی، سنجه‌ها هم رایگان‌اند</li>
-                                            <li>مراکز با قرارداد: اعتبار پیش‌پرداخت و تعرفهٔ هر سنجه در پنل</li>
-                                            <li>اگر تعرفه‌ای تعیین شود، پیش از اعمال خبر می‌دهیم</li>
+                                            <li>در دورهٔ آزمایشی، آزمون‌ها هم رایگان است</li>
+                                            <li>مراکز طرف قرارداد با اعتبار پیش‌پرداخت کار می‌کنند و قیمت هر آزمون را در پنل می‌بینند</li>
+                                            <li>اگر برای آزمون‌ها هزینه تعیین شود، پیش از اجرا خبر می‌دهیم</li>
                                         </ul>
                                         <div class="ts-plan__foot"><a href="/panel" class="ts-btn ts-btn--outline ts-btn--lg">ساخت پنل رایگان</a></div>
                                     </div>
@@ -353,7 +353,7 @@
                         <section class="ts-section" id="faq" aria-labelledby="ts-h-faq">
                             <div class="ts-container ts-container--narrow">
                                 <div class="ts-faq">
-                                    <h2 id="ts-h-faq">پرسش‌های رایج</h2>
+                                    <h2 id="ts-h-faq">سؤال‌های متداول</h2>
                                     <div class="ts-faq__box">
                                         <div class="ts-faq__item" t-foreach="faqs" t-as="fq" t-att-id="'faq-' + fq[0]">
                                             <button type="button" class="ts-faq__q" aria-expanded="false" t-att-aria-controls="'faq-' + fq[0] + '-a'">
@@ -373,8 +373,8 @@
                             <div class="ts-container">
                                 <div class="ts-section__head">
                                     <span class="ts-kick">تماس</span>
-                                    <h2 id="ts-h-contact">با ما حرف بزنید.</h2>
-                                    <p>جلسهٔ معرفی پنل، پرسش یا پشتیبانی؛ از همان راهی که می‌نویسید جواب می‌دهیم.</p>
+                                    <h2 id="ts-h-contact">با ما در تماس باشید</h2>
+                                    <p>برای جلسهٔ معرفی پنل، سؤال یا پشتیبانی پیام بگذارید. از همان راهی که نوشته‌اید جوابتان را می‌دهیم.</p>
                                 </div>
                                 <t t-call="ts_website.lead_form"/>
                             </div>
@@ -398,33 +398,33 @@
                 <t t-set="tops" t-value="[86, 70, 80, 84, 80]"/>
                 <t t-set="sample" t-value="[('برنامه‌نویسی', [86, 60, 73, 46, 80], 69), ('پزشکی', [66, 70, 80, 40, 76], 66), ('معماری', [60, 64, 53, 84, 58], 64), ('روان‌شناسی', [72, 52, 66, 56, 70], 63)]"/>
                 <t t-set="fatr" t-value="{48: '۰', 49: '۱', 50: '۲', 51: '۳', 52: '۴', 53: '۵', 54: '۶', 55: '۷', 56: '۸', 57: '۹'}"/>
-                <t t-call="website.layout" additional_title.f="سنجه‌ها">
+                <t t-call="website.layout" additional_title.f="آزمون‌ها">
                     <div id="wrap" class="ts-page">
                         <section class="ts-hero">
                             <div class="ts-container ts-hero__grid">
                                 <div class="ts-hero__words">
-                                    <span class="ts-hero__kicker">سنجه</span>
+                                    <span class="ts-hero__kicker">آزمون استعداد</span>
                                     <h1>فهرست تعاملی استعداد</h1>
-                                    <p class="ts-hero__lead">پنج توانایی، در زمینه‌هایی که خودت انتخاب می‌کنی.</p>
+                                    <p class="ts-hero__lead">پنج توانایی تو، در زمینه‌هایی که خودت انتخاب می‌کنی؛ مثل یک رشتهٔ تحصیلی یا یک شغل.</p>
                                     <!-- time per field from the instrument itself (ts_talent MATRIX_SECONDS_PER_FIELD), the same words as the invite and
                                          the detail page (UX T7 P14-1, X5) -->
                                     <t t-set="ts_tal" t-value="request.env['ts.instrument'].sudo().search([('code', '=', 'TALENT-INV-15'), ('state', '=', 'published')], limit=1) if 'ts.instrument' in request.env else None"/>
                                     <div class="ts-hero__meta"><span>۲ تا ۸ زمینه</span><span>۱۵ جمله برای هر زمینه</span><span t-out="ts_tal.ts_duration_label() if ts_tal else 'حدود ۲ دقیقه برای هر زمینه'"/></div>
                                     <div class="ts-hero__actions">
-                                        <a t-att-href="start_href" class="ts-btn ts-btn--primary ts-btn--lg">شروع سنجه<t t-call="ts_website.icon" ico.f="arrow-left"/></a>
+                                        <a t-att-href="start_href" class="ts-btn ts-btn--primary ts-btn--lg">شروع آزمون<t t-call="ts_website.icon" ico.f="arrow-left"/></a>
                                         <a t-if="request.env.user._is_public()" href="/signup?next=/my/assessments" class="ts-btn ts-btn--quiet ts-btn--lg">ورود</a>
-                                        <a t-else="" href="/my/assessments" class="ts-btn ts-btn--quiet ts-btn--lg">سنجه‌ها و نتیجه‌ها</a>
+                                        <a t-else="" href="/my/assessments" class="ts-btn ts-btn--quiet ts-btn--lg">آزمون‌ها و نتیجه‌های من</a>
                                     </div>
                                 </div>
                             </div>
                         </section>
                         <section class="ts-section">
                             <div class="ts-container">
-                                <div class="ts-section__head"><h2>چطور کار می‌کند</h2></div>
+                                <div class="ts-section__head"><h2>این آزمون چطور انجام می‌شود؟</h2></div>
                                 <ol class="ts-steps">
-                                    <li><strong>زمینه‌هایت را بنویس</strong><span>رشته یا کاری که به آن فکر می‌کنی؛ دست‌کم دو تا.</span></li>
-                                    <li><strong>۱۵ جمله جواب بده</strong><span>از «بسیار کم» تا «بسیار زیاد». پاسخ‌ها خودکار ذخیره می‌شوند.</span></li>
-                                    <li><strong>زمینه‌ها را کنار هم ببین</strong><span>گزارش را با مشاورت مرور کن یا چاپ کن.</span></li>
+                                    <li><strong>زمینه‌هایت را بنویس</strong><span>رشته‌ها یا کارهایی که به آن‌ها فکر می‌کنی؛ دست‌کم دو تا.</span></li>
+                                    <li><strong>به ۱۵ جمله جواب بده</strong><span>برای هر زمینه، از «بسیار کم» تا «بسیار زیاد». پاسخ‌ها خودکار ذخیره می‌شوند.</span></li>
+                                    <li><strong>زمینه‌ها را با هم مقایسه کن</strong><span>گزارش را با مشاورت بخوان یا چاپش کن.</span></li>
                                 </ol>
                             </div>
                         </section>
@@ -435,8 +435,8 @@
                                     <div class="ts-card ts-card--plain"><h3>تحلیلی</h3><p>تحلیل، ریشه‌یابی و سازمان‌دهی مطالب.</p></div>
                                     <div class="ts-card ts-card--plain"><h3>تجربی</h3><p>میل به آزمودن آنچه می‌دانی.</p></div>
                                     <div class="ts-card ts-card--plain"><h3>تحصیلی</h3><p>یادگیری دقیق درس‌های آن زمینه.</p></div>
-                                    <div class="ts-card ts-card--plain"><h3>نوسودمندی</h3><p>راه‌حل و شیوهٔ تازه و کاربردی.</p></div>
-                                    <div class="ts-card ts-card--plain"><h3>وظیفه‌مندی</h3><p>انجام درست و دقیق کار خواسته‌شده.</p></div>
+                                    <div class="ts-card ts-card--plain"><h3>نوسودمندی</h3><p>پیدا کردن راه‌حل و روش تازه و کاربردی.</p></div>
+                                    <div class="ts-card ts-card--plain"><h3>وظیفه‌مندی</h3><p>انجام درست و دقیق کاری که از تو خواسته‌اند.</p></div>
                                 </div>
                             </div>
                         </section>
@@ -444,8 +444,8 @@
                             <div class="ts-container">
                                 <div class="ts-section__head">
                                     <span class="ts-kick">گزارش</span>
-                                    <h2>گزارش در هفت سطح، از کلی به جزئی.</h2>
-                                    <p>هر سطح از همان نمره‌ها ساخته می‌شود و یک پرسش مشاوره را جواب می‌دهد.</p>
+                                    <h2>گزارش در هفت سطح؛ از کلی تا جزئی</h2>
+                                    <p>همهٔ سطح‌ها از همان نمره‌ها به دست می‌آیند و هر کدام به یک سؤال مشاوره جواب می‌دهد.</p>
                                 </div>
                                 <ol class="ts-levels">
                                     <li><div><strong>کلّی</strong><span>میانگین همهٔ توانایی‌ها در همهٔ زمینه‌ها.</span></div></li>
@@ -462,7 +462,7 @@
                             <div class="ts-container">
                                 <div class="ts-section__head">
                                     <span class="ts-kick">از گزارش تا برنامه</span>
-                                    <h2>هر نتیجه، یک گام بعدی دارد.</h2>
+                                    <h2>هر نتیجه، قدم بعدی خودش را دارد</h2>
                                 </div>
                                 <div class="ts-grid" style="--min: 220px">
                                     <div class="ts-card"><span class="ts-card__icon"><t t-call="ts_website.icon" ico.f="rocket"/></span><h3>تسریع</h3><p>وقتی توانایی تحصیلی یا وظیفه‌مندی برجسته است.</p></div>
@@ -476,7 +476,7 @@
                             <div class="ts-container">
                                 <div class="ts-doc-sample">
                                     <span class="ts-tagline">نمونهٔ ساختگی؛ فقط شکل گزارش را نشان می‌دهد.</span>
-                                    <h2>نمونهٔ گزارش: زمینه‌ها کنار هم</h2>
+                                    <h2>نمونهٔ گزارش: مقایسهٔ زمینه‌ها</h2>
                                     <p>یک دانش‌آموز فرضی این چهار زمینه را نوشته: برنامه‌نویسی، پزشکی، معماری، روان‌شناسی.</p>
                                     <div class="ts-legend">
                                         <span t-foreach="sample" t-as="f"><i t-attf-class="ts-f#{f_index + 1}"/><t t-out="f[0]"/></span>
@@ -506,15 +506,15 @@
                                             <span>کمترین: <t t-out="abil[f[1].index(mn)]"/> (<t t-out="str(mn).translate(fatr)"/>)</span>
                                         </div>
                                     </div>
-                                    <p class="ts-tagline" style="font-size: 14px">این ترتیب، پیشنهاد رشته نیست. کنار علاقه و نمره‌های درسی، با مشاورت بخوانش.</p>
-                                    <a t-att-href="start_href" class="ts-btn ts-btn--primary ts-btn--lg" style="align-self: flex-start">شروع سنجه</a>
+                                    <p class="ts-tagline" style="font-size: 14px">این ترتیب به معنای پیشنهاد رشته نیست. آن را در کنار علاقه و نمره‌های درسی‌ات، با مشاورت بررسی کن.</p>
+                                    <a t-att-href="start_href" class="ts-btn ts-btn--primary ts-btn--lg" style="align-self: flex-start">شروع آزمون</a>
                                 </div>
                             </div>
                         </section>
                         <section class="ts-section ts-section--tight">
                             <div class="ts-container">
                                 <div class="ts-notice" role="note"><t t-call="ts_website.icon" ico.f="info"/><span>این گزارش رتبه یا قبولی را پیش‌بینی نمی‌کند. فقط زمینه‌های خودت با هم مقایسه می‌شوند، نه با دیگران.</span></div>
-                                <p t-if="catalog_count" class="ts-hint" style="margin: 0">سنجه‌های دیگر را مشاورت یا مدرسه‌ات می‌تواند برایت بفرستد. <a href="/assessments?all=1">فهرست همهٔ سنجه‌ها</a></p>
+                                <p t-if="catalog_count" class="ts-hint" style="margin: 0">آزمون‌های دیگر را مشاورت یا مدرسه‌ات می‌تواند برایت بفرستد. <a href="/assessments?all=1">فهرست همهٔ آزمون‌ها</a></p>
                             </div>
                         </section>
                     </div>
@@ -531,14 +531,14 @@
         <field name="website_id" ref="website_ts"/>
         <field name="arch" type="xml">
             <t t-name="ts_website.page_contact">
-                <t t-call="website.layout" additional_title.f="تماس">
+                <t t-call="website.layout" additional_title.f="تماس با ما">
                     <div id="wrap" class="ts-page">
                         <section class="ts-hero">
                             <div class="ts-container ts-hero__grid">
                                 <div class="ts-hero__words">
                                     <span class="ts-hero__kicker">تماس</span>
-                                    <h1>با ما حرف بزنید.</h1>
-                                    <p class="ts-hero__lead">جلسهٔ معرفی، پرسش یا پشتیبانی؛ از همان راهی که می‌نویسید جواب می‌دهیم.</p>
+                                    <h1>تماس با ما</h1>
+                                    <p class="ts-hero__lead">برای جلسهٔ معرفی پنل، سؤال یا پشتیبانی پیام بگذارید. از همان راهی که نوشته‌اید جوابتان را می‌دهیم.</p>
                                 </div>
                             </div>
                         </section>
@@ -567,7 +567,7 @@
                             <div class="ts-container ts-hero__grid">
                                 <div class="ts-hero__words">
                                     <span class="ts-hero__kicker">حریم خصوصی</span>
-                                    <h1>دادهٔ شما، تصمیم شما.</h1>
+                                    <h1>اطلاعات شما، در اختیار خودتان</h1>
                                     <p class="ts-hero__lead">نسخهٔ ۱<t t-call="ts_website.sep"/>از ۷ مهر ۱۴۰۵</p>
                                 </div>
                             </div>
@@ -616,8 +616,8 @@
                                 <div class="ts-hero__words">
                                     <span class="ts-hero__kicker">دریافت شد</span>
                                     <h1>پیام شما رسید.</h1>
-                                    <p class="ts-hero__lead">به‌زودی از همان راهی که نوشتید جواب می‌دهیم.</p>
-                                    <div class="ts-hero__actions"><a href="/" class="ts-btn ts-btn--outline">بازگشت به خانه</a></div>
+                                    <p class="ts-hero__lead">به‌زودی از همان راهی که نوشته‌اید (ایمیل یا موبایل) جوابتان را می‌دهیم.</p>
+                                    <div class="ts-hero__actions"><a href="/" class="ts-btn ts-btn--outline">بازگشت به صفحهٔ اصلی</a></div>
                                 </div>
                             </div>
                         </section>

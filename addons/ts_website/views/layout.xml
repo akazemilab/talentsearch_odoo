@@ -40,7 +40,7 @@
                 <xpath expr="//a[hasclass('o_skip_to_content')]" position="replace">
                     <!-- visually-hidden-focusable (Bootstrap, !important) hides it at rest on every page whatever the cascade;
                          .ts-skip only styles the focused state -->
-                    <a class="o_skip_to_content ts-skip visually-hidden-focusable" href="#wrap" groups="!base.group_user">پرش به محتوا</a>
+                    <a class="o_skip_to_content ts-skip visually-hidden-focusable" href="#wrap" groups="!base.group_user">رفتن به محتوای اصلی</a>
                 </xpath>
                 <xpath expr="//header[@id='top']" position="replace">
                     <t t-set="ts_path" t-value="request.httprequest.path"/>
@@ -65,7 +65,7 @@
                                     </ul>
                                 </nav>
                                 <div class="ts-header__end">
-                                    <button type="button" class="ts-iconbtn ts-theme" aria-label="تغییر حالت روشن و تیره" title="حالت روشن یا تیره">
+                                    <button type="button" class="ts-iconbtn ts-theme" aria-label="تغییر حالت روشن و تاریک" title="حالت روشن یا تاریک">
                                         <span class="ts-theme__moon"><t t-call="ts_website.icon" ico.f="moon"/></span>
                                         <span class="ts-theme__sun"><t t-call="ts_website.icon" ico.f="sun"/></span>
                                     </button>
@@ -108,7 +108,7 @@
                                     <button type="submit" title="خروج"><t t-call="ts_website.icon" ico.f="sign-out"/><span>خروج</span></button>
                                 </form>
                             </nav>
-                            <button t-if="ts_mode != 'marketing'" type="button" t-attf-class="ts-iconbtn ts-theme #{'' if ts_mode == 'app' else 'ts-theme--end'}" aria-label="تغییر حالت روشن و تیره" title="حالت روشن یا تیره">
+                            <button t-if="ts_mode != 'marketing'" type="button" t-attf-class="ts-iconbtn ts-theme #{'' if ts_mode == 'app' else 'ts-theme--end'}" aria-label="تغییر حالت روشن و تاریک" title="حالت روشن یا تاریک">
                                 <span class="ts-theme__moon"><t t-call="ts_website.icon" ico.f="moon"/></span>
                                 <span class="ts-theme__sun"><t t-call="ts_website.icon" ico.f="sun"/></span>
                             </button>
@@ -129,7 +129,7 @@
                             <div class="ts-footer__grid">
                                 <div class="ts-footer__col">
                                     <span class="ts-footer__brand">استعدادیاب، از خانوادهٔ هیجان اندیشه</span>
-                                    <p>آزمون شغلی رایگان، و پنل سنجش برای مراکز مشاوره، استخدام و مدرسه‌ها. تصمیم با انسان است، نه با نمره.</p>
+                                    <p>آزمون شغلی رایگان و پنل سنجش برای مراکز مشاوره، استخدام و مدرسه‌ها. تصمیم نهایی با انسان است، نه با نمره.</p>
                                     <!-- same tab: a new tab needs a warning, and the core script adds an English one («(Open in new tab)») -->
                                     <a class="ts-footer__eot" href="https://www.eot.ir/">سایت هیجان اندیشه&#160;(<bdi dir="ltr">EOT</bdi>)</a>
                                 </div>
@@ -140,14 +140,14 @@
                                         <li><a href="/#clinics">برای مراکز مشاوره</a></li>
                                         <li><a href="/#hiring">برای استخدام</a></li>
                                         <li><a href="/#schools">برای مدرسه‌ها</a></li>
-                                        <li><a href="/assessments">همهٔ سنجه‌ها</a></li>
+                                        <li><a href="/assessments">همهٔ آزمون‌ها</a></li>
                                     </ul>
                                 </nav>
                                 <nav class="ts-footer__col" aria-label="کمک">
                                     <h2>کمک</h2>
                                     <ul>
-                                        <li><a href="/#pricing">هزینه</a></li>
-                                        <li><a href="/#faq">پرسش‌های رایج</a></li>
+                                        <li><a href="/#pricing">هزینه‌ها</a></li>
+                                        <li><a href="/#faq">سؤال‌های متداول</a></li>
                                         <li><a href="/#contact">تماس با ما</a></li>
                                         <li><a href="/privacy">حریم خصوصی و رضایت</a></li>
                                     </ul>
@@ -161,7 +161,7 @@
                                 </div>
                             </div>
                             <div class="ts-footer__legal">
-                                <p>استعدادیاب خدمت اورژانسی نیست. در شرایط اضطراری با اورژانس اجتماعی ۱۲۳ یا صدای مشاور ۱۴۸۰ تماس بگیرید.</p>
+                                <p>استعدادیاب برای شرایط اضطراری نیست. اگر در وضعیت اضطراری هستید، با اورژانس اجتماعی ۱۲۳ یا صدای مشاور ۱۴۸۰ تماس بگیرید.</p>
                                 <p>© مؤسسهٔ تعاملی هیجان اندیشه</p>
                             </div>
                         </div>
@@ -173,7 +173,7 @@
                                 <li><a href="/privacy">حریم خصوصی و رضایت</a></li>
                                 <li><a href="/contact?topic=support">تماس با پشتیبانی</a></li>
                             </ul>
-                            <p>© مؤسسهٔ تعاملی هیجان اندیشه<t t-call="ts_website.sep"/>استعدادیاب خدمت اورژانسی نیست؛ در شرایط اضطراری با اورژانس اجتماعی ۱۲۳ یا صدای مشاور ۱۴۸۰ تماس بگیرید.</p>
+                            <p>© مؤسسهٔ تعاملی هیجان اندیشه<t t-call="ts_website.sep"/>استعدادیاب برای شرایط اضطراری نیست؛ اگر در وضعیت اضطراری هستید، با اورژانس اجتماعی ۱۲۳ یا صدای مشاور ۱۴۸۰ تماس بگیرید.</p>
                         </div>
                     </footer>
                 </xpath>

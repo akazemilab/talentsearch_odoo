@@ -24,7 +24,7 @@
                         <link t-if="editable or debug" rel="stylesheet" href="/web/static/lib/bootstrap/dist/css/bootstrap.css"/>
                     </head>
                     <body>
-                        <a class="tse-skip" href="#tse-main">پرش به محتوا</a>
+                        <a class="tse-skip" href="#tse-main">رفتن به محتوای اصلی</a>
                         <header class="tse-header">
                             <a href="/" class="tse-lockup" aria-label="استعدادیاب، صفحهٔ اصلی">
                                 <img src="/ts_website/static/img/talentsearch-logo.webp" width="36" height="36" alt=""/>
@@ -35,8 +35,8 @@
                             <div class="tse-card">
                                 <span class="tse-kicker">خطای سرور</span>
                                 <h1>خطایی پیش آمد.</h1>
-                                <p>این صفحه این بار باز نشد. کاری که انجام می‌دادید شاید ذخیره نشده باشد؛ چند لحظهٔ دیگر دوباره تلاش کنید.</p>
-                                <p>اگر باز هم همین صفحه را دیدید، به پشتیبانی بگویید چه کاری می‌کردید و زمان خطا را هم بنویسید.</p>
+                                <p>این صفحه باز نشد. ممکن است کاری که انجام می‌دادید ذخیره نشده باشد؛ چند لحظهٔ دیگر دوباره امتحان کنید.</p>
+                                <p>اگر باز هم همین صفحه را دیدید، به پشتیبانی بگویید چه کاری انجام می‌دادید و زمان خطا را هم بنویسید.</p>
                                 <p class="tse-ref" id="tse-ref" hidden="hidden"/>
                                 <nav class="tse-actions" aria-label="راه بازگشت">
                                     <a href="/my" class="tse-btn tse-btn--primary" id="tse-back">کارهای من</a>
@@ -46,7 +46,7 @@
                             </div>
                         </main>
                         <footer class="tse-footer">
-                            <p>استعدادیاب خدمت اورژانسی نیست؛ در شرایط اضطراری با اورژانس اجتماعی ۱۲۳ یا صدای مشاور ۱۴۸۰ تماس بگیرید.</p>
+                            <p>استعدادیاب برای شرایط اضطراری نیست؛ اگر در وضعیت اضطراری هستید، با اورژانس اجتماعی ۱۲۳ یا صدای مشاور ۱۴۸۰ تماس بگیرید.</p>
                         </footer>
                         <div t-if="editable or debug" dir="ltr" lang="en" class="container">
                             <t t-call="http_routing.http_error_debug"/>

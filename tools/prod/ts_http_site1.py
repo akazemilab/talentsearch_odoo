@@ -23,7 +23,7 @@ TS, EOT = 'talentsearch.ir', 'eot.ir'
 
 anon = Client(TS)
 st, loc, home = anon.req('/')
-check('S01 / is 200 with one h1, the career question', st == 200 and home.count('<h1') == 1 and 'کدام شغل‌ها با علایق شما هم‌خوان‌اند؟' in home, str(st))
+check('S01 / is 200 with one h1, the career question', st == 200 and home.count('<h1') == 1 and 'چه شغل‌هایی با علایق شما متناسب است؟' in home, str(st))
 hero = home.split('id="career"', 1)[1].split('</section>', 1)[0] if 'id="career"' in home else ''
 check('S02 the hero: one primary «شروع آزمون رایگان» to /career/start, a quiet link to #orgs, the sign-in note',
       hero.count('ts-btn--primary') == 1 and re.search(r'href="/career/start"[^>]*id="ts-hero-career"', hero)
@@ -79,6 +79,6 @@ for p in ('/privacy', '/assessments', '/career', '/contact/thanks', '/sample/cli
 # eot.ir: none of this
 e = Client(EOT)
 st, _, eh = e.req('/')
-check('S19 eot.ir home is not the Talent Search page', st == 200 and 'ts-one' not in eh and 'کدام شغل‌ها با علایق شما' not in eh, str(st))
+check('S19 eot.ir home is not the Talent Search page', st == 200 and 'ts-one' not in eh and 'چه شغل‌هایی با علایق شما' not in eh, str(st))
 check('S20 eot.ir has no /career, /clinics redirect stays theirs', e.req('/career')[0] == 404 and e.req('/clinics')[0] in (404, 301, 302))
 summary()

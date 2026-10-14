@@ -20,7 +20,7 @@
                 <t t-set="ts_p404" t-value="request.httprequest.path if request else ''"/>
                 <t t-set="ts_link404" t-value="ts_p404.startswith(('/invite/', '/i/', '/take/', '/c/', '/join/', '/j/'))"/>
                 <t t-set="ts_force_mode" t-value="'auth' if ts_link404 else None"/>
-                <t t-set="additional_title" t-value="'این پیوند باز نمی‌شود' if ts_link404 else 'این صفحه نیست'"/>
+                <t t-set="additional_title" t-value="'این لینک باز نمی‌شود' if ts_link404 else 'صفحه پیدا نشد'"/>
             </xpath>
             <xpath expr="//div[@id='wrap']" position="replace">
                 <div id="wrap" class="ts-page">
@@ -30,11 +30,11 @@
                             <t t-set="ts_u" t-value="request.env.user"/>
                             <t t-set="ts_out" t-value="ts_u._is_public()"/>
                             <div class="ts-section__head">
-                                <h1>این پیوند باز نمی‌شود</h1>
-                                <p>شاید برای حساب دیگری است، مهلتش تمام شده یا دیگر فعال نیست.</p>
+                                <h1>این لینک باز نمی‌شود</h1>
+                                <p>ممکن است این لینک برای حساب دیگری باشد، مهلتش تمام شده باشد یا دیگر فعال نباشد.</p>
                             </div>
                             <t t-if="ts_out">
-                                <p>اگر این پیوند را برای پاسخ‌دادن به یک سنجه یا پیوستن به یک پنل گرفته‌اید، با همان شمارهٔ موبایلی وارد شوید که دعوت برایش فرستاده شده؛ بعد از ورود به همین پیوند برمی‌گردید.</p>
+                                <p>اگر این لینک را برای پاسخ دادن به یک آزمون یا عضویت در یک پنل دریافت کرده‌اید، با همان شمارهٔ موبایلی وارد شوید که دعوت به آن فرستاده شده است. بعد از ورود، به همین لینک برمی‌گردید.</p>
                                 <div class="ts-state__actions">
                                     <a t-att-href="'/signup?next=' + ts_p404" class="ts-btn ts-btn--primary ts-btn--lg ts-btn--block">ورود با شمارهٔ موبایل</a>
                                     <a href="/contact?topic=support" class="ts-btn ts-btn--quiet">تماس با پشتیبانی</a>
@@ -53,7 +53,7 @@
                                             <t t-elif="ts_login.isdigit() and len(ts_login) &gt;= 7">با شمارهٔ <bdi dir="ltr" t-out="(ts_login[:4] + '\u200e…\u200e' + ts_login[-4:]).translate(ts_fa)"/> وارد شده‌اید.</t>
                                             <t t-elif="'@' in ts_login">با حساب <bdi dir="ltr" t-out="ts_login[:1] + '…@' + ts_login.split('@', 1)[1]"/> وارد شده‌اید.</t>
                                             <t t-else="">با حساب دیگری وارد شده‌اید.</t>
-                                            اگر این پیوند برای شمارهٔ دیگری فرستاده شده، از این حساب خارج شوید و با همان شماره وارد شوید.
+                                            اگر این لینک برای شمارهٔ دیگری فرستاده شده است، از این حساب خارج شوید و با همان شماره وارد شوید.
                                         </p>
                                     </div>
                                 </div>
@@ -65,7 +65,7 @@
                                         <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
                                         <button type="submit" class="ts-btn ts-btn--primary ts-btn--lg ts-btn--block">خروج و ورود با شمارهٔ دیگر</button>
                                     </form>
-                                    <a href="/my/assessments" class="ts-btn ts-btn--outline">سنجه‌ها و نتیجه‌ها</a>
+                                    <a href="/my/assessments" class="ts-btn ts-btn--outline">آزمون‌های من</a>
                                     <a href="/contact?topic=support" class="ts-btn ts-btn--quiet">تماس با پشتیبانی</a>
                                 </div>
                             </t>
@@ -76,9 +76,9 @@
                             <div class="ts-hero__words">
                                 <span class="ts-hero__kicker">۴۰۴</span>
                                 <h1>این صفحه پیدا نشد.</h1>
-                                <p class="ts-hero__lead">شاید نشانی اشتباه است یا صفحه جابه‌جا شده.</p>
+                                <p class="ts-hero__lead">ممکن است نشانی را اشتباه وارد کرده باشید یا این صفحه جابه‌جا شده باشد.</p>
                                 <div class="ts-hero__actions">
-                                    <a href="/" class="ts-btn ts-btn--primary">خانه</a>
+                                    <a href="/" class="ts-btn ts-btn--primary">صفحهٔ اصلی</a>
                                     <a href="/contact?topic=support" class="ts-btn ts-btn--quiet">تماس با پشتیبانی</a>
                                 </div>
                             </div>

@@ -19,32 +19,32 @@
         <field name="website_id" ref="ts_website.website_ts"/>
         <field name="arch" type="xml">
             <t t-name="ts_career.home">
-                <t t-call="website.layout" additional_title.f="شغل‌های هم‌خوان با علایق شما">
+                <t t-call="website.layout" additional_title.f="آزمون شغلی رایگان">
                     <div id="wrap" class="ts-page">
                         <section class="ts-section tsc-home">
                             <div class="ts-container ts-narrow">
                                 <p class="ts-tag">رایگان<t t-call="ts_website.sep"/>نسخهٔ آزمایشی</p>
-                                <h1>کدام شغل‌ها با علایق شما هم‌خوان‌اند؟</h1>
-                                <p class="ts-lead">به ۶۰ کار کوتاه بگویید چقدر دوست دارید انجامشان دهید. از میان ۹۲۳ شغل، آن‌هایی را می‌بینید که با علایق شما هم‌خوان‌اند.</p>
-                                <p class="tsc-meta">حدود ۸ دقیقه<t t-call="ts_website.sep"/>روی گوشی<t t-call="ts_website.sep"/>نتیجه فقط برای خودتان</p>
+                                <h1>چه شغل‌هایی با علایق شما متناسب است؟</h1>
+                                <p class="ts-lead">برای ۶۰ فعالیت ساده مشخص کنید چقدر به انجامشان علاقه دارید. بعد، از میان ۹۲۳ شغل، شغل‌های متناسب با علایقتان را می‌بینید.</p>
+                                <p class="tsc-meta">حدود ۸ دقیقه<t t-call="ts_website.sep"/>با گوشی<t t-call="ts_website.sep"/>نتیجه را فقط خودتان می‌بینید</p>
                                 <ol class="tsc-steps">
-                                    <li><strong>علایق</strong>: ۶۰ کار، برای هر کدام یک انتخاب.</li>
-                                    <li><strong>دو پرسش</strong>: تحصیلات و سابقهٔ کار.</li>
-                                    <li><strong>نتیجه</strong>: فهرست شغل‌های هم‌خوان، با دلیل هر کدام.</li>
+                                    <li><strong>علایق</strong>: برای هر یک از ۶۰ فعالیت، میزان علاقه‌تان را انتخاب می‌کنید.</li>
+                                    <li><strong>دو سؤال</strong>: تحصیلات و سابقهٔ کارتان.</li>
+                                    <li><strong>نتیجه</strong>: فهرست شغل‌های مناسب، همراه با دلیل هر کدام.</li>
                                 </ol>
                                 <t t-if="full">
                                     <div class="tsc-note" role="status" id="tsc-full">
-                                        <p><strong>ظرفیت رایگان امروز پر شده است.</strong> فردا دوباره سر بزنید.</p>
+                                        <p><strong>ظرفیت آزمون رایگان برای امروز تکمیل شده است.</strong> فردا دوباره سر بزنید.</p>
                                     </div>
                                 </t>
                                 <t t-elif="run and run.ts_state()['ip_done']">
-                                    <a href="/career/r" class="ts-btn ts-btn--primary ts-btn--lg" id="tsc-see">دیدن نتیجهٔ من<t t-call="ts_website.icon" ico.f="arrow-left"/></a>
+                                    <a href="/career/r" class="ts-btn ts-btn--primary ts-btn--lg" id="tsc-see">دیدن نتیجهٔ آزمون<t t-call="ts_website.icon" ico.f="arrow-left"/></a>
                                 </t>
                                 <t t-else="">
-                                    <a href="/career/start" class="ts-btn ts-btn--primary ts-btn--lg" id="tsc-start">شروع رایگان<t t-call="ts_website.icon" ico.f="arrow-left"/></a>
-                                    <p t-if="public" class="ts-hint">برای نگه‌داشتن نتیجه، با شمارهٔ همراه وارد می‌شوید.</p>
+                                    <a href="/career/start" class="ts-btn ts-btn--primary ts-btn--lg" id="tsc-start">شروع آزمون رایگان<t t-call="ts_website.icon" ico.f="arrow-left"/></a>
+                                    <p t-if="public" class="ts-hint">برای ذخیرهٔ نتیجه، اول با شمارهٔ موبایل وارد می‌شوید.</p>
                                 </t>
-                                <p class="tsc-small">این فهرست برای خودشناسی شغلی است، نه تصمیم استخدام. <t t-call="ts_career.notice"/></p>
+                                <p class="tsc-small">این فهرست برای شناخت بهتر خودتان است، نه برای تصمیم استخدام. <t t-call="ts_career.notice"/></p>
                             </div>
                         </section>
                     </div>
@@ -191,7 +191,7 @@
 
 
                                 <p class="tsc-small"><a href="/career/r?edit=1">ویرایش تحصیلات و سابقه</a></p>
-                                <p class="tsc-small">این فهرست برای خودشناسی شغلی است، نه تصمیم استخدام. <t t-call="ts_career.notice"/></p>
+                                <p class="tsc-small">این فهرست برای شناخت بهتر خودتان است، نه برای تصمیم استخدام. <t t-call="ts_career.notice"/></p>
                             </div>
                         </section>
                     </div>

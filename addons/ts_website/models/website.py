@@ -15,11 +15,11 @@ TS_MENU = [
     ('آزمون شغلی', '/#career', 10),
     ('برای سازمان‌ها', '/#orgs', 20),
     ('پشتوانهٔ علمی', '/#science', 30),
-    ('هزینه و پرسش‌ها', '/#pricing', 40),
-    ('تماس', '/#contact', 50),
+    ('هزینه و سؤال‌ها', '/#pricing', 40),
+    ('تماس با ما', '/#contact', 50),
 ]
-HOME_DESCRIPTION = ('آزمون شغلی رایگان: به ۶۰ کار کوتاه پاسخ دهید و از میان ۹۲۳ شغل، شغل‌های هم‌خوان با علایق خود را ببینید. '
-                    'و پنل سنجش برای مراکز مشاوره، استخدام و مدرسه‌ها؛ ساخت پنل رایگان است.')
+HOME_DESCRIPTION = ('آزمون شغلی رایگان استعدادیاب: علاقه‌تان را به ۶۰ فعالیت مشخص کنید و از میان ۹۲۳ شغل، شغل‌های متناسب با '
+                    'علایق خود را ببینید. پنل سنجش برای مراکز مشاوره، استخدام و مدرسه‌ها؛ ساخت پنل رایگان است.')
 # Persian page names by path (first match wins; most specific first), used by ts_fallback_title. Every route of website 4
 # that can render without its own title has a row, so <title> never falls back to the bare site name twice
 # («استعدادیاب | استعدادیاب», clinic phase 5). Patterns are anchored; `(/.*)?$` = the path and everything below it.
@@ -74,10 +74,10 @@ TS_TITLES = [
     (r'^/web/login(/.*)?$', 'ورود'),
     (r'^/web/signup(/.*)?$', 'ثبت‌نام'),
     (r'^/web/reset_password(/.*)?$', 'بازیابی رمز عبور'),
-    (r'^/assessments/[^/]+/start$', 'شروع سنجه'),
-    (r'^/assessments(/.*)?$', 'سنجه‌ها'),
+    (r'^/assessments/[^/]+/start$', 'شروع آزمون'),
+    (r'^/assessments(/.*)?$', 'آزمون‌ها'),
     (r'^/entekhab-reshteh(/.*)?$', 'انتخاب رشته'),
-    (r'^/contact(/.*)?$', 'تماس'),
+    (r'^/contact(/.*)?$', 'تماس با ما'),
     (r'^/privacy(/.*)?$', 'حریم خصوصی'),
     (r'^/how-it-works(/.*)?$', 'سنجه‌ها چگونه کار می‌کنند'),
     (r'^/evidence(/.*)?$', 'پشتوانهٔ علمی'),

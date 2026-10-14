@@ -134,7 +134,7 @@ check('a used invite opened by a visitor who is not signed in offers «ادام�
       st == 200 and '>ادامه<' in page and 'name="share"' not in page and 'موافقم و شروع می‌کنم' not in page)
 st_u, _, page_u = c3.req('/invite/%s' % ('f' * 32))
 check('...and never the invitee name; an unknown invite token gets the explained 404 (sign-in back to the link)',
-      'دعوت‌شدهٔ HTTP' not in page and st_u == 404 and 'این پیوند باز نمی‌شود' in page_u and 'id="ts-link-404"' in page_u
+      'دعوت‌شدهٔ HTTP' not in page and st_u == 404 and 'این لینک باز نمی‌شود' in page_u and 'id="ts-link-404"' in page_u
       and ('/signup?next=/invite/%s' % ('f' * 32)) in page_u, str(st_u))
 a2 = shell("""
 ws = env['ts.workspace'].search([('name','=','سازمان ثبت‌نام HTTP')], limit=1)

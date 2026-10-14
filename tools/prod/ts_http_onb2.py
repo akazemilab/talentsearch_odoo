@@ -317,7 +317,7 @@ nb = client()
 gone = [raw(nb, p) for p in ('/invite/%s' % ('x' * 43), '/i/zzzzzzzzzzzz', '/j/zzzzzzzzzzzz', '/c/no-such-open-link',
                              '/i/zzzzzzzzzzzz/%s' % ('y' * 22))]
 check('W08 an unknown invitation, short code (with or without a secret) or open link: the one explained link 404',
-      all(st == 404 and 'این پیوند باز نمی‌شود' in pg and 'id="ts-link-404"' in pg for st, _h, pg in gone), [x[0] for x in gone])
+      all(st == 404 and 'این لینک باز نمی‌شود' in pg and 'id="ts-link-404"' in pg for st, _h, pg in gone), [x[0] for x in gone])
 check('W09 ...the same words for each (nothing tells whether such a link existed), with no-store',
       len({re.sub(r'\s+', ' ', re.search(r'<h1>(.*?)</h1>', pg, re.S).group(1)) for _s, _h, pg in gone if '<h1>' in pg}) == 1
       and all('no-store' in (hh.get('Cache-Control') or '') for _s, hh, _p in gone))

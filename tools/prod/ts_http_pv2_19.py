@@ -149,7 +149,7 @@ for r in ('/', '/assessments', '/panel', '/privacy', '/help/panel', '/contact', 
     check('public: %s passes the text and accessibility scan' % r, not bad, '; '.join(bad)[:300])
 st, html = get(pub, '/')
 check('the home page uses the marketing header and the full footer', 'ts-header--marketing' in html and 'ts-footer__grid' in html)
-check('the home page shows the one-page hero (site1), the theme toggle and the free panel', 'کدام شغل‌ها با علایق شما هم‌خوان‌اند؟' in html and 'ts-theme' in html and 'ساخت پنل رایگان' in html and "localStorage.getItem('ts-site-theme')" in html)
+check('the home page shows the one-page hero (site1), the theme toggle and the free panel', 'چه شغل‌هایی با علایق شما متناسب است؟' in html and 'ts-theme' in html and 'ساخت پنل رایگان' in html and "localStorage.getItem('ts-site-theme')" in html)
 st, html = get(pub, '/web/login')
 check('the sign-in page is the mobile sign-in (S-AUTH) without the stock English form', 'ورود یا ثبت‌نام' in html and 'name="phone"' in html and 'Enter your' not in html and 'Passkey' not in html)
 st, html = get(pub, '/web/login?email=1')
