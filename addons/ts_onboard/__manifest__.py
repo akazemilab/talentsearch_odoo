@@ -7,7 +7,7 @@
                'events without personal data. onb3 (docs/onboarding/03_panel_first_session.md): kind-driven starter, '
                'the member\'s own try-out, sample reports, «شروع کار», one-screen invitation with a permanent link, guide '
                'SMS, audience pages, activation events',
-    'version': '20.0.2.1.0',
+    'version': '20.0.2.2.0',
     'category': 'Services/Talent Search',
     'author': 'EOT',
     'license': 'LGPL-3',
@@ -23,6 +23,7 @@
         'data/onb3_data.xml',
         'views/web_onb3_panel.xml',
         'views/web_onb3_site.xml',
+        'views/web_services.xml',
     ],
     'assets': {
         # the website-4 bundles only (never web.assets_frontend, shared with eot.ir)

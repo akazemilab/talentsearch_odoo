@@ -15,6 +15,8 @@ from odoo.addons.ts_org.controllers.main import _memberships
 from odoo.addons.ts_org.models.panel import ROLE_LABELS, role_label
 
 RESULT_PERMS = ('results:summary', 'results:education', 'results:clinical')
+FLAT_PURPOSES = ('clinical',)
+CLINIC_PARENT = {'invites': 'clients', 'members': 'settings', 'audit': 'settings', 'credits_own': 'credits'}
 
 # seq, key, group (sidebar heading, redesign 2026-10), label, path suffix below /my/workspaces/<id>, permission, needs_act, absolute url;
 # optional: 'when' (callable(member) -> bool, checked after the permission) and 'active_key' (the page key that marks it current)
@@ -22,10 +24,12 @@ MENU = [
     {'seq': 10, 'key': 'home', 'group': 'نمای کلی', 'label': 'پیشخوان', 'suffix': '', 'perm': 'panel:view'},
     {'seq': 20, 'key': 'clients', 'group': 'افراد و دعوت', 'label': 'شرکت‌کنندگان', 'suffix': '/clients', 'perm': 'clients:read_own',
      'needs_act': True, 'labels': {'clinical': 'مراجعان'}},
+    {'seq': 22, 'key': 'services', 'group': 'افراد و دعوت', 'label': 'خدمات', 'suffix': '/services', 'perm': 'invites:create',
+     'needs_act': True, 'only_in': ('clinical',)},   # clin8: the clinic's service catalog (ts_onboard)
     {'seq': 25, 'key': 'groups', 'group': 'افراد و دعوت', 'label': 'گروه‌ها', 'suffix': '/groups', 'perm': 'groups:manage',
      'needs_act': True, 'hide_in': ('clinical',)},
     {'seq': 30, 'key': 'invites', 'group': 'افراد و دعوت', 'label': 'دعوت‌ها', 'suffix': '/invites', 'perm': 'invites:manage',
-     'needs_act': True},
+     'needs_act': True, 'hide_in': ('clinical',)},
     {'seq': 35, 'key': 'campaigns', 'group': 'افراد و دعوت', 'label': 'دعوت گروهی', 'suffix': '/campaigns', 'perm': 'invites:bulk',
      'needs_act': True, 'hide_in': ('clinical',)},
     {'seq': 38, 'key': 'import', 'group': 'افراد و دعوت', 'label': 'ورود از فایل', 'suffix': '/import', 'perm': 'clients:import',
@@ -33,11 +37,11 @@ MENU = [
     {'seq': 45, 'key': 'exports', 'group': 'گزارش و داده', 'label': 'خروجی‌ها', 'suffix': '/exports', 'perm': 'clients:export',
      'needs_act': True, 'hide_in': ('clinical',)},
     {'seq': 42, 'key': 'reports', 'group': 'گزارش و داده', 'label': 'گزارش‌ها', 'suffix': '/reports', 'perm_any': RESULT_PERMS, 'needs_act': True},
-    {'seq': 50, 'key': 'credits', 'group': 'گزارش و داده', 'label': 'اعتبار و مصرف', 'suffix': '/credits', 'perm': 'credits:read'},
-    {'seq': 85, 'key': 'members', 'group': 'پنل', 'label': 'اعضا و نقش‌ها', 'suffix': '/members', 'perm': 'members:read'},
-    {'seq': 80, 'key': 'audit', 'group': 'گزارش و داده', 'label': 'دفتر ممیزی', 'suffix': '/audit', 'perm': 'audit:read'},
+    {'seq': 50, 'key': 'credits', 'group': 'گزارش و داده', 'label': 'اعتبار و مصرف', 'suffix': '/credits', 'perm': 'credits:read', 'labels': {'clinical': 'اعتبار'}},
+    {'seq': 85, 'key': 'members', 'group': 'پنل', 'label': 'اعضا و نقش‌ها', 'suffix': '/members', 'perm': 'members:read', 'hide_in': ('clinical',)},
+    {'seq': 80, 'key': 'audit', 'group': 'گزارش و داده', 'label': 'دفتر ممیزی', 'suffix': '/audit', 'perm': 'audit:read', 'hide_in': ('clinical',)},
     {'seq': 90, 'key': 'settings', 'group': 'پنل', 'label': 'تنظیمات', 'suffix': '/settings', 'perm': 'panel:profile'},
-    {'seq': 999, 'key': 'help', 'group': 'پنل', 'label': 'راهنما', 'url': '/help/panel', 'perm': None},   # always last, for every state (WCAG 3.2.6)
+    {'seq': 999, 'key': 'help', 'group': 'پنل', 'label': 'راهنما', 'url': '/help/panel', 'perm': None, 'hide_in': ('clinical',)},   # always last, for every state (WCAG 3.2.6)
 ]
 
 STATE_LABELS = {'invited': 'دعوت‌شده', 'opened': 'بازشده', 'expired': 'منقضی', 'accepted': 'پذیرفته', 'in_progress': 'در حال پاسخ',
@@ -91,7 +95,7 @@ def build_menu(member, active):
     out = []
     for it in sorted(MENU, key=lambda i: i['seq']):
         # clin7: a clinic's panel shows only what an office and a therapist use; hidden pages stay reachable by URL
-        if purpose in it.get('hide_in', ()):
+        if purpose in it.get('hide_in', ()) or (it.get('only_in') and purpose not in it['only_in']):
             continue
         if it.get('perm') and it['perm'] not in perms:
             continue
@@ -105,6 +109,13 @@ def build_menu(member, active):
         url = it.get('url') or '/my/workspaces/%s%s' % (member.workspace_id.id, it['suffix'])
         out.append({'key': it['key'], 'label': it.get('labels', {}).get(purpose, it['label']), 'url': url, 'current': it.get('active_key', it['key']) == active,
                     'group': it.get('group', '')})
+    if purpose in FLAT_PURPOSES:
+        # clin8: a clinic's menu is one short flat list; pages without an item of their own light up their parent
+        cur = CLINIC_PARENT.get(active, active)
+        for it in out:
+            it['group'] = ''
+            it['current'] = it['current'] or it['key'] == cur
+        return out
     # A group heading over a single item says nothing (non-owners saw «پنل» above «راهنما» only, audit G5 PT-9):
     # such an item loses its heading and is set apart by a line instead.
     for i, it in enumerate(out):
@@ -136,6 +147,9 @@ def render_in_shell(template, member, active, title, status=None, **vals):
         role_scope=role_scope(member.role, ws.purpose), role_help_url='/help/roles#role-%s' % member.role,
         panel_state=panel_state_label(ws),
         back_url=None, back_label=None,
+        shell_send_url=('/my/workspaces/%d/invites/new' % ws.id) if (ws.purpose in FLAT_PURPOSES and member.can_act()
+                                                                and member.has_perm('invites:create')) else None,
+        shell_flat=ws.purpose in FLAT_PURPOSES,
         flash_ok=ok, flash_err=err,
         title='%s · %s' % (title, ws.name), page_title=title, page_name='ts_panel_shell')
     ctx.update(vals)

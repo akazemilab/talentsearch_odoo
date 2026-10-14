@@ -185,17 +185,32 @@ class TsPanelClients(http.Controller):
                 if a.result_level(me) != 'none':
                     results[c.id] = '/my/workspaces/%s/clients/%s/r/%s' % (ws_id, c.id, a.attempt_id.id)
                     break
+        # clin8: a clinic's list is the whole loop in one place («دعوت‌ها» has no menu item there): the therapist and
+        # the latest test of each client with its live status, nothing else
+        clin = me.workspace_id.purpose == 'clinical'
+        last = {}
+        if clin:
+            cols = (['responsible'] if me.has_perm('clients:read_all') else []) + ['last']
+            for c in rows:
+                a = c.assignment_ids.filtered(lambda x: not getattr(x, 'ts_preview', False)).sorted(
+                    lambda x: (x.create_date, x.id), reverse=True)[:1]
+                if a:
+                    item = a.battery_id if a.battery_id else a.instrument_id
+                    last[c.id] = {'title': item.ts_title() if hasattr(item, 'ts_title') else item.name,
+                                  'state': STATE_LABELS.get(a.state, a.state), 'key': a.state,
+                                  'url': '/my/workspaces/%s/invites/%s' % (ws_id, a.id)}
         can_invite = me.can_invite() and me.has_perm('invites:create') and me.can_invite_participants()
         assignable = request.env['ts.workspace.member'].sudo().search(
             [('workspace_id', '=', ws_id), ('active', '=', True), ('role', 'in', list(RESPONSIBLE_ROLES))]
         ).filtered(lambda m: m.can_act()) if can_bulk['assign'] else []
         return render_in_shell(
-            'ts_panel.clients', me, 'clients', 'شرکت‌کنندگان', rows=rows, total=total, page=page, pages=pages,
+            'ts_panel.clients', me, 'clients', 'مراجعان' if clin else 'شرکت‌کنندگان', rows=rows, total=total, page=page, pages=pages,
             filters=role_filters(me), flt=flt, dflt=dflt, q=q, sort=sort, desc=desc, direction=direction, url=url, filter_url=filter_url,
             results=results, can_invite=can_invite, purpose=me.workspace_id.purpose,
             source_labels=SOURCE_LABELS, cols=cols, all_cols=COLUMNS, groups=groups.filtered('active'), group=group,
             views=views, view=view, can_bulk=can_bulk, any_bulk=any(can_bulk.values()), assignable=assignable,
-            can_write=me.has_perm('clients:write'), role_labels=ROLE_LABELS,
+            can_write=me.has_perm('clients:write'), role_labels=ROLE_LABELS, clin=clin, last=last,
+            invites_url=('/my/workspaces/%s/invites' % ws_id) if (clin and me.has_perm('invites:manage')) else None,
             n_all=C.search_count(visible_domain(me) + [('state', '=', 'active')]))
 
     # ------------------------------------------------------------------ saved views

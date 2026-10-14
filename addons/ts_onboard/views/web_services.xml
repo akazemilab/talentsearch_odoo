@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- clin8: «خدمات», the clinic's service catalog (controllers/services.py) -->
+    <record id="tpl_services" model="ir.ui.view">
+        <field name="name">TS onboard: clinic service catalog</field>
+        <field name="type">qweb</field>
+        <field name="key">ts_onboard.services</field>
+        <field name="website_id" ref="ts_website.website_ts"/>
+        <field name="arch" type="xml">
+            <t t-name="ts_onboard.services">
+                <t t-call="website.layout" additional_title="title">
+                    <div id="wrap" class="ts-page">
+                        <t t-call="ts_panel.shell_frame">
+                            <header class="tsp-head">
+                                <div>
+                                    <h1 class="tsp-head__title">خدمات</h1>
+                                    <p class="tsp-head__help">آنچه می‌توانید برای مراجع بفرستید. هر مورد برای کمک به گفت‌وگوی مشاوره است، نه تشخیص.</p>
+                                </div>
+                            </header>
+                            <p t-if="members_url" class="ts-hint" id="tss-access">دسترسی هر مشاور به این خدمات را در <a t-att-href="members_url">اعضا و دسترسی‌ها</a> تنظیم کنید.</p>
+                            <p t-if="not n_total" class="tsp-empty" id="tss-empty">هنوز خدمتی برای شما فعال نیست. از مالک مرکز بخواهید دسترسی شما را باز کند.</p>
+
+                            <section t-if="bats" class="tss-group" id="tss-bats" aria-labelledby="tss-bats-h">
+                                <h2 id="tss-bats-h" class="h5">مجموعه‌ها</h2>
+                                <ul class="tss-list">
+                                    <li t-foreach="bats" t-as="b" class="ts-card tss-item" t-att-id="'tss-b%s' % b['id']">
+                                        <div class="tss-item__main">
+                                            <h3 class="tss-item__title" t-out="b['title']"/>
+                                            <p class="tss-item__facts"><t t-out="fa(b['facts']['count'])"/> سنجه · <t t-out="fa(b['facts']['items'])"/> پرسش · حدود <t t-out="fa(b['facts']['minutes'])"/> دقیقه<t t-if="b['price']"> · <strong class="tss-price" t-out="b['price']"/></t></p>
+                                            <p t-if="b['desc']" class="tss-item__desc" t-out="b['desc']"/>
+                                            <details class="tss-more"><summary>شامل</summary><p t-out="'، '.join(b['lines'])"/></details>
+                                        </div>
+                                        <a t-if="b['send']" t-att-href="b['send']" class="ts-btn ts-btn--outline ts-btn--sm tss-send">فرستادن به مراجع</a>
+                                    </li>
+                                </ul>
+                            </section>
+
+                            <section t-foreach="cats" t-as="cat" class="tss-group" t-att-aria-label="cat['name']">
+                                <h2 class="h5" t-out="cat['name']"/>
+                                <ul class="tss-list">
+                                    <li t-foreach="cat['rows']" t-as="r" class="ts-card tss-item" t-att-id="'tss-i%s' % r['id']">
+                                        <div class="tss-item__main">
+                                            <h3 class="tss-item__title" t-out="r['title']"/>
+                                            <p class="tss-item__facts"><t t-out="r['time']"/><t t-if="r['effort']"> · <t t-out="r['effort']"/></t><t t-if="r['price']"> · <strong class="tss-price" t-out="r['price']"/></t></p>
+                                            <p t-if="r['summary']" class="tss-item__desc" t-out="r['summary']"/>
+                                            <details t-if="r['use'] or r['limits']" class="tss-more"><summary>بیشتر</summary>
+                                                <p t-if="r['use']"><strong>کاربرد: </strong><t t-out="r['use']"/></p>
+                                                <p t-if="r['limits']"><strong>محدودیت: </strong><t t-out="r['limits']"/></p>
+                                            </details>
+                                        </div>
+                                        <a t-if="r['send']" t-att-href="r['send']" class="ts-btn ts-btn--outline ts-btn--sm tss-send">فرستادن به مراجع</a>
+                                    </li>
+                                </ul>
+                            </section>
+                        </t>
+                    </div>
+                </t>
+            </t>
+        </field>
+    </record>
+</odoo>

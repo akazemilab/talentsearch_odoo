@@ -15,12 +15,13 @@
                             <t t-set="has_any" t-value="n_all or q or flt != dflt or group"/>
                             <header class="tsp-head">
                                 <div>
-                                    <h1 class="tsp-head__title">شرکت‌کنندگان</h1>
-                                    <p class="tsp-head__help">افرادی که در این پنل ثبت یا دعوت شده‌اند، یا نتیجهٔ آن‌ها به پنل رسیده است.</p>
+                                    <h1 class="tsp-head__title" t-out="'مراجعان' if clin else 'شرکت‌کنندگان'"/>
+                                    <p t-if="clin" class="tsp-head__help">هر مراجع با آخرین آزمونش.<t t-if="invites_url"> <a t-att-href="invites_url" id="tsp-all-invites">همهٔ دعوت‌ها</a></t></p>
+                                    <p t-else="" class="tsp-head__help">افرادی که در این پنل ثبت یا دعوت شده‌اند، یا نتیجهٔ آن‌ها به پنل رسیده است.</p>
                                 </div>
                                 <div class="tsp-head__actions">
-                                    <a t-if="can_invite" t-attf-href="/my/workspaces/#{ws.id}/invites/new?fresh=1" t-attf-class="ts-btn #{'ts-btn--outline' if can_write else 'ts-btn--primary'}">دعوت به سنجه</a>
-                                    <a t-if="can_write" t-attf-href="/my/workspaces/#{ws.id}/clients/new" class="ts-btn ts-btn--primary">شرکت‌کنندهٔ جدید</a>
+                                    <a t-if="can_invite and not shell_send_url" t-attf-href="/my/workspaces/#{ws.id}/invites/new?fresh=1" t-attf-class="ts-btn #{'ts-btn--outline' if can_write else 'ts-btn--primary'}">دعوت به سنجه</a>
+                                    <a t-if="can_write" t-attf-href="/my/workspaces/#{ws.id}/clients/new" t-attf-class="ts-btn #{'ts-btn--outline' if clin else 'ts-btn--primary'}" t-out="'مراجع تازه' if clin else 'شرکت‌کنندهٔ جدید'"/>
                                 </div>
                             </header>
                             <t t-if="has_any">
@@ -73,7 +74,8 @@
                                                 <th scope="col" t-att-aria-sort="('descending' if desc else 'ascending') if sort == 'name' else None">
                                                     <a t-att-href="url(sort='name', dir='desc' if (sort == 'name' and not desc) else 'asc', page=1)">نام</a></th>
                                                 <th t-if="'source' in cols" scope="col">منبع</th>
-                                                <th t-if="'responsible' in cols" scope="col">کارشناس مسئول</th>
+                                                <th t-if="'responsible' in cols" scope="col" t-out="'مشاور' if clin else 'کارشناس مسئول'"/>
+                                                <th t-if="'last' in cols" scope="col">آخرین آزمون</th>
                                                 <th t-if="'open' in cols" scope="col" t-att-aria-sort="('descending' if desc else 'ascending') if sort == 'open' else None">
                                                     <a t-att-href="url(sort='open', dir='asc' if (sort == 'open' and desc) else 'desc', page=1)">در جریان</a></th>
                                                 <th t-if="'done' in cols" scope="col" t-att-aria-sort="('descending' if desc else 'ascending') if sort == 'done' else None">
@@ -92,6 +94,7 @@
                                                 </th>
                                                 <td t-if="'source' in cols" data-label="منبع"><span class="ts-pill ts-pill--info" t-if="c.source == 'import'">واردشده</span><t t-else="" t-out="source_labels.get(c.source)"/></td>
                                                 <td t-if="'responsible' in cols" data-label="کارشناس مسئول"><t t-if="c.responsible_id"><bdi t-out="c.responsible_id.user_id.name"/></t><span t-else="" class="ts-hint">بدون کارشناس</span></td>
+                                                <td t-if="'last' in cols" data-label="آخرین آزمون"><t t-if="last.get(c.id)"><a t-att-href="last[c.id]['url']"><t t-out="last[c.id]['title']"/></a> <span t-attf-class="ts-pill #{'ts-pill--ok' if last[c.id]['key'] == 'done' else ('ts-pill--warn' if last[c.id]['key'] in ('expired', 'declined') else 'ts-pill--info')}" t-out="last[c.id]['state']"/></t><span t-else="" class="ts-hint">بدون آزمون</span></td>
                                                 <td t-if="'open' in cols" data-label="در جریان" class="ts-num" t-out="fa(c.open_count)"/>
                                                 <td t-if="'done' in cols" data-label="تکمیل‌شده" class="ts-num" t-out="fa(c.done_count)"/>
                                                 <td t-if="'activity' in cols" data-label="آخرین فعالیت" t-out="jalali(c.last_activity_at, with_time=False)"/>
@@ -140,7 +143,7 @@
                                     <a t-if="page &lt; pages" t-att-href="url(page=page + 1)" rel="next">صفحهٔ بعد</a>
                                 </nav>
                             </form>
-                            <section t-if="has_any" class="ts-card tsp-collapse" aria-labelledby="tsp-views-h" data-tsp-collapse="1">
+                            <section t-if="has_any and not clin" class="ts-card tsp-collapse" aria-labelledby="tsp-views-h" data-tsp-collapse="1">
                                 <h2 id="tsp-views-h" class="h5">نماهای ذخیره‌شده و ستون‌ها</h2>
                                 <ul t-if="views" class="tsp-list">
                                     <li t-foreach="views" t-as="v">

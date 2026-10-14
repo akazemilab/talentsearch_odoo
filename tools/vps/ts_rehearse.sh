@@ -169,6 +169,7 @@ has ts_onboard && { echo "=== $(date +%T) http onb2 (one-tap invitations, test f
 # onb3: the first session inside a panel (one form, try-out, sample, one-screen invitation, permanent link, guide SMS, audience pages)
 has ts_onboard && { echo "=== $(date +%T) http onb3 (the first session inside a panel)"; http ts_http_onb3.py; }
 has ts_onboard && { echo "=== $(date +%T) http clin7 (clinic office and therapist)"; http ts_http_clin7.py; }
+has ts_onboard && { echo "=== $(date +%T) http clin8 (clinic menus, services, talent inventory)"; http ts_http_clin8.py; }
 if has ts_kavenegar; then
   echo "=== $(date +%T) kavenegar tests (fake API, commits)"; orm tests_kavenegar.py
   echo "=== $(date +%T) kavenegar webhooks (http)"; http ts_http_kv.py

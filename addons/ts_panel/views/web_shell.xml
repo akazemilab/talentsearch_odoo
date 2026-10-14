@@ -12,7 +12,7 @@
                 <!-- Context from controllers/base.py render_in_shell: ws, member, menu, role_label, role_scope, role_help_url,
                      panel_state, flash_ok, flash_err, and optional back_url / back_label (the parent
                      page: rendered above the page heading as «→ back_label», audit PAT-3). -->
-                <t t-set="tabs" t-value="[m for m in menu if m['key'] in ('home', 'clients', 'invites', 'reports')][:4]"/>
+                <t t-set="tabs" t-value="[m for m in menu if m['key'] in ('home', 'clients', 'invites', 'services', 'reports')][:4]"/>
                 <section class="ts-section tsp-section">
                     <div class="ts-container tsp-shell" id="tsp-shell">
                         <aside class="tsp-shell__nav" id="tsp-rail" aria-label="پنل">
@@ -30,9 +30,10 @@
                                     <a class="tsp-role" t-att-href="role_help_url or '/help/roles'" title="آنچه این نقش می‌بیند و انجام می‌دهد">نقش شما: <t t-out="role_label"/></a>
                                 </span>
                                 <span t-if="ws.state != 'active'" class="ts-pill ts-pill--warn" t-out="panel_state"/>
-                                <p t-if="role_scope" class="tsp-switch__scope" t-out="role_scope"/>
+                                <p t-if="role_scope and not shell_flat" class="tsp-switch__scope" t-out="role_scope"/>
                                 <a href="/my/workspaces" class="tsp-switch__link" aria-label="تغییر پنل">تغییر پنل</a>
                             </div>
+                            <a t-if="shell_send_url" t-att-href="shell_send_url" class="ts-btn ts-btn--primary tsp-send" id="tsp-send" aria-label="فرستادن آزمون">فرستادن آزمون</a>
                             <nav class="tsp-nav" aria-label="منوی پنل">
                                 <ul id="tsp-menu" class="tsp-nav__list">
                                     <li t-foreach="menu" t-as="it" t-att-class="'tsp-nav__solo' if it.get('solo') else None">
@@ -45,6 +46,7 @@
                                     </li>
                                 </ul>
                             </nav>
+                            <a t-if="shell_flat" href="/help/panel" class="tsp-helplink" id="tsp-help" aria-label="راهنما">راهنما</a>
                         </aside>
                         <div class="tsp-scrim" data-tsp-close="1" hidden="hidden"/>
                         <div class="tsp-shell__main">
@@ -53,6 +55,7 @@
                                     <strong t-out="ws.name"/>
                                     <span class="ts-hint"><bdi class="ts-bdi" dir="ltr" t-out="ws.code"/> · <a class="tsp-role" t-att-href="role_help_url or '/help/roles'">نقش شما: <t t-out="role_label"/></a><t t-if="ws.state != 'active'"> · <t t-out="panel_state"/></t></span>
                                 </div>
+                                <a t-if="shell_send_url" t-att-href="shell_send_url" class="ts-btn ts-btn--primary ts-btn--sm tsp-send" id="tsp-send-m">فرستادن آزمون</a>
                                 <button type="button" class="tsp-nav__toggle" aria-expanded="false" aria-controls="tsp-rail" data-tsp-open="1">
                                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
                                     <span>منو</span>
@@ -140,6 +143,7 @@
                     <t t-elif="key == 'campaigns'"><path d="M4 12a8 8 0 1 0 16 0 8 8 0 0 0-16 0z"/><path d="M12 8v4l3 2"/></t>
                     <t t-elif="key == 'import'"><path d="M12 4v11"/><path d="M8 11l4 4 4-4"/><path d="M4 19h16"/></t>
                     <t t-elif="key == 'exports'"><path d="M12 15V4"/><path d="M8 8l4-4 4 4"/><path d="M4 19h16"/></t>
+                    <t t-elif="key == 'services'"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M8 9h8"/><path d="M8 13h8"/><path d="M8 17h5"/></t>
                     <t t-elif="key == 'reports'"><path d="M4 20h16"/><path d="M7 17V11"/><path d="M12 17V6"/><path d="M17 17v-4"/></t>
                     <t t-elif="key in ('credits', 'credits_own')"><rect x="3" y="6" width="18" height="12" rx="2"/><path d="M3 10h18"/></t>
                     <t t-elif="key == 'members'"><circle cx="12" cy="8" r="3.5"/><path d="M5 20c0-3.6 3.1-6 7-6s7 2.4 7 6"/></t>
