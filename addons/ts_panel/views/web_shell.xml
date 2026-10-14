@@ -33,7 +33,7 @@
                                 <p t-if="role_scope and not shell_flat" class="tsp-switch__scope" t-out="role_scope"/>
                                 <a href="/my/workspaces" class="tsp-switch__link" aria-label="تغییر پنل">تغییر پنل</a>
                             </div>
-                            <a t-if="shell_send_url" t-att-href="shell_send_url" class="ts-btn ts-btn--primary tsp-send" id="tsp-send" aria-label="فرستادن آزمون">فرستادن آزمون</a>
+                            <a t-if="shell_send_url" t-att-href="shell_send_url" class="ts-btn ts-btn--outline tsp-send" id="tsp-send" aria-label="فرستادن آزمون">فرستادن آزمون</a>
                             <nav class="tsp-nav" aria-label="منوی پنل">
                                 <ul id="tsp-menu" class="tsp-nav__list">
                                     <li t-foreach="menu" t-as="it" t-att-class="'tsp-nav__solo' if it.get('solo') else None">
@@ -55,7 +55,7 @@
                                     <strong t-out="ws.name"/>
                                     <span class="ts-hint"><bdi class="ts-bdi" dir="ltr" t-out="ws.code"/> · <a class="tsp-role" t-att-href="role_help_url or '/help/roles'">نقش شما: <t t-out="role_label"/></a><t t-if="ws.state != 'active'"> · <t t-out="panel_state"/></t></span>
                                 </div>
-                                <a t-if="shell_send_url" t-att-href="shell_send_url" class="ts-btn ts-btn--primary ts-btn--sm tsp-send" id="tsp-send-m">فرستادن آزمون</a>
+                                <a t-if="shell_send_url" t-att-href="shell_send_url" class="ts-btn ts-btn--outline ts-btn--sm tsp-send" id="tsp-send-m">فرستادن آزمون</a>
                                 <button type="button" class="tsp-nav__toggle" aria-expanded="false" aria-controls="tsp-rail" data-tsp-open="1">
                                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
                                     <span>منو</span>
