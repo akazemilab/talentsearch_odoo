@@ -40,7 +40,7 @@
                                 </div>
                                 <span t-if="ws.state != 'active'" class="ts-pill ts-pill--warn" t-out="panel_state"/>
                                 <p t-if="role_scope and not shell_flat" class="tsp-switch__scope" t-out="role_scope"/>
-                                <a t-if="shell_multi" href="/my/workspaces" t-attf-class="tsp-switch__link #{'tsp-switch__swap' if shell_flat else ''}" aria-label="تغییر پنل" title="تغییر پنل"><t t-if="shell_flat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M8 9l4-4 4 4M8 15l4 4 4-4"/></svg></t><t t-else="">تغییر پنل</t></a>
+                                <a t-if="shell_multi" href="/my/workspaces" class="tsp-switch__link" t-att-class="'tsp-switch__swap' if shell_flat else None" aria-label="تغییر پنل" title="تغییر پنل"><t t-if="shell_flat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M8 9l4-4 4 4M8 15l4 4 4-4"/></svg></t><t t-else="">تغییر پنل</t></a>
                             </div>
                             <a t-if="shell_send_url" t-att-href="shell_send_url" class="ts-btn ts-btn--outline tsp-send" id="tsp-send" aria-label="فرستادن آزمون">فرستادن آزمون</a>
                             <nav class="tsp-nav" aria-label="منوی پنل">

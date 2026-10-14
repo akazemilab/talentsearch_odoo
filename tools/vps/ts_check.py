@@ -104,6 +104,7 @@ def prev_element(el):
 # Odoo refuses some attributes as xpath selectors in inherited views (found 2026-10-12: aria-label)
 BAD_XPATH_ATTRS = ('aria-label', 'title', 'placeholder', 'alt', 'string', 'help')   # translatable attributes
 view_ids = {}   # module -> set of xml ids of views/templates
+static_by_file, dyn_classes, hasclass_uses = {}, set(), []   # clin11: an xpath hasclass('x') needs a STATIC class="x" in another file
 for p in glob.glob(f'{ADDONS}/**/*.xml', recursive=True):
     mod = rel(p).split(os.sep)[1]
     try:
@@ -114,6 +115,15 @@ for p in glob.glob(f'{ADDONS}/**/*.xml', recursive=True):
     for el in tree.iter():
         if not isinstance(el.tag, str):
             continue
+        if el.get('class'):
+            for c in el.get('class').split():
+                static_by_file.setdefault(c, set()).add(rel(p))
+        for k in ('t-attf-class', 't-att-class'):
+            if el.get(k):
+                dyn_classes.update(re.findall(r'[A-Za-z][\w-]+', el.get(k)))
+        if el.tag == 'xpath':
+            for c in re.findall(r"hasclass\(\s*['\"]([^'\"]+)['\"]", el.get('expr', '')):
+                hasclass_uses.append((rel(p), el.sourceline, c))
         if el.tag == 'xpath' and any(('@%s=' % a) in el.get('expr', '').replace(' ', '') for a in BAD_XPATH_ATTRS):
             errors.append(f'xpath {rel(p)}:{el.sourceline} uses a forbidden selector attribute: {el.get("expr")[:80]}')
         if 't-elif' in el.attrib or 't-else' in el.attrib:
@@ -214,6 +224,13 @@ if os.path.isdir(PANEL):
             if w in txt:
                 errors.append(f'words {rel(p)}: forbidden claim «{w}»')
 
+for f, line, c in hasclass_uses:
+    if static_by_file.get(c, set()) - {f}:
+        continue
+    if c in dyn_classes:
+        errors.append(f'xpath {f}:{line} hasclass({c!r}) but the target has it only in t-attf-class/t-att-class: keep a static class="{c}"')
+    elif c not in static_by_file:
+        warns.append(f'xpath {f}:{line} hasclass({c!r}) not found in our addons (an Odoo core class?)')
 for e in errors:
     print('E ' + e)
 for w in warns:
