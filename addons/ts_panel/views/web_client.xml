@@ -75,7 +75,7 @@
                                 <form t-if="can_assign" t-attf-action="/my/workspaces/#{ws.id}/clients/#{c.id}/responsible" method="post" class="tsp-form" data-tsp-once="1">
                                     <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
                                     <div class="tsp-field">
-                                        <label class="tsp-field__label" for="tsp_resp">تغییر کارشناس مسئول</label>
+                                        <label class="tsp-field__label" for="tsp_resp" t-out="'تغییر مشاور' if shell_flat else 'تغییر کارشناس مسئول'"/>
                                         <select id="tsp_resp" name="responsible_id">
                                             <option value="">بدون کارشناس</option>
                                             <option t-foreach="cands" t-as="m" t-att-value="m.id" t-att-selected="'selected' if m == c.responsible_id else None">
@@ -83,7 +83,7 @@
                                             </option>
                                         </select>
                                     </div>
-                                    <p><button type="submit" class="ts-btn ts-btn--outline">ذخیرهٔ کارشناس مسئول</button></p>
+                                    <p><button type="submit" class="ts-btn ts-btn--outline" t-out="'ذخیرهٔ مشاور' if shell_flat else 'ذخیرهٔ کارشناس مسئول'"/></p>
                                 </form>
                                 <form t-if="colleagues and not c.handover_to_id and c.state == 'active'" t-attf-action="/my/workspaces/#{ws.id}/clients/#{c.id}/handover" method="post" class="tsp-form" data-tsp-once="1">
                                     <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
