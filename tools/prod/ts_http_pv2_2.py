@@ -132,7 +132,7 @@ check('and the name did not change', 'NAME پنل S2 آموزشی' in name, name
 u = login('unv')
 st, _, page = u.req('/my/workspaces/%s' % C)
 check('a clinician without the licence badge gets the clinician panel, no waiting page',
-      st == 200 and 'در حال بررسی است' not in page and 'پیشخوان' in menu(page) and 'شرکت‌کنندگان' in menu(page), '%s %s' % (st, menu(page)))
+      st == 200 and 'در حال بررسی است' not in page and 'پیشخوان' in menu(page) and 'مراجعان' in menu(page), '%s %s' % (st, menu(page)))
 check('the old page is not closed to them any more', u.req('/my/workspaces/%s/legacy' % C)[0] != 404)
 check('and settings is 403', u.req('/my/workspaces/%s/settings' % C)[0] == 403)
 
