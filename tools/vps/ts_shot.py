@@ -122,6 +122,19 @@ JS = r"""() => {
   const ids = {}; for (const el of document.querySelectorAll('[id]')) ids[el.id] = (ids[el.id] || 0) + 1;
   out.dupid = Object.keys(ids).filter(k => ids[k] > 1).slice(0, 4);
   out.lang = document.documentElement.lang || '';
+  // clin9: empty vertical space between consecutive blocks of the panel (TS_SHOT_GAPS=1 prints it): the spacing audit
+  const gaps = [], vis = e => { const c = getComputedStyle(e), r = e.getBoundingClientRect();
+    return c.display !== 'none' && c.visibility !== 'hidden' && r.height > 0 && c.position !== 'fixed' && c.position !== 'absolute'; };
+  const lab = e => e.id ? '#' + e.id : (e.tagName.toLowerCase() + ([...e.classList].slice(0, 1).map(c => '.' + c).join('')));
+  for (const root of document.querySelectorAll('.tsp-shell__main, .tsp-shell__nav, .tsp-shell__main > section, .tsp-shell__main > form, .ts-card')) {
+    const kids = [...root.children].filter(vis).sort((x, y) => x.getBoundingClientRect().top - y.getBoundingClientRect().top);   // visual order (CSS order:)
+    for (let i = 1; i < kids.length; i++) {
+      const a = kids[i - 1].getBoundingClientRect(), b = kids[i].getBoundingClientRect(), g = Math.round(b.top - a.bottom);
+      if (g > 24 && b.top > a.top) gaps.push(g + 'px ' + lab(root) + ':' + lab(kids[i - 1]) + '>' + lab(kids[i]));
+    }
+  }
+  out.gaps = [...new Set(gaps)].slice(0, 10);
+  out.height = document.documentElement.scrollHeight;
   return out;
 }"""
 
@@ -305,6 +318,8 @@ def audit(p, login, paths):
                 page.screenshot(path=stem + '_fold.png', full_page=False)
                 page.set_viewport_size({'width': w, 'height': 900})
             print('%s %-4s %-40s %s%s' % (r.status if r else '-', w, path[:40], '; '.join(probs) or 'ok', info), flush=True)
+            if os.environ.get('TS_SHOT_GAPS') == '1':
+                print('   gaps %-4s h=%d %s' % (w, m.get('height', 0), ' | '.join(m.get('gaps') or []) or '-'), flush=True)
         for w in DARK:
             page.set_viewport_size({'width': w, 'height': 900})
             page.evaluate("() => localStorage.setItem('ts-site-theme', 'dark')")

@@ -82,7 +82,7 @@ SQL
     if [ $rc -ne 0 ]; then echo "--- exception lines:"; grep -E "^[A-Za-z_.]+(Error|Exception|Warning)[:(]" "/tmp/ts_apply_$DB.log" | head -8 | cut -c1-400; echo "--- last traceback lines:"; awk '/Traceback/{buf=""} {buf=buf $0 "\n"} END{printf "%s", buf}' "/tmp/ts_apply_$DB.log" | tail -25 | cut -c1-300; fi
     step "rc=$rc"; exit $rc ;;
   serve)
-    PORT=${3:-8071}; pkill -f "[-]d $DB " 2>/dev/null; sleep 1
+    PORT=${3:-${TS_PORT:-8071}}; pkill -f "[-]d $DB " 2>/dev/null; sleep 1
     holder=$(ss -ltnp "sport = :$PORT" | grep -o 'pid=[0-9]*' | head -1 | cut -d= -f2)
     if [ -n "$holder" ]; then echo "!! port $PORT is held by: $(tr '\0' ' ' < /proc/$holder/cmdline | grep -o -- '-d [^ ]*')"; exit 3; fi
     avail=$(awk '/MemAvailable/{print int($2/1024)}' /proc/meminfo)
@@ -95,7 +95,7 @@ SQL
     pkill -f "[-]d $DB " 2>/dev/null; sleep 2
     echo "halted $DB (database kept); procs left: $(pgrep -fc "[-]d $DB ")" ;;
   reload)
-    MODS=${3:?modules}; PORT=${4:-8071}
+    MODS=${3:?modules}; PORT=${4:-${TS_PORT:-8071}}
     pkill -f "[-]d $DB " 2>/dev/null; sleep 2
     step "reload: upgrade $MODS"
     odoo -u "$MODS" --stop-after-init --no-http > "/tmp/ts_reload_$DB.log" 2>&1; rc=$?

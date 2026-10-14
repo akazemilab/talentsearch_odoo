@@ -14,7 +14,7 @@
                      page: rendered above the page heading as «→ back_label», audit PAT-3). -->
                 <t t-set="tabs" t-value="[m for m in menu if m['key'] in ('home', 'clients', 'invites', 'services', 'reports')][:4]"/>
                 <section class="ts-section tsp-section">
-                    <div class="ts-container tsp-shell" id="tsp-shell">
+                    <div t-attf-class="ts-container tsp-shell #{'tsp-shell--flat' if shell_flat else ''}" id="tsp-shell">
                         <aside class="tsp-shell__nav" id="tsp-rail" aria-label="پنل">
                             <div class="tsp-drawer__head">
                                 <strong t-out="ws.name"/>
@@ -25,13 +25,13 @@
                             <div class="tsp-switch">
                                 <strong class="tsp-switch__name" t-out="ws.name"/>
                                 <span class="tsp-switch__meta">
-                                    <bdi class="ts-bdi" dir="ltr" t-out="ws.code"/>
-                                    <span aria-hidden="true">·</span>
+                                    <t t-if="not shell_flat"><bdi class="ts-bdi" dir="ltr" t-out="ws.code"/>
+                                    <span aria-hidden="true">·</span></t>
                                     <a class="tsp-role" t-att-href="role_help_url or '/help/roles'" title="آنچه این نقش می‌بیند و انجام می‌دهد">نقش شما: <t t-out="role_label"/></a>
                                 </span>
                                 <span t-if="ws.state != 'active'" class="ts-pill ts-pill--warn" t-out="panel_state"/>
                                 <p t-if="role_scope and not shell_flat" class="tsp-switch__scope" t-out="role_scope"/>
-                                <a href="/my/workspaces" class="tsp-switch__link" aria-label="تغییر پنل">تغییر پنل</a>
+                                <a t-if="shell_multi" href="/my/workspaces" class="tsp-switch__link" aria-label="تغییر پنل">تغییر پنل</a>
                             </div>
                             <a t-if="shell_send_url" t-att-href="shell_send_url" class="ts-btn ts-btn--outline tsp-send" id="tsp-send" aria-label="فرستادن آزمون">فرستادن آزمون</a>
                             <nav class="tsp-nav" aria-label="منوی پنل">
@@ -53,7 +53,7 @@
                             <div class="tsp-topbar">
                                 <div class="tsp-topbar__ws">
                                     <strong t-out="ws.name"/>
-                                    <span class="ts-hint"><bdi class="ts-bdi" dir="ltr" t-out="ws.code"/> · <a class="tsp-role" t-att-href="role_help_url or '/help/roles'">نقش شما: <t t-out="role_label"/></a><t t-if="ws.state != 'active'"> · <t t-out="panel_state"/></t></span>
+                                    <span class="ts-hint"><t t-if="not shell_flat"><bdi class="ts-bdi" dir="ltr" t-out="ws.code"/> · </t><a class="tsp-role" t-att-href="role_help_url or '/help/roles'">نقش شما: <t t-out="role_label"/></a><t t-if="ws.state != 'active'"> · <t t-out="panel_state"/></t></span>
                                 </div>
                                 <a t-if="shell_send_url" t-att-href="shell_send_url" class="ts-btn ts-btn--outline ts-btn--sm tsp-send" id="tsp-send-m">فرستادن آزمون</a>
                                 <button type="button" class="tsp-nav__toggle" aria-expanded="false" aria-controls="tsp-rail" data-tsp-open="1">

@@ -47,9 +47,9 @@ class TsServices(http.Controller):
                 'id': i.id, 'title': i.ts_title(), 'time': i.ts_total_time_label(), 'effort': i.ts_effort_label(),
                 'summary': i.summary or '', 'use': i.intended_use or '', 'limits': i.limitations or '',
                 'price': _price(i, show_price), 'send': (send % (ws.id, 'i%d' % i.id)) if can_send else ''})
-        cats = [{'name': k, 'rows': sorted(v, key=lambda r: r['title'].replace('‌', ' '))}
-                for k, v in sorted(groups.items(), key=lambda kv: kv[0].replace('‌', ' '))]
+        cats = [{'name': k, 'anchor': 'tss-c%d' % n, 'rows': sorted(v, key=lambda r: r['title'].replace('‌', ' '))}
+                for n, (k, v) in enumerate(sorted(groups.items(), key=lambda kv: kv[0].replace('‌', ' ')))]
         return render_in_shell(
             'ts_onboard.services', me, 'services', 'خدمات', bats=bats, cats=cats, show_price=show_price,
             n_total=len(bats) + sum(len(c['rows']) for c in cats), fa=fa_digits,
-            members_url=('/my/workspaces/%d/members' % ws.id) if me.has_perm('catalog:assign') else None)
+            members_url=('/my/workspaces/%d/members' % ws.id) if (me.role == 'owner' and me.has_perm('catalog:assign')) else None)

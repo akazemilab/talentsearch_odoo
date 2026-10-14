@@ -17,6 +17,9 @@ FILTERS = [('all', 'همه'), ('mine', 'شرکت‌کنندگان من'), ('unas
            ('done', 'تکمیل‌شده')]
 
 
+CLINIC_FILTER_LABELS = {'mine': 'مراجعان من', 'unassigned': 'بدون مشاور', 'done': 'آماده', 'archived': 'بایگانی'}
+
+
 def role_filters(me):
     """The chips this member can use (G5-P2-3, G5-P14-2): responsibility chips only for roles that hold participants,
     the handover chip only for those who decide on it, «من» first for members who see only their own."""
@@ -34,6 +37,10 @@ def role_filters(me):
             keys = [k for k in keys if k not in ('mine', 'mine_open')]
     if not me.has_perm('clients:assign'):
         keys = [k for k in keys if k != 'handover']
+    if me.workspace_id.purpose == 'clinical':
+        # clin9: a clinic keeps four chips; handover requests and imports reach the office from the dashboard
+        keys = [k for k in keys if k not in ('imported', 'handover', 'mine_open')][:4]
+        labels.update(CLINIC_FILTER_LABELS)
     return [(k, labels[k]) for k in keys]
 
 

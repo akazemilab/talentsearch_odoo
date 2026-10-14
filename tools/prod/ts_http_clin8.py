@@ -66,10 +66,10 @@ if m:
     off, doc, own = Client(TS), Client(TS), Client(TS)
     check('H02 sign-ins', off.login(L['off'], pw[L['off']]) and doc.login(L['doc'], pw[L['doc']]) and own.login(L['own'], pw[L['own']]))
     st, _, page = off.req(W)
-    check('H03 office menu: پیشخوان، مراجعان، خدمات، اعتبار', menu(page) == ['پیشخوان', 'مراجعان', 'خدمات', 'اعتبار'], menu(page))
+    check('H03 office menu: پیشخوان، خدمات، مراجعان، اعتبار (clin9: «خدمات» right after «پیشخوان»)', menu(page) == ['پیشخوان', 'خدمات', 'مراجعان', 'اعتبار'], menu(page))
     check('H04 fixed «فرستادن آزمون» for the office, no group headings', 'id="tsp-send"' in page and 'tsp-nav__group' not in page)
     st, _, page = doc.req(W)
-    check('H05 therapist menu: پیشخوان، مراجعان، خدمات، گزارش‌ها', menu(page) == ['پیشخوان', 'مراجعان', 'خدمات', 'گزارش‌ها'], menu(page))
+    check('H05 therapist menu: پیشخوان، خدمات، مراجعان، گزارش‌ها', menu(page) == ['پیشخوان', 'خدمات', 'مراجعان', 'گزارش‌ها'], menu(page))
     st, _, page = own.req(W)
     check('H06 owner menu ends with تنظیمات, no members/audit/help items',
           menu(page)[-1:] == ['تنظیمات'] and not {'اعضا و نقش‌ها', 'دفتر ممیزی', 'راهنما'} & set(menu(page)), menu(page))

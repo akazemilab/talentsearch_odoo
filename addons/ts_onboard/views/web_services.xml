@@ -11,47 +11,57 @@
                 <t t-call="website.layout" additional_title="title">
                     <div id="wrap" class="ts-page">
                         <t t-call="ts_panel.shell_frame">
-                            <header class="tsp-head">
+                            <header class="tsp-head tss-head">
                                 <div>
                                     <h1 class="tsp-head__title">خدمات</h1>
-                                    <p class="tsp-head__help">آنچه می‌توانید برای مراجع بفرستید. هر مورد برای کمک به گفت‌وگوی مشاوره است، نه تشخیص.</p>
+                                    <p class="tsp-head__help">برای هر مراجع یکی را بفرستید. هر مورد کمکی برای گفت‌وگوی مشاوره است، نه تشخیص.</p>
                                 </div>
                             </header>
-                            <p t-if="members_url" class="ts-hint" id="tss-access">دسترسی هر مشاور به این خدمات را در <a t-att-href="members_url">اعضا و دسترسی‌ها</a> تنظیم کنید.</p>
                             <p t-if="not n_total" class="tsp-empty" id="tss-empty">هنوز خدمتی برای شما فعال نیست. از مالک مرکز بخواهید دسترسی شما را باز کند.</p>
+                            <nav t-if="n_total" class="tsp-chips tss-jump" aria-label="بخش‌های خدمات">
+                                <a t-if="bats" href="#tss-bats" class="tsp-chip">مجموعه‌ها <span class="ts-num" t-out="fa(len(bats))"/></a>
+                                <a t-foreach="cats" t-as="cat" t-attf-href="##{cat['anchor']}" class="tsp-chip"><t t-out="cat['name']"/> <span class="ts-num" t-out="fa(len(cat['rows']))"/></a>
+                            </nav>
 
                             <section t-if="bats" class="tss-group" id="tss-bats" aria-labelledby="tss-bats-h">
-                                <h2 id="tss-bats-h" class="h5">مجموعه‌ها</h2>
+                                <h2 id="tss-bats-h" class="tss-group__h">مجموعه‌ها <span class="ts-hint">چند سنجه با یک پیامک</span></h2>
                                 <ul class="tss-list">
-                                    <li t-foreach="bats" t-as="b" class="ts-card tss-item" t-att-id="'tss-b%s' % b['id']">
-                                        <div class="tss-item__main">
+                                    <li t-foreach="bats" t-as="b" class="ts-card tss-item tss-item--bat" t-att-id="'tss-b%s' % b['id']">
+                                        <div class="tss-item__top">
                                             <h3 class="tss-item__title" t-out="b['title']"/>
-                                            <p class="tss-item__facts"><t t-out="fa(b['facts']['count'])"/> سنجه · <t t-out="fa(b['facts']['items'])"/> پرسش · حدود <t t-out="fa(b['facts']['minutes'])"/> دقیقه<t t-if="b['price']"> · <strong class="tss-price" t-out="b['price']"/></t></p>
-                                            <p t-if="b['desc']" class="tss-item__desc" t-out="b['desc']"/>
-                                            <details class="tss-more"><summary>شامل</summary><p t-out="'، '.join(b['lines'])"/></details>
+                                            <strong t-if="b['price']" class="tss-price" t-out="b['price']"/>
                                         </div>
-                                        <a t-if="b['send']" t-att-href="b['send']" class="ts-btn ts-btn--outline ts-btn--sm tss-send">فرستادن به مراجع</a>
+                                        <p class="tss-item__facts"><t t-out="fa(b['facts']['count'])"/> سنجه · <t t-out="fa(b['facts']['items'])"/> پرسش · حدود <t t-out="fa(b['facts']['minutes'])"/> دقیقه</p>
+                                        <p t-if="b['desc']" class="tss-item__desc" t-out="b['desc']"/>
+                                        <div class="tss-item__foot">
+                                            <details class="tss-more"><summary>شامل</summary><p t-out="'، '.join(b['lines'])"/></details>
+                                            <a t-if="b['send']" t-att-href="b['send']" class="ts-btn ts-btn--outline ts-btn--sm tss-send">فرستادن به مراجع</a>
+                                        </div>
                                     </li>
                                 </ul>
                             </section>
 
-                            <section t-foreach="cats" t-as="cat" class="tss-group" t-att-aria-label="cat['name']">
-                                <h2 class="h5" t-out="cat['name']"/>
+                            <section t-foreach="cats" t-as="cat" class="tss-group" t-att-id="cat['anchor']" t-att-aria-label="cat['name']">
+                                <h2 class="tss-group__h" t-out="cat['name']"/>
                                 <ul class="tss-list">
                                     <li t-foreach="cat['rows']" t-as="r" class="ts-card tss-item" t-att-id="'tss-i%s' % r['id']">
-                                        <div class="tss-item__main">
+                                        <div class="tss-item__top">
                                             <h3 class="tss-item__title" t-out="r['title']"/>
-                                            <p class="tss-item__facts"><t t-out="r['time']"/><t t-if="r['effort']"> · <t t-out="r['effort']"/></t><t t-if="r['price']"> · <strong class="tss-price" t-out="r['price']"/></t></p>
-                                            <p t-if="r['summary']" class="tss-item__desc" t-out="r['summary']"/>
+                                            <strong t-if="r['price']" class="tss-price" t-out="r['price']"/>
+                                        </div>
+                                        <p class="tss-item__facts"><t t-out="r['time']"/><t t-if="r['effort']"> · <t t-out="r['effort']"/></t></p>
+                                        <p t-if="r['summary']" class="tss-item__desc" t-out="r['summary']"/>
+                                        <div class="tss-item__foot">
                                             <details t-if="r['use'] or r['limits']" class="tss-more"><summary>بیشتر</summary>
                                                 <p t-if="r['use']"><strong>کاربرد: </strong><t t-out="r['use']"/></p>
                                                 <p t-if="r['limits']"><strong>محدودیت: </strong><t t-out="r['limits']"/></p>
                                             </details>
+                                            <a t-if="r['send']" t-att-href="r['send']" class="ts-btn ts-btn--outline ts-btn--sm tss-send">فرستادن به مراجع</a>
                                         </div>
-                                        <a t-if="r['send']" t-att-href="r['send']" class="ts-btn ts-btn--outline ts-btn--sm tss-send">فرستادن به مراجع</a>
                                     </li>
                                 </ul>
                             </section>
+                            <p t-if="members_url" class="ts-hint" id="tss-access">دسترسی هر مشاور به خدمات: <a t-att-href="members_url">اعضا و دسترسی‌ها</a></p>
                         </t>
                     </div>
                 </t>

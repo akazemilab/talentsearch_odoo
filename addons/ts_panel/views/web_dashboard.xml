@@ -28,15 +28,15 @@
                             <header class="tsp-head">
                                 <div>
                                     <h1 class="tsp-head__title">پیشخوان</h1>
-                                    <p t-if="att or (tiles and not empty)" class="tsp-head__help">اول کارهای منتظر شما، بعد خلاصهٔ دوره. هر عدد شما را به فهرستی می‌برد که همان تعداد را نشان می‌دهد.</p>
+                                    <p t-if="(att or (tiles and not empty)) and not shell_flat" class="tsp-head__help">اول کارهای منتظر شما، بعد خلاصهٔ دوره. هر عدد شما را به فهرستی می‌برد که همان تعداد را نشان می‌دهد.</p>
                                 </div>
                                 <div class="tsp-head__actions">
                                     <!-- first_run (set by ts_brand while a set-up list or card is shown): that list holds the one primary button -->
                                     <a t-if="can_invite and not shell_send_url" t-attf-href="/my/workspaces/#{ws.id}/invites/new?fresh=1" t-attf-class="ts-btn #{'ts-btn--outline' if first_run else 'ts-btn--primary'}">دعوت تازه</a>
-                                    <span t-attf-class="ts-pill #{'ts-pill--ok' if ws.state == 'active' else 'ts-pill--warn'}"><t t-out="panel_state"/></span>
+                                    <span t-if="not (shell_flat and ws.state == 'active')" t-attf-class="ts-pill #{'ts-pill--ok' if ws.state == 'active' else 'ts-pill--warn'}"><t t-out="panel_state"/></span>
                                 </div>
                             </header>
-                            <p t-if="role_notes.get(member.role)" class="tsp-role-note" role="note">
+                            <p t-if="role_notes.get(member.role) and not shell_flat" class="tsp-role-note" role="note">
                                 <t t-out="role_notes[member.role]"/>
                                 <a t-att-href="role_help_url or '/help/roles'">دسترسی نقش‌ها</a>
                             </p>
@@ -64,9 +64,9 @@
                             </div>
 
                             <section t-if="tiles and not empty" class="ts-card" aria-labelledby="tsp-d-kpi">
-                                <h2 id="tsp-d-kpi" class="h5">رخدادهای این دوره</h2>
-                                <p class="ts-hint">شمار کارهایی که در این بازه رخ داده است (تجمعی)، حتی اگر وضعیت دعوت بعداً عوض شده باشد.<t t-if="manages and not [t for t in tiles if t['key'] == 'rate']"> نرخ تکمیل و میانهٔ زمان از پنجمین دعوت به بعد نشان داده می‌شود.</t></p>
-                                <nav class="tsp-chips" aria-label="دورهٔ گزارش">
+                                <h2 id="tsp-d-kpi" class="h5" t-out="'۳۰ روز گذشته' if shell_flat else 'رخدادهای این دوره'"/>
+                                <p t-if="not shell_flat" class="ts-hint">شمار کارهایی که در این بازه رخ داده است (تجمعی)، حتی اگر وضعیت دعوت بعداً عوض شده باشد.<t t-if="manages and not [t for t in tiles if t['key'] == 'rate']"> نرخ تکمیل و میانهٔ زمان از پنجمین دعوت به بعد نشان داده می‌شود.</t></p>
+                                <nav t-if="not shell_flat" class="tsp-chips" aria-label="دورهٔ گزارش">
                                     <a t-foreach="periods" t-as="p" t-attf-href="/my/workspaces/#{ws.id}?period=#{p}"
                                        t-attf-class="tsp-chip #{'is-on' if p == days else ''}" t-att-aria-current="'true' if p == days else None">
                                         <t t-out="fa(p)"/> روز گذشته</a>
