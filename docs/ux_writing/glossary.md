@@ -146,6 +146,18 @@ B Odoo backend staff, ALL everyone.
    "demo/test data" and may make a paying school think results are not real. Recommendation: «در انتظار تأیید» while gated
    (with the one-line reason on every page), «فعال» after approval; «پایلوت» stays a CRM/sales word only.
 
+7. **Public pages speak everyday Persian. DECIDED (owner, 2026-10-14).** On the public site (/, /career, /assessments,
+   /contact, /contact/thanks, /privacy heading, 404, 500, header and footer, menu, page titles) use the words people say and
+   search, in correct written Persian, never slang: «آزمون» (not «سنجه»), «لینک» (not «پیوند»), «شمارهٔ موبایل» (not
+   «شمارهٔ همراه»), «کد تأیید» (not «کد پیامکی»), «سؤال» (not «پرسش»), «متناسب/مناسب» (not «هم‌خوان»), «متقاضی» (not
+   «داوطلب») for job applicants, «بستهٔ آزمون» for a battery, «سابقهٔ دسترسی» (not «دفتر ممیزی»), «اطلاعات» (not «داده»)
+   in sentences, «سؤال‌های متداول», «تماس با ما», «صفحهٔ اصلی», «رفتن به محتوای اصلی». No calques («با ما حرف بزنید»،
+   «دادهٔ شما، تصمیم شما») and no full stop at the end of headings. Applied in commit 871ca92 (data file
+   tools/content/ux_public_20261014.txt, before/after table docs/ux_writing/public_pages_2026-10-14_table.md).
+   Not changed: the /privacy body (versioned consent text TS-CONSENT-1405-07-07-v1: a wording change needs a new
+   consent version), the signed-in app bar, the product (panel, player, reports, SMS), instrument and factor names from
+   the book. The product still says «سنجه»/«پیوند»; whether it follows the public pages is an open owner decision.
+
 ## 10. Terminology drift found by the UX audit (2026-10-11)
 
 | Audit ref | Drift | Glossary resolution |
