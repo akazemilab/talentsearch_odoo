@@ -170,6 +170,7 @@ has ts_onboard && { echo "=== $(date +%T) http onb2 (one-tap invitations, test f
 has ts_onboard && { echo "=== $(date +%T) http onb3 (the first session inside a panel)"; http ts_http_onb3.py; }
 has ts_onboard && { echo "=== $(date +%T) http clin7 (clinic office and therapist)"; http ts_http_clin7.py; }
 has ts_onboard && { echo "=== $(date +%T) http clin8 (clinic menus, services, talent inventory)"; http ts_http_clin8.py; }
+has ts_website && { echo "=== $(date +%T) http site1 (one-page home, career hero, section redirects)"; http ts_http_site1.py; }
 if has ts_kavenegar; then
   echo "=== $(date +%T) kavenegar tests (fake API, commits)"; orm tests_kavenegar.py
   echo "=== $(date +%T) kavenegar webhooks (http)"; http ts_http_kv.py
