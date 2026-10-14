@@ -17,6 +17,14 @@ ROLE_LABELS = {
     'clinic_director': 'مدیر مرکز مشاوره', 'clinician': 'مشاور مرکز', 'counselor': 'مشاور',
     'reviewer': 'بازبین', 'school_admin': 'مدیر مدرسه',
 }
+# clin7 (owner 2026-10-14): a role may read differently in one kind of panel (a clinic's «admin» is its office).
+ROLE_LABELS_BY_PURPOSE = {('admin', 'clinical'): 'دفتر مرکز'}
+
+
+def role_label(role, purpose=None):
+    return ROLE_LABELS_BY_PURPOSE.get((role, purpose)) or ROLE_LABELS.get(role, role)
+
+
 # One label per panel purpose for the panel list, the landing page and the create form (UX audit G3-P20-2).
 PURPOSE_LABELS = {'education': 'مدرسه یا دانشگاه', 'employment': 'سازمان (استخدام و منابع انسانی)',
                   'clinical': 'مرکز مشاوره', 'benefits': 'رفاه کارکنان'}

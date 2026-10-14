@@ -125,7 +125,7 @@ class TsMemberDashboard(models.Model):
             add('overdue', 'دعوت گذشته از مهلت', A.search_count(dom + overdue_domain()), base + '/invites?overdue=1')
             add('expiring', 'دعوتی که تا ۳ روز دیگر منقضی می‌شود', A.search_count(dom + expiring_domain()), base + '/invites?expiring=1')
         if self.has_perm('clients:assign') or self.has_perm('clients:read_unassigned'):
-            add('unassigned', '%s بدون کارشناس مسئول' % ('مراجع' if ws.purpose == 'clinical' else 'شرکت‌کنندهٔ'),
+            add('unassigned', 'مراجع بدون مشاور' if ws.purpose == 'clinical' else 'شرکت‌کنندهٔ بدون کارشناس مسئول',
                 C.search_count(visible_domain(self) + [('state', '=', 'active'), ('responsible_id', '=', False)]),
                 base + '/clients?filter=unassigned')
         if self.has_perm('clients:assign'):

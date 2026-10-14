@@ -7,7 +7,7 @@ from odoo.addons.ts_assessment.models.attempt import fa_digits, jalali_long
 from urllib.parse import quote
 
 from odoo.addons.ts_org.controllers.main import _membership
-from odoo.addons.ts_org.models.panel import ROLE_LABELS, TERMS_LABEL, TERMS_VERSION
+from odoo.addons.ts_org.models.panel import ROLE_LABELS, TERMS_LABEL, role_label, TERMS_VERSION
 
 PANEL_KINDS = ('school', 'org', 'clinic', 'solo')
 
@@ -173,7 +173,7 @@ class TsPanel(http.Controller):
         signed = not user._is_public()
         return request.render('ts_org.panel_join', {
             'inv': inv, 'state': inv.usable_state(), 'signed': signed,
-            'fits': signed and inv.matches(user), 'role_label': ROLE_LABELS.get(inv.role, inv.role),
+            'fits': signed and inv.matches(user), 'role_label': role_label(inv.role, inv.workspace_id.purpose),
             'urls': self._auth_urls('/join/' + token), 'error': _flash(), 'page_name': 'ts_panel',
             'bound_to': mask_identity(inv.phone, inv.email), 'by_phone': bool(inv.phone),
             'inviter': inv.invited_by_id.sudo().name or '', 'expires_fa': jalali_long(inv.expires_at),
