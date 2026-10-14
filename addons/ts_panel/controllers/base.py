@@ -4,6 +4,7 @@ Every page of the panel: find the caller's membership in the panel of the URL (4
 none), check one permission (403 page inside the shell and a deny event), render inside the shell with the menu
 that the caller's permissions allow. Later stages add menu items by appending to MENU.
 """
+import re
 import time
 from urllib.parse import quote
 
@@ -138,6 +139,21 @@ def flash_error(msg):
     request.session['ts_flash'] = msg
 
 
+def _shell_logo(ws):
+    """The panel's logo as a data URI for the identity card (ts_brand adds ts_logo_uri), else None (the initial is shown)."""
+    w = ws.sudo()
+    try:
+        return w.ts_logo_uri(96) if hasattr(w, 'ts_logo_uri') and w.ts_has_logo() else None
+    except Exception:       # noqa: BLE001 - a broken image never breaks the page
+        return None
+
+
+def _shell_color(ws):
+    """The center's brand colour (#rrggbb only: it goes into a style attribute) for the avatar, else None."""
+    c = (getattr(ws.sudo(), 'brand_color', None) or '').strip()
+    return c if re.fullmatch(r'#[0-9a-fA-F]{6}', c) else None
+
+
 def render_in_shell(template, member, active, title, status=None, **vals):
     ws = member.workspace_id
     ok, err = pop_flash()
@@ -150,6 +166,7 @@ def render_in_shell(template, member, active, title, status=None, **vals):
         shell_send_url=('/my/workspaces/%d/invites/new' % ws.id) if (ws.purpose in FLAT_PURPOSES and member.can_act()
                                                                 and member.has_perm('invites:create')) else None,
         shell_flat=ws.purpose in FLAT_PURPOSES,
+        shell_logo=_shell_logo(ws), shell_brand_color=_shell_color(ws),
         shell_multi=len(_memberships()) > 1 if ws.purpose in FLAT_PURPOSES else True,
         flash_ok=ok, flash_err=err,
         title='%s · %s' % (title, ws.name), page_title=title, page_name='ts_panel_shell')

@@ -107,6 +107,12 @@ if [ "$MODE" = clinic ]; then
     if [ $w = 1280 ]; then c=3; t=520; else c=6; t=260; fi
     $PY $REPO/tools/vps/ts_sheet.py "$OUT/sheet_${r}_$w.png" $c $t $(ls /root/ts-jobs/shots/ts.clin8.${r}.http_*_$w.png 2>/dev/null)
   done; done
+  # clin10: the side box and menu of each role's dashboard, side by side (one small image for shell reviews)
+  for r in off doc own; do
+    f=$(ls /root/ts-jobs/shots/ts.clin8.${r}.http_my_workspaces_*_1280.png 2>/dev/null | grep -E '_[0-9]+_1280.png$' | head -1)
+    [ -n "$f" ] && python3 $REPO/tools/vps/ts_crop.py "$f" /root/ts-jobs/rail_$r.png -400 0 400 600 >/dev/null
+  done
+  TS_SHEET_CROP=2000 $PY $REPO/tools/vps/ts_sheet.py "$OUT/rails.png" 3 400 /root/ts-jobs/rail_off.png /root/ts-jobs/rail_doc.png /root/ts-jobs/rail_own.png
   # only pages that have a problem or a gap over 24px: the page line, then its gap line (short enough to read whole)
   awk '/^[0-9-]+ /{u=$0; p=($0 !~ / ok( \[|$)/)} /^ *gaps /{ if ($0 !~ / -$/ || p) print u "\n" $0 }' \
     /root/ts-jobs/ui_shot_report_$DB.txt | sed 's/#tsp-rail:[^|]*| *//g' > "$OUT/gaps.txt"
