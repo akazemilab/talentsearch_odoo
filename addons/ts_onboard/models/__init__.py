@@ -7,3 +7,4 @@ from . import ir_http
 from . import onb3
 from . import onb3_nudge
 from . import onb3_sample
+from . import clin7

@@ -88,6 +88,7 @@ has ts_onboard && NOCOMMIT+=(tests_onb2.py)
 # onb3: one form, kind-driven starter, try-out never counted, «شروع کار», permanent link, guide SMS, welcome credit, samples;
 # HTTP companion: ts_http_onb3.py
 has ts_onboard && NOCOMMIT+=(tests_onb3.py)
+has ts_onboard && NOCOMMIT+=(tests_clin7.py)
 for f in "${NOCOMMIT[@]}"; do
   [ -f $REPO_DIR/tools/prod/$f ] || continue
   grep -q "cr.commit" $REPO_DIR/tools/prod/$f && { echo "!! $f commits; it cannot run beside the guard"; continue; }
@@ -167,6 +168,7 @@ has ts_career && { echo "=== $(date +%T) http free career match"; http ts_http_c
 has ts_onboard && { echo "=== $(date +%T) http onb2 (one-tap invitations, test first)"; http ts_http_onb2.py; }
 # onb3: the first session inside a panel (one form, try-out, sample, one-screen invitation, permanent link, guide SMS, audience pages)
 has ts_onboard && { echo "=== $(date +%T) http onb3 (the first session inside a panel)"; http ts_http_onb3.py; }
+has ts_onboard && { echo "=== $(date +%T) http clin7 (clinic office and therapist)"; http ts_http_clin7.py; }
 if has ts_kavenegar; then
   echo "=== $(date +%T) kavenegar tests (fake API, commits)"; orm tests_kavenegar.py
   echo "=== $(date +%T) kavenegar webhooks (http)"; http ts_http_kv.py

@@ -81,9 +81,10 @@ class TsPanelWorkspace(TsOrg):
             return render_in_shell('ts_panel.state_page', member, 'home', title, state_title=title, state_text=text)
         days = int(period) if (period or '').isdigit() and int(period) in PERIODS else 30
         counts = invite_count_by_state(member) if member.can_act() and member.has_perm('invites:manage') else {k: 0 for k in STATE_ORDER}
+        clin = member.workspace_id.purpose == 'clinical'   # clin7: a clinic sees what needs doing, not the funnel and workload tables
         return render_in_shell('ts_panel.dashboard', member, 'home', 'پیشخوان',
-                               attention=member.dash_attention(), tiles=member.dash_tiles(days), funnel=member.dash_funnel(days),
-                               workload=member.dash_workload(), days=days, periods=PERIODS,
+                               attention=member.dash_attention(), tiles=member.dash_tiles(days), funnel=None if clin else member.dash_funnel(days),
+                               workload=None if clin else member.dash_workload(), days=days, periods=PERIODS,
                                is_new=is_new, total=sum(counts.values()),
                                can_invite=member.can_act() and member.has_perm('invites:create'),
                                people=people_word(ws.purpose), person_a='مراجعی' if ws.purpose == 'clinical' else 'شرکت‌کننده‌ای')

@@ -3,7 +3,7 @@ from odoo.exceptions import UserError, ValidationError
 from odoo.http import request
 
 from odoo.addons.ts_core.models.workspace import ROLES_BY_PURPOSE
-from odoo.addons.ts_org.models.panel import ROLE_LABELS
+from odoo.addons.ts_org.models.panel import role_label
 
 from ..perm_labels import DEFAULT_PICK, LIVE, PERM_LABELS, PICK_ORDER, ROLE_BLURBS, ROLE_ORDER
 from .base import (flash_error, flash_ok, forbidden, member_or_404, need_reauth, render_in_shell, require)
@@ -20,7 +20,7 @@ def _roles_for(ws, me):
     out = []
     for r in PICK_ORDER:
         if r in allowed and (r != 'owner' or me.has_perm('members:add_owner')):
-            out.append({'key': r, 'label': ROLE_LABELS.get(r, r), 'blurb': ROLE_BLURBS.get(r, '')})
+            out.append({'key': r, 'label': role_label(r, ws.purpose), 'blurb': ROLE_BLURBS.get(r, '')})
     return out
 
 
@@ -52,7 +52,7 @@ class TsPanelMembers(http.Controller):
             [('workspace_id', '=', ws.id)])
         for m in everyone.sorted(lambda x: (not x.active, ROLE_ORDER.index(x.role) if x.role in ROLE_ORDER else 99, x.id)):
             key = m.ts_state_key()
-            rows.append({'m': m, 'name': m.user_id.name, 'role': ROLE_LABELS.get(m.role, m.role),
+            rows.append({'m': m, 'name': m.user_id.name, 'role': role_label(m.role, me.workspace_id.purpose),
                          'state': MEMBER_STATE[key][0], 'pill': MEMBER_STATE[key][1],
                          'clients': m.ts_client_count() if m.active else 0,
                          'last': jalali_or_dash(m.ts_last_activity()), 'self': m == me})
@@ -70,8 +70,8 @@ class TsPanelMembers(http.Controller):
             'ts_panel.members', me, 'members', 'اعضا و نقش‌ها', rows=rows, can_invite=can_invite,
             can_manage=me.has_perm('members:manage'), invites=invites, new_inv=new_inv, roles=roles,
             vals=pend, resumed=bool(pend), default_role=default_role, confirm_revoke=confirm_revoke[:1], solo=len([r for r in rows if r['m'].active]) == 1 and not invites,
-            role_label=ROLE_LABELS.get(me.role, me.role), expires=lambda i: jalali_or_dash(i.expires_at),
-            invite_role_label=lambda i: ROLE_LABELS.get(i.role, i.role))
+            role_label=role_label(me.role, me.workspace_id.purpose), expires=lambda i: jalali_or_dash(i.expires_at),
+            invite_role_label=lambda i: role_label(i.role, me.workspace_id.purpose))
 
     @http.route('/my/workspaces/<int:ws_id>/members/add', type='http', auth='user', website=True,
                 methods=['POST'], sitemap=False)
@@ -131,7 +131,7 @@ class TsPanelMembers(http.Controller):
         key = m.ts_state_key()
         return render_in_shell(
             'ts_panel.member', me, 'members', m.user_id.name, m=m, state=MEMBER_STATE[key][0], pill=MEMBER_STATE[key][1],
-            m_role=ROLE_LABELS.get(m.role, m.role), clients=m.ts_client_count() if m.active else 0,
+            m_role=role_label(m.role, me.workspace_id.purpose), clients=m.ts_client_count() if m.active else 0,
             last=jalali_or_dash(m.ts_last_activity()), can_manage=me.has_perm('members:manage'), is_self=m == me,
             roles=_roles_for(ws, me), chosen=pend.get('role') or m.role, resumed=bool(pend),
             clinical=ws.purpose == 'clinical')
@@ -224,7 +224,7 @@ class TsPanelMembers(http.Controller):
                   'cells': [p in ROLE_PERMS[(r, purpose)] for r in roles]} for p in perms]
         table = [row for row in table if any(row['cells'])]      # a row nobody has in this purpose is noise (UX audit G4 P17-3)
         return request.render('ts_panel.help_roles', {
-            'roles': [{'key': r, 'label': ROLE_LABELS.get(r, r), 'blurb': ROLE_BLURBS.get(r, '')} for r in roles],
+            'roles': [{'key': r, 'label': role_label(r, purpose), 'blurb': ROLE_BLURBS.get(r, '')} for r in roles],
             'table': table, 'purpose_label': dict(request.env['ts.workspace']._fields['purpose'].selection).get(purpose),
             'title': 'نقش‌ها و دسترسی‌ها', 'page_name': 'ts_panel_help'})
 

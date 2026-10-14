@@ -235,7 +235,7 @@ check('T08 ...nor clients', 'پیش‌نمایش —' not in cli)
 st, one = get(cl, W + '/invites/new')
 check('I01 «دعوت تازه» is one screen: two equal choices, name and mobile, the starter preselected, the SMS shown, «فرستادن»',
       st == 200 and 'فرستادن به یک نفر' in one and 'پیوند همیشگی و QR' in one and 'name="new_name"' in one and 'name="new_phone"' in one
-      and 'ارزیابی آغاز مشاوره' in one and 'پیامکی که می‌رود' in one and 'تنظیمات بیشتر' in one and 'id="tso-send"' in one, str(st))
+      and 'ارزیابی آغاز مشاوره' in one and 'متن پیامک' in one and 'id="tso-pick"' in one and 'تنظیمات بیشتر' in one and 'id="tso-send"' in one, str(st))
 check('I02 the escalation question is asked here, once (a counseling center without its contact)', 'name="escalation_ok"' in one
       and 'پیگیری فوری نشانه‌های خطر در این مرکز با من است' in one)
 check('I03 the step wizard is still reachable for a registered participant (?wizard=1)', 'wizard=1' in one)

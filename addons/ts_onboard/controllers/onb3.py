@@ -151,6 +151,24 @@ class TsOnb3Panel(http.Controller):
         return request.make_response(buf.getvalue(), headers=headers)
 
 
+def _therapists(me):
+    """clin7: the members a client can be handed to in a clinical panel (see models/clin7.py)."""
+    return request.env['ts.workspace.member'].ts_clin7_therapists(me.workspace_id)
+
+
+def _therapist_ctx(me, client=None, chosen=None):
+    """None when no choice is shown (outside clinical, or the sender is himself the therapist, or an existing client who
+    already has one and the sender cannot reassign). Else {'all': members, 'pick': member or empty, 'fixed': bool}."""
+    ts = _therapists(me)
+    if not ts or me in ts and (not client or not client.responsible_id):
+        return None
+    if client and client.responsible_id and not me.has_perm('clients:assign'):
+        return None
+    pick = chosen if (chosen and chosen in ts) else (client.responsible_id if client and client.responsible_id in ts else
+                                       (ts[:1] if len(ts) == 1 else ts.browse()))
+    return {'all': ts, 'pick': pick, 'fixed': len(ts) == 1}
+
+
 class TsOnb3Invites(TsBillingInvites):
     """«دعوت تازه» is one screen (onb3): two equal choices, a personal invitation (name, mobile, the starter preselected, the
     SMS read-only, «فرستادن») or the panel's permanent link with its QR. Deadline, note, another instrument or battery,
@@ -188,7 +206,9 @@ class TsOnb3Invites(TsBillingInvites):
             age_default='minor' if ws.purpose == 'education' else 'unknown', vals=vals or {}, error=error,
             wizard_url='/my/workspaces/%s/invites/new?wizard=1&step=1' % ws.id,
             positions_url='/my/workspaces/%s/positions' % ws.id if ws.purpose == 'employment' else None,
-            extra_time=ws.purpose == 'employment', fa=fa_digits)
+            extra_time=ws.purpose == 'employment', fa=fa_digits,
+            therapist=_therapist_ctx(me, client if client else None,
+                                     me.browse(int((vals or {}).get('therapist_id'))) if str((vals or {}).get('therapist_id') or '').isdigit() else None))
 
     def _sms_preview(self, me, bat, inst):
         """The invitation SMS as it will read, from the real template (short link shown as a placeholder)."""
@@ -283,6 +303,10 @@ class TsOnb3Invites(TsBillingInvites):
             d.update(new_name=name, new_phone=norm_phone(phone_raw) or '', new_email=norm_email(email_raw) or '',
                      new_age=post.get('new_age') if post.get('new_age') in dict(AGE) else
                      ('minor' if ws.purpose == 'education' else 'unknown'))
+        pick = post.get('pick') or ''
+        if ws.purpose == 'clinical' and len(pick) > 1 and pick[1:].isdigit():   # clin7: one visible list «چه بفرستید»
+            post = dict(post, item_kind='battery', battery_id=pick[1:]) if pick[0] == 'b' else \
+                dict(post, item_kind='single', instrument_id=pick[1:], battery_id='')
         # the item: the starter unless «تنظیمات بیشتر» chose another (the billing check of ts_billing applies here)
         if not (post.get('instrument_id') or post.get('battery_id')):
             bat, inst = ws.ts_onb_starter(me)
@@ -320,6 +344,13 @@ class TsOnb3Invites(TsBillingInvites):
                     return again('برای %s زیر ۱۸ سال تأیید کنید که رضایت ولی یا سرپرست قانونی را گرفته‌اید.' % ws.ts_onb_words()['one'])
             vals.update(invitee_name=d['new_name'], invitee_email=d.get('new_email') or False,
                         invitee_phone=d.get('new_phone') or False)
+        tctx = _therapist_ctx(me, client if client else None)
+        therapist = request.env['ts.workspace.member']
+        if tctx:
+            tid = post.get('therapist_id') or ''
+            therapist = tctx['all'].filtered(lambda m: str(m.id) == tid)[:1] if tid.isdigit() else tctx['pick']
+            if not therapist:
+                return again('مشاور این مراجع را انتخاب کنید.')
         # «فرستادن» with the line under it is the attestation that the person agrees to the SMS (same rule as the wizard)
         if vals.get('invitee_phone') and sms_available(ws) and post.get('attest') == '1':
             vals.update(sms_consent=True, remind_ok=True)
@@ -334,6 +365,8 @@ class TsOnb3Invites(TsBillingInvites):
                     a.client_id.sudo().age_group = d['new_age']
                     if d['new_age'] == 'minor' and guardian:
                         a.client_id.ts_attest_guardian(me)
+                if therapist and a.client_id and a.client_id.responsible_id != therapist:
+                    a.client_id.sudo().responsible_id = therapist
         except (UserError, ValidationError) as e:
             return again(str(e.args[0] if e.args else e))
         # the invitation SMS goes out from ts_sms's create hook (sms_consent); the next page says whether it reached

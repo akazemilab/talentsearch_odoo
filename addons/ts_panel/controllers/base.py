@@ -12,7 +12,7 @@ from odoo.http import request
 from odoo.addons.ts_assessment.controllers.main import _ts_site_or_404
 from odoo.addons.ts_assessment.models.attempt import fa_digits, jalali
 from odoo.addons.ts_org.controllers.main import _memberships
-from odoo.addons.ts_org.models.panel import ROLE_LABELS
+from odoo.addons.ts_org.models.panel import ROLE_LABELS, role_label
 
 RESULT_PERMS = ('results:summary', 'results:education', 'results:clinical')
 
@@ -21,17 +21,17 @@ RESULT_PERMS = ('results:summary', 'results:education', 'results:clinical')
 MENU = [
     {'seq': 10, 'key': 'home', 'group': 'نمای کلی', 'label': 'پیشخوان', 'suffix': '', 'perm': 'panel:view'},
     {'seq': 20, 'key': 'clients', 'group': 'افراد و دعوت', 'label': 'شرکت‌کنندگان', 'suffix': '/clients', 'perm': 'clients:read_own',
-     'needs_act': True},
+     'needs_act': True, 'labels': {'clinical': 'مراجعان'}},
     {'seq': 25, 'key': 'groups', 'group': 'افراد و دعوت', 'label': 'گروه‌ها', 'suffix': '/groups', 'perm': 'groups:manage',
-     'needs_act': True},
+     'needs_act': True, 'hide_in': ('clinical',)},
     {'seq': 30, 'key': 'invites', 'group': 'افراد و دعوت', 'label': 'دعوت‌ها', 'suffix': '/invites', 'perm': 'invites:manage',
      'needs_act': True},
     {'seq': 35, 'key': 'campaigns', 'group': 'افراد و دعوت', 'label': 'دعوت گروهی', 'suffix': '/campaigns', 'perm': 'invites:bulk',
-     'needs_act': True},
+     'needs_act': True, 'hide_in': ('clinical',)},
     {'seq': 38, 'key': 'import', 'group': 'افراد و دعوت', 'label': 'ورود از فایل', 'suffix': '/import', 'perm': 'clients:import',
-     'needs_act': True},
+     'needs_act': True, 'hide_in': ('clinical',)},
     {'seq': 45, 'key': 'exports', 'group': 'گزارش و داده', 'label': 'خروجی‌ها', 'suffix': '/exports', 'perm': 'clients:export',
-     'needs_act': True},
+     'needs_act': True, 'hide_in': ('clinical',)},
     {'seq': 42, 'key': 'reports', 'group': 'گزارش و داده', 'label': 'گزارش‌ها', 'suffix': '/reports', 'perm_any': RESULT_PERMS, 'needs_act': True},
     {'seq': 50, 'key': 'credits', 'group': 'گزارش و داده', 'label': 'اعتبار و مصرف', 'suffix': '/credits', 'perm': 'credits:read'},
     {'seq': 85, 'key': 'members', 'group': 'پنل', 'label': 'اعضا و نقش‌ها', 'suffix': '/members', 'perm': 'members:read'},
@@ -49,6 +49,7 @@ PANEL_STATE_LABELS = {'draft': 'پیش‌نویس', 'active': 'فعال', 'suspe
 ROLE_SCOPE = {
     'owner': 'اعضا، شرکت‌کنندگان و تنظیمات پنل را اداره می‌کنید.',
     'admin': 'کارهای اجرایی پنل را پیش می‌برید؛ نتیجه‌ها را نمی‌بینید، فقط وضعیت دعوت‌ها را.',
+    ('admin', 'clinical'): 'آزمون می‌فرستید و هر مراجع را به مشاورش می‌سپارید؛ نتیجه‌ها را نمی‌بینید.',
     ('counselor', 'education'): 'دانش‌آموزانی را که کارشناس مسئول آن‌ها هستید و فهرست «بدون کارشناس» را می‌بینید؛ نتیجه را در سطح مشاور می‌خوانید.',
     'counselor': 'شرکت‌کنندگانی را که کارشناس مسئول آن‌ها هستید می‌بینید؛ نتیجه را در سطح مشاور می‌خوانید.',
     'clinic_director': 'همهٔ مراجعان پنل را می‌بینید و اعضا و دعوت‌ها را اداره می‌کنید؛ گزارش کامل ویژهٔ مشاور را با اجازهٔ مراجع می‌خوانید.',
@@ -86,8 +87,12 @@ def member_or_404(ws_id):
 
 def build_menu(member, active):
     perms = member.perms()
+    purpose = member.workspace_id.purpose
     out = []
     for it in sorted(MENU, key=lambda i: i['seq']):
+        # clin7: a clinic's panel shows only what an office and a therapist use; hidden pages stay reachable by URL
+        if purpose in it.get('hide_in', ()):
+            continue
         if it.get('perm') and it['perm'] not in perms:
             continue
         if it.get('perm_any') and not any(p in perms for p in it['perm_any']):
@@ -98,7 +103,7 @@ def build_menu(member, active):
         if it.get('when') and not it['when'](member):
             continue
         url = it.get('url') or '/my/workspaces/%s%s' % (member.workspace_id.id, it['suffix'])
-        out.append({'key': it['key'], 'label': it['label'], 'url': url, 'current': it.get('active_key', it['key']) == active,
+        out.append({'key': it['key'], 'label': it.get('labels', {}).get(purpose, it['label']), 'url': url, 'current': it.get('active_key', it['key']) == active,
                     'group': it.get('group', '')})
     # A group heading over a single item says nothing (non-owners saw «پنل» above «راهنما» only, audit G5 PT-9):
     # such an item loses its heading and is set apart by a line instead.
@@ -127,7 +132,7 @@ def render_in_shell(template, member, active, title, status=None, **vals):
     ok, err = pop_flash()
     ctx = dict(
         member=member, ws=ws, active=active, menu=build_menu(member, active), fa=fa_digits, jalali=jalali,
-        role_label=ROLE_LABELS.get(member.role, member.role),
+        role_label=role_label(member.role, member.workspace_id.purpose),
         role_scope=role_scope(member.role, ws.purpose), role_help_url='/help/roles#role-%s' % member.role,
         panel_state=panel_state_label(ws),
         back_url=None, back_label=None,

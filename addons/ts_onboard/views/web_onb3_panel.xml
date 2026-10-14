@@ -186,22 +186,42 @@
                                        t-att-data-ts-show="None if client else 'new_age=minor'">
                                         <label class="tsp-check"><input type="checkbox" name="guardian_ok" value="1"/><span>رضایت ولی (پدر، مادر یا سرپرست قانونی) را گرفته‌ایم و نزد ما محفوظ است.</span></label>
                                         <a class="tsp-what" href="/help/panel#minors">این چیست؟</a></p>
-                                    <div class="tso-item" id="tso-item">
+                                    <label t-if="ws.purpose == 'clinical' and (batteries or instruments)" class="tsp-field" id="tso-pick">
+                                        <span class="tsp-field__label">چه بفرستید</span>
+                                        <select name="pick" class="form-select" required="required">
+                                            <optgroup t-if="batteries" label="مجموعه‌ها">
+                                                <option t-foreach="batteries" t-as="b" t-att-value="'b%s' % b.id" t-att-selected="'selected' if (vals.get('pick') == 'b%s' % b.id or (not vals.get('pick') and starter_bat == b)) else None" t-out="b.ts_title()"/>
+                                            </optgroup>
+                                            <optgroup t-if="instruments" label="سنجه‌های تکی">
+                                                <option t-foreach="instruments" t-as="i" t-att-value="'i%s' % i.id" t-att-selected="'selected' if (vals.get('pick') == 'i%s' % i.id or (not vals.get('pick') and not starter_bat and starter_inst == i)) else None" t-out="i.ts_title()"/>
+                                            </optgroup>
+                                        </select></label>
+                                    <t t-if="therapist">
+                                        <p t-if="therapist['fixed']" class="tso-for" id="tso-therapist">مشاور: <strong><bdi t-out="therapist['all'][0].user_id.name"/></strong>
+                                            <input type="hidden" name="therapist_id" t-att-value="therapist['all'][0].id"/></p>
+                                        <label t-else="" class="tsp-field" id="tso-therapist"><span class="tsp-field__label">مشاور</span>
+                                            <select name="therapist_id" class="form-select" required="required">
+                                                <option value="" t-att-selected="None if therapist['pick'] else 'selected'">انتخاب کنید</option>
+                                                <option t-foreach="therapist['all']" t-as="m" t-att-value="m.id" t-att-selected="'selected' if m == therapist['pick'] else None" t-out="m.user_id.name"/>
+                                            </select></label>
+                                    </t>
+                                    <div t-if="ws.purpose != 'clinical'" class="tso-item" id="tso-item">
                                         <span class="tsp-field__label">سنجه</span>
                                         <strong t-if="starter_bat" t-out="starter_bat.ts_title()"/>
                                         <strong t-elif="starter_inst" t-out="starter_inst.ts_title()"/>
                                         <span t-else="" class="ts-hint">از «تنظیمات بیشتر» یکی را برگزینید.</span>
                                         <span class="ts-hint"> · قابل تغییر در «تنظیمات بیشتر»</span>
                                     </div>
-                                    <div t-if="sms_ok and preview_sms" class="tso-sms" id="tso-sms">
-                                        <span class="tsp-field__label" id="tso-sms-h">پیامکی که می‌رود</span>
+                                    <details t-if="sms_ok and preview_sms" class="tso-sms" id="tso-sms">
+                                        <summary class="tsp-field__label" id="tso-sms-h">متن پیامک</summary>
                                         <p class="tso-sms__body" aria-labelledby="tso-sms-h" t-out="preview_sms"/>
-                                    </div>
+                                    </details>
                                     <p t-elif="not sms_ok" class="ts-hint">پیامک دعوت در این پنل خاموش است؛ پس از ساخت دعوت، پیوند را خودتان بفرستید.</p>
-                                    <details class="tso-moreset" id="tso-moreset" t-att-open="'open' if (vals.get('deadline') or vals.get('note') or vals.get('new_email') or vals.get('battery_id') or vals.get('instrument_id')) else None">
+                                    <details class="tso-moreset" id="tso-moreset" t-att-open="'open' if (vals.get('deadline') or vals.get('note') or vals.get('new_email') or (ws.purpose != 'clinical' and (vals.get('battery_id') or vals.get('instrument_id')))) else None">
                                         <summary>تنظیمات بیشتر</summary>
                                         <div class="tso-moreset__body">
-                                            <t t-if="batteries" t-call="ts_battery.item_picker"/>
+                                            <t t-if="ws.purpose == 'clinical'"/>
+                                            <t t-elif="batteries" t-call="ts_battery.item_picker"/>
                                             <fieldset t-elif="len(instruments) &gt; 1" class="tsp-field">
                                                 <legend class="tsp-field__label">سنجه</legend>
                                                 <label t-foreach="instruments" t-as="i" class="tsp-radio"><input type="radio" name="instrument_id" t-att-value="i.id" t-att-checked="'checked' if (starter_inst and i == starter_inst) else None"/><span t-out="i.ts_title()"/></label>
