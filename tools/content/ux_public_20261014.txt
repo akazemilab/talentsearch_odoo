@@ -800,3 +800,22 @@ id="tsc-start">شروع آزمون رایگان<t
 ===
 'چه شغل‌هایی با علایق شما'
 >>>
+
+# tests follow the new wording (rehearsal eot_ts96)
+@@ tools/prod/ts_http_career.py
+<<<
+'نسخهٔ آزمایشی' in body and 'نه تصمیم استخدام' in body
+===
+'نسخهٔ آزمایشی' in body and 'تصمیم استخدام' in body
+>>>
+<<<
+'tsc-start' in body and 'با شمارهٔ همراه وارد' in body
+===
+'tsc-start' in body and 'با شمارهٔ موبایل وارد' in body
+>>>
+@@ tools/prod/ts_http_site1.py
+<<<
+'نتیجه فقط برای خودتان' in hero
+===
+'نتیجه را فقط خودتان می‌بینید' in hero
+>>>

@@ -28,7 +28,7 @@ hero = home.split('id="career"', 1)[1].split('</section>', 1)[0] if 'id="career"
 check('S02 the hero: one primary «شروع آزمون رایگان» to /career/start, a quiet link to #orgs, the sign-in note',
       hero.count('ts-btn--primary') == 1 and re.search(r'href="/career/start"[^>]*id="ts-hero-career"', hero)
       and 'شروع آزمون رایگان' in hero and 'href="#orgs"' in hero and 'id="ts-hero-hint"' in hero
-      and 'حدود ۸ دقیقه' in hero and 'نتیجه فقط برای خودتان' in hero, hero[:120])
+      and 'حدود ۸ دقیقه' in hero and 'نتیجه را فقط خودتان می‌بینید' in hero, hero[:120])
 check('S03 the hero preview is decorative and labelled «نمونه»', 'ts-cmock' in hero and 'aria-hidden="true"' in hero and 'نمونه' in hero)
 for sid in ('career', 'how', 'orgs', 'clinics', 'hiring', 'schools', 'science', 'privacy', 'pricing', 'faq', 'contact'):
     check('S04 section #%s exists once' % sid, home.count('id="%s"' % sid) == 1)
