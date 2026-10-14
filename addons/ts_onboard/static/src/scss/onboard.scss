@@ -41,17 +41,7 @@
 .tso-name__row { display: flex; flex-wrap: wrap; gap: var(--space-2); }
 .tso-name__row input { flex: 1 1 14rem; min-width: 0; min-block-size: 44px; }
 .tso-next { display: flex; flex-wrap: wrap; gap: var(--space-2); margin: 0; }
-.tso-hero-sub { margin-block: var(--space-2) 0; color: var(--color-neutral-400); font-size: var(--fs-1); }
 .tsa-known { margin: 0; }
-// the three quiet links for organisations under the home hero's one action (44 px targets, wrap on a phone)
-.tso-hero-links {
-    display: flex; flex-wrap: wrap; align-items: center; column-gap: var(--space-2); margin-block-start: var(--space-2);
-    font-size: var(--fs-1);
-}
-.tso-hero-links a {
-    display: inline-flex; align-items: center; min-block-size: 44px; text-decoration: underline; text-underline-offset: 3px;
-}
-.tso-hero-links .tso-dot { color: var(--color-neutral-400); }
 
 // ---------------------------------------------------------------- onb3: the first session inside a panel
 // «شروع کار» and «پنل را کامل کنید» reuse ts_brand's .tsob* card styles (progress line, bar, step list, tags)
@@ -113,10 +103,6 @@
 .tso-sample-part { display: grid; gap: var(--space-3); margin-block-end: var(--space-5); }
 .tso-sample-part > h2 { margin: 0; }
 .tso-sample-cta { margin-block-start: var(--space-6); }
-// audience pages
-.tso-aud-alt { margin: var(--space-2) 0 0; }
-.tso-aud-alt a { display: inline-flex; align-items: center; min-block-size: 44px; }
-.tso-plans-go { display: flex; justify-content: center; margin: var(--space-5) 0 0; }
 
 #wrapwrap {
     // clin8/clin9: «خدمات» (the clinic's service catalog): jump chips, a two-column card grid, title and price on one line

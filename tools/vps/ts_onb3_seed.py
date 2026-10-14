@@ -83,7 +83,7 @@ try:
                 '/help/panel#getting-started']
     if wb.ts_perm_campaign_id.open_token:      # the join screen of a counseling panel's permanent link (the age question)
         ONB3_OWN.append('/c/%s' % wb.ts_perm_campaign_id.open_token)
-    ONB3_PUB = ['/clinics', '/hiring', '/sample/clinic', '/sample/school', '/sample/hr']
+    ONB3_PUB = ['/sample/clinic', '/sample/school', '/sample/hr']
     print('ONB3SEED', len(ONB3_OWN), len(ONB3_PUB))
 except Exception as e:      # noqa: BLE001 - the rest of the matrix still runs
     env.cr.rollback()

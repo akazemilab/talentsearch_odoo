@@ -435,7 +435,7 @@ class TsOnb3Public(http.Controller):
         ctx = _sample_ctx(kind, public=True)
         if not ctx:
             raise request.not_found()
-        back = {'clinic': '/clinics', 'solo': '/clinics', 'school': '/schools', 'hr': '/hiring'}[kind]
+        back = {'clinic': '/#clinics', 'solo': '/#clinics', 'school': '/#schools', 'hr': '/#hiring'}[kind]
         extra = dict(title_kind=KIND_TITLES[kind], back_url=back, build_url='/panel?kind=%s' % {'hr': 'org'}.get(kind, kind),
                      page_name='ts_sample', additional_title=KIND_TITLES[kind])
         if ctx['sample_kind'] == 'school':

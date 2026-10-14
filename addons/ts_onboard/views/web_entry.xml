@@ -1,36 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <!-- O3 entry points. Home hero: one primary action, the free starter test, then three quiet text links for
-         organisations, to the audience pages of onb3 (/clinics, /hiring, /schools). -->
-    <record id="home_hero_start" model="ir.ui.view">
-        <field name="name">ts_onboard.home.hero</field>
-        <field name="inherit_id" ref="ts_website.page_home_view"/>
-        <field name="website_id" ref="ts_website.website_ts"/>
-        <field name="arch" type="xml">
-            <xpath expr="//section[hasclass('ts-hero')]//div[hasclass('ts-hero__actions')]" position="replace">
-                <t t-set="ts_starter" t-value="request.env['ts.instrument'].sudo().ts_starter()"/>
-                <div class="ts-hero__actions">
-                    <t t-if="ts_starter">
-                        <a href="/start" class="ts-btn ts-btn--primary ts-btn--lg" id="tso-hero-start">شروع سنجهٔ رایگان<t t-call="ts_website.icon" ico.f="arrow-left"/></a>
-                    </t>
-                    <t t-else="">
-                        <a href="/panel" class="ts-btn ts-btn--primary ts-btn--lg">ساخت پنل رایگان<t t-call="ts_website.icon" ico.f="arrow-left"/></a>
-                        <a href="/assessments#sample" class="ts-btn ts-btn--quiet ts-btn--lg">نمونهٔ گزارش</a>
-                    </t>
-                </div>
-                <t t-if="ts_starter">
-                    <p class="tso-hero-sub" id="tso-hero-sub">حدود <t t-out="ts_starter.ts_minutes_fa()"/> دقیقه<t t-call="ts_website.sep"/>بدون ثبت‌نام برای شروع<t t-call="ts_website.sep"/>نتیجه فقط برای خودتان</p>
-                    <nav class="tso-hero-links" id="tso-hero-links" aria-label="برای سازمان‌ها">
-                        <a href="/clinics">برای مراکز مشاوره</a>
-                        <span class="tso-dot" aria-hidden="true">·</span>
-                        <a href="/hiring">برای شرکت‌ها و استخدام</a>
-                        <span class="tso-dot" aria-hidden="true">·</span>
-                        <a href="/schools">برای مدرسه‌ها</a>
-                    </nav>
-                </t>
-            </xpath>
-        </field>
-    </record>
+    <!-- O3 entry points: the guest starter from the catalog and the detail page (site1 2026-10-14: the home hero is the
+         career test, ts_website.home; it no longer carries the starter or the audience links). -->
 
     <!-- the catalog card of the starter opens its start screen (no sign-in first) -->
     <record id="catalog_guest_card" model="ir.ui.view">

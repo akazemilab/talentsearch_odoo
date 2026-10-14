@@ -21,7 +21,7 @@ a1 = attempt(U['owner'], tal, False)
 a2 = attempt(U['owner'], oth, True)
 done = A.search([('user_id', '=', U['owner'].id), ('state', '=', 'done')], limit=1)
 env.cr.commit()
-pub = ['/', '/schools', '/assessments', '/assessments?all=1', '/assessments/%s' % tal.slug, '/panel', '/pricing', '/contact',
+pub = ['/', '/career', '/assessments', '/assessments?all=1', '/assessments/%s' % tal.slug, '/panel', '/contact',
        '/privacy', '/contact/thanks', '/help/panel', '/web/login', '/signup',
        'POSTSHOT /signup/send phone=09127770375&next=/my',     # the code step (pending code seeded by ts_ui_matrix.sh)
        '/nist-404']

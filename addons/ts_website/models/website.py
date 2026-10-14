@@ -9,13 +9,17 @@ _logger = logging.getLogger(__name__)
 
 HOMEPAGE_ARCH = '<t name="Homepage" t-name="website.homepage"><t t-call="ts_website.home"/></t>'
 
-# (label, url, sequence). Rebuilt on every upgrade; website 2 only.
+# (label, url, sequence). Rebuilt on every upgrade; website 4 only. site1 2026-10-14: the site is one page, the menu
+# links its sections (ts_nav.js marks the section in view with aria-current="location").
 TS_MENU = [
-    ('برای مدارس و مشاوران', '/schools', 10),
-    ('سنجه‌ها', '/assessments', 20),
-    ('هزینه و پرسش‌ها', '/pricing', 30),
-    ('تماس', '/contact', 40),
+    ('آزمون شغلی', '/#career', 10),
+    ('برای سازمان‌ها', '/#orgs', 20),
+    ('پشتوانهٔ علمی', '/#science', 30),
+    ('هزینه و پرسش‌ها', '/#pricing', 40),
+    ('تماس', '/#contact', 50),
 ]
+HOME_DESCRIPTION = ('آزمون شغلی رایگان: به ۶۰ کار کوتاه پاسخ دهید و از میان ۹۲۳ شغل، شغل‌های هم‌خوان با علایق خود را ببینید. '
+                    'و پنل سنجش برای مراکز مشاوره، استخدام و مدرسه‌ها؛ ساخت پنل رایگان است.')
 # Persian page names by path (first match wins; most specific first), used by ts_fallback_title. Every route of website 4
 # that can render without its own title has a row, so <title> never falls back to the bare site name twice
 # («استعدادیاب | استعدادیاب», clinic phase 5). Patterns are anchored; `(/.*)?$` = the path and everything below it.
@@ -73,8 +77,6 @@ TS_TITLES = [
     (r'^/assessments/[^/]+/start$', 'شروع سنجه'),
     (r'^/assessments(/.*)?$', 'سنجه‌ها'),
     (r'^/entekhab-reshteh(/.*)?$', 'انتخاب رشته'),
-    (r'^/schools(/.*)?$', 'برای مدارس و مشاوران'),
-    (r'^/pricing(/.*)?$', 'هزینه و پرسش‌ها'),
     (r'^/contact(/.*)?$', 'تماس'),
     (r'^/privacy(/.*)?$', 'حریم خصوصی'),
     (r'^/how-it-works(/.*)?$', 'سنجه‌ها چگونه کار می‌کنند'),
@@ -169,6 +171,12 @@ class Website(models.Model):
         page = self.env['website.page'].search([('website_id', '=', site.id), ('url', '=', '/')], limit=1)
         if page:
             page.write({'view_id': home.id, 'website_indexed': True, 'website_published': True})
+        # <meta name="description"> of / (the homepage view is its main_object). The field is translated and the stock
+        # Persian text is «این صفحه اصلی وب‌سایت است», so every installed language gets the same Persian description.
+        langs = [code for code, _label in self.env['res.lang'].get_installed()]
+        home.update_field_translations('website_meta_description', {code: HOME_DESCRIPTION for code in langs})
+        if page:
+            page.update_field_translations('website_meta_description', {code: HOME_DESCRIPTION for code in langs})
 
     def _ts_setup_menu(self, site):
         Menu = self.env['website.menu']

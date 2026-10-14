@@ -22,7 +22,6 @@
         'views/web_entry.xml',
         'data/onb3_data.xml',
         'views/web_onb3_panel.xml',
-        'views/web_onb3_site.xml',
         'views/web_services.xml',
     ],
     'assets': {

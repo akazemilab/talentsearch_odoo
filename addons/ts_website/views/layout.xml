@@ -129,23 +129,26 @@
                             <div class="ts-footer__grid">
                                 <div class="ts-footer__col">
                                     <span class="ts-footer__brand">استعدادیاب، از خانوادهٔ هیجان اندیشه</span>
-                                    <p>سنجش استعداد برای مدرسه‌ها و مراکز مشاوره. تصمیم با انسان است، نه با نمره.</p>
+                                    <p>آزمون شغلی رایگان، و پنل سنجش برای مراکز مشاوره، استخدام و مدرسه‌ها. تصمیم با انسان است، نه با نمره.</p>
                                     <!-- same tab: a new tab needs a warning, and the core script adds an English one («(Open in new tab)») -->
                                     <a class="ts-footer__eot" href="https://www.eot.ir/">سایت هیجان اندیشه&#160;(<bdi dir="ltr">EOT</bdi>)</a>
                                 </div>
                                 <nav class="ts-footer__col" aria-label="استعدادیاب">
                                     <h2>استعدادیاب</h2>
                                     <ul>
-                                        <li><a href="/schools">برای مدارس و مشاوران</a></li>
-                                        <li><a href="/assessments">سنجه‌ها</a></li>
-                                        <li><a href="/pricing">هزینه و پرسش‌ها</a></li>
+                                        <li><a href="/#career">آزمون شغلی رایگان</a></li>
+                                        <li><a href="/#clinics">برای مراکز مشاوره</a></li>
+                                        <li><a href="/#hiring">برای استخدام</a></li>
+                                        <li><a href="/#schools">برای مدرسه‌ها</a></li>
+                                        <li><a href="/assessments">همهٔ سنجه‌ها</a></li>
                                     </ul>
                                 </nav>
                                 <nav class="ts-footer__col" aria-label="کمک">
                                     <h2>کمک</h2>
                                     <ul>
-                                        <li><a href="/pricing#faq">پرسش‌های رایج</a></li>
-                                        <li><a href="/contact">تماس با ما</a></li>
+                                        <li><a href="/#pricing">هزینه</a></li>
+                                        <li><a href="/#faq">پرسش‌های رایج</a></li>
+                                        <li><a href="/#contact">تماس با ما</a></li>
                                         <li><a href="/privacy">حریم خصوصی و رضایت</a></li>
                                     </ul>
                                 </nav>

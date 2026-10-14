@@ -727,13 +727,9 @@ shell("ICP = env['ir.config_parameter'].sudo(); ICP.set_str('ts_onboard.short_pe
 # ================================================================ 10. test first: start, guest attempt, gate, claim
 g = client()
 st, h, page = raw(g, '/')
-check('P01 home: the primary action is «شروع سنجهٔ رایگان» to /start, with «حدود N دقیقه · بدون ثبت‌نام برای شروع · نتیجه فقط برای خودتان»',
-      st == 200 and re.search(r'href="/start"[^>]*>شروع سنجهٔ رایگان', page) and ('حدود %s دقیقه' % SMIN.translate(FA)) in page
-      and 'بدون ثبت‌نام برای شروع' in page, str(st))
-hero = page.split('id="tso-hero-links"', 1)[1][:900] if 'id="tso-hero-links"' in page else ''
-check('P01b ...then three quiet text links for organisations (centres, companies, schools), no second hero button',
-      'برای مراکز مشاوره' in hero and 'برای شرکت‌ها و استخدام' in hero and 'href="/schools">برای مدرسه‌ها' in hero
-      and page.split('id="tso-hero-start"', 1)[1].split('</div>', 1)[0].count('ts-btn') == 0, hero[:120])
+# site1 2026-10-14: the home hero is the career test (ts_http_site1.py); the starter is reached from the catalog
+check('P01 home: the hero leads to the career test, not the starter', st == 200 and 'href="/career/start"' in page
+      and 'id="tso-hero-start"' not in page, str(st))
 st, h, page = raw(g, '/start')
 check('P02 /start: the starter, statements and minutes, the promise, the age button, «کمتر از ۱۸ سال دارم», an unticked research box',
       st == 200 and SCODE == 'inventory_002' and ('%s جمله' % SITEMS.translate(FA)) in page
@@ -741,7 +737,7 @@ check('P02 /start: the starter, statements and minutes, the promise, the age but
       and '۱۸ سال یا بیشتر دارم؛ موافقم و شروع می‌کنم' in page and 'href="/start/under-18"' in page
       and re.search(r'name="consent_research" value="1"/>', page) and 'checked' not in re.search(r'<input type="checkbox" name="consent_research"[^>]*>', page).group(0), str(st))
 st, page = get(g, '/start/under-18')
-check('P03 under 18: no guest attempt; the school or counselor path, a link to /schools', st == 200 and 'href="/schools"' in page
+check('P03 under 18: no guest attempt; the school or counselor path, a link to /#schools', st == 200 and 'href="/#schools"' in page
       and 'action="/start/' not in page, str(st))
 st, page = get(g, '/assessments/%s' % SLUG)
 check('P04 the detail page\'s «شروع سنجه» goes to the start screen, not to a sign-in', st == 200

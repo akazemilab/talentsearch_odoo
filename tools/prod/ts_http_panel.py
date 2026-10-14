@@ -124,7 +124,11 @@ check('suspended panel dashboard is closed', st == 404)
 
 # homepage call-to-action
 st, _, home = anon.req('/')
-if 'id="tso-hero-start"' in home:
+if 'id="ts-hero-career"' in home:
+    # site1 2026-10-14: the free career test leads; the free panel is in the header and #orgs
+    check('homepage main button is «شروع آزمون رایگان» -> /career/start', st == 200 and 'href="/career/start"' in home and 'شروع آزمون رایگان' in home)
+    check('homepage secondary button goes to the organisation section', 'href="#orgs"' in home and 'href="/panel"' in home and 'ساخت پنل رایگان' in home)
+elif 'id="tso-hero-start"' in home:
     # onb2 (ts_onboard with a guest starter): the free test leads, the free panel follows
     check('homepage main button is «شروع سنجهٔ رایگان» -> /start', st == 200 and 'href="/start"' in home and 'شروع سنجهٔ رایگان' in home)
     check('homepage secondary button is «ساخت پنل رایگان» -> /panel', 'href="/panel"' in home and 'ساخت پنل رایگان' in home)

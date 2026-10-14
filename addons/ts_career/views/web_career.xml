@@ -281,16 +281,4 @@
         </field>
     </record>
 
-    <!-- home hero: one more quiet text link in the group of organisation links (the hero keeps ONE primary button) -->
-    <record id="home_hero_career" model="ir.ui.view">
-        <field name="name">TS career: home hero link</field>
-        <field name="inherit_id" ref="ts_onboard.home_hero_start"/>
-        <field name="website_id" ref="ts_website.website_ts"/>
-        <field name="arch" type="xml">
-            <xpath expr="//nav[@id='tso-hero-links']" position="inside">
-                <span class="tso-dot" aria-hidden="true">·</span>
-                <a href="/career" id="tsc-hero">کشف شغل‌های هم‌خوان</a>
-            </xpath>
-        </field>
-    </record>
 </odoo>

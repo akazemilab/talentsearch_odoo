@@ -485,28 +485,28 @@ counts = [len(re.findall(r'<li>', (re.search(r'id="%s".*?</ol>' % k, gs, re.S) o
 check('W01 /help/panel#getting-started: «شروع کار» per kind, five items each, listed first in the contents', st == 200 and counts == [5, 5, 5, 5]
       and hp.index('href="#getting-started"') < hp.index('href="#invite"'), str(counts))
 check('W02 the help has «استخدام و موقعیت‌های شغلی» and «پنل را کامل کنید»', 'id="hr"' in hp and 'id="more"' in hp)
+# site1 2026-10-14: the audience pages are sections of the one-page home; their URLs 301 there
+st, pg = get(anon, '/')
 for path, kind, sample in (('/clinics', 'clinic', 'clinic'), ('/hiring', 'org', 'hr'), ('/schools', 'school', 'school')):
-    st, pg = get(anon, path)
-    t = re.search(r'<title>(.*?)</title>', pg, re.S)
-    check('W03 %s: one h1, «ساخت پنل رایگان» to the one form, «نمونهٔ گزارش», questions, a Persian title; no pilot or contact form' % path,
-          st == 200 and pg.count('<h1') == 1 and ('href="/panel?kind=%s"' % kind) in pg and ('href="/sample/%s"' % sample) in pg
-          and 'نمونهٔ گزارش' in pg and pg.count('ts-faq__item') >= 3 and t and 'استعدادیاب' in t.group(1)
-          and 'پایلوت' not in pg and 'contact?topic=partner' not in pg and 'دورهٔ آزمایشی' in pg,
-          '%s %s' % (st, t.group(1).strip()[:60] if t else '-'))
-st, pr = get(anon, '/pricing')
-check('W04 /pricing: every kind free in early access, links to the audience pages', st == 200 and 'در دورهٔ آزمایشی، همهٔ پنل‌ها رایگان‌اند' in pr
-      and 'href="/clinics"' in pr and 'href="/hiring"' in pr and 'href="/schools"' in pr, str(st))
+    sec = pg.split('id="%s"' % path[1:], 1)[1].split('</article>', 1)[0] if ('id="%s"' % path[1:]) in pg else ''
+    check('W03 / #%s: «ساخت پنل» to the one form and «نمونهٔ گزارش»' % path[1:],
+          ('href="/panel?kind=%s"' % kind) in sec and ('href="/sample/%s"' % sample) in sec and 'نمونهٔ گزارش' in sec, sec[:80])
+    st, loc, _ = anon.req(path)
+    check('W03b %s → /#%s (301)' % (path, path[1:]), st == 301 and loc.endswith('/#' + path[1:]), '%s %s' % (st, loc))
+st, loc, _ = anon.req('/pricing')
+check('W04 /pricing → /#pricing (301); the home says the panel is free to build', st == 301 and loc.endswith('/#pricing')
+      and 'ساخت رایگان' in pg and 'در دورهٔ آزمایشی، سنجه‌ها هم رایگان‌اند' in pg, '%s %s' % (st, loc))
 for k in ('clinic', 'solo', 'school', 'hr'):
     st, sp_ = get(anon, '/sample/' + k)
     check('W05 /sample/%s: the public sample, labelled, with «ساخت پنل رایگان»' % k, st == 200 and 'نمونه — داده‌های ساختگی' in sp_
           and 'ساخت پنل رایگان' in sp_, str(st))
 check('W06 an unknown sample kind is 404', anon.req('/sample/x')[0] == 404)
 st, home = get(anon, '/')
-check('W07 the home hero links go to the audience pages', 'href="/clinics"' in home and 'href="/hiring"' in home and 'href="/schools"' in home)
+check('W07 the footer links the audience sections', 'href="/#clinics"' in home and 'href="/#hiring"' in home and 'href="/#schools"' in home)
 st, loc, _ = anon.req('/employers')
-check('W08 /employers → /hiring (301)', st == 301 and loc.endswith('/hiring'), '%s %s' % (st, loc))
+check('W08 /employers → /#hiring (301)', st == 301 and loc.endswith('/#hiring'), '%s %s' % (st, loc))
 e = Client(EOT)
-check('W09 eot.ir serves none of it', all(e.req(p)[0] == 404 for p in ('/clinics', '/hiring', '/sample/clinic')))
+check('W09 eot.ir serves none of it', all(e.req(p)[0] == 404 for p in ('/clinics', '/hiring', '/sample/clinic', '/career')))
 
 # ================================================================ X. a clone that carries the live Kavenegar address sends nothing
 x = shell(r"""

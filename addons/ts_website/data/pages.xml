@@ -1,15 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <!-- website.page records bound to website 4; eot.ir never resolves them. Redesign 2026-10: five pages + legal.
+    <!-- website.page records bound to website 4; eot.ir never resolves them. Redesign 2026-10; site1 2026-10-14: one page (/) + catalog, contact form, legal.
          The retired pages (/how-it-works, /evidence, /about, /help, /employers, /clinics, /sample-report,
-         /consent-policy) were removed from this file, so the upgrade deletes them; data/redirects.xml 301s their URLs. -->
-    <record id="page_schools" model="website.page">
-        <field name="url">/schools</field>
-        <field name="view_id" ref="page_schools_view"/>
-        <field name="website_id" ref="website_ts"/>
-        <field name="website_published" eval="True"/>
-        <field name="website_indexed" eval="True"/>
-    </record>
+         /consent-policy; site1: /schools, /pricing) were removed from this file, so the upgrade deletes them; data/redirects.xml 301s their URLs. -->
     <record id="page_privacy" model="website.page">
         <field name="url">/privacy</field>
         <field name="view_id" ref="page_privacy_view"/>
@@ -20,13 +13,6 @@
     <record id="page_contact" model="website.page">
         <field name="url">/contact</field>
         <field name="view_id" ref="page_contact_view"/>
-        <field name="website_id" ref="website_ts"/>
-        <field name="website_published" eval="True"/>
-        <field name="website_indexed" eval="True"/>
-    </record>
-    <record id="page_pricing" model="website.page">
-        <field name="url">/pricing</field>
-        <field name="view_id" ref="page_pricing_view"/>
         <field name="website_id" ref="website_ts"/>
         <field name="website_published" eval="True"/>
         <field name="website_indexed" eval="True"/>

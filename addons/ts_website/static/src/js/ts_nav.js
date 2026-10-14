@@ -3,6 +3,7 @@
 // - mobile menu: a disclosure button (aria-expanded) controlling #ts-mnav
 // - theme toggle: light / dark, stored in localStorage['ts-site-theme'] (the head script applies it before paint)
 // - FAQ accordion: .ts-faq__q buttons with aria-expanded controlling the answer (never <details>)
+// - one-page home (site1): menu section links close the mobile menu; the section in view gets aria-current="location"
 // - horizontal scrollers (.ts-scroller, .tsp-subnav, .tsp-chips, .tsp-steps): data-ts-fade="l|r|lr" on the side that
 //   hides more items; the active item (.is-on / aria-current) is scrolled into view
 // - file pickers (ts_website.filefield and every bare <input type=file>): Persian button «انتخاب فایل» + live file name
@@ -46,9 +47,11 @@
             setOpen(btn, btn.getAttribute('aria-expanded') !== 'true');
             return;
         }
+        // a section link of the one-page menu closes the mobile menu too (the page scrolls under it otherwise)
+        var jump = t.closest('a[href*="#"]');
         document.querySelectorAll('.ts-nav__toggle[aria-expanded="true"]').forEach(function (b) {
             var panel = document.getElementById(b.getAttribute('aria-controls'));
-            if (panel && !panel.contains(t)) { setOpen(b, false); }
+            if (panel && (!panel.contains(t) || jump)) { setOpen(b, false); }
         });
     });
     document.addEventListener('keydown', function (ev) {
@@ -58,7 +61,7 @@
             b.focus();
         });
     });
-    // An answer linked from elsewhere (/pricing#faq-f2) opens on arrival.
+    // An answer linked from elsewhere (/#faq-q2) opens on arrival.
     function openFromHash() {
         var id = (location.hash || '').slice(1);
         if (!id) { return; }
@@ -271,8 +274,38 @@
         });
     }
 
+    // ---------- one-page menu (site1): the section in view is marked aria-current="location" ----------
+    function initSpy() {
+        var links = Array.prototype.slice.call(document.querySelectorAll('.ts-dnav__list a, .ts-nav__list a')).filter(function (a) {
+            var u = a.getAttribute('href') || '';
+            return u.indexOf('/#') === 0 && location.pathname === '/';
+        });
+        if (!links.length || !('IntersectionObserver' in window)) { return; }
+        var ids = [];
+        links.forEach(function (a) { var id = a.getAttribute('href').slice(2); if (ids.indexOf(id) < 0 && document.getElementById(id)) { ids.push(id); } });
+        // a section without its own menu link (#how, #privacy, #faq) belongs to the menu section above it
+        var secs = Array.prototype.slice.call(document.querySelectorAll('#wrap > section[id]'));
+        var owner = {}, last = null;
+        secs.forEach(function (sec) { if (ids.indexOf(sec.id) >= 0) { last = sec.id; } owner[sec.id] = last; });
+        var shown = {};
+        function mark() {
+            var cur = null;
+            secs.forEach(function (sec) { if (shown[sec.id] && !cur) { cur = owner[sec.id]; } });
+            links.forEach(function (a) {
+                if (cur && a.getAttribute('href') === '/#' + cur) { a.setAttribute('aria-current', 'location'); } else { a.removeAttribute('aria-current'); }
+            });
+        }
+        var io = new IntersectionObserver(function (entries) {
+            entries.forEach(function (e) { shown[e.target.id] = e.isIntersecting; });
+            mark();
+        }, {rootMargin: '-84px 0px -55% 0px'});
+        secs.forEach(function (sec) { io.observe(sec); });
+    }
+
     function init() {
         openFromHash();
+        window.addEventListener('hashchange', openFromHash);
+        initSpy();
         initScrollers();
         initFiles();
         initDates();

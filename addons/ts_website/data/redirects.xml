@@ -3,10 +3,10 @@
     <!-- Redesign 2026-10: permanent redirects for retired website-4 URLs. Website-scoped (website 4 only); the
          ts_website ir_http override serves only website 4's own rewrites there, so eot.ir is unaffected. -->
     <record id="rw_how" model="website.rewrite">
-        <field name="name">TS: /how-it-works → /schools</field>
+        <field name="name">TS: /how-it-works → /#orgs</field>
         <field name="redirect_type">301</field>
         <field name="url_from">/how-it-works</field>
-        <field name="url_to">/schools</field>
+        <field name="url_to">/#orgs</field>
         <field name="website_id" ref="website_ts"/>
     </record>
     <record id="rw_evidence" model="website.rewrite">
@@ -24,18 +24,18 @@
         <field name="website_id" ref="website_ts"/>
     </record>
     <record id="rw_help" model="website.rewrite">
-        <field name="name">TS: /help → /pricing#faq</field>
+        <field name="name">TS: /help → /#faq</field>
         <field name="redirect_type">301</field>
         <field name="url_from">/help</field>
-        <field name="url_to">/pricing#faq</field>
+        <field name="url_to">/#faq</field>
         <field name="website_id" ref="website_ts"/>
     </record>
-    <!-- onb3: /clinics and /hiring are audience pages again (ts_onboard); /employers leads to /hiring -->
+    <!-- site1 2026-10-14: the site is one page; the audience and pricing pages lead to their sections on / -->
     <record id="rw_employers" model="website.rewrite">
-        <field name="name">TS: /employers → /hiring</field>
+        <field name="name">TS: /employers → /#hiring</field>
         <field name="redirect_type">301</field>
         <field name="url_from">/employers</field>
-        <field name="url_to">/hiring</field>
+        <field name="url_to">/#hiring</field>
         <field name="website_id" ref="website_ts"/>
     </record>
     <record id="rw_sample" model="website.rewrite">
@@ -57,6 +57,34 @@
         <field name="redirect_type">301</field>
         <field name="url_from">/consent-policy</field>
         <field name="url_to">/privacy</field>
+        <field name="website_id" ref="website_ts"/>
+    </record>
+    <record id="rw_schools" model="website.rewrite">
+        <field name="name">TS: /schools → /#schools</field>
+        <field name="redirect_type">301</field>
+        <field name="url_from">/schools</field>
+        <field name="url_to">/#schools</field>
+        <field name="website_id" ref="website_ts"/>
+    </record>
+    <record id="rw_pricing" model="website.rewrite">
+        <field name="name">TS: /pricing → /#pricing</field>
+        <field name="redirect_type">301</field>
+        <field name="url_from">/pricing</field>
+        <field name="url_to">/#pricing</field>
+        <field name="website_id" ref="website_ts"/>
+    </record>
+    <record id="rw_clinics" model="website.rewrite">
+        <field name="name">TS: /clinics → /#clinics</field>
+        <field name="redirect_type">301</field>
+        <field name="url_from">/clinics</field>
+        <field name="url_to">/#clinics</field>
+        <field name="website_id" ref="website_ts"/>
+    </record>
+    <record id="rw_hiring" model="website.rewrite">
+        <field name="name">TS: /hiring → /#hiring</field>
+        <field name="redirect_type">301</field>
+        <field name="url_from">/hiring</field>
+        <field name="url_to">/#hiring</field>
         <field name="website_id" ref="website_ts"/>
     </record>
 </odoo>
