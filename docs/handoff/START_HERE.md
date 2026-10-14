@@ -37,6 +37,13 @@ on prod, changed only by `ts ship`.
 - 2026-10-14 clin11: clinic side menu = the panel at the head (avatar, name, a switch icon only for members of several
   panels) and the person at the foot (name, role → own page with «هویت شما در گزارش‌ها»; «راهنما»). ts_check now fails an
   xpath hasclass() whose target has that class only in t-attf-class (cost every panel page a 500 on a clone).
+- 2026-10-14 site1: talentsearch.ir is ONE page (ts_website.home). Hero = the free career test (/career/start; owner: mobile
+  sign-in first, unchanged), then #orgs (#clinics #hiring #schools, shared features, three steps), #science (RIASEC/O*NET
+  notice, the scientific lead), #privacy, #pricing, #faq (8), #contact (shared ts_website.lead_form; /contact stays for form
+  errors and «شارژ اعتبار پنل»). TS_MENU links the sections (ts_nav.js scroll spy, aria-current="location"); /schools
+  /pricing /clinics /hiring /employers /help /how-it-works 301 to sections (data/redirects.xml); the audience/pricing pages
+  and the old hero inherits are deleted. Claims on the page are only product facts and what the owner already published
+  (no logos, testimonials or counts until the owner supplies them). Tests: ts_http_site1.py (in the rehearsal).
 - No build phase is pending. What remains is owner input and hardening (below).
 
 ## UX review tools (clin9)
