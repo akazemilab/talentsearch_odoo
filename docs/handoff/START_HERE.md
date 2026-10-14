@@ -23,6 +23,10 @@ on prod, changed only by `ts ship`.
 ## Status (from the 2026-10-12 handoff, verified 2026-10-14)
 - Live commit d5f60a4 (main 6b85fc7 adds docs only). `ts live`: talentsearch.ir 200, eot.ir 200, odoo20 active, 0 journal errors.
 - All clinic phases 1-6, HR hiring, onboarding LIVE. No employment (HR) panel exists yet. Sepehr's panel is prepaid, no counselors invited yet.
+- 2026-10-14 LIVE: clin7 (clinic office role «دفتر مرکز» + therapist; single-therapist default for new clients; one visible
+  «چه بفرستید» list) and clin8 (flat clinic menus per role, fixed «فرستادن آزمون», «خدمات» service catalog with prices for
+  office/owner, «مراجعان» shows each client's latest test, settings links to members/audit). Sepehr: office and first therapist
+  invited (join SMS sent), talent inventory TALENT-INV-15 added to its catalog. Tests: tests_clin7, ts_http_clin7, ts_http_clin8.
 - No build phase is pending. What remains is owner input and hardening (below).
 
 ## Open items

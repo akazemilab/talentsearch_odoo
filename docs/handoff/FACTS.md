@@ -1,6 +1,6 @@
 # FACTS (generated, do not edit by hand)
 
-Generated: 2026-10-14T03:21Z from commit 6b85fc7 on branch main.
+Generated: 2026-10-14T06:45Z from commit 142e980 on branch main.
 Regenerate: `bash tools/vps/handoff_facts.sh`. Scope: talentsearch.ir only.
 
 ## Modules (addons/*, manifest version, python lines, test files)
@@ -15,10 +15,10 @@ Regenerate: `bash tools/vps/handoff_facts.sh`. Scope: talentsearch.ir only.
 | ts_core | 20.0.2.0.0 | 676 | 0 | base,mail,portal |
 | ts_hire | 20.0.1.1.0 | 1224 | 0 | ts_brand,ts_tasks,ts_onet,mail |
 | ts_kavenegar | 20.0.1.0.0 | 1576 | 0 | sms,phone_validation |
-| ts_onboard | 20.0.2.0.0 | 3773 | 0 | ts_hire,ts_sms,website |
+| ts_onboard | 20.0.2.2.0 | 3894 | 0 | ts_hire,ts_sms,website |
 | ts_onet | 20.0.1.0.0 | 422 | 0 | ts_core,website |
-| ts_org | 20.0.5.0.0 | 1610 | 0 | ts_assessment |
-| ts_panel | 20.0.20.0.0 | 7757 | 0 | ts_talent,ts_sms |
+| ts_org | 20.0.5.0.0 | 1618 | 0 | ts_assessment |
+| ts_panel | 20.0.20.1.0 | 7792 | 0 | ts_talent,ts_sms |
 | ts_sms | 20.0.2.0.1 | 1120 | 0 | ts_kavenegar,ts_org,ts_assessment,ts_website |
 | ts_talent | 20.0.1.0.0 | 1929 | 0 | ts_assessment,ts_org,ts_sms |
 | ts_tasks | 20.0.1.0.0 | 1266 | 0 | ts_battery,ts_onet,website |
@@ -33,7 +33,7 @@ Regenerate: `bash tools/vps/handoff_facts.sh`. Scope: talentsearch.ir only.
 - ts_career: 6
 - ts_hire: 16
 - ts_kavenegar: 2
-- ts_onboard: 37
+- ts_onboard: 38
 - ts_org: 22
 - ts_panel: 91
 - ts_sms: 12
@@ -109,6 +109,7 @@ Regenerate: `bash tools/vps/handoff_facts.sh`. Scope: talentsearch.ir only.
 - tests_billing.py
 - tests_brand.py
 - tests_career_engine.py
+- tests_clin7.py
 - tests_edge.py
 - tests_hire.py
 - tests_hire_engine.py
@@ -149,6 +150,7 @@ Regenerate: `bash tools/vps/handoff_facts.sh`. Scope: talentsearch.ir only.
 - tests_zlive_sepehr_checklist.py
 - tests_zlive_sepehr_prepaid.py
 - tests_zlive_sepehr_smsname.py
+- tests_zlive_sepehr_talent.py
 - tests_zseed_sepehr.py
 - tests_zseed_sepehr_live.py
 - ts_db.sh
@@ -159,6 +161,8 @@ Regenerate: `bash tools/vps/handoff_facts.sh`. Scope: talentsearch.ir only.
 - ts_http_billing.py
 - ts_http_brand.py
 - ts_http_career.py
+- ts_http_clin7.py
+- ts_http_clin8.py
 - ts_http_edu.py
 - ts_http_flow.py
 - ts_http_hire.py
@@ -168,25 +172,21 @@ Regenerate: `bash tools/vps/handoff_facts.sh`. Scope: talentsearch.ir only.
 - ts_http_onb3.py
 - ts_http_org.py
 - ts_http_panel.py
-- ts_http_pv2_0.py
-- ts_http_pv2_1.py
-- ts_http_pv2_10.py
-- ts_http_pv2_11.py
 
 ## Recent commits
 
+- 142e980 Merge clin8: clinic flat menus, «خدمات» catalog, «مراجعان» with latest test, talent inventory one-off
+- a0ef3e5 clin8: the shell's «فرستادن آزمون» is an outline button (one primary action per page); tests: clinic menu keys, G06 looks for the welcome among the sent SMS
+- e157b06 live one-off: talent inventory into the Sepehr catalog
+- 8c3b61e clin8: clinic panels get flat role menus (office: پیشخوان/مراجعان/خدمات/اعتبار, therapist adds گزارش‌ها, owner تنظیمات), fixed «فرستادن آزمون», «خدمات» service catalog (batteries, tests by category, prices for office/owner, preselected send), «مراجعان» with each client's latest test, settings links; tests ts_http_clin8
+- d934c6a Merge clin7: clinic office + therapist
+- 2e029c7 tests: clinician menu says «مراجعان» in clinic panels (clin7)
+- c96a9d4 clin7: clinic office + therapist (therapist picker and single-therapist default, visible «چه بفرستید», «دفتر مرکز», trimmed clinic menu and dashboard); tests_clin7, ts_http_clin7
+- 47a919c gitignore: private live one-offs
+- 996ad29 docs: whole-project handoff (START_HERE, RULES, TOKENS_AND_DELEGATION, CLIENT_HANDOFF, generated FACTS)
 - 6b85fc7 docs: onb3 LIVE in HANDOFF
 - d5f60a4 Merge branch 'main' of github-talentsearch:akazemilab/talentsearch_odoo into onb3
 - f0608c2 onb3: fix career1 merge conflicts (norm rebuild excludes career, preview, voided; career hero entry is a quiet text link)
 - 71c7ead ts_career sitemap: Odoo 20 request website (env.website)
 - 7ad8add ts_career: /career in talentsearch.ir's sitemap only (guard: eot.ir sitemap must not change)
 - febadff Merge branch 'main' of github-talentsearch:akazemilab/talentsearch_odoo into career
-- 49ba27b ts_career 20.0.1.1.0
-- a0ff540 ts_career precision: CAREER-MATCH-v2 (interest shape + top-code congruence, neutral for unchecked domains, gated short list of 5-10 with at most 4 per area), results grouped by area, full list behind a link
-- ca255ee Onboarding handoff (onb1/onb2 live, onb3 built)
-- 7b3aba9 Merge main (career1) into onb3
-- c0c6e15 log: career1 shipped (free career match)
-- a84abb3 Merge branch 'main' of github-talentsearch:akazemilab/talentsearch_odoo into career
-- 909c766 ts_career risk fixes: no result SMS per module, erase removes the run, hiring norms exclude career takes, service-only carried consent stated on the button, site check first, cap guard, create race
-- 3c6e46d tests_assessment: the free career instruments are not source instruments
-- 58df92d Merge branch 'main' of github-talentsearch:akazemilab/talentsearch_odoo into onb3
