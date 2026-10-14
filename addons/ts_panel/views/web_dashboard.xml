@@ -32,7 +32,7 @@
                                 </div>
                                 <div class="tsp-head__actions">
                                     <!-- first_run (set by ts_brand while a set-up list or card is shown): that list holds the one primary button -->
-                                    <a t-if="can_invite" t-attf-href="/my/workspaces/#{ws.id}/invites/new?fresh=1" t-attf-class="ts-btn #{'ts-btn--outline' if first_run else 'ts-btn--primary'}">دعوت تازه</a>
+                                    <a t-if="can_invite and not shell_send_url" t-attf-href="/my/workspaces/#{ws.id}/invites/new?fresh=1" t-attf-class="ts-btn #{'ts-btn--outline' if first_run else 'ts-btn--primary'}">دعوت تازه</a>
                                     <span t-attf-class="ts-pill #{'ts-pill--ok' if ws.state == 'active' else 'ts-pill--warn'}"><t t-out="panel_state"/></span>
                                 </div>
                             </header>

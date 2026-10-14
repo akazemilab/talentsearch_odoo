@@ -18,6 +18,12 @@
                                 </div>
                             </header>
 
+                            <nav t-if="shell_flat" class="ts-card tsp-setlinks" id="tsp-setlinks" aria-label="بخش‌های تنظیمات">
+                                <a t-if="member.has_perm('members:read')" t-attf-href="/my/workspaces/#{ws.id}/members">اعضا و دسترسی‌ها</a>
+                                <a t-if="member.has_perm('audit:read')" t-attf-href="/my/workspaces/#{ws.id}/audit">دفتر ممیزی</a>
+                                <a href="/help/panel">راهنما</a>
+                            </nav>
+
                             <section class="ts-card" id="tsp-profile" aria-labelledby="tsp-profile-h">
                                 <h2 id="tsp-profile-h" class="h5">مشخصات</h2>
                                 <form t-attf-action="/my/workspaces/#{ws.id}/settings/save" method="post" enctype="multipart/form-data" class="tsp-form" data-tsp-once="1" data-ts-dirty="مشخصات">

@@ -243,3 +243,10 @@
     .tsp-shell { display: block !important; background: #fff !important; }
     .tsp-card, .ts-card { break-inside: avoid; border: 1px solid #ccc; box-shadow: none; }
 }
+
+// clin8: the clinic shell's fixed «فرستادن آزمون» and the quiet help link under the menu
+.tsp-shell__nav > .tsp-send { inline-size: 100%; justify-content: center; margin-block: var(--space-2) var(--space-3); }
+.tsp-helplink { display: inline-block; margin-block-start: var(--space-3); padding-inline: 10px; font-size: 13px; color: var(--color-neutral-300); }
+.tsp-topbar .tsp-send { margin-inline-start: auto; white-space: nowrap; }
+@media (max-width: 1023.98px) { .tsp-shell__nav > .tsp-send { display: none; } }
+.tsp-setlinks { display: flex; flex-wrap: wrap; gap: var(--space-2) var(--space-5); }

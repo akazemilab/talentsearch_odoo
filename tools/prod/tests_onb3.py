@@ -479,9 +479,10 @@ wq_row = Nudge.search([('workspace_id', '=', w_q.id), ('kind', '=', 'welcome')])
 check('G05 the welcome SMS at 23:00 Tehran waits in the queue (quiet hours 22:00–08:00)', wq_row.state == 'queued' and not SENT)
 NOW[0] = NOW[0].replace(hour=8, minute=30) + timedelta(days=1)
 Nudge._ts_run()
-check('G06 ...and goes out from 08:00 with the hourly run', wq_row.state == 'sent' and SENT and SENT[-1][0] == PH[7]
-      and 'پنل' in SENT[-1][1] and 'ساخته شد. نخستین قدم: خودتان امتحان کنید.' in SENT[-1][1]
-      and '/my/workspaces/%d' % w_q.id in SENT[-1][1], str(SENT[-1:]))
+# the same run may also send a later guide SMS that is due by then (time of day of the test run): look for the welcome
+wq_sent = [b for n, b in SENT if n == PH[7] and 'ساخته شد. نخستین قدم: خودتان امتحان کنید.' in b]
+check('G06 ...and goes out from 08:00 with the hourly run', wq_row.state == 'sent' and wq_sent
+      and 'پنل' in wq_sent[0] and '/my/workspaces/%d' % w_q.id in wq_sent[0], str(SENT[-2:]))
 # stall 3 h: same Tehran day as the welcome -> held back by the one-a-day cap; next day -> sent
 env.flush_all()
 env.cr.execute("UPDATE ts_workspace SET create_date = now() at time zone 'UTC' - interval '4 hours' WHERE id = %s", [w_q.id])

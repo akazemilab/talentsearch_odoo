@@ -177,6 +177,9 @@ class TsOnb3Invites(TsBillingInvites):
 
     def _one_values(self, me, kw=None, vals=None, error=None):
         kw = kw or {}
+        pk = kw.get('pick') or ''
+        if not (vals or {}).get('pick') and len(pk) > 1 and pk[0] in 'bi' and pk[1:].isdigit():   # clin8: from «خدمات»
+            vals = dict(vals or {}, pick=pk)
         ws = me.workspace_id
         kind = ws.ts_onb_kind()
         words = ws.ts_onb_words()

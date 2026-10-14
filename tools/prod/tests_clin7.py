@@ -54,7 +54,8 @@ try:
     check('C06 clinic menu has no groups, campaigns, import, exports',
           not set(keys) & {'groups', 'campaigns', 'import', 'exports'}, keys)
     check('C07 clinic menu says «مراجعان»', labels.get('clients') == 'مراجعان', labels.get('clients'))
-    check('C08 office keeps invites and credits', {'invites', 'credits'} <= set(keys), keys)
+    check('C08 office: clients, services, credits; invites and members live elsewhere (clin8)',
+          {'clients', 'services', 'credits'} <= set(keys) and not {'invites', 'members', 'help'} & set(keys), keys)
 
     ts = M.ts_clin7_therapists(ws)
     check('C09 the only therapist (owner not practising)', ts == doc, ts.ids)

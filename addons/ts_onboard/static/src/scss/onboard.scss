@@ -117,3 +117,17 @@
 .tso-aud-alt { margin: var(--space-2) 0 0; }
 .tso-aud-alt a { display: inline-flex; align-items: center; min-block-size: 44px; }
 .tso-plans-go { display: flex; justify-content: center; margin: var(--space-5) 0 0; }
+
+// clin8: «خدمات» (the clinic's service catalog)
+.tss-group { margin-block-start: var(--space-6); }
+.tss-list { list-style: none; margin: var(--space-3) 0 0; padding: 0; display: grid; gap: var(--space-3); }
+.tss-item { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--space-4); }
+.tss-item__main { min-inline-size: 0; }
+.tss-item__title { font-size: var(--fs-2, 1.05rem); margin: 0; }
+.tss-item__facts { margin: var(--space-1) 0 0; color: var(--color-neutral-300); font-size: 14px; }
+.tss-item__desc { margin: var(--space-2) 0 0; }
+.tss-price { color: var(--color-text); font-weight: 600; }
+.tss-more { margin-block-start: var(--space-2); font-size: 14px; }
+.tss-more summary { cursor: pointer; color: var(--color-accent-300); }
+.tss-send { flex: none; white-space: nowrap; }
+@media (max-width: 767.98px) { .tss-item { flex-direction: column; } .tss-send { align-self: stretch; justify-content: center; } }
