@@ -85,6 +85,10 @@ hold newer code that the old clone DB cannot run. Long jobs: `ts bg NAME CMD`,
 - Installing survey+crm+helpdesk+account adds 57 modules (localizations are filtered
   by company country; a static manifest walk wrongly predicted 151).
 
+- Another module's xpath `hasclass('x')` matches the STATIC `class` attribute only: turning that element's class into
+  `t-attf-class` breaks the inheriting view (every page 500, clin11). Keep `class="x"` and add `t-att-class` for the
+  dynamic part (QWeb merges both).
+
 ## Source data facts (assessments)
 Exports came from the old sepehrtherapy.ir Odoo (read-only via the `odoo` connector):
 x_psy_* models, engine `S09-V3.0-multi-inventory` (server action 1290): answers are

@@ -4,7 +4,7 @@
                'every report (screen, print, PDF), on-demand PDF downloads that are never stored, native sms.template texts '
                '(docs/clinic/05_sms_texts.md) with short links /i/<code> and /j/<code>; clinic phase 6: the counseling-center '
                'set-up checklist, the counselor first-run card and the help section «راهنمای راه‌اندازی مرکز مشاوره»',
-    'version': '20.0.1.0.1',
+    'version': '20.0.1.0.2',
     'category': 'Services/Talent Search',
     'author': 'EOT',
     'license': 'LGPL-3',

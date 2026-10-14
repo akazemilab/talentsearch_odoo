@@ -26,7 +26,7 @@ def content_disposition(filename):
 
 from odoo.addons.ts_assessment.controllers.main import _my_attempt, _ts_site_or_404
 from odoo.addons.ts_battery.controllers.main import TsBatteryMembers, TsBatteryPanelReport
-from odoo.addons.ts_org.models.panel import ROLE_LABELS
+from odoo.addons.ts_org.models.panel import ROLE_LABELS, role_label
 from odoo.addons.ts_panel.controllers.base import (deny, flash_error, flash_ok, forbidden, member_or_404, render_in_shell,
                                                    require)
 from odoo.addons.ts_panel.controllers.members import MEMBER_STATE, _other_member, jalali_or_dash
@@ -185,7 +185,7 @@ class TsBrandMembers(TsBatteryMembers):
             key = me.ts_state_key()
             return render_in_shell(
                 'ts_panel.member', me, 'members', me.user_id.name, m=me, state=MEMBER_STATE[key][0], pill=MEMBER_STATE[key][1],
-                m_role=ROLE_LABELS.get(me.role, me.role), clients=me.ts_client_count() if me.active else 0,
+                m_role=role_label(me.role, me.workspace_id.purpose), clients=me.ts_client_count() if me.active else 0,
                 last=jalali_or_dash(me.ts_last_activity()), can_manage=False, is_self=True, roles=[], chosen=me.role,
                 resumed=False, clinical=me.workspace_id.purpose == 'clinical', can_catalog=False, own_only=True)
         return super().member_page(ws_id, mid, **kw)
