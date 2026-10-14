@@ -27,7 +27,19 @@ on prod, changed only by `ts ship`.
   «چه بفرستید» list) and clin8 (flat clinic menus per role, fixed «فرستادن آزمون», «خدمات» service catalog with prices for
   office/owner, «مراجعان» shows each client's latest test, settings links to members/audit). Sepehr: office and first therapist
   invited (join SMS sent), talent inventory TALENT-INV-15 added to its catalog. Tests: tests_clin7, ts_http_clin7, ts_http_clin8.
+- 2026-10-14 clin9 (UX pass of the clinic panel): «خدمات» right after «پیشخوان»; staff bar without «سنجه‌ها و نتیجه‌ها»;
+  rail without code / «تغییر پنل» (unless several panels); dashboard without help text, role note, period chips; client page
+  «مشاور», no groups card, archive folded; four client chips; «خدمات» with jump chips and a card grid; tighter rhythm
+  (.tsp-shell--flat, rules under #wrapwrap). Tests: ts_http_clin8 is re-runnable on one clone.
 - No build phase is pending. What remains is owner input and hardening (below).
+
+## UX review tools (clin9)
+- `ts shots DB clinic` (slot's kept clone): seeds a clinic (office, therapist, owner, a finished talent inventory) with
+  ts_http_clin8.py, photographs each role's pages at 1280 and 390, writes `/root/share/out/shots_DB/gaps.txt` (only pages
+  with a problem or an empty gap over 24px between blocks) and one contact sheet per role and width (`sheet_<role>_<w>.png`).
+  Read gaps.txt first; look at one sheet per role, not page by page.
+- `TS_SHOT_GAPS=1 tools/vps/ts_shot.py ...` prints the gap line per page; `tools/vps/ts_sheet.py OUT COLS TILE PNG...` builds a sheet.
+- `ts db reload DB MODULES` now restarts the clone on the slot's own port (was always 8071).
 
 ## Open items
 Owner: Kavenegar Verify Lookup template (`@talentsearch.ir #%token`); look at the Kavenegar outbox for 2026-10-13 13:48-13:56
