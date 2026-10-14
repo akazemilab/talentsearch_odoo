@@ -7,7 +7,8 @@
 # slot N>0 syncs from the worktree /root/ts_wt_sN (create it with `ts wt`). Env: SKIP_BASE=1 reuses
 # the baseline snapshot of the same clone name; SKIP_CHECK=1 skips the preflight.
 set -uo pipefail
-DB=${1:?db}; MODS=${2:?install_modules}; UPG=${3:-}
+DB=${1:?db}; MODS=${2?install_modules (may be empty)}; UPG=${3:-}
+[ -n "$MODS$UPG" ] || { echo "!! nothing to install or upgrade"; exit 2; }
 SLOT=${TS_SLOT:-0}; export TS_SLOT=$SLOT
 [[ $SLOT =~ ^[012]$ ]] || { echo "!! TS_SLOT must be 0, 1 or 2"; exit 2; }
 PORT=$((8071 + 2 * SLOT))
