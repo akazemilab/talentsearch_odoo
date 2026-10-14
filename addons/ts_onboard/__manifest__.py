@@ -7,7 +7,7 @@
                'events without personal data. onb3 (docs/onboarding/03_panel_first_session.md): kind-driven starter, '
                'the member\'s own try-out, sample reports, «شروع کار», one-screen invitation with a permanent link, guide '
                'SMS, audience pages, activation events',
-    'version': '20.0.2.2.0',
+    'version': '20.0.2.3.0',
     'category': 'Services/Talent Search',
     'author': 'EOT',
     'license': 'LGPL-3',

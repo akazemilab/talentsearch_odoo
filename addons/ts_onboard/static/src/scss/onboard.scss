@@ -118,16 +118,24 @@
 .tso-aud-alt a { display: inline-flex; align-items: center; min-block-size: 44px; }
 .tso-plans-go { display: flex; justify-content: center; margin: var(--space-5) 0 0; }
 
-// clin8: «خدمات» (the clinic's service catalog)
-.tss-group { margin-block-start: var(--space-6); }
-.tss-list { list-style: none; margin: var(--space-3) 0 0; padding: 0; display: grid; gap: var(--space-3); }
-.tss-item { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--space-4); }
-.tss-item__main { min-inline-size: 0; }
-.tss-item__title { font-size: var(--fs-2, 1.05rem); margin: 0; }
-.tss-item__facts { margin: var(--space-1) 0 0; color: var(--color-neutral-300); font-size: 14px; }
-.tss-item__desc { margin: var(--space-2) 0 0; }
-.tss-price { color: var(--color-text); font-weight: 600; }
-.tss-more { margin-block-start: var(--space-2); font-size: 14px; }
-.tss-more summary { cursor: pointer; color: var(--color-accent-300); }
-.tss-send { flex: none; white-space: nowrap; }
-@media (max-width: 767.98px) { .tss-item { flex-direction: column; } .tss-send { align-self: stretch; justify-content: center; } }
+#wrapwrap {
+    // clin8/clin9: «خدمات» (the clinic's service catalog): jump chips, a two-column card grid, title and price on one line
+    .tss-jump { margin-block-start: calc(-1 * var(--space-2)); }
+    .tss-group { scroll-margin-block-start: var(--space-4); }
+    .tss-group__h { font-size: 15.5px; font-weight: 600; margin: 0 0 var(--space-2); display: flex; gap: var(--space-2); align-items: baseline; flex-wrap: wrap; }
+    .tss-group__h .ts-hint { font-weight: 400; font-size: 13px; }
+    .tss-list { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--space-3); grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); }
+    .tsp-shell__main .ts-card.tss-item { display: flex; flex-direction: column; gap: 6px; padding: 14px 16px; }
+    .tss-item__top { display: flex; justify-content: space-between; align-items: baseline; gap: var(--space-3); }
+    .tss-item__title { font-size: 15px; font-weight: 600; margin: 0; line-height: 1.6; }
+    .tss-price { flex: none; font-size: 13.5px; font-weight: 600; color: var(--color-accent-300); white-space: nowrap; }
+    .tss-item__facts { margin: 0; color: var(--color-neutral-300); font-size: 13px; }
+    .tss-item__desc { margin: 0; font-size: 14px; line-height: 1.75; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+    .tss-item__foot { margin-block-start: auto; padding-block-start: 4px; display: flex; justify-content: space-between; align-items: center; gap: var(--space-3); flex-wrap: wrap; }
+    .tss-more { font-size: 13.5px; }
+    .tss-more summary { cursor: pointer; color: var(--color-accent-300); }
+    .tss-more[open] { flex-basis: 100%; }
+    .tss-more p { margin: 6px 0 0; line-height: 1.7; }
+    .tss-send { flex: none; margin-inline-start: auto; white-space: nowrap; }
+    .tss-item--bat { border-color: var(--color-accent-900); }
+}

@@ -40,7 +40,7 @@ env.cr.commit()
 print('SHOTSMS on: kavenegar -> 127.0.0.1:9 (dead), otp', bool(c.kv_enabled and c.ts_sms_otp), 'code step for', P)
 PY
 echo "=== $(date +%T) seed"
-[ "$MODE" = career ] || ssh -n eot-odoo-prod "TS_SLOT=$SLOT PYTHONIOENCODING=utf-8 python3 -u $STAGE/tools/prod/ts_http_pv2_19.py $DB $PORT 2>&1 | grep -E '^(FAIL|SUMMARY)'"
+[ "$MODE" = career ] || [ "$MODE" = clinic ] || ssh -n eot-odoo-prod "TS_SLOT=$SLOT PYTHONIOENCODING=utf-8 python3 -u $STAGE/tools/prod/ts_http_pv2_19.py $DB $PORT 2>&1 | grep -E '^(FAIL|SUMMARY)'"
 if [ "$MODE" = career ]; then
   # ts_career: the free career pages of the HTTP suite's people (run ts_http_career.py on this clone first)
   export TS_SHOT_WIDTHS=360,390,1280 TS_SHOT_DARK=${TS_SHOT_DARK:-390} TS_SHOT_FOLD=1
@@ -60,6 +60,23 @@ env.cr.commit()
 print('CAREER matrix')
 print(json.dumps({'': ['/career'], p.login: ['/career', '/career/r', '/career/r?ready=1', '/career/job/' + code, '/career/r?edit=1'],
                   q.login: ['/take/' + at.access_token]}))
+PY
+elif [ "$MODE" = clinic ]; then
+  # clin9: the clinic panel per role (office / therapist / owner) at 1280 and 390 with the spacing audit (TS_SHOT_GAPS)
+  # and one contact sheet per role and width (ts_sheet.py): review the sheets, not page by page
+  export TS_SHOT_WIDTHS=1280,390 TS_SHOT_GAPS=1
+  ssh -n eot-odoo-prod "TS_SLOT=$SLOT PYTHONIOENCODING=utf-8 python3 -u $STAGE/tools/prod/ts_http_clin8.py $DB $PORT 2>&1 | grep -E '^(FAIL|SUMMARY)'"
+  ssh eot-odoo-prod "$SHELL_CMD" 2>&1 > /tmp/ui_matrix_out_$DB.txt <<'PY'
+import json
+ws = env['ts.workspace'].sudo().search([('name', '=', 'مرکز جریان clin8')], order='id desc', limit=1)
+a = env['ts.assignment'].sudo().search([('workspace_id', '=', ws.id), ('state', '=', 'done')], limit=1)
+W, C, AT = '/my/workspaces/%d' % ws.id, a.client_id.id, a.attempt_id.id
+L = lambda r: 'ts.clin8.%s.http@example.invalid' % r
+print('CLINIC matrix', ws.id, C, AT)
+print(json.dumps({
+    L('off'): [W, W + '/services', W + '/clients', W + '/clients/%d' % C, W + '/invites/new', W + '/invites', W + '/credits'],
+    L('doc'): [W, W + '/services', W + '/clients', W + '/clients/%d/r/%d' % (C, AT), W + '/reports'],
+    L('own'): [W, W + '/settings', W + '/members', W + '/credits']}))
 PY
 elif [ "$MODE" = ux ] || [ "$MODE" = take ]; then
   if [ "$MODE" = take ]; then
@@ -85,4 +102,14 @@ PY=/root/eot-browser/venv/bin/python; [ -x "$PY" ] || PY=python3
 $PY $REPO/tools/vps/ts_shot.py $DB $PORT --matrix /root/ts-jobs/ui_matrix_$DB.json 2>&1 | tee /root/ts-jobs/ui_shot_report_$DB.txt | tail -3
 rm -rf "$OUT"; mkdir -p "$OUT"; cp /root/ts-jobs/shots/*.png "$OUT"/ 2>/dev/null; cp /root/ts-jobs/ui_shot_report_$DB.txt "$OUT"/report.txt
 cp /root/ts-jobs/ui_matrix_$DB.json "$OUT"/matrix.json 2>/dev/null
+if [ "$MODE" = clinic ]; then
+  for r in off doc own; do for w in 1280 390; do
+    if [ $w = 1280 ]; then c=3; t=520; else c=6; t=260; fi
+    $PY $REPO/tools/vps/ts_sheet.py "$OUT/sheet_${r}_$w.png" $c $t $(ls /root/ts-jobs/shots/ts.clin8.${r}.http_*_$w.png 2>/dev/null)
+  done; done
+  # only pages that have a problem or a gap over 24px: the page line, then its gap line (short enough to read whole)
+  awk '/^[0-9-]+ /{u=$0; p=($0 !~ / ok( \[|$)/)} /^ *gaps /{ if ($0 !~ / -$/ || p) print u "\n" $0 }' \
+    /root/ts-jobs/ui_shot_report_$DB.txt | sed 's/#tsp-rail:[^|]*| *//g' > "$OUT/gaps.txt"
+  echo "gaps: $(grep -c ' gaps ' "$OUT/gaps.txt") page/width with gaps or problems"
+fi
 echo "=== $(date +%T) done: $(ls "$OUT" | wc -l) files in $OUT"

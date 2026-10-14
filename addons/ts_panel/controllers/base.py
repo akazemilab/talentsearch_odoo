@@ -24,7 +24,7 @@ MENU = [
     {'seq': 10, 'key': 'home', 'group': 'نمای کلی', 'label': 'پیشخوان', 'suffix': '', 'perm': 'panel:view'},
     {'seq': 20, 'key': 'clients', 'group': 'افراد و دعوت', 'label': 'شرکت‌کنندگان', 'suffix': '/clients', 'perm': 'clients:read_own',
      'needs_act': True, 'labels': {'clinical': 'مراجعان'}},
-    {'seq': 22, 'key': 'services', 'group': 'افراد و دعوت', 'label': 'خدمات', 'suffix': '/services', 'perm': 'invites:create',
+    {'seq': 12, 'key': 'services', 'group': 'افراد و دعوت', 'label': 'خدمات', 'suffix': '/services', 'perm': 'invites:create',
      'needs_act': True, 'only_in': ('clinical',)},   # clin8: the clinic's service catalog (ts_onboard)
     {'seq': 25, 'key': 'groups', 'group': 'افراد و دعوت', 'label': 'گروه‌ها', 'suffix': '/groups', 'perm': 'groups:manage',
      'needs_act': True, 'hide_in': ('clinical',)},
@@ -150,6 +150,7 @@ def render_in_shell(template, member, active, title, status=None, **vals):
         shell_send_url=('/my/workspaces/%d/invites/new' % ws.id) if (ws.purpose in FLAT_PURPOSES and member.can_act()
                                                                 and member.has_perm('invites:create')) else None,
         shell_flat=ws.purpose in FLAT_PURPOSES,
+        shell_multi=len(_memberships()) > 1 if ws.purpose in FLAT_PURPOSES else True,
         flash_ok=ok, flash_err=err,
         title='%s · %s' % (title, ws.name), page_title=title, page_name='ts_panel_shell')
     ctx.update(vals)

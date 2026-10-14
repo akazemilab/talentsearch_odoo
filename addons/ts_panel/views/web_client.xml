@@ -11,7 +11,7 @@
                 <t t-call="website.layout" additional_title="title">
                     <div id="wrap" class="ts-page">
                         <t t-call="ts_panel.shell_frame">
-                            <a t-attf-href="/my/workspaces/#{ws.id}/clients" class="ts-backlink">شرکت‌کنندگان</a>
+                            <a t-attf-href="/my/workspaces/#{ws.id}/clients" class="ts-backlink" t-out="'مراجعان' if shell_flat else 'شرکت‌کنندگان'"/>
                             <header class="tsp-head">
                                 <div>
                                     <h1 class="tsp-head__title"><bdi t-out="c.name"/></h1>
@@ -55,7 +55,7 @@
                             </section>
 
                             <section class="ts-card tsp-c-after" aria-labelledby="tsp-c-resp">
-                                <h2 id="tsp-c-resp" class="h5">کارشناس مسئول</h2>
+                                <h2 id="tsp-c-resp" class="h5" t-out="'مشاور' if shell_flat else 'کارشناس مسئول'"/>
                                 <p><t t-if="c.responsible_id"><strong><bdi t-out="c.responsible_id.user_id.name"/></strong> (<t t-out="role_labels.get(c.responsible_id.role, c.responsible_id.role)"/>)</t><t t-else="">این شرکت‌کننده کارشناس مسئول ندارد (بدون کارشناس).</t></p>
                                 <t t-if="c.handover_to_id">
                                     <p class="tsp-flash" role="status">درخواست سپردن به «<t t-out="c.handover_to_id.user_id.name"/>» از طرف «<t t-out="c.handover_by_id.user_id.name"/>» منتظر تأیید است.</p>
@@ -75,7 +75,7 @@
                                 <form t-if="can_assign" t-attf-action="/my/workspaces/#{ws.id}/clients/#{c.id}/responsible" method="post" class="tsp-form" data-tsp-once="1">
                                     <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
                                     <div class="tsp-field">
-                                        <label class="tsp-field__label" for="tsp_resp">تغییر کارشناس مسئول</label>
+                                        <label class="tsp-field__label" for="tsp_resp" t-out="'تغییر مشاور' if shell_flat else 'تغییر کارشناس مسئول'"/>
                                         <select id="tsp_resp" name="responsible_id">
                                             <option value="">بدون کارشناس</option>
                                             <option t-foreach="cands" t-as="m" t-att-value="m.id" t-att-selected="'selected' if m == c.responsible_id else None">
@@ -83,7 +83,7 @@
                                             </option>
                                         </select>
                                     </div>
-                                    <p><button type="submit" class="ts-btn ts-btn--outline">ذخیرهٔ کارشناس مسئول</button></p>
+                                    <p><button type="submit" class="ts-btn ts-btn--outline" t-out="'ذخیرهٔ مشاور' if shell_flat else 'ذخیرهٔ کارشناس مسئول'"/></p>
                                 </form>
                                 <form t-if="colleagues and not c.handover_to_id and c.state == 'active'" t-attf-action="/my/workspaces/#{ws.id}/clients/#{c.id}/handover" method="post" class="tsp-form" data-tsp-once="1">
                                     <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
@@ -98,7 +98,7 @@
                                 </form>
                             </section>
 
-                            <section class="ts-card tsp-c-after" aria-labelledby="tsp-c-grp">
+                            <section t-if="not shell_flat" class="ts-card tsp-c-after" aria-labelledby="tsp-c-grp">
                                 <h2 id="tsp-c-grp" class="h5">گروه‌ها</h2>
                                 <p t-if="not c.group_ids" class="ts-hint">در هیچ گروهی نیست.</p>
                                 <ul t-else="" class="tsp-list">
@@ -149,7 +149,8 @@
                             </section>
 
                             <section t-if="can_archive and c.state == 'active'" class="ts-card" aria-labelledby="tsp-c-arch">
-                                <h2 id="tsp-c-arch" class="h5">بایگانی این شرکت‌کننده</h2>
+                                <h2 id="tsp-c-arch" class="h5" t-out="'بایگانی' if shell_flat else 'بایگانی این شرکت‌کننده'"/>
+                                <details t-att-open="None if shell_flat else 'open'" class="tsp-fold"><summary t-att-class="None if shell_flat else 'tsp-sr'">بایگانی این مراجع…</summary>
                                 <form t-attf-action="/my/workspaces/#{ws.id}/clients/#{c.id}/archive" method="post" class="ts-confirm" data-tsp-once="1" role="group" aria-labelledby="tsp-c-arch-t">
                                     <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
                                     <p class="ts-confirm__title" id="tsp-c-arch-t">بایگانی <bdi t-out="c.name"/></p>
@@ -157,6 +158,7 @@
                                     <label class="ts-check"><input type="checkbox" name="confirm" value="1" required="required"/><span>مطمئنم، این شرکت‌کننده بایگانی شود</span></label>
                                     <div class="ts-confirm__actions"><button type="submit" class="ts-btn ts-btn--danger-outline">بایگانی شرکت‌کننده</button></div>
                                 </form>
+                                </details>
                             </section>
                         </t>
                     </div>

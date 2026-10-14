@@ -26,6 +26,11 @@ Inst, Bat = env['ts.instrument'].sudo(), env['ts.battery'].sudo()
 u = {k: U.search([('login', '=', v)], limit=1) for k, v in L.items()}
 for m in M.search([('user_id', 'in', [u['off'].id, u['doc'].id])]):
     m.write({'active': False})
+# a re-run on the same clone (screenshot rounds): earlier fixture panels of these users count against the 24-hour panel
+# limit (counted on owner memberships), so those are aged by two days first (clone only, asserted above)
+env.cr.execute("UPDATE ts_workspace_member SET create_date = create_date - interval '2 days' WHERE user_id IN %%s",
+               [tuple(x.id for x in u.values())])
+env.invalidate_all()
 ws = W.ts_panel_create(u['own'], 'مرکز جریان clin8', 'clinic', terms=True)
 owner = ws.member_ids.filtered(lambda m: m.role == 'owner')[:1]
 off = M.create({'workspace_id': ws.id, 'user_id': u['off'].id, 'role': 'admin'})
@@ -66,10 +71,10 @@ if m:
     off, doc, own = Client(TS), Client(TS), Client(TS)
     check('H02 sign-ins', off.login(L['off'], pw[L['off']]) and doc.login(L['doc'], pw[L['doc']]) and own.login(L['own'], pw[L['own']]))
     st, _, page = off.req(W)
-    check('H03 office menu: پیشخوان، مراجعان، خدمات، اعتبار', menu(page) == ['پیشخوان', 'مراجعان', 'خدمات', 'اعتبار'], menu(page))
+    check('H03 office menu: پیشخوان، خدمات، مراجعان، اعتبار (clin9: «خدمات» right after «پیشخوان»)', menu(page) == ['پیشخوان', 'خدمات', 'مراجعان', 'اعتبار'], menu(page))
     check('H04 fixed «فرستادن آزمون» for the office, no group headings', 'id="tsp-send"' in page and 'tsp-nav__group' not in page)
     st, _, page = doc.req(W)
-    check('H05 therapist menu: پیشخوان، مراجعان، خدمات، گزارش‌ها', menu(page) == ['پیشخوان', 'مراجعان', 'خدمات', 'گزارش‌ها'], menu(page))
+    check('H05 therapist menu: پیشخوان، خدمات، مراجعان، گزارش‌ها', menu(page) == ['پیشخوان', 'خدمات', 'مراجعان', 'گزارش‌ها'], menu(page))
     st, _, page = own.req(W)
     check('H06 owner menu ends with تنظیمات, no members/audit/help items',
           menu(page)[-1:] == ['تنظیمات'] and not {'اعضا و نقش‌ها', 'دفتر ممیزی', 'راهنما'} & set(menu(page)), menu(page))

@@ -54,7 +54,7 @@ case $cmd in
     rsync -a --delete --exclude .git --exclude __pycache__ "$REPO/" $P:$STAGE/ \
       && ssh $P "chown -R odoo:odoo $STAGE && chmod +x $STAGE/tools/prod/*" \
       && echo "synced slot $SLOT $(cd $REPO && git rev-parse --short HEAD) $(cd $REPO && git branch --show-current)$(cd $REPO && git status --porcelain --untracked-files=no | grep -q . && echo ' +uncommitted')" ;;
-  db)    ts sync >/dev/null || exit 2; ssh $P "TS_CODE=$STAGE bash $STAGE/tools/prod/ts_db.sh $(q "$@")" ;;
+  db)    ts sync >/dev/null || exit 2; ssh $P "TS_CODE=$STAGE TS_PORT=$PORT bash $STAGE/tools/prod/ts_db.sh $(q "$@")" ;;
   guard) ts sync >/dev/null || exit 2; ssh $P "python3 -u $STAGE/tools/prod/ts_guard.py $(q "$@")" ;;
   test)
     db=${1:?db}; shift; ts sync >/dev/null || exit 2

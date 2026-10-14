@@ -23,6 +23,10 @@
                         <b t-if="ts_unread" class="ts-appnav__badge" t-out="ts_unread"/>
                     </a>
                 </xpath>
+                <!-- clin9: inside a clinic panel the staff bar is «پنل، اعلان‌ها، حساب، خروج» -->
+                <xpath expr="//nav[@id='ts-appnav']/a[@href='/my/assessments']" position="attributes">
+                    <attribute name="t-if">not shell_flat</attribute>
+                </xpath>
                 <!-- marketing menus (desktop and phone): one role-aware link for members -->
                 <xpath expr="(//div[hasclass('ts-nav__actions')])[1]" position="inside">
                     <t t-set="ts_panel_url" t-value="request.env.user.ts_panel_home()"/>

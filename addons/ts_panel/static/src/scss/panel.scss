@@ -244,9 +244,20 @@
     .tsp-card, .ts-card { break-inside: avoid; border: 1px solid #ccc; box-shadow: none; }
 }
 
-// clin8: the clinic shell's fixed «فرستادن آزمون» and the quiet help link under the menu
-.tsp-shell__nav > .tsp-send { inline-size: 100%; justify-content: center; margin-block: var(--space-2) var(--space-3); }
-.tsp-helplink { display: inline-block; margin-block-start: var(--space-3); padding-inline: 10px; font-size: 13px; color: var(--color-neutral-300); }
-.tsp-topbar .tsp-send { margin-inline-start: auto; white-space: nowrap; }
-@media (max-width: 1023.98px) { .tsp-shell__nav > .tsp-send { display: none; } }
-.tsp-setlinks { display: flex; flex-wrap: wrap; gap: var(--space-2) var(--space-5); }
+#wrapwrap {
+    // clin8/clin9: the clinic shell (.tsp-shell--flat): the send button under the panel card, a quiet help link, tighter rhythm
+    .tsp-shell__nav > .tsp-send { inline-size: 100%; justify-content: center; margin: 0; }
+    .tsp-helplink { display: inline-block; padding-inline: 10px; font-size: 13px; color: var(--color-neutral-300); }
+    .tsp-topbar .tsp-send { margin-inline-start: auto; white-space: nowrap; }
+    @media (max-width: 1023.98px) { .tsp-shell__nav > .tsp-send { display: none; } }
+    .tsp-shell--flat .tsp-shell__nav { gap: 10px; }
+    .tsp-shell--flat .tsp-shell__main { gap: var(--space-4); }
+    .tsp-shell--flat .tsp-shell__main > p, .tsp-shell--flat .tsp-shell__main > div, .tsp-shell--flat .tsp-shell__main > nav,
+    .tsp-shell--flat .tsp-shell__main > form, .tsp-shell--flat .tsp-shell__main > section, .tsp-shell--flat .tsp-shell__main > header { margin-block: 0; }
+    .tsp-shell--flat .tsp-head__help { margin-block-start: 2px; }
+    .tsp-shell--flat .tsp-shell__main .ts-card h2 { margin-block-end: var(--space-2); }
+    .tsp-shell--flat .tsp-shell__main .ts-backlink { margin-block-end: calc(-1 * var(--space-2)); }
+    .tsp-fold > summary { cursor: pointer; color: var(--color-neutral-300); font-size: 14px; }
+    .tsp-fold[open] > summary { margin-block-end: var(--space-3); }
+    .tsp-setlinks { display: flex; flex-wrap: wrap; gap: var(--space-2) var(--space-5); }
+}
