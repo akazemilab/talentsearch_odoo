@@ -9,6 +9,7 @@ Catches, before a 25-minute rehearsal, the failures that cost whole cycles on 20
   E view     a NEW ir.ui.view / template in a module that does not depend on `website`
              (install fails on eot_main: website makes ir_ui_view.visibility NOT NULL)
   W phone    the same test mobile number used in two test files (fixtures collide)
+  W css      one class starting rules in the SCSS of two modules (only when one of those files changed)
   W pycache  __pycache__ files tracked by git
   W copy     «اشتراک» alone in ts_* code/templates (reads as "subscription"; glossary §6: «اشتراک‌گذاری» / «به اشتراک گذاشتن»)
   Panel v2 rules (ts_panel only):
@@ -169,9 +170,40 @@ phones = {}
 for p in glob.glob(f'{REPO}/tools/prod/*.py'):
     for num in set(re.findall(r'09\d{9}', open(p, encoding='utf-8').read().translate(FA))):
         phones.setdefault(num, set()).add(os.path.basename(p))
+# only collisions that touch a test file changed on this branch (or uncommitted) are listed; the older ones are counted
+# in one line (2026-10-14: the same 13 warnings on every check were noise)
+try:
+    _chg = subprocess.run(['git', '-C', REPO, 'diff', '--name-only', 'main'], capture_output=True, text=True).stdout.split()
+    _chg += subprocess.run(['git', '-C', REPO, 'ls-files', '--others', '--exclude-standard'], capture_output=True, text=True).stdout.split()
+    changed = {os.path.basename(f) for f in _chg if f.startswith('tools/prod/')}
+except Exception:            # noqa: BLE001 - no git: list them all
+    changed = None
+old = 0
 for num, files in sorted(phones.items()):
     if len(files) > 1:
-        warns.append(f'phone {num[:4]}***{num[-3:]} used in {sorted(files)}')
+        if changed is None or files & changed:
+            warns.append(f'phone {num[:4]}***{num[-3:]} used in {sorted(files)}')
+        else:
+            old += 1
+if old:
+    print(f'(note: {old} older shared test numbers in unchanged files)')
+
+# W css: a class that starts a rule in the SCSS of two modules (site2 2026-10-14: the home's new .ts-band met
+# ts_assessment's pill .ts-band and drew a pill). Listed only when one of the files changed on this branch.
+# deliberate module refinements of a shared class (checked 2026-10-14)
+CSS_SHARED_OK = {'ts-btn--sm', 'ts-muted', 'ts-notice--info', 'ts-num'}
+css_def = {}
+for p in glob.glob(f'{REPO}/addons/*/static/src/**/*.scss', recursive=True):
+    mod = p[len(REPO) + 8:].split('/', 1)[0]
+    for cls in set(re.findall(r'^\s*\.([a-z][\w-]*)\s*[{,]', open(p, encoding='utf-8').read(), re.M)):
+        css_def.setdefault(cls, {}).setdefault(mod, p[len(REPO) + 1:])
+try:
+    _all = set(subprocess.run(['git', '-C', REPO, 'diff', '--name-only', 'main'], capture_output=True, text=True).stdout.split())
+except Exception:            # noqa: BLE001
+    _all = None
+for cls, mods in sorted(css_def.items()):
+    if len(mods) > 1 and cls not in CSS_SHARED_OK and (_all is None or _all & set(mods.values())):
+        warns.append(f'css .{cls} starts rules in {sorted(mods)} (one class, two meanings?)')
 
 # ---------------------------------------------------------------- tracked pycache
 tracked = [l for l in (git('ls-files') or '').splitlines() if '__pycache__' in l]

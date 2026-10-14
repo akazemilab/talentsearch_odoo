@@ -62,6 +62,9 @@ hold newer code that the old clone DB cannot run. Long jobs: `ts bg NAME CMD`,
    fails on any generic `ts_*` view.
 
 ## Odoo 20 pitfalls (new here)
+- Binary fields take raw content: assign `odoo.tools.binary.BinaryBytes(raw)`, never base64 bytes ("use BinaryValue instead of bytes"); a website favicon is re-encoded to a 256 px .ico on write.
+- `ir.config_parameter`: get_str/get_int/get_bool/get_float and set_* (no get_param/set_param).
+- Shell edits: never `sed s#..#..#` on text that contains `#` (Python comments): it rewrote every indented line of website.py (2026-10-14). Use a Python replace with an assert on the count.
 - Access rights: `security/ir.access.csv` (model `ir.access`), columns
   `id,name,model_id,group_id/id,operation,domain`; operation is a subset of
   "crud"; a row with a group grants, a row without one restricts everyone.
