@@ -26,15 +26,21 @@
     // invite wizard step 1: the legend of the «چه کسی» card sits inside the card, not on its border (2026-10-12)
     .tsp-who > legend { float: inline-start; inline-size: 100%; margin-block-end: var(--space-2); padding: 0; }
     .tsp-who > legend + * { clear: both; }
-    .tsp-switch { display: grid; gap: 1px; padding: 8px 10px; background: var(--color-bg); border: 1px solid var(--color-neutral-800); border-radius: var(--r-8); }
-    .tsp-switch__name { color: var(--color-text); font-size: 13.5px; font-weight: 500; overflow-wrap: anywhere; }
-    .tsp-switch__meta { color: var(--color-neutral-400); font-size: var(--fs-0); display: flex; flex-wrap: wrap; align-items: center; gap: 2px 6px; }
-    .tsp-switch__link { font-size: var(--fs-0); min-block-size: var(--control-min); display: inline-flex; align-items: center; }
-    // the caller's role links to what it may see (/help/roles#role-<key>), audit G5 PT-2
-    .tsp-role { display: inline-flex; align-items: center; min-block-size: 32px; color: var(--color-accent-300); font-weight: 500; text-decoration: underline; text-underline-offset: 3px; }
-    .tsp-switch__scope { margin: 4px 0 0; font-size: var(--fs-0); line-height: 1.7; color: var(--color-neutral-300); }
-    .tsp-switch .ts-pill { justify-self: start; margin-block-start: 4px; }
-    .tsp-topbar__ws .tsp-role { min-block-size: 24px; }
+    // clin10: the panel identity card (no frame): avatar (logo or initial), name, the role as a chip, quiet links below
+    .tsp-switch { display: flex; flex-wrap: wrap; align-items: center; gap: 2px 14px; padding: 2px 4px 10px; border-block-end: 1px solid var(--color-neutral-800); }
+    .tsp-switch__id { flex-basis: 100%; display: flex; align-items: center; gap: 10px; min-inline-size: 0; }
+    .tsp-avatar { --tsp-avatar: var(--color-accent); flex: none; inline-size: 40px; block-size: 40px; border-radius: 12px; display: grid; place-items: center; overflow: hidden; background: color-mix(in oklab, var(--tsp-avatar) 16%, var(--color-surface)); color: var(--tsp-avatar); font-family: var(--font-display); font-weight: 700; font-size: 18px; line-height: 1; }
+    .tsp-avatar img { inline-size: 100%; block-size: 100%; object-fit: contain; background: #fff; padding: 3px; }
+    .tsp-switch__who { display: grid; gap: 4px; min-inline-size: 0; }
+    .tsp-switch__name { color: var(--color-text); font-size: 14.5px; font-weight: 600; line-height: 1.45; overflow-wrap: anywhere; }
+    .tsp-switch__meta { display: flex; flex-wrap: wrap; align-items: center; gap: 2px 6px; color: var(--color-neutral-400); font-size: 12.5px; }
+    .tsp-role { display: inline-flex; align-items: center; min-block-size: 24px; padding: 0 10px; border-radius: 999px; background: var(--color-accent-900); color: var(--color-accent-300); font-size: 12.5px; font-weight: 500; text-decoration: none; justify-self: start; }
+    .tsp-role:hover, .tsp-role:focus-visible { text-decoration: none; background: color-mix(in oklab, var(--color-accent) 22%, var(--color-surface)); }
+    .tsp-switch__link { display: inline-flex; align-items: center; min-block-size: 28px; font-size: 12.5px; color: var(--color-neutral-300); text-decoration: none; }
+    .tsp-switch__link:hover, .tsp-switch__link:focus-visible { color: var(--color-accent-300); text-decoration: underline; }
+    .tsp-switch__scope { flex-basis: 100%; margin: 4px 0 0; font-size: var(--fs-0); line-height: 1.7; color: var(--color-neutral-300); }
+    .tsp-switch .ts-pill { flex: none; margin: 0; }
+    .tsp-topbar__ws .tsp-role { min-block-size: 22px; padding: 0 8px; font-size: 12px; }
     .tsp-nav__list { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; }
     .tsp-nav__item { position: relative; display: flex; align-items: center; gap: 10px; min-block-size: var(--control-min); padding: 0 10px; border-radius: var(--r-8); color: var(--color-neutral-300); text-decoration: none; font-weight: 500; font-size: 14px; }
     .tsp-nav__item:hover { background: var(--color-neutral-900); color: var(--color-text); text-decoration: none; }
