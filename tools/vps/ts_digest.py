@@ -10,7 +10,9 @@ import os, re, sys, time
 
 KNOWN = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'known_failures.txt')
 # `wait` returns early only for things that need attention or end a stage, not for every phase line
-EVENT = re.compile(r'^(FAIL|!!|\[rc=|pages compared|portal: |REHEARSAL|SHIP |Traceback|.*verdict)')
+EVENT = re.compile(r'^(FAIL|!!|\[rc=|pages compared|portal: |REHEARSAL|SHIP |Traceback|.*verdict|[A-Za-z]*(Error|Exception): )')
+# a suite that dies before its SUMMARY (a SyntaxError in the test file, 2026-10-14) ends in a bare exception line
+CRASH = re.compile(r'^[A-Za-z]*(Error|Exception): ')
 
 
 def known():
@@ -45,7 +47,7 @@ def digest(path, lines):
     kn = known()
     fails, seen = [], set()
     for l in lines:
-        if l.startswith('FAIL') or l.startswith('Traceback') or l.startswith('!!'):
+        if l.startswith('FAIL') or l.startswith('Traceback') or l.startswith('!!') or CRASH.match(l):
             key = l[:90]
             if key in seen:
                 continue
