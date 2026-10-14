@@ -15,7 +15,11 @@ assert env.cr.dbname == 'eot_main', 'this file is only for the live database'
 su = env(su=True)
 TOMAN = 10
 TIERS = ((30, 80000), (60, 120000), (10 ** 6, 180000))
-SPECIAL = {'TALENT-INV-15': 250000}
+SPECIAL = {'TALENT-INV-15': 1500000}        # owner 2026-10-14 12:12: «۱.۵ میلیون تومن» (was 250,000)
+# owner 2026-10-14 12:12: the intake battery «ارزیابی آغاز مشاوره» costs 800,000 toman and the other batteries keep their
+# ratio to it (was 300,000 = 70% of its parts): new = old x 800/300, rounded to the nearest 10,000 toman.
+BATTERY_TOMAN = {'BAT-INTAKE-1': 800000, 'BAT-DISTRESS-1': 670000, 'BAT-WORK-1': 670000, 'BAT-LIFE-1': 590000,
+                 'BAT-COUPLE-1': 590000, 'BAT-CHILD-1': 430000}
 GRANT_RIAL = 10000000 * TOMAN
 GRANT_KEY = 'grant:sepehr-start-1405-07-20'
 
@@ -32,7 +36,9 @@ try:
     with contextlib.redirect_stdout(out):
         Inst = su['ts.instrument']
         Bat = su['ts.battery']
-        insts = Inst.search([('state', '=', 'published')])
+        # clinic/school catalog only: hiring (purpose employment) and the free career tests are priced elsewhere, if ever
+        # (2026-10-14: a run over every published instrument priced them by mistake; tests_zlive_restore_hr_prices.py)
+        insts = Inst.search([('state', '=', 'published'), ('purpose', '!=', 'employment'), ('code', 'not like', 'CAREER-%')])
         singles = {}
         for i in insts:
             i._ts_ensure_product()
@@ -40,13 +46,13 @@ try:
             singles[i.id] = p
             if i.product_id.list_price != p * TOMAN:
                 i.product_id.list_price = p * TOMAN
-        for b in Bat.search([('state', '=', 'published')]):
+        for b in Bat.search([('state', '=', 'published'), ('code', 'in', list(BATTERY_TOMAN))]):
             b._ts_ensure_product()
             total = sum(singles.get(l.instrument_id.id, 0) for l in b.line_ids)
-            p = int(total * 0.7) // 10000 * 10000
+            p = BATTERY_TOMAN.get(b.code, int(total * 0.7) // 10000 * 10000)   # explicit owner prices first
             if b.product_id.list_price != p * TOMAN:
                 b.product_id.list_price = p * TOMAN
-            print('battery %-40s %d instruments, singles %d -> %d toman' % (b.name, len(b.line_ids), total, p))
+            print('battery %-16s %d instruments, singles %d -> %d toman' % (b.code, len(b.line_ids), total, p))
         by_tier = {}
         for i in insts:
             by_tier[singles[i.id]] = by_tier.get(singles[i.id], 0) + 1
@@ -61,7 +67,7 @@ try:
         if not Txn.search_count([('idem_key', '=', GRANT_KEY)]):
             w._post('grant', GRANT_RIAL, 0, GRANT_KEY, 'promo', free=False)
             su['ts.audit.event'].log('wallet.grant', w, workspace=ws, amount=GRANT_RIAL, reason='promo')
-        top_battery = max([b.product_id.list_price for b in Bat.search([('state', '=', 'published')])] or [0])
+        top_battery = max([b.product_id.list_price for b in Bat.search([('code', 'in', list(BATTERY_TOMAN))])] or [0])
         threshold = int(top_battery * 3)
         if w.low_threshold != threshold:
             w.low_threshold = threshold
