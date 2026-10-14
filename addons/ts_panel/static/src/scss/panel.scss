@@ -266,4 +266,18 @@
     .tsp-fold > summary { cursor: pointer; color: var(--color-neutral-300); font-size: 14px; }
     .tsp-fold[open] > summary { margin-block-end: var(--space-3); }
     .tsp-setlinks { display: flex; flex-wrap: wrap; gap: var(--space-2) var(--space-5); }
+    // clin11: the panel at the head of the side menu, the person at its foot (the usual app-sidebar pattern)
+    .tsp-shell--flat .tsp-switch { flex-wrap: nowrap; }
+    .tsp-shell--flat .tsp-switch__id { flex: 1 1 auto; }
+    .tsp-switch__swap { flex: none; inline-size: 32px; min-block-size: 32px; justify-content: center; border-radius: var(--r-8); color: var(--color-neutral-300); }
+    .tsp-switch__swap:hover, .tsp-switch__swap:focus-visible { background: var(--color-neutral-900); color: var(--color-text); text-decoration: none; }
+    .tsp-switch__swap svg { inline-size: 18px; block-size: 18px; }
+    .tsp-me { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-block-start: 4px; padding-block-start: 10px; border-block-start: 1px solid var(--color-neutral-800); }
+    .tsp-me__link { display: flex; align-items: center; gap: 8px; min-inline-size: 0; padding: 4px 6px; border-radius: var(--r-8); color: var(--color-text); text-decoration: none; }
+    .tsp-me__link:hover, .tsp-me__link:focus-visible { background: var(--color-neutral-900); text-decoration: none; }
+    .tsp-me__av { flex: none; inline-size: 30px; block-size: 30px; border-radius: 50%; display: grid; place-items: center; background: var(--color-neutral-900); color: var(--color-neutral-300); font-weight: 600; font-size: 13px; }
+    .tsp-me__who { display: grid; min-inline-size: 0; line-height: 1.4; }
+    .tsp-me__who strong { font-size: 13px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .tsp-me__who small { font-size: 12px; color: var(--color-neutral-400); }
+    .tsp-me .tsp-helplink { padding-inline: 6px; }
 }
