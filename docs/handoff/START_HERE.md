@@ -34,6 +34,9 @@ on prod, changed only by `ts ship`.
 - 2026-10-14 clin10: the panel identity card (avatar with logo or initial, name, role chip, quiet links; no frame).
   Prices (owner, same day): talent inventory 1,500,000 toman; intake battery 800,000 and the other clinic batteries in the
   same ratio (tests_zlive_sepehr_prepaid.py is the single source, limited to the clinic catalog).
+- 2026-10-14 clin11: clinic side menu = the panel at the head (avatar, name, a switch icon only for members of several
+  panels) and the person at the foot (name, role → own page with «هویت شما در گزارش‌ها»; «راهنما»). ts_check now fails an
+  xpath hasclass() whose target has that class only in t-attf-class (cost every panel page a 500 on a clone).
 - No build phase is pending. What remains is owner input and hardening (below).
 
 ## UX review tools (clin9)
