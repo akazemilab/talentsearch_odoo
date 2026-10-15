@@ -51,10 +51,10 @@
         <field name="arch" type="xml">
             <xpath expr="//div[hasclass('ts-player__head')]" position="before">
                 <t t-if="inst.code == 'CAREER-IP-60'">
-                    <t t-call="ts_career.journey"><t t-set="jstep" t-value="1"/></t>
+                    <t t-set="jstep" t-value="1"/><t t-call="ts_career.journey"/>
                 </t>
                 <t t-if="not guest and attempt.career_run_id and request.session.get('tsc_sms')">
-                    <t t-call="ts_career.remind"><t t-set="run" t-value="attempt.career_run_id"/><t t-set="back" t-value="'/take/%s' % attempt.access_token"/></t>
+                    <t t-set="run" t-value="attempt.career_run_id"/><t t-set="back" t-value="'/take/%s' % attempt.access_token"/><t t-call="ts_career.remind"/>
                 </t>
             </xpath>
             <xpath expr="//ol[hasclass('ts-qlist')]" position="after">

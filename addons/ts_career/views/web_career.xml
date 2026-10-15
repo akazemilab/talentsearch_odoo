@@ -96,7 +96,7 @@
                     <div id="wrap" class="ts-page">
                         <section class="ts-section">
                             <div class="ts-container ts-narrow">
-                                <t t-call="ts_career.journey"><t t-set="jstep" t-value="2"/></t>
+                                <t t-set="jstep" t-value="2"/><t t-call="ts_career.journey"/>
                                 <p class="ts-tag">یک قدم تا نتیجه</p>
                                 <h1>تحصیلات و سابقهٔ کار</h1>
                                 <p class="ts-lead">با این دو پاسخ، کنار هر شغل می‌بینید چقدر برای آن آماده‌اید.</p>
@@ -236,7 +236,7 @@
                                 </t>
 
 
-                                <t t-call="ts_career.remind"><t t-set="back" t-value="'/career/r'"/></t>
+                                <t t-set="back" t-value="'/career/r'"/><t t-call="ts_career.remind"/>
                                 <p class="tsc-small"><a href="/career/r?edit=1">ویرایش تحصیلات و سابقه</a></p>
                                 <p class="tsc-small">این فهرست برای شناخت بهتر خودتان است، نه برای تصمیم استخدام. <t t-call="ts_career.notice"/></p>
                             </div>
