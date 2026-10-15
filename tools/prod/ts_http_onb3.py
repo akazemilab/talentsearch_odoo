@@ -497,7 +497,8 @@ for path, kind, sample in (('/clinics', 'clinic', 'clinic'), ('/hiring', 'org', 
     check('W03b %s → /#%s (301)' % (path, path[1:]), st == 301 and loc.endswith('/#' + path[1:]), '%s %s' % (st, loc))
 st, loc, _ = anon.req('/pricing')
 check('W04 /pricing → /#pricing (301); the home says the panel is free to build', st == 301 and loc.endswith('/#pricing')
-      and 'ساخت رایگان' in pg and 'در دورهٔ آزمایشی، سنجه‌ها هم رایگان‌اند' in pg, '%s %s' % (st, loc))
+      # public pages say آزمون since the plain-Persian decision of 2026-10-14
+      and 'ساخت رایگان' in pg and 'در دورهٔ آزمایشی، آزمون‌ها هم رایگان است' in pg, '%s %s' % (st, loc))
 for k in ('clinic', 'solo', 'school', 'hr'):
     st, sp_ = get(anon, '/sample/' + k)
     check('W05 /sample/%s: the public sample, labelled, with «ساخت پنل رایگان»' % k, st == 200 and 'نمونه — داده‌های ساختگی' in sp_
