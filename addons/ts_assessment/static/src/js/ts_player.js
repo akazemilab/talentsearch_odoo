@@ -4,6 +4,8 @@
 // a one-time notice when «صفحهٔ بعد» leaves items unanswered, double-submit
 // protection, the consent page's disclosure and error focus, and the report's
 // print button.
+// Career completion (docs/career/01_completion.md): answers that could not be saved (a dropped mobile connection) wait
+// in this browser and are sent again; card mode (data-card on .ts-player) shows one item at a time with auto-advance.
 (function () {
     'use strict';
     var FA = '۰۱۲۳۴۵۶۷۸۹';
@@ -32,28 +34,51 @@
         }
     }
 
-    document.addEventListener('change', function (ev) {
-        var input = ev.target;
-        if (!input.matches || !input.matches('.ts-q input[type="radio"]')) { return; }
+    // answers waiting in this browser: {item id: value}, one key per player address (storage may be missing: then the
+    // page form still posts every answer of the page)
+    function qKey() {
+        var r = player();
+        return r ? 'tsq:' + (r.getAttribute('data-answer-url') || r.getAttribute('data-token') || '') : null;
+    }
+    function qRead() {
+        try { return JSON.parse(window.localStorage.getItem(qKey()) || '{}') || {}; } catch (e) { return {}; }
+    }
+    function qWrite(o) {
+        try {
+            if (Object.keys(o).length) { window.localStorage.setItem(qKey(), JSON.stringify(o)); }
+            else { window.localStorage.removeItem(qKey()); }
+        } catch (e) { /* no storage: nothing kept */ }
+    }
+    function qSet(item, value) { var o = qRead(); if (value === null) { delete o[item]; } else { o[item] = value; } qWrite(o); }
+
+    function csrf() {
+        var el = document.querySelector('#ts-qform input[name="csrf_token"]');
+        return el ? el.value : '';
+    }
+
+    function post(item, value) {
         var root = player();
         if (!root) { return; }
-        var li = input.closest('.ts-q');
-        var form = input.closest('form');
-        li.classList.add('is-answered');
-        li.removeAttribute('data-missing');
-        var flag = li.querySelector('.ts-q__flag');
-        if (flag) { flag.remove(); }
         var body = new FormData();
-        body.append('csrf_token', form.querySelector('input[name="csrf_token"]').value);
-        body.append('item', li.getAttribute('data-item'));
-        body.append('value', input.value);
+        body.append('csrf_token', csrf());
+        body.append('item', item);
+        body.append('value', value);
+        qSet(item, value);
         showState('در حال ذخیره…', false);
         // onb2: the page names its own autosave address (the guest player has no token in any address)
         var url = root.getAttribute('data-answer-url') || ('/take/' + root.getAttribute('data-token') + '/answer');
         fetch(url, { method: 'POST', body: body, credentials: 'same-origin' })
-            .then(function (r) { return r.json().then(function (j) { return { ok: r.ok && j.ok, j: j }; }); })
+            .then(function (r) {
+                return r.json().then(function (j) { return { ok: r.ok && j.ok, status: r.status, j: j }; },
+                    function () { return { ok: false, status: r.status, j: {} }; });
+            })
             .then(function (res) {
-                if (!res.ok) { throw new Error(res.j && res.j.error); }
+                if (!res.ok) {
+                    // a refused answer (4xx other than «slow down») is dropped; the page form posts it again anyway
+                    if (res.status >= 400 && res.status < 500 && res.status !== 429) { qSet(item, null); }
+                    throw new Error(res.j && res.j.error);
+                }
+                qSet(item, null);
                 var total = res.j.total || +root.getAttribute('data-total');
                 var el = root.querySelector('.ts-js-answered');
                 if (el) { el.textContent = fa(res.j.answered); }
@@ -68,10 +93,38 @@
                 if (!announced) { announced = true; say('پاسخ ذخیره شد. پاسخ‌های بعدی هم خودکار ذخیره می‌شوند.'); }
             })
             .catch(function () {
-                var msg = 'ذخیره نشد؛ با دکمهٔ پایین صفحه دوباره فرستاده می‌شود';
+                var msg = 'اینترنت قطع است؛ پاسخ در همین گوشی نگه داشته شد و دوباره فرستاده می‌شود';
                 showState(msg, true);
                 say(msg);
             });
+    }
+
+    function resend() {
+        var o = qRead();
+        Object.keys(o).forEach(function (item) {
+            var input = document.querySelector('.ts-q[data-item="' + item + '"] input[value="' + o[item] + '"]');
+            if (input && !input.checked) {
+                input.checked = true;
+                var li = input.closest('.ts-q');
+                if (li) { li.classList.add('is-answered'); }
+            }
+            post(item, o[item]);
+        });
+    }
+    window.addEventListener('online', resend);
+
+    document.addEventListener('change', function (ev) {
+        var input = ev.target;
+        if (!input.matches || !input.matches('.ts-q input[type="radio"]')) { return; }
+        var root = player();
+        if (!root) { return; }
+        var li = input.closest('.ts-q');
+        li.classList.add('is-answered');
+        li.removeAttribute('data-missing');
+        var flag = li.querySelector('.ts-q__flag');
+        if (flag) { flag.remove(); }
+        post(li.getAttribute('data-item'), input.value);
+        cardAnswered(li);
     });
 
     // ------------------------------------------------------------------ skipped items (B8-4a): the first «صفحهٔ بعد»
@@ -146,6 +199,122 @@
         var btn = form.querySelector('button[type="submit"]');
         if (btn) { btn.setAttribute('aria-disabled', 'true'); btn.textContent = 'در حال ارسال…'; }
     });
+
+    // ------------------------------------------------------------------ card mode (phase C): one item at a time,
+    // auto-advance after an answer, a visible «قبلی» (the one complaint about auto-advance in the research is that going
+    // back looked impossible). After the page's last item: the end card (#ts-cardend, written by the page when it has one)
+    // and the page's own buttons. The page form still holds every item of the page and posts them all.
+    var card = null;
+    var advanceTimer = null;
+    function cardForm() { return document.getElementById('ts-qform'); }
+    function cardItems(form) { return Array.prototype.slice.call(form.querySelectorAll('.ts-q')); }
+    function cardShow(idx, focus) {
+        var form = cardForm();
+        if (!card || !form) { return; }
+        var lis = cardItems(form);
+        idx = Math.max(0, Math.min(idx, lis.length));
+        var end = idx >= lis.length;
+        card.idx = idx;
+        lis.forEach(function (li, i) { li.classList.toggle('is-current', i === idx); });
+        form.classList.toggle('is-end', end);
+        var endBox = document.getElementById('ts-cardend');
+        var nav = form.querySelector('.ts-qnav');
+        if (endBox) { endBox.hidden = !end; }
+        // an end card with its own buttons (data-own-nav) keeps the page bar hidden
+        if (nav) { nav.hidden = !end || !!(endBox && endBox.hasAttribute('data-own-nav')); }
+        var root = player();
+        var first = +(root.getAttribute('data-first') || 0);
+        var total = +(root.getAttribute('data-total') || lis.length);
+        var pos = form.querySelector('.ts-cardpos');
+        if (pos) { pos.textContent = end ? '' : 'سؤال ' + fa(first + idx + 1) + ' از ' + fa(total); }
+        var next = form.querySelector('.ts-card-next');
+        if (next) { next.hidden = end; }
+        var prev = form.querySelector('.ts-card-prev');
+        if (prev) { prev.hidden = (idx === 0 && !form.querySelector('button[name="go"][value="prev"]')); }
+        if (end) {
+            var missing = unanswered(form);
+            var note = document.getElementById('ts-cardend-missing');
+            if (note) {
+                note.hidden = !missing.length;
+                var n = note.querySelector('.ts-cardend-missing__n');
+                if (n) { n.textContent = fa(missing.length); }
+            }
+            // the end card names this page's gaps itself: «صفحهٔ بعد» goes on without the one-time stop
+            form.setAttribute('data-skip-shown', '1');
+        }
+        if (focus) {
+            var target = end ? (endBox || nav) : lis[idx].querySelector('legend');
+            if (target) {
+                if (!target.hasAttribute('tabindex')) { target.setAttribute('tabindex', '-1'); }
+                target.focus({ preventScroll: true });
+            }
+            var head = root.querySelector('.ts-player__head') || root;
+            if (head.getBoundingClientRect().top < 0) { head.scrollIntoView({ block: 'start' }); }
+        }
+    }
+    function cardAnswered(li) {
+        if (!card) { return; }
+        var lis = cardItems(cardForm());
+        var i = lis.indexOf(li);
+        if (i !== card.idx) { return; }
+        window.clearTimeout(advanceTimer);
+        // a short pause: the chosen answer is seen before the next item comes (a changed mind restarts it)
+        advanceTimer = window.setTimeout(function () { cardShow(i + 1, true); }, 280);
+    }
+    function cardPrev() {
+        var form = cardForm();
+        if (!card || !form) { return; }
+        window.clearTimeout(advanceTimer);
+        if (card.idx > 0) { cardShow(card.idx - 1, true); return; }
+        var back = form.querySelector('button[name="go"][value="prev"]');
+        if (back) {
+            if (form.requestSubmit) { form.requestSubmit(back); } else { back.click(); }
+        }
+    }
+    function cardInit() {
+        var root = player();
+        var form = cardForm();
+        if (!root || !form || root.getAttribute('data-card') !== '1') { return; }
+        card = { idx: 0 };
+        form.classList.add('is-card');
+        var bar = document.createElement('div');
+        bar.className = 'ts-cardnav';
+        var pos = document.createElement('p');
+        pos.className = 'ts-cardpos';
+        pos.setAttribute('aria-live', 'polite');
+        var prev = document.createElement('button');
+        prev.type = 'button';
+        prev.className = 'ts-btn ts-btn--outline ts-card-prev';
+        prev.textContent = 'قبلی';
+        var next = document.createElement('button');
+        next.type = 'button';
+        next.className = 'ts-btn ts-btn--quiet ts-card-next';
+        next.textContent = 'بعدی';
+        bar.appendChild(prev);
+        bar.appendChild(next);
+        var list = form.querySelector('.ts-qlist');
+        if (list) { list.parentNode.insertBefore(pos, list); list.parentNode.insertBefore(bar, list.nextSibling); }
+        prev.addEventListener('click', cardPrev);
+        next.addEventListener('click', function () { window.clearTimeout(advanceTimer); cardShow(card.idx + 1, true); });
+        form.addEventListener('click', function (ev) {
+            var miss = ev.target.closest && ev.target.closest('.ts-card-missing');
+            if (miss) {
+                ev.preventDefault();
+                var gaps = unanswered(form);
+                if (gaps.length) { cardShow(cardItems(form).indexOf(gaps[0]), true); }
+            }
+            var back = ev.target.closest && ev.target.closest('.ts-card-back');
+            if (back) { ev.preventDefault(); cardPrev(); }
+        });
+        var lis = cardItems(form);
+        var start = -1;
+        if (location.hash && location.hash.indexOf('#q-') === 0) {
+            start = lis.indexOf(document.getElementById(location.hash.slice(1)));
+        }
+        if (start < 0) { start = lis.indexOf(unanswered(form)[0]); }
+        if (start < 0) { start = lis.length; }       // every item of this page answered: the end card
+        cardShow(start, false);
+    }
 
     document.addEventListener('click', function (ev) {
         if (ev.target.closest && ev.target.closest('.ts-js-print')) { window.print(); }
@@ -229,6 +398,9 @@
         document.querySelectorAll('.ts-q').forEach(function (li) {
             if (li.querySelector('input:checked')) { li.classList.add('is-answered'); }
         });
+        // answers that waited in this browser (a dropped connection on the last visit) go out first
+        if (player()) { resend(); }
+        cardInit();
         // the consent details start closed once JS runs (no-JS: open, the button stays hidden)
         document.querySelectorAll('.ts-more__btn').forEach(function (btn) {
             var body = document.getElementById(btn.getAttribute('aria-controls'));

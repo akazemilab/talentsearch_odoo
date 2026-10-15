@@ -110,7 +110,9 @@
                 <t t-set="take_url" t-value="take_url or ('/take/' + attempt.access_token)"/>
                 <t t-call="website.layout" additional_title="inst.ts_title()">
                     <div id="wrap" class="ts-page">
-                        <section class="ts-section ts-player" t-att-data-token="None if guest else attempt.access_token" t-att-data-answer-url="take_url + '/answer'" t-att-data-total="total" t-att-data-tu="'1' if tu else None">
+                        <!-- data-card: one item at a time (ts_player.js), only for instruments that ask for it (ts_card_mode) -->
+                        <section class="ts-section ts-player" t-att-data-token="None if guest else attempt.access_token" t-att-data-answer-url="take_url + '/answer'" t-att-data-total="total" t-att-data-tu="'1' if tu else None"
+                                 t-att-data-card="'1' if inst.ts_card_mode() else None" t-att-data-first="first_index">
                             <div class="ts-container ts-narrow">
                                 <div class="ts-player__head">
                                     <h1 class="ts-player__title" t-out="inst.ts_title()"/>

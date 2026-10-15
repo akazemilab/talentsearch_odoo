@@ -37,20 +37,20 @@ def _my_attempt(token=None, attempt_id=None):
     return attempt
 
 
-def _n_pages(n_items):
-    return max(1, math.ceil(n_items / PAGE_SIZE))
+def _n_pages(n_items, size=PAGE_SIZE):
+    return max(1, math.ceil(n_items / (size or PAGE_SIZE)))
 
 
-def _page_start(page, n_items):
+def _page_start(page, n_items, size=PAGE_SIZE):
     """0-based index of the first item on `page` (1-based) in balanced paging."""
-    n = _n_pages(n_items)
+    n = _n_pages(n_items, size)
     base, extra = divmod(n_items, n)
     return (page - 1) * base + min(page - 1, extra)
 
 
-def _page_of(idx, n_items):
+def _page_of(idx, n_items, size=PAGE_SIZE):
     """1-based page that holds the item at 0-based index `idx`."""
-    n = _n_pages(n_items)
+    n = _n_pages(n_items, size)
     base, extra = divmod(n_items, n)
     big = extra * (base + 1)          # items on the larger pages, which come first
     if idx < big:
@@ -58,9 +58,17 @@ def _page_of(idx, n_items):
     return extra + (idx - big) // max(base, 1) + 1
 
 
+def _size(attempt):
+    """Items per page of this attempt's instrument (5 unless the instrument says otherwise, e.g. the career modules)."""
+    try:
+        return int(attempt.instrument_id.ts_page_size()) or PAGE_SIZE
+    except Exception:       # noqa: BLE001 - paging never breaks the player
+        return PAGE_SIZE
+
+
 def _pages(attempt):
     items = attempt.active_items()
-    return items, _n_pages(len(items))
+    return items, _n_pages(len(items), _size(attempt))
 
 
 # consent page: the boxes a person ticked come back ticked after an error redirect (WCAG 3.3.7; display only — the
@@ -152,17 +160,18 @@ class TsAssessment(http.Controller):
         if attempt.state == 'error':
             return request.render('ts_assessment.error', {'attempt': attempt, 'tu': attempt.ts_informal()})
         items, n_pages = _pages(attempt)
+        size = _size(attempt)
         answers = attempt.answers_map()
         n_items = len(items)
         if page is None:
             first_open = next((idx for idx, it in enumerate(items) if it.id not in answers), 0)
-            page = _page_of(first_open, n_items)
+            page = _page_of(first_open, n_items, size)
         try:
             page = int(page)
         except (TypeError, ValueError):
             page = 1
         page = min(max(page, 1), n_pages)
-        start, end = _page_start(page, n_items), _page_start(page + 1, n_items) if page < n_pages else n_items
+        start, end = _page_start(page, n_items, size), _page_start(page + 1, n_items, size) if page < n_pages else n_items
         chunk = items[start:end]
         chunk_ids = set(chunk.ids)
         total = n_items
@@ -233,14 +242,15 @@ class TsAssessment(http.Controller):
         if attempt.state != 'in_progress':
             return request.redirect('/take/%s' % token)
         items, n_pages = _pages(attempt)
+        size = _size(attempt)
         answers = attempt.answers_map()
         n_items = len(items)
-        missing = [(idx + 1, it, _page_of(idx, n_items)) for idx, it in enumerate(items) if it.id not in answers]
+        missing = [(idx + 1, it, _page_of(idx, n_items, size)) for idx, it in enumerate(items) if it.id not in answers]
         # one row per page (B11-1, B14-2): numbers of its first and last item and its unanswered items
         page_rows = []
         for p in range(1, n_pages + 1):
-            start = _page_start(p, n_items)
-            end = _page_start(p + 1, n_items) if p < n_pages else n_items
+            start = _page_start(p, n_items, size)
+            end = _page_start(p + 1, n_items, size) if p < n_pages else n_items
             page_rows.append({'page': p, 'first': start + 1, 'last': end,
                               'missing': [m for m in missing if m[2] == p]})
         return request.render('ts_assessment.review', {

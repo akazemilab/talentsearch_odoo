@@ -108,6 +108,19 @@ class TsInstrument(models.Model):
         """Alias of ts_title() kept for older callers."""
         return self.ts_title()
 
+    # career completion (docs/career/01_completion.md, phase C): how the player shows this instrument. Defaults keep
+    # every other instrument exactly as before (5 items a page, list view); ts_career answers for its own modules.
+    def ts_page_size(self):
+        """Items per player page (balanced paging); a page boundary is also a natural pause."""
+        self.ensure_one()
+        return 5
+
+    def ts_card_mode(self):
+        """One item at a time on screen (the page still holds `ts_page_size()` items; JS shows them one by one with
+        auto-advance and a visible «قبلی»; without JS the page is the ordinary list)."""
+        self.ensure_one()
+        return False
+
     def ts_intended_use(self):
         """intended_use as people read it: Persian digits and glossary words even in texts stored by older loads."""
         self.ensure_one()

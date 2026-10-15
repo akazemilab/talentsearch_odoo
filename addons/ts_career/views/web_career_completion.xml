@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Career completion (docs/career/01_completion.md): the journey, the SMS reminder switch, the player's end card of
+         every 30-item page (card mode, ts_player.js) and the wording of the result gate for a guest's interests. -->
+    <record id="tpl_journey" model="ir.ui.view">
+        <field name="name">TS career: journey (three steps to the list)</field>
+        <field name="type">qweb</field>
+        <field name="key">ts_career.journey</field>
+        <field name="website_id" ref="ts_website.website_ts"/>
+        <field name="arch" type="xml">
+            <t t-name="ts_career.journey">
+                <ol class="tsc-journey" aria-label="مراحل آزمون">
+                    <li t-attf-class="#{'is-done' if jstep &gt; 1 else 'is-current'}" t-att-aria-current="'step' if jstep == 1 else None"><span class="tsc-journey__n" aria-hidden="true"><t t-if="jstep &gt; 1">✓</t><t t-else="">۱</t></span> علایق<span t-if="jstep &gt; 1" class="ts-sr"> (انجام شد)</span></li>
+                    <li t-attf-class="#{'is-done' if jstep &gt; 2 else ('is-current' if jstep == 2 else '')}" t-att-aria-current="'step' if jstep == 2 else None"><span class="tsc-journey__n" aria-hidden="true"><t t-if="jstep &gt; 2">✓</t><t t-else="">۲</t></span> دو سؤال</li>
+                    <li t-attf-class="#{'is-current' if jstep == 3 else ''}" t-att-aria-current="'step' if jstep == 3 else None"><span class="tsc-journey__n" aria-hidden="true">۳</span> نتیجه</li>
+                </ol>
+            </t>
+        </field>
+    </record>
+
+    <record id="tpl_remind" model="ir.ui.view">
+        <field name="name">TS career: SMS reminders on/off</field>
+        <field name="type">qweb</field>
+        <field name="key">ts_career.remind</field>
+        <field name="website_id" ref="ts_website.website_ts"/>
+        <field name="arch" type="xml">
+            <t t-name="ts_career.remind">
+                <form action="/career/remind" method="post" class="tsc-remind" id="tsc-remind-form">
+                    <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                    <input type="hidden" name="back" t-att-value="back"/>
+                    <t t-if="run.remind">
+                        <input type="hidden" name="on" value="0"/>
+                        <p>یادآوری پیامکی روشن است. <button type="submit" class="tsc-linkbtn" id="tsc-remind-off">خاموش کردن</button></p>
+                    </t>
+                    <t t-else="">
+                        <input type="hidden" name="on" value="1"/>
+                        <p>یادآوری پیامکی خاموش است. <button type="submit" class="tsc-linkbtn" id="tsc-remind-on">روشن کردن</button></p>
+                    </t>
+                </form>
+            </t>
+        </field>
+    </record>
+
+    <!-- the player of the career questionnaires: the journey above the interests, the reminder switch for a person who
+         came from a reminder SMS, and the end card of every 30-item page (hidden without JS: the page bar works alone) -->
+    <record id="player_card_career" model="ir.ui.view">
+        <field name="name">TS career: player journey and end card</field>
+        <field name="inherit_id" ref="ts_assessment.tpl_player"/>
+        <field name="website_id" ref="ts_website.website_ts"/>
+        <field name="priority">30</field>
+        <field name="arch" type="xml">
+            <xpath expr="//div[hasclass('ts-player__head')]" position="before">
+                <t t-if="inst.code == 'CAREER-IP-60'">
+                    <t t-call="ts_career.journey"><t t-set="jstep" t-value="1"/></t>
+                </t>
+                <t t-if="not guest and attempt.career_run_id and request.session.get('tsc_sms')">
+                    <t t-call="ts_career.remind"><t t-set="run" t-value="attempt.career_run_id"/><t t-set="back" t-value="'/take/%s' % attempt.access_token"/></t>
+                </t>
+            </xpath>
+            <xpath expr="//ol[hasclass('ts-qlist')]" position="after">
+                <t t-if="inst.ts_card_mode()">
+                    <t t-set="tsc_done" t-value="first_index + len(items)"/>
+                    <t t-set="tsc_min" t-value="((total - tsc_done) * (inst.duration_minutes or 0) + total - 1) // total if total else 0"/>
+                    <div id="ts-cardend" class="tsc-cardend" hidden="hidden" data-own-nav="1" tabindex="-1">
+                        <p id="ts-cardend-missing" class="ts-notice ts-notice--warn" hidden="hidden"><span class="ts-cardend-missing__n"/> سؤال این بخش بی‌پاسخ مانده است. <button type="button" class="ts-btn ts-btn--quiet ts-card-missing">رفتن به سؤال بی‌پاسخ</button></p>
+                        <t t-if="page == n_pages">
+                            <h2 class="tsc-cardend__h">همهٔ سؤال‌ها را دیدید.</h2>
+                            <p>با «دیدن نتیجه» پاسخ‌ها ثبت می‌شود و دیگر تغییر نمی‌کند. برای تغییر یک پاسخ، «قبلی» را بزنید.</p>
+                            <div class="tsc-cardend__go">
+                                <button type="button" class="ts-btn ts-btn--outline ts-card-back">قبلی</button>
+                                <button type="submit" name="go" value="review" class="ts-btn ts-btn--primary ts-btn--lg" id="tsc-finish">دیدن نتیجه</button>
+                            </div>
+                        </t>
+                        <t t-else="">
+                            <h2 class="tsc-cardend__h" t-if="inst.code == 'CAREER-IP-60'">نیمی از راه را آمده‌اید.</h2>
+                            <h2 class="tsc-cardend__h" t-else="">جای خوبی برای مکث است.</h2>
+                            <p><t t-out="fa(tsc_done)"/> از <t t-out="fa(total)"/> پاسخ داده شد<t t-if="tsc_min">؛ حدود <t t-out="fa(tsc_min)"/> دقیقهٔ دیگر مانده</t>. پاسخ‌ها ذخیره شده‌اند؛ اگر بخواهید، بعداً از همین‌جا ادامه می‌دهید.</p>
+                            <div class="tsc-cardend__go">
+                                <button type="button" class="ts-btn ts-btn--outline ts-card-back">قبلی</button>
+                                <button type="submit" name="go" value="next" class="ts-btn ts-btn--primary ts-btn--lg" id="tsc-next-part">ادامه</button>
+                            </div>
+                            <p class="tsc-cardend__later"><button type="submit" name="go" value="exit" class="ts-btn ts-btn--quiet" id="tsc-later">بعداً ادامه می‌دهم</button></p>
+                        </t>
+                    </div>
+                </t>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- the result gate of a guest's interests: what the number unlocks -->
+    <record id="signup_gate_career" model="ir.ui.view">
+        <field name="name">TS career: result gate wording</field>
+        <field name="inherit_id" ref="ts_sms.tpl_signup"/>
+        <field name="website_id" ref="ts_website.website_ts"/>
+        <field name="priority">30</field>
+        <field name="arch" type="xml">
+            <xpath expr="//p[hasclass('tso-gate-intro')]" position="replace">
+                <p class="ts-auth__intro tso-gate-intro" t-if="gate_inst and gate_inst.code == 'CAREER-IP-60'" id="tsc-gate-intro">شمارهٔ موبایلتان را بزنید تا فهرست شغل‌های متناسب با علایقتان را ببینید و برای همیشه داشته باشید. بعد از ورود، فقط دو سؤال کوتاه مانده است.</p>
+                <p class="ts-auth__intro tso-gate-intro" t-else="">شماره‌تان را بزنید تا نتیجه را ببینید و برای همیشه داشته باشید.</p>
+            </xpath>
+        </field>
+    </record>
+</odoo>

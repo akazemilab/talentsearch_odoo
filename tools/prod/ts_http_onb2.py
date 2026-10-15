@@ -911,7 +911,9 @@ out = shell("F = env['ts.funnel.event'].sudo(); c = lambda d: F.search_count(d);
             "print('INV', c([('step', '=', 'q1'), ('entry', '=', 'manual')]), c([('step', '=', 'finish'), ('entry', '=', 'manual')]), "
             "c([('step', '=', 'invite_view'), ('entry', '=', 'sms')]), c([('step', '=', 'q1'), ('entry', '=', 'sms')]), "
             "c([('step', '=', 'q1'), ('entry', '=', 'guest')]), "
-            "c([('step', 'in', ('q1', 'finish')), ('entry', 'in', ('guest', 'user')), ('instrument_id.ts_guest_ok', '=', False)]))")
+            # the free career match counts its own modules (ts_career, docs/career/01_completion.md): not «other instruments»
+            "c([('step', 'in', ('q1', 'finish')), ('entry', 'in', ('guest', 'user')), ('instrument_id.ts_guest_ok', '=', False), "
+            "('instrument_id.code', 'not in', ('CAREER-IP-60', 'CAREER-HEXACO-1')), ('instrument_id.code', 'not like', 'TASK-%')]))")
 check('F03 the invitation path counts welcome viewed, first answer and finished by channel (sms, manual); the guest path its '
       'first answer; self-started attempts of other instruments are never counted',
       re.search(r'INV [1-9]\d* [1-9]\d* [1-9]\d* [1-9]\d* [1-9]\d* 0', out), out.strip()[-80:])

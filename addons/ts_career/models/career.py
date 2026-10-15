@@ -10,6 +10,7 @@ from datetime import timedelta
 
 from odoo import api, fields, models
 from odoo.exceptions import UserError, ValidationError
+from odoo.http import request
 
 from odoo.addons.ts_hire.models import hexaco as H
 from odoo.addons.ts_onet.models import jobfit as JF
@@ -47,6 +48,10 @@ LEVEL_FA = {'high': 'هم‌خوانی زیاد', 'medium': 'هم‌خوانی �
 ONET_NOTICE = ('بخش علایق ترجمه و اقتباسی از O*NET Interest Profiler است. وزارت کار آمریکا (USDOL/ETA) این تغییرات را '
                'تأیید یا آزمایش نکرده است. داده‌های شغلی از O*NET 31.0 (مجوز CC BY 4.0).')
 IP_BANDS = [('low', 1.0, 2.5), ('medium', 2.6, 3.4), ('high', 3.5, 5.0)]
+# phase C (docs/career/01_completion.md): the two questionnaires of the career match, one item at a time, a pause every
+# 30 items (interests: half-way; work styles: four sittings)
+CARD_CODES = (IP_CODE, HEX_CODE)
+CARD_PAGE = 30
 
 
 @functools.lru_cache(maxsize=1)
@@ -60,6 +65,7 @@ class TsAttemptCareer(models.Model):
     _inherit = 'ts.attempt'
 
     career_run_id = fields.Many2one('ts.career.run', 'مسیر شغلی', index=True, ondelete='set null')
+    ts_career_remind = fields.Boolean('یادآوری پیامکی (آزمون شغلی مهمان)', copy=False, readonly=True)
 
     def _ts_notify_result_ready(self):
         # the career list is one page the person is already on: no result-ready SMS per module
@@ -74,6 +80,61 @@ class TsAttemptCareer(models.Model):
         if run:
             run.unlink()
         return res
+
+    # ------------------------------------------------------------------ phase B: a guest's interests join the account
+    def ts_guest_claim(self, user):
+        """The interests answered before sign-in become the run of the account that claims them (newest counts)."""
+        ok = super().ts_guest_claim(user)
+        at = self.sudo()
+        if ok and at.instrument_id.code == IP_CODE and not at.career_run_id:
+            run = self.env['ts.career.run'].ts_for_user(at.user_id, create=True)
+            at.write({'career_run_id': run.id})
+            run.write({'remind': bool(at.ts_career_remind)})
+        return ok
+
+    # ------------------------------------------------------------------ funnel: every career module is counted
+    def _ts_career_counted(self):
+        s = self.sudo()
+        return bool(s.career_run_id or (s.ts_guest and s.instrument_id.code == IP_CODE))
+
+    def _ts_funnel_target(self):
+        if self._ts_career_counted():
+            return True, None
+        return super()._ts_funnel_target()
+
+    def _ts_funnel_first(self):
+        s = self.sudo()
+        if s.career_run_id and request and s.state == 'in_progress':
+            self.env.cr.execute('SELECT 1 FROM ts_attempt_answer WHERE attempt_id = %s LIMIT 1', [self.id])
+            return not self.env.cr.fetchone()
+        return super()._ts_funnel_first()
+
+    def save_answer(self, item_id, value):
+        """Half-way of a career questionnaire is a funnel step (where people stop is what phase A measures)."""
+        before = None
+        if request and self._ts_career_counted() and self.state == 'in_progress':
+            self.env['ts.attempt.answer'].flush_model()
+            self.env.cr.execute('SELECT count(*) FROM ts_attempt_answer WHERE attempt_id = %s', [self.id])
+            before = self.env.cr.fetchone()[0]
+        res = super().save_answer(item_id, value)
+        if before is not None:
+            try:
+                total = self.sudo().version_id.active_item_count or 0
+                if total and before < (total + 1) // 2 <= before + 1:
+                    self.env['ts.funnel.event'].ts_log(request, 'half', instrument=self.sudo().instrument_id)
+            except Exception:       # noqa: BLE001 - measuring never breaks answering
+                _logger.exception('ts_career: half-way not counted')
+        return res
+
+
+class TsInstrumentCareer(models.Model):
+    _inherit = 'ts.instrument'
+
+    def ts_page_size(self):
+        return CARD_PAGE if self.code in CARD_CODES else super().ts_page_size()
+
+    def ts_card_mode(self):
+        return self.code in CARD_CODES or super().ts_card_mode()
 
 
 class TsTaskNormCareer(models.Model):
@@ -99,6 +160,7 @@ class TsTaskNormCareer(models.Model):
 
 class TsCareerRun(models.Model):
     _name = 'ts.career.run'
+    _inherit = ['ts.brand.short.mixin']
     _description = 'مسیر شغلی (نسخهٔ رایگان)'
     _order = 'id desc'
 
@@ -110,18 +172,63 @@ class TsCareerRun(models.Model):
     result_key = fields.Char()
     computed_at = fields.Datetime()
     model_version = fields.Char()
+    # phase A (docs/career/01_completion.md): reminders on by default (owner 2026-10-15), one tap turns them off
+    remind = fields.Boolean('یادآوری پیامکی', default=True)
+    remind_off_at = fields.Datetime('یادآوری خاموش شد', readonly=True)
+    first_result_at = fields.Datetime('نخستین دیدن فهرست', readonly=True)
+    nudge_ids = fields.One2many('ts.career.nudge', 'run_id', 'یادآوری‌ها')
 
     _user_uniq = models.Constraint('unique(user_id)', 'هر حساب یک مسیر شغلی دارد.')
+    _short_code_unique = models.Constraint('unique(short_code)', 'کد پیوند کوتاه باید یکتا باشد.')
+
+    # ---------------------------------------------------------------- reminders and the SMS link
+    def ts_short_url(self):
+        """/career/c/<code>: the link of a reminder SMS (opens the step where this person stopped)."""
+        self.ensure_one()
+        from odoo.addons.ts_brand.models.short import site_base
+        return '%s/career/c/%s' % (site_base(self.env), self.ts_short_code())
+
+    def ts_resume_url(self):
+        """Where this person continues: the open questionnaire, the two questions, or the list."""
+        self.ensure_one()
+        st = self.ts_state()
+        if not st['ip_done']:
+            return '/take/%s' % self.ts_ensure_attempt(IP_CODE).access_token
+        if not st['bg_done']:
+            return '/career/r'
+        if st['hex'] and not st['hex_done']:
+            return '/take/%s' % st['hex'].access_token
+        return '/career/r'
+
+    def ts_set_remind(self, on):
+        self.ensure_one()
+        self.sudo().write({'remind': bool(on), 'remind_off_at': False if on else fields.Datetime.now()})
+        if not on:
+            self.sudo().nudge_ids.filtered(lambda n: n.state == 'queued').write({'state': 'skipped', 'reason': 'opted_out'})
+
+    def ts_minutes_left(self, code):
+        """Honest minutes left of one questionnaire (from the items left and the instrument's minutes)."""
+        self.ensure_one()
+        at = self.ts_attempt(code, done=False)
+        inst = at.instrument_id if at else self._inst(code)
+        total = (inst.active_item_count or 0) if inst else 0
+        left = total - (len(at.answer_ids) if at else 0)
+        mins = (inst.duration_minutes or 0) if inst else 0
+        return max(1, -(-left * mins // total)) if (total and mins and left > 0) else 0
 
     # ---------------------------------------------------------------- access helpers
     @api.model
     def ts_cap_reached(self):
+        """New free starts in the last 24 hours (runs of accounts and interests started as a guest) reached the cap."""
         try:
             cap = int(self.env['ir.config_parameter'].sudo().get_str(CAP_PARAM) or CAP_DEFAULT)
         except (TypeError, ValueError):
             cap = CAP_DEFAULT
         since = fields.Datetime.now() - timedelta(hours=24)
-        return self.sudo().search_count([('create_date', '>=', since)]) >= cap
+        runs = self.sudo().search_count([('create_date', '>=', since)])
+        guests = self.env['ts.attempt'].sudo().search_count([('create_date', '>=', since), ('ts_guest', '=', True),
+                                                             ('instrument_id.code', '=', IP_CODE)])
+        return runs + guests >= cap
 
     @api.model
     def ts_for_user(self, user, create=False):

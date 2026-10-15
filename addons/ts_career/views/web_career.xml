@@ -37,12 +37,44 @@
                                         <p><strong>ظرفیت آزمون رایگان برای امروز تکمیل شده است.</strong> فردا دوباره سر بزنید.</p>
                                     </div>
                                 </t>
-                                <t t-elif="run and run.ts_state()['ip_done']">
+                                <t t-elif="st and st['ip_done']">
                                     <a href="/career/r" class="ts-btn ts-btn--primary ts-btn--lg" id="tsc-see">دیدن نتیجهٔ آزمون<t t-call="ts_website.icon" ico.f="arrow-left"/></a>
                                 </t>
+                                <t t-elif="guest and guest.state == 'done'">
+                                    <div class="ts-card tsc-resume" id="tsc-guest-done"><p>پاسخ‌های شما در همین مرورگر ثبت شد و نتیجه آماده است.</p></div>
+                                    <a href="/start/result" class="ts-btn ts-btn--primary ts-btn--lg" id="tsc-see">دیدن نتیجه<t t-call="ts_website.icon" ico.f="arrow-left"/></a>
+                                </t>
+                                <t t-elif="guest">
+                                    <div class="ts-card tsc-resume" id="tsc-guest-going"><p>پاسخ‌هایتان در همین مرورگر ذخیره شده است: <t t-out="fa(len(guest.answer_ids))"/> از <t t-out="fa(guest.version_id.active_item_count)"/> سؤال.</p></div>
+                                    <a href="/start/q" class="ts-btn ts-btn--primary ts-btn--lg" id="tsc-continue">ادامهٔ آزمون<t t-call="ts_website.icon" ico.f="arrow-left"/></a>
+                                </t>
+                                <t t-elif="st and st['ip'] and st['ip'].state == 'in_progress'">
+                                    <div class="ts-card tsc-resume" id="tsc-going"><p>پاسخ‌هایتان ذخیره شده است: <t t-out="fa(len(st['ip'].answer_ids))"/> از <t t-out="fa(st['ip'].version_id.active_item_count)"/> سؤال<t t-if="minutes">؛ حدود <t t-out="fa(minutes)"/> دقیقه مانده</t>.</p></div>
+                                    <a t-attf-href="/take/#{st['ip'].access_token}" class="ts-btn ts-btn--primary ts-btn--lg" id="tsc-continue">ادامهٔ آزمون<t t-call="ts_website.icon" ico.f="arrow-left"/></a>
+                                </t>
                                 <t t-else="">
-                                    <a href="/career/start" class="ts-btn ts-btn--primary ts-btn--lg" id="tsc-start">شروع آزمون رایگان<t t-call="ts_website.icon" ico.f="arrow-left"/></a>
-                                    <p t-if="public" class="ts-hint">برای ذخیرهٔ نتیجه، اول با شمارهٔ موبایل وارد می‌شوید.</p>
+                                    <form action="/career/go" method="post" class="ts-form tsc-go" id="tsc-start-form">
+                                        <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                                        <p class="tsc-promise" t-if="public">بدون ثبت‌نام شروع کنید؛ در پایان با شمارهٔ موبایل نتیجه را می‌بینید و نگه می‌دارید.</p>
+                                        <p class="tsc-promise" t-else="">پاسخ‌ها و نتیجه فقط در حساب خودتان می‌ماند.</p>
+                                        <label class="ts-check"><input type="checkbox" name="remind" value="1" checked="checked" id="tsc-remind"/>
+                                            <span>اگر آزمون نیمه‌کاره ماند، با یک پیامک یادآوری کنید.</span></label>
+                                        <label class="ts-check"><input type="checkbox" name="consent_research" value="1"/>
+                                            <span>اجازه می‌دهم پاسخ‌هایم بدون نام و به‌صورت تجمیعی برای بهبود آزمون‌ها استفاده شود. <span class="ts-hint">(اختیاری)</span></span></label>
+                                        <button type="submit" class="ts-btn ts-btn--primary ts-btn--lg ts-btn--block" id="tsc-start">۱۸ سال یا بیشتر دارم؛ شروع آزمون</button>
+                                    </form>
+                                    <p class="tsc-minor"><a href="/start/under-18" class="ts-btn ts-btn--quiet">کمتر از ۱۸ سال دارم</a></p>
+                                    <details class="tsc-more" id="tsc-start-more">
+                                        <summary>پیش از شروع، بیشتر بدانید</summary>
+                                        <dl class="ts-meta tsc-terms">
+                                            <dt>چه کسی نتیجه را می‌بیند</dt><dd>فقط خودتان. نتیجه با هیچ مرکز یا کارفرمایی به اشتراک گذاشته نمی‌شود، مگر خودتان بعداً بفرستید.</dd>
+                                            <dt t-if="public">نگه‌داری پاسخ‌ها</dt><dd t-if="public">پاسخ‌ها در همین مرورگر و تا ۴۸ ساعت نگه داشته می‌شود. اگر در این مدت با شمارهٔ موبایل نتیجه را نگیرید، پاک می‌شود.</dd>
+                                            <dt>ذخیره و ادامه</dt><dd>هر پاسخ خودکار ذخیره می‌شود؛ هر وقت خواستید از همان‌جا ادامه می‌دهید.</dd>
+                                            <dt>یادآوری پیامکی</dt><dd>اگر کادرش تیک دارد و آزمون نیمه‌کاره بماند، حداکثر سه پیامک کوتاه می‌فرستیم (روزی یکی، نه شب‌ها)؛ با یک دکمه در صفحه‌های آزمون خاموش می‌شود.</dd>
+                                            <dt>پشتیبانی</dt><dd><a href="/contact?topic=support">تماس با پشتیبانی</a><t t-call="ts_website.sep"/>اگر حالتان خوب نیست، منتظر نمانید: اورژانس اجتماعی ۱۲۳ یا صدای مشاور ۱۴۸۰.</dd>
+                                        </dl>
+                                        <p class="ts-hint"><a href="/privacy">حریم خصوصی</a></p>
+                                    </details>
                                 </t>
                                 <p class="tsc-small">این فهرست برای شناخت بهتر خودتان است، نه برای تصمیم استخدام. <t t-call="ts_career.notice"/></p>
                             </div>
@@ -64,6 +96,7 @@
                     <div id="wrap" class="ts-page">
                         <section class="ts-section">
                             <div class="ts-container ts-narrow">
+                                <t t-call="ts_career.journey"><t t-set="jstep" t-value="2"/></t>
                                 <p class="ts-tag">یک قدم تا نتیجه</p>
                                 <h1>تحصیلات و سابقهٔ کار</h1>
                                 <p class="ts-lead">با این دو پاسخ، کنار هر شغل می‌بینید چقدر برای آن آماده‌اید.</p>
@@ -134,20 +167,33 @@
                                     </ul>
                                 </section>
 
-                                <section t-if="not st['hex_done'] or st['tasks_done'] &lt; st['tasks_total']" class="tsc-next" aria-labelledby="tsc-ref-h">
+                                <p t-if="paused" class="tsc-note" role="status" id="tsc-paused">پاسخ‌هایتان ذخیره شد؛ هر وقت خواستید از همان‌جا ادامه دهید.<t t-if="run.remind"> اگر تا فردا ادامه ندادید، یک پیامک یادآوری می‌فرستیم.</t></p>
+                                <section t-if="not st['hex_done'] or st['tasks_done'] &lt; st['tasks_total']" class="tsc-next" aria-labelledby="tsc-ref-h" id="tsc-next">
                                     <h2 id="tsc-ref-h">فهرست را دقیق‌تر کنید <span class="tsc-opt">اختیاری</span></h2>
-                                    <form t-if="not st['hex_done']" action="/career/more/personality" method="post">
-                                        <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
-                                        <p>با ۱۲۰ جملهٔ کوتاه دربارهٔ شیوهٔ کارتان، فهرست بر پایهٔ علایق و سبک کاری شما چیده می‌شود. حدود ۱۵ دقیقه، روی گوشی.</p>
-                                        <button type="submit" class="ts-btn ts-btn--primary" id="tsc-go-personality"><t t-if="st['hex']">ادامهٔ سبک‌های کاری</t><t t-else="">افزودن سبک‌های کاری</t></button>
-                                        <p class="tsc-consent">با شروع، رضایتی که در آغاز دادید برای این بخش هم ثبت می‌شود.</p>
-                                    </form>
-                                    <form t-else="" action="/career/more/abilities" method="post">
-                                        <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
-                                        <p>با ۳ بخش زمان‌دار کوتاه، توانایی‌های شما هم در فهرست اثر می‌گذارد. حدود ۲۳ دقیقه؛ روی رایانه راحت‌تر است.<t t-if="st['tasks_done']"> <t t-out="fa(st['tasks_done'])"/> از <t t-out="fa(st['tasks_total'])"/> بخش انجام شد.</t></p>
-                                        <button type="submit" class="ts-btn ts-btn--primary" id="tsc-go-abilities"><t t-if="st['tasks_done']">ادامهٔ توانایی‌ها</t><t t-else="">افزودن توانایی‌ها</t></button>
-                                        <p class="tsc-consent">با شروع، رضایتی که در آغاز دادید برای این بخش هم ثبت می‌شود.</p>
-                                    </form>
+                                    <ol class="tsc-levels">
+                                        <li class="tsc-level is-done"><strong>۱. علایق</strong> <span class="tsc-done">انجام شد ✓</span></li>
+                                        <li t-attf-class="tsc-level #{'is-done' if st['hex_done'] else 'is-current'}">
+                                            <strong>۲. سبک‌های کاری</strong> <span t-if="st['hex_done']" class="tsc-done">انجام شد ✓</span>
+                                            <form t-if="not st['hex_done']" action="/career/more/personality" method="post">
+                                                <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                                                <p>۱۲۰ جملهٔ کوتاه دربارهٔ شیوهٔ کارتان، در چهار بخش ۳۰تایی. بعد از آن همین فهرست بر پایهٔ علایق و سبک کاری شما دوباره چیده می‌شود و دلیل هم‌خوانی هر شغل کامل‌تر می‌شود.</p>
+                                                <p class="tsc-meta"><t t-if="st['hex']">حدود <t t-out="fa(hex_left)"/> دقیقه مانده</t><t t-else="">حدود ۱۵ دقیقه</t><t t-call="ts_website.sep"/>با گوشی<t t-call="ts_website.sep"/>هر جا خواستید مکث کنید؛ پاسخ‌ها ذخیره می‌شوند</p>
+                                                <button type="submit" class="ts-btn ts-btn--primary" id="tsc-go-personality"><t t-if="st['hex']">ادامهٔ سبک‌های کاری</t><t t-else="">شروع بخش ۲</t></button>
+                                                <p class="tsc-consent">با شروع، رضایتی که در آغاز دادید برای این بخش هم ثبت می‌شود.</p>
+                                            </form>
+                                        </li>
+                                        <li t-attf-class="tsc-level #{'is-current' if st['hex_done'] else 'is-later'}">
+                                            <strong>۳. توانایی‌ها</strong>
+                                            <form t-if="st['hex_done']" action="/career/more/abilities" method="post">
+                                                <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                                                <p>سه بخش زمان‌دار کوتاه (استدلال، تجسم فضایی و عدد). بعد از آن توانایی‌های شما هم در فهرست اثر می‌گذارد.<t t-if="st['tasks_done']"> <t t-out="fa(st['tasks_done'])"/> از <t t-out="fa(st['tasks_total'])"/> بخش انجام شد.</t></p>
+                                                <p class="tsc-meta">حدود ۲۳ دقیقه<t t-call="ts_website.sep"/>روی رایانه راحت‌تر است</p>
+                                                <button type="submit" class="ts-btn ts-btn--primary" id="tsc-go-abilities"><t t-if="st['tasks_done']">ادامهٔ توانایی‌ها</t><t t-else="">شروع بخش ۳</t></button>
+                                                <p class="tsc-consent">با شروع، رضایتی که در آغاز دادید برای این بخش هم ثبت می‌شود.</p>
+                                            </form>
+                                            <p t-else="" class="tsc-meta">بعد از بخش ۲ باز می‌شود.</p>
+                                        </li>
+                                    </ol>
                                 </section>
                                 <t t-if="not full_list">
                                     <p t-if="not groups" class="tsc-note" id="tsc-empty">پاسخ‌های شما به همهٔ کارها یکسان بود و نمی‌شود علایقتان را از هم جدا کرد. اگر بخواهید، دوباره پاسخ دهید.</p>
@@ -190,6 +236,7 @@
                                 </t>
 
 
+                                <t t-call="ts_career.remind"><t t-set="back" t-value="'/career/r'"/></t>
                                 <p class="tsc-small"><a href="/career/r?edit=1">ویرایش تحصیلات و سابقه</a></p>
                                 <p class="tsc-small">این فهرست برای شناخت بهتر خودتان است، نه برای تصمیم استخدام. <t t-call="ts_career.notice"/></p>
                             </div>

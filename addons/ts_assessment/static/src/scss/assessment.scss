@@ -76,6 +76,21 @@
     .ts-skip-note__link { display: inline-flex; align-items: center; min-block-size: 44px; padding-inline: 2px; color: inherit; text-decoration: underline; text-underline-offset: 3px; }
     .ts-skip-note__go { margin-block-start: 4px; }
 
+    // card mode (career completion, phase C; ts_player.js): one item on screen, bigger answers, «قبلی» always visible.
+    // Without JS the class is never set and the page stays the ordinary list.
+    .ts-qform.is-card .ts-q { display: none; }
+    .ts-qform.is-card .ts-q.is-current { display: block; animation: ts-card-in .18s ease-out; }
+    .ts-qform.is-card .ts-q__text { font-size: 1.2rem; line-height: 1.7; }
+    .ts-qform.is-card .ts-opt { min-height: 72px; }
+    .ts-qform.is-card .ts-qnav[hidden], .ts-cardend[hidden], .ts-cardend-missing[hidden], .ts-card-prev[hidden], .ts-card-next[hidden] { display: none; }
+    .ts-qform.is-card .ts-qnav { position: static; }
+    .ts-cardpos { margin: 0 0 8px; color: var(--color-neutral-400); font-size: var(--fs-1, .9rem); min-block-size: 1.4em; }
+    .ts-cardnav { display: flex; justify-content: space-between; gap: 10px; margin-block-start: 14px; }
+    .ts-cardnav .ts-btn { min-block-size: 48px; min-inline-size: 7rem; }
+    .ts-qform.is-end .ts-cardnav { display: none; }
+    @keyframes ts-card-in { from { opacity: .3; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+    @media (prefers-reduced-motion: reduce) { .ts-qform.is-card .ts-q.is-current { animation: none; } }
+
     // the bar: previous and next in one row on phones (B8-5, B9-2); both 48 px
     .ts-qnav { display: flex; flex-wrap: wrap; gap: 10px; margin-block-start: 22px; align-items: center; }
     @media (max-width: 767.98px) {

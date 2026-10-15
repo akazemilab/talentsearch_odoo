@@ -149,7 +149,7 @@
                                         <li><t t-call="ts_website.icon" ico.f="check-circle"/>با گوشی، بدون نصب برنامه</li>
                                         <li><t t-call="ts_website.icon" ico.f="check-circle"/>نتیجه را فقط خودتان می‌بینید</li>
                                     </ul>
-                                    <p t-if="request.env.user._is_public()" class="ts-hero__hint" id="ts-hero-hint">برای ذخیرهٔ نتیجه، اول با شمارهٔ موبایل وارد می‌شوید.</p>
+                                    <p t-if="request.env.user._is_public()" class="ts-hero__hint" id="ts-hero-hint">بدون ثبت‌نام شروع می‌کنید؛ در پایان با شمارهٔ موبایل نتیجه را می‌بینید و نگه می‌دارید.</p>
                                 </div>
                                 <t t-call="ts_website.career_mock"/>
                             </div>
