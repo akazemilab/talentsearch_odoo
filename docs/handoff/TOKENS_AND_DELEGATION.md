@@ -36,3 +36,10 @@ Detail and history: docs/OPS.md (read sections 2-4 only).
 4. `ts push` (only when the owner agrees; repo is public). 5. One rehearsal, risk review if sensitive, shots if templates.
 6. Ship via ts-shipper. 7. ts-scribe updates IMPLEMENTATION_LOG, HANDOFF and re-runs handoff_facts.sh.
 8. Short Persian report to the owner.
+
+## Reading code cheaply (2026-10-15)
+- `short [N]` (tools VPS and sp-new): cut stdin lines to N characters, UTF-8 safe. `cut -c` cuts bytes, splits Persian
+  letters, and the VPS bridge then fails to decode the whole output.
+- `qwebmap FILE [FROM TO]` (both hosts): one line per template line with t-name / t-if / href / id / name / t-call and the
+  visible text, svg stripped. A 340-line view reads in about a third of the tokens.
+- Never `pkill -f PATTERN` from a shell whose own command line contains PATTERN (it kills itself); use `pgrep -f 'x[y]z'`.
