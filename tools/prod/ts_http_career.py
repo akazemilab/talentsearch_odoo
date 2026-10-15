@@ -47,7 +47,7 @@ m = re.search(r'ITEMS (.*)', out)
 assert m, out[-1500:]
 items = [tuple(x.split(':')) for x in m.group(1).split()]
 hexi = [tuple(x.split(':', 1)) for x in re.search(r'HEX (.*)', out).group(1).split('|')]
-check('both modules published, 30 a page, card mode', 'STATE published published 30 True 30' in out, out[-300:])
+check('both modules published, card mode, interests 30 a page, work styles in four sittings', 'STATE published published 30 True 31' in out, out[-300:])
 check('60 interest items', len(items) == 60, str(len(items)))
 val = {'R': 2, 'I': 5, 'A': 1, 'S': 4, 'E': 1, 'C': 2}
 
