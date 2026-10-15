@@ -176,8 +176,8 @@
                                             <strong>۲. سبک‌های کاری</strong> <span t-if="st['hex_done']" class="tsc-done">انجام شد ✓</span>
                                             <form t-if="not st['hex_done']" action="/career/more/personality" method="post">
                                                 <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
-                                                <p>۱۲۰ جملهٔ کوتاه دربارهٔ شیوهٔ کارتان، در چهار بخش ۳۰تایی. بعد از آن همین فهرست بر پایهٔ علایق و سبک کاری شما دوباره چیده می‌شود و دلیل هم‌خوانی هر شغل کامل‌تر می‌شود.</p>
-                                                <p class="tsc-meta"><t t-if="st['hex']">حدود <t t-out="fa(hex_left)"/> دقیقه مانده</t><t t-else="">حدود ۱۵ دقیقه</t><t t-call="ts_website.sep"/>با گوشی<t t-call="ts_website.sep"/>هر جا خواستید مکث کنید؛ پاسخ‌ها ذخیره می‌شوند</p>
+                                                <p>حدود ۱۲۰ جملهٔ کوتاه دربارهٔ شیوهٔ کارتان، در چهار بخش. بعد از آن همین فهرست بر پایهٔ علایق و سبک کاری شما دوباره چیده می‌شود و دلیل هم‌خوانی هر شغل کامل‌تر می‌شود.</p>
+                                                <p class="tsc-meta">حدود <t t-out="fa(hex_left)"/> دقیقه<t t-if="st['hex']"> مانده</t><t t-call="ts_website.sep"/>با گوشی<t t-call="ts_website.sep"/>هر جا خواستید مکث کنید؛ پاسخ‌ها ذخیره می‌شوند</p>
                                                 <button type="submit" class="ts-btn ts-btn--primary" id="tsc-go-personality"><t t-if="st['hex']">ادامهٔ سبک‌های کاری</t><t t-else="">شروع بخش ۲</t></button>
                                                 <p class="tsc-consent">با شروع، رضایتی که در آغاز دادید برای این بخش هم ثبت می‌شود.</p>
                                             </form>

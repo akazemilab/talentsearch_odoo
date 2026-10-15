@@ -131,7 +131,11 @@ class TsInstrumentCareer(models.Model):
     _inherit = 'ts.instrument'
 
     def ts_page_size(self):
-        return CARD_PAGE if self.code in CARD_CODES else super().ts_page_size()
+        if self.code == HEX_CODE:
+            return -(-(self.active_item_count or 120) // 4)       # four sittings of about 30 (123 items: 31/31/31/30)
+        if self.code == IP_CODE:
+            return CARD_PAGE                                      # 60 interests: half-way pause
+        return super().ts_page_size()
 
     def ts_card_mode(self):
         return self.code in CARD_CODES or super().ts_card_mode()

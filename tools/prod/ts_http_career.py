@@ -147,8 +147,10 @@ st, loc, _ = p.req('/career/more/personality', [('csrf_token', p.csrf(body))])
 check('personality -> player', st in (302, 303) and '/take/' in loc, loc)
 T2 = path_of(loc).split('/take/')[1].split('?')[0]
 st, loc, b2 = p.req('/take/%s' % T2)
-check('no second consent, card mode, 30 a sitting, «جای خوبی برای مکث»', st == 200 and 'consent_service' not in b2 and 'ts-qform' in b2
-      and 'data-card="1"' in b2 and b2.count('class="ts-q"') == 30 and 'جای خوبی برای مکث است' in b2, str(st))
+nq = b2.count('class="ts-q"')
+check('no second consent, card mode, about 30 a sitting (balanced pages), «جای خوبی برای مکث»', st == 200
+      and 'consent_service' not in b2 and 'ts-qform' in b2 and 'data-card="1"' in b2 and 28 <= nq <= 32
+      and 'جای خوبی برای مکث است' in b2, '%s %s %s' % (st, nq, 'جای خوبی' in b2))
 facets_hi = {'Inquisitiveness', 'Diligence', 'Organization', 'Sentimentality', 'Perfectionism'}
 hv = [('q_%s' % i, '5' if f in facets_hi else ('3' if f != 'ATTN' else '1')) for i, f in hexi]
 st, loc, _ = p.req('/take/%s/page' % T2, [('page', '1'), ('go', 'exit')] + hv[:30] + [('csrf_token', p.csrf(b2))])
@@ -214,6 +216,10 @@ st, loc, _ = g.req('/career/start')
 check('old start link -> /career (no sign-in wall)', st in (302, 303) and path_of(loc) == '/career', loc)
 st, loc, _ = g.req('/career/go', [('csrf_token', g.csrf(body)), ('remind', '1')])
 check('a visitor taps start -> guest interests', st in (302, 303) and path_of(loc) == '/start/q', loc)
+# the guest cookie is Secure (production is https); this client talks plain http to the clone, so it is sent by hand
+for c in g.jar:
+    if c.name == 'ts_guest':
+        c.secure = False
 st, loc, body = g.req('/start/q')
 check('guest player: card mode, 30 items, journey', st == 200 and 'data-card="1"' in body and body.count('class="ts-q"') == 30
       and 'tsc-journey' in body, str(st))
