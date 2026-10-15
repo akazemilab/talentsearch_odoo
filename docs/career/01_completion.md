@@ -1,5 +1,9 @@
 # Career test (ts_career): completion research and plan (2026-10-15)
 
+Status: phases A, B and C built on branch `career-completion` and rehearsed on a clone (eot_ts96: eot.ir guard and
+portal UNCHANGED, 736/737 checks; the one failure was an old onb3 wording check, fixed). Waiting for the owner's ship
+approval. Ship: `ts ship "" ts_assessment,ts_onboard,ts_website,ts_career career-completion` after merging to main.
+
 The career test is the signature product. Goal: more people who start it finish level 1 (interests -> result), and more of
 them go on to level 2 (work styles) and level 3 (abilities).
 
@@ -55,17 +59,18 @@ Measurement: 3 career runs on live so far (launched 2026-10-13): no usable compl
   - `ip_stall`: interests started, not finished, 24 h idle -> "you are N questions from your list" + resume link.
   - `bg_stall`: interests done, education/experience missing, 3 h -> "one step to your list".
   - `l2_invite`: quick result seen, level 2 not started, 3 days -> what level 2 adds.
-  - `l2_stall`: level 2 started, not finished, 48 h idle.
-  - Only for people who ticked «یادآوری پیامکی» (explicit opt-in, unticked by default, on the start screen and on the result
-    page; one-tap stop on /my). Text never names the test; short link `/n/...` style; Persian digits; link last.
+  - `l2_stall`: level 2 started, not finished, 24 h idle.
+  - Owner decision 2026-10-15: the «یادآوری پیامکی» box on the start screen is TICKED by default (the person can untick
+    it); one tap turns reminders off on the result page and on the page an SMS link opens. Text never names the test;
+    short link `/career/c/<code>`; Persian digits; link last.
 - Journey header on every career screen: «۱ علایق ← ۲ دو پرسش ← ۳ نتیجه» with finished steps ticked, and minutes left
   (honest, from items left).
 - Milestone notes inside the interests player at 50% and the last page ("almost there: N left").
 - Level cards on the result page: what changes in *their* list (e.g. "your 20 jobs are re-ordered by work style and
   readiness"), honest minutes, and "you can stop any time; answers are saved".
-- Level 2 split into sittings: after every 30 items a "good place to stop" screen (continue now / remind me tomorrow).
-- Funnel per step for career (landing, start, first answer, 25/50/75%, done, background, result, L2/L3 start/done,
-  reminder sent / came back) in the existing ts.funnel.event, with a back-office view.
+- Level 2 split into four sittings (123 items: 31/31/31/30), each ending in a "good place to stop" card.
+- Funnel steps in ts.funnel.event: career_view, career_start, q1, half, finish, bg_done, result_view, nudge_sent,
+  nudge_back, remind_off (per instrument, so level 2 and 3 have their own q1/half/finish).
 
 **Phase B - fewer walls before the first question**
 - Start the interests as a guest (existing guest player + cookie + claim). Consent becomes the one-screen start of /start
