@@ -56,10 +56,13 @@ rq = env['ts.career.run'].sudo().ts_for_user(q, create=True)
 at = rq.ts_ensure_attempt('CAREER-IP-60')
 if at.state == 'consent':
     at.give_consent()
+# completion (card mode): page 1 fully answered shows its end card «نیمی از راه»; page 2 shows its first card
+for it in at.active_items()[:30]:
+    at.save_answer(it.id, 3)
 env.cr.commit()
 print('CAREER matrix')
 print(json.dumps({'': ['/career'], p.login: ['/career', '/career/r', '/career/r?ready=1', '/career/job/' + code, '/career/r?edit=1'],
-                  q.login: ['/take/' + at.access_token]}))
+                  q.login: ['/take/%s?page=1' % at.access_token, '/take/%s?page=2' % at.access_token, '/career']}))
 PY
 elif [ "$MODE" = clinic ]; then
   # clin9: the clinic panel per role (office / therapist / owner) at 1280 and 390 with the spacing audit (TS_SHOT_GAPS)
