@@ -29,6 +29,8 @@ class Fake(http.server.BaseHTTPRequestHandler):
         q = dict(urllib.parse.parse_qsl(urllib.parse.urlsplit(self.path).query))
         q.update(dict(urllib.parse.parse_qsl(body)))
         path = urllib.parse.urlsplit(self.path).path.split('/v1/', 1)[1].split('/', 1)[1][:-5]
+        if path == 'verify/lookup':  # every OTP goes through the approved template «otp»; record it like a send
+            path, q = 'sms/send', {'receptor': q['receptor'], 'message': 'LOOKUP:%s:%s' % (q.get('template'), q.get('token'))}
         REQS.append((path, q))
         ent = []
         if path == 'sms/send':
@@ -248,7 +250,8 @@ code, body = last_code(PH['new'])
 lines = body.split('\n')
 check('J02 the SMS: «استعدادیاب / کد ورود: … / این کد را به کسی ندهید.» and the last line «@talentsearch.ir #code», <= 140 characters',
       bool(code) and lines[0] == 'استعدادیاب' and lines[1] == 'کد ورود: %s' % code and lines[2] == 'این کد را به کسی ندهید.'
-      and re.match(r'^@([\w-]+\.)*talentsearch\.ir #%s$' % code, lines[-1]) is not None and len(body) <= 140, repr(body))
+      and re.match(r'^@([\w-]+\.)*talentsearch\.ir #%s$' % code, lines[-1]) is not None and len(body) <= 140
+      or body == 'LOOKUP:otp:%s' % code, repr(body))  # OTP is now sent only through the approved Verify Lookup template «otp»
 st, h, j = ajax(c1, '/signup/verify', {'csrf_token': tok, 'code': '۱۲۳', 'next': '/invite/' + TOK_INV})
 check('J03 a short code -> «کد ۶ رقمی است.» inline, still on the code state', j.get('state') == 'code' and j.get('msg') == 'کد ۶ رقمی است.', str(j)[:160])
 wrong = '000000' if code != '000000' else '111111'
@@ -376,8 +379,8 @@ shell("env.cr.execute(\"update ts_phone_otp set create_date = create_date - inte
 st, _, page = cm.req('/my/phone')
 st, loc, _ = cm.req('/my/phone/send', {'csrf_token': cm.csrf(page), 'phone': fa(PH['mail'])})
 code_m, body_m = last_code(PH['mail'])
-check('M04 the linking code is sent (its SMS ends with the WebOTP line too)', 'msg=sent' in loc and bool(code_m)
-      and body_m.split('\n')[-1].endswith(' #' + str(code_m)), '%s %r' % (loc, body_m))
+check('M04 the linking code is sent through the approved template «otp»', 'msg=sent' in loc and bool(code_m)
+      and body_m == 'LOOKUP:otp:%s' % code_m, '%s %r' % (loc, body_m))
 st, _, page = cm.req('/my/phone?pending=1')
 st, loc, _ = cm.req('/my/phone/verify', {'csrf_token': cm.csrf(page), 'code': fa(code_m[:3]) + ' ' + fa(code_m[3:])})
 info = shell("print('T', env['res.users'].search([('login', '=', '%s')]).partner_id.ts_phone)" % L['mail'])

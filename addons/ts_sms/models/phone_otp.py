@@ -72,24 +72,20 @@ class TsPhoneOtp(models.Model):
 
     @api.model
     def _send_code(self, company, phone, code):
+        """Every OTP (sign-in, signup, phone verify, re-auth) goes through the approved Kavenegar Verify Lookup
+        template «otp» (id 1543452). There is no plain-SMS fallback: if the lookup fails the code is not sent."""
         tpl = company.ts_sms_otp_template_id
+        name = tpl.name if tpl else 'otp'
         try:
-            if tpl and company.kv_has_lookup and tpl.approval == 'Approved':
-                cl = company._kv_client()
-                res = cl.lookup(phone, tpl.name, code, tag=company.kv_default_tag or None)
-                e = res[0] if res else {}
-                self.env['kavenegar.message'].sudo()._kv_log_sent([{
-                    'company_id': company.id, 'kind': 'lookup', 'messageid': str(e.get('messageid') or ''),
-                    'receptor': phone, 'sender': e.get('sender'), 'body': '***', 'template_name': tpl.name,
-                    'kv_status': int(e.get('status') or 1), 'status_text': e.get('statustext'),
-                    'cost': float(e.get('cost') or 0)}])
-                return True
-            body = self._ts_otp_body(code, phone)
-            sms = self.env['sms.sms'].sudo().create({'number': phone, 'body': body, 'sms_type': 'alert', 'kv_secret': True})
-            sms.send(unlink_sent=False, raise_exception=False)
-            ok = sms.state in ('process', 'pending', 'sent')
-            sms.unlink()
-            return ok
+            cl = company._kv_client()
+            res = cl.lookup(phone, name, code, tag=company.kv_default_tag or None)
+            e = res[0] if res else {}
+            self.env['kavenegar.message'].sudo()._kv_log_sent([{
+                'company_id': company.id, 'kind': 'lookup', 'messageid': str(e.get('messageid') or ''),
+                'receptor': phone, 'sender': e.get('sender'), 'body': '***', 'template_name': name,
+                'kv_status': int(e.get('status') or 1), 'status_text': e.get('statustext'),
+                'cost': float(e.get('cost') or 0)}])
+            return True
         except Exception:
             return False
 

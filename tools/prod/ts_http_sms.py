@@ -29,6 +29,8 @@ class Fake(http.server.BaseHTTPRequestHandler):
         q = dict(urllib.parse.parse_qsl(urllib.parse.urlsplit(self.path).query))
         q.update(dict(urllib.parse.parse_qsl(body)))
         path = urllib.parse.urlsplit(self.path).path.split('/v1/', 1)[1].split('/', 1)[1][:-5]
+        if path == 'verify/lookup':  # every OTP goes through the approved template «otp»; record it like a send
+            path, q = 'sms/send', {'receptor': q['receptor'], 'message': 'LOOKUP:%s:%s' % (q.get('template'), q.get('token'))}
         REQS.append((path, q))
         ent = []
         if path == 'sms/send':
@@ -76,7 +78,7 @@ check('good number -> sent', 'msg=sent' in loc and 'pending=1' in loc, loc)
 sent = [r for r in REQS if r[0] == 'sms/send']
 check('exactly one SMS to Kavenegar', len(sent) == n0 + 1)
 code = re.search(r'(\d{6})', sent[-1][1]['message']).group(1)
-check('SMS goes to the given number from default line', sent[-1][1]['receptor'] == '09121112222' and sent[-1][1].get('sender') == '10004346')
+check('OTP goes to the given number through the approved template «otp»', sent[-1][1]['receptor'] == '09121112222' and sent[-1][1]['message'] == 'LOOKUP:otp:%s' % code)
 st, loc, _ = p.req('/my/phone/send', {'csrf_token': p.csrf(page), 'phone': '09121112222'})
 check('immediate resend -> cooldown', 'msg=cooldown' in loc, loc)
 wrong = '000000' if code != '000000' else '111111'

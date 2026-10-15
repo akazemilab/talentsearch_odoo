@@ -34,6 +34,8 @@ class Fake(http.server.BaseHTTPRequestHandler):
         q = dict(urllib.parse.parse_qsl(urllib.parse.urlsplit(self.path).query))
         q.update(dict(urllib.parse.parse_qsl(body)))
         path = urllib.parse.urlsplit(self.path).path.split('/v1/', 1)[1].split('/', 1)[1][:-5]
+        if path == 'verify/lookup':  # every OTP goes through the approved template «otp»; record it like a send
+            path, q = 'sms/send', {'receptor': q['receptor'], 'message': 'LOOKUP:%s:%s' % (q.get('template'), q.get('token'))}
         REQS.append((path, q))
         ent = []
         if path == 'sms/send':
