@@ -288,7 +288,7 @@
         prev.textContent = 'قبلی';
         var next = document.createElement('button');
         next.type = 'button';
-        next.className = 'ts-btn ts-btn--quiet ts-card-next';
+        next.className = 'ts-btn ts-btn--outline ts-card-next';
         next.textContent = 'بعدی';
         bar.appendChild(prev);
         bar.appendChild(next);

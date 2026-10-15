@@ -88,6 +88,7 @@
     .ts-cardnav { display: flex; justify-content: space-between; gap: 10px; margin-block-start: 14px; }
     .ts-cardnav .ts-btn { min-block-size: 48px; min-inline-size: 7rem; }
     .ts-qform.is-end .ts-cardnav { display: none; }
+    .ts-qform.is-end .ts-qlist, .ts-qform.is-end .ts-cardpos { display: none; }
     @keyframes ts-card-in { from { opacity: .3; transform: translateY(6px); } to { opacity: 1; transform: none; } }
     @media (prefers-reduced-motion: reduce) { .ts-qform.is-card .ts-q.is-current { animation: none; } }
 

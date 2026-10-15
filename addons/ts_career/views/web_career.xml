@@ -27,11 +27,6 @@
                                 <h1>چه شغل‌هایی با علایق شما متناسب است؟</h1>
                                 <p class="ts-lead">برای ۶۰ فعالیت ساده مشخص کنید چقدر به انجامشان علاقه دارید. بعد، از میان ۹۲۳ شغل، شغل‌های متناسب با علایقتان را می‌بینید.</p>
                                 <p class="tsc-meta">حدود ۸ دقیقه<t t-call="ts_website.sep"/>با گوشی<t t-call="ts_website.sep"/>نتیجه را فقط خودتان می‌بینید</p>
-                                <ol class="tsc-steps">
-                                    <li><strong>علایق</strong>: برای هر یک از ۶۰ فعالیت، میزان علاقه‌تان را انتخاب می‌کنید.</li>
-                                    <li><strong>دو سؤال</strong>: تحصیلات و سابقهٔ کارتان.</li>
-                                    <li><strong>نتیجه</strong>: فهرست شغل‌های مناسب، همراه با دلیل هر کدام.</li>
-                                </ol>
                                 <t t-if="full">
                                     <div class="tsc-note" role="status" id="tsc-full">
                                         <p><strong>ظرفیت آزمون رایگان برای امروز تکمیل شده است.</strong> فردا دوباره سر بزنید.</p>
@@ -55,15 +50,20 @@
                                 <t t-else="">
                                     <form action="/career/go" method="post" class="ts-form tsc-go" id="tsc-start-form">
                                         <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
-                                        <p class="tsc-promise" t-if="public">بدون ثبت‌نام شروع کنید؛ در پایان با شمارهٔ موبایل نتیجه را می‌بینید و نگه می‌دارید.</p>
-                                        <p class="tsc-promise" t-else="">پاسخ‌ها و نتیجه فقط در حساب خودتان می‌ماند.</p>
+                                        <button type="submit" class="ts-btn ts-btn--primary ts-btn--lg ts-btn--block" id="tsc-start">۱۸ سال یا بیشتر دارم؛ شروع آزمون</button>
                                         <label class="ts-check"><input type="checkbox" name="remind" value="1" checked="checked" id="tsc-remind"/>
                                             <span>اگر آزمون نیمه‌کاره ماند، با یک پیامک یادآوری کنید.</span></label>
                                         <label class="ts-check"><input type="checkbox" name="consent_research" value="1"/>
                                             <span>اجازه می‌دهم پاسخ‌هایم بدون نام و به‌صورت تجمیعی برای بهبود آزمون‌ها استفاده شود. <span class="ts-hint">(اختیاری)</span></span></label>
-                                        <button type="submit" class="ts-btn ts-btn--primary ts-btn--lg ts-btn--block" id="tsc-start">۱۸ سال یا بیشتر دارم؛ شروع آزمون</button>
+                                        <p class="tsc-promise" t-if="public">بدون ثبت‌نام شروع کنید؛ در پایان با شمارهٔ موبایل نتیجه را می‌بینید و نگه می‌دارید.</p>
+                                        <p class="tsc-promise" t-else="">پاسخ‌ها و نتیجه فقط در حساب خودتان می‌ماند.</p>
                                     </form>
                                     <p class="tsc-minor"><a href="/start/under-18" class="ts-btn ts-btn--quiet">کمتر از ۱۸ سال دارم</a></p>
+                                    <ol class="tsc-steps">
+                                        <li><strong>علایق</strong>: برای هر یک از ۶۰ فعالیت، میزان علاقه‌تان را انتخاب می‌کنید.</li>
+                                        <li><strong>دو سؤال</strong>: تحصیلات و سابقهٔ کارتان.</li>
+                                        <li><strong>نتیجه</strong>: فهرست شغل‌های مناسب، همراه با دلیل هر کدام.</li>
+                                    </ol>
                                     <details class="tsc-more" id="tsc-start-more">
                                         <summary>پیش از شروع، بیشتر بدانید</summary>
                                         <dl class="ts-meta tsc-terms">
